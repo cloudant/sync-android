@@ -1,0 +1,13 @@
+target/*
+bin/*
+gen/*
+*.iml
+local.properties
+.project
+*~
+build
+.gradle
+*.ipr
+*.iws
+out
+local.gradle

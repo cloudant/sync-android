@@ -1,0 +1,299 @@
+/**
+ * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+package com.cloudant.sync.replication;
+
+import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.mazha.*;
+import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.DocumentBody;
+import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevisionBuilder;
+import com.cloudant.sync.util.CouchUtils;
+import org.apache.commons.io.FileUtils;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static org.hamcrest.CoreMatchers.*;
+
+@Category(RequireRunningCouchDB.class)
+public class CouchClientWrapperTest extends CouchTestBase {
+
+    public static final String CLOUDANT_TEST_DB_NAME = "couch_client_wrapper_test";
+
+    final static String documentOneFile = "fixture/document_1.json";
+    final static String documentTwoFile = "fixture/document_2.json";
+    static DocumentBody bodyOne = null;
+    static DocumentBody bodyTwo = null;
+
+    public static final String REPLICATOR_IDENTIFIER = "replicator_identifier";
+    public static final String SEQUENCE_1 = "10-ksdkdsi";
+    public static final String SEQUENCE_2 = "101-adfoasd83";
+
+    public static CouchClientWrapper remoteDb;
+
+    @Before
+    public void setup() throws IOException {
+        remoteDb = new CouchClientWrapper(CLOUDANT_TEST_DB_NAME, super.getCouchConfig());
+        bodyOne = DocumentBodyFactory.create(FileUtils.readFileToByteArray(new File(documentOneFile)));
+        bodyTwo = DocumentBodyFactory.create(FileUtils.readFileToByteArray(new File(documentTwoFile)));
+
+        CouchClientWrapperDbUtils.deleteDbQuietly(remoteDb);
+        remoteDb.createDatabase();
+    }
+
+    @After
+    public void tearDown() {
+        CouchClientWrapperDbUtils.deleteDbQuietly(remoteDb);
+    }
+
+    @Test
+    public void getDbName() {
+        Assert.assertEquals(CLOUDANT_TEST_DB_NAME, remoteDb.getDbName());
+    }
+
+    @Test
+    public void exists_dbExists_true() {
+        Assert.assertTrue(remoteDb.exists());
+    }
+
+    @Test
+    public void exists_dbExists_false() {
+        CouchClientWrapper couchClientWrapper = new CouchClientWrapper("db_not_exists",
+                super.getCouchConfig());
+        Assert.assertFalse(couchClientWrapper.exists());
+    }
+
+    @Test
+    public void getCouchClient() {
+        Assert.assertNotNull(remoteDb.getCouchClient());
+    }
+
+    @Test
+    public void getIdentifier() {
+        String identifier = remoteDb.getIdentifier();
+        String couchDbId = "http://127.0.0.1:5984/couch_client_wrapper_test";
+        String cloudantId = String.format(
+                "https://%s.cloudant.com:443/couch_client_wrapper_test",
+                CloudantConfig.defaultConfig().getUsername());
+
+        if(getCouchConfig().getHost().startsWith("127")) {
+            Assert.assertEquals(couchDbId, identifier);
+        } else {
+            Assert.assertEquals(cloudantId, identifier);
+        }
+    }
+
+    @Test
+    public void getCheckpoint_getNotExist_nullMustBeReturn() {
+        String sequence = remoteDb.getCheckpoint(REPLICATOR_IDENTIFIER);
+        Assert.assertThat(sequence, is(nullValue()));
+    }
+
+    @Test
+    public void getCheckpoint_putAndGet_correctSequenceMustReturn() {
+        remoteDb.putCheckpoint(REPLICATOR_IDENTIFIER, SEQUENCE_1);
+        String sequence1 = remoteDb.getCheckpoint(REPLICATOR_IDENTIFIER);
+        Assert.assertEquals(SEQUENCE_1, sequence1);
+
+        remoteDb.putCheckpoint(REPLICATOR_IDENTIFIER, SEQUENCE_2);
+        String sequence2 = remoteDb.getCheckpoint(REPLICATOR_IDENTIFIER);
+        Assert.assertEquals(SEQUENCE_2, sequence2);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void putCheckpoint_putNull_exception() {
+        remoteDb.putCheckpoint(REPLICATOR_IDENTIFIER, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getCheckpoint_nullCheckpointId_exception() {
+        remoteDb.getCheckpoint(null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getCheckpoint_emptyCheckpointId_exception() {
+        remoteDb.getCheckpoint("");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void putCheckpoint_nullCheckpointId_exception() {
+        remoteDb.putCheckpoint(null, "101");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void putCheckpoint_emptyCheckpointId_exception() {
+        remoteDb.putCheckpoint("", "101");
+    }
+
+    @Test
+    public void changes_getChangesAfterTwoUpdates() {
+
+        ChangesResult changes0 = remoteDb.changes(null, 1000);
+        Assert.assertEquals(0, changes0.size());
+
+        String lastSequence0 = changes0.getLastSeq();
+
+        Response[] responses = createTwoDocumentsInRemoteDb(remoteDb);
+
+        ChangesResult changes1 = remoteDb.changes(lastSequence0, 1000);
+
+        Assert.assertEquals(2, changes1.size());
+        List<String> changedDocIds = findIdOfChangedDocs(changes1);
+        Assert.assertThat(changedDocIds, hasItems(responses[0].getId(), responses[1].getId()));
+    }
+
+    public Response[] createTwoDocumentsInRemoteDb(CouchClientWrapper db) {
+        Bar bar1 = new Bar();
+        Response res1 = db.create(bar1);
+        Assert.assertNotNull(res1);
+
+        Bar bar2 = new Bar();
+        Response res2 = db.create(bar2);
+        bar2 = db.get(Bar.class, res2.getId());
+
+        Response res3 = db.update(bar2.getId(), bar2);
+        Assert.assertNotNull(res3);
+        return new Response[]{ res1, res2 };
+    }
+
+    private List<String> findIdOfChangedDocs(ChangesResult changes1) {
+        List<String> changedDocIds = new ArrayList<String>();
+        for(ChangesResult.Row row : changes1.getResults()) {
+            changedDocIds.add(row.getId());
+        }
+        return changedDocIds;
+    }
+
+    @Test
+    public void getRevisions_giveDocumentId() {
+        Response[] responses = createDocAndUpdateTwoTimes(remoteDb);
+        List<DocumentRevs> documentRevs = remoteDb.getRevisions(responses[0].getId(), responses[2].getRev());
+
+        Assert.assertNotNull(documentRevs);
+        Assert.assertEquals(1, documentRevs.size());
+        Assert.assertEquals(3, documentRevs.get(0).getRevisions().getIds().size());
+        Assert.assertEquals(3, documentRevs.get(0).getRevisions().getStart());
+        Assert.assertEquals(responses[2].getRev(), documentRevs.get(0).getRev());
+        Assert.assertThat(documentRevs.get(0).getRevisions().getIds(), hasItems(findRevisionIds(responses)));
+    }
+
+    private String[] findRevisionIds(Response[] responses) {
+        return new String[]{CouchUtils.getRevisionIdSuffix(responses[0].getRev()),
+                CouchUtils.getRevisionIdSuffix(responses[1].getRev()),
+                CouchUtils.getRevisionIdSuffix(responses[2].getRev())};
+    }
+
+    public Response[] createDocAndUpdateTwoTimes(CouchClientWrapper db) {
+        Response res1 = db.create(new Bar());
+        Bar bar1 = db.get(Bar.class, res1.getId());
+
+        Response res2 = db.update(bar1.getId(), bar1);
+        Assert.assertNotNull(res2);
+        Assert.assertEquals(res1.getId(), res2.getId());
+        Bar bar2 = db.get(Bar.class, res1.getId());
+
+        Response res3 = db.update(bar2.getId(), bar2);
+        Assert.assertEquals(res1.getId(), res3.getId());
+        Bar bar3 = db.get(Bar.class, res1.getId());
+        Assert.assertNotNull(bar3);
+        return new Response[] { res1, res2, res3};
+    }
+
+    @Test
+    public void getRevisions_deletedDocument() {
+        Response[] responses = createDocUpdateTwoTimesThenDelete(remoteDb);
+        List<DocumentRevs> documentRevs = remoteDb.getRevisions(responses[0].getId(), responses[3].getRev());
+
+        Assert.assertEquals(1, documentRevs.size());
+        Assert.assertTrue(documentRevs.get(0).getDeleted());
+        Assert.assertEquals(4, documentRevs.get(0).getRevisions().getStart());
+        Assert.assertEquals(4, documentRevs.get(0).getRevisions().getIds().size());
+    }
+
+    public Response[] createDocUpdateTwoTimesThenDelete(CouchClientWrapper remoteDb) {
+        Response res1 = remoteDb.create(new Bar());
+        Bar bar1 = remoteDb.get(Bar.class, res1.getId());
+
+        Response res2 = remoteDb.update(bar1.getId(), bar1);
+        Assert.assertNotNull(res2);
+        Assert.assertEquals(res1.getId(), res2.getId());
+        Bar bar2 = remoteDb.get(Bar.class, res1.getId());
+
+        Response res3 = remoteDb.update(bar2.getId(), bar2);
+        Assert.assertEquals(res1.getId(), res3.getId());
+        Bar bar3 = remoteDb.get(Bar.class, res1.getId());
+        Assert.assertNotNull(bar3);
+
+        Response res4 = remoteDb.delete(bar3.getId(), bar3.getRevision());
+        Assert.assertEquals(res1.getId(), res4.getId());
+        try {
+            Bar bar4 = remoteDb.get(Bar.class, res1.getId());
+            Assert.fail();
+        } catch (NoResourceException e) {}
+        return new Response[]{res1, res2, res3, res4};
+    }
+
+    @Test
+    public void bulk_twoDocs_docsShouldBeCreated() {
+
+        String objectId1 = "haha";
+        String objectId2 = "hehe";
+
+        List<DocumentRevision> objects = createTwoDBObjects(remoteDb, objectId1, objectId2);
+
+        remoteDb.bulk(objects);
+
+        Map<String, Object> obj1 = remoteDb.get(Map.class, objectId1);
+        Assert.assertNotNull(obj1);
+        Assert.assertEquals(objects.get(0).getRevision(), obj1.get("_rev"));
+
+
+        Map<String, Object> obj2 = remoteDb.get(Map.class, objectId2);
+        Assert.assertNotNull(obj2);
+        Assert.assertNotNull(obj2.get("_rev"));
+        Assert.assertEquals(objects.get(1).getRevision(), obj2.get("_rev"));
+    }
+
+    public List<DocumentRevision> createTwoDBObjects(CouchClientWrapper remoteDb, String id1, String id2) {
+        List<DocumentRevision> objects = new ArrayList<DocumentRevision>();
+
+        DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
+        builder.setDocId(id1);
+        builder.setRevId(CouchUtils.getFirstRevisionId());
+        builder.setBody(bodyOne);
+
+        DocumentRevision todo1 = builder.build();
+        objects.add(todo1);
+
+        DocumentRevisionBuilder builder2 = new DocumentRevisionBuilder();
+        builder2.setDocId(id2);
+        builder2.setRevId(CouchUtils.getFirstRevisionId());
+        builder2.setBody(bodyTwo);
+
+        DocumentRevision tdo2 = builder2.build();
+        objects.add(tdo2);
+
+        return objects;
+    }
+}

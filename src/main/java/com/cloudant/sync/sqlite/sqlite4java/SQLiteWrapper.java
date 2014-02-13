@@ -1,0 +1,350 @@
+/**
+ * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+package com.cloudant.sync.sqlite.sqlite4java;
+
+import com.almworks.sqlite4java.SQLiteConnection;
+import com.almworks.sqlite4java.SQLiteException;
+import com.almworks.sqlite4java.SQLiteStatement;
+import com.cloudant.common.Log;
+import com.cloudant.sync.sqlite.ContentValues;
+import com.cloudant.sync.sqlite.SQLDatabase;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+
+import java.io.File;
+import java.lang.ref.WeakReference;
+import java.sql.SQLException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Stack;
+
+
+/**
+ * Very simple implementation of SQLDatabase backed by sqlite4java. This is mainly used for testing.
+ *
+ * Since sqlite4java's SQLiteConnection does not really support multi-threading, as a matter of face, the
+ * SQLiteConnection can only be used by the thread create/open it, ThreadLocal<SQLiteConnection> is created, so that
+ * each thread (if there is any) is using their own connection.
+ *
+ * All the connection are closed when displose() is called.
+ */
+public class SQLiteWrapper implements SQLDatabase {
+
+    private final static String LOG_TAG = "SQLiteWrapper";
+
+    private static final String[] CONFLICT_VALUES = new String[]
+            {"", " OR ROLLBACK ", " OR ABORT ", " OR FAIL ", " OR IGNORE ", " OR REPLACE "};
+
+    private final String databaseFilePath;
+
+    private Set<WeakReference<SQLiteConnection>> allConnections =
+            Collections.synchronizedSet(new HashSet<WeakReference<SQLiteConnection>>());
+    private ThreadLocal<SQLiteConnection> localConnection = new ThreadLocal<SQLiteConnection>();
+
+    /**
+     * Tracks whether the current nested set of transactions has had any
+     * failed transactions so far.
+     */
+    private ThreadLocal<Boolean> transactionNestedSetSuccess = new ThreadLocal<Boolean>() {
+        @Override
+        public Boolean initialValue() {
+            return false;
+        }
+    };
+
+    /**
+     * Stack to track whether the current transaction is successful.
+     * As transactions are started, their status is pushed onto the stack.
+     * When complete, the status is popped and used to update
+     * {@see SQLiteWrapper#transactionNestedSetSuccess}
+     */
+    private ThreadLocal<Stack<Boolean>> transactionStack = new ThreadLocal<Stack<Boolean>>() {
+        @Override
+        public Stack<Boolean> initialValue() {
+            return new Stack<Boolean>();
+        }
+    };
+
+    public static SQLiteWrapper openSQLiteWrapper(String databaseFilePath) {
+        SQLiteWrapper db = new SQLiteWrapper(databaseFilePath);
+        db.open();
+        return db;
+    }
+
+    public SQLiteWrapper(String databaseFilePath) {
+        this.databaseFilePath = databaseFilePath;
+    }
+
+    public String getDatabaseFile() {
+        return this.databaseFilePath;
+    }
+
+    SQLiteConnection getConnection() {
+        if (localConnection.get() == null) {
+            SQLiteConnection conn = createNewConnection();
+            allConnections.add(new WeakReference<SQLiteConnection>(conn));
+            localConnection.set(conn);
+        }
+
+        return localConnection.get();
+    }
+
+    SQLiteConnection createNewConnection() {
+        try {
+            SQLiteConnection conn = new SQLiteConnection(new File(this.databaseFilePath));
+            conn.open();
+            return conn;
+        } catch (SQLiteException ex) {
+            throw new IllegalStateException("Failed to open database.", ex);
+        }
+    }
+
+    @Override
+    public void open() {
+    }
+
+    @Override
+    public void compactDatabase() {
+        try {
+            this.execSQL("VACUUM");
+        } catch (SQLException e) {
+            String error = "Fatal error running 'VACUUM', the database is probably malfunctioning.";
+            throw new IllegalStateException(error);
+        }
+    }
+
+    @Override
+    public int getVersion() {
+        try {
+            return SQLiteWrapperUtils.longForQuery(getConnection(), "PRAGMA user_version;").intValue();
+        } catch (SQLiteException e) {
+            throw new IllegalStateException("Can not query for the user_version?");
+        }
+    }
+
+    @Override
+    public boolean isOpen() {
+        return getConnection().isOpen();
+    }
+
+    @Override
+    public void beginTransaction() {
+        Preconditions.checkState(this.isOpen(), "db must be open");
+
+        // All transaction state variables are thread-local,
+        // so we don't have to lock.
+
+        // Start new set of nested transactions
+        if(this.transactionStack.get().size() == 0) {
+            try {
+                this.execSQL("BEGIN EXCLUSIVE;");
+            } catch (SQLException e) {
+                String error = "Fatal error running 'BEGIN', the database is probably malfunctioning.";
+                throw new IllegalStateException(error);
+            }
+
+            // We assume the set as a whole is successful. If any of the
+            // transactions in the set fail, this will be set to false
+            // before we commit or rollback.
+            transactionNestedSetSuccess.set(true);
+        }
+
+        // This is set to true by setTransactionSuccessful(), if that method
+        // is called. If it's still false at the end of this transaction,
+        // transactionNestedSetSuccess is set to false.
+        transactionStack.get().push(false);
+    }
+
+    @Override
+    public void endTransaction() {
+        Preconditions.checkState(this.isOpen(), "db must be open");
+        Preconditions.checkState(this.transactionStack.get().size() >= 1,
+                "TransactionStatus stack must not be empty");
+
+        // All transaction state variables are thread-local,
+        // so we don't have to lock.
+
+        Boolean success = this.transactionStack.get().pop();
+        if (!success) {
+            transactionNestedSetSuccess.set(false);
+        }
+
+        if(this.transactionStack.get().size() == 0) {
+            // We've reached the top of the stack, and need to commit or
+            // rollback. At this point transactionNestedSetSuccess will be true
+            // iff no transactions in the set failed.
+            try {
+                if (transactionNestedSetSuccess.get()) {
+                    this.execSQL("COMMIT;");
+                } else {
+                    this.execSQL("ROLLBACK;");
+                }
+            } catch (java.sql.SQLException e) {
+                try {
+                    this.execSQL("ROLLBACK;");
+                } catch (Exception e2) {
+                    String error = "Fatal error running 'ROLLBACK', the database is probably malfunctioning.";
+                    throw new IllegalStateException(error);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void setTransactionSuccessful() {
+        Preconditions.checkState(this.isOpen(), "db must be open");
+
+        // Pop the false value off and replace it with true.
+        // As the stack is thread-local, this is thread-safe
+        // and we need not lock.
+        this.transactionStack.get().pop();
+        this.transactionStack.get().push(true);
+    }
+
+    private void disposeAllConnections() {
+        synchronized (this) {
+            for (WeakReference<SQLiteConnection> conn : allConnections) {
+                if (conn != null && conn.get() != null && !conn.get().isDisposed()) {
+                    conn.get().dispose();
+                }
+            }
+            allConnections.clear();
+        }
+    }
+
+    @Override
+    public void close() {
+        disposeAllConnections();
+    }
+
+    @Override
+    public void execSQL(String statement) throws SQLException {
+        try {
+            getConnection().exec(statement);
+        } catch (SQLiteException e) {
+            throw new SQLException(e);
+        }
+    }
+
+    @Override
+    public void execSQL(String sql, Object[] bindArgs) throws SQLException {
+        SQLiteStatement stmt = null;
+        try {
+            stmt = this.getConnection().prepare(sql);
+            stmt = SQLiteWrapperUtils.bindArguments(stmt, bindArgs);
+            while (stmt.step()) {
+            }
+        } catch (SQLiteException e) {
+            throw new SQLException(e);
+        } finally {
+            SQLiteWrapperUtils.disposeQuietly(stmt);
+        }
+    }
+
+    @Override
+    public int update(String table, ContentValues values, String whereClause, String[] whereArgs) {
+        if (values == null || values.size() == 0) {
+            throw new IllegalArgumentException("Empty values");
+        }
+
+        try {
+            String updateQuery = QueryBuilder.buildUpdateQuery(table, values, whereClause, whereArgs);
+            Object[] bindArgs = QueryBuilder.buildBindArguments(values, whereArgs);
+            this.executeSQLStatement(updateQuery, bindArgs);
+            return getConnection().getChanges();
+        } catch (SQLiteException e) {
+            Log.e(LOG_TAG, "Error updating: " + table + ", " + values + ", " + whereClause + ", " + whereArgs, e);
+            return -1;
+        }
+    }
+
+    @Override
+    public SQLiteCursor rawQuery(String sql, String[] bindArgs) throws SQLException {
+        try {
+            return SQLiteWrapperUtils.buildSQLiteCursor(getConnection(), sql, bindArgs);
+        } catch (SQLiteException e) {
+            throw new SQLException(e);
+        }
+    }
+
+    @Override
+    public int delete(String table, String whereClause, String[] whereArgs) {
+        try {
+            String sql = new StringBuilder("DELETE FROM ")
+                    .append(table)
+                    .append(!Strings.isNullOrEmpty(whereClause) ? " WHERE " +
+                            whereClause : "")
+                    .toString();
+            this.executeSQLStatement(sql, whereArgs);
+            return getConnection().getChanges();
+        } catch (SQLiteException e) {
+            return 0;
+        }
+    }
+
+    @Override
+    public long insertWithOnConflict(String table, ContentValues initialValues, int conflictAlgorithm) {
+        int size = (initialValues != null && initialValues.size() > 0)
+                ? initialValues.size() : 0;
+
+        if (size == 0) {
+            throw new IllegalArgumentException("SQLite does not support to insert an all null row");
+        }
+
+        try {
+            StringBuilder sql = new StringBuilder();
+            sql.append("INSERT ");
+            sql.append(CONFLICT_VALUES[conflictAlgorithm]);
+            sql.append(" INTO ");
+            sql.append(table);
+            sql.append('(');
+
+
+            Object[] bindArgs  = new Object[size];
+            int i = 0;
+            for (String colName : initialValues.keySet()) {
+                sql.append((i > 0) ? "," : "");
+                sql.append(colName);
+                bindArgs[i++] = initialValues.get(colName);
+            }
+            sql.append(')');
+            sql.append(" VALUES (");
+            for (i = 0; i < size; i++) {
+                sql.append((i > 0) ? ",?" : "?");
+            }
+
+            sql.append(')');
+            this.executeSQLStatement(sql.toString(), bindArgs);
+            return getConnection().getLastInsertId();
+        } catch (SQLiteException e) {
+            Log.d(LOG_TAG, "Error inserting to : " + table + ", " + initialValues + ", "
+                    + CONFLICT_VALUES[conflictAlgorithm], e);
+            return -1;
+        }
+    }
+
+    @Override
+    public long insert(String table, ContentValues initialValues) {
+        return insertWithOnConflict(table, initialValues, CONFLICT_NONE);
+    }
+
+    private void executeSQLStatement(String sql, Object[] values) throws SQLiteException{
+        SQLiteStatement stmt = getConnection().prepare(sql);
+        stmt = SQLiteWrapperUtils.bindArguments(stmt, values);
+        while (stmt.step()) {
+        }
+    }
+}

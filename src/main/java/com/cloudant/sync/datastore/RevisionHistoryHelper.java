@@ -1,0 +1,145 @@
+/**
+ * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+package com.cloudant.sync.datastore;
+
+import com.cloudant.common.CouchConstants;
+import com.cloudant.mazha.DocumentRevs;
+import com.cloudant.mazha.json.JSONHelper;
+import com.cloudant.sync.util.CouchUtils;
+import com.google.common.base.Preconditions;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * <p>Methods to help managing document revision histories.</p>
+ *
+ * <p>This class is not complete, but should bring together a set of utility
+ * methods for working with document trees.</p>
+ */
+public class RevisionHistoryHelper {
+
+    // we are using json helper from mazha to it does not filter out
+    // couchdb special fields
+    private static JSONHelper sJsonHelper = new JSONHelper();
+
+    /**
+     * <p>Returns the list of revision IDs from a {@link DocumentRevs} object.
+     * </p>
+     *
+     * <p>The list is (reverse) ordered, with the leaf revision ID for the
+     * branch first.</p>
+     *
+     * <p>For the following input:</p>
+     *
+     * <pre>
+     * {
+     * ...
+     * "_revisions": {
+     *   "start": 4
+     *   "ids": [
+     *   "47d7102726fc89914431cb217ab7bace",
+     *   "d8e1fb8127d8dd732d9ae46a6c38ae3c",
+     *   "74e0572530e3b4cd4776616d2f591a96",
+     *   "421ff3d58df47ea6c5e83ca65efb2fa9"
+     *   ],
+     * },
+     * ...
+     * }
+     * </pre>
+     *
+     * <p>The returned value is:</p>
+     *
+     * <pre>
+     * [
+     *   "4-47d7102726fc89914431cb217ab7bace",
+     *   "3-d8e1fb8127d8dd732d9ae46a6c38ae3c",
+     *   "2-74e0572530e3b4cd4776616d2f591a96",
+     *   "1-421ff3d58df47ea6c5e83ca65efb2fa9"
+     * ]
+     * </pre>
+     *
+     * @param documentRevs {@code DocumentRevs} object to process
+     * @return an ordered list of revision IDs for the branch, leaf node first.
+     *
+     * @see com.cloudant.mazha.DocumentRevs
+     */
+    public static List<String> getRevisionPath(DocumentRevs documentRevs) {
+        Preconditions.checkNotNull(documentRevs, "History must not be null");
+        Preconditions.checkArgument(checkRevisionStart(documentRevs.getRevisions()),
+                "Revision start must be bigger than revision ids' length");
+        List<String> path = new ArrayList<String>();
+        int start = documentRevs.getRevisions().getStart();
+        for(String revId : documentRevs.getRevisions().getIds()) {
+            path.add(start + "-" + revId);
+            start --;
+        }
+        return path;
+    }
+
+    private static boolean checkRevisionStart(DocumentRevs.Revisions revisions) {
+        return revisions.getStart() >= revisions.getIds().size();
+    }
+
+    /**
+     * <p>Serialise a branch's revision history, in the form of a list of
+     * {@link DocumentRevision}s, into the JSON format expected by CouchDB's _bulk_docs
+     * endpoint.</p>
+     *
+     * @param history list of {@code DocumentRevision}s. This should be a complete list
+     *                from the revision furthest down the branch to the root.
+     * @return JSON-serialised {@code String} suitable for sending to CouchDB's
+     *      _bulk_docs endpoint.
+     *
+     * @see com.cloudant.mazha.DocumentRevs
+     */
+    public static String revisionHistoryToJson(List<DocumentRevision> history) {
+        Preconditions.checkNotNull(history, "History must not be null");
+        Preconditions.checkArgument(history.size() > 0, "History must not have at least one DocumentRevision.");
+        Preconditions.checkArgument(checkHistoryIsInDescendingOrder(history),
+                "History must be in descending order.");
+
+        DocumentRevision currentNode = history.get(0);
+        Map<String, Object> m = currentNode.asMap();
+        m.put(CouchConstants._revisions, createRevisions(history));
+        return sJsonHelper.toJson(m);
+    }
+
+    private static Map<String, Object> createRevisions(List<DocumentRevision> history) {
+        DocumentRevision currentNode = history.get(0);
+        int start = CouchUtils.generationFromRevId(currentNode.getRevision());
+        List<String> ids = new ArrayList<String>();
+        for(DocumentRevision obj : history) {
+            ids.add(CouchUtils.getRevisionIdSuffix(obj.getRevision()));
+        }
+        Map revisions = new HashMap<String, Object>();
+        revisions.put(CouchConstants.start, start);
+        revisions.put(CouchConstants.ids, ids);
+        return revisions;
+    }
+
+    private static boolean checkHistoryIsInDescendingOrder(List<DocumentRevision> history) {
+        for(int i = 0 ; i < history.size() - 1 ; i ++) {
+            int l = CouchUtils.generationFromRevId(history.get(i).getRevision());
+            int m = CouchUtils.generationFromRevId(history.get(i+1).getRevision());
+            if(l <= m) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
