@@ -15,8 +15,8 @@ is available under the [Apache 2.0 licence][ap2].
 [ap2]: https://github.com/cloudant/sync-android/blob/master/LICENSE
 [acdb]: http://couchdb.apache.org/
 
-The API is quite different from CouchDB's; we retain the 
-[MVCC](http://en.wikipedia.org/wiki/Multiversion_concurrency_control) data 
+The API is quite different from CouchDB's; we retain the
+[MVCC](http://en.wikipedia.org/wiki/Multiversion_concurrency_control) data
 model but not the HTTP-centric API.
 
 ## Using in your project
@@ -95,27 +95,10 @@ It's a similar story in maven, add the repo and the dependencies:
 </project>
 ```
 
-## Storing and Manipulating Local Data
+## Overview of the library
 
-Once you have the dependencies installed, the classes described below should
-all be available to your project.
-
-### Datastore and DatastoreManager objects
-
-A `Datastore` object manages a set of JSON documents, keyed by ID.
-
-A `DatastoreManager` object manages a directory where `Datastore` objects
-store their data. It's a factory object for named `Datastore` instances. A
-named datastore will persist its data between application runs. Names are
-arbitrary strings, with the restriction that the name must match
-`^[a-zA-Z]+[a-zA-Z0-9_]*`.
-
-It's best to give a `DatastoreManager` a directory of its own, and to make the
-manager a singleton within an application. The content of the directory is
-simple folders and SQLite databases if you want to take a peek.
-
-Therefore, start by creating a `DatastoreManager` to manage datastores for
-a given directory:
+Once the libraries are added to a project, the basics of adding and reading
+a document are:
 
 ```java
 import com.cloudant.sync.datastore.DatastoreManager;
@@ -123,35 +106,8 @@ import com.cloudant.sync.datastore.Datastore;
 
 // Create a DatastoreManager using application internal storage path
 File path = getApplicationContext().getDir("datastores");
-DatastoreManager helper = new DatastoreManager(path.getAbsolutePath());
-```
+DatastoreManager manager = new DatastoreManager(path.getAbsolutePath());
 
-Once you've a manager set up, it's straightforward to create datastores:
-
-```java
-Datastore ds = manager.openDatastore("my_datastore");
-Datastore ds2 = manager.openDatastore("other_datastore");
-```
-
-The `DatabaseManager` handles creating and initialising non-existent
-datastores, so the object returned is ready for reading and writing.
-
-To delete a datastore:
-
-```java
-manager.deleteDatastore("my_datastore");
-```
-
-It's important to note that this doesn't check there are any active
-`Datastore` objects for this datastore. The behaviour of active `Datastore`
-objects after their underlying files have been deleted is undefined.
-
-### Document CRUD APIs
-
-Once you have a `Datastore` instance, you can use it to create, update and
-delete documents.
-
-```java
 Datastore ds = manager.openDatastore("my_datastore");
 
 // Create a document
@@ -160,38 +116,14 @@ DocumentRevision revision = ds.createDocument(body);
 
 // Read a document
 DocumentRevision aRevision = ds.getDocument(revision.getId());
-
-// Update a document
-DocumentBody updatedBody = new BasicDBBody(moreJsonData);
-updatedRevision = ds.updateDocument(
-    revision.getId(),
-    revision.getRevision(),
-    updatedBody
-);
-
-// Delete a document
-ds.deleteDocument(
-    updatedRevision.getId(),
-    updatedRevision.getRevision()
-);
 ```
 
-As can be seen above, the `updateDocument` and `deleteDocument` methods both
-require the revision of the version of the document currently in the datastore
-to be passed as an argument. This is to prevent data being overwritten, for
-example if a replication had changed the document since it had been read from
-the local datastore by the applicaiton.
+Read more in [the CRUD document](https://github.com/cloudant/sync-android/blob/master/doc/crud.md).
 
-The `getAllDocuments()` method allows iterating through all documents in the
-database:
+You can also subscribe for notifications of changes in the database, which
+is described in [the events documentation](https://github.com/cloudant/sync-android/blob/master/doc/events.md).
 
-```java
-// read all documents in one go
-int pageSize = ds.getDocumentCount();
-List<DocumentRevision> docs = ds.getAllDocuments(0, pageSize, true);
-```
-
-## Replicating Data Between Many Devices
+### Replicating Data Between Many Devices
 
 Replication is used to synchronise data between the local datastore and a
 remote database, either a CouchDB instance or a Cloudant database. Many
@@ -199,9 +131,44 @@ datastores can replicate with the same remote database, meaning that
 cross-device syncronisation is acheived by setting up replications from each
 device the the remote database.
 
+Replication is simple to get started in the common cases:
+
+```java
+import com.cloudant.sync.replication.ReplicationFactory;
+import com.cloudant.sync.replication.Replicator;
+
+URI uri = new URI("https://apikey:apipasswd@username.cloudant.com/my_database");
+Datastore ds = manager.openDatastore("my_datastore");
+
+// Replicate from the local to remote database
+Replicator replicator = ReplicatorFactory.oneway(ds, uri);
+
+// Fire-and-forget (there are easy ways to monitor the state too)
+replicator.start();
+```
+
 Read more in [the replication docs](https://github.com/cloudant/sync-android/blob/master/doc/replication.md).
 
-## Conflicts
+### Finding data
+
+Once you have thousands of documents in a database, it's important to have
+efficient ways of finding them. We've added an easy-to-use querying API. Once
+the appropriate indexes are set up, querying is as follows:
+
+```java
+QueryBuilder query = new QueryBuilder();
+query.index("name").equalTo("John");
+query.index("age").greaterThan(25);
+
+QueryResult result = indexManager.query(query.build());
+for (DocumentRevision revision : result) {
+    // do something
+}
+```
+
+See [Index and Querying Data](https://github.com/cloudant/sync-android/blob/master/doc/index-querying.md).
+
+### Conflicts
 
 A document is really a tree of the document and its history. This is neat
 because it allows us to store multiple versions of a document. In the main,
@@ -227,12 +194,8 @@ See more information on document trees in the [javadocs][jd] for `DocumentRevisi
 
 [jd]: docs/
 
-In v1 of the EAP, searching for and resolving conflicts isn't supported, but
+In v0.1.0 of the library, searching for and resolving conflicts isn't supported, but
 it'll be one of the first features we add.
-
-## Finding data
-
-See [Index and Querying Data](https://github.com/cloudant/sync-android/blob/master/doc/index-querying.md).
 
 ## Contributors
 
@@ -244,5 +207,4 @@ See [CONTRIBUTING](CONTRIBUTING.md).
 
 ## License
 
-See [LICENSE](LICENSE)
-
+See [LICENSE](LICENSE).
