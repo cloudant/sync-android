@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <EditTextPreference
+        android:key="pref_key_username"
+        android:summary="@string/pref_summary_username"
+        android:title="@string/pref_title_username"
+        android:defaultValue="@string/default_user" />
+    <EditTextPreference
+        android:key="pref_key_dbname"
+        android:summary="@string/pref_summary_dbname"
+        android:title="@string/pref_title_dbname"
+        android:defaultValue="@string/default_dbname"  />
+    <EditTextPreference
+        android:key="pref_key_api_key"
+        android:summary="@string/pref_summary_api_key"
+        android:title="@string/pref_title_api_key" 
+        android:defaultValue="@string/default_api_key" />
+    <EditTextPreference
+        android:key="pref_key_api_password"
+        android:summary="@string/pref_summary_api_password"
+        android:title="@string/pref_title_api_password"
+        android:defaultValue="@string/default_api_password" />
+
+</PreferenceScreen>
