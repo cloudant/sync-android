@@ -1,4 +1,6 @@
-**Events**
+# Events
+
+_This functionality is available in versions 0.3.0 and up._
 
 Cloudant Sync uses [EventBus](https://code.google.com/p/guava-libraries/wiki/EventBusExplained) from
 the Google Guava library to post events to interested parties in a publish and subscribe fashion.
