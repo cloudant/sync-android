@@ -1,5 +1,7 @@
 # Replication with Cloudant Sync Android
 
+_This functionality is available in versions 0.1.0 and up._
+
 This document discusses setting up replication with the library, along
 with synchronising data by using two-way (bi-direction) replication.
 
