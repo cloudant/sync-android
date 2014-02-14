@@ -1,6 +1,7 @@
 # 0.3.0  (Unreleased)
 
 - Add indexing and query functionality.
+- Ability to find and resolve conflicts.
 
 # 0.2.0 (Unreleased)
 
@@ -12,4 +13,6 @@
 
 # 0.1.0
 
-- Initial release
+- Initial release.
+- Replication.
+- CRUD.
