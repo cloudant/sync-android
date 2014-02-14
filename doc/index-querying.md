@@ -1,5 +1,7 @@
 ## Finding documents within Cloudant Sync
 
+_This functionality is available in versions 0.3.0 and up._
+
 Cloudant Sync provides simple and powerful ways to index and query
 your documents, allowing your applications to make the most of the
 data they store.
