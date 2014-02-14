@@ -40,7 +40,7 @@ public class QueryBuilderTest {
     @Test
     public void equalsTo_String() {
         queryBuilder.index("album").equalTo("X&Y");
-        Map<String, Object> query = queryBuilder.build();
+        Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.containsKey("album"));
         Assert.assertEquals("X&Y", query.get("album"));
@@ -54,7 +54,7 @@ public class QueryBuilderTest {
     @Test
     public void equalsTo_Long() {
         queryBuilder.index("album").equalTo(100L);
-        Map<String, Object> query = queryBuilder.build();
+        Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.containsKey("album"));
         Assert.assertEquals(100L, query.get("album"));
@@ -68,7 +68,7 @@ public class QueryBuilderTest {
     @Test
     public void oneOf_ListOfString() {
         queryBuilder.index("album").oneOf(new String[]{"value1", "value2"});
-        Map<String, Object> query = queryBuilder.build();
+        Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.containsKey("album"));
         Assert.assertTrue(query.get("album") instanceof List);
@@ -84,7 +84,7 @@ public class QueryBuilderTest {
     @Test
     public void oneOf_ListOfLong() {
         queryBuilder.index("album").oneOf(new Long[]{100L, 200L});
-        Map<String, Object> query = queryBuilder.build();
+        Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.containsKey("album"));
         Assert.assertTrue(query.get("album") instanceof List);
@@ -100,7 +100,7 @@ public class QueryBuilderTest {
     @Test
     public void greaterThan_String() {
         queryBuilder.index("album").greaterThan("value");
-        Map<String, Object> query = queryBuilder.build();
+        Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.get("album") instanceof Map);
         Assert.assertTrue(((Map) query.get("album")).containsKey("min"));
@@ -115,7 +115,7 @@ public class QueryBuilderTest {
     @Test
     public void greaterThan_Long() {
         queryBuilder.index("album").greaterThan(100L);
-        Map<String, Object> query = queryBuilder.build();
+        Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.get("album") instanceof Map);
         Assert.assertTrue(((Map) query.get("album")).containsKey("min"));
@@ -130,7 +130,7 @@ public class QueryBuilderTest {
     @Test
     public void lessThan_String() {
         queryBuilder.index("album").lessThan("value");
-        Map<String, Object> query = queryBuilder.build();
+        Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.get("album") instanceof Map);
         Assert.assertTrue(((Map) query.get("album")).containsKey("max"));
@@ -145,7 +145,7 @@ public class QueryBuilderTest {
     @Test
     public void lessThan_Long() {
         queryBuilder.index("album").lessThan(100L);
-        Map<String, Object> query = queryBuilder.build();
+        Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.get("album") instanceof Map);
         Assert.assertTrue(((Map) query.get("album")).containsKey("max"));
@@ -160,7 +160,7 @@ public class QueryBuilderTest {
     @Test
     public void greaterThanAndLessThan() {
         queryBuilder.index("album").lessThan(100L).index("album").greaterThan(0L);
-        Map<String, Object> query = queryBuilder.build();
+        Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.get("album") instanceof Map);
         Assert.assertTrue(((Map) query.get("album")).size() == 2);
@@ -173,7 +173,7 @@ public class QueryBuilderTest {
         queryBuilder.index("company").equalTo("some company")
                 .index("name").oneOf(new String[]{ "Tom", "Jerry"})
                 .index("age").lessThan(100L).index("age").greaterThan(0L);
-        Map<String, Object> query = queryBuilder.build();
+        Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(3, query.size());
 
         Assert.assertTrue(query.containsKey("company"));

@@ -409,7 +409,12 @@ public class IndexManager {
      *
      * @see QueryResult
      */
-    public QueryResult query(Map<String, Object> query) {
+
+    public QueryResult query(Map<String, Map<String, Object>> queryWithOptions) {
+
+        Map<String, Object> query = queryWithOptions.get("query");
+        Map<String, Object> options = queryWithOptions.get("options");
+
         Preconditions.checkNotNull(query, "Input query must not be null");
         Preconditions.checkArgument(query.size() <= IndexManager.JOINS_LIMIT_PER_QUERY, "One query can not use more than 64 indexes");
         for (String index : query.keySet()) {
@@ -422,6 +427,29 @@ public class IndexManager {
         for (String indexName : query.keySet()) {
             Index index = this.getIndex(indexName);
             sb.addQueryCriterion(constructIndexTableName(indexName), query.get(indexName), index.getIndexType());
+        }
+
+        // TODO deal with cast errors
+        if (options.containsKey("sort_by")) {
+            // first - if this isn't in the query criteria then it needs to be added to the join clause
+            String value = (String)options.get("sort_by");
+            String table = constructIndexTableName(value);
+            if (!query.containsKey(value)) {
+                sb.addJoinForSort(table);
+            }
+            // is ascending/descending specified?
+            SortDirection direction = SortDirection.Ascending;
+            if (options.containsKey("ascending")) {
+                direction = (Boolean)options.get("ascending") ? SortDirection.Ascending : SortDirection.Descending;
+            }
+            else if (options.containsKey("descending")) {
+                direction = !(Boolean)options.get("descending") ? SortDirection.Ascending : SortDirection.Descending;
+            }
+            sb.addSortByOption(table, direction);
+        } else if (options.containsKey("offset")) {
+            sb.addOffsetOption((Integer)options.get(options.get("offset")));
+        } else if (options.containsKey("limit")) {
+            sb.addLimitOption((Integer)options.get(options.get("limit")));
         }
 
         List<String> ids = executeIndexJoinQueryForDocumentIds(sb.toSQL());

@@ -45,6 +45,7 @@ import java.util.HashMap;
 public class QueryBuilder {
 
     Map<String, Object> query = new HashMap<String, Object>();
+    Map<String, Object> options = new HashMap<String, Object>();
     String indexName = null;
 
     public QueryBuilder() {
@@ -57,8 +58,11 @@ public class QueryBuilder {
      * <p>The return value will be updated if further calls are made to this
      * builder object.</p>
      */
-    public Map<String, Object> build() {
-        return query;
+    public Map<String, Map<String, Object>> build() {
+        Map<String, Map<String, Object>> queryWithOptions = new HashMap<String, Map<String, Object>>();
+        queryWithOptions.put("query", query);
+        queryWithOptions.put("options", options);
+        return queryWithOptions;
     }
 
     /**
@@ -222,11 +226,41 @@ public class QueryBuilder {
         return clearIndexName();
     }
 
-    /**
-     * Clears the currently selected index name.
-     *
-     * @return this object for method chaining.
-     */
+    public QueryBuilder limit(int value) {
+        return limitInternal(value);
+    }
+
+    private QueryBuilder limitInternal(int value) {
+        // TODO error checking
+        options.put("limit", value);
+        return this;
+    }
+
+    public QueryBuilder offset(int value) {
+        return offsetInternal(value);
+    }
+
+    private QueryBuilder offsetInternal(int value) {
+        // TODO error checking
+        options.put("offset", value);
+        return this;
+    }
+
+    public QueryBuilder sortBy(String value) {
+        return sortByInternal(value);
+    }
+
+    private QueryBuilder sortByInternal(String value) {
+        // TODO error checking
+        options.put("sort_by", value);
+        return this;
+    }
+
+        /**
+         * Clears the currently selected index name.
+         *
+         * @return this object for method chaining.
+         */
     public QueryBuilder clearIndexName() {
         this.indexName = null;
         return this;

@@ -254,4 +254,17 @@ public class IndexManagerQueryTest {
                     revisions.get(5).getId()));
         }
     }
+
+    @Test
+    public void query_OrderBy() throws IndexExistsException {
+        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year").build());
+        Assert.assertEquals(7, result.size());
+        int prevYear = 0;
+        for(DocumentRevision doc  : result) {
+            int year = (Integer)doc.getBody().asMap().get("year");
+            Assert.assertTrue(year >= prevYear);
+            prevYear = year;
+        }
+    }
+
 }
