@@ -234,3 +234,15 @@ it'll be one of the first features we add.
 
 See [Index and Querying Data](https://github.com/cloudant/sync-android/blob/master/doc/index-querying.md).
 
+## Contributors
+
+See [CONTRIBUTORS](CONTRIBUTORS).
+
+## Contributing to the project
+
+See [CONTRIBUTING](CONTRIBUTING.md).
+
+## License
+
+See [LICENSE](LICENSE)
+
