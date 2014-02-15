@@ -95,6 +95,10 @@ It's a similar story in maven, add the repo and the dependencies:
 </project>
 ```
 
+## Example application
+
+There is a [sample application and a quickstart guide](/sample/).
+
 ## Overview of the library
 
 Once the libraries are added to a project, the basics of adding and reading
@@ -170,32 +174,22 @@ See [Index and Querying Data](https://github.com/cloudant/sync-android/blob/mast
 
 ### Conflicts
 
+An obvious repercussion of being able to replicate documents about the place
+is that sometimes you might edit them in more than one place at the same time.
+When the databases containing these concurrent edits replicate, there needs
+to be some way to bring these divergent documents back together. Cloudant's
+MVCC data-model is used to do this.
+
 A document is really a tree of the document and its history. This is neat
 because it allows us to store multiple versions of a document. In the main,
 there's a single, linear tree -- just a single branch -- running from the
 creation of the document to the current revision. It's possible, however,
-to create further branches in the tree.
+to create further branches in the tree. At this point your document is
+conflicted and needs some surgury to resolve the conflicts and bring it
+back to full health.
 
-When a document has been replicated to more than one place, it's possible to
-edit it concurrently in two places. When the datastores storing the document
-then replicate with each other again, they each add their changes to the
-document's tree. This causes an extra branch to be added to the tree for
-each concurrent set of changes. When this happens, the document is said to be
-_conflicted_. This creates multiple current revisions of the document, one for
-each of the concurrent changes.
-
-To make things easier, calling `Datastore#getDocument(...)` returns one of
-the leaf nodes of the branches of the conflicted document. It selects the
-node to return in an arbitrary but deterministic way, which means that all
-replicas of the database will return the same revision for the document. The
-other copies of the document are still there, however, waiting to be merged.
-
-See more information on document trees in the [javadocs][jd] for `DocumentRevisionTree`.
-
-[jd]: docs/
-
-In v0.1.0 of the library, searching for and resolving conflicts isn't supported, but
-it'll be one of the first features we add.
+Learn more about this essential process in the
+[conflicts documentation](https://github.com/cloudant/sync-android/blob/master/doc/conflicts.md).
 
 ## Contributors
 
