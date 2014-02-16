@@ -133,7 +133,7 @@ of the `Datastore` interface.
 The `ConflictResolver` interface has one method:
 
 ```java
-interface Resolver {
+interface ConflictResolver {
     DocumentRevision resolve(String docId, List<DocumentRevision> conflicts);
 }
 ```
@@ -159,7 +159,7 @@ Conceptually, the `resolveConflictsForDocument` method does the following:
     1-x  ---  2-x  ---  3-x  ---  4-x
     ```
 
-    That's `3-x` and `4-x` here.
+    That's `3-y` and `4-x` here.
 
 2. Call `resolve` with the list of revisions from (1).
 3. Take the returned revision and update the current winning revision (`4-x`)
