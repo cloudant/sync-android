@@ -429,26 +429,40 @@ public class IndexManager {
             sb.addQueryCriterion(constructIndexTableName(indexName), query.get(indexName), index.getIndexType());
         }
 
-        // TODO deal with cast errors
         if (options.containsKey("sort_by")) {
-            // first - if this isn't in the query criteria then it needs to be added to the join clause
             String value = (String)options.get("sort_by");
+            if (!this.indexFunctionMap.containsKey(value)) {
+                throw new IllegalArgumentException("Index used in sort_by option does not exist: " + value);
+            }
             String table = constructIndexTableName(value);
+            // first - if this isn't in the query criteria then it needs to be added to the join clause
             if (!query.containsKey(value)) {
                 sb.addJoinForSort(table);
             }
             // is ascending/descending specified?
             SortDirection direction = SortDirection.Ascending;
             if (options.containsKey("ascending")) {
+                if (options.get("ascending").getClass() != Boolean.class) {
+                    throw new IllegalArgumentException("Value for ascending option must be boolean");
+                }
                 direction = (Boolean)options.get("ascending") ? SortDirection.Ascending : SortDirection.Descending;
             }
             else if (options.containsKey("descending")) {
+                if (options.get("descending").getClass() != Boolean.class) {
+                    throw new IllegalArgumentException("Value for descending option must be boolean");
+                }
                 direction = !(Boolean)options.get("descending") ? SortDirection.Ascending : SortDirection.Descending;
             }
             sb.addSortByOption(table, direction);
         } if (options.containsKey("offset")) {
+            if (options.get("offset").getClass() != Integer.class) {
+                throw new IllegalArgumentException("Value for offset option must be integer");
+            }
             sb.addOffsetOption((Integer)(options.get("offset")));
         } if (options.containsKey("limit")) {
+            if (options.get("limit").getClass() != Integer.class) {
+                throw new IllegalArgumentException("Value for limit option must be integer");
+            }
             sb.addLimitOption((Integer)(options.get("limit")));
         }
 
