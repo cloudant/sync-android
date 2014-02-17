@@ -267,4 +267,13 @@ public class IndexManagerQueryTest {
         }
     }
 
+    @Test
+    public void query_OffsetLimit() throws IndexExistsException {
+        QueryResult resultAll = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year").build());
+        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year").offset(2).limit(2).build());
+        Assert.assertEquals(2, result.size());
+        assert (resultAll.documentIds().toArray()[2].equals(result.documentIds().toArray()[0]));
+    }
+
+
 }

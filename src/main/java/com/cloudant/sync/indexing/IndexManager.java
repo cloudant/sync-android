@@ -446,10 +446,10 @@ public class IndexManager {
                 direction = !(Boolean)options.get("descending") ? SortDirection.Ascending : SortDirection.Descending;
             }
             sb.addSortByOption(table, direction);
-        } else if (options.containsKey("offset")) {
-            sb.addOffsetOption((Integer)options.get(options.get("offset")));
-        } else if (options.containsKey("limit")) {
-            sb.addLimitOption((Integer)options.get(options.get("limit")));
+        } if (options.containsKey("offset")) {
+            sb.addOffsetOption((Integer)(options.get("offset")));
+        } if (options.containsKey("limit")) {
+            sb.addLimitOption((Integer)(options.get("limit")));
         }
 
         List<String> ids = executeIndexJoinQueryForDocumentIds(sb.toSQL());

@@ -26,6 +26,8 @@ class IndexJoinQueryBuilder {
     public static final String FROM_CLAUSE_FORMAT = " FROM %s";
     public static final String JOIN_CLAUSE_FORMAT = " JOIN %s ON %s.docid = %s.docid";
     public static final String ORDERBY_CLAUSE_FORMAT = " ORDER BY %s.value %s";
+    public static final String OFFSET_CLAUSE_FORMAT = " OFFSET %d";
+    public static final String LIMIT_CLAUSE_FORMAT = " LIMIT %d";
 
     public static final String WHERE = " WHERE";
     public static final String AND = " AND";
@@ -40,18 +42,19 @@ class IndexJoinQueryBuilder {
     String from;
     StringBuilder join;
     StringBuilder where;
-    StringBuilder orderby;
+    String orderby = "";
+    String offset = "";
+    String limit = "";
 
     public IndexJoinQueryBuilder() {
         from = null;
         join = new StringBuilder();
         where = new StringBuilder();
-        orderby = new StringBuilder();
     }
 
     public String toSQL() {
         StringBuffer sb = new StringBuffer();
-        sb.append(String.format(SELECT_CLAUSE_FORMAT, firstTable)).append(from).append(join).append(where).append(orderby);
+        sb.append(String.format(SELECT_CLAUSE_FORMAT, firstTable)).append(from).append(join).append(where).append(orderby).append(limit).append(offset);
         return sb.toString();
     }
 
@@ -74,13 +77,15 @@ class IndexJoinQueryBuilder {
 
     public void addSortByOption(String value, SortDirection direction) {
         String directionString = direction == SortDirection.Ascending ? "asc" : "desc";
-        orderby.append(String.format(ORDERBY_CLAUSE_FORMAT, value, directionString));
+        orderby = String.format(ORDERBY_CLAUSE_FORMAT, value, directionString);
     }
 
-    public void addOffsetOption(int offset) {
+    public void addOffsetOption(int off) {
+        offset = String.format(OFFSET_CLAUSE_FORMAT, off);
     }
 
-    public void addLimitOption(int limit) {
+    public void addLimitOption(int lim) {
+        limit = String.format(LIMIT_CLAUSE_FORMAT, lim);
     }
 
     private String buildWherePartClause(String index, Object criterion, IndexType type) {
