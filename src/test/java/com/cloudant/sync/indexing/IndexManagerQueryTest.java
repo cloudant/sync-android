@@ -279,10 +279,9 @@ public class IndexManagerQueryTest {
     public void query_UniqueValues() throws IndexExistsException {
         List values = indexManager.uniqueValues("Album");
         Assert.assertEquals(3, values.size());
-        Assert.assertThat(values, hasItems(
-                "A rush of blood to my head",
-                "Hall of fame",
-                "X&Y"));
+        Assert.assertTrue(values.contains("A rush of blood to my head"));
+        Assert.assertTrue(values.contains("Hall of fame"));
+        Assert.assertTrue(values.contains("X&Y"));
     }
 
 
