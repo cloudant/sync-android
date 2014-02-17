@@ -84,6 +84,8 @@ public class IndexManager {
                     "        type TEXT NOT NULL, " +
                     "        last_sequence INTEGER NOT NULL); ";
 
+    private static final String SQL_SELECT_UNIQUE = "SELECT DISTINCT value FROM %s";
+
     /**
      * Constructs an {@code IndexManager} for the passed
      * {@link com.cloudant.sync.datastore.Datastore}, allowing the documents
@@ -481,6 +483,32 @@ public class IndexManager {
             throw new IllegalArgumentException("Can not execute the query: " + sql, e);
         }
         return ids;
+    }
+
+    public List uniqueValues(String indexName) {
+        List values = new ArrayList();
+
+        Index index = this.getIndex(indexName);
+
+        String table = constructIndexTableName(indexName);
+        String sql = String.format(SQL_SELECT_UNIQUE, table);
+
+        try {
+            Cursor cursor = this.sqlDb.rawQuery(sql, new String[]{});
+            while (cursor.moveToNext()) {
+                switch(index.getIndexType()) {
+                    case INTEGER:
+                        values.add(cursor.getInt(0));
+                        break;
+                    case STRING:
+                        values.add(cursor.getString(0));
+                        break;
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalArgumentException("Can not execute the query: " + sql, e);
+        }
+        return values;
     }
 
     @Subscribe

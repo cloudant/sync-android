@@ -275,5 +275,16 @@ public class IndexManagerQueryTest {
         assert (resultAll.documentIds().toArray()[2].equals(result.documentIds().toArray()[0]));
     }
 
+    @Test
+    public void query_UniqueValues() throws IndexExistsException {
+        List values = indexManager.uniqueValues("Album");
+        Assert.assertEquals(3, values.size());
+        Assert.assertThat(values, hasItems(
+                "A rush of blood to my head",
+                "Hall of fame",
+                "X&Y"));
+    }
 
-}
+
+
+    }

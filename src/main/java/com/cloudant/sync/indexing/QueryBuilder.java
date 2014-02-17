@@ -231,7 +231,6 @@ public class QueryBuilder {
     }
 
     private QueryBuilder limitInternal(int value) {
-        // TODO error checking
         options.put("limit", value);
         return this;
     }
@@ -241,7 +240,6 @@ public class QueryBuilder {
     }
 
     private QueryBuilder offsetInternal(int value) {
-        // TODO error checking
         options.put("offset", value);
         return this;
     }
