@@ -20,7 +20,7 @@ package com.cloudant.sync.indexing;
  * to list of values, and then you can query over them efficiently.
  * </p>
  * <p>
- * The mapping is defined using {@link IndexFunction}. {@code IndexFunction}
+ * The mapping is defined using {@link Indexer}. {@code Indexer}
  * returns a list of {@code Object}. The type of these object must be supported
  * by {@link IndexType}
  * </p>
@@ -29,7 +29,7 @@ package com.cloudant.sync.indexing;
  * </p>
  *
  * @see IndexManager
- * @see IndexFunction
+ * @see Indexer
  * @see IndexType
  * @see com.cloudant.sync.datastore.Datastore
  */

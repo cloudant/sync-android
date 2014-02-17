@@ -37,7 +37,7 @@ An index is typed to aid in querying. Currently there are two types:
 
 #### Defining an index
 
-The `FieldIndexFunction` class allows indexing a document by a top-level
+The `FieldIndexer` class allows indexing a document by a top-level
 field (those existing at the root of the JSON document).
 
 We'll use this document as our example:
@@ -59,7 +59,7 @@ class is also used for queries. It's simple to create:
 IndexManager indexManager = new IndexManager(datastore);
 ```
 
-To create an index on the `firstname` field using the `FieldIndexFunction`,
+To create an index on the `firstname` field using the `FieldIndexer`,
 we define the index using:
 
 ```java
@@ -76,7 +76,7 @@ themselves are persisted to disk and updated incrementally -- the
 `IndexManager` just needs to be told about them at startup time.
 
 `ensureIndexed(String name, String field)` is a convienience method to
-create an index using a `FieldIndexFunction` on the defined field that
+create an index using a `FieldIndexer` on the defined field that
 is of type `IndexType.STRING`. A longer form is used for using your
 own indexing functions, see below.
 
@@ -141,23 +141,23 @@ for (DocumentRevision revision : result) {
 
 ### Index Functions
 
-As noted above, an index uses an `IndexFunction` instance to map a
+As noted above, an index uses an `Indexer` instance to map a
 document to the values that should be indexed for the document. The
-`IndexFunction` interface defines a single function:
+`Indexer` interface defines a single function:
 
 ```java
 public List<Object> indexedValues(String indexName, Map map);
 ```
 
-For example, the included `FieldIndexFunction` used earlier is
+For example, the included `FieldIndexer` used earlier is
 defined as:
 
 ```java
-public class FieldIndexFunction implements IndexFunction<Object> {
+public class FieldIndexer implements Indexer<Object> {
 
     private String fieldName;
 
-    public FieldIndexFunction(String fieldName) {
+    public FieldIndexer(String fieldName) {
         this.fieldName = fieldName;
     }
 
@@ -176,7 +176,7 @@ The longer form of the `ensureIndexed` function allows you to provide
 your own index function:
 
 ```java
-public void ensureIndexed(String indexName, IndexType type, IndexFunction indexFunction)
+public void ensureIndexed(String indexName, IndexType type, Indexer Indexer)
             throws IndexExistsException
 ```
 
@@ -184,7 +184,7 @@ For example, to use this long form to define the field index on `firstname`
 used earlier:
 
 ```java
-FieldIndexFunction f = new FieldIndexFunction("firstname");
+FieldIndexer f = new FieldIndexer("firstname");
 indexManager.ensureIndexed("default", IndexType.STRING, f);
 ```
 
@@ -231,7 +231,7 @@ Assume all the songs are in the following format:
 
 ```
 
-First build the indexes on "album" and "artist" using the `FieldIndexFunction`:
+First build the indexes on "album" and "artist" using the `FieldIndexer`:
 
 
 ```java
@@ -257,6 +257,6 @@ for (DocumentRevision revision : result) {
 //   Viva la Vida
 ```
 
-Note that `FieldIndexFunction` doesn't transform the values, so queries
+Note that `FieldIndexer` doesn't transform the values, so queries
 need to use the exact term and case (e.g., you can't use "coldplay" or
 "cold").

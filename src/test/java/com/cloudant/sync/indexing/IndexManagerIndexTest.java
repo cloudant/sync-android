@@ -213,7 +213,7 @@ public class IndexManagerIndexTest {
         DocumentRevision obj1 = datastore.createDocument(dbBodies.get(1));
         DocumentRevision obj2 = datastore.createDocument(dbBodies.get(2));
 
-        final class TestIF implements IndexFunction<String> {
+        final class TestIF implements Indexer<String> {
             public List<String> indexedValues(String indexName, Map map) {
                 return Arrays.asList("fred");
             }
@@ -239,7 +239,7 @@ public class IndexManagerIndexTest {
         DocumentRevision obj1 = datastore.createDocument(dbBodies.get(1));
         DocumentRevision obj2 = datastore.createDocument(dbBodies.get(2));
 
-        final class TestIF implements IndexFunction<String> {
+        final class TestIF implements Indexer<String> {
             public List<String> indexedValues(String indexName, Map map) {
                 return null;
             }

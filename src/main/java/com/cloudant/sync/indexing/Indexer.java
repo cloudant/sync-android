@@ -19,7 +19,7 @@ import java.util.Map;
 
 /**
  * <p>
- * This interface defines the IndexFunction object used to
+ * This interface defines the Indexer object used to
  * map from document to indexed values by the
  * {@link IndexManager} object.
  * </p>
@@ -30,10 +30,10 @@ import java.util.Map;
  * </p>
  *
  * <p>
- * For an example, see {@link FieldIndexFunction}.
+ * For an example, see {@link FieldIndexer}.
  * </p>
  */
-public interface IndexFunction<T> {
+public interface Indexer<T> {
 
     /**
      * <p>

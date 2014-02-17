@@ -50,7 +50,7 @@ public class IndexManager {
     private final SQLDatabase sqlDb;
     private final Datastore datastore;
 
-    private final Map<String, IndexFunction> indexFunctionMap;
+    private final Map<String, Indexer> indexFunctionMap;
 
     private static final String EXTENSION_NAME = "com.cloudant.indexing";
 
@@ -91,7 +91,7 @@ public class IndexManager {
      */
     public IndexManager(Datastore datastore) throws SQLException, IOException {
         this.datastore = datastore;
-        this.indexFunctionMap = new HashMap<String, IndexFunction>();
+        this.indexFunctionMap = new HashMap<String, Indexer>();
         String filename = datastore.extensionDataFolder(EXTENSION_NAME)
                 + File.separator + "indexes.sqlite";
         this.sqlDb = SQLDatabaseFactory.openSqlDatabase(filename);
@@ -105,7 +105,7 @@ public class IndexManager {
      * <p>This method is equivalent to:</p>
      *
      * <pre>
-     *     IndexFunction f = new FieldIndexFunction(field);
+     *     Indexer f = new FieldIndexer(field);
      *     datastore.ensureIndexed(name, IndexType.STRING, f);
      * </pre>
      *
@@ -117,7 +117,7 @@ public class IndexManager {
      *
      * @see com.cloudant.sync.indexing.QueryBuilder
      * @see IndexType
-     * @see com.cloudant.sync.indexing.FieldIndexFunction
+     * @see FieldIndexer
      */
     public void ensureIndexed(String indexName, String fieldName)
             throws IndexExistsException {
@@ -131,7 +131,7 @@ public class IndexManager {
      * <p>This method is equivalent to:</p>
      *
      * <pre>
-     *     IndexFunction f = new FieldIndexFunction(field);
+     *     Indexer f = new FieldIndexer(field);
      *     datastore.ensureIndexed(name, type, f);
      * </pre>
      *
@@ -144,12 +144,12 @@ public class IndexManager {
      *
      * @see com.cloudant.sync.indexing.QueryBuilder
      * @see IndexType
-     * @see com.cloudant.sync.indexing.FieldIndexFunction
+     * @see FieldIndexer
      */
     public void ensureIndexed(String indexName, String fieldName, IndexType type)
             throws IndexExistsException {
         IndexManager.validateFieldName(fieldName);
-        this.ensureIndexed(indexName, type, new FieldIndexFunction(fieldName));
+        this.ensureIndexed(indexName, type, new FieldIndexer(fieldName));
     }
 
     /**
@@ -164,7 +164,7 @@ public class IndexManager {
      * @param indexName case-sensitive name of the index. Can only contain letters,
      *             digits and underscores. It must not start with a digit.
      * @param type type of the index.
-     * @param indexFunction the function to use to map between a document and
+     * @param indexer the function to use to map between a document and
      *                      indexed value(s).
      * @throws IndexExistsException if an index
      *          with the same name has already been registered.
@@ -172,13 +172,13 @@ public class IndexManager {
      * @see com.cloudant.sync.indexing.QueryBuilder
      * @see com.cloudant.sync.datastore.DocumentRevision
      * @see IndexType
-     * @see IndexFunction
+     * @see Indexer
      */
-    public void ensureIndexed(String indexName, IndexType type, IndexFunction indexFunction)
+    public void ensureIndexed(String indexName, IndexType type, Indexer indexer)
             throws IndexExistsException {
         IndexManager.validateIndexName(indexName);
         Preconditions.checkNotNull(type, "type cannot be null");
-        Preconditions.checkNotNull(indexFunction, "indexFunction cannot be null");
+        Preconditions.checkNotNull(indexer, "indexer cannot be null");
 
         if (this.indexFunctionMap.containsKey(indexName)) {
             throw new IndexExistsException(
@@ -196,7 +196,7 @@ public class IndexManager {
                 insertIndexMetaData(indexName, type);
             }
 
-            this.indexFunctionMap.put(indexName, indexFunction);
+            this.indexFunctionMap.put(indexName, indexer);
 
             updateIndex(indexName);
 
@@ -284,7 +284,7 @@ public class IndexManager {
 
         deleteIndexRowsForDocument(index, docId);
 
-        IndexFunction f = indexFunctionMap.get(index.getName());
+        Indexer f = indexFunctionMap.get(index.getName());
         List values = f.indexedValues(index.getName(), map);
         if(values == null) {
             return;

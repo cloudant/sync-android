@@ -25,11 +25,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RunWith(JUnit4.class)
-public class FieldIndexFunctionTest {
+public class FieldIndexerTest {
 
     @Test
     public void constructor() {
-        FieldIndexFunction fif = new FieldIndexFunction("FieldName");
+        FieldIndexer fif = new FieldIndexer("FieldName");
         Assert.assertNotNull(fif);
     }
 
@@ -38,7 +38,7 @@ public class FieldIndexFunctionTest {
         String fieldName = "FieldName";
         String expected = "an expected value";
 
-        FieldIndexFunction fif = new FieldIndexFunction(fieldName);
+        FieldIndexer fif = new FieldIndexer(fieldName);
 
         Map map = new HashMap<String, String>();
         map.put("hello", "world");
@@ -69,7 +69,7 @@ public class FieldIndexFunctionTest {
 
     private void assertFieldExtractionWorks(Object expected) {
         String fieldName = "simple_field_string";
-        FieldIndexFunction fif = new FieldIndexFunction(fieldName);
+        FieldIndexer fif = new FieldIndexer(fieldName);
         Map map = new HashMap<String, String>();
         map.put(fieldName, expected);
         Assert.assertEquals(Arrays.asList(expected), fif.indexedValues("null", map));

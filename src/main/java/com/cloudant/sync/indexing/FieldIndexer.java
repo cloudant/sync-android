@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  * <p>
- * FieldIndexFunction is a simple {@link IndexFunction} which extracts
+ * FieldIndexer is a simple {@link Indexer} which extracts
  * values from a document based on the fieldName given to it.
  * </p>
  * <p>
@@ -39,15 +39,15 @@ import java.util.Map;
  * {@code indexedValues} will return ["world"]. For "foo", it
  * will return ["bar", "baz"].
  */
-public class FieldIndexFunction implements IndexFunction<Object> {
+public class FieldIndexer implements Indexer<Object> {
 
     private String fieldName;
 
     /**
-     * Creates a {@code FieldIndexFunction} object that will return the
+     * Creates a {@code FieldIndexer} object that will return the
      * value for {@code fieldName}.
      */
-    public FieldIndexFunction(String fieldName) {
+    public FieldIndexer(String fieldName) {
         this.fieldName = fieldName;
     }
 
