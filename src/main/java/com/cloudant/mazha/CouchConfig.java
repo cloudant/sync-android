@@ -25,8 +25,6 @@ import java.net.URISyntaxException;
 
 public class CouchConfig {
 
-    private static final String user_agent = "Cloudant Sync";
-
     private static final String couchdb_protocol = "http";
     private static final String couchdb_host= "127.0.0.1";
     private static final int couchdb_port = 5984;
@@ -39,9 +37,6 @@ public class CouchConfig {
 	private final int port;
 	private final String username;
 	private final String password;
-
-	// optional
-    private String userAgent = user_agent;
 
     // Timeout to wait for a response, in milliseconds. Defaults to 0 (no timeout).
 	private int socketTimeout = 30000;
@@ -104,14 +99,6 @@ public class CouchConfig {
 		this.username = username;
 		this.password = password;
 	}
-
-    public String getUserAgent() {
-        return userAgent;
-    }
-
-    public void setUserAgent(String ua) {
-        this.userAgent = ua;
-    }
 
     public String getProtocol() {
 		return protocol;
