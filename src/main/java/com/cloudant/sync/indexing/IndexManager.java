@@ -485,6 +485,18 @@ public class IndexManager {
         return ids;
     }
 
+    /**
+     * Return a List of unique values for the given index.
+     *
+     * The unique values will be determined by the database's DISTINCT operator and will depend on the
+     * data type.
+     *
+     * @param indexName the index to fetch the unique values for.
+     *
+     * @return a List of unique values. The type of the array members will be determined by the
+     *         Indexer's implementation.
+     *
+     */
     public List uniqueValues(String indexName) {
         List values = new ArrayList();
 

@@ -226,6 +226,11 @@ public class QueryBuilder {
         return clearIndexName();
     }
 
+    /**
+     * Limit the number of results returned by the query to {@code value}
+     *
+     * @return this object for method chaining.
+     */
     public QueryBuilder limit(int value) {
         return limitInternal(value);
     }
@@ -235,6 +240,11 @@ public class QueryBuilder {
         return this;
     }
 
+    /**
+     * Returned results from the query will start at offset specified by {@code value}
+     *
+     * @return this object for method chaining.
+     */
     public QueryBuilder offset(int value) {
         return offsetInternal(value);
     }
@@ -244,6 +254,11 @@ public class QueryBuilder {
         return this;
     }
 
+    /**
+     * Sort results according to the index specified by {@code value}
+     *
+     * @return this object for method chaining.
+     */
     public QueryBuilder sortBy(String value) {
         return sortByInternal(value);
     }
@@ -254,11 +269,11 @@ public class QueryBuilder {
         return this;
     }
 
-        /**
-         * Clears the currently selected index name.
-         *
-         * @return this object for method chaining.
-         */
+    /**
+     * Clears the currently selected index name.
+     *
+     * @return this object for method chaining.
+     */
     public QueryBuilder clearIndexName() {
         this.indexName = null;
         return this;

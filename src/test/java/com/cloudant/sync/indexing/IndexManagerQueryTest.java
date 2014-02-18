@@ -284,6 +284,4 @@ public class IndexManagerQueryTest {
         Assert.assertTrue(values.contains("X&Y"));
     }
 
-
-
-    }
+}
