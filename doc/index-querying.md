@@ -139,6 +139,64 @@ for (DocumentRevision revision : result) {
 }
 ```
 
+### Query options
+
+It is possible to specify additional options with the `QueryBuilder` class.
+These options affect the results which the query returns.
+
+`sortBy` is used to order the results according to the value of the index given:
+
+```java
+QueryBuilder query = new QueryBuilder();
+
+query.index("default").equalTo("John");
+query.index("age").greaterThan(25);
+query.sortBy("age", SortDirection.Descending);
+
+// Run the query
+QueryResult result = indexManager.query(query.build());
+```
+
+As in the example above, this can be combined with the parameter `SortDirection.Ascending` or
+`SortDirection.Descending` to sort ascending or descending. If the direction is not given, then the
+default is ascending.
+
+The ordering is determined by the underlying SQL type of the index. 
+
+`offset` and `limit` can be used to page through results, which can be
+useful when presenting information in a GUI. In this example we present 10 results at a time:
+
+```java
+QueryBuilder query = new QueryBuilder();
+
+query.index("default").equalTo("John");
+query.index("age").greaterThan(25);
+
+QueryResult result;
+
+int i=0;
+int pageSize=10;
+do {
+    result = indexManager.query(query.offset(i).limit(pageSize).build());
+    i+=pageSize;
+    // display results
+} while (result.documentIds().size() > 0);
+```
+
+Note that the current implementation does not use a cursor, so the results are likely to be
+incorrect if the data changes during paging.
+
+### Unique Values
+
+Another useful feature for displaying results in a GUI is the `uniqueValues` method.
+Suppose each document represents a blog article and we want to display an index showing each
+all of the categories for the articles:
+
+```java
+List result = indexManager.uniqueValues("category");
+```
+
+
 ### Index Functions
 
 As noted above, an index uses an `IndexFunction` instance to map a
