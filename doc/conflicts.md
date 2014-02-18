@@ -4,7 +4,7 @@ _This functionality is available in versions 0.3.0 and up._
 
 An obvious repercussion of being able to replicate documents about the place
 is that sometimes you might edit them in more than one place at the same time.
-When the databases containing these concurrent edits replicate, there needs
+When the databases containing these concurrent edits are replicated, there needs
 to be some way to bring these divergent documents back together. Cloudant's
 MVCC data-model is used to do this. This page describes how it works.
 
@@ -49,7 +49,7 @@ and looks like this, with the revisions represented by their revision IDs:
           "winning" revision /
 ```
 
-The fact that the docuemnt
+The fact that the document
 is a tree implies that it's possible, however, to create further branches
 in the tree.
 
@@ -98,10 +98,10 @@ See more information on document trees in the javadocs for
 When a document has been changed in many places, it becomes
 conflicted. This means that there are a number of active, alternative
 versions of the document. Applications -- whether on device or a web app
-communicating with the Cloudand or CouchDB HTTP interfaces -- must
+communicating with the Cloudant or CouchDB HTTP interfaces -- must
 resolve the conflicts by creating a merged version of the active versions
 of the document, then updating the document with this and deleting the now
-obselete leaf nodes.
+obsolete leaf nodes.
 
 Fortunately, Cloudant Sync has helper methods to simplify this. There's
 a method which returns all the documents in a conflicted state, along with
@@ -118,12 +118,12 @@ Iterator<String> getConflictedDocumentIds();
 This method returns an iterator over the document IDs:
 
 ```java
-for (String docId : datastore.getConflictedDocumentIds) {
+for (String docId : datastore.getConflictedDocumentIds()) {
     System.out.println(docId);
 }
 ```
 
-### Resolving the conflcits
+### Resolving the conflicts
 
 Once you've found the list of documents, you need to resolve them. This is
 done one-by-one, passing a class able to resolve conflicts and a document
@@ -148,6 +148,9 @@ class PickFirstResolver implements ConflictResolver {
     }
 }
 ```
+
+Clearly, in the general case this will discard the user's data(!),
+but it'll do for this example.
 
 Conceptually, the `resolveConflictsForDocument` method does the following:
 
@@ -193,7 +196,7 @@ via a timer to periodically fix up any conflicts:
 ```java
 public void resolveConflicts(Datastore datastore) {
     ConflictResolver pickFirst = new PickFirstResolver();
-    for (String docId : datastore.getConflictedDocumentIds) {
+    for (String docId : datastore.getConflictedDocumentIds()) {
         datastore.resolveConflictsForDocument(docId, pickFirst);
     }
 }
