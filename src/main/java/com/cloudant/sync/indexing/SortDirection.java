@@ -1,9 +1,12 @@
 package com.cloudant.sync.indexing;
 
-/**
- * Created by tomblench on 14/02/2014.
- */
 public enum SortDirection {
+    /**
+     * Sort values in ascending order.
+     */
     Ascending,
+    /**
+     * Sort values in descending order.
+     */
     Descending
 }
