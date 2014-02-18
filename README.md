@@ -126,10 +126,10 @@ DocumentRevision revision = ds.createDocument(body);
 DocumentRevision aRevision = ds.getDocument(revision.getId());
 ```
 
-Read more in [the CRUD document](https://github.com/cloudant/sync-android/blob/master/doc/crud.md).
+Read more in [the CRUD document](crud.md.html).
 
 You can also subscribe for notifications of changes in the database, which
-is described in [the events documentation](https://github.com/cloudant/sync-android/blob/master/doc/events.md).
+is described in [the events documentation](events.md.html).
 
 ### Replicating Data Between Many Devices
 
@@ -155,7 +155,7 @@ Replicator replicator = ReplicatorFactory.oneway(ds, uri);
 replicator.start();
 ```
 
-Read more in [the replication docs](https://github.com/cloudant/sync-android/blob/master/doc/replication.md).
+Read more in [the replication docs](replication.md.html).
 
 ### Finding data
 
@@ -174,7 +174,7 @@ for (DocumentRevision revision : result) {
 }
 ```
 
-See [Index and Querying Data](https://github.com/cloudant/sync-android/blob/master/doc/index-querying.md).
+See [Index and Querying Data](index-querying.md.html).
 
 ### Conflicts
 
@@ -193,7 +193,7 @@ conflicted and needs some surgury to resolve the conflicts and bring it
 back to full health.
 
 Learn more about this essential process in the
-[conflicts documentation](https://github.com/cloudant/sync-android/blob/master/doc/conflicts.md).
+[conflicts documentation](conflicts.md.html).
 
 ## Contributors
 
