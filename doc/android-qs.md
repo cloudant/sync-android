@@ -1,12 +1,4 @@
----
-layout: default
----
-
 # Cloudant Sync - Android Quickstart
-
-<p class="nav">
-<a href="https://github.com/cloudant/sync-android">Cloudant Sync Android GitHub Repository</a>
-</p>
 
 ## Setup
 First off, download [Android Studio][studio]. You'll use this as your IDE and build manager.
@@ -17,7 +9,7 @@ Although Android Studio comes bundled with a version of Android and the build to
 
 [gradle]: http://www.gradle.org/
 
-We'll use [homebrew](brew) to install both. From the terminal:
+We'll use [homebrew](http://brew.sh/) to install both. From the terminal:
 
 ```bash
 # install homebrew
