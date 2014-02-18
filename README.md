@@ -19,6 +19,10 @@ The API is quite different from CouchDB's; we retain the
 [MVCC](http://en.wikipedia.org/wiki/Multiversion_concurrency_control) data
 model but not the HTTP-centric API.
 
+This library is for Android, an [iOS][ios] version is also available.
+
+[ios]: https://github.com/cloudant/CDTDatastore
+
 ## Using in your project
 
 Using the library in your project should be as simple as adding it as
