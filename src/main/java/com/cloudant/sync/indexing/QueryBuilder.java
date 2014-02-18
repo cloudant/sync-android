@@ -227,7 +227,7 @@ public class QueryBuilder {
     }
 
     /**
-     * Limit the number of results returned by the query to {@code value}
+     * Limit the number of results returned by the query to {@code value}.
      *
      * @return this object for method chaining.
      */
@@ -241,7 +241,7 @@ public class QueryBuilder {
     }
 
     /**
-     * Returned results from the query will start at offset specified by {@code value}
+     * Returned results from the query will start at offset specified by {@code value}.
      *
      * @return this object for method chaining.
      */
@@ -255,7 +255,7 @@ public class QueryBuilder {
     }
 
     /**
-     * Sort results according to the index specified by {@code value}
+     * Sort results according to the index specified by {@code value}.
      *
      * @return this object for method chaining.
      */

@@ -405,7 +405,11 @@ public class IndexManager {
      * <p>Otherwise, the {@code query} should have fields as keys and the
      * query for that field as a value.</p>
      *
-     * @param query query
+     * @param queryWithOptions map containing the following:
+     *                         <ul>
+     *                         <li>"query": a Map expressing the query</li>
+     *                         <li>"options": an optional Map containing query options</li>
+     *                         </ul>
      * @return an arbitrarily ordered list of {@code DocumentRevision}s matching the
      *          query.
      *
