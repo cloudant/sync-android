@@ -260,12 +260,21 @@ public class QueryBuilder {
      * @return this object for method chaining.
      */
     public QueryBuilder sortBy(String value) {
-        return sortByInternal(value);
+        return sortByInternal(value, SortDirection.Ascending);
     }
 
-    private QueryBuilder sortByInternal(String value) {
-        // TODO error checking
+    /**
+     * Sort results according to the index specified by {@code value} and {@code direction}.
+     *
+     * @return this object for method chaining.
+     */
+    public QueryBuilder sortBy(String value, SortDirection direction) {
+        return sortByInternal(value, direction);
+    }
+
+    private QueryBuilder sortByInternal(String value, SortDirection direction) {
         options.put("sort_by", value);
+        options.put(direction == SortDirection.Ascending ? "ascending" : "descending", true);
         return this;
     }
 

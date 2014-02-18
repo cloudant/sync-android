@@ -268,6 +268,18 @@ public class IndexManagerQueryTest {
     }
 
     @Test
+    public void query_OrderByDescending() throws IndexExistsException {
+        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year", SortDirection.Descending).build());
+        Assert.assertEquals(7, result.size());
+        int prevYear = 9999;
+        for(DocumentRevision doc  : result) {
+            int year = (Integer)doc.getBody().asMap().get("year");
+            Assert.assertTrue(year <= prevYear);
+            prevYear = year;
+        }
+    }
+
+    @Test
     public void query_OffsetLimit() throws IndexExistsException {
         QueryResult resultAll = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year").build());
         QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year").offset(2).limit(2).build());
