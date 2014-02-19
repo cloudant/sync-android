@@ -65,7 +65,7 @@ if (localGradleScript.exists()) {
 //
 
 javadoc {
-    excludes = ["**/*sql*/**", "**/common/**", "**/android/**"]
+    excludes = ["**/*sql*/**", "**/common/**", "**/android/**", "**/mazha/**"]
     options.showFromPublic()
     title = "cloudant-sync-datastore-android ${version} API"
 }
