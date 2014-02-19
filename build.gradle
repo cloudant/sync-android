@@ -18,16 +18,6 @@ buildscript {
 apply plugin: 'cobertura'
 
 //
-// Allow developer-local configuration to be applied (e.g., customising
-// location of maven repo).
-//
-
-def localGradleScript = file("local.gradle")
-if (localGradleScript.exists()) {
-    apply from: localGradleScript
-}
-
-//
 // General settings
 //
 
@@ -61,12 +51,23 @@ dependencies {
 }
 
 //
+// Allow developer-local configuration to be applied (e.g., customising
+// location of maven repo).
+//
+
+def localGradleScript = file("local.gradle")
+if (localGradleScript.exists()) {
+    apply from: localGradleScript
+}
+
+//
 // Docs
 //
 
 javadoc {
     excludes = ["**/*sql*/**", "**/common/**", "**/android/**"]
     options.showFromPublic()
+    title = "cloudant-sync-datastore-android ${version} API"
 }
 
 //
