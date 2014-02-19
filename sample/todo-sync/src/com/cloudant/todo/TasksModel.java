@@ -4,11 +4,14 @@ import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.notifications.ReplicationCompleted;
+import com.cloudant.sync.notifications.ReplicationErrored;
 import com.cloudant.sync.replication.ErrorInfo;
-import com.cloudant.sync.replication.ReplicationListener;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorFactory;
 import com.cloudant.sync.util.TypedDatastore;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -29,7 +32,7 @@ import java.net.URISyntaxException;
 /**
  * <p>Handles dealing with the datastore and replication.</p>
  */
-class TasksModel implements ReplicationListener {
+class TasksModel {
 
     private static final String LOG_TAG = "TasksModel";
 
@@ -209,10 +212,10 @@ class TasksModel implements ReplicationListener {
         URI uri = this.createServerURI();
 
         mPushReplicator = ReplicatorFactory.oneway(mDatastore, uri);
-        mPushReplicator.setListener(this);
+        mPushReplicator.getEventBus().register(this);
 
         mPullReplicator = ReplicatorFactory.oneway(uri, mDatastore);
-        mPullReplicator.setListener(this);
+        mPullReplicator.getEventBus().register(this);
 
         Log.d(LOG_TAG, "Set up replicators for URI:" + uri.toString());
     }
@@ -247,8 +250,8 @@ class TasksModel implements ReplicationListener {
      * as the complete() callback will probably come from a replicator worker
      * thread.
      */
-    @Override
-    public void complete(Replicator replicator) {
+    @Subscribe
+    public void complete(ReplicationCompleted rc) {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -264,9 +267,9 @@ class TasksModel implements ReplicationListener {
      * as the error() callback will probably come from a replicator worker
      * thread.
      */
-    @Override
-    public void error(Replicator replicator, final ErrorInfo error) {
-        Log.e(LOG_TAG, "Replication error:", error.getException());
+    @Subscribe
+    public void error(ReplicationErrored re) {
+        Log.e(LOG_TAG, "Replication error:", re.errorInfo.getException());
         mHandler.post(new Runnable() {
             @Override
             public void run() {
