@@ -36,19 +36,13 @@ a dependency via [maven][maven] or [gradle][gradle].
 [maven]: http://maven.apache.org/
 [gradle]: http://www.gradle.org/
 
-There are currently two jar files for the datastore:
+There is currently one jar file for the datastore:
 
 * `cloudant-sync-datastore-android` contains the main datastore.
-* `mazha` contains a simple CouchDB client.
-
-We will be rolling `mazha` into `cloudant-sync-datastore-android` as `mazha`
-only contains the functionality to support HTTP requests made for replication
-and isn't intended to be used as a separate package.
 
 ### Gradle
 
-Add the EAP maven repo and a compile time dependency on the datastore and
-mazha jars:
+Add the maven repo and a compile time dependency on the datastore jar:
 
 ```groovy
 repositories {
@@ -59,18 +53,17 @@ repositories {
 
 dependencies {
     // Other dependencies
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.1.0'
-    compile group: 'com.cloudant', name: 'mazha', version:'0.1.1'
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.3.0'
 }
 ```
 
 You can see a fuller example in the sample application's [build.gradle][sabg].
 
-[sabg]: https://github.com/cloudant/cloudant-sync-eap/blob/master/sample/todo-sync/build.gradle
+[sabg]: https://github.com/cloudant/sync-android/blob/master/sample/todo-sync/build.gradle
 
 ### Maven
 
-It's a similar story in maven, add the repo and the dependencies:
+It's a similar story in maven, add the repo and the dependency:
 
 ```xml
 <project>
@@ -90,19 +83,17 @@ It's a similar story in maven, add the repo and the dependencies:
     <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-android</artifactId>
-      <version>0.1.0</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudant</groupId>
-      <artifactId>mazha</artifactId>
-      <version>0.1.1</version>
+      <version>0.3.0</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
 
 </project>
 ```
+
+_Note_: Older versions than 0.3.0 had a separate Mazha jar. This was rolled
+into the main jar for distribution simplicity. The dependency needs removing
+from gradle and maven build files.
 
 ## Example application
 
@@ -194,7 +185,7 @@ because it allows us to store multiple versions of a document. In the main,
 there's a single, linear tree -- just a single branch -- running from the
 creation of the document to the current revision. It's possible, however,
 to create further branches in the tree. At this point your document is
-conflicted and needs some surgury to resolve the conflicts and bring it
+conflicted and needs some surgery to resolve the conflicts and bring it
 back to full health.
 
 Learn more about this essential process in the
