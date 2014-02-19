@@ -23,6 +23,11 @@ This library is for Android, an [iOS][ios] version is also available.
 
 [ios]: https://github.com/cloudant/CDTDatastore
 
+If you have questions, please join our [mailing list][mlist] and drop us a 
+line.
+
+[mlist]: https://groups.google.com/forum/#!forum/cloudant-sync
+
 ## Using in your project
 
 Using the library in your project should be as simple as adding it as
