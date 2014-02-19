@@ -45,6 +45,7 @@ import java.util.HashMap;
 public class QueryBuilder {
 
     Map<String, Object> query = new HashMap<String, Object>();
+    Map<String, Object> options = new HashMap<String, Object>();
     String indexName = null;
 
     public QueryBuilder() {
@@ -57,8 +58,11 @@ public class QueryBuilder {
      * <p>The return value will be updated if further calls are made to this
      * builder object.</p>
      */
-    public Map<String, Object> build() {
-        return query;
+    public Map<String, Map<String, Object>> build() {
+        Map<String, Map<String, Object>> queryWithOptions = new HashMap<String, Map<String, Object>>();
+        queryWithOptions.put("query", query);
+        queryWithOptions.put("options", options);
+        return queryWithOptions;
     }
 
     /**
@@ -220,6 +224,58 @@ public class QueryBuilder {
         g.put("max", value);
         this.query.put(this.indexName, g);
         return clearIndexName();
+    }
+
+    /**
+     * Limit the number of results returned by the query to {@code value}.
+     *
+     * @return this object for method chaining.
+     */
+    public QueryBuilder limit(int value) {
+        return limitInternal(value);
+    }
+
+    private QueryBuilder limitInternal(int value) {
+        options.put("limit", value);
+        return this;
+    }
+
+    /**
+     * Returned results from the query will start at offset specified by {@code value}.
+     *
+     * @return this object for method chaining.
+     */
+    public QueryBuilder offset(int value) {
+        return offsetInternal(value);
+    }
+
+    private QueryBuilder offsetInternal(int value) {
+        options.put("offset", value);
+        return this;
+    }
+
+    /**
+     * Sort results according to the index specified by {@code value}.
+     *
+     * @return this object for method chaining.
+     */
+    public QueryBuilder sortBy(String value) {
+        return sortByInternal(value, SortDirection.Ascending);
+    }
+
+    /**
+     * Sort results according to the index specified by {@code value} and {@code direction}.
+     *
+     * @return this object for method chaining.
+     */
+    public QueryBuilder sortBy(String value, SortDirection direction) {
+        return sortByInternal(value, direction);
+    }
+
+    private QueryBuilder sortByInternal(String value, SortDirection direction) {
+        options.put("sort_by", value);
+        options.put(direction == SortDirection.Ascending ? "ascending" : "descending", true);
+        return this;
     }
 
     /**

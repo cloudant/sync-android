@@ -254,4 +254,46 @@ public class IndexManagerQueryTest {
                     revisions.get(5).getId()));
         }
     }
+
+    @Test
+    public void query_OrderBy() throws IndexExistsException {
+        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year").build());
+        Assert.assertEquals(7, result.size());
+        int prevYear = 0;
+        for(DocumentRevision doc  : result) {
+            int year = (Integer)doc.getBody().asMap().get("year");
+            Assert.assertTrue(year >= prevYear);
+            prevYear = year;
+        }
+    }
+
+    @Test
+    public void query_OrderByDescending() throws IndexExistsException {
+        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year", SortDirection.Descending).build());
+        Assert.assertEquals(7, result.size());
+        int prevYear = 9999;
+        for(DocumentRevision doc  : result) {
+            int year = (Integer)doc.getBody().asMap().get("year");
+            Assert.assertTrue(year <= prevYear);
+            prevYear = year;
+        }
+    }
+
+    @Test
+    public void query_OffsetLimit() throws IndexExistsException {
+        QueryResult resultAll = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year").build());
+        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year").offset(2).limit(2).build());
+        Assert.assertEquals(2, result.size());
+        assert (resultAll.documentIds().toArray()[2].equals(result.documentIds().toArray()[0]));
+    }
+
+    @Test
+    public void query_UniqueValues() throws IndexExistsException {
+        List values = indexManager.uniqueValues("Album");
+        Assert.assertEquals(3, values.size());
+        Assert.assertTrue(values.contains("A rush of blood to my head"));
+        Assert.assertTrue(values.contains("Hall of fame"));
+        Assert.assertTrue(values.contains("X&Y"));
+    }
+
 }

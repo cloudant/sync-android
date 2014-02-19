@@ -22,9 +22,12 @@ class IndexJoinQueryBuilder {
     public static final String MIN = "min";
     public static final String MAX = "max";
 
-    public static final String SELECT_CLAUSE_FORMAT = "SELECT DISTINCT idx0.docid";
-    public static final String FROM_CLAUSE_FORMAT = " FROM %s AS idx0";
-    public static final String JOIN_CLAUSE_FORMAT = " JOIN %s AS %s ON idx0.docid = %s.docid";
+    public static final String SELECT_CLAUSE_FORMAT = "SELECT DISTINCT %s.docid";
+    public static final String FROM_CLAUSE_FORMAT = " FROM %s";
+    public static final String JOIN_CLAUSE_FORMAT = " JOIN %s ON %s.docid = %s.docid";
+    public static final String ORDERBY_CLAUSE_FORMAT = " ORDER BY %s.value %s";
+    public static final String OFFSET_CLAUSE_FORMAT = " OFFSET %d";
+    public static final String LIMIT_CLAUSE_FORMAT = " LIMIT %d";
 
     public static final String WHERE = " WHERE";
     public static final String AND = " AND";
@@ -35,10 +38,13 @@ class IndexJoinQueryBuilder {
     public static final String MIN_CLAUSE = " %s.value > %s";
     public static final String MAX_CLAUSE = " %s.value < %s";
 
-    int count = -1;
+    String firstTable;
     String from;
     StringBuilder join;
     StringBuilder where;
+    String orderby = "";
+    String offset = "";
+    String limit = "";
 
     public IndexJoinQueryBuilder() {
         from = null;
@@ -48,20 +54,38 @@ class IndexJoinQueryBuilder {
 
     public String toSQL() {
         StringBuffer sb = new StringBuffer();
-        sb.append(SELECT_CLAUSE_FORMAT).append(from).append(join).append(where);
+        sb.append(String.format(SELECT_CLAUSE_FORMAT, firstTable)).append(from).append(join).append(where).append(orderby).append(limit).append(offset);
         return sb.toString();
     }
 
     public void addQueryCriterion(String table, Object criterion, IndexType type) {
-        count++;
-        String index = "idx" + String.valueOf(count);
+        if (firstTable == null) {
+            firstTable = table;
+        }
         if (from == null) {
             from = String.format(FROM_CLAUSE_FORMAT, table);
-            where.append(WHERE).append(buildWherePartClause(index, criterion, type));
+            where.append(WHERE).append(buildWherePartClause(table, criterion, type));
         } else {
-            join.append(String.format(JOIN_CLAUSE_FORMAT, table, index, index));
-            where.append(AND).append(buildWherePartClause(index, criterion, type));
+            join.append(String.format(JOIN_CLAUSE_FORMAT, table, firstTable, table));
+            where.append(AND).append(buildWherePartClause(table, criterion, type));
         }
+    }
+
+    public void addJoinForSort(String table) {
+        join.append(String.format(JOIN_CLAUSE_FORMAT, table, firstTable, table));
+    }
+
+    public void addSortByOption(String value, SortDirection direction) {
+        String directionString = direction == SortDirection.Ascending ? "asc" : "desc";
+        orderby = String.format(ORDERBY_CLAUSE_FORMAT, value, directionString);
+    }
+
+    public void addOffsetOption(int off) {
+        offset = String.format(OFFSET_CLAUSE_FORMAT, off);
+    }
+
+    public void addLimitOption(int lim) {
+        limit = String.format(LIMIT_CLAUSE_FORMAT, lim);
     }
 
     private String buildWherePartClause(String index, Object criterion, IndexType type) {

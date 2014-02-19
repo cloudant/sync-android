@@ -84,6 +84,8 @@ public class IndexManager {
                     "        type TEXT NOT NULL, " +
                     "        last_sequence INTEGER NOT NULL); ";
 
+    private static final String SQL_SELECT_UNIQUE = "SELECT DISTINCT value FROM %s";
+
     /**
      * Constructs an {@code IndexManager} for the passed
      * {@link com.cloudant.sync.datastore.Datastore}, allowing the documents
@@ -403,13 +405,22 @@ public class IndexManager {
      * <p>Otherwise, the {@code query} should have fields as keys and the
      * query for that field as a value.</p>
      *
-     * @param query query
+     * @param queryWithOptions map containing the following:
+     *                         <ul>
+     *                         <li>"query": a Map expressing the query</li>
+     *                         <li>"options": an optional Map containing query options</li>
+     *                         </ul>
      * @return an arbitrarily ordered list of {@code DocumentRevision}s matching the
      *          query.
      *
      * @see QueryResult
      */
-    public QueryResult query(Map<String, Object> query) {
+
+    public QueryResult query(Map<String, Map<String, Object>> queryWithOptions) {
+
+        Map<String, Object> query = queryWithOptions.get("query");
+        Map<String, Object> options = queryWithOptions.get("options");
+
         Preconditions.checkNotNull(query, "Input query must not be null");
         Preconditions.checkArgument(query.size() <= IndexManager.JOINS_LIMIT_PER_QUERY, "One query can not use more than 64 indexes");
         for (String index : query.keySet()) {
@@ -422,6 +433,43 @@ public class IndexManager {
         for (String indexName : query.keySet()) {
             Index index = this.getIndex(indexName);
             sb.addQueryCriterion(constructIndexTableName(indexName), query.get(indexName), index.getIndexType());
+        }
+
+        if (options.containsKey("sort_by")) {
+            String value = (String)options.get("sort_by");
+            if (!this.indexFunctionMap.containsKey(value)) {
+                throw new IllegalArgumentException("Index used in sort_by option does not exist: " + value);
+            }
+            String table = constructIndexTableName(value);
+            // first - if this isn't in the query criteria then it needs to be added to the join clause
+            if (!query.containsKey(value)) {
+                sb.addJoinForSort(table);
+            }
+            // is ascending/descending specified?
+            SortDirection direction = SortDirection.Ascending;
+            if (options.containsKey("ascending")) {
+                if (options.get("ascending").getClass() != Boolean.class) {
+                    throw new IllegalArgumentException("Value for ascending option must be boolean");
+                }
+                direction = (Boolean)options.get("ascending") ? SortDirection.Ascending : SortDirection.Descending;
+            }
+            else if (options.containsKey("descending")) {
+                if (options.get("descending").getClass() != Boolean.class) {
+                    throw new IllegalArgumentException("Value for descending option must be boolean");
+                }
+                direction = !(Boolean)options.get("descending") ? SortDirection.Ascending : SortDirection.Descending;
+            }
+            sb.addSortByOption(table, direction);
+        } if (options.containsKey("offset")) {
+            if (options.get("offset").getClass() != Integer.class) {
+                throw new IllegalArgumentException("Value for offset option must be integer");
+            }
+            sb.addOffsetOption((Integer)(options.get("offset")));
+        } if (options.containsKey("limit")) {
+            if (options.get("limit").getClass() != Integer.class) {
+                throw new IllegalArgumentException("Value for limit option must be integer");
+            }
+            sb.addLimitOption((Integer)(options.get("limit")));
         }
 
         List<String> ids = executeIndexJoinQueryForDocumentIds(sb.toSQL());
@@ -439,6 +487,44 @@ public class IndexManager {
             throw new IllegalArgumentException("Can not execute the query: " + sql, e);
         }
         return ids;
+    }
+
+    /**
+     * Return a List of unique values for the given index.
+     *
+     * The unique values will be determined by the database's DISTINCT operator and will depend on the
+     * data type.
+     *
+     * @param indexName the index to fetch the unique values for.
+     *
+     * @return a List of unique values. The type of the array members will be determined by the
+     *         Indexer's implementation.
+     *
+     */
+    public List uniqueValues(String indexName) {
+        List values = new ArrayList();
+
+        Index index = this.getIndex(indexName);
+
+        String table = constructIndexTableName(indexName);
+        String sql = String.format(SQL_SELECT_UNIQUE, table);
+
+        try {
+            Cursor cursor = this.sqlDb.rawQuery(sql, new String[]{});
+            while (cursor.moveToNext()) {
+                switch(index.getIndexType()) {
+                    case INTEGER:
+                        values.add(cursor.getInt(0));
+                        break;
+                    case STRING:
+                        values.add(cursor.getString(0));
+                        break;
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalArgumentException("Can not execute the query: " + sql, e);
+        }
+        return values;
     }
 
     @Subscribe
