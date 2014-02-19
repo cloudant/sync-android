@@ -1,4 +1,4 @@
-# 0.3.0  (Unreleased)
+# 0.3.0  (2014-02-19)
 
 - Add indexing and query functionality.
 - Ability to find and resolve conflicts.
