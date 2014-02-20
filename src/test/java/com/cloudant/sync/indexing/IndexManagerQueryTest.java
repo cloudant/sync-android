@@ -127,20 +127,20 @@ public class IndexManagerQueryTest {
     @Test
     public void query_RangeQueryIntegerIndex() throws IndexExistsException {
         QueryResult result = indexManager.query(
-                new QueryBuilder().index("Year").greaterThan(2003l)
-                        .index("Year").lessThan(2007l).build());
+                new QueryBuilder().index("Year").greaterThanOrEqual(2004l)
+                        .index("Year").lessThanOrEqual(2006l).build());
         Assert.assertEquals(3, result.size());
     }
 
     @Test
     public void query_RangeQueryWithMinValueIntegerIndex() throws IndexExistsException {
-        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThan(2003l).build());
+        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThanOrEqual(2004l).build());
         Assert.assertEquals(4, result.size());
     }
 
     @Test
     public void query_RangeQueryWithMaxValueIntegerIndex() throws IndexExistsException {
-        QueryResult result = indexManager.query(new QueryBuilder().index("Year").lessThan(2003l).build());
+        QueryResult result = indexManager.query(new QueryBuilder().index("Year").lessThanOrEqual(2002l).build());
         Assert.assertEquals(2, result.size());
     }
 
@@ -180,7 +180,7 @@ public class IndexManagerQueryTest {
             throws IndexExistsException {
         QueryResult result = indexManager.query(new QueryBuilder()
                 .index("Artist").equalTo("cold play")
-                .index("Year").greaterThan(2003l).build());
+                .index("Year").greaterThanOrEqual(2004l).build());
         Assert.assertEquals(2, result.size());
     }
 
@@ -257,7 +257,7 @@ public class IndexManagerQueryTest {
 
     @Test
     public void query_OrderBy() throws IndexExistsException {
-        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year").build());
+        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThanOrEqual(0l).sortBy("Year").build());
         Assert.assertEquals(7, result.size());
         int prevYear = 0;
         for(DocumentRevision doc  : result) {
@@ -269,7 +269,7 @@ public class IndexManagerQueryTest {
 
     @Test
     public void query_OrderByDescending() throws IndexExistsException {
-        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year", SortDirection.Descending).build());
+        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThanOrEqual(0l).sortBy("Year", SortDirection.Descending).build());
         Assert.assertEquals(7, result.size());
         int prevYear = 9999;
         for(DocumentRevision doc  : result) {
@@ -281,8 +281,8 @@ public class IndexManagerQueryTest {
 
     @Test
     public void query_OffsetLimit() throws IndexExistsException {
-        QueryResult resultAll = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year").build());
-        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThan(0l).sortBy("Year").offset(2).limit(2).build());
+        QueryResult resultAll = indexManager.query(new QueryBuilder().index("Year").greaterThanOrEqual(0l).sortBy("Year").build());
+        QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThanOrEqual(0l).sortBy("Year").offset(2).limit(2).build());
         Assert.assertEquals(2, result.size());
         assert (resultAll.documentIds().toArray()[2].equals(result.documentIds().toArray()[0]));
     }

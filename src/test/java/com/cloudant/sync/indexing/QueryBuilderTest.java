@@ -99,7 +99,7 @@ public class QueryBuilderTest {
 
     @Test
     public void greaterThan_String() {
-        queryBuilder.index("album").greaterThan("value");
+        queryBuilder.index("album").greaterThanOrEqual("value");
         Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.get("album") instanceof Map);
@@ -109,12 +109,12 @@ public class QueryBuilderTest {
 
     @Test(expected = IllegalStateException.class)
     public void greaterThan_StringButIndexNotCalled() {
-        queryBuilder.greaterThan(100L);
+        queryBuilder.greaterThanOrEqual(100L);
     }
 
     @Test
     public void greaterThan_Long() {
-        queryBuilder.index("album").greaterThan(100L);
+        queryBuilder.index("album").greaterThanOrEqual(100L);
         Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.get("album") instanceof Map);
@@ -124,12 +124,12 @@ public class QueryBuilderTest {
 
     @Test(expected = IllegalStateException.class)
     public void greaterThan_LongButIndexNotCalled() {
-        queryBuilder.greaterThan(100L);
+        queryBuilder.greaterThanOrEqual(100L);
     }
 
     @Test
     public void lessThan_String() {
-        queryBuilder.index("album").lessThan("value");
+        queryBuilder.index("album").lessThanOrEqual("value");
         Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.get("album") instanceof Map);
@@ -139,12 +139,12 @@ public class QueryBuilderTest {
 
     @Test(expected = IllegalStateException.class)
     public void lessThan_StringButIndexNotCalled() {
-        queryBuilder.lessThan("value");
+        queryBuilder.lessThanOrEqual("value");
     }
 
     @Test
     public void lessThan_Long() {
-        queryBuilder.index("album").lessThan(100L);
+        queryBuilder.index("album").lessThanOrEqual(100L);
         Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.get("album") instanceof Map);
@@ -154,12 +154,12 @@ public class QueryBuilderTest {
 
     @Test(expected = IllegalStateException.class)
     public void lessThan_LongButIndexNotCalled() {
-        queryBuilder.lessThan(100L);
+        queryBuilder.lessThanOrEqual(100L);
     }
 
     @Test
     public void greaterThanAndLessThan() {
-        queryBuilder.index("album").lessThan(100L).index("album").greaterThan(0L);
+        queryBuilder.index("album").lessThanOrEqual(100L).index("album").greaterThanOrEqual(0L);
         Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(1, query.size());
         Assert.assertTrue(query.get("album") instanceof Map);
@@ -172,7 +172,7 @@ public class QueryBuilderTest {
     public void withEverything() {
         queryBuilder.index("company").equalTo("some company")
                 .index("name").oneOf(new String[]{ "Tom", "Jerry"})
-                .index("age").lessThan(100L).index("age").greaterThan(0L);
+                .index("age").lessThanOrEqual(100L).index("age").greaterThanOrEqual(0L);
         Map<String, Object> query = queryBuilder.build().get("query");
         Assert.assertEquals(3, query.size());
 
@@ -197,6 +197,6 @@ public class QueryBuilderTest {
 
     @Test(expected = IllegalStateException.class)
     public void build_lessThanEqualTo_exception() {
-        queryBuilder.index("age").lessThan(100L).equalTo(10L);
+        queryBuilder.index("age").lessThanOrEqual(100L).equalTo(10L);
     }
 }

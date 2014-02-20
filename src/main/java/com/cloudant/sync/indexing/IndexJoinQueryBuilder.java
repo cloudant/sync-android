@@ -34,9 +34,9 @@ class IndexJoinQueryBuilder {
 
     public static final String EQUALS_CLAUSE = " %s.value = %s";
     public static final String IN_CLAUSE = " %s.value IN (%s)";
-    public static final String MIN_MAX_CLAUSE = " %s.value < %s AND %s.value > %s";
-    public static final String MIN_CLAUSE = " %s.value > %s";
-    public static final String MAX_CLAUSE = " %s.value < %s";
+    public static final String MIN_MAX_CLAUSE = " %s.value <= %s AND %s.value >= %s";
+    public static final String MIN_CLAUSE = " %s.value >= %s";
+    public static final String MAX_CLAUSE = " %s.value <= %s";
 
     String firstTable;
     String from;
