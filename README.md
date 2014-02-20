@@ -1,5 +1,7 @@
 # Cloudant Sync - Android Datastore
 
+[![Build Status](https://travis-ci.org/cloudant/sync-android.png?branch=master)](https://travis-ci.org/cloudant/sync-android)
+
 **Applications use Cloudant Sync to store, index and query local JSON data on a
 device and to synchronise data between many devices. Synchronisation is under
 the control of the application, rather than being controlled by the underlying
