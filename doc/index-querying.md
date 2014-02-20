@@ -144,9 +144,8 @@ The queries currently supported are:
 * `lessThanOrEqual(value)`: index <= value 
 * `equalTo(value)`: index == value
 * `greaterThanOrEqual(value)`: index >= value
+* `greaterThanOrEqual(value1).lessThanOrEqual(value2)`: value1 <= index <= value2
 * `oneOf([value_0,...,value_n])`: index == value_0 || ... || index == value_n
-
-Additionally lessThanOrEqual and greaterThanOrEqual can be combined to form a range.
 
 ### Query options
 
