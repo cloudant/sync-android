@@ -149,3 +149,10 @@ task listJars << {
     configurations.testCompile.each { File file -> println file.name }
 }
 
+//for Ant filter for "processResources" task
+import org.apache.tools.ant.filters.ReplaceTokens
+processResources {
+    filter ReplaceTokens, tokens: [
+            "version": project.version
+    ]
+}

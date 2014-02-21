@@ -20,6 +20,8 @@ package com.cloudant.mazha;
 
 
 import com.cloudant.mazha.json.JSONHelper;
+import com.cloudant.sync.util.Misc;
+import com.google.common.io.Resources;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
@@ -50,6 +52,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URL;
+import java.util.Properties;
 
 public class HttpRequests {
 
@@ -206,7 +210,7 @@ public class HttpRequests {
         HttpClientParams.setRedirecting(params, config.isHandleRedirectEnabled());
 
         // Set the specified user agent and register standard protocols.
-        HttpProtocolParams.setUserAgent(params, config.getUserAgent());
+        HttpProtocolParams.setUserAgent(params, this.getUserAgent());
 
         ConnManagerParams.setMaxConnectionsPerRoute(params, new ConnPerRoute() {
             @Override
@@ -215,6 +219,32 @@ public class HttpRequests {
             }
         });
         return params;
+    }
+
+    private static final String default_user_agent = "CloudantSync";
+    private static String userAgent = null;
+    public String getUserAgent() {
+        if(userAgent == null) {
+            String ua = this.getUserAgentFromResource();
+            if(Misc.isRunningOnAndroid()) {
+                userAgent = ua + " " + Misc.androidVersion();
+            }
+            userAgent = ua + " (" + System.getProperty("os.arch") + "; "
+                    + System.getProperty("os.name") + "; "
+                    + System.getProperty("os.version") + ")";
+        }
+        return userAgent;
+    }
+
+    private String getUserAgentFromResource() {
+        final URL url = Resources.getResource("mazha.properties");
+        final Properties properties = new Properties();
+        try {
+            properties.load(Resources.newInputStreamSupplier(url).getInput());
+            return properties.getProperty("user.agent", default_user_agent);
+        } catch (IOException ioException) {
+            return default_user_agent;
+        }
     }
 
     private void addHttpBasicAuth(CouchConfig config, DefaultHttpClient httpclient) {
