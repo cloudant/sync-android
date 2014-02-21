@@ -1,3 +1,8 @@
+# 0.3.1  (2014-02-21)
+
+- Change min/max query to use inclusive ranges.
+- Update gradle wrapper for sample app to require gradle 1.8.
+
 # 0.3.0  (2014-02-19)
 
 - Add indexing and query functionality.
