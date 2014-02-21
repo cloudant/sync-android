@@ -68,8 +68,8 @@ public class IndexJoinQueryBuilderTest {
     @Test
     public void integerIndex_buildQuerySQL_RangeQuery() {
         QueryBuilder qb = new QueryBuilder();
-        qb.index("year").greaterThan(2012l).index("year").lessThan(2016l);
-        String expectSQL = "SELECT DISTINCT album.docid FROM album WHERE album.value < 2016 AND album.value > 2012";
+        qb.index("year").greaterThanOrEqual(2012l).index("year").lessThanOrEqual(2016l);
+        String expectSQL = "SELECT DISTINCT album.docid FROM album WHERE album.value <= 2016 AND album.value >= 2012";
         builder.addQueryCriterion("album", qb.build().get("query").get("year"), IndexType.INTEGER);
         Assert.assertEquals(expectSQL, builder.toSQL());
     }
@@ -77,8 +77,8 @@ public class IndexJoinQueryBuilderTest {
     @Test
     public void stringIndex_buildQuerySQL_RangeQuery() {
         QueryBuilder qb = new QueryBuilder();
-        qb.index("year").greaterThan("2012").index("year").lessThan("2016");
-        String expectSQL = "SELECT DISTINCT album.docid FROM album WHERE album.value < '2016' AND album.value > '2012'";
+        qb.index("year").greaterThanOrEqual("2012").index("year").lessThanOrEqual("2016");
+        String expectSQL = "SELECT DISTINCT album.docid FROM album WHERE album.value <= '2016' AND album.value >= '2012'";
         builder.addQueryCriterion("album", qb.build().get("query").get("year"), IndexType.STRING);
         Assert.assertEquals(expectSQL, builder.toSQL());
     }
@@ -87,8 +87,8 @@ public class IndexJoinQueryBuilderTest {
     @Test
     public void integerIndex_buildQuerySQL_RangeQueryWithMinIntegerOnly() {
         QueryBuilder qb = new QueryBuilder();
-        qb.index("year").greaterThan(2012l);
-        String expectSQL = "SELECT DISTINCT album.docid FROM album WHERE album.value > 2012";
+        qb.index("year").greaterThanOrEqual(2012l);
+        String expectSQL = "SELECT DISTINCT album.docid FROM album WHERE album.value >= 2012";
         builder.addQueryCriterion("album", qb.build().get("query").get("year"), IndexType.INTEGER);
         Assert.assertEquals(expectSQL, builder.toSQL());
     }
@@ -96,8 +96,8 @@ public class IndexJoinQueryBuilderTest {
     @Test
     public void stringIndex_buildQuerySQL_RangeQueryWithMinStringOnly() {
         QueryBuilder qb = new QueryBuilder();
-        qb.index("year").lessThan("2016");
-        String expectSQL = "SELECT DISTINCT album.docid FROM album WHERE album.value < '2016'";
+        qb.index("year").lessThanOrEqual("2016");
+        String expectSQL = "SELECT DISTINCT album.docid FROM album WHERE album.value <= '2016'";
         builder.addQueryCriterion("album", qb.build().get("query").get("year"), IndexType.STRING);
         Assert.assertEquals(expectSQL, builder.toSQL());
     }
@@ -106,8 +106,8 @@ public class IndexJoinQueryBuilderTest {
     @Test
     public void integerIndex_buildQuerySQL_RangeQueryWithMaxIntegerOnly() {
         QueryBuilder qb = new QueryBuilder();
-        qb.index("year").lessThan(2012l);
-        String expectSQL = "SELECT DISTINCT album.docid FROM album WHERE album.value < 2012";
+        qb.index("year").lessThanOrEqual(2012l);
+        String expectSQL = "SELECT DISTINCT album.docid FROM album WHERE album.value <= 2012";
         builder.addQueryCriterion("album", qb.build().get("query").get("year"), IndexType.INTEGER);
         Assert.assertEquals(expectSQL, builder.toSQL());
     }
@@ -116,8 +116,8 @@ public class IndexJoinQueryBuilderTest {
     @Test
     public void stringIndex_buildQuerySQL_RangeQueryWithMaxStringOnly() {
         QueryBuilder qb = new QueryBuilder();
-        qb.index("year").greaterThan("2012");
-        String expectSQL = "SELECT DISTINCT album.docid FROM album WHERE album.value > '2012'";
+        qb.index("year").greaterThanOrEqual("2012");
+        String expectSQL = "SELECT DISTINCT album.docid FROM album WHERE album.value >= '2012'";
         builder.addQueryCriterion("album", qb.build().get("query").get("year"), IndexType.STRING);
         Assert.assertEquals(expectSQL, builder.toSQL());
     }
@@ -164,15 +164,15 @@ public class IndexJoinQueryBuilderTest {
         QueryBuilder qb = new QueryBuilder();
         qb.index("year").equalTo(2013l);
         qb.index("name").oneOf("Tommy Jones", "Harrison Ford");
-        qb.index("age").greaterThan(23l);
-        qb.index("age").lessThan(99l);
+        qb.index("age").greaterThanOrEqual(23l);
+        qb.index("age").lessThanOrEqual(99l);
         String expectSQL = "SELECT DISTINCT artistAlbum.docid" +
                 " FROM artistAlbum" +
                 " JOIN artistName ON artistAlbum.docid = artistName.docid" +
                 " JOIN artistAge ON artistAlbum.docid = artistAge.docid" +
                 " WHERE artistAlbum.value = 2013" +
                 " AND artistName.value IN ('Tommy Jones','Harrison Ford')" +
-                " AND artistAge.value < 99 AND artistAge.value > 23";
+                " AND artistAge.value <= 99 AND artistAge.value >= 23";
         builder.addQueryCriterion("artistAlbum", qb.build().get("query").get("year"), IndexType.INTEGER);
         builder.addQueryCriterion("artistName", qb.build().get("query").get("name"), IndexType.STRING);
         builder.addQueryCriterion("artistAge", qb.build().get("query").get("age"), IndexType.INTEGER);

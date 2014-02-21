@@ -145,26 +145,26 @@ public class QueryBuilder {
     }
 
     /**
-     * The value in the previous {@code index} call must be greater than
+     * The value in the previous {@code index} call must be greater than or equal to
      * {@code value}.
      *
      * @return this object for method chaining.
      */
-    public QueryBuilder greaterThan(Long value) {
-        return greaterThanInternal(value);
+    public QueryBuilder greaterThanOrEqual(Long value) {
+        return greaterThanOrEqualInternal(value);
     }
 
     /**
-     * The value in the previous {@code index} call must be greater than
+     * The value in the previous {@code index} call must be greater than or equal to
      * {@code value}.
      *
      * @return this object for method chaining.
      */
-    public QueryBuilder greaterThan(String value) {
-        return greaterThanInternal(value);
+    public QueryBuilder greaterThanOrEqual(String value) {
+        return greaterThanOrEqualInternal(value);
     }
 
-    private QueryBuilder greaterThanInternal(Object value) {
+    private QueryBuilder greaterThanOrEqualInternal(Object value) {
         if(indexName == null) {
             throw new IllegalStateException("indexName() must be called directly before greaterThan() is called.");
         }
@@ -186,26 +186,26 @@ public class QueryBuilder {
     }
 
     /**
-     * The value in the previous {@code index} call must be less than
+     * The value in the previous {@code index} call must be less than or equal to
      * {@code value}.
      *
      * @return this object for method chaining.
      */
-    public QueryBuilder lessThan(Long value) {
-        return lessThanInternal(value);
+    public QueryBuilder lessThanOrEqual(Long value) {
+        return lessThanOrEqualInternal(value);
     }
 
     /**
-     * The value in the previous {@code index} call must be less than
+     * The value in the previous {@code index} call must be less than or equal to
      * {@code value}.
      *
      * @return this object for method chaining.
      */
-    public QueryBuilder lessThan(String value) {
-        return lessThanInternal(value);
+    public QueryBuilder lessThanOrEqual(String value) {
+        return lessThanOrEqualInternal(value);
     }
 
-    private QueryBuilder lessThanInternal(Object value) {
+    private QueryBuilder lessThanOrEqualInternal(Object value) {
         if(indexName == null) {
             throw new IllegalStateException("indexName() must be called before lessThan() is called.");
         }

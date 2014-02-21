@@ -125,7 +125,7 @@ A query can use more than one index:
 QueryBuilder query = new QueryBuilder();
 
 query.index("default").equalTo("John");
-query.index("age").greaterThan(25);
+query.index("age").greaterThanOrEqual(26);
 
 // Run the query
 QueryResult result = indexManager.query(query.build());
@@ -139,6 +139,14 @@ for (DocumentRevision revision : result) {
 }
 ```
 
+The queries currently supported are:
+
+* `lessThanOrEqual(value)`: index <= value 
+* `equalTo(value)`: index == value
+* `greaterThanOrEqual(value)`: index >= value
+* `greaterThanOrEqual(value1).lessThanOrEqual(value2)`: value1 <= index <= value2
+* `oneOf([value_0,...,value_n])`: index == value_0 || ... || index == value_n
+
 ### Query options
 
 It is possible to specify additional options with the `QueryBuilder` class.
@@ -150,7 +158,7 @@ These options affect the results which the query returns.
 QueryBuilder query = new QueryBuilder();
 
 query.index("default").equalTo("John");
-query.index("age").greaterThan(25);
+query.index("age").greaterThanOrEqual(26);
 query.sortBy("age", SortDirection.Descending);
 
 // Run the query
@@ -170,7 +178,7 @@ useful when presenting information in a GUI. In this example we present 10 resul
 QueryBuilder query = new QueryBuilder();
 
 query.index("default").equalTo("John");
-query.index("age").greaterThan(25);
+query.index("age").greaterThanOrEqual(26);
 
 QueryResult result;
 
