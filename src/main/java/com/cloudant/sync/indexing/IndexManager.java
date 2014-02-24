@@ -78,11 +78,11 @@ public class IndexManager {
     private static final Pattern pattern = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
 
     public static final int VERSION = 1;
-    public static final String SCHEMA_INDEX =
+    public static final String[] SCHEMA_INDEX = {
             "CREATE TABLE _t_cloudant_sync_indexes_metadata ( " +
                     "        name TEXT NOT NULL, " +       // name of the index
                     "        type TEXT NOT NULL, " +
-                    "        last_sequence INTEGER NOT NULL); ";
+                    "        last_sequence INTEGER NOT NULL); " };
 
     private static final String SQL_SELECT_UNIQUE = "SELECT DISTINCT value FROM %s";
 

@@ -231,9 +231,11 @@ public class SQLiteWrapper implements SQLDatabase {
     }
 
     @Override
-    public void execSQL(String statement) throws SQLException {
+    public void execSQL(String sql) throws SQLException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(sql.trim()),
+                "Input SQL can not be empty String.");
         try {
-            getConnection().exec(statement);
+            getConnection().exec(sql);
         } catch (SQLiteException e) {
             throw new SQLException(e);
         }
@@ -241,6 +243,8 @@ public class SQLiteWrapper implements SQLDatabase {
 
     @Override
     public void execSQL(String sql, Object[] bindArgs) throws SQLException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(sql.trim()),
+                "Input SQL can not be empty String.");
         SQLiteStatement stmt = null;
         try {
             stmt = this.getConnection().prepare(sql);

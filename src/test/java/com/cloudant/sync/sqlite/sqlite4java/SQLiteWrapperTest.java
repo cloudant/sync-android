@@ -420,7 +420,10 @@ public class SQLiteWrapperTest {
         SQLDatabaseTestUtils.assertTablesExist(this.database, "docs", "revs");
     }
 
-
+    @Test(expected = IllegalArgumentException.class)
+    public void execSQL_emptySQL_exception() throws SQLException {
+        database.execSQL(" ");
+    }
 
     @Test
     public void execSQL_someCreateTablesStatements_NA() throws Exception {
