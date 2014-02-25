@@ -497,14 +497,20 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     @Override
     public BasicDocumentRevision updateDocument(String docId, String prevRevId, final DocumentBody body)
             throws ConflictException {
+        return updateDocument(docId, prevRevId, body, true);
+    }
+
+    BasicDocumentRevision updateDocument(String docId, String prevRevId, final DocumentBody body, boolean validateBody)
+            throws ConflictException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
                 "Input document id can not be empty");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(prevRevId),
                 "Input previous revision id can not be empty");
         Preconditions.checkNotNull(body, "Input document body can not be null");
-        this.validateDBBody(body);
-
+        if (validateBody) {
+            this.validateDBBody(body);
+        }
         CouchUtils.validateRevisionId(prevRevId);
 
         DocumentUpdated documentUpdated = null;

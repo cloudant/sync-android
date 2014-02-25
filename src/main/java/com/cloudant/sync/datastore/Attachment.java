@@ -24,7 +24,7 @@ import java.io.InputStream;
 /**
  * Base class for Attachments
  */
-public abstract class Attachment {
+public abstract class Attachment implements Comparable<Attachment>{
 
     /**
      * Name of the attachment, must be unique for a given revision
@@ -50,6 +50,10 @@ public abstract class Attachment {
 
     public String toString() {
         return "Attachment: "+name+", type: "+type;
+    }
+
+    public int compareTo(Attachment other) {
+        return name.compareTo(other.name);
     }
 
 }
