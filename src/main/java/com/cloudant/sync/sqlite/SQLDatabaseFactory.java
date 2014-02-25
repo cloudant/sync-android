@@ -21,6 +21,7 @@ import com.cloudant.sync.sqlite.android.AndroidSQLite;
 import com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper;
 import com.cloudant.sync.util.Misc;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,7 +72,7 @@ public class SQLDatabaseFactory {
      *
      * @see com.cloudant.sync.sqlite.SQLDatabase#getVersion()
      */
-    public static void updateSchema(SQLDatabase database, String schema, int version)
+    public static void updateSchema(SQLDatabase database, String[] schema, int version)
             throws SQLException {
         Preconditions.checkArgument(version > 0, "Schema version number must be positive");
 
@@ -84,11 +85,11 @@ public class SQLDatabaseFactory {
         }
     }
 
-    private static int executeStatements(SQLDatabase database, String statements, int version)
+    private static int executeStatements(SQLDatabase database, String[] statements, int version)
             throws SQLException {
         try {
             database.beginTransaction();
-            for (String statement : statements.split(";")) {
+            for (String statement : statements) {
                 database.execSQL(statement);
             }
             database.execSQL("PRAGMA user_version = " + version + ";");

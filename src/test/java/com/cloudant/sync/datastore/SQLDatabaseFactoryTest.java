@@ -33,25 +33,25 @@ public class SQLDatabaseFactoryTest {
     String database_dir;
     private String database_file = "database_initializer_test";
 
-    String SCHEMA_1 =
+    String[] SCHEMA_1 = {
             "    CREATE TABLE person ( " +
             "        id INTEGER PRIMARY KEY, " +
-            "        name TEXT UNIQUE NOT NULL); " +
-            "    CREATE INDEX person_id ON person(id); " +
+            "        name TEXT UNIQUE NOT NULL); ",
+            "    CREATE INDEX person_id ON person(id); ",
             "    CREATE TABLE address ( " +
             "        id INTEGER PRIMARY KEY AUTOINCREMENT, " +
             "        person INTEGER NOT NULL REFERENCES person(id) ON DELETE CASCADE, " +
-            "        address TEXT NOT NULL); " +
-            "    CREATE INDEX address_id ON address(id); " +
-            "    CREATE INDEX address_person ON address(person); " +
-            "    PRAGMA user_version = 1";
+            "        address TEXT NOT NULL); ",
+            "    CREATE INDEX address_id ON address(id); ",
+            "    CREATE INDEX address_person ON address(person); ",
+            "    PRAGMA user_version = 1" };
 
 
-    String SCHEMA_2 =
+    String[] SCHEMA_2 = {
             "    CREATE TABLE email ( " +
             "        person INTEGER PRIMARY KEY REFERENCES person(id), " +
-            "        email TEXT UNIQUE NOT NULL); " +
-            "    PRAGMA user_version = 2";
+            "        email TEXT UNIQUE NOT NULL); ",
+            "    PRAGMA user_version = 2" };
 
     SQLiteWrapper database = null;
 
