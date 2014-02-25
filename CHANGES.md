@@ -1,3 +1,8 @@
+# 0.3.2  (2014-02-25)
+
+- Fix issue initialising datastores on certain Android versions.
+- Add user-agent to the calls Cloudant Sync makes while replicating.
+
 # 0.3.1  (2014-02-21)
 
 - Change min/max query to use inclusive ranges.
