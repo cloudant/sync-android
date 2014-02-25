@@ -20,6 +20,7 @@ package com.cloudant.mazha;
 
 
 import com.cloudant.mazha.json.JSONHelper;
+import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -29,6 +30,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -218,10 +220,25 @@ public class CouchClient {
     public InputStream getAttachmentStream(String id, String attachmentName) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
         URI doc = this.uriHelper.attachmentUri(this.defaultDb, id, attachmentName);
+        return httpClient.getCompressed(doc);
+    }
+
+    public InputStream getAttachmentStreamUncompressed(String id, String attachmentName) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
+        URI doc = this.uriHelper.attachmentUri(this.defaultDb, id, attachmentName);
         return httpClient.get(doc);
     }
 
     public InputStream getAttachmentStream(String id, String rev, String attachmentName) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
+        Map<String, Object> queries = new HashMap<String, Object>();
+        queries.put("rev", rev);
+        URI doc = this.uriHelper.attachmentUri(this.defaultDb, id, queries, attachmentName);
+        return httpClient.getCompressed(doc);
+    }
+
+    public InputStream getAttachmentStreamUncompressed(String id, String rev, String attachmentName) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
         Map<String, Object> queries = new HashMap<String, Object>();
@@ -275,13 +292,24 @@ public class CouchClient {
      * It must return a list because that is how CouchDB return its results.
      *
      */
-    public List<OpenRevision> getDocWithOpenRevisions(String id, String... revisions) {
+    public List<OpenRevision> getDocWithOpenRevisions(String id, Collection<String> revisions,
+                                                      Collection<String> attsSince,
+                                                      boolean pullAttachmentsInline) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        Preconditions.checkArgument(revisions.length > 0, "Need at lease on open revision");
+        Preconditions.checkArgument(revisions.size() > 0, "Need at lease one open revision");
 
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("revs", true);
-        options.put("attachments", true);
+        // only pull attachments inline if we're configured to
+        if (pullAttachmentsInline) {
+            options.put("attachments", true);
+        } else {
+            options.put("attachments", false);
+            options.put("att_encoding_info", true);
+        }
+        if (attsSince != null) {
+            options.put("atts_since", getJson().toJson(attsSince));
+        }
         options.put("open_revs", getJson().toJson(revisions));
         return this.getDocument(id, options, new TypeReference<List<OpenRevision>>() {
         });
@@ -532,6 +560,16 @@ public class CouchClient {
         } finally {
             closeQuietly(is);
         }
+    }
+
+    public Response putMultipart(MultipartAttachmentWriter mpw) {
+        Map<String, Object> options = new HashMap<String, Object>();
+        options.put("new_edits", "false");
+        URI uri = this.uriHelper.documentUri(this.defaultDb, mpw.getId(), options);
+        HashMap<String, String> headers = new HashMap<String, String>();
+        String contentType = "multipart/related;boundary=" + mpw.getBoundary();
+        InputStream is = this.httpClient.putStream(uri, contentType, mpw, mpw.getContentLength());
+        return getJson().fromJson(new InputStreamReader(is), Response.class);
     }
 
     public static class MissingRevisions {

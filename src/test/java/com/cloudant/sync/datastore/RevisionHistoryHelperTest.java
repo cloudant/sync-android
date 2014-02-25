@@ -38,7 +38,7 @@ public class RevisionHistoryHelperTest {
         m.put("name", "Tom");
 
         List<DocumentRevision> d = createDBObjects("Tom", "1-a");
-        String json = RevisionHistoryHelper.revisionHistoryToJson(d, null);
+        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
 
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         Assert.assertEquals("1", documentRevs.getId());
@@ -75,7 +75,7 @@ public class RevisionHistoryHelperTest {
         m.put("name", "Tom");
 
         List<DocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
-        String json = RevisionHistoryHelper.revisionHistoryToJson(d, null);
+        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
 
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         Assert.assertEquals("1", documentRevs.getId());
@@ -88,23 +88,23 @@ public class RevisionHistoryHelperTest {
     @Test(expected = IllegalArgumentException.class)
     public void revisionHistoryToJson_historyIsInAscendingOrder_exception() {
         List<DocumentRevision> d = createDBObjects("Tom", "1-a", "2-b");
-        RevisionHistoryHelper.revisionHistoryToJson(d, null);
+        RevisionHistoryHelper.revisionHistoryToJson(d);
     }
 
     @Test(expected = NullPointerException.class)
     public void revisionHistoryToJson_null_exception() {
-        RevisionHistoryHelper.revisionHistoryToJson(null, null);
+        RevisionHistoryHelper.revisionHistoryToJson(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void revisionHistoryToJson_zeroLengthHistory_exception() {
-        RevisionHistoryHelper.revisionHistoryToJson(new ArrayList<DocumentRevision>(), null);
+        RevisionHistoryHelper.revisionHistoryToJson(new ArrayList<DocumentRevision>());
     }
 
     @Test
     public void getRevisionPath_oneRevision_success() {
         List<DocumentRevision> d = createDBObjects("Tom", "1-a");
-        String json = RevisionHistoryHelper.revisionHistoryToJson(d, null);
+        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         List<String> revisions = RevisionHistoryHelper.getRevisionPath(documentRevs);
         Assert.assertThat(revisions, equalTo(Arrays.asList("1-a")));
@@ -113,7 +113,7 @@ public class RevisionHistoryHelperTest {
     @Test
     public void getRevisionPath_twoRevision_success() {
         List<DocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
-        String json = RevisionHistoryHelper.revisionHistoryToJson(d, null);
+        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         List<String> revisions = RevisionHistoryHelper.getRevisionPath(documentRevs);
         Assert.assertThat(revisions, equalTo(Arrays.asList("2-b", "1-a")));
@@ -122,7 +122,7 @@ public class RevisionHistoryHelperTest {
     @Test(expected = IllegalArgumentException.class)
     public void getRevisionPath_revisionStartIsTooSmall_exception() {
         List<DocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
-        String json = RevisionHistoryHelper.revisionHistoryToJson(d, null);
+        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         addOneMoreIdToRevisions(documentRevs);
         RevisionHistoryHelper.getRevisionPath(documentRevs);

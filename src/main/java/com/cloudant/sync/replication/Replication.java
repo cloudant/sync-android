@@ -20,9 +20,8 @@ import java.util.Map;
  * configure pull and push replications respectively.</p>
  *
  * @see com.cloudant.sync.replication.PullReplication
- * @see ReplicatorFactory#oneway(PullReplication)
  * @see com.cloudant.sync.replication.PushReplication
- * @see ReplicatorFactory#oneway(PushReplication)
+ * @see ReplicatorFactory#oneway(Replication)
  */
 public abstract class Replication {
 

@@ -29,6 +29,7 @@ import com.cloudant.common.Log;
 import org.junit.Assert;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -196,8 +197,12 @@ public class DatabaseAssert {
      */
     static void checkOpenRevisionsAreIdentical(String documentId, String[] openRevisions,
                                                DatastoreExtended datastore, CouchClient client) {
+        boolean pullAttachmentsInline = false;
+
+        ArrayList<String> attsSince = new ArrayList<String>();
+
         List<DocumentRevs> documentRevsList = convertToDocumentRevs(
-                client.getDocWithOpenRevisions(documentId, openRevisions));
+                client.getDocWithOpenRevisions(documentId, Arrays.asList(openRevisions), attsSince, pullAttachmentsInline));
 
         DocumentRevisionTree tree = datastore.getAllRevisionsOfDocument(documentId);
         Assert.assertNotNull(tree);

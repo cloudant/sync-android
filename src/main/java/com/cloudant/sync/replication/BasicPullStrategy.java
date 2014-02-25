@@ -17,16 +17,26 @@ package com.cloudant.sync.replication;
 import com.cloudant.common.Log;
 import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.CouchConfig;
+import com.cloudant.mazha.DocumentRevs;
+import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.DatastoreExtended;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevsList;
+import com.cloudant.sync.datastore.DocumentRevsUtils;
+import com.cloudant.sync.datastore.PreparedAttachment;
+import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.util.JSONUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.EventBus;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -271,7 +281,66 @@ class BasicPullStrategy implements ReplicationStrategy {
                     // We promise not to insert documents after cancel is set
                     if (this.cancel) { break; }
 
-                    this.targetDb.bulkInsert(result);
+                    HashMap<String, List<PreparedAttachment>> atts = new HashMap<String, List<PreparedAttachment>>();
+
+                    // now put together a list of attachments we need to download
+                    if (!config.pullAttachmentsInline) {
+                        try {
+                            for (DocumentRevs documentRevs : result) {
+                                Map<String, Object> attachments = documentRevs.getAttachments();
+                                // keep track of attachments we are going to prepare
+                                ArrayList<PreparedAttachment> preparedAtts = new ArrayList<PreparedAttachment>();
+                                atts.put(documentRevs.getId(), preparedAtts);
+                                for (String attachmentName : attachments.keySet()) {
+                                    Boolean stub = ((Map<String, Boolean>) attachments.get(attachmentName)).get("stub");
+                                    if (stub != null && stub.booleanValue()) {
+                                        continue;
+                                    }
+                                    String contentType = ((Map<String, String>) attachments.get(attachmentName)).get("content_type");
+                                    String encoding = (String) ((Map<String, Object>) attachments.get(attachmentName)).get("encoding");
+                                    UnsavedStreamAttachment usa = this.sourceDb.getAttachmentStream(documentRevs.getId(), documentRevs.getRev(), attachmentName, contentType, encoding);
+                                    DocumentRevision doc = this.targetDb.getDbCore().getDocument(documentRevs.getId());
+
+                                    // by preparing the attachment here, it is downloaded outside of the database transaction
+                                    preparedAtts.add(this.targetDb.prepareAttachment(usa, doc));
+                                }
+                            }
+                        } catch (Exception e) {
+                            Log.e(LOG_TAG, "There was a problem downloading an attachment to the datastore, terminating replication");
+                            Log.e(LOG_TAG, "Exception was: " + e);
+                            this.cancel = true;
+                        }
+                    }
+
+                    if (this.cancel)
+                        break;
+
+                    boolean ok = true;
+                    // start tx
+                    this.targetDb.getDbCore().getSQLDatabase().beginTransaction();
+                    this.targetDb.bulkInsert(result, config.pullAttachmentsInline);
+
+                    // now add the attachments we have just downloaded
+                    try {
+                        for (String id : atts.keySet()) {
+                            DocumentRevision doc = this.targetDb.getDbCore().getDocument(id);
+                            for (PreparedAttachment att : atts.get(id)) {
+                                this.targetDb.addAttachment(att, doc);
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e(LOG_TAG, "There was a problem adding an attachment to the datastore, terminating replication");
+                        Log.e(LOG_TAG, "Exception was: " + e);
+                        this.cancel = true;
+                        ok = false;
+                    }
+
+                    if (ok) {
+                        this.targetDb.getDbCore().getSQLDatabase().setTransactionSuccessful();
+                    }
+                    // end tx
+                    this.targetDb.getDbCore().getSQLDatabase().endTransaction();
+
                     changesProcessed++;
                 }
             } catch (InterruptedException ex) {
@@ -313,10 +382,25 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     public List<Callable<DocumentRevsList>> createTasks(List<String> ids,
                                                         Map<String, Collection<String>> revisions) {
+
+
         List<Callable<DocumentRevsList>> tasks = new ArrayList<Callable<DocumentRevsList>>();
         for(String id : ids) {
+            // get list for atts_since (these are possible ancestors we have, it's ok to be eager
+            // and get all revision IDs higher up in the tree even if they're not our ancestors and
+            // belong to a different subtree)
+            HashSet<String> possibleAncestors = new HashSet<String>();
+            for (String revId : revisions.get(id)) {
+                List<String> thesePossibleAncestors = targetDb.getDbCore().getPossibleAncestorRevisionIDs(id, revId, 50);
+                if (thesePossibleAncestors != null) {
+                    possibleAncestors.addAll(thesePossibleAncestors);
+                }
+            }
             tasks.add(GetRevisionTask.createGetRevisionTask(this.sourceDb,
-                    id, revisions.get(id).toArray(new String[]{})));
+                    id,
+                    revisions.get(id),
+                    possibleAncestors,
+                    config.pullAttachmentsInline));
         }
         return tasks;
     }

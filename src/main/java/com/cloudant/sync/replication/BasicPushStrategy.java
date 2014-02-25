@@ -16,13 +16,14 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.common.Log;
 import com.cloudant.mazha.CouchConfig;
+import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
+import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
-import com.cloudant.sync.datastore.SavedAttachment;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -30,7 +31,6 @@ import com.google.common.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,6 +61,8 @@ class BasicPushStrategy implements ReplicationStrategy {
      * may live on because the listener's callback is executed on the thread.
      */
     private volatile boolean replicationTerminated = false;
+
+    private static JSONHelper sJsonHelper = new JSONHelper();
 
     public BasicPushStrategy(PushReplication pushReplication) {
         this(pushReplication, null);
@@ -216,6 +218,21 @@ class BasicPushStrategy implements ReplicationStrategy {
                 config.changeLimitPerBatch);
     }
 
+    /**
+     * A small value class containing a set of documents to push, some
+     * via multipart and some via _bulk_docs
+     */
+    private class ItemsToPush
+    {
+        public ItemsToPush() {
+            serializedDocs = new ArrayList<String>();
+            multiparts = new ArrayList<MultipartAttachmentWriter>();
+        }
+
+        List<String> serializedDocs;
+        List<MultipartAttachmentWriter> multiparts;
+    }
+
     private int processOneChangesBatch(Changes changes) {
 
         int changesProcessed = 0;
@@ -233,9 +250,13 @@ class BasicPushStrategy implements ReplicationStrategy {
             Map<String, DocumentRevisionTree> allTrees = this.sourceDb.getDocumentTrees(batch);
             Map<String, Set<String>> docOpenRevs = this.openRevisions(allTrees);
             Map<String, Set<String>> docMissingRevs = this.targetDb.revsDiff(docOpenRevs);
-            List<String> serialisedMissingRevs = missingRevisionsToJsonDocs(allTrees, docMissingRevs);
+
+            ItemsToPush itemsToPush = missingRevisionsToJsonDocs(allTrees, docMissingRevs);
+            List<String> serialisedMissingRevs = itemsToPush.serializedDocs;
+            List<MultipartAttachmentWriter> multiparts = itemsToPush.multiparts;
 
             if (!this.cancel) {
+                this.targetDb.putMultiparts(multiparts);
                 this.targetDb.bulkSerializedDocs(serialisedMissingRevs);
                 changesProcessed += docMissingRevs.size();
             }
@@ -248,10 +269,12 @@ class BasicPushStrategy implements ReplicationStrategy {
         return changesProcessed;
     }
 
-    private List<String> missingRevisionsToJsonDocs(
+    private ItemsToPush missingRevisionsToJsonDocs(
             Map<String, DocumentRevisionTree> allTrees,
-            Map<String, Set<String>> revisions) {
-        List<String> docs = new ArrayList<String>();
+            Map<String, Set<String>> revisions)  {
+
+        ItemsToPush itemsToPush = new ItemsToPush();
+
         for(Map.Entry<String, Set<String>> e : revisions.entrySet()) {
             String docId = e.getKey();
             Set<String> missingRevisions = e.getValue();
@@ -259,13 +282,26 @@ class BasicPushStrategy implements ReplicationStrategy {
             for(String rev : missingRevisions) {
                 long sequence = tree.lookup(docId, rev).getSequence();
                 List<DocumentRevision> path = tree.getPathForNode(sequence);
+
                 // get the attachments for the leaf of this path
                 DocumentRevision dr = path.get(0);
                 List<? extends Attachment> atts = this.sourceDb.getDbCore().attachmentsForRevision(dr);
-                docs.add(RevisionHistoryHelper.revisionHistoryToJson(path, atts));
+
+                // get the json, and inline any small attachments
+                Map<String, Object> json = RevisionHistoryHelper.revisionHistoryToJson(path, atts, this.config.pushAttachmentsInline);
+                // if there are any large atts we will get a multipart writer, otherwise null
+                MultipartAttachmentWriter mpw = RevisionHistoryHelper.createMultipartWriter(path, atts, this.config.pushAttachmentsInline);
+
+                // now we will have either a multipart or a plain doc
+                if (mpw == null) {
+                    itemsToPush.serializedDocs.add(sJsonHelper.toJson(json));
+                } else {
+                    itemsToPush.multiparts.add(mpw);
+                }
             }
         }
-        return docs;
+
+        return itemsToPush;
     }
 
     Map<String, Set<String>> openRevisions(Map<String, DocumentRevisionTree> trees) {

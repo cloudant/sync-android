@@ -23,12 +23,17 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.OkOpenRevision;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.mazha.Response;
+import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.MultipartAttachmentWriter;
+import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -130,9 +135,12 @@ class CouchClientWrapper implements CouchDB {
      * @see DocumentRevs
      */
     @Override
-    public List<DocumentRevs> getRevisions(String documentId, String... revisionIds) {
+    public List<DocumentRevs> getRevisions(String documentId,
+                                           Collection<String> revisionIds,
+                                           Collection<String> attsSince,
+                                           boolean pullAttachmentsInline) {
         List<OpenRevision> openRevisions =
-                couchClient.getDocWithOpenRevisions(documentId, revisionIds);
+                couchClient.getDocWithOpenRevisions(documentId, revisionIds, attsSince, pullAttachmentsInline);
 
         // expect all the open revisions return ok, return error is there is any missing
         List<DocumentRevs> documentRevs = new ArrayList<DocumentRevs>();
@@ -224,8 +232,27 @@ class CouchClientWrapper implements CouchDB {
     }
 
     @Override
+    public List<Response> putMultiparts(List<MultipartAttachmentWriter> multiparts) {
+        Log.v(LOG_TAG, "putMultiparts(), parts: " + multiparts);
+        ArrayList<Response> responses = new ArrayList<Response>();
+        for (MultipartAttachmentWriter mpw : multiparts) {
+            Response r = couchClient.putMultipart(mpw);
+            responses.add(r);
+        }
+        return responses;
+    }
+
+    @Override
     public Map<String, Set<String>> revsDiff(Map<String, Set<String>> revisions) {
         return this.couchClient.revsDiff(revisions);
+    }
+
+    @Override
+    public UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType, String encodingStr) {
+        InputStream is = this.couchClient.getAttachmentStream(id, rev, attachmentName);
+        Attachment.Encoding encoding = encodingStr != null && encodingStr.equals("gzip") ? Attachment.Encoding.Gzip : Attachment.Encoding.Plain;
+        UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is, attachmentName, contentType, encoding);
+        return usa;
     }
 
 }

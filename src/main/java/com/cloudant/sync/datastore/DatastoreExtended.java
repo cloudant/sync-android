@@ -22,6 +22,8 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.google.common.collect.Multimap;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -145,11 +147,11 @@ public interface DatastoreExtended extends Datastore {
      * whether it's a conflict which needs to be grafted to the tree or
      * whether it's a newer version of the same branch we already have.</p>
      *
-     * <p>If the document was successfully inserted, a 
-     * {@link com.cloudant.sync.notifications.DocumentCreated DocumentCreated}, 
-     * {@link com.cloudant.sync.notifications.DocumentModified DocumentModified}, or 
-     * {@link com.cloudant.sync.notifications.DocumentDeleted DocumentDeleted} 
-     * event is posted on the event bus. The event will depend on the nature 
+     * <p>If the document was successfully inserted, a
+     * {@link com.cloudant.sync.notifications.DocumentCreated DocumentCreated},
+     * {@link com.cloudant.sync.notifications.DocumentModified DocumentModified}, or
+     * {@link com.cloudant.sync.notifications.DocumentDeleted DocumentDeleted}
+     * event is posted on the event bus. The event will depend on the nature
      * of the update made.</p>
      *
      * @param rev A {@code DocumentRevision} containing the information for a revision
@@ -158,9 +160,12 @@ public interface DatastoreExtended extends Datastore {
      *                        including the rev ID of {@code rev}. This list
      *                        needs to be sorted in ascending order.
      *
-     * @see Datastore#getEventBus() 
+     * @see Datastore#getEventBus()
      */
-    public void forceInsert(DocumentRevision rev, List<String> revisionHistory, Map<String, Object> attachments);
+    public void forceInsert(DocumentRevision rev,
+                            List<String> revisionHistory,
+                            Map<String, Object> attachments,
+                            boolean pullAttachmentsInline);
 
     /**
      * <p>Inserts a revision of a document with an existing revision ID</p>
@@ -174,7 +179,7 @@ public interface DatastoreExtended extends Datastore {
      * @param rev
      * @param revisionHistory
      *
-     * @see DatastoreExtended#forceInsert(DocumentRevision, java.util.List, java.util.Map)
+     * @see DatastoreExtended#forceInsert(DocumentRevision, java.util.List, java.util.Map, boolean)
      */
     public void forceInsert(DocumentRevision rev, String... revisionHistory);
 
@@ -241,4 +246,29 @@ public interface DatastoreExtended extends Datastore {
      * @see <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
      */
     public Map<String, Collection<String>> revsDiff(Multimap<String, String> revisions);
+
+    /**
+     * Read attachment stream to a temporary location and calculate sha1,
+     * prior to being added to the datastore.
+     *
+     * Used by replicator when receiving new/updated attachments
+     *
+     * @param att Attachment to be prepared, providing data either from a file or a stream
+     * @param rev The revision this attachment is associated with
+     * @return
+     * @throws IOException
+     * @throws SQLException
+     */
+    public PreparedAttachment prepareAttachment(Attachment att, DocumentRevision rev) throws IOException;
+
+    /**
+     * Add attachment to document revision without incrementing revision.
+     *
+     * Used by replicator when receiving new/updated attachments
+     *
+     * @param att The attachment to add
+     * @param rev The DocumentRevision to add the attachment to
+     */
+    public void addAttachment(PreparedAttachment att, DocumentRevision rev) throws IOException, SQLException;
+
 }

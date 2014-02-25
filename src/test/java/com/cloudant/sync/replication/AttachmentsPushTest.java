@@ -28,12 +28,16 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -45,6 +49,7 @@ import static org.hamcrest.core.Is.isA;
  */
 
 @Category(RequireRunningCouchDB.class)
+@RunWith(Parameterized.class)
 public class AttachmentsPushTest extends ReplicationTestBase {
 
     String id1;
@@ -53,8 +58,19 @@ public class AttachmentsPushTest extends ReplicationTestBase {
 
     private TypedDatastore<Foo> fooTypedDatastore;
 
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {PushAttachmentsInline.False}, {PushAttachmentsInline.Small}, {PushAttachmentsInline.True}
+        });
+    }
+
+    @Parameterized.Parameter
+    public PushAttachmentsInline pushAttachmentsInline;
+
     @Before
     public void setUp() throws Exception {
+
         super.setUp();
 
         this.fooTypedDatastore = new TypedDatastore<Foo>(
@@ -130,7 +146,34 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         push();
 
         // check it's in the DB
-        InputStream is1 = this.couchClient.getAttachmentStream(id1, attachmentName);
+        InputStream is1 = this.couchClient.getAttachmentStreamUncompressed(id1, attachmentName);
+        InputStream is2 = new FileInputStream(f);
+        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(is1, is2));
+    }
+
+    @Test
+    public void pushBigAttachmentsTest() throws Exception {
+        // simple 1-rev attachment
+        String attachmentName = "bonsai-boston.jpg";
+        populateSomeDataInLocalDatastore();
+        File f = new File("fixture", attachmentName);
+        Attachment att = new UnsavedFileAttachment(f, "image/jpeg");
+        List<Attachment> atts = new ArrayList<Attachment>();
+        atts.add(att);
+        DocumentRevision oldRevision = datastore.getDocument(id1);
+        DocumentRevision newRevision = null;
+        try {
+            // set attachment
+            newRevision = datastore.updateAttachments(oldRevision, atts);
+        } catch (IOException ioe) {
+            Assert.fail("IOException thrown: " + ioe);
+        }
+
+        // push replication
+        push();
+
+        // check it's in the DB
+        InputStream is1 = this.couchClient.getAttachmentStreamUncompressed(id1, attachmentName);
         InputStream is2 = new FileInputStream(f);
         Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(is1, is2));
     }
@@ -179,10 +222,10 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         InputStream isOriginal1;
         InputStream isOriginal2;
 
-        InputStream isRev2 = this.couchClient.getAttachmentStream(id1, rev2.getRevision(), attachmentName1);
-        InputStream isRev3 = this.couchClient.getAttachmentStream(id1, rev3.getRevision(), attachmentName1);
-        InputStream isRev4Att1 = this.couchClient.getAttachmentStream(id1, rev4.getRevision(), attachmentName1);
-        InputStream isRev4Att2 = this.couchClient.getAttachmentStream(id1, rev4.getRevision(), attachmentName2);
+        InputStream isRev2 = this.couchClient.getAttachmentStreamUncompressed(id1, rev2.getRevision(), attachmentName1);
+        InputStream isRev3 = this.couchClient.getAttachmentStreamUncompressed(id1, rev3.getRevision(), attachmentName1);
+        InputStream isRev4Att1 = this.couchClient.getAttachmentStreamUncompressed(id1, rev4.getRevision(), attachmentName1);
+        InputStream isRev4Att2 = this.couchClient.getAttachmentStreamUncompressed(id1, rev4.getRevision(), attachmentName2);
 
         isOriginal1 = new FileInputStream(f1);
         Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev2, isOriginal1));
@@ -199,7 +242,11 @@ public class AttachmentsPushTest extends ReplicationTestBase {
 
     private void push() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        BasicPushStrategy push = new BasicPushStrategy(this.createPushReplication());
+        BasicPushStrategy push = new BasicPushStrategy(this.createPushReplication(),
+                new PushConfiguration(PushConfiguration.DEFAULT_CHANGES_LIMIT_PER_BATCH,
+                        PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                        PushConfiguration.DEFAULT_BULK_INSERT_SIZE,
+                        pushAttachmentsInline));
         push.eventBus.register(listener);
 
         Thread t = new Thread(push);
@@ -208,10 +255,5 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
     }
-
-
-
-
-
 
 }

@@ -15,15 +15,19 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.mazha.DocumentRevs;
+import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.DocumentRevsUtils;
+import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.common.Log;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,7 +84,7 @@ class DatastoreWrapper {
         return "_local/" + replicatorIdentifier;
     }
 
-    public void bulkInsert(DocumentRevsList documentRevsList) {
+    public void bulkInsert(DocumentRevsList documentRevsList, boolean pullAttachmentsInline) {
         for(DocumentRevs documentRevs: documentRevsList) {
             Log.v(LOG_TAG, "Bulk Inserting DocumentRevs: [ " + documentRevs.getId() + ", "
                     + documentRevs.getRev() + "," + documentRevs.getRevisions().getIds() + " ]");
@@ -88,7 +92,7 @@ class DatastoreWrapper {
 
             List<String> revisions = DocumentRevsUtils.createRevisionIdHistory(documentRevs);
             Map<String, Object> attachments = documentRevs.getAttachments();
-            dbCore.forceInsert(doc, revisions, attachments);
+            dbCore.forceInsert(doc, revisions, attachments, pullAttachmentsInline);
         }
     }
 
@@ -102,5 +106,14 @@ class DatastoreWrapper {
         }
         return allDocumentTrees;
     }
+
+    protected PreparedAttachment prepareAttachment(Attachment att, DocumentRevision rev) throws IOException, SQLException {
+        return this.dbCore.prepareAttachment(att, rev);
+    }
+
+    protected void addAttachment(PreparedAttachment att, DocumentRevision rev) throws IOException, SQLException {
+        this.dbCore.addAttachment(att, rev);
+    }
+
 
 }

@@ -369,7 +369,6 @@ public interface Datastore {
      *
      * @return New revision.
      *
-     * @see #createAttachment(java.io.File, String)
      */
     public DocumentRevision updateAttachments(DocumentRevision rev,
                                               List<? extends Attachment> attachments)
@@ -399,5 +398,9 @@ public interface Datastore {
      * Close the datastore
      */
     public void close();
-}
 
+
+    public List<String> getPossibleAncestorRevisionIDs(String docId,
+                                                       String revId,
+                                                       int limit);
+}

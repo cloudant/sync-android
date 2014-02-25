@@ -27,13 +27,25 @@ import java.io.InputStream;
 public class UnsavedStreamAttachment extends Attachment {
 
     public UnsavedStreamAttachment(InputStream stream, String name, String type) {
+        super(name, type, Encoding.Plain);
         this.stream = stream;
-        this.name = name;
-        this.type = type;
+    }
+
+    public UnsavedStreamAttachment(InputStream stream, String name, String type, Encoding encoding) {
+        super(name, type, encoding);
+        this.stream = stream;
     }
 
     public InputStream getInputStream() throws IOException {
         return stream;
+    }
+
+    public long getSize() {
+        try {
+            return stream.available();
+        } catch(IOException ioe) {
+            return -1;
+        }
     }
 
     private InputStream stream;

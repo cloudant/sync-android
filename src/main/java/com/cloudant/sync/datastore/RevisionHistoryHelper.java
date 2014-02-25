@@ -17,18 +17,15 @@ package com.cloudant.sync.datastore;
 import com.cloudant.common.CouchConstants;
 import com.cloudant.common.Log;
 import com.cloudant.mazha.DocumentRevs;
-import com.cloudant.mazha.json.JSONHelper;
+import com.cloudant.sync.replication.PushAttachmentsInline;
 import com.cloudant.sync.util.CouchUtils;
 import com.google.common.base.Preconditions;
 
 import org.apache.commons.codec.binary.Base64OutputStream;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -47,7 +44,6 @@ public class RevisionHistoryHelper {
 
     // we are using json helper from mazha to it does not filter out
     // couchdb special fields
-    private static JSONHelper sJsonHelper = new JSONHelper();
 
     /**
      * <p>Returns the list of revision IDs from a {@link DocumentRevs} object.
@@ -96,15 +92,27 @@ public class RevisionHistoryHelper {
                 "Revision start must be bigger than revision ids' length");
         List<String> path = new ArrayList<String>();
         int start = documentRevs.getRevisions().getStart();
-        for(String revId : documentRevs.getRevisions().getIds()) {
+        for (String revId : documentRevs.getRevisions().getIds()) {
             path.add(start + "-" + revId);
-            start --;
+            start--;
         }
         return path;
     }
 
     private static boolean checkRevisionStart(DocumentRevs.Revisions revisions) {
         return revisions.getStart() >= revisions.getIds().size();
+    }
+
+
+    /**
+     * Serialise a branch's revision history, without attachments.
+     * See {@link #revisionHistoryToJson(java.util.List, java.util.List, com.cloudant.sync.replication.PushAttachmentsInline)} for details.
+     * @param history list of {@code DocumentRevision}s.
+     * @return JSON-serialised {@code String} suitable for sending to CouchDB's
+     *      _bulk_docs endpoint.
+     */
+    public static Map<String, Object> revisionHistoryToJson(List<DocumentRevision> history) {
+        return revisionHistoryToJson(history, null, null);
     }
 
     /**
@@ -114,32 +122,94 @@ public class RevisionHistoryHelper {
      *
      * @param history list of {@code DocumentRevision}s. This should be a complete list
      *                from the revision furthest down the branch to the root.
+     * @param attachments list of {@code Attachment}s, if any. This allows the {@code _attachments}
+     *                    dictionary to be correctly serialised. If there are no attachments, set
+     *                    to null.
+     * @param inlinePreference strategy to decide whether to upload attachments inline or separately.
      * @return JSON-serialised {@code String} suitable for sending to CouchDB's
      *      _bulk_docs endpoint.
      *
      * @see com.cloudant.mazha.DocumentRevs
      */
-    public static String revisionHistoryToJson(List<DocumentRevision> history, List<? extends Attachment> attachments) {
+    public static Map<String, Object> revisionHistoryToJson(List<DocumentRevision> history,
+                                                            List<? extends Attachment> attachments,
+                                                            PushAttachmentsInline inlinePreference) {
         Preconditions.checkNotNull(history, "History must not be null");
         Preconditions.checkArgument(history.size() > 0, "History must have at least one DocumentRevision.");
         Preconditions.checkArgument(checkHistoryIsInDescendingOrder(history),
                 "History must be in descending order.");
 
         DocumentRevision currentNode = history.get(0);
+
         Map<String, Object> m = currentNode.asMap();
         if (attachments != null && !attachments.isEmpty()) {
             // graft attachments on to m for this particular revision here
-            addAttachments(attachments, m, CouchUtils.generationFromRevId(currentNode.getRevision()));
+            addAttachments(attachments, currentNode, m, inlinePreference);
         }
 
         m.put(CouchConstants._revisions, createRevisions(history));
 
-        return sJsonHelper.toJson(m);
+        return m;
     }
 
-    private static void addAttachments(List<? extends Attachment> attachments, Map<String, Object> map, int revpos) {
+    /**
+     * Create a MultipartAttachmentWriter object needed to subsequently write the JSON body and
+     * attachments as a multipart/related stream
+     */
+    public static MultipartAttachmentWriter createMultipartWriter(List<DocumentRevision> history,
+                                                                  List<? extends Attachment> attachments,
+                                                                  PushAttachmentsInline inlinePreference) {
+
+        Preconditions.checkNotNull(history, "History must not be null");
+        Preconditions.checkArgument(history.size() > 0, "History must have at least one DocumentRevision.");
+        Preconditions.checkArgument(checkHistoryIsInDescendingOrder(history),
+                "History must be in descending order.");
+
+        DocumentRevision currentNode = history.get(0);
+
+        MultipartAttachmentWriter mpw = null;
+        int revpos = CouchUtils.generationFromRevId(currentNode.getRevision());
+        for (Attachment att : attachments) {
+            // we need to cast down to SavedAttachment, which we know is what the AttachmentManager gives us
+            SavedAttachment savedAtt = (SavedAttachment) att;
+            try {
+                if (savedAtt.revpos < revpos) {
+                    ; // skip
+                } else {
+                    if (!savedAtt.shouldInline(inlinePreference)) {
+                        // add
+                        if (mpw == null) {
+                            // 1st time init
+                            mpw = new MultipartAttachmentWriter();
+                            mpw.setBody(currentNode);
+                        }
+                        mpw.addAttachment(att);
+                    } else {
+                        // skip
+                    }
+                }
+            } catch (IOException ioe) {
+                Log.w(LOG_TAG, "IOException caught when adding multiparts: "+ioe);
+            }
+        }
+        if (mpw != null) {
+            mpw.close();
+        }
+        return mpw;
+    }
+
+    /**
+     * Add attachment entries to the _attachments dictionary of the revision
+     * If the attachment should be inlined, then insert the attachment data as a base64 string
+     * If it isn't inlined, set follows=true to show it will be included in the multipart/related
+     */
+    private static void addAttachments(List<? extends Attachment> attachments,
+                                   DocumentRevision revision,
+                                   Map<String, Object> outMap,
+                                   PushAttachmentsInline inlinePreference) {
         LinkedHashMap<String, Object> attsMap = new LinkedHashMap<String, Object>();
-        map.put("_attachments", attsMap);
+        int revpos = CouchUtils.generationFromRevId(revision.getRevision());
+        outMap.put("_attachments", attsMap);
         for (Attachment att : attachments) {
             // we need to cast down to SavedAttachment, which we know is what the AttachmentManager gives us
             SavedAttachment savedAtt = (SavedAttachment)att;
@@ -149,23 +219,29 @@ public class RevisionHistoryHelper {
                     // if the revpos of the current doc is higher than that of the attachment, it's a stub
                     theAtt.put("stub", true);
                 } else {
-                    // base64 encode this attachment
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    Base64OutputStream bos = new Base64OutputStream(baos, true, 0, null);
-                    InputStream fis = savedAtt.getInputStream();
-                    int bufSiz = 1024;
-                    byte[] buf = new byte[bufSiz];
-                    int n = 0;
-                    do {
-                        n = fis.read(buf);
-                        if (n > 0) {
-                            bos.write(buf, 0, n);
-                        }
-                    } while (n > 0);
-                    theAtt.put("data", baos.toString());  //base64 of data
+                    if (!savedAtt.shouldInline(inlinePreference)) {
+                        theAtt.put("follows", true);
+                    } else {
+                        theAtt.put("follows", false);
+                        // base64 encode this attachment
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        Base64OutputStream bos = new Base64OutputStream(baos, true, 0, null);
+                        InputStream fis = savedAtt.getInputStream();
+                        int bufSiz = 1024;
+                        byte[] buf = new byte[bufSiz];
+                        int n = 0;
+                        do {
+                            n = fis.read(buf);
+                            if (n > 0) {
+                                bos.write(buf, 0, n);
+                            }
+                        } while (n > 0);
+                        theAtt.put("data", baos.toString());  //base64 of data
+                    }
+                    theAtt.put("length", savedAtt.getSize());
+                    theAtt.put("content_type", savedAtt.type);
+                    theAtt.put("revpos", savedAtt.revpos);
                 }
-                theAtt.put("content_type", savedAtt.type);
-                theAtt.put("revpos", savedAtt.revpos);
             } catch (IOException ioe) {
                 // if we can't read the file containing the attachment then skip it
                 // (this should only occur if someone tampered with the attachments directory

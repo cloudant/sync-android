@@ -18,7 +18,7 @@ import com.cloudant.sync.util.Document;
 
 import java.util.HashMap;
 
-public class Bar extends Document {
+public class BarWithAttachments extends Document {
 
     private String name;
     public String getName() {
@@ -35,6 +35,8 @@ public class Bar extends Document {
     public void setAge(int age) {
         this.age = age;
     }
+
+    public HashMap<String, Object> _attachments;
 
     @Override
     public String toString() {
