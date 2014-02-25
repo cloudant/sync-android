@@ -22,7 +22,7 @@ apply plugin: 'cobertura'
 //
 
 group = 'com.cloudant'
-version = '0.3.2'
+version = '0.3.3-SNAPSHOT'
 
 description = """cloudant-sync"""
 
