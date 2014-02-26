@@ -1,6 +1,6 @@
 # Replication with Cloudant Sync Android
 
-_This functionality is available in versions 0.1.0 and up._
+_This functionality is available in versions 0.3.0 and up._
 
 This document discusses setting up replication with the library, along
 with synchronising data by using two-way (bi-direction) replication.
@@ -31,13 +31,13 @@ replication finishes so we can wait for a replication to finish without
 needing to poll:
 
 ```java
-import com.cloudant.sync.replication.ReplicationListener;
+import com.google.common.eventbus.Subscribe;
 
 /**
  * A {@code ReplicationListener} that sets a latch when it's told the
  * replication has finished.
  */
-private class Listener implements ReplicationListener {
+private class Listener {
 
     private final CountDownLatch latch;
     public ErrorInfo error = null;
@@ -46,14 +46,14 @@ private class Listener implements ReplicationListener {
         this.latch = latch;
     }
 
-    @Override
-    public void complete(Replicator replicator) {
+    @Subscribe
+    public void complete(ReplicationCompleted event) {
         latch.countDown();
     }
 
-    @Override
-    public void error(Replicator replicator, ErrorInfo error) {
-        this.error = error;
+    @Subscribe
+    public void error(ReplicationErrored event) {
+        this.error = event.errorInfo;
         latch.countDown();
     }
 }
@@ -76,9 +76,10 @@ Replicator replicator = ReplicatorFactory.oneway(ds, uri);
 // Use a CountDownLatch to provide a lightweight way to wait for completion
 latch = new CountDownLatch(1);
 Listener listener = new Listener(latch);
-replicator.setListener(listener);
+replicator.getEventBus().register(listener);
 replicator.start();
 latch.await();
+replicator.getEventBus().unregister(listener);
 if (replicator.getState() != Replicator.State.COMPLETE) {
     System.out.println("Error replicating TO remote");
     System.out.println(listener.error);
@@ -99,9 +100,10 @@ replicator = ReplicatorFactory.oneway(uri, ds);
 // Use a CountDownLatch to provide a lightweight way to wait for completion
 latch = new CountDownLatch(1);
 Listener listener = new Listener(latch);
-replicator.setListener(listener);
+replicator.getEventBus().register(listener);
 replicator.start();
 latch.await();
+replicator.getEventBus().unregister(listener);
 if (replicator.getState() != Replicator.State.COMPLETE) {
     System.out.println("Error replicating FROM remote");
     System.out.println(listener.error);
@@ -123,13 +125,17 @@ latch = new CountDownLatch(2);
 Listener listener = new Listener(latch);
 
 // Set the listener and start for both pull and push replications
-replicator_pull.setListener(listener);
+replicator_pull.getEventBus().register(listener);
 replicator_pull.start();
-replicator_push.setListener(listener);
+replicator_push.getEventBus().register(listener);
 replicator_push.start();
 
 // Wait for both replications to complete, decreasing the latch via listeners
 latch.await();
+
+// Unsubscribe the listeners
+replicator_pull.getEventBus().unregister(listener);
+replicator_push.getEventBus().unregister(listener);
 
 // Unfortunately in this implementation we'll only record the last error
 // the listener saw
@@ -141,4 +147,42 @@ if (replicator_push.getState() != Replicator.State.COMPLETE) {
     System.out.println("Error replicating FROM remote");
     System.out.println(listener.error);
 }
+```
+
+### Using IndexManager with replication
+
+When using IndexManager for indexing and querying data, it needs to be updated after replication completes:
+
+```java
+import com.cloudant.sync.replication.ReplicationFactory;
+import com.cloudant.sync.replication.Replicator;
+import com.cloudant.sync.indexing.IndexManager;
+
+// username/password can be Cloudant API keys
+URI uri = new URI("https://username:password@username.cloudant.com/my_database");
+Datastore ds = manager.openDatastore("my_datastore");
+
+// Create a replicator that replicates changes from the local
+// datastore to the remote database.
+Replicator replicator = ReplicatorFactory.oneway(ds, uri);
+
+// Create a sample index on type field
+IndexManager indexManager = new IndexManager(ds);
+indexManager.ensureIndexed("type", "type");
+
+// Use a CountDownLatch to provide a lightweight way to wait for completion
+latch = new CountDownLatch(1);
+Listener listener = new Listener(latch);
+replicator.getEventBus().register(listener);
+replicator.start();
+latch.await();
+replicator.getEventBus().unregister(listener);
+if (replicator.getState() != Replicator.State.COMPLETE) {
+    System.out.println("Error replicating TO remote");
+    System.out.println(listener.error);
+}
+
+// Ensure all indexes are updated after replication
+indexManager.updateAllIndexes();
+
 ```
