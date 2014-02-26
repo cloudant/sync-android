@@ -8,6 +8,7 @@ import com.cloudant.sync.datastore.DatastoreExtended;
 import java.net.URI;
 
 public class PushReplication extends Replication {
+
     public URI target;
     public Datastore source;
 
@@ -18,8 +19,8 @@ public class PushReplication extends Replication {
 
     @Override
     public ReplicationStrategy createReplicationStrategy() {
-        CouchConfig couchConfig = ReplicatorURIUtils.extractCouchConfig(target);
-        String dbName = ReplicatorURIUtils.extractDatabaseName(target);
+        String dbName = extractDatabaseName(target);
+        CouchConfig couchConfig = createCouchConfig(target, this.username, this.password);
         CouchClient couchClient = new CouchClient(couchConfig, dbName);
 
         return new BasicPushStrategy(
@@ -28,4 +29,5 @@ public class PushReplication extends Replication {
                 this.getName()
         );
     }
+
 }

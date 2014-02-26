@@ -20,6 +20,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import java.net.URI;
+
 class BasicReplicator implements Replicator {
 
     protected final Replication replication;
@@ -34,6 +36,8 @@ class BasicReplicator implements Replicator {
     public BasicReplicator(PullReplication replication) {
         Preconditions.checkNotNull(replication.target);
         Preconditions.checkNotNull(replication.source);
+        checkURI(replication.source);
+
         this.replication = replication;
         this.state = State.PENDING;
     }
@@ -41,8 +45,19 @@ class BasicReplicator implements Replicator {
     public BasicReplicator(PushReplication replication) {
         Preconditions.checkNotNull(replication.target);
         Preconditions.checkNotNull(replication.source);
+        checkURI(replication.target);
+
         this.replication = replication;
         this.state = State.PENDING;
+    }
+
+    static void checkURI(URI uri) {
+        Preconditions.checkArgument(uri.getUserInfo() == null,
+                "User info must be null (Use Replication.username/password please)");
+        Preconditions.checkArgument(uri.getScheme() != null, "Protocol must be provided.");
+        Preconditions.checkArgument(uri.getHost() != null, "Host must be provided.");
+        Preconditions.checkArgument(uri.getScheme().equalsIgnoreCase("http")
+                || uri.getScheme().equalsIgnoreCase("https"), "Only http/https are supported.");
     }
 
     protected ReplicationStrategy getReplicationStrategy() {
