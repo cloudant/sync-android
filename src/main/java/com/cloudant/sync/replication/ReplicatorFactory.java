@@ -17,6 +17,7 @@ package com.cloudant.sync.replication;
 import com.cloudant.sync.datastore.Datastore;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * <p>Factory for {@link Replicator} objects.</p>
@@ -34,6 +35,7 @@ import java.net.URI;
  */
 public class ReplicatorFactory {
 
+
     /**
      * <p>Creates a Replicator object set up to replicate changes from the
      * local datastore to a remote database.</p>
@@ -45,8 +47,37 @@ public class ReplicatorFactory {
      *  stop the replication itself.
      *
      */
+    @Deprecated
     public static Replicator oneway(Datastore source, URI target) {
-        return new BasicReplicator(source, target);
+        try {
+            String user = getUsername(target.getUserInfo());
+            String password = getPassword(target.getUserInfo());
+            PushReplication pushReplication = new PushReplication();
+            pushReplication.username = user;
+            pushReplication.password = password;
+            pushReplication.source = source;
+            pushReplication.target = removeUsernamePassword(target);
+
+            return new BasicReplicator(pushReplication);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    /**
+     * <p>Creates a Replicator object set up to replicate changes from the
+     * local datastore to a remote database.</p>
+     *
+     * @param replication {@code PushReplication} instance to specify replication
+     *                    from local datastore to remote CouchDb/Cloudant
+     *
+     * @return a {@link Replicator} instance which can be used to start and
+     *  stop the replication itself.
+     *
+     * @see com.cloudant.sync.replication.PushReplication
+     */
+    public static Replicator oneway(PushReplication replication) {
+        return new BasicReplicator(replication);
     }
 
     /**
@@ -59,7 +90,58 @@ public class ReplicatorFactory {
      * @return a {@link Replicator} instance which can be used to start and
      *  stop the replication itself.
      */
+    @Deprecated
     public static Replicator oneway(URI source, Datastore target) {
-        return new BasicReplicator(source, target);
+        try {
+            String user = getUsername(source.getUserInfo());
+            String password = getPassword(source.getUserInfo());
+            PullReplication pullReplication = new PullReplication();
+            pullReplication.username = user;
+            pullReplication.password = password;
+            pullReplication.source = removeUsernamePassword(source);
+            pullReplication.target = target;
+
+            return new BasicReplicator(pullReplication);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    /**
+     * <p>Creates a Replicator object set up to replicate changes from a
+     * remote database to the local datastore.</p>
+     *
+     * @param replication {@code PullReplication} instance to specify replication
+     *                    from remote CouchDB/Cloudant to local datastore
+     *
+     * @return a {@link Replicator} instance which can be used to start and
+     *  stop the replication itself.
+     *
+     * @see com.cloudant.sync.replication.PullReplication
+     */
+    public static Replicator oneway(PullReplication replication) {
+        return new BasicReplicator(replication);
+    }
+
+    static URI removeUsernamePassword(URI u) throws URISyntaxException {
+        return new URI(u.getScheme(),
+                null, u.getHost(), u.getPort(),
+                u.getPath(), u.getQuery(), u.getFragment());
+    }
+
+    static String getUsername(String userInfo) {
+        if(userInfo == null || userInfo.indexOf(':') < 0) {
+            return "";
+        } else {
+            return userInfo.substring(0, userInfo.indexOf(':'));
+        }
+    }
+
+    static String getPassword(String userInfo) {
+        if(userInfo == null || userInfo.indexOf(':') < 0) {
+            return "";
+        } else {
+            return userInfo.substring(userInfo.indexOf(':') + 1);
+        }
     }
 }

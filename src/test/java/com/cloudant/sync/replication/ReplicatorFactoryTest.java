@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import static org.mockito.Mockito.mock;
 
@@ -37,13 +38,33 @@ public class ReplicatorFactoryTest {
 
     @Test
     public void oneway_datastoreAndURI_pullReplicatorReturned() {
-        Replicator replicator = ReplicatorFactory.oneway(mockDatastore, uri);
+        PullReplication pull = new PullReplication();
+        pull.target = this.mockDatastore;
+        pull.source = this.uri;
+        Replicator replicator = ReplicatorFactory.oneway(pull);
         Assert.assertTrue(replicator instanceof BasicReplicator);
     }
 
     @Test
     public void oneway_datastoreAndURI_pushReplicatorReturned() {
-        Replicator replicator = ReplicatorFactory.oneway(uri, mockDatastore);
+        PushReplication push = new PushReplication();
+        push.target = this.uri;
+        push.source = this.mockDatastore;
+        Replicator replicator = ReplicatorFactory.oneway(push);
         Assert.assertTrue(replicator instanceof BasicReplicator);
+    }
+
+    @Test
+    public void removeUsernamePassword_uriWithUsernamePassword() throws URISyntaxException {
+        URI uri = new URI("https://usename:password@myhost.com:443/mydb");
+        URI expected = new URI("https://myhost.com:443/mydb");
+        Assert.assertEquals(expected, ReplicatorFactory.removeUsernamePassword(uri));
+    }
+
+    @Test
+    public void removeUsernamePassword_uriWithoutUsernamePassword() throws URISyntaxException {
+        URI uri = new URI("https://myhost.com:443/mydb");
+        URI expected = new URI("https://myhost.com:443/mydb");
+        Assert.assertEquals(expected, ReplicatorFactory.removeUsernamePassword(uri));
     }
 }
