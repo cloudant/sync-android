@@ -126,10 +126,10 @@ DocumentRevision revision = ds.createDocument(body);
 DocumentRevision aRevision = ds.getDocument(revision.getId());
 ```
 
-Read more in [the CRUD document](crud.html).
+Read more in [the CRUD document](doc/crud.md).
 
 You can also subscribe for notifications of changes in the database, which
-is described in [the events documentation](events.html).
+is described in [the events documentation](doc/events.md).
 
 ### Replicating Data Between Many Devices
 
@@ -155,7 +155,7 @@ Replicator replicator = ReplicatorFactory.oneway(ds, uri);
 replicator.start();
 ```
 
-Read more in [the replication docs](replication.html).
+Read more in [the replication docs](doc/replication.md).
 
 ### Finding data
 
@@ -174,7 +174,7 @@ for (DocumentRevision revision : result) {
 }
 ```
 
-See [Index and Querying Data](index-querying.html).
+See [Index and Querying Data](doc/index-querying.md).
 
 ### Conflicts
 
@@ -193,7 +193,7 @@ conflicted and needs some surgury to resolve the conflicts and bring it
 back to full health.
 
 Learn more about this essential process in the
-[conflicts documentation](conflicts.html).
+[conflicts documentation](docs/conflicts.md).
 
 ## Contributors
 
