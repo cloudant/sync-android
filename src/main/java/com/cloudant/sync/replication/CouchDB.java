@@ -46,6 +46,7 @@ interface CouchDB {
     public void putCheckpoint(String checkpointId, String sequence);
 
     public ChangesResult changes(String lastSequence, int limit);
+    public ChangesResult changes(Replication.Filter filter,String lastSequence, int limit);
     public List<DocumentRevs> getRevisions(String documentId, String... revisionId);
     public void bulk(List<DocumentRevision> revisions);
     public void bulkSerializedDocs(List<String> serializedDocs);

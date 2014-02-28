@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.mazha.AnimalDb;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
@@ -21,6 +22,7 @@ import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.util.TypedDatastore;
+import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -172,7 +174,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     @Test
     public void pull_localDbError_replicationAbort() throws Exception {
         DatastoreExtended localDb = mock(DatastoreExtended.class);
-        BasicPullStrategy replication = new BasicPullStrategy(remoteDb, localDb, null,
+        BasicPullStrategy replication = new BasicPullStrategy(remoteDb, null, localDb, null,
                 config, "name");
         replication.getEventBus().register(new TestStrategyListener());
 
@@ -195,8 +197,12 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     }
 
     private void pull() throws Exception {
+        this.pull(null);;
+    }
+
+    private void pull(Replication.Filter filter) throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        this.replicator = new BasicPullStrategy(remoteDb, datastore, null, this.config,
+        this.replicator = new BasicPullStrategy(remoteDb, filter, datastore, null, this.config,
                 "name");
         this.replicator.getEventBus().register(listener);
         this.replicator.run();
@@ -258,4 +264,38 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         DatastoreWrapper wrapper = new DatastoreWrapper(this.datastore);
         wrapper.putCheckpoint(this.remoteDb.getIdentifier(), "0");
     }
+
+    @Test
+    public void pull_filterBirdFromAnimalDb_twoDocShouldBePulled() throws Exception {
+        Assert.assertEquals(0, datastore.getDocumentCount());
+
+        AnimalDb.populate(remoteDb.couchClient);
+        Replication.Filter filter = new Replication.Filter("animal/bird");
+        this.pull(filter);
+
+        Assert.assertEquals(2, datastore.getDocumentCount());
+        String[] birds = {"snipe", "kookaburra"};
+        for(String mammal : birds) {
+            Assert.assertTrue(datastore.containsDocument(mammal));
+        }
+
+    }
+
+    @Test
+    public void pull_filterMammalFromAnimalDbUsingParameterizedFitler_twoDocShouldBePulled()
+            throws Exception {
+        Assert.assertEquals(0, datastore.getDocumentCount());
+
+        AnimalDb.populate(remoteDb.couchClient);
+        Replication.Filter filter = new Replication.Filter("animal/by_class",
+                ImmutableMap.of("class", "mammal"));
+        this.pull(filter);
+
+        Assert.assertEquals(8, datastore.getDocumentCount());
+        String[] mammals = {"aardvark", "badger", "elephant", "giraffe", "lemur", "llama", "panda", "zebra"};
+        for(String mammal : mammals) {
+            Assert.assertTrue(datastore.containsDocument(mammal));
+        }
+    }
+
 }

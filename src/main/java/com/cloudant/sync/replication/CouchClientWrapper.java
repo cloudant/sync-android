@@ -14,9 +14,16 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.mazha.*;
-import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.common.Log;
+import com.cloudant.mazha.ChangesResult;
+import com.cloudant.mazha.CouchClient;
+import com.cloudant.mazha.CouchConfig;
+import com.cloudant.mazha.CouchException;
+import com.cloudant.mazha.DocumentRevs;
+import com.cloudant.mazha.OkOpenRevision;
+import com.cloudant.mazha.OpenRevision;
+import com.cloudant.mazha.Response;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
@@ -106,6 +113,15 @@ class CouchClientWrapper implements CouchDB {
     @Override
     public ChangesResult changes(String lastSequence, int limit) {
         return couchClient.changes(lastSequence, limit);
+    }
+
+    @Override
+    public ChangesResult changes(Replication.Filter filter, String lastSequence, int limit) {
+        if(filter == null) {
+            return this.changes(lastSequence, limit);
+        } else {
+            return couchClient.changes(filter.name, filter.parameters, lastSequence, limit);
+        }
     }
 
     /**

@@ -1,0 +1,8 @@
+{
+   "_id": "_design/animal",
+   "filters": {
+       "bird": "function(doc, req) { if(doc.class && doc.class == 'bird') { return true; } return false; }",
+       "mammal": "function(doc, req) { if(doc.class && doc.class == 'mammal') { return true; } return false; }",
+       "by_class": "function(doc, req) { if(doc.class && doc.class == req.query.class) { return true; } return false; }"
+   }
+}
