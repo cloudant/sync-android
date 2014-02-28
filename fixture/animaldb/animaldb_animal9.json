@@ -1,0 +1,11 @@
+{
+   "_id": "snipe",
+   "min_weight": 0.08,
+   "max_weight": 0.14,
+   "min_length": 0.25,
+   "max_length": 0.27,
+   "latin_name": "Gallinago gallinago",
+   "wiki_page": "http://en.wikipedia.org/wiki/Common_Snipe",
+   "class": "bird",
+   "diet": "omnivore"
+}

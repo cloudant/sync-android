@@ -14,6 +14,7 @@ public class PullReplication extends Replication {
 
     public URI source;
     public Datastore target;
+    public Filter filter;
 
     @Override
     public void validate() {
@@ -24,7 +25,11 @@ public class PullReplication extends Replication {
 
     @Override
     public String getReplicatorName() {
-        return String.format("%s <-- %s ", target.getDatastoreName(), source);
+        if(filter == null) {
+            return String.format("%s <-- %s ", target.getDatastoreName(), source);
+        } else {
+            return String.format("%s <-- %s (%s)", target.getDatastoreName(), source, filter.name);
+        }
     }
 
     public String getSourceDbName() {

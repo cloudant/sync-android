@@ -41,6 +41,7 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     private static final String LOG_TAG = "BasicPullStrategy";
     CouchDB sourceDb;
+    Replication.Filter filter;
     DatastoreWrapper targetDb;
 
     ExecutorService executor;
@@ -83,12 +84,13 @@ class BasicPullStrategy implements ReplicationStrategy {
 
         this.executor = executorService;
         this.config = config;
-        this.name = String.format("%s [%s]", LOG_TAG, pullReplication.getReplicatorName());
+        this.filter = pullReplication.filter;
 
         String dbName = pullReplication.getSourceDbName();
         CouchConfig couchConfig = pullReplication.getCouchConfig();
         this.sourceDb = new CouchClientWrapper(dbName, couchConfig);
         this.targetDb = new DatastoreWrapper((DatastoreExtended) pullReplication.target);
+        this.name = String.format("%s [%s]", LOG_TAG, pullReplication.getReplicatorName());
     }
 
     @Override
@@ -242,9 +244,9 @@ class BasicPullStrategy implements ReplicationStrategy {
     private int processOneChangesBatch(ChangesResultWrapper changeFeeds)
         throws ExecutionException, InterruptedException {
         String feed = String.format(
-            "Change feed: { last_seq: %s, change size: %s}",
-            changeFeeds.getLastSeq(),
-            changeFeeds.getResults().size()
+                "Change feed: { last_seq: %s, change size: %s}",
+                changeFeeds.getLastSeq(),
+                changeFeeds.getResults().size()
         );
         Log.d(this.name, feed);
 
@@ -284,16 +286,25 @@ class BasicPullStrategy implements ReplicationStrategy {
         }
 
         if (!this.cancel) {
-            this.targetDb.putCheckpoint(this.sourceDb.getIdentifier(), changeFeeds.getLastSeq());
+            this.targetDb.putCheckpoint(this.getReplicationId(), changeFeeds.getLastSeq());
         }
 
         return changesProcessed;
     }
 
+    private String getReplicationId() {
+        if(filter == null) {
+            return this.sourceDb.getIdentifier() ;
+        } else {
+            return this.sourceDb.getIdentifier() + "?" + filter.toQueryString();
+        }
+    }
+
     private ChangesResultWrapper nextBatch() {
-        final String lastCheckpoint = this.targetDb.getCheckpoint(this.sourceDb.getIdentifier());
+        final String lastCheckpoint = this.targetDb.getCheckpoint(this.getReplicationId());
         Log.d(this.name, "lastCheckpoint: " + lastCheckpoint);
         ChangesResult changeFeeds = this.sourceDb.changes(
+                filter,
                 lastCheckpoint,
                 this.config.changeLimitPerBatch);
         Log.v(this.name, "changes feed: " + JSONUtils.toPrettyJson(changeFeeds));

@@ -1,0 +1,11 @@
+{
+   "_id": "llama",
+   "min_weight": 130,
+   "max_weight": 200,
+   "min_length": 1.7,
+   "max_length": 1.8,
+   "latin_name": "Lama glama",
+   "wiki_page": "http://en.wikipedia.org/wiki/Llama",
+   "class": "mammal",
+   "diet": "herbivore"
+}

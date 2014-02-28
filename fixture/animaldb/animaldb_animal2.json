@@ -1,0 +1,11 @@
+{
+   "_id": "badger",
+   "wiki_page": "http://en.wikipedia.org/wiki/Badger",
+   "min_weight": 7,
+   "max_weight": 30,
+   "min_length": 0.6,
+   "max_length": 0.9,
+   "latin_name": "Meles meles",
+   "class": "mammal",
+   "diet": "omnivore"
+}

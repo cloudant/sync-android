@@ -1,0 +1,11 @@
+{
+   "_id": "aardvark",
+   "min_weight": 40,
+   "max_weight": 65,
+   "min_length": 1,
+   "max_length": 2.2,
+   "latin_name": "Orycteropus afer",
+   "wiki_page": "http://en.wikipedia.org/wiki/Aardvark",
+   "class": "mammal",
+   "diet": "omnivore"
+}
