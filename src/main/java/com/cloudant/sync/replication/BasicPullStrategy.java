@@ -41,6 +41,7 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     private static final String LOG_TAG = "BasicPullStrategy";
     CouchDB sourceDb;
+    Replication.Filter filter;
     DatastoreWrapper targetDb;
 
     ExecutorService executor;
@@ -83,12 +84,13 @@ class BasicPullStrategy implements ReplicationStrategy {
 
         this.executor = executorService;
         this.config = config;
-        this.name = String.format("%s [%s]", LOG_TAG, pullReplication.getName());
+        this.filter = pullReplication.filter;
 
         String dbName = pullReplication.getDbName();
         CouchConfig couchConfig = pullReplication.getCouchConfig();
         this.sourceDb = new CouchClientWrapper(dbName, couchConfig);
         this.targetDb = new DatastoreWrapper((DatastoreExtended) pullReplication.target);
+        this.name = String.format("%s [%s]", LOG_TAG, pullReplication.getName());
     }
 
     @Override
@@ -242,9 +244,9 @@ class BasicPullStrategy implements ReplicationStrategy {
     private int processOneChangesBatch(ChangesResultWrapper changeFeeds)
         throws ExecutionException, InterruptedException {
         String feed = String.format(
-            "Change feed: { last_seq: %s, change size: %s}",
-            changeFeeds.getLastSeq(),
-            changeFeeds.getResults().size()
+                "Change feed: { last_seq: %s, change size: %s}",
+                changeFeeds.getLastSeq(),
+                changeFeeds.getResults().size()
         );
         Log.d(this.name, feed);
 
@@ -284,16 +286,26 @@ class BasicPullStrategy implements ReplicationStrategy {
         }
 
         if (!this.cancel) {
-            this.targetDb.putCheckpoint(this.sourceDb.getIdentifier(), changeFeeds.getLastSeq());
+            this.targetDb.putCheckpoint(this.getReplicationId(), changeFeeds.getLastSeq());
         }
 
         return changesProcessed;
     }
 
+    private String getReplicationId() {
+        if(filter == null) {
+            return this.sourceDb.getIdentifier() ;
+        } else {
+            return this.sourceDb.getIdentifier() + "?" + filter.toString();
+        }
+    }
+
     private ChangesResultWrapper nextBatch() {
-        final String lastCheckpoint = this.targetDb.getCheckpoint(this.sourceDb.getIdentifier());
+        String replicationId = this.getReplicationId();
+        final String lastCheckpoint = this.targetDb.getCheckpoint(replicationId);
         Log.d(this.name, "lastCheckpoint: " + lastCheckpoint);
         ChangesResult changeFeeds = this.sourceDb.changes(
+                filter,
                 lastCheckpoint,
                 this.config.changeLimitPerBatch);
         Log.v(this.name, "changes feed: " + JSONUtils.toPrettyJson(changeFeeds));
@@ -304,6 +316,10 @@ class BasicPullStrategy implements ReplicationStrategy {
                                                         Map<String, Collection<String>> revisions) {
         List<Callable<DocumentRevsList>> tasks = new ArrayList<Callable<DocumentRevsList>>();
         for(String id : ids) {
+            if(id.startsWith("_")) {
+                continue;
+            }
+
             tasks.add(GetRevisionTask.createGetRevisionTask(this.sourceDb,
                     id, revisions.get(id).toArray(new String[]{})));
         }

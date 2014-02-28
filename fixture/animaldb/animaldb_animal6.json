@@ -1,0 +1,10 @@
+{
+   "_id": "lemur",
+   "wiki_page": "http://en.wikipedia.org/wiki/Ring-tailed_lemur",
+   "min_weight": 2.2,
+   "max_weight": 2.2,
+   "min_length": 0.95,
+   "max_length": 1.1,
+   "class": "mammal",
+   "diet": "omnivore"
+}

@@ -1,9 +1,13 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.mazha.CouchConfig;
-import com.google.common.base.Preconditions;
+import com.google.common.base.Joiner;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 abstract class Replication {
 
@@ -14,8 +18,37 @@ abstract class Replication {
 
     public abstract ReplicationStrategy createReplicationStrategy();
 
+    public static class Filter {
+        public String name;
+        public Map<String, String> parameters;
+
+        public Filter(String name) {
+            this.name = name;
+        }
+
+        public Filter(String name, Map<String, String> parameters) {
+            this.name = name;
+            this.parameters = parameters;
+        }
+
+        @Override
+        public String toString() {
+            if(this.parameters == null) {
+                return String.format("filter=%s", this.name);
+            } else {
+                List<String> queries = new ArrayList<String>();
+                for(Map.Entry<String, String> parameter : this.parameters.entrySet()) {
+                    queries.add(String.format("%s=%s", parameter.getKey(), parameter.getValue()));
+                }
+                Collections.sort(queries);
+                return String.format("filter=%s&%s", this.name,
+                        Joiner.on('&').skipNulls().join(queries));
+            }
+        }
+    }
+
     CouchConfig createCouchConfig(URI uri, String username, String password) {
-        int port = uri.getPort() < 0 ? this.getDefaultPort(uri.getScheme()) : uri.getPort();
+        int port = uri.getPort() < 0 ? getDefaultPort(uri.getScheme()) : uri.getPort();
         return new CouchConfig(uri.getScheme(), uri.getHost(),  port, username, password);
     }
 

@@ -1,0 +1,11 @@
+{
+   "_id": "zebra",
+   "_rev": "3-750dac460a6cc41e6999f8943b8e603e",
+   "wiki_page": "http://en.wikipedia.org/wiki/Plains_zebra",
+   "min_length": 2,
+   "max_length": 2.5,
+   "min_weight": 175,
+   "max_weight": 387,
+   "class": "mammal",
+   "diet": "herbivore"
+}
