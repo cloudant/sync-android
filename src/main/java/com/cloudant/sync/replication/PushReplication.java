@@ -1,9 +1,7 @@
 package com.cloudant.sync.replication;
 
-import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreExtended;
 
 import java.net.URI;
 
@@ -17,17 +15,17 @@ public class PushReplication extends Replication {
         return String.format("%s <-- %s ", target, source.getDatastoreName());
     }
 
+    public String getDbName() {
+        return this.extractDatabaseName(this.target);
+    }
+
+    public CouchConfig getCouchConfig() {
+        return this.createCouchConfig(this.target, this.username, this.password);
+    }
+
     @Override
     public ReplicationStrategy createReplicationStrategy() {
-        String dbName = extractDatabaseName(target);
-        CouchConfig couchConfig = createCouchConfig(target, this.username, this.password);
-        CouchClient couchClient = new CouchClient(couchConfig, dbName);
-
-        return new BasicPushStrategy(
-                new CouchClientWrapper(couchClient),
-                (DatastoreExtended)this.source,
-                this.getName()
-        );
+        return new BasicPushStrategy(this);
     }
 
 }
