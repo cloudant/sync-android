@@ -14,12 +14,12 @@ abstract class Replication {
 
     public abstract ReplicationStrategy createReplicationStrategy();
 
-    static CouchConfig createCouchConfig(URI uri, String username, String password) {
-        int port = uri.getPort() < 0 ? getDefaultPort(uri.getScheme()) : uri.getPort();
+    CouchConfig createCouchConfig(URI uri, String username, String password) {
+        int port = uri.getPort() < 0 ? this.getDefaultPort(uri.getScheme()) : uri.getPort();
         return new CouchConfig(uri.getScheme(), uri.getHost(),  port, username, password);
     }
 
-    static int getDefaultPort(String protocol) {
+    int getDefaultPort(String protocol) {
         if(protocol.equalsIgnoreCase("http")) {
             return 80;
         } else if(protocol.equalsIgnoreCase("https")) {
@@ -29,7 +29,7 @@ abstract class Replication {
         }
     }
 
-    static String extractDatabaseName(URI uri) {
+    String extractDatabaseName(URI uri) {
         String db =  uri.getPath().substring(1);
         if(db.contains("/"))
             throw new IllegalArgumentException("DB name can not contain slash: '/'");

@@ -15,15 +15,13 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
-import com.cloudant.sync.notifications.ReplicationCompleted;
-import com.cloudant.sync.notifications.ReplicationErrored;
 import com.google.common.eventbus.Subscribe;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentMatcher;
 
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +38,8 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
         // Prepare
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
-        BasicPushStrategy pushStrategy = new BasicPushStrategy(mockRemoteDb, datastore,
-                "name");
+        BasicPushStrategy pushStrategy = new BasicPushStrategy(this.createPushReplication());
+        pushStrategy.targetDb = mockRemoteDb;
         pushStrategy.eventBus.register(mockListener);
         when(mockRemoteDb.exists()).thenReturn(false);
 
@@ -64,8 +62,8 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
         // Prepare
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
-        BasicPushStrategy pushStrategy = new BasicPushStrategy(mockRemoteDb, datastore,
-                "name");
+        BasicPushStrategy pushStrategy = new BasicPushStrategy(this.createPushReplication());
+        pushStrategy.targetDb = mockRemoteDb;
         pushStrategy.eventBus.register(mockListener);
 
         BarUtils.createBar(datastore, "Tom", 31);
@@ -87,12 +85,12 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
     }
 
     @Test
-    public void push_noMissingRevisions_noDataShouldBePushed() {
+    public void push_noMissingRevisions_noDataShouldBePushed() throws URISyntaxException {
         //Prepare
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
-        BasicPushStrategy pushStrategy = new BasicPushStrategy(mockRemoteDb, datastore,
-                "name");
+        BasicPushStrategy pushStrategy = new BasicPushStrategy(this.createPushReplication());
+        pushStrategy.targetDb = mockRemoteDb;
         pushStrategy.eventBus.register(mockListener);
         
         Bar bar = BarUtils.createBar(datastore, "Tom", 31);
@@ -128,8 +126,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
-        final BasicPushStrategy pushStrategy = new BasicPushStrategy(mockRemoteDb, datastore,
-                "name");
+        final BasicPushStrategy pushStrategy = new BasicPushStrategy(this.createPushReplication());
         pushStrategy.eventBus.register(mockListener);
         when(mockRemoteDb.exists()).thenReturn(true);
 

@@ -39,13 +39,6 @@ public class PullReplicatorTest extends ReplicationTestBase {
         prepareTwoDocumentsInRemoteDB();
     }
 
-    private PullReplication createPullReplication() {
-        PullReplication pull = new PullReplication();
-        pull.target = this.datastore;
-        pull.source = this.source;
-        return pull;
-    }
-
     private void prepareTwoDocumentsInRemoteDB() {
         Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
         couchClient.create(bar1);
