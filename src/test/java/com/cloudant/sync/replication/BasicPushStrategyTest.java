@@ -14,10 +14,10 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.mazha.NoResourceException;
 import com.cloudant.common.RequireRunningCouchDB;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.mazha.NoResourceException;
 import com.cloudant.sync.datastore.DocumentBody;
+import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionBuilder;
 import org.junit.After;
@@ -26,12 +26,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.util.Map;
 import java.util.HashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 
 @Category(RequireRunningCouchDB.class)
@@ -188,8 +184,8 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     private void push() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        this.replicator = new BasicPushStrategy(remoteDb, datastore, currentSetting,
-                "name");
+        PushReplication pushReplication = this.createPushReplication();
+        this.replicator = new BasicPushStrategy(pushReplication, currentSetting);
         this.replicator.eventBus.register(listener);
         this.replicator.run();
         Assert.assertTrue(listener.finishCalled);

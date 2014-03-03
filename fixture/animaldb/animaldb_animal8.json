@@ -1,0 +1,11 @@
+{
+   "_id": "panda",
+   "_rev": "4-f436ff652be15aff03461af1cb5c1ba9",
+   "wiki_page": "http://en.wikipedia.org/wiki/Panda",
+   "min_weight": 73,
+   "max_weight": 115,
+   "min_length": 1.2,
+   "max_length": 1.8,
+   "class": "mammal",
+   "diet": "carnivore"
+}

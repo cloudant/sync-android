@@ -78,4 +78,18 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     public URI getURI() throws URISyntaxException {
         return this.getCouchConfig().getURI(getDbName());
     }
+
+    PullReplication createPullReplication() throws URISyntaxException {
+        PullReplication pullReplication = new PullReplication();
+        pullReplication.source = this.getURI();
+        pullReplication.target = this.datastore;
+        return pullReplication;
+    }
+
+    PushReplication createPushReplication() throws URISyntaxException {
+        PushReplication pushReplication = new PushReplication();
+        pushReplication.target = this.getURI();
+        pushReplication.source = this.datastore;
+        return pushReplication;
+    }
 }

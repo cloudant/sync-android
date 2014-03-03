@@ -178,7 +178,12 @@ public class ReplicationSystemTest {
     private void pull(URI uri, DatastoreExtended datastoreExtended) throws
             InterruptedException {
         TestReplicationListener listener = new TestReplicationListener();
-        Replicator pullReplicator = ReplicatorFactory.oneway(uri, datastoreExtended);
+
+        PullReplication pull = new PullReplication();
+        pull.target = datastoreExtended;
+        pull.source = uri;
+
+        Replicator pullReplicator = ReplicatorFactory.oneway(pull);
         pullReplicator.getEventBus().register(listener);
         pullReplicator.start();
 
@@ -192,7 +197,12 @@ public class ReplicationSystemTest {
     private void push(DatastoreExtended datastoreExtended, URI uri) throws
             InterruptedException {
         TestReplicationListener listener = new TestReplicationListener();
-        Replicator pushReplicator = ReplicatorFactory.oneway(datastoreExtended, uri);
+
+        PushReplication push = new PushReplication();
+        push.source = datastoreExtended;
+        push.target = uri;
+
+        Replicator pushReplicator = ReplicatorFactory.oneway(push);
         pushReplicator.getEventBus().register(listener);
         pushReplicator.start();
 

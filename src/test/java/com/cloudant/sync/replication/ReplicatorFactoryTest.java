@@ -37,13 +37,19 @@ public class ReplicatorFactoryTest {
 
     @Test
     public void oneway_datastoreAndURI_pullReplicatorReturned() {
-        Replicator replicator = ReplicatorFactory.oneway(mockDatastore, uri);
+        PullReplication pull = new PullReplication();
+        pull.target = this.mockDatastore;
+        pull.source = this.uri;
+        Replicator replicator = ReplicatorFactory.oneway(pull);
         Assert.assertTrue(replicator instanceof BasicReplicator);
     }
 
     @Test
     public void oneway_datastoreAndURI_pushReplicatorReturned() {
-        Replicator replicator = ReplicatorFactory.oneway(uri, mockDatastore);
+        PushReplication push = new PushReplication();
+        push.target = this.uri;
+        push.source = this.mockDatastore;
+        Replicator replicator = ReplicatorFactory.oneway(push);
         Assert.assertTrue(replicator instanceof BasicReplicator);
     }
 }

@@ -1,0 +1,10 @@
+{
+   "_id": "kookaburra",
+   "_rev": "4-6038cf35dfe1211f85484dec951142c7",
+   "min_length": 0.28,
+   "max_length": 0.42,
+   "wiki_page": "http://en.wikipedia.org/wiki/Kookaburra",
+   "class": "bird",
+   "diet": "carnivore",
+   "latin_name": "Dacelo novaeguineae"
+}

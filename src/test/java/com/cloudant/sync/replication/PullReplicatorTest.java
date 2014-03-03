@@ -33,7 +33,9 @@ public class PullReplicatorTest extends ReplicationTestBase {
     public void setUp() throws Exception {
         super.setUp();
         source = getURI();
-        replicator = (BasicReplicator)ReplicatorFactory.oneway(source, datastore);
+
+        PullReplication pull = createPullReplication();
+        replicator = (BasicReplicator)ReplicatorFactory.oneway(pull);
         prepareTwoDocumentsInRemoteDB();
     }
 
@@ -52,7 +54,6 @@ public class PullReplicatorTest extends ReplicationTestBase {
     @Test
     public void start_StartedThenComplete() throws InterruptedException {
         TestReplicationListener listener = new TestReplicationListener();
-        Assert.assertEquals(BasicReplicator.ReplicationType.PULL, replicator.replicationType);
         Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
         replicator.getEventBus().register(listener);
         replicator.start();

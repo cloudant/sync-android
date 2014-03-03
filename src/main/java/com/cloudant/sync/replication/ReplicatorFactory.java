@@ -38,28 +38,32 @@ public class ReplicatorFactory {
      * <p>Creates a Replicator object set up to replicate changes from the
      * local datastore to a remote database.</p>
      *
-     * @param source local {@link Datastore} to replicate changes from.
-     * @param target remote database to replicate changes to.
+     * @param replication {@code PushReplication} instance to specify replication
+     *                    from local datastore to remote CouchDb/Cloudant
      *
      * @return a {@link Replicator} instance which can be used to start and
      *  stop the replication itself.
      *
+     * @see com.cloudant.sync.replication.PushReplication
      */
-    public static Replicator oneway(Datastore source, URI target) {
-        return new BasicReplicator(source, target);
+    public static Replicator oneway(PushReplication replication) {
+        return new BasicReplicator(replication);
     }
 
     /**
      * <p>Creates a Replicator object set up to replicate changes from a
      * remote database to the local datastore.</p>
      *
-     * @param source remote database to replicate changes from.
-     * @param target local {@link Datastore} to replicate changes to.
+     * @param replication {@code PullReplication} instance to specify replication
+     *                    from remote CouchDB/Cloudant to local datastore
      *
      * @return a {@link Replicator} instance which can be used to start and
      *  stop the replication itself.
+     *
+     * @see com.cloudant.sync.replication.PullReplication
      */
-    public static Replicator oneway(URI source, Datastore target) {
-        return new BasicReplicator(source, target);
+    public static Replicator oneway(PullReplication replication) {
+        return new BasicReplicator(replication);
     }
+
 }
