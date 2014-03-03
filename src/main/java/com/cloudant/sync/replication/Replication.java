@@ -24,16 +24,18 @@ abstract class Replication {
     public String username;
     public String password;
 
-    public abstract String getName();
+    public abstract void validate();
+
+    public abstract String getReplicatorName();
 
     public abstract ReplicationStrategy createReplicationStrategy();
 
-    static CouchConfig createCouchConfig(URI uri, String username, String password) {
-        int port = uri.getPort() < 0 ? getDefaultPort(uri.getScheme()) : uri.getPort();
+    CouchConfig createCouchConfig(URI uri, String username, String password) {
+        int port = uri.getPort() < 0 ? this.getDefaultPort(uri.getScheme()) : uri.getPort();
         return new CouchConfig(uri.getScheme(), uri.getHost(),  port, username, password);
     }
 
-    static int getDefaultPort(String protocol) {
+    int getDefaultPort(String protocol) {
         if(protocol.equalsIgnoreCase("http")) {
             return 80;
         } else if(protocol.equalsIgnoreCase("https")) {
@@ -43,10 +45,20 @@ abstract class Replication {
         }
     }
 
-    static String extractDatabaseName(URI uri) {
+    String extractDatabaseName(URI uri) {
         String db =  uri.getPath().substring(1);
         if(db.contains("/"))
             throw new IllegalArgumentException("DB name can not contain slash: '/'");
         return db;
+    }
+
+    void checkURI(URI uri) {
+        Preconditions.checkArgument(uri.getUserInfo() == null,
+                "There must be no user info (credentials) in replication URI " +
+                        "(use Replication instance attributes)");
+        Preconditions.checkArgument(uri.getScheme() != null, "Protocol must be provided in replication URI");
+        Preconditions.checkArgument(uri.getHost() != null, "Host must be provided in replication URI");
+        Preconditions.checkArgument(uri.getScheme().equalsIgnoreCase("http")
+                || uri.getScheme().equalsIgnoreCase("https"), "Only http/https are supported in replication URI");
     }
 }

@@ -15,11 +15,13 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.Log;
+import com.cloudant.mazha.CouchConfig;
 import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
@@ -57,23 +59,26 @@ class BasicPushStrategy implements ReplicationStrategy {
      */
     private volatile boolean replicationTerminated = false;
 
-    public BasicPushStrategy(CouchDB targetDb,
-                             DatastoreExtended sourceDb,
-                             PushConfiguration config,
-                             String name) {
+    public BasicPushStrategy(PushReplication pushReplication) {
+        this(pushReplication, null);
+    }
 
-        this.targetDb = targetDb;
-        this.sourceDb = new DatastoreWrapper(sourceDb);
+    public BasicPushStrategy(PushReplication pushReplication,
+                             PushConfiguration config) {
+        Preconditions.checkNotNull(pushReplication, "PushReplication must not be null.");
+        if(config == null) {
+            config = new PushConfiguration();
+        }
+
+        String dbName = pushReplication.getTargetDbName();
+        CouchConfig couchConfig = pushReplication.getCouchConfig();
+
+        this.targetDb = new CouchClientWrapper(dbName, couchConfig);
+        this.sourceDb = new DatastoreWrapper((DatastoreExtended) pushReplication.source);
         // Push config is immutable
         this.config = config;
 
-        this.name = String.format("%s [%s]", LOG_TAG, name);
-    }
-
-    public BasicPushStrategy(CouchDB targetDb,
-                             DatastoreExtended sourceDb,
-                             String name) {
-        this(targetDb, sourceDb, new PushConfiguration(), name);
+        this.name = String.format("%s [%s]", LOG_TAG, pushReplication.getReplicatorName());
     }
 
     @Override

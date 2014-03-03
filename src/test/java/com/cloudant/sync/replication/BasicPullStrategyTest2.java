@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -104,8 +105,8 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
 
     private void sync() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        BasicPullStrategy replicator = new BasicPullStrategy(remoteDb, datastore,
-                null, "name");
+
+        BasicPullStrategy replicator = new BasicPullStrategy(this.createPullReplication());
         replicator.getEventBus().register(listener);
 
         Executors.newSingleThreadExecutor().submit(replicator).get();

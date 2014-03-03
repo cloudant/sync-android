@@ -1,9 +1,8 @@
 package com.cloudant.sync.replication;
 
-import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreExtended;
+import com.google.common.base.Preconditions;
 
 import java.net.URI;
 
@@ -17,21 +16,28 @@ public class PushReplication extends Replication {
     public Datastore source;
 
     @Override
-    public String getName() {
+    public void validate() {
+        Preconditions.checkNotNull(this.target);
+        Preconditions.checkNotNull(this.source);
+        checkURI(this.target);
+    }
+
+    @Override
+    public String getReplicatorName() {
         return String.format("%s <-- %s ", target, source.getDatastoreName());
+    }
+
+    public String getTargetDbName() {
+        return this.extractDatabaseName(this.target);
+    }
+
+    public CouchConfig getCouchConfig() {
+        return this.createCouchConfig(this.target, this.username, this.password);
     }
 
     @Override
     public ReplicationStrategy createReplicationStrategy() {
-        String dbName = extractDatabaseName(target);
-        CouchConfig couchConfig = createCouchConfig(target, this.username, this.password);
-        CouchClient couchClient = new CouchClient(couchConfig, dbName);
-
-        return new BasicPushStrategy(
-                new CouchClientWrapper(couchClient),
-                (DatastoreExtended)this.source,
-                this.getName()
-        );
+        return new BasicPushStrategy(this);
     }
 
 }

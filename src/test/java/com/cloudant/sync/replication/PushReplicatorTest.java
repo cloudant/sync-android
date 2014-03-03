@@ -34,16 +34,9 @@ public class PushReplicatorTest extends ReplicationTestBase {
         super.setUp();
         source = getURI();
 
-        PushReplication push = createPushReplication();
+        PushReplication push = this.createPushReplication();
         replicator = (BasicReplicator) ReplicatorFactory.oneway(push);
         prepareTwoDocumentsInLocalDB();
-    }
-
-    private PushReplication createPushReplication() {
-        PushReplication push = new PushReplication();
-        push.target = this.source;
-        push.source = this.datastore;
-        return push;
     }
 
     private void prepareTwoDocumentsInLocalDB() {

@@ -16,10 +16,9 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.common.Log;
 import com.cloudant.mazha.ChangesResult;
+import com.cloudant.mazha.CouchConfig;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentRevsList;
-import com.cloudant.sync.notifications.ReplicationCompleted;
-import com.cloudant.sync.notifications.ReplicationErrored;
 import com.cloudant.sync.util.JSONUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -43,8 +42,8 @@ class BasicPullStrategy implements ReplicationStrategy {
     private static final String LOG_TAG = "BasicPullStrategy";
     CouchDB sourceDb;
     DatastoreWrapper targetDb;
-    ExecutorService executor;
 
+    ExecutorService executor;
     private PullConfiguration config;
 
     int documentCounter = 0;
@@ -64,36 +63,32 @@ class BasicPullStrategy implements ReplicationStrategy {
      */
     private volatile boolean replicationTerminated = false;
 
-    public BasicPullStrategy(CouchDB sourceDb,
-                             DatastoreExtended targetDb,
+    public BasicPullStrategy(PullReplication pullReplication) {
+        this(pullReplication, null, null);
+    }
+
+    public BasicPullStrategy(PullReplication pullReplication,
                              ExecutorService executorService,
-                             PullConfiguration config,
-                             String name) {
-        
+                             PullConfiguration config) {
+        Preconditions.checkNotNull(pullReplication, "PullReplication must not be null.");
+
         if(executorService == null) {
             executorService = new ThreadPoolExecutor(4, 4, 1, TimeUnit.MINUTES,
                     new LinkedBlockingQueue<Runnable>());
         }
 
-        this.sourceDb = sourceDb;
-        this.targetDb = new DatastoreWrapper(targetDb);
+        if(config == null) {
+            config = new PullConfiguration();
+        }
+
         this.executor = executorService;
         this.config = config;
+        this.name = String.format("%s [%s]", LOG_TAG, pullReplication.getReplicatorName());
 
-        this.name = String.format("%s [%s]", LOG_TAG, name);
-    }
-
-    public BasicPullStrategy(CouchDB sourceDb,
-                             DatastoreExtended targetDb,
-                             ExecutorService executorService,
-                             String name) {
-        this(sourceDb, targetDb, executorService, new PullConfiguration(), name);
-    }
-
-    public BasicPullStrategy(CouchDB sourceDb,
-                             DatastoreExtended targetDb,
-                             String name) {
-        this(sourceDb, targetDb, null, new PullConfiguration(), name);
+        String dbName = pullReplication.getSourceDbName();
+        CouchConfig couchConfig = pullReplication.getCouchConfig();
+        this.sourceDb = new CouchClientWrapper(dbName, couchConfig);
+        this.targetDb = new DatastoreWrapper((DatastoreExtended) pullReplication.target);
     }
 
     @Override
