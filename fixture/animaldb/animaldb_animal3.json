@@ -1,0 +1,10 @@
+{
+   "_id": "elephant",
+   "wiki_page": "http://en.wikipedia.org/wiki/African_elephant",
+   "min_weight": 4700,
+   "max_weight": 6050,
+   "min_length": 3.2,
+   "max_length": 4,
+   "class": "mammal",
+   "diet": "herbivore"
+}

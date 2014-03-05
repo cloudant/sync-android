@@ -14,14 +14,11 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.mazha.CouchClient;
-import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,7 +43,9 @@ public class BasicReplicatorMockTest {
         mockStrategy = mock(ReplicationStrategy.class);
         when(mockStrategy.getEventBus()).thenReturn(new EventBus());
         mockListener = mock(Listener.class);
-        replicator = new TestReplicator(uri, mockDatastore, mockStrategy);
+        replicator = new TestReplicator(
+                this.createPullReplication(this.uri, this.mockDatastore),
+                mockStrategy);
 
         // mockStrategy always needs to be ready to start
         when(mockStrategy.isReplicationTerminated()).thenReturn(true);
@@ -55,8 +54,6 @@ public class BasicReplicatorMockTest {
     @Test
     public void constructor() throws Exception {
         Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
-        Assert.assertNotNull(replicator.getDatastore());
-        Assert.assertNotNull(replicator.getCouchClient());
         Assert.assertNull(replicator.strategyThread());
     }
 
@@ -290,28 +287,12 @@ public class BasicReplicatorMockTest {
         verify(mockStrategy, times(2)).run();
     }
 
-    @Test
-    public void getReplicationStrategy_typeIsPULL_BasicPullStrategy() {
-        BasicReplicator replicator = new BasicReplicator(uri, mockDatastore);
-        Assert.assertEquals(BasicReplicator.ReplicationType.PULL, replicator.replicationType);
-        ReplicationStrategy strategy = replicator.getReplicationStrategy();
-        Assert.assertTrue(strategy instanceof BasicPullStrategy);
-    }
-
-    @Test
-    public void getReplicationStrategy_typeIsPUSH_BasicPushStrategy() {
-        BasicReplicator replicator = new BasicReplicator(mockDatastore, uri);
-        Assert.assertEquals(BasicReplicator.ReplicationType.PUSH, replicator.replicationType);
-        ReplicationStrategy strategy = replicator.getReplicationStrategy();
-        Assert.assertTrue(strategy instanceof BasicPushStrategy);
-    }
-
     public class TestReplicator extends BasicReplicator {
 
         final ReplicationStrategy strategy;
 
-        public TestReplicator(URI uri, Datastore datastore, ReplicationStrategy strategy) {
-            super(uri, datastore);
+        public TestReplicator(PullReplication replication, ReplicationStrategy strategy) {
+            super(replication);
             this.strategy = strategy;
         }
 
@@ -326,14 +307,6 @@ public class BasicReplicatorMockTest {
 
         void await() throws InterruptedException {
             this.strategyThread.join();
-        }
-
-        CouchClient getCouchClient() {
-            return this.couchClient;
-        }
-
-        Datastore getDatastore() {
-            return this.datastore;
         }
     }
 
@@ -378,7 +351,8 @@ public class BasicReplicatorMockTest {
         when(mockStrategy.isReplicationTerminated()).thenReturn(true);
         when(mockStrategy.getEventBus()).thenReturn(new EventBus());
 
-        TestReplicator replicator = new TestReplicator(uri, mockDatastore, mockStrategy);
+        PullReplication pull = createPullReplication(uri, mockDatastore);
+        TestReplicator replicator = new TestReplicator(pull, mockStrategy);
         replicator.getEventBus().register(listener);
         replicator.start();
 
@@ -404,7 +378,8 @@ public class BasicReplicatorMockTest {
         when(mockStrategy.isReplicationTerminated()).thenReturn(true);
         when(mockStrategy.getEventBus()).thenReturn(new EventBus());
 
-        TestReplicator replicator = new TestReplicator(uri, mockDatastore, mockStrategy);
+        PullReplication pull = createPullReplication(uri, mockDatastore);
+        TestReplicator replicator = new TestReplicator(pull, mockStrategy);
         replicator.getEventBus().register(listener);
         replicator.start();
 
@@ -416,5 +391,12 @@ public class BasicReplicatorMockTest {
 
         // Don't leave threads about the place
         replicator.complete(new ReplicationStrategyCompleted(mockStrategy));
+    }
+
+    private PullReplication createPullReplication(URI uri, DatastoreExtended mockDatastore) {
+        PullReplication pull = new PullReplication();
+        pull.target = mockDatastore;
+        pull.source = uri;
+        return pull;
     }
 }

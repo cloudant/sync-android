@@ -15,22 +15,15 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
-import com.cloudant.mazha.ChangesResult;
-import com.cloudant.sync.notifications.ReplicationCompleted;
-import com.cloudant.sync.notifications.ReplicationErrored;
 import com.google.common.eventbus.Subscribe;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -62,8 +55,10 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
-        BasicPullStrategy pullStrategy = new BasicPullStrategy(mockRemoteDb, datastore,
-                service, "name");
+        PullReplication pullReplication = createPullReplication();
+
+        BasicPullStrategy pullStrategy = new BasicPullStrategy(pullReplication);
+        pullStrategy.sourceDb = mockRemoteDb;
         pullStrategy.getEventBus().register(mockListener);
 
         when(mockRemoteDb.exists()).thenReturn(false);
@@ -81,7 +76,6 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         Assert.assertEquals(0, pullStrategy.getBatchCounter());
     }
 
-
     @Test
     public void call_unknownRemoteDBError_pullAbortedAndErrorShouldBeCalled() throws
             Exception {
@@ -89,8 +83,8 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
-        BasicPullStrategy pullStrategy = new BasicPullStrategy(mockRemoteDb, datastore,
-                service, "name");
+        BasicPullStrategy pullStrategy = new BasicPullStrategy(createPullReplication());
+        pullStrategy.sourceDb = mockRemoteDb;
         pullStrategy.getEventBus().register(mockListener);
 
         doThrow(new RuntimeException("Mocked error.")).when(mockRemoteDb).changes(anyString(),
@@ -117,8 +111,9 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
-        BasicPullStrategy pullStrategy = new BasicPullStrategy(mockRemoteDb, datastore,
-                service, "name");
+        PullReplication pullReplication = this.createPullReplication();
+        BasicPullStrategy pullStrategy = new BasicPullStrategy(pullReplication, this.service, null);
+        pullStrategy.sourceDb = mockRemoteDb;
         pullStrategy.getEventBus().register(mockListener);
         service.shutdownNow();
         when(mockRemoteDb.exists()).thenReturn(true);
@@ -139,8 +134,8 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
-        final BasicPullStrategy pullStrategy = new BasicPullStrategy(mockRemoteDb, datastore,
-                service, "name");
+        final BasicPullStrategy pullStrategy = new BasicPullStrategy(createPullReplication());
+        pullStrategy.sourceDb = mockRemoteDb;
         pullStrategy.getEventBus().register(mockListener);
         
         when(mockRemoteDb.exists()).thenReturn(true);
@@ -154,7 +149,6 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
     }
     
     private class StrategyListener {
-
 
         @Subscribe
         public void complete(ReplicationStrategyCompleted rc) {

@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.Map;
-import java.util.concurrent.*;
 
 @Category(RequireRunningCouchDB.class)
 public class BasicPushStrategyTest2 extends ReplicationTestBase {
@@ -202,8 +201,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
 
     private void push() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        BasicPushStrategy push = new BasicPushStrategy(remoteDb, datastore,
-                "name");
+        BasicPushStrategy push = new BasicPushStrategy(this.createPushReplication());
         push.eventBus.register(listener);
 
         Thread t = new Thread(push);
@@ -215,8 +213,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
 
     private void pull() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        BasicPullStrategy pull = new BasicPullStrategy(remoteDb, datastore,
-                "name");
+        BasicPullStrategy pull = new BasicPullStrategy(this.createPullReplication());
         pull.getEventBus().register(listener);
 
         Thread t = new Thread(pull);
