@@ -33,7 +33,9 @@ public class PushReplicatorTest extends ReplicationTestBase {
     public void setUp() throws Exception {
         super.setUp();
         source = getURI();
-        replicator = (BasicReplicator) ReplicatorFactory.oneway(datastore, source);
+
+        PushReplication push = this.createPushReplication();
+        replicator = (BasicReplicator) ReplicatorFactory.oneway(push);
         prepareTwoDocumentsInLocalDB();
     }
 
@@ -50,7 +52,6 @@ public class PushReplicatorTest extends ReplicationTestBase {
     @Test
     public void start_StartedThenComplete() throws InterruptedException {
         TestReplicationListener listener = new TestReplicationListener();
-        Assert.assertEquals(BasicReplicator.ReplicationType.PUSH, replicator.replicationType);
         Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
         replicator.getEventBus().register(listener);
         replicator.start();
