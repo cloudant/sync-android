@@ -81,6 +81,8 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     PullReplication createPullReplication() throws URISyntaxException {
         PullReplication pullReplication = new PullReplication();
+        pullReplication.username = this.getCouchConfig().getUsername();
+        pullReplication.password = this.getCouchConfig().getPassword();
         pullReplication.source = this.getURI();
         pullReplication.target = this.datastore;
         return pullReplication;
@@ -88,6 +90,8 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     PushReplication createPushReplication() throws URISyntaxException {
         PushReplication pushReplication = new PushReplication();
+        pushReplication.username = this.getCouchConfig().getUsername();
+        pushReplication.password = this.getCouchConfig().getPassword();
         pushReplication.target = this.getURI();
         pushReplication.source = this.datastore;
         return pushReplication;

@@ -136,7 +136,17 @@ public class CouchClient {
     }
 
     public ChangesResult changes(String since, Integer limit) {
+        return this.changes(null, null, since, limit);
+    }
+
+    public ChangesResult changes(String filterName, Map<String, String> filterParameters, String since, Integer limit) {
         Map<String, Object> options = getDefaultChangeFeeOptions();
+        if(filterName != null) {
+            options.put("filter", filterName);
+            if(filterParameters != null) {
+                options.putAll(filterParameters);
+            }
+        }
         if(since != null) {
             options.put("since", since);
         }

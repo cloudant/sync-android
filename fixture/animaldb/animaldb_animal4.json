@@ -1,0 +1,10 @@
+{
+   "_id": "giraffe",
+   "min_weight": 830,
+   "min_length": 5,
+   "max_weight": 1600,
+   "max_length": 6,
+   "wiki_page": "http://en.wikipedia.org/wiki/Giraffe",
+   "class": "mammal",
+   "diet": "herbivore"
+}

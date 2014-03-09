@@ -1,0 +1,9 @@
+{
+   "_id": "kookaburra",
+   "min_length": 0.28,
+   "max_length": 0.42,
+   "wiki_page": "http://en.wikipedia.org/wiki/Kookaburra",
+   "class": "bird",
+   "diet": "carnivore",
+   "latin_name": "Dacelo novaeguineae"
+}
