@@ -1,11 +1,17 @@
 # 0.3.3 (2014-03-17)
 
+- [FIX] Remove classes from public API which don't need to be there.
+- [FIX] Update documentation around replication to account for filters.
+
+# 0.3.3 (Unreleased)
+
 - [NEW] Add options to pull replication (remote -> local) to support filtered
-  replications.
-  - There are new methods to create replications.
-  - The `ReplicatorFactory.oneway` methods have been deprecated in favour
-    of methods taking a fuller suite of replication options. They will be
-    removed in a future version.
+  replications. This required changing the way replications are defined:
+  - There are new classes containing the configuration of pull and push
+    replications, and a new `ReplicatorFactory` method which uses them.
+  - The `ReplicatorFactory.oneway(source,target)` methods have been
+    deprecated in favour of a method taking a fuller suite of replication
+    options. They will be removed in a future version.
 
 # 0.3.2 (2014-02-25)
 
