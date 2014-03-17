@@ -1,4 +1,4 @@
-# 0.3.3 (2014-03-17)
+# 0.3.4 (2014-03-17)
 
 - [FIX] Remove classes from public API which don't need to be there.
 - [FIX] Update documentation around replication to account for filters.
