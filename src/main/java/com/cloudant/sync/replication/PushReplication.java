@@ -7,36 +7,52 @@ import com.google.common.base.Preconditions;
 import java.net.URI;
 
 /**
- * Manages information about a push replication: replication from
- * local {@link Datastore} to remote CouchDB/Cloudant DB.
+ * <p>Provides configuration for a push replication.</p>
+ *
+ * <p>A push replication is <em>to</em> a remote Cloudant or CouchDB database
+ * from the device's local datastore.</p>
  */
 public class PushReplication extends Replication {
 
+    /**
+     * URI for this replication's remote database.
+     */
     public URI target;
+    /**
+     * The local datastore for this replication.
+     */
     public Datastore source;
 
+    /**
+     * Constructs a PushReplication object, configured by assigning to the
+     * instance's attributes after construction.
+     */
+    public PushReplication() {
+        /* Does nothing but we can now document it */
+    }
+
     @Override
-    public void validate() {
+    void validate() {
         Preconditions.checkNotNull(this.target);
         Preconditions.checkNotNull(this.source);
         checkURI(this.target);
     }
 
     @Override
-    public String getReplicatorName() {
+    String getReplicatorName() {
         return String.format("%s <-- %s ", target, source.getDatastoreName());
     }
 
-    public String getTargetDbName() {
+    String getTargetDbName() {
         return this.extractDatabaseName(this.target);
     }
 
-    public CouchConfig getCouchConfig() {
+    CouchConfig getCouchConfig() {
         return this.createCouchConfig(this.target, this.username, this.password);
     }
 
     @Override
-    public ReplicationStrategy createReplicationStrategy() {
+    ReplicationStrategy createReplicationStrategy() {
         return new BasicPushStrategy(this);
     }
 

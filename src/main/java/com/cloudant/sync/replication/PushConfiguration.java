@@ -18,7 +18,7 @@ package com.cloudant.sync.replication;
  * <p>Describes the configuration for a replication with the local datastore
  * as source.</p>
  */
-public class PushConfiguration {
+class PushConfiguration {
 
     public static final int DEFAULT_CHANGES_LIMIT_PER_BATCH = 500;
     public static final int DEFAULT_MAX_BATCH_COUNTER_PER_RUN = 100;

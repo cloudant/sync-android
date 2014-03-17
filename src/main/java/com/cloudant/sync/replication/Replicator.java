@@ -135,7 +135,22 @@ public interface Replicator {
          */
         ERROR
     }
-    
+
+    /**
+     * <p>Returns an EventBus that clients can use to listen for state changes
+     * for this replicator.</p>
+     *
+     * <p>The replicator raises the following events:</p>
+     *
+     * <ul>
+     *     <li>{@link com.cloudant.sync.notifications.ReplicationErrored} if
+     *     there is an error during replication.</li>
+     *     <li>{@link com.cloudant.sync.notifications.ReplicationCompleted}
+     *     when the replication is completed, unless there is an error.</li>
+     * </ul>
+     *
+     * @return EventBus object.
+     */
     public EventBus getEventBus();
 }
 

@@ -12,129 +12,122 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Manages information about a replication. It could be "pull" or "push",
- * and concrete classes "PullReplication" and "PushReplication" are for
- * them respectively.
+ * <p>Abstract class which provides configuration for a replication.</p>
  *
- * The concrete object is used to create a {@link com.cloudant.sync.replication.Replicator}
- * that can be used to managed a pull or push replication:
- * {@code ReplicatorFactory.oneway(PullReplication)} or
- * {@code ReplicatorFactory.oneway(PushReplication)}
+ * <p>This class is abstract. Concrete classes
+ * {@link com.cloudant.sync.replication.PullConfiguration}
+ * and {@link com.cloudant.sync.replication.PushReplication} are used to
+ * configure pull and push replications respectively.</p>
  *
  * @see com.cloudant.sync.replication.PullReplication
+ * @see ReplicatorFactory#oneway(PullReplication)
  * @see com.cloudant.sync.replication.PushReplication
- * @see com.cloudant.sync.replication.ReplicatorFactory
+ * @see ReplicatorFactory#oneway(PushReplication)
  */
-abstract class Replication {
+public abstract class Replication {
 
     /**
-     * Username of the replication's CouchDB/Cloudant DB. Each replication
-     * would involves a CouchDB/Cloudant Db, and this is the username
-     * for that database.
+     * Username to use for authentication with the remote Cloudant/CouchDB
+     * database.
      */
     public String username;
 
     /**
-     * Password of the replication's CouchDB/Cloudant DB.
+     * Password to use for authentication with the remote Cloudant/CouchDB
+     * database.
      */
     public String password;
 
     /**
-     * Validate the replication itself, and throw
-     * {@code IllegalArgumentException} is the replication is not valid.
-     */
-    public abstract void validate();
-
-    /**
-     * Name of the replication.
+     * <p>Provides the name and parameters for a filter function to be used
+     * when a pull replication calls the source database's {@code _changes}
+     * feed.</p>
      *
-     * @return name of the replication.
-     */
-    public abstract String getReplicatorName();
-
-    /**
-     * Create the {@code ReplicationStrategy} that can use to conduct the
-     * replication.
+     * <p>For a filter function that takes no parameters, use this
+     * constructor:</p>
      *
-     * @return the correct ReplicationStrategy that can use to conduct
-     *         the replication.
-     */
-    public abstract ReplicationStrategy createReplicationStrategy();
-
-    /**
-     * Describe "Filter Function" used in {@code PullReplication}.
-     * It includes the name of the function, and the query
-     * parameters for the function.
+     * <pre>
+     * Filter filter = new Filter("filterDoc/filterFunctionName")
+     * </pre>
      *
-     * The name includes doc name and filter function name. For example
-     * "filterDoc/filterFunctionName" is a filter from doc "filterDoc"
-     * and the function name is "filterFunctionName".
+     * <p>For a filter function that requires parameters, use this
+     * constructor:</p>
      *
-     * {@code
-     *     Filter filter = new Filter("filterDoc/filterFunctionName")
-     * }
-     *
-     * Query parameter is a {@code Map<String, String>}.
-     * Integer value should be put as String as well. For example:
-     *
-     * {@code
-     *     Filter filter = new Filter("doc/filterName"),
-     *         ImmutableMap.of("max_age", "10"));
-     * }
+     * <pre>
+     * Map<String, String> params = new HashMap();
+     * map.put("max_age", "10");
+     * map.put("name", "john");
+     * Filter filter = new Filter("doc/filterName", map);
+     * </pre>
      *
      * @see com.cloudant.sync.replication.PullReplication
-     * http://docs.couchdb.org/en/1.4.x/replication.html#controlling-which-documents-to-replicate
-     * http://docs.couchdb.org/en/1.4.x/ddocs.html#filterfun
+     * @see <a href="http://docs.couchdb.org/en/1.4.x/replication.html#controlling-which-documents-to-replicate">Controlling documents replicated</a>
+     * @see <a href="http://docs.couchdb.org/en/1.4.x/ddocs.html#filterfun">Filter functions CouchDB docs</a>
      */
     public static class Filter {
 
         /**
-         * Name of the "Filter Function", indicates which function will
-         * be called for this filter.
+         * The name of the filter function to use.
+         *
+         * <p>The {@code name} attribute is the name of the filter, as passed to
+         * the {@code filter} parameter of CouchDB's {@code _changes} feed. This
+         * is the name of the design document, minus the leading {@code _design/},
+         * and the name of the filter function, separated by a slash. For example,
+         * {@code filterDoc/filterFunctionName}.</p>
          */
         public final String name;
 
         /**
-         * Query parameters, which will be put as part of the "request"
-         * when filter function is called.
+         * Any parameters required for the function. Can be {@code null}.
          *
-         * @see @see http://docs.couchdb.org/en/1.4.x/ddocs.html#filterfun
+         * <p>The contents of {@code properties} are expanded
+         * to {@code key=value} pairs when constructing the
+         * {@code _changes} feed call for the remote database.
+         * Integer values should be added as String objects.</p>
+         *
+         * @see <a href="http://docs.couchdb.org/en/1.4.x/ddocs.html#filterfun">Filter functions CouchDB docs</a>
          */
-        public final ImmutableMap<String, String> parameters;
+        public final Map<String, String> parameters;
 
         /**
-         * Construct a filter without any parameters
+         * Constructs a filter object for a function that requires no
+         * parameters.
          *
-         * @param name of the filter function
+         * @param filterName filter function name
          */
-        public Filter(String name) {
-            this.name = name;
+        public Filter(String filterName) {
+            this.name = filterName;
             this.parameters = null;
         }
 
         /**
-         * Construct a filter with filter function name and query parameters.
-         * The query parameters should not be escaped.
+         * <p>Constructs a filter object for a function requiring
+         * parameters.</p>
          *
-         * @param name filter function name
+         * <p>The query parameters should not be URL-escaped.</p>
+         *
+         * @param filterName filter function name
          * @param parameters filter function parameters
          */
-        public Filter(String name, Map<String, String> parameters) {
-            this.name = name;
-            ImmutableMap.Builder builder = new ImmutableMap.Builder<String, String>();
+        public Filter(String filterName, Map<String, String> parameters) {
+            this.name = filterName;
+            ImmutableMap.Builder<String, String> builder = new ImmutableMap.Builder<String, String>();
             builder.putAll(parameters);
             this.parameters = builder.build();
         }
 
         /**
-         * Generated {@code String} should not be used in URL as request
-         * query as they are not properly escaped.
+         * <p>Generate a string representation of this {@code Filter} object
+         * that is consistent for a given name and parameter set.</p>
          *
-         * Filter parameters are sorted by key so that the  generated
-         * String are the same for different calls. This is imporant
-         * because the String is part of the replication id.
+         * <p>The string is not intended for use in URLs as it's not
+         * escaped.</p>
          *
-         * @return String can use to display the filter name and parameters.
+         * <p>Filter parameters are sorted by key so that the  generated
+         * String are the same for different calls. This is important
+         * because the String can therefore be part of the replication ID.</p>
+         *
+         * @return Query string like representation of the filter
          *
          * @see BasicPullStrategy#getReplicationId()
          */
@@ -143,15 +136,44 @@ abstract class Replication {
                 return String.format("filter=%s", this.name);
             } else {
                 List<String> queries = new ArrayList<String>();
+
                 for(Map.Entry<String, String> parameter : this.parameters.entrySet()) {
                     queries.add(String.format("%s=%s", parameter.getKey(), parameter.getValue()));
                 }
                 Collections.sort(queries);
-                return String.format("filter=%s&%s", this.name,
-                        Joiner.on('&').skipNulls().join(queries));
+
+                queries.add(0, String.format("filter=%s", this.name));
+
+                return Joiner.on('&').skipNulls().join(queries);
             }
         }
     }
+
+    protected Replication() {
+        /* prevent instances of this class being constructed */
+    }
+
+    /**
+     * Validate the replication parameters, and throw
+     * {@code IllegalArgumentException} if the replication is not valid.
+     */
+    abstract void validate();
+
+    /**
+     * Name of the replication.
+     *
+     * @return name of the replication.
+     */
+    abstract String getReplicatorName();
+
+    /**
+     * Create the {@code ReplicationStrategy} that can use to conduct the
+     * replication.
+     *
+     * @return the correct ReplicationStrategy that can use to conduct
+     *         the replication.
+     */
+    abstract ReplicationStrategy createReplicationStrategy();
 
     CouchConfig createCouchConfig(URI uri, String username, String password) {
         int port = uri.getPort() < 0 ? getDefaultPort(uri.getScheme()) : uri.getPort();

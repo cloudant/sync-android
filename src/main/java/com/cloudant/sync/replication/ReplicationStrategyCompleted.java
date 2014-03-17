@@ -1,11 +1,11 @@
 package com.cloudant.sync.replication;
 
-public class ReplicationStrategyCompleted {
+class ReplicationStrategyCompleted {
 
-    public ReplicationStrategyCompleted(ReplicationStrategy replicationStrategy) {
+    protected ReplicationStrategyCompleted(ReplicationStrategy replicationStrategy) {
         this.replicationStrategy = replicationStrategy;
     }
-    
-    public final ReplicationStrategy replicationStrategy;
+
+    protected final ReplicationStrategy replicationStrategy;
     
 }

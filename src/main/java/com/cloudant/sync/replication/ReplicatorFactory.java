@@ -21,24 +21,44 @@ import java.net.URISyntaxException;
 
 /**
  * <p>Factory for {@link Replicator} objects.</p>
- *
- * <p>The {@code source} or {@code target} {@link URI} parameters used in the
- * methods below must include:</p>
- *
- * <pre>
- *   protocol://[username:password@]host[:port]/database_name
- * </pre>
- *
- * <p><em>protocol</em>, <em>host</em> and <em>database_name</em> are required.
- * If no <em>port</em> is provided, the default for <em>protocol</em> is used.
- * Using a <em>database_name</em> containing a {@code /} is not supported.</p>
  */
-public class ReplicatorFactory {
+public final class ReplicatorFactory {
 
+    private ReplicatorFactory() {
+        /* prevent instances of this class being constructed */
+    }
+
+
+    /**
+     * <p>Creates a Replicator object set up to replicate changes in one
+     * direction between a local datastore and remote database.</p>
+     *
+     * @param replication replication configuration information
+     *
+     * @return a {@link Replicator} instance which can be used to start and
+     *  stop the replication itself.
+     *
+     * @see com.cloudant.sync.replication.PushReplication
+     * @see com.cloudant.sync.replication.PullReplication
+     */
+    public static Replicator oneway(Replication replication) {
+        return new BasicReplicator(replication);
+    }
 
     /**
      * <p>Creates a Replicator object set up to replicate changes from the
      * local datastore to a remote database.</p>
+     *
+     * <p>The {@code target} {@code URI} parameters used in the
+     * methods below must include:</p>
+     *
+     * <pre>
+     *   protocol://[username:password@]host[:port]/database_name
+     * </pre>
+     *
+     * <p><em>protocol</em>, <em>host</em> and <em>database_name</em> are required.
+     * If no <em>port</em> is provided, the default for <em>protocol</em> is used.
+     * Using a <em>database_name</em> containing a {@code /} is not supported.</p>
      *
      * @param source local {@link Datastore} to replicate changes from.
      * @param target remote database to replicate changes to.
@@ -65,24 +85,19 @@ public class ReplicatorFactory {
     }
 
     /**
-     * <p>Creates a Replicator object set up to replicate changes from the
-     * local datastore to a remote database.</p>
-     *
-     * @param replication {@code PushReplication} instance to specify replication
-     *                    from local datastore to remote CouchDb/Cloudant
-     *
-     * @return a {@link Replicator} instance which can be used to start and
-     *  stop the replication itself.
-     *
-     * @see com.cloudant.sync.replication.PushReplication
-     */
-    public static Replicator oneway(PushReplication replication) {
-        return new BasicReplicator(replication);
-    }
-
-    /**
      * <p>Creates a Replicator object set up to replicate changes from a
      * remote database to the local datastore.</p>
+     *
+     * <p>The {@code source} {@code URI} parameters used in the
+     * methods below must include:</p>
+     *
+     * <pre>
+     *   protocol://[username:password@]host[:port]/database_name
+     * </pre>
+     *
+     * <p><em>protocol</em>, <em>host</em> and <em>database_name</em> are required.
+     * If no <em>port</em> is provided, the default for <em>protocol</em> is used.
+     * Using a <em>database_name</em> containing a {@code /} is not supported.</p>
      *
      * @param source remote database to replicate changes from.
      * @param target local {@link Datastore} to replicate changes to.
@@ -105,22 +120,6 @@ public class ReplicatorFactory {
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);
         }
-    }
-
-    /**
-     * <p>Creates a Replicator object set up to replicate changes from a
-     * remote database to the local datastore.</p>
-     *
-     * @param replication {@code PullReplication} instance to specify replication
-     *                    from remote CouchDB/Cloudant to local datastore
-     *
-     * @return a {@link Replicator} instance which can be used to start and
-     *  stop the replication itself.
-     *
-     * @see com.cloudant.sync.replication.PullReplication
-     */
-    public static Replicator oneway(PullReplication replication) {
-        return new BasicReplicator(replication);
     }
 
     static URI removeUsernamePassword(URI u) throws URISyntaxException {
