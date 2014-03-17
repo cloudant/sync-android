@@ -55,7 +55,7 @@ repositories {
 
 dependencies {
     // Other dependencies
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.3.2'
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.3.3'
 }
 ```
 
@@ -85,7 +85,7 @@ It's a similar story in maven, add the repo and the dependency:
     <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-android</artifactId>
-      <version>0.3.2</version>
+      <version>0.3.3</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
