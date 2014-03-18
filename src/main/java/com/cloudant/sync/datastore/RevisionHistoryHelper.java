@@ -20,8 +20,16 @@ import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.util.CouchUtils;
 import com.google.common.base.Preconditions;
 
+import org.apache.commons.codec.binary.Base64OutputStream;
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -107,7 +115,7 @@ public class RevisionHistoryHelper {
      *
      * @see com.cloudant.mazha.DocumentRevs
      */
-    public static String revisionHistoryToJson(List<DocumentRevision> history) {
+    public static String revisionHistoryToJson(List<DocumentRevision> history, List<SavedAttachment> attachments) {
         Preconditions.checkNotNull(history, "History must not be null");
         Preconditions.checkArgument(history.size() > 0, "History must not have at least one DocumentRevision.");
         Preconditions.checkArgument(checkHistoryIsInDescendingOrder(history),
@@ -115,8 +123,51 @@ public class RevisionHistoryHelper {
 
         DocumentRevision currentNode = history.get(0);
         Map<String, Object> m = currentNode.asMap();
+        if (attachments != null && !attachments.isEmpty()) {
+            // graft attachments on to m for this particular revision here
+            addAttachments(attachments, m, CouchUtils.generationFromRevId(currentNode.getRevision()));
+        }
+
         m.put(CouchConstants._revisions, createRevisions(history));
+
         return sJsonHelper.toJson(m);
+    }
+
+    private static void addAttachments(List<SavedAttachment> attachments, Map<String, Object> map, int revpos) {
+        LinkedHashMap<String, Object> attsMap = new LinkedHashMap<String, Object>();
+        map.put("_attachments", attsMap);
+        for (SavedAttachment att : attachments) {
+            HashMap<String, Object> theAtt = new HashMap<String, Object>();
+            // base64 encode this attachment
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Base64OutputStream bos = new Base64OutputStream(baos, true, 0, null);
+            try {
+                FileInputStream fis = new FileInputStream(att.file);
+                int bufSiz = 1024;
+                byte[] buf = new byte[bufSiz];
+                int n = 0;
+                do {
+                    n = fis.read(buf);
+                    if (n > 0) {
+                        bos.write(buf, 0, n);
+                    }
+                } while (n > 0);
+                // if the revpos of the current doc is higher than that of the attachment, it's a stub
+                if (att.revpos < revpos) {
+                    theAtt.put("stub", true);
+                } else {
+                    theAtt.put("data", baos.toString());  //base64 of data
+                }
+                theAtt.put("content_type", att.type);
+                theAtt.put("revpos", att.revpos);
+            } catch (FileNotFoundException fnfe) {
+                continue;
+            } catch (IOException ioe) {
+                continue;
+            }
+            // now we are done, add the attachment to the hash
+            attsMap.put(att.name, theAtt);
+        }
     }
 
     private static Map<String, Object> createRevisions(List<DocumentRevision> history) {

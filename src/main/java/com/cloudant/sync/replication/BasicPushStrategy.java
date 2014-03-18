@@ -16,11 +16,13 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.common.Log;
 import com.cloudant.mazha.CouchConfig;
+import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
+import com.cloudant.sync.datastore.SavedAttachment;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -28,6 +30,7 @@ import com.google.common.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -230,6 +233,8 @@ class BasicPushStrategy implements ReplicationStrategy {
             Map<String, DocumentRevisionTree> allTrees = this.sourceDb.getDocumentTrees(batch);
             Map<String, Set<String>> docOpenRevs = this.openRevisions(allTrees);
             Map<String, Set<String>> docMissingRevs = this.targetDb.revsDiff(docOpenRevs);
+            // get attachments for these revs?
+
             List<String> serialisedMissingRevs = missingRevisionsToJsonDocs(allTrees, docMissingRevs);
 
             if (!this.cancel) {
@@ -256,7 +261,12 @@ class BasicPushStrategy implements ReplicationStrategy {
             for(String rev : missingRevisions) {
                 long sequence = tree.lookup(docId, rev).getSequence();
                 List<DocumentRevision> path = tree.getPathForNode(sequence);
-                docs.add(RevisionHistoryHelper.revisionHistoryToJson(path));
+                // NB this will probably look like AttachmentHistoryHelper.....() later
+                DocumentRevision dr = path.get(0);
+                List<SavedAttachment> atts = this.sourceDb.getDbCore().getAttachments(dr);
+                // need to graft on _attachments somehow
+                // need to stub out attachments for in between versions
+                docs.add(RevisionHistoryHelper.revisionHistoryToJson(path, atts));
             }
         }
         return docs;

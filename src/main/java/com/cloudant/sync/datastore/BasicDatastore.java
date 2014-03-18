@@ -74,6 +74,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     private final SQLDatabase sqlDb;
     private final String datastoreName;
     private final EventBus eventBus;
+    private final AttachmentManager attachmentManager;
 
     final String datastoreDir;
     final String extensionsDir;
@@ -91,6 +92,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         this.sqlDb = SQLDatabaseFactory.openSqlDatabase(dbFilename);
         this.updateSchema();
         this.eventBus = new EventBus();
+        this.attachmentManager = new AttachmentManager(this);
     }
 
     private void updateSchema() throws SQLException {
@@ -658,6 +660,20 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         if (newSequence < 0) {
             throw new IllegalStateException("Unknown error inserting new updated doc, please checking log");
         }
+        // by default all the attachments from the previous rev will be carried over
+
+        String attsSql = "INSERT INTO attachments "+
+        "(sequence, filename, key, type, length, revpos) "+
+        "SELECT "+newSequence+", filename, key, type, length, revpos "+
+        "FROM attachments WHERE sequence="+parentSequence;
+
+//        Object[] attsArgs = {parentSequence, newSequence};
+        try {
+            this.getSQLDatabase().execSQL(attsSql);
+        } catch (SQLException e) {
+            throw new IllegalStateException("Error copying attachments to new revision "+e);
+        }
+
         return newSequence;
     }
 
@@ -1163,6 +1179,25 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         String[] whereArgs = new String[]{String.valueOf(winner.getSequence())};
         this.getSQLDatabase().update("revs", updateContent, "sequence=?", whereArgs);
     }
+
+    @Override
+    public DocumentRevision setAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException, IOException {
+        // facade to attachmentmanager
+        return this.attachmentManager.setAttachments(rev, attachments);
+    }
+
+    @Override
+    public SavedAttachment getAttachment(DocumentRevision rev, String attachmentName) {
+        // facade to attachmentmanager
+        return this.attachmentManager.getAttachment(rev, attachmentName);
+    }
+
+    @Override
+    public List<SavedAttachment> getAttachments(DocumentRevision rev) {
+        // facade to attachmentmanager
+        return this.attachmentManager.getAttachments(rev);
+    }
+
 
     @Override
     public EventBus getEventBus() {
