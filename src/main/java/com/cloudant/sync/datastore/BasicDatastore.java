@@ -74,6 +74,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     private final SQLDatabase sqlDb;
     private final String datastoreName;
     private final EventBus eventBus;
+    private final AttachmentManager attachmentManager;
 
     final String datastoreDir;
     final String extensionsDir;
@@ -91,6 +92,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         this.sqlDb = SQLDatabaseFactory.openSqlDatabase(dbFilename);
         this.updateSchema();
         this.eventBus = new EventBus();
+        this.attachmentManager = new AttachmentManager(this);
     }
 
     private void updateSchema() throws SQLException {
@@ -658,6 +660,20 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         if (newSequence < 0) {
             throw new IllegalStateException("Unknown error inserting new updated doc, please checking log");
         }
+        // by default all the attachments from the previous rev will be carried over
+
+        String attsSql = "INSERT INTO attachments "+
+        "(sequence, filename, key, type, length, revpos) "+
+        "SELECT "+newSequence+", filename, key, type, length, revpos "+
+        "FROM attachments WHERE sequence="+parentSequence;
+
+//        Object[] attsArgs = {parentSequence, newSequence};
+        try {
+            this.getSQLDatabase().execSQL(attsSql);
+        } catch (SQLException e) {
+            throw new IllegalStateException("Error copying attachments to new revision "+e);
+        }
+
         return newSequence;
     }
 
@@ -1162,6 +1178,29 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         updateContent.put("current", 0);
         String[] whereArgs = new String[]{String.valueOf(winner.getSequence())};
         this.getSQLDatabase().update("revs", updateContent, "sequence=?", whereArgs);
+    }
+
+    @Override
+    public DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException, IOException {
+        // facade to attachmentmanager
+        return this.attachmentManager.updateAttachments(rev, attachments);
+    }
+
+    @Override
+    public Attachment getAttachment(DocumentRevision rev, String attachmentName) {
+        // facade to attachmentmanager
+        return this.attachmentManager.getAttachment(rev, attachmentName);
+    }
+
+    @Override
+    public List<? extends Attachment> attachmentsForRevision(DocumentRevision rev) {
+        // facade to attachmentmanager
+        return this.attachmentManager.attachmentsForRevision(rev);
+    }
+
+    @Override
+    public DocumentRevision removeAttachments(DocumentRevision rev, String[] attachmentNames) throws ConflictException {
+        return this.attachmentManager.removeAttachments(rev, attachmentNames);
     }
 
     @Override

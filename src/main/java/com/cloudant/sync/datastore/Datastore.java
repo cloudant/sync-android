@@ -19,6 +19,7 @@ package com.cloudant.sync.datastore;
 
 import com.google.common.eventbus.EventBus;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -328,6 +329,39 @@ public interface Datastore {
      */
     public void resolveConflictsForDocument(String docId, ConflictResolver resolver)
         throws ConflictException;
+
+    /**
+     * Returns attachment `attachmentName` for the revision.
+     *
+     * @return SavedAttachment or null no attachment with that name.
+     */
+    Attachment getAttachment(DocumentRevision rev, String attachmentName);
+
+    /**
+     * Returns all attachments revision, creating a new revision.
+     *
+     * @return SavedAttachment or null no attachment with that name.
+     */
+    List<? extends Attachment> attachmentsForRevision(DocumentRevision rev);
+
+    /**
+     Set the content of attachments on a document, creating
+     new revision of the document.
+
+     Existing attachments with the same name will be replaced,
+     new attachments will be created, and attachments already
+     existing on the document which are not included in
+     `attachments` will remain as attachments on the document.
+
+     @return New revision.
+     */
+    DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException, IOException;
+
+    /**
+     Remove attachment `name` from a document, creating a new revision.
+     @return New revision.
+     */
+    DocumentRevision removeAttachments(DocumentRevision rev, String[] attachmentNames) throws ConflictException;
 
     /**
      * Close the datastore
