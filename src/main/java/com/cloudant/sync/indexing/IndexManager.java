@@ -17,6 +17,7 @@ package com.cloudant.sync.indexing;
 import com.cloudant.android.Log;
 import com.cloudant.sync.datastore.*;
 import com.cloudant.sync.notifications.DatabaseClosed;
+import com.cloudant.sync.notifications.DocumentModified;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -98,6 +99,8 @@ public class IndexManager {
                 + File.separator + "indexes.sqlite";
         this.sqlDb = SQLDatabaseFactory.openSqlDatabase(filename);
         SQLDatabaseFactory.updateSchema(this.sqlDb, SCHEMA_INDEX, VERSION);
+        // subscribe to some events
+        this.datastore.getEventBus().register(this);
     }
 
     /**
@@ -531,6 +534,10 @@ public class IndexManager {
     public void onDatastoreClosed(DatabaseClosed databaseClosed) {
         this.getDatabase().close();
     }
+
+    // subscriber to generic DocumentModified events which will update all indexes
+    @Subscribe
+    public void onDocumentModified(DocumentModified documentModified) { this.updateAllIndexes(); }
 
     static void validateIndexName(String name) {
         if(!pattern.matcher(name).matches()) {
