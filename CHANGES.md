@@ -1,7 +1,9 @@
 # 0.3.5 (Unreleased)
 
+- [FIX] Update indexes automatically after documents in the datastore are
+  changed, including during pull replication.
 - [FIX] Fix https://github.com/cloudant/sync-android/issues/17 where requests
-  were failing because we couldn't load mazha.properties .
+  were failing because we couldn't load mazha.properties.
 
 # 0.3.4 (2014-03-17)
 
