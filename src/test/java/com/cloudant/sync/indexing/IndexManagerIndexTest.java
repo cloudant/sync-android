@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.indexing;
 
+import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBody;
@@ -573,6 +574,37 @@ public class IndexManagerIndexTest {
         Assert.assertEquals(Long.valueOf(datastore.getLastSequence()),
                 Long.valueOf(index.getLastSequence()));
         this.assertIndexed(database, index, rev.getId(), tags.toArray(new String[]{}));
+    }
+
+    // test that index updates itself on create/update/delete
+    @Test
+    public void index_UpdateCrud()
+            throws IndexExistsException, SQLException, ConflictException {
+        Index index = createAndGetIndex("title", "title", IndexType.STRING);
+        // create
+        DocumentRevision obj1 = datastore.createDocument(dbBodies.get(1));
+        this.assertIndexed(database, index, obj1.getId(), "Politik");
+        // update
+        Map<String,Object> map = obj1.getBody().asMap();
+        map.put("title", "Another Green Day");
+        DocumentBody body = DocumentBodyFactory.create(map);
+        DocumentRevision obj2 = datastore.updateDocument(obj1.getId(), obj1.getRevision(), body);
+        Assert.assertEquals(obj1.getId(), obj2.getId());
+        this.assertIndexed(database, index, obj2.getId(), "Another Green Day");
+        // delete
+        datastore.deleteDocument(obj2.getId(), obj2.getRevision());
+        this.assertNotIndexed(database, index, obj2.getId());
+    }
+
+    private void assertNotIndexed(SQLDatabase database,
+                               Index index,
+                               String docId) throws SQLException {
+        String table = String.format(IndexManager.TABLE_INDEX_NAME_FORMAT, index.getName());
+        Cursor cursor = database.rawQuery("SELECT count(*) FROM " +
+                        table + " where docid = ? ",
+                new String[]{String.valueOf(docId)});
+        Assert.assertTrue(cursor.moveToFirst());
+        Assert.assertEquals(Integer.valueOf(0), Integer.valueOf(cursor.getInt(0)));
     }
 
     private void assertIndexed(SQLDatabase database,
