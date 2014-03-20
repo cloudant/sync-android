@@ -25,6 +25,8 @@ import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -40,6 +42,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.hamcrest.Matchers.containsInAnyOrder;
 
 public class IndexManagerIndexTest {
 
@@ -594,6 +598,80 @@ public class IndexManagerIndexTest {
         // delete
         datastore.deleteDocument(obj2.getId(), obj2.getRevision());
         this.assertNotIndexed(database, index, obj2.getId());
+    }
+
+    /**
+     * A sanity-check that updating the datastore from many threads
+     * doesn't cause the index manager to balk.
+     */
+    @Test
+    public void index_UpdateCrudMultiThreaded()
+            throws IndexExistsException, SQLException, ConflictException,
+                   InterruptedException {
+        int n_threads = 5;
+        final int n_docs = 100;
+
+        // We'll later search for search == success
+        final Map<String,String> matching = ImmutableMap.of("search", "success");
+        final Map<String,String> nonmatching = ImmutableMap.of("search", "failure");
+        indexManager.ensureIndexed("search", "search", IndexType.STRING);
+
+        final List<String> matching_ids = new ArrayList<String>();
+
+        // When run, this thread creates n_docs documents with unique
+        // names in the datastore. A subset of these
+        // will be matched by our query to the datastore later, which
+        // we record in the matching_ids list.
+        class PopulateThread extends Thread {
+
+            @Override
+            public void run() {
+                String docId;
+                final String thread_id;
+                DocumentBody body;
+
+                thread_id = Thread.currentThread().getName();
+                for (int i = 0; i < n_docs; i++) {
+                    docId = String.format("%s-%s", thread_id, i);
+
+                    if ((i % 2) == 0) {  // even numbers create matching docs
+                        body = DocumentBodyFactory.create(matching);
+                        matching_ids.add(docId);
+                    } else {
+                        body = DocumentBodyFactory.create(nonmatching);
+                    }
+                    datastore.createDocument(docId, body);
+                }
+            }
+        }
+        List<Thread> threads = new ArrayList<Thread>();
+
+        // Create, start and wait for the threads to complete
+        for (int i = 0; i < n_threads; i++) {
+            threads.add(new PopulateThread());
+        }
+        for (Thread t : threads) {
+            t.start();
+        }
+        for (Thread t : threads) {
+            t.join();
+        }
+
+        // Check appropriate entries in index
+        QueryBuilder q = new QueryBuilder();
+        q.index("search").equals("success");
+        QueryResult result = indexManager.query(q.build());
+
+        List<DocumentRevision> docRevisions = Lists.newArrayList(result);
+        List<String> docIds = new ArrayList<String>();
+        for (DocumentRevision r : docRevisions) {
+            docIds.add(r.getId());
+        }
+
+        Assert.assertEquals(matching_ids.size(), docIds.size());
+        for (String id : matching_ids) {
+            Assert.assertTrue(docIds.contains(id));
+        }
     }
 
     private void assertNotIndexed(SQLDatabase database,
