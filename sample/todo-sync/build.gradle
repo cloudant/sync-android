@@ -16,7 +16,7 @@ repositories {
 }
 
 dependencies {
-    compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.3.4')
+    compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.3.5')
 }
 
 android {

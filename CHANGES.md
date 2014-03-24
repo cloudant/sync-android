@@ -1,4 +1,4 @@
-# 0.3.5 (Unreleased)
+# 0.3.5 (2014-03-24)
 
 - [FIX] Update indexes automatically after documents in the datastore are
   changed, including during pull replication.
