@@ -1,3 +1,8 @@
+# 0.3.5 (Unreleased)
+
+- [FIX] Fix https://github.com/cloudant/sync-android/issues/17 where requests
+  were failing because we couldn't load mazha.properties .
+
 # 0.3.4 (2014-03-17)
 
 - [FIX] Remove classes from public API which don't need to be there.

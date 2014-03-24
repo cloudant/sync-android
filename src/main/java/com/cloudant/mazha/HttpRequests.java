@@ -237,7 +237,7 @@ public class HttpRequests {
     }
 
     private String getUserAgentFromResource() {
-        final URL url = Resources.getResource("mazha.properties");
+        final URL url = getClass().getClassLoader().getResource("mazha.properties");
         final Properties properties = new Properties();
         try {
             properties.load(Resources.newInputStreamSupplier(url).getInput());
