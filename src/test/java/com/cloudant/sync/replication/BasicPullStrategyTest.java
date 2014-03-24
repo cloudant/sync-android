@@ -21,6 +21,9 @@ import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
+import com.cloudant.sync.indexing.IndexManager;
+import com.cloudant.sync.indexing.QueryBuilder;
+import com.cloudant.sync.indexing.QueryResult;
 import com.cloudant.sync.util.TypedDatastore;
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
@@ -342,4 +345,24 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
         Assert.assertEquals(0, datastore.getDocumentCount());
     }
+
+    @Test
+    public void pull_indexesUpdated()
+            throws Exception {
+        Assert.assertEquals(0, datastore.getDocumentCount());
+
+        IndexManager im = new IndexManager(datastore);
+        im.ensureIndexed("diet", "diet");
+
+        AnimalDb.populateWithoutFilter(remoteDb.couchClient);
+        this.pull();
+
+        Assert.assertEquals(10, datastore.getDocumentCount());
+
+        QueryBuilder qb = new QueryBuilder();
+        QueryResult qr = im.query(qb.index("diet").equalTo("herbivore").build());
+        Assert.assertEquals(4, qr.size());
+
+    }
+
 }

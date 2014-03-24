@@ -8,13 +8,17 @@ the Google Guava library to post events to interested parties in a publish and s
 The `Datastore` class posts events about Documents:
 
 * `DocumentCreated`
-* `DocumentModified`
-* `DocumentDeleted`.
+* `DocumentDeleted`
+* `DocumentUpdated`.
 
 The `DatastoreManager` class posts events about Databases:
 
+* `DatabaseClosed`
 * `DatabaseCreated`
-* `DatabaseDeleted`.
+* `DatabaseDeleted`
+* `DatabaseOpened`.
+
+There are also generic `Modified` events for each class (more about these later).
 
 To subscribe to an event, first register the object whose methods you want to be called (in this
 case, an instance of `DocumentNotificationClient`):
@@ -31,7 +35,7 @@ Next, add the methods you want to be called when each event occurs and decorate 
 
 Here the `DocumentNotificationClient` is subscribing to the `DocumentCreated` event. Because the
 events are just classes, they obey the type hierarchy. This means that it is also possible to
-subscribe to the generic `DocumentChanged` event to be notified of all Created/Modified/Deleted
+subscribe to the generic `DocumentModified` event to be notified of all Created/Deleted/Updated
 events and then use reflection and downcasting if needed.
 
 ```java

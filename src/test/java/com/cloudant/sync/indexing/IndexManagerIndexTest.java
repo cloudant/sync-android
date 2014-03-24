@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.indexing;
 
+import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBody;
@@ -24,10 +25,13 @@ import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -39,6 +43,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.hamcrest.Matchers.containsInAnyOrder;
 
 public class IndexManagerIndexTest {
 
@@ -573,6 +579,113 @@ public class IndexManagerIndexTest {
         Assert.assertEquals(Long.valueOf(datastore.getLastSequence()),
                 Long.valueOf(index.getLastSequence()));
         this.assertIndexed(database, index, rev.getId(), tags.toArray(new String[]{}));
+    }
+
+    // test that index updates itself on create/update/delete
+    @Test
+    public void index_UpdateCrud()
+            throws IndexExistsException, SQLException, ConflictException {
+        Index index = createAndGetIndex("title", "title", IndexType.STRING);
+        // create
+        DocumentRevision obj1 = datastore.createDocument(dbBodies.get(1));
+        this.assertIndexed(database, index, obj1.getId(), "Politik");
+        // update
+        Map<String,Object> map = obj1.getBody().asMap();
+        map.put("title", "Another Green Day");
+        DocumentBody body = DocumentBodyFactory.create(map);
+        DocumentRevision obj2 = datastore.updateDocument(obj1.getId(), obj1.getRevision(), body);
+        Assert.assertEquals(obj1.getId(), obj2.getId());
+        this.assertIndexed(database, index, obj2.getId(), "Another Green Day");
+        // delete
+        datastore.deleteDocument(obj2.getId(), obj2.getRevision());
+        this.assertNotIndexed(database, index, obj2.getId());
+    }
+
+    /**
+     * A sanity-check that updating the datastore from many threads
+     * doesn't cause the index manager to balk.
+     */
+    @Test
+    @Ignore("Needs fixing for J2SE release, not a problem on Android")
+    public void index_UpdateCrudMultiThreaded()
+            throws IndexExistsException, SQLException, ConflictException,
+                   InterruptedException {
+        int n_threads = 5;
+        final int n_docs = 100;
+
+        // We'll later search for search == success
+        final Map<String,String> matching = ImmutableMap.of("search", "success");
+        final Map<String,String> nonmatching = ImmutableMap.of("search", "failure");
+        indexManager.ensureIndexed("search", "search", IndexType.STRING);
+
+        final List<String> matching_ids = new ArrayList<String>();
+
+        // When run, this thread creates n_docs documents with unique
+        // names in the datastore. A subset of these
+        // will be matched by our query to the datastore later, which
+        // we record in the matching_ids list.
+        class PopulateThread extends Thread {
+
+            @Override
+            public void run() {
+                String docId;
+                final String thread_id;
+                DocumentBody body;
+
+                thread_id = Thread.currentThread().getName();
+                for (int i = 0; i < n_docs; i++) {
+                    docId = String.format("%s-%s", thread_id, i);
+
+                    if ((i % 2) == 0) {  // even numbers create matching docs
+                        body = DocumentBodyFactory.create(matching);
+                        matching_ids.add(docId);
+                    } else {
+                        body = DocumentBodyFactory.create(nonmatching);
+                    }
+                    datastore.createDocument(docId, body);
+                }
+            }
+        }
+        List<Thread> threads = new ArrayList<Thread>();
+
+        // Create, start and wait for the threads to complete
+        for (int i = 0; i < n_threads; i++) {
+            threads.add(new PopulateThread());
+        }
+        for (Thread t : threads) {
+            t.start();
+        }
+        for (Thread t : threads) {
+            t.join();
+        }
+
+        // Check appropriate entries in index
+        QueryBuilder q = new QueryBuilder();
+        q.index("search").equals("success");
+        QueryResult result = indexManager.query(q.build());
+
+        List<DocumentRevision> docRevisions = Lists.newArrayList(result);
+        List<String> docIds = new ArrayList<String>();
+        for (DocumentRevision r : docRevisions) {
+            docIds.add(r.getId());
+        }
+
+        Assert.assertEquals(matching_ids.size(), docIds.size());
+        for (String id : matching_ids) {
+            Assert.assertTrue(docIds.contains(id));
+        }
+    }
+
+    private void assertNotIndexed(SQLDatabase database,
+                               Index index,
+                               String docId) throws SQLException {
+        String table = String.format(IndexManager.TABLE_INDEX_NAME_FORMAT, index.getName());
+        Cursor cursor = database.rawQuery("SELECT count(*) FROM " +
+                        table + " where docid = ? ",
+                new String[]{String.valueOf(docId)}
+        );
+        Assert.assertTrue(cursor.moveToFirst());
+        Assert.assertEquals(Integer.valueOf(0), Integer.valueOf(cursor.getInt(0)));
     }
 
     private void assertIndexed(SQLDatabase database,
