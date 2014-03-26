@@ -215,6 +215,22 @@ public class CouchClient {
         return httpClient.get(doc);
     }
 
+    public InputStream getAttachmentStream(String id, String attachmentName) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
+        URI doc = this.uriHelper.attachmentUri(this.defaultDb, id, attachmentName);
+        return httpClient.get(doc);
+    }
+
+    public InputStream getAttachmentStream(String id, String rev, String attachmentName) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
+        Map<String, Object> queries = new HashMap<String, Object>();
+        queries.put("rev", rev);
+        URI doc = this.uriHelper.attachmentUri(this.defaultDb, id, queries, attachmentName);
+        return httpClient.get(doc);
+    }
+
+
     /**
      * Convenience method to get document with all the conflicts revisions. It does that by adding
      * "conflicts=true" option to the GET request. An example response json is following:
