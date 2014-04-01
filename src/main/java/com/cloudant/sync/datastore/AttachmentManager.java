@@ -25,11 +25,11 @@ public class AttachmentManager {
 
     private static final String EXTENSION_NAME = "com.cloudant.attachments";
 
-    private static final String SQL_ATTACHMENTS_SELECT = "SELECT sequence, filename, key, type, length, revpos " +
+    private static final String SQL_ATTACHMENTS_SELECT = "SELECT sequence, filename, key, type, encoding, length, encoded_length, revpos " +
             " FROM attachments " +
             " WHERE filename = ? and sequence = ?";
 
-    private static final String SQL_ATTACHMENTS_SELECT_ALL = "SELECT sequence, filename, key, type, length, revpos " +
+    private static final String SQL_ATTACHMENTS_SELECT_ALL = "SELECT sequence, filename, key, type, encoding, length, encoded_length, revpos " +
             " FROM attachments " +
             " WHERE sequence = ?";
 
@@ -79,9 +79,9 @@ public class AttachmentManager {
                 values.put("filename", filename);
                 values.put("key", sha1);
                 values.put("type", type);
-                //values.put("encoding", encoding);
+                values.put("encoding", encoding);
                 values.put("length", length);
-                //values.put("encoded_length", length);
+                values.put("encoded_length", length);
                 values.put("revpos", revpos);
 
                 long result = datastore.getSQLDatabase().insert("attachments", values);
@@ -104,8 +104,10 @@ public class AttachmentManager {
                 int sequence = c.getInt(0);
                 byte[] key = c.getBlob(2);
                 String type = c.getString(3);
-                int length = c.getInt(4);
-                int revpos = c.getInt(5);
+                int encoding = c.getInt(4);
+                int length = c.getInt(5);
+                int encoded_length = c.getInt(6);
+                int revpos = c.getInt(7);
                 File file = fileFromKey(key);
                 return new SavedAttachment(attachmentName, revpos, sequence, key, type, file);
             }
@@ -127,8 +129,10 @@ public class AttachmentManager {
                 String name = c.getString(1);
                 byte[] key = c.getBlob(2);
                 String type = c.getString(3);
-                int length = c.getInt(4);
-                int revpos = c.getInt(5);
+                int encoding = c.getInt(4);
+                int length = c.getInt(5);
+                int encoded_length = c.getInt(6);
+                int revpos = c.getInt(7);
                 File file = fileFromKey(key);
                 atts.add(new SavedAttachment(name, revpos, sequence, key, type, file));
             }

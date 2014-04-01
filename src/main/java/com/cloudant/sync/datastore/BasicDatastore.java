@@ -97,7 +97,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     private void updateSchema() throws SQLException {
         SQLDatabaseFactory.updateSchema(this.sqlDb, DatastoreConstants.SCHEMA_VERSION_3, 3);
-        SQLDatabaseFactory.updateSchema(this.sqlDb, DatastoreConstants.getSCHEMA_VERSION_4(), 4);
+        SQLDatabaseFactory.updateSchema(this.sqlDb, DatastoreConstants.SCHEMA_VERSION_4, 4);
+        SQLDatabaseFactory.updateSchema(this.sqlDb, DatastoreConstants.SCHEMA_VERSION_5, 5);
     }
 
     @Override
