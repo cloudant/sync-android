@@ -61,6 +61,8 @@ public interface DocumentRevision extends Comparable<DocumentRevision> {
      */
     public long getSequence();
 
+    public void setSequence(long sequence);
+
     /**
      * <p>Returns the sequence number of this revision's parent revision.</p>
      *

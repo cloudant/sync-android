@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
 
 public class TestUtils {
@@ -71,4 +72,22 @@ public class TestUtils {
         FileUtils.touch(f);
         return f.getAbsolutePath();
     }
+
+    public static boolean streamsEqual(InputStream is1, InputStream is2){
+        int c1, c2;
+        boolean equal = true;
+        try {
+            while ((c1 = is1.read()) != -1) {
+                c2 = is2.read();
+                if (c1 != c2) {
+                    equal = false;
+                    break;
+                }
+            }
+        } catch (IOException ioe) {
+            return false;
+        }
+        return equal;
+    }
+
 }

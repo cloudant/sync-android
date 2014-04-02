@@ -4,6 +4,7 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
+import com.cloudant.sync.util.TestUtils;
 import com.cloudant.sync.util.TypedDatastore;
 
 import org.junit.After;
@@ -87,23 +88,6 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         return foo.getId();
     }
 
-    private boolean streamsEqual(InputStream is1, InputStream is2){
-        int c1, c2;
-        boolean equal = true;
-        try {
-            while ((c1 = is1.read()) != -1) {
-                c2 = is2.read();
-                if (c1 != c2) {
-                    equal = false;
-                    break;
-                }
-            }
-        } catch (IOException ioe) {
-            return false;
-        }
-        return equal;
-    }
-
     @Test
     public void pushAttachmentsTest() throws Exception {
         // simple 1-rev attachment
@@ -128,7 +112,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         // check it's in the DB
         InputStream is1 = this.couchClient.getAttachmentStream(id1, attachmentName);
         InputStream is2 = new FileInputStream(f);
-        Assert.assertTrue("Attachment not the same", streamsEqual(is1,is2));
+        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(is1, is2));
     }
 
     @Test
@@ -181,15 +165,15 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         InputStream isRev4Att2 = this.couchClient.getAttachmentStream(id1, rev4.getRevision(), attachmentName2);
 
         isOriginal1 = new FileInputStream(f1);
-        Assert.assertTrue("Attachment not the same", streamsEqual(isRev2, isOriginal1));
+        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev2, isOriginal1));
 
         isOriginal1 = new FileInputStream(f1);
-        Assert.assertTrue("Attachment not the same", streamsEqual(isRev3, isOriginal1));
+        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev3, isOriginal1));
 
         isOriginal1 = new FileInputStream(f1);
         isOriginal2 = new FileInputStream(f2);
-        Assert.assertTrue("Attachment not the same", streamsEqual(isRev4Att1, isOriginal1));
-        Assert.assertTrue("Attachment not the same", streamsEqual(isRev4Att2, isOriginal2));
+        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev4Att1, isOriginal1));
+        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev4Att2, isOriginal2));
 
     }
 
@@ -204,6 +188,9 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
     }
+
+
+
 
 
 

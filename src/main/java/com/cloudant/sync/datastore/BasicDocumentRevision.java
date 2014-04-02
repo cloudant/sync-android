@@ -162,6 +162,12 @@ class BasicDocumentRevision implements DocumentRevision {
         return sequence;
     }
 
+    public void setSequence(long sequence) {
+        if (this.sequence == -1) {
+            this.sequence = sequence;
+        }
+    }
+
     @Override
     public String toString() {
         return "{ id: " + this.id + ", rev: " + this.revision + ", seq: " + sequence + ", parent: " + parent + " }";

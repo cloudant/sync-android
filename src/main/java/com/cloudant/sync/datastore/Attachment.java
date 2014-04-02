@@ -7,10 +7,10 @@ import java.io.InputStream;
  */
 public abstract class Attachment {
 
-    String name;
-    String type; // mime type
-    long size;
+    public String name;
+    public String type; // mime type
+    public long size;
 
-    abstract InputStream getInputStream();
+    public abstract InputStream getInputStream();
 
 }

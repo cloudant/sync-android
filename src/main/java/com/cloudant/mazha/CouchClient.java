@@ -230,6 +230,15 @@ public class CouchClient {
         return httpClient.get(doc);
     }
 
+    public void putAttachmentStream(String id, String rev, String attachmentName, String attachmentBase64) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
+        Map<String, Object> queries = new HashMap<String, Object>();
+        queries.put("rev", rev);
+        URI doc = this.uriHelper.attachmentUri(this.defaultDb, id, queries, attachmentName);
+        httpClient.put(doc, attachmentBase64);
+    }
+
 
     /**
      * Convenience method to get document with all the conflicts revisions. It does that by adding
@@ -264,6 +273,7 @@ public class CouchClient {
 
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("revs", true);
+        options.put("attachments", true);
         options.put("open_revs", getJson().toJson(revisions));
         return this.getDocument(id, options, new TypeReference<List<OpenRevision>>() {
         });
