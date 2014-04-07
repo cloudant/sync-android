@@ -137,8 +137,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         rev = bar.getRevision();
     }
 
-    @Test
-    public void createRevisionAndBigAttachment() throws IOException {
+    private void createRevisionAndBigAttachment() throws IOException {
         Bar bar = new Bar();
         bar.setName("Tom");
         bar.setAge(34);
@@ -160,8 +159,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         rev = bar.getRevision();
     }
 
-    @Test
-    public void createRevisionAndBigTextAttachment() throws IOException {
+    private void createRevisionAndBigTextAttachment() throws IOException {
         Bar bar = new Bar();
         bar.setName("Tom");
         bar.setAge(34);
