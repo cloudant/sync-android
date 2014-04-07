@@ -801,6 +801,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                     String data = (String)((Map<String,Object>)attachments.get(att)).get("data");
                     InputStream is = new Base64InputStream(new ByteArrayInputStream(data.getBytes()));
                     String type = (String)((Map<String,Object>)attachments.get(att)).get("content_type");
+                    // TODO deal with encoding - is it compressed?
                     UnsavedFileAttachment ufa = new UnsavedFileAttachment(is, att, type);
                     try {
                         this.attachmentManager.addAttachment(ufa, rev);

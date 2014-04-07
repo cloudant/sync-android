@@ -93,6 +93,7 @@ public class AttachmentManager {
         if (result == -1) {
             // if we can't insert into DB then don't copy the attachment
             Log.e(LOG_TAG, "Could not insert attachment " + a + " into database; not copying to attachments directory");
+            tempFile.delete();
             return false;
         }
         // move file to blob store, with file name based on sha1

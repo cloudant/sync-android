@@ -2,6 +2,7 @@ package com.cloudant.sync.datastore;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -18,12 +19,8 @@ public class SavedAttachment extends Attachment {
         this.file = file;
     }
 
-    public InputStream getInputStream() {
-        try {
-            return new FileInputStream(file);
-        } catch (Exception e) {
-            return null;
-        }
+    public InputStream getInputStream() throws IOException {
+        return new FileInputStream(file);
     }
 
     protected final long revpos;

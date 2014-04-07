@@ -1,5 +1,6 @@
 package com.cloudant.sync.datastore;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -11,6 +12,6 @@ public abstract class Attachment {
     public String type; // mime type
     public long size;
 
-    public abstract InputStream getInputStream();
+    public abstract InputStream getInputStream() throws IOException;
 
 }

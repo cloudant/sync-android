@@ -49,6 +49,22 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         }
     }
 
+    @Test(expected = IOException.class)
+    public void setBadAttachmentsTest() throws IOException {
+        String attachmentName = "attachment_1.txt";
+        BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
+        File f = new File("/nonexistentfile");
+        UnsavedFileAttachment att = new UnsavedFileAttachment(f, "text/plain");
+        List<UnsavedFileAttachment> atts = new ArrayList<UnsavedFileAttachment>();
+        atts.add(att);
+        DocumentRevision newRevision = null;
+        try {
+            newRevision = datastore.updateAttachments(rev_1, atts);
+        } catch (ConflictException ce) {
+            Assert.fail("ConflictException thrown: " + ce);
+        }
+    }
+
     // this test should throw a conflictexception when we try to add attachments to an old revision
     @Test(expected = ConflictException.class)
     public void setAttachmentsConflictTest() throws ConflictException {

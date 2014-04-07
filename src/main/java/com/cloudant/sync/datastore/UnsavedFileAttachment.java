@@ -16,6 +16,7 @@ public class UnsavedFileAttachment extends Attachment {
             this.inputStream = new FileInputStream(file);
         } catch (IOException ioe) {
             System.out.println("problem setting inputstream "+ioe);
+            inputStreamException = ioe;
         }
         this.type = type;
     }
@@ -26,9 +27,14 @@ public class UnsavedFileAttachment extends Attachment {
         this.type = type;
     }
 
-    public InputStream getInputStream() {
-        return inputStream;
+    public InputStream getInputStream() throws IOException {
+        if (inputStream != null) {
+            return inputStream;
+        } else {
+            throw inputStreamException;
+        }
     }
 
     private InputStream inputStream;
+    private IOException inputStreamException;
 }
