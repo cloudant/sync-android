@@ -41,7 +41,8 @@ class DatastoreConstants {
     // First-time initialization:
     // (Note: Declaring revs.sequence as AUTOINCREMENT means the values will always be
     // monotonically increasing, never reused. See <http://www.sqlite4java.org/autoinc.html>)
-    public static final String[] SCHEMA_VERSION_3 = {
+    public static String[] getSchemaVersion3() {
+        return new String[] {
             "    CREATE TABLE docs ( " +
             "        doc_id INTEGER PRIMARY KEY, " +
             "        docid TEXT UNIQUE NOT NULL); ",
@@ -89,19 +90,24 @@ class DatastoreConstants {
             "        startPush BOOLEAN, " +
             "        last_sequence TEXT, " +
             "        UNIQUE (remote, startPush)); "
+        };
     };
 
-    public static final String[] SCHEMA_VERSION_4 = {
+    public static String[] getSchemaVersion4() {
+        return new String[] {
             "CREATE TABLE info ( " +
             "    key TEXT PRIMARY KEY, " +
             "    value TEXT); ",
             String.format("INSERT INTO INFO (key, value) VALUES ('privateUUID', '%s'); ", Misc.createUUID()),
             String.format("INSERT INTO INFO (key, value) VALUES ('publicUUID',  '%s'); ", Misc.createUUID())
+        };
     };
 
-    public static final String[] SCHEMA_VERSION_5 = {
+    public static String[] getSchemaVersion5() {
+        return new String[] {
             "ALTER TABLE attachments ADD COLUMN encoding INTEGER DEFAULT 0; ",
             "ALTER TABLE attachments ADD COLUMN encoded_length INTEGER DEFAULT 0; "
+        };
     };
 
 }
