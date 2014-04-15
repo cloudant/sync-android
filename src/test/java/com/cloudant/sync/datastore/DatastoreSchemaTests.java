@@ -17,7 +17,7 @@ public class DatastoreSchemaTests {
         // privateUuid and publicUuid have to be unique on the info table for each DB
         String[] schema_Alpha = DatastoreConstants.getSchemaVersion4();
         String[] schema_Beta  = DatastoreConstants.getSchemaVersion4();
-        assertThat("", schema_Alpha, not(equalTo(schema_Beta)));
+        assertThat("Schemas should be different", schema_Alpha, not(equalTo(schema_Beta)));
     }
 
     @Test
@@ -25,11 +25,11 @@ public class DatastoreSchemaTests {
         // for contrast with above test, schema 3 and 5 are identical each time
         String[] schema_Alpha3 = DatastoreConstants.getSchemaVersion3();
         String[] schema_Beta3  = DatastoreConstants.getSchemaVersion3();
-        assertThat("", schema_Alpha3, equalTo(schema_Beta3));
+        assertThat("Schemas should be the same", schema_Alpha3, equalTo(schema_Beta3));
 
         String[] schema_Alpha5 = DatastoreConstants.getSchemaVersion5();
         String[] schema_Beta5  = DatastoreConstants.getSchemaVersion5();
-        assertThat("", schema_Alpha5, equalTo(schema_Beta5));
+        assertThat("Schemas should be the same", schema_Alpha5, equalTo(schema_Beta5));
     }
 
 }
