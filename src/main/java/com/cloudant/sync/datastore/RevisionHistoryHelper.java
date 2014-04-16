@@ -118,7 +118,7 @@ public class RevisionHistoryHelper {
      */
     public static String revisionHistoryToJson(List<DocumentRevision> history, List<? extends Attachment> attachments) {
         Preconditions.checkNotNull(history, "History must not be null");
-        Preconditions.checkArgument(history.size() > 0, "History must not have at least one DocumentRevision.");
+        Preconditions.checkArgument(history.size() > 0, "History must have at least one DocumentRevision.");
         Preconditions.checkArgument(checkHistoryIsInDescendingOrder(history),
                 "History must be in descending order.");
 
@@ -141,34 +141,35 @@ public class RevisionHistoryHelper {
             // we need to cast down to SavedAttachment, which we know is what the AttachmentManager gives us
             SavedAttachment savedAtt = (SavedAttachment)att;
             HashMap<String, Object> theAtt = new HashMap<String, Object>();
-            // base64 encode this attachment
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            Base64OutputStream bos = new Base64OutputStream(baos, true, 0, null);
             try {
-                InputStream fis = savedAtt.getInputStream();
-                int bufSiz = 1024;
-                byte[] buf = new byte[bufSiz];
-                int n = 0;
-                do {
-                    n = fis.read(buf);
-                    if (n > 0) {
-                        bos.write(buf, 0, n);
-                    }
-                } while (n > 0);
-                // if the revpos of the current doc is higher than that of the attachment, it's a stub
                 if (savedAtt.revpos < revpos) {
+                    // if the revpos of the current doc is higher than that of the attachment, it's a stub
                     theAtt.put("stub", true);
                 } else {
+                    // base64 encode this attachment
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    Base64OutputStream bos = new Base64OutputStream(baos, true, 0, null);
+                    InputStream fis = savedAtt.getInputStream();
+                    int bufSiz = 1024;
+                    byte[] buf = new byte[bufSiz];
+                    int n = 0;
+                    do {
+                        n = fis.read(buf);
+                        if (n > 0) {
+                            bos.write(buf, 0, n);
+                        }
+                    } while (n > 0);
                     theAtt.put("data", baos.toString());  //base64 of data
                 }
                 theAtt.put("content_type", savedAtt.type);
                 theAtt.put("revpos", savedAtt.revpos);
-            } catch (FileNotFoundException fnfe) {
-                continue;
             } catch (IOException ioe) {
+                // if we can't read the file containing the attachment then skip it
+                // (this should only occur if someone tampered with the attachments directory
+                // or something went seriously wrong)
                 continue;
             }
-            // now we are done, add the attachment to the hash
+            // now we are done, add the attachment to the map
             attsMap.put(att.name, theAtt);
         }
     }

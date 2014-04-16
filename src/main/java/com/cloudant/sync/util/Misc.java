@@ -58,10 +58,4 @@ public class Misc {
         return sha1.digest();
     }
 
-    public static byte[] getMd5(InputStream md5Fis) {
-        // TODO
-        byte[] md5 = null;
-        return md5;
-    }
-
 }

@@ -1,12 +1,28 @@
+/**
+ * Copyright (c) 2014 Cloudant, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.util.TestUtils;
 import com.cloudant.sync.util.TypedDatastore;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -19,6 +35,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.core.Is.isA;
 
 /**
  * Created by tomblench on 26/03/2014.
@@ -94,8 +114,9 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         String attachmentName = "attachment_1.txt";
         populateSomeDataInLocalDatastore();
         File f = new File("fixture", attachmentName);
-        UnsavedFileAttachment att = new UnsavedFileAttachment(f, "text/plain");
-        List<UnsavedFileAttachment> atts = new ArrayList<UnsavedFileAttachment>();
+        Attachment att = datastore.createAttachment(f, "text/plain");
+        Assert.assertThat(att, is(instanceOf(UnsavedFileAttachment.class)));
+        List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
         DocumentRevision oldRevision = datastore.getDocument(id1);
         DocumentRevision newRevision = null;
@@ -123,11 +144,13 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         populateSomeDataInLocalDatastore();
         File f1 = new File("fixture", attachmentName1);
         File f2 = new File("fixture", attachmentName2);
-        UnsavedFileAttachment att1 = new UnsavedFileAttachment(f1, "text/plain");
-        UnsavedFileAttachment att2 = new UnsavedFileAttachment(f2, "text/plain");
-        List<UnsavedFileAttachment> atts1 = new ArrayList<UnsavedFileAttachment>();
+        Attachment att1 = datastore.createAttachment(f1, "text/plain");
+        Attachment att2 = datastore.createAttachment(f2, "text/plain");
+        Assert.assertThat(att1, is(instanceOf(UnsavedFileAttachment.class)));
+        Assert.assertThat(att2, is(instanceOf(UnsavedFileAttachment.class)));
+        List<Attachment> atts1 = new ArrayList<Attachment>();
         atts1.add(att1);
-        List<UnsavedFileAttachment> atts2 = new ArrayList<UnsavedFileAttachment>();
+        List<Attachment> atts2 = new ArrayList<Attachment>();
         atts2.add(att2);
         DocumentRevision rev1 = datastore.getDocument(id1);
         DocumentRevision rev2 = null;

@@ -19,6 +19,7 @@ package com.cloudant.sync.datastore;
 
 import com.google.common.eventbus.EventBus;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
@@ -335,14 +336,14 @@ public interface Datastore {
      *
      * @return SavedAttachment or null no attachment with that name.
      */
-    Attachment getAttachment(DocumentRevision rev, String attachmentName);
+    public Attachment getAttachment(DocumentRevision rev, String attachmentName);
 
     /**
      * Returns all attachments revision, creating a new revision.
      *
      * @return SavedAttachment or null no attachment with that name.
      */
-    List<? extends Attachment> attachmentsForRevision(DocumentRevision rev);
+    public List<? extends Attachment> attachmentsForRevision(DocumentRevision rev);
 
     /**
      Set the content of attachments on a document, creating
@@ -355,13 +356,15 @@ public interface Datastore {
 
      @return New revision.
      */
-    DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException, IOException;
+    public DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException, IOException;
 
     /**
      Remove attachment `name` from a document, creating a new revision.
      @return New revision.
      */
-    DocumentRevision removeAttachments(DocumentRevision rev, String[] attachmentNames) throws ConflictException;
+    public DocumentRevision removeAttachments(DocumentRevision rev, String[] attachmentNames) throws ConflictException;
+
+    public Attachment createAttachment(File f, String contentType);
 
     /**
      * Close the datastore

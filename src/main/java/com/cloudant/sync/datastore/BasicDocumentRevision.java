@@ -162,7 +162,7 @@ class BasicDocumentRevision implements DocumentRevision {
         return sequence;
     }
 
-    public void setSequence(long sequence) {
+    public void initialiseSequence(long sequence) {
         if (this.sequence == -1) {
             this.sequence = sequence;
         }

@@ -1,3 +1,17 @@
+/**
+ * Copyright (c) 2014 Cloudant, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.util.Misc;
@@ -133,6 +147,44 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         }
 
     }
+
+    @Test
+    public void createDeleteAttachmentsFailTest() {
+        // check that an attachment 'going missing' from the blob store doesn't stop us deleting it
+        // from the database
+        String attachmentName = "attachment_1.txt";
+        BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
+        File f = new File("fixture", attachmentName);
+        UnsavedFileAttachment att = new UnsavedFileAttachment(f, "text/plain");
+        List<UnsavedFileAttachment> atts = new ArrayList<UnsavedFileAttachment>();
+        atts.add(att);
+        DocumentRevision rev2 = null;
+        try {
+            rev2 = datastore.updateAttachments(rev_1, atts);
+            Assert.assertNotNull("Revision null", rev2);
+        } catch (ConflictException ce){
+            Assert.fail("ConflictException thrown: "+ce);
+        } catch (IOException ioe) {
+            Assert.fail("IOException thrown: "+ioe);
+        }
+
+        DocumentRevision rev3 = null;
+        // clear out the attachment directory
+        File attachments = new File(datastore.datastoreDir + "/extensions/com.cloudant.attachments");
+        for(File attFile : attachments.listFiles()) {
+            attFile.delete();
+        }
+
+        try {
+            rev3 = datastore.removeAttachments(rev2, new String[]{attachmentName});
+            Assert.assertNotNull("Revision null", rev3);
+        } catch (Exception e) {
+            Assert.fail("Exception thrown: "+e);
+        }
+        // check that there are no attachments now associated with this doc
+        Assert.assertTrue("Revision should have 0 attachments", datastore.attachmentsForRevision(rev3).isEmpty());
+    }
+
 
     @Test
     public void attachmentsForRevisionTest() {

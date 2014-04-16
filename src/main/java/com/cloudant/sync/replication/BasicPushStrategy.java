@@ -233,8 +233,6 @@ class BasicPushStrategy implements ReplicationStrategy {
             Map<String, DocumentRevisionTree> allTrees = this.sourceDb.getDocumentTrees(batch);
             Map<String, Set<String>> docOpenRevs = this.openRevisions(allTrees);
             Map<String, Set<String>> docMissingRevs = this.targetDb.revsDiff(docOpenRevs);
-            // get attachments for these revs?
-
             List<String> serialisedMissingRevs = missingRevisionsToJsonDocs(allTrees, docMissingRevs);
 
             if (!this.cancel) {
@@ -261,11 +259,9 @@ class BasicPushStrategy implements ReplicationStrategy {
             for(String rev : missingRevisions) {
                 long sequence = tree.lookup(docId, rev).getSequence();
                 List<DocumentRevision> path = tree.getPathForNode(sequence);
-                // NB this will probably look like AttachmentHistoryHelper.....() later
+                // get the attachments for the leaf of this path
                 DocumentRevision dr = path.get(0);
                 List<? extends Attachment> atts = this.sourceDb.getDbCore().attachmentsForRevision(dr);
-                // need to graft on _attachments somehow
-                // need to stub out attachments for in between versions
                 docs.add(RevisionHistoryHelper.revisionHistoryToJson(path, atts));
             }
         }

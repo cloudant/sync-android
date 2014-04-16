@@ -1,3 +1,17 @@
+/**
+ * Copyright (c) 2014 Cloudant, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
 package com.cloudant.sync.datastore;
 
 import com.cloudant.common.Log;
@@ -21,17 +35,31 @@ import java.util.UUID;
 /**
  * Created by tomblench on 14/03/2014.
  */
-public class AttachmentManager {
+class AttachmentManager {
 
     private static final String LOG_TAG = "AttachmentManager";
 
     private static final String EXTENSION_NAME = "com.cloudant.attachments";
 
-    private static final String SQL_ATTACHMENTS_SELECT = "SELECT sequence, filename, key, type, encoding, length, encoded_length, revpos " +
+    private static final String SQL_ATTACHMENTS_SELECT = "SELECT sequence, " +
+            "filename, " +
+            "key, " +
+            "type, " +
+            "encoding, " +
+            "length, " +
+            "encoded_length, " +
+            "revpos " +
             " FROM attachments " +
             " WHERE filename = ? and sequence = ?";
 
-    private static final String SQL_ATTACHMENTS_SELECT_ALL = "SELECT sequence, filename, key, type, encoding, length, encoded_length, revpos " +
+    private static final String SQL_ATTACHMENTS_SELECT_ALL = "SELECT sequence, " +
+            "filename, " +
+            "key, " +
+            "type, " +
+            "encoding, " +
+            "length, " +
+            "encoded_length, " +
+            "revpos " +
             " FROM attachments " +
             " WHERE sequence = ?";
 
@@ -44,13 +72,6 @@ public class AttachmentManager {
         Gzip
     }
 
-    private enum EncodingHint {
-        Auto,
-        Never,
-        Always
-    }
-
-
     public AttachmentManager(BasicDatastore datastore) {
         this.datastore = datastore;
         this.attachmentsDir = datastore.extensionDataFolder(EXTENSION_NAME);
@@ -60,14 +81,12 @@ public class AttachmentManager {
 
         // do it this way to only go thru inputstream once
         // * write to temp location using copyinputstreamtofile
-        // * get sha1 and md5 of file
+        // * get sha1
         // * stick it into database
-        // * move file
+        // * move file using sha1 as name
 
         File tempFile = new File(this.attachmentsDir, "temp"+ UUID.randomUUID());
         FileUtils.copyInputStreamToFile(a.getInputStream(), tempFile);
-
-        byte[] md5 = Misc.getMd5(new FileInputStream(tempFile));
 
         ContentValues values = new ContentValues();
         long sequence = rev.getSequence();
@@ -98,26 +117,17 @@ public class AttachmentManager {
         }
         // move file to blob store, with file name based on sha1
         File newFile = fileFromKey(sha1);
-        FileUtils.copyFile(tempFile, newFile);
+        FileUtils.moveFile(tempFile, newFile);
         return true;
     }
 
-    public DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException, IOException {
-        // add attachments and then return new revision
+    protected DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException, IOException {
 
-        // make a new rev for the version with attachments
+        // add attachments and then return new revision:
+        // * save new (unmodified) revision which will have new _attachments when synced
+        // * for each attachment, add attachment to db linked to this revision
+
         DocumentRevision newDocument = datastore.updateDocument(rev.getId(), rev.getRevision(), rev.getBody());
-
-        // save new (unmodified) revision which will have new _attachments when synced
-        // ...
-        // get these properties:
-        // length
-        // content type
-        // digests sha1 and md5
-        // ...
-        // save to blob store
-        // ...
-        // add attachment to db linked to this revision
 
         for (Attachment a : attachments) {
             this.addAttachment(a, newDocument);
@@ -125,16 +135,13 @@ public class AttachmentManager {
         return newDocument;
     }
 
-    public Attachment getAttachment(DocumentRevision rev, String attachmentName) {
+    protected Attachment getAttachment(DocumentRevision rev, String attachmentName) {
         try {
             Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT, new String[]{attachmentName, String.valueOf(rev.getSequence())});
             if (c.moveToFirst()) {
                 int sequence = c.getInt(0);
                 byte[] key = c.getBlob(2);
                 String type = c.getString(3);
-                int encoding = c.getInt(4);
-                int length = c.getInt(5);
-                int encoded_length = c.getInt(6);
                 int revpos = c.getInt(7);
                 File file = fileFromKey(key);
                 return new SavedAttachment(attachmentName, revpos, sequence, key, type, file);
@@ -145,21 +152,15 @@ public class AttachmentManager {
         }
     }
 
-    public List<? extends Attachment> attachmentsForRevision(DocumentRevision rev) {
-        return this.attachmentsForRevision(rev.getSequence());
-    }
-
-    public List<? extends Attachment> attachmentsForRevision(long sequence) {
+    protected List<? extends Attachment> attachmentsForRevision(DocumentRevision rev) {
         try {
             LinkedList<SavedAttachment> atts = new LinkedList<SavedAttachment>();
+            long sequence = rev.getSequence();
             Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL, new String[]{String.valueOf(sequence)});
             while (c.moveToNext()) {
                 String name = c.getString(1);
                 byte[] key = c.getBlob(2);
                 String type = c.getString(3);
-                int encoding = c.getInt(4);
-                int length = c.getInt(5);
-                int encoded_length = c.getInt(6);
                 int revpos = c.getInt(7);
                 File file = fileFromKey(key);
                 atts.add(new SavedAttachment(name, revpos, sequence, key, type, file));
@@ -170,7 +171,8 @@ public class AttachmentManager {
         }
     }
 
-    public DocumentRevision removeAttachments(DocumentRevision rev, String[] attachmentNames) throws ConflictException {
+    protected DocumentRevision removeAttachments(DocumentRevision rev, String[] attachmentNames)
+            throws ConflictException {
 
         int nDeleted = 0;
 
@@ -178,31 +180,39 @@ public class AttachmentManager {
             // first see if it exists
             SavedAttachment a = (SavedAttachment) this.getAttachment(rev, attachmentName);
             if (a == null) {
+                Log.w(LOG_TAG, "Could not find attachment to delete from database with filename = "+attachmentName+", sequence = "+rev.getSequence());
                 continue;
             }
             // get the file in blob store
             File f = this.fileFromKey(a.key);
-
-            // delete att from database table
-            datastore.getSQLDatabase().delete("attachments", " filename = ? and sequence = ? ", new String[]{attachmentName, String.valueOf(rev.getSequence())});
-
+            boolean rowDeleted = datastore.getSQLDatabase().delete("attachments", " filename = ? and sequence = ? ",
+                    new String[]{attachmentName, String.valueOf(rev.getSequence())}) == 1;
+            if (!rowDeleted) {
+                Log.w(LOG_TAG, "Could not delete attachment from database with filename = "+attachmentName+", sequence = "+rev.getSequence());
+            }
             // delete attachments from blob store
-            f.delete();
-
-            nDeleted++;
+            boolean fileDeleted = f.delete();
+            if (!fileDeleted) {
+                Log.w(LOG_TAG, "Could not delete file from BLOB store: "+f.getAbsolutePath());
+            }
+            if (rowDeleted) {
+                // only need to update the rev if we deleted the attachment from the local database
+                nDeleted++;
+            }
         }
 
         if (nDeleted > 0) {
             // return a new rev for the version with attachment removed
             return datastore.updateDocument(rev.getId(), rev.getRevision(), rev.getBody());
+        } else {
+            // nothing deleted, just return the same rev
+            return rev;
         }
-
-        // nothing deleted, just return the same rev
-        return rev;
     }
 
-        protected File fileFromKey(byte[] key) {
+    private File fileFromKey(byte[] key) {
         File file = new File(attachmentsDir, new String(new Hex().encode(key)));
+
         return file;
     }
 
