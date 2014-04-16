@@ -106,6 +106,7 @@ public class SQLiteWrapper implements SQLDatabase {
         try {
             SQLiteConnection conn = new SQLiteConnection(new File(this.databaseFilePath));
             conn.open();
+            conn.setBusyTimeout(30*1000);
             return conn;
         } catch (SQLiteException ex) {
             throw new IllegalStateException("Failed to open database.", ex);

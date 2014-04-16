@@ -661,7 +661,7 @@ public class IndexManagerIndexTest {
 
         // Check appropriate entries in index
         QueryBuilder q = new QueryBuilder();
-        q.index("search").equals("success");
+        q.index("search").equalTo("success");
         QueryResult result = indexManager.query(q.build());
 
         List<DocumentRevision> docRevisions = Lists.newArrayList(result);
