@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -618,7 +619,7 @@ public class IndexManagerIndexTest {
         final Map<String,String> nonmatching = ImmutableMap.of("search", "failure");
         indexManager.ensureIndexed("search", "search", IndexType.STRING);
 
-        final List<String> matching_ids = new ArrayList<String>();
+        final List<String> matching_ids = Collections.synchronizedList(new ArrayList<String>());
 
         // When run, this thread creates n_docs documents with unique
         // names in the datastore. A subset of these
