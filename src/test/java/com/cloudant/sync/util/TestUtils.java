@@ -22,6 +22,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.UUID;
 
 public class TestUtils {
 
@@ -56,10 +57,17 @@ public class TestUtils {
         }
     }
 
-    public static String createTempTestingDir(String dirName) {
-        String tempPath = FileUtils.getTempDirectory().getAbsolutePath() + File.separator + dirName;
-        new File(tempPath).mkdirs();
-        return tempPath;
+    public static String createTempTestingDir(String dirPrefix) {
+        String tempPath = String.format(
+                "%s_%s",
+                dirPrefix,
+                UUID.randomUUID().toString()
+        );
+        File f = new File(
+                FileUtils.getTempDirectory().getAbsolutePath(),
+                tempPath);
+        f.mkdirs();
+        return f.getAbsolutePath();
     }
 
     public static void deleteTempTestingDir(String path) {
