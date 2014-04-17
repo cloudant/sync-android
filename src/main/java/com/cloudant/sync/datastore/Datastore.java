@@ -332,39 +332,81 @@ public interface Datastore {
         throws ConflictException;
 
     /**
-     * Returns attachment `attachmentName` for the revision.
+     * Returns attachment <code>attachmentName</code> for the revision.
      *
-     * @return SavedAttachment or null no attachment with that name.
+     * @return <code>Attachment</code> or null if there is no attachment with that name.
      */
     public Attachment getAttachment(DocumentRevision rev, String attachmentName);
 
     /**
-     * Returns all attachments revision, creating a new revision.
+     * Returns all attachments for the revision.
      *
-     * @return SavedAttachment or null no attachment with that name.
+     * @return List of <code>Attachment</code>
      */
     public List<? extends Attachment> attachmentsForRevision(DocumentRevision rev);
 
     /**
-     Set the content of attachments on a document, creating
-     new revision of the document.
-
-     Existing attachments with the same name will be replaced,
-     new attachments will be created, and attachments already
-     existing on the document which are not included in
-     `attachments` will remain as attachments on the document.
-
-     @return New revision.
+     * <p>
+     * Set the content of attachments on a document, creating
+     * new revision of the document.
+     * </p>
+     *
+     * <p>
+     * Existing attachments with the same name will be replaced,
+     * new attachments will be created, and attachments already
+     * existing on the document which are not included in
+     * <code>attachments</code> will remain as attachments on the document.
+     * </p>
+     *
+     * <p>
+     * Multiple attachments can be added with one call to this method.
+     * This avoids creating unnecessary <code>DocumentRevision</code>s which
+     * differ only by their attachments.
+     * </p>
+     *
+     * @param rev The <code>DocumentRevision</code> to update
+     * @param attachments List of attachments to create or replace
+     *
+     * @return New revision.
+     *
+     * @see #createAttachment(java.io.File, String)
      */
-    public DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException, IOException;
+    public DocumentRevision updateAttachments(DocumentRevision rev,
+                                              List<? extends Attachment> attachments)
+            throws ConflictException, IOException;
 
     /**
-     Remove attachment `name` from a document, creating a new revision.
-     @return New revision.
+     * <p>
+     * Remove attachments <code>attachmentNames</code> from a document, creating a new revision
+     * of the document.
+     * </p>
+     *
+     * <p>
+     * Multiple attachments can be removed with one call to this method.
+     * This avoids creating unnecessary <code>DocumentRevision</code>s which
+     * differ only by their attachments.
+     * </p>
+     *
+     * @param rev The <code>DocumentRevision</code> to update
+     * @param attachmentNames Array of attachment names to remove
+     *
+     * @return New revision.
      */
-    public DocumentRevision removeAttachments(DocumentRevision rev, String[] attachmentNames) throws ConflictException;
+    public DocumentRevision removeAttachments(DocumentRevision rev, String[] attachmentNames)
+            throws ConflictException;
 
-    public Attachment createAttachment(File f, String contentType);
+    /**
+     * Helper method to create an attachment from a <code>File</code> on disk,
+     * suitable for passing to <code>updateAttachments</code>
+     *
+     * @param file File to attach
+     * @param contentType MIME content type of the file, for example
+     *                    <code>text/plain</code> or <code>image/jpeg</code>
+     * @return New attachment
+     *
+     * @see #updateAttachments(DocumentRevision, java.util.List)
+     */
+    public Attachment createAttachment(File file, String contentType);
 
     /**
      * Close the datastore

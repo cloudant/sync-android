@@ -20,12 +20,32 @@ import java.io.InputStream;
 /**
  * Created by tomblench on 11/03/2014.
  */
+
+/**
+ * Base class for Attachments
+ */
 public abstract class Attachment {
 
+    /**
+     * Name of the attachment, must be unique for a given revision
+     */
     public String name;
-    public String type; // mime type
-    public long size;
 
+    /**
+     * MIME type of the attachment
+     */
+    public String type;
+
+    /**
+     * Size in bytes, may be -1 if not known (e.g., HTTP URL for new attachment)
+     */
+    public long size;
+    
+    /**
+     * Gets contents of attachments as a stream.
+     *
+     * Caller must call close() when done.
+     */     
     public abstract InputStream getInputStream() throws IOException;
 
 }

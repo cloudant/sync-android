@@ -174,7 +174,7 @@ public interface DatastoreExtended extends Datastore {
      * @param rev
      * @param revisionHistory
      *
-     * @see DatastoreExtended#forceInsert(DocumentRevision, java.util.List)
+     * @see DatastoreExtended#forceInsert(DocumentRevision, java.util.List, java.util.Map)
      */
     public void forceInsert(DocumentRevision rev, String... revisionHistory);
 
