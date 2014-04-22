@@ -16,6 +16,8 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.util.Misc;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import org.junit.Assert;
@@ -38,8 +40,9 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         String attachmentName = "attachment_1.txt";
         BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
         File f = new File("fixture", attachmentName);
-        UnsavedFileAttachment att = new UnsavedFileAttachment(f, "text/plain");
-        List<UnsavedFileAttachment> atts = new ArrayList<UnsavedFileAttachment>();
+        Attachment att = datastore.createAttachment(f, "text/plain");
+        List<Attachment> atts = new ArrayList<Attachment>();
+        Assert.assertThat(att, is(instanceOf(UnsavedFileAttachment.class)));
         atts.add(att);
         DocumentRevision newRevision = null;
         try {
@@ -68,8 +71,9 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         String attachmentName = "attachment_1.txt";
         BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
         File f = new File("/nonexistentfile");
-        UnsavedFileAttachment att = new UnsavedFileAttachment(f, "text/plain");
-        List<UnsavedFileAttachment> atts = new ArrayList<UnsavedFileAttachment>();
+        Attachment att = datastore.createAttachment(f, "text/plain");
+        List<Attachment> atts = new ArrayList<Attachment>();
+        Assert.assertThat(att, is(instanceOf(UnsavedFileAttachment.class)));
         atts.add(att);
         DocumentRevision newRevision = null;
         try {
@@ -92,8 +96,9 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             Assert.fail("ConflictException thrown: "+ce);
         }
         File f = new File("fixture", attachmentName);
-        UnsavedFileAttachment att = new UnsavedFileAttachment(f, "text/plain");
-        List<UnsavedFileAttachment> atts = new ArrayList<UnsavedFileAttachment>();
+        Attachment att = datastore.createAttachment(f, "text/plain");
+        List<Attachment> atts = new ArrayList<Attachment>();
+        Assert.assertThat(att, is(instanceOf(UnsavedFileAttachment.class)));
         atts.add(att);
         DocumentRevision newRevision = null;
         try {
@@ -109,8 +114,9 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         String attachmentName = "attachment_1.txt";
         BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
         File f = new File("fixture", attachmentName);
-        UnsavedFileAttachment att = new UnsavedFileAttachment(f, "text/plain");
-        List<UnsavedFileAttachment> atts = new ArrayList<UnsavedFileAttachment>();
+        Attachment att = datastore.createAttachment(f, "text/plain");
+        List<Attachment> atts = new ArrayList<Attachment>();
+        Assert.assertThat(att, is(instanceOf(UnsavedFileAttachment.class)));
         atts.add(att);
         DocumentRevision rev2 = null;
         try {
@@ -155,8 +161,9 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         String attachmentName = "attachment_1.txt";
         BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
         File f = new File("fixture", attachmentName);
-        UnsavedFileAttachment att = new UnsavedFileAttachment(f, "text/plain");
-        List<UnsavedFileAttachment> atts = new ArrayList<UnsavedFileAttachment>();
+        Attachment att = datastore.createAttachment(f, "text/plain");
+        List<Attachment> atts = new ArrayList<Attachment>();
+        Assert.assertThat(att, is(instanceOf(UnsavedFileAttachment.class)));
         atts.add(att);
         DocumentRevision rev2 = null;
         try {
@@ -189,9 +196,12 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     @Test
     public void attachmentsForRevisionTest() {
         BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
-        UnsavedFileAttachment att1 = new UnsavedFileAttachment(new File("fixture", "attachment_1.txt"), "text/plain");
-        UnsavedFileAttachment att2 = new UnsavedFileAttachment(new File("fixture", "attachment_2.txt"), "text/plain");
-        List<UnsavedFileAttachment> atts = new ArrayList<UnsavedFileAttachment>();
+
+        Attachment att1 = datastore.createAttachment(new File("fixture", "attachment_1.txt"), "text/plain");
+        Attachment att2 = datastore.createAttachment(new File("fixture", "attachment_2.txt"), "text/plain");
+        Assert.assertThat(att1, is(instanceOf(UnsavedFileAttachment.class)));
+        Assert.assertThat(att2, is(instanceOf(UnsavedFileAttachment.class)));
+        List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att1);
         atts.add(att2);
         DocumentRevision newRevision = null;
