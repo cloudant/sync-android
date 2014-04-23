@@ -1031,6 +1031,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         this.sqlDb.update("revs", args, "current=0", null);
 
         Log.v(LOG_TAG, "Deleting old attachments...");
+        this.attachmentManager.purgeAttachments();
 
         Log.v(LOG_TAG, "Vacuuming SQLite database...");
         this.sqlDb.compactDatabase();

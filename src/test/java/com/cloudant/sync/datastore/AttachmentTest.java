@@ -18,8 +18,6 @@ import com.cloudant.sync.util.Misc;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -111,13 +109,14 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     @Test
     public void createDeleteAttachmentsTest() {
 
-        String attachmentName = "attachment_1.txt";
         BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
-        File f = new File("fixture", attachmentName);
-        Attachment att = datastore.createAttachment(f, "text/plain");
+        Attachment att1 = datastore.createAttachment(new File("fixture", "attachment_1.txt"), "text/plain");
+        Attachment att2 = datastore.createAttachment(new File("fixture", "attachment_2.txt"), "text/plain");
+        Assert.assertThat(att1, is(instanceOf(UnsavedFileAttachment.class)));
+        Assert.assertThat(att2, is(instanceOf(UnsavedFileAttachment.class)));
         List<Attachment> atts = new ArrayList<Attachment>();
-        Assert.assertThat(att, is(instanceOf(UnsavedFileAttachment.class)));
-        atts.add(att);
+        atts.add(att1);
+        atts.add(att2);
         DocumentRevision rev2 = null;
         try {
             rev2 = datastore.updateAttachments(rev_1, atts);
@@ -130,13 +129,32 @@ public class AttachmentTest extends BasicDatastoreTestBase {
 
         DocumentRevision rev3 = null;
         try {
-            rev3 = datastore.removeAttachments(rev2, new String[]{attachmentName});
+            rev3 = datastore.removeAttachments(rev2, new String[]{"attachment_1.txt"});
+            datastore.compact();
             Assert.assertNotNull("Revision null", rev3);
+
+            // 1st shouldn't exist
+            Attachment savedAtt1 = datastore.getAttachment(rev3, "attachment_1.txt");
+            Assert.assertNull("Att1 not null", savedAtt1);
+
+            // check we can read from the 2nd attachment, it wasn't deleted
+            Attachment savedAtt2 = datastore.getAttachment(rev3, "attachment_2.txt");
+            Assert.assertNotNull("Att2 null", savedAtt2);
+            int i = savedAtt2.getInputStream().read();
+            Assert.assertTrue("Can't read from Att2", i >= 0);
+
+            // now sneakily look for them on disk
+            File attachments = new File(datastore.datastoreDir + "/extensions/com.cloudant.attachments");
+            int count = attachments.listFiles().length;
+            Assert.assertEquals("Did not find 1 file in blob store", 1, count);
+
         } catch (Exception e) {
             Assert.fail("Exception thrown: "+e);
         }
 
     }
+
+    // TODO test 2 revs pointing at the same file in the blob store, deleting one doesn't cause it to be deleted
 
     @Test
     public void deleteNonexistentAttachmentsTest() {

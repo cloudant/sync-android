@@ -27,9 +27,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -62,6 +63,9 @@ class AttachmentManager {
             "revpos " +
             " FROM attachments " +
             " WHERE sequence = ?";
+
+    private static final String SQL_ATTACHMENTS_SELECT_ALL_KEYS = "SELECT key " +
+            " FROM attachments";
 
     private String attachmentsDir;
 
@@ -127,7 +131,9 @@ class AttachmentManager {
         // * save new (unmodified) revision which will have new _attachments when synced
         // * for each attachment, add attachment to db linked to this revision
 
-        DocumentRevision newDocument = datastore.updateDocument(rev.getId(), rev.getRevision(), rev.getBody());
+        DocumentRevision newDocument = datastore.updateDocument(rev.getId(),
+                rev.getRevision(),
+                rev.getBody());
 
         for (Attachment a : attachments) {
             this.addAttachment(a, newDocument);
@@ -137,7 +143,8 @@ class AttachmentManager {
 
     protected Attachment getAttachment(DocumentRevision rev, String attachmentName) {
         try {
-            Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT, new String[]{attachmentName, String.valueOf(rev.getSequence())});
+            Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT,
+                    new String[]{attachmentName, String.valueOf(rev.getSequence())});
             if (c.moveToFirst()) {
                 int sequence = c.getInt(0);
                 byte[] key = c.getBlob(2);
@@ -156,7 +163,8 @@ class AttachmentManager {
         try {
             LinkedList<SavedAttachment> atts = new LinkedList<SavedAttachment>();
             long sequence = rev.getSequence();
-            Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL, new String[]{String.valueOf(sequence)});
+            Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
+                    new String[]{String.valueOf(sequence)});
             while (c.moveToNext()) {
                 String name = c.getString(1);
                 byte[] key = c.getBlob(2);
@@ -190,11 +198,6 @@ class AttachmentManager {
             if (!rowDeleted) {
                 Log.w(LOG_TAG, "Could not delete attachment from database with filename = "+attachmentName+", sequence = "+rev.getSequence());
             }
-            // delete attachments from blob store
-            boolean fileDeleted = f.delete();
-            if (!fileDeleted) {
-                Log.w(LOG_TAG, "Could not delete file from BLOB store: "+f.getAbsolutePath());
-            }
             if (rowDeleted) {
                 // only need to update the rev if we deleted the attachment from the local database
                 nDeleted++;
@@ -210,11 +213,39 @@ class AttachmentManager {
         }
     }
 
-    private File fileFromKey(byte[] key) {
-        File file = new File(attachmentsDir, new String(new Hex().encode(key)));
-
-        return file;
+    protected void purgeAttachments() {
+        // it's easier to deal with Strings since java doesn't know how to compare byte[]s
+        Set<String> currentKeys = new HashSet<String>();
+        try {
+            // get all keys from attachments table
+            Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
+            while (c.moveToNext()) {
+                byte[] key = c.getBlob(0);
+                currentKeys.add(keyToString(key));
+            }
+            // iterate thru attachments dir
+            for (File f : new File(attachmentsDir).listFiles()) {
+                // if file isn't in the keys list, delete it
+                String keyForFile = f.getName();
+                if (!currentKeys.contains(keyForFile)) {
+                    boolean deleted = f.delete();
+                    if (!deleted) {
+                        Log.w(LOG_TAG, "Could not delete file from BLOB store: "+f.getAbsolutePath());
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            Log.e(LOG_TAG, "Problem executing SQL to fetch all attachment keys "+e);
+        }
     }
 
+    private String keyToString(byte[] key) {
+        return new String(new Hex().encode(key));
+    }
+
+    private File fileFromKey(byte[] key) {
+        File file = new File(attachmentsDir, keyToString(key));
+        return file;
+    }
 }
 
