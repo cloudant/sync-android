@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.util.Misc;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -24,7 +25,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,8 +48,6 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             newRevision = datastore.updateAttachments(rev_1, atts);
         } catch (ConflictException ce){
             Assert.fail("ConflictException thrown: "+ce);
-        } catch (IOException ioe) {
-            Assert.fail("IOException thrown: "+ioe);
         }
         // get attachment...
         try {
@@ -64,20 +63,33 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         }
     }
 
-    @Test(expected = IOException.class)
-    public void setBadAttachmentsTest() throws IOException {
-        String attachmentName = "attachment_1.txt";
+    // check that the transaction gets rolled back if one file is dodgy
+    @Test
+    public void setBadAttachmentsTest() {
         BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
-        File f = new File("/nonexistentfile");
-        Attachment att = datastore.createAttachment(f, "text/plain");
+        Attachment att1 = datastore.createAttachment(new File("fixture", "attachment_1.txt"), "text/plain");
+        Attachment att2 = datastore.createAttachment(new File("fixture", "/nonexistentfile"), "text/plain");
+        Attachment att3 = datastore.createAttachment(new File("fixture", "attachment_2.txt"), "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
-        Assert.assertThat(att, is(instanceOf(UnsavedFileAttachment.class)));
-        atts.add(att);
+        Assert.assertThat(att1, is(instanceOf(UnsavedFileAttachment.class)));
+        Assert.assertThat(att2, is(instanceOf(UnsavedFileAttachment.class)));
+        Assert.assertThat(att3, is(instanceOf(UnsavedFileAttachment.class)));
+        atts.add(att1);
+        atts.add(att2);
+        atts.add(att3);
         DocumentRevision newRevision = null;
         try {
             newRevision = datastore.updateAttachments(rev_1, atts);
+            Assert.assertNull("newRevision not null", newRevision);
+            // now check that things got rolled back
+            Cursor c1 = datastore.getSQLDatabase().rawQuery("select sequence from attachments;", null);
+            Assert.assertEquals("Attachments table not empty", c1.getCount(), 0);
+            Cursor c2 = datastore.getSQLDatabase().rawQuery("select sequence from revs;", null);
+            Assert.assertEquals("Revs table not empty", c2.getCount(), 1);
         } catch (ConflictException ce) {
             Assert.fail("ConflictException thrown: " + ce);
+        } catch (SQLException sqe) {
+            Assert.fail("SQLException thrown: " + sqe);
         }
     }
 
@@ -99,11 +111,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         Assert.assertThat(att, is(instanceOf(UnsavedFileAttachment.class)));
         atts.add(att);
         DocumentRevision newRevision = null;
-        try {
-            newRevision = datastore.updateAttachments(rev_1, atts);
-        } catch (IOException ioe) {
-            Assert.fail("IOException thrown: "+ioe);
-        }
+        newRevision = datastore.updateAttachments(rev_1, atts);
     }
 
     @Test
@@ -123,8 +131,6 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             Assert.assertNotNull("Revision null", rev2);
         } catch (ConflictException ce){
             Assert.fail("ConflictException thrown: "+ce);
-        } catch (IOException ioe) {
-            Assert.fail("IOException thrown: "+ioe);
         }
 
         DocumentRevision rev3 = null;
@@ -189,8 +195,6 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             Assert.assertNotNull("Revision null", rev2);
         } catch (ConflictException ce){
             Assert.fail("ConflictException thrown: "+ce);
-        } catch (IOException ioe) {
-            Assert.fail("IOException thrown: "+ioe);
         }
 
         DocumentRevision rev3 = null;
@@ -229,8 +233,6 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             Assert.assertEquals("Didn't get expected number of attachments", atts.size(), attsForRev.size());
         } catch (ConflictException ce){
             Assert.fail("ConflictException thrown: "+ce);
-        } catch (IOException ioe) {
-            Assert.fail("IOException thrown: "+ioe);
         }
     }
 

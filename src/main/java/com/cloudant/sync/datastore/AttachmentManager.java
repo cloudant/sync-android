@@ -81,7 +81,7 @@ class AttachmentManager {
         this.attachmentsDir = datastore.extensionDataFolder(EXTENSION_NAME);
     }
 
-    protected boolean addAttachment(Attachment a, DocumentRevision rev) throws IOException {
+    protected boolean addAttachment(Attachment a, DocumentRevision rev) {
 
         // do it this way to only go thru inputstream once
         // * write to temp location using copyinputstreamtofile
@@ -89,56 +89,83 @@ class AttachmentManager {
         // * stick it into database
         // * move file using sha1 as name
 
-        File tempFile = new File(this.attachmentsDir, "temp"+ UUID.randomUUID());
-        FileUtils.copyInputStreamToFile(a.getInputStream(), tempFile);
+        try {
+            File tempFile = new File(this.attachmentsDir, "temp" + UUID.randomUUID());
+            FileUtils.copyInputStreamToFile(a.getInputStream(), tempFile);
 
-        ContentValues values = new ContentValues();
-        long sequence = rev.getSequence();
-        String filename = a.name;
-        byte[] sha1 = Misc.getSha1(new FileInputStream(tempFile));
-        String type = a.type;
-        int encoding = Encoding.Plain.ordinal();
-        long length = a.size;
-        long revpos = CouchUtils.generationFromRevId(rev.getRevision());
+            ContentValues values = new ContentValues();
+            long sequence = rev.getSequence();
+            String filename = a.name;
+            byte[] sha1 = Misc.getSha1(new FileInputStream(tempFile));
+            String type = a.type;
+            int encoding = Encoding.Plain.ordinal();
+            long length = a.size;
+            long revpos = CouchUtils.generationFromRevId(rev.getRevision());
 
-        values.put("sequence", sequence);
-        values.put("filename", filename);
-        values.put("key", sha1);
-        values.put("type", type);
-        values.put("encoding", encoding);
-        values.put("length", length);
-        values.put("encoded_length", length);
-        values.put("revpos", revpos);
+            values.put("sequence", sequence);
+            values.put("filename", filename);
+            values.put("key", sha1);
+            values.put("type", type);
+            values.put("encoding", encoding);
+            values.put("length", length);
+            values.put("encoded_length", length);
+            values.put("revpos", revpos);
 
-        // delete and insert in case there is already an attachment at this seq (eg copied over from a previous rev)
-        datastore.getSQLDatabase().delete("attachments", " filename = ? and sequence = ? ", new String[]{filename, String.valueOf(sequence)});
-        long result = datastore.getSQLDatabase().insert("attachments", values);
-        if (result == -1) {
-            // if we can't insert into DB then don't copy the attachment
-            Log.e(LOG_TAG, "Could not insert attachment " + a + " into database; not copying to attachments directory");
-            tempFile.delete();
+            // delete and insert in case there is already an attachment at this seq (eg copied over from a previous rev)
+            datastore.getSQLDatabase().delete("attachments", " filename = ? and sequence = ? ", new String[]{filename, String.valueOf(sequence)});
+            long result = datastore.getSQLDatabase().insert("attachments", values);
+            if (result == -1) {
+                // if we can't insert into DB then don't copy the attachment
+                Log.e(LOG_TAG, "Could not insert attachment " + a + " into database; not copying to attachments directory");
+                tempFile.delete();
+                return false;
+            }
+            // move file to blob store, with file name based on sha1
+            File newFile = fileFromKey(sha1);
+            FileUtils.moveFile(tempFile, newFile);
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "Got IOException in addAttachment: "+e);
+            // TODO check if temp file is still there and delete it?
             return false;
         }
-        // move file to blob store, with file name based on sha1
-        File newFile = fileFromKey(sha1);
-        FileUtils.moveFile(tempFile, newFile);
         return true;
     }
 
-    protected DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException, IOException {
+    protected DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException {
 
         // add attachments and then return new revision:
         // * save new (unmodified) revision which will have new _attachments when synced
         // * for each attachment, add attachment to db linked to this revision
 
-        DocumentRevision newDocument = datastore.updateDocument(rev.getId(),
-                rev.getRevision(),
-                rev.getBody());
+        try {
+            this.datastore.getSQLDatabase().beginTransaction();
 
-        for (Attachment a : attachments) {
-            this.addAttachment(a, newDocument);
+            DocumentRevision newDocument = datastore.updateDocument(rev.getId(),
+                    rev.getRevision(),
+                    rev.getBody());
+
+            boolean ok = true;
+
+            for (Attachment a : attachments) {
+                boolean result = this.addAttachment(a, newDocument);
+                if (!result) {
+                    ok = false;
+                    break;
+                }
+            }
+
+            if (ok) {
+                this.datastore.getSQLDatabase().setTransactionSuccessful();
+            }
+
+            if (ok) {
+                return newDocument;
+            } else {
+                return null;
+            }
+        } finally {
+            this.datastore.getSQLDatabase().endTransaction();
         }
-        return newDocument;
     }
 
     protected Attachment getAttachment(DocumentRevision rev, String attachmentName) {

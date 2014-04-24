@@ -16,6 +16,8 @@ package com.cloudant.sync.util;
 
 import android.os.Build;
 
+import com.cloudant.common.Log;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -53,6 +55,7 @@ public class Misc {
                 sha1.update(buf, 0, bytesRead);
             }
         } catch (Exception e) {
+            Log.w("getSha1", "Problem calculating SHA1 for stream: "+e);
             return null;
         }
         return sha1.digest();

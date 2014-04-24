@@ -811,15 +811,19 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                     String data = (String)((Map<String,Object>)attachments.get(att)).get("data");
                     InputStream is = new Base64InputStream(new ByteArrayInputStream(data.getBytes()));
                     String type = (String)((Map<String,Object>)attachments.get(att)).get("content_type");
-                    // TODO deal with encoding - is it compressed?
+                    // inline attachments are automatically decompressed, so we don't have to worry about that
                     UnsavedFileAttachment ufa = new UnsavedFileAttachment(is, att, type);
-                    this.attachmentManager.addAttachment(ufa, rev);
+                    boolean result = this.attachmentManager.addAttachment(ufa, rev);
+                    if (!result) {
+                        Log.e(LOG_TAG, "There was a problem adding the attachment to the datastore; not force inserting this document: "+rev);
+                        ok = false;
+                        break;
+                    }
                 }
             }
-            this.sqlDb.setTransactionSuccessful();
-        } catch(IOException e) {
-            Log.e(LOG_TAG, "There was a problem adding the attachment to the datastore; not force inserting this document: "+e);
-            ok = false;
+            if (ok) {
+                this.sqlDb.setTransactionSuccessful();
+            }
         } finally {
             this.sqlDb.endTransaction();
             if (ok) {
@@ -1224,7 +1228,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException, IOException {
+    public DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException {
         return this.attachmentManager.updateAttachments(rev, attachments);
     }
 
