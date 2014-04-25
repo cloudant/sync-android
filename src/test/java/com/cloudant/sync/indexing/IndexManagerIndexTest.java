@@ -607,7 +607,6 @@ public class IndexManagerIndexTest {
      * doesn't cause the index manager to balk.
      */
     @Test
-    @Ignore("Needs fixing for J2SE release, not a problem on Android")
     public void index_UpdateCrudMultiThreaded()
             throws IndexExistsException, SQLException, ConflictException,
                    InterruptedException {
@@ -645,6 +644,8 @@ public class IndexManagerIndexTest {
                     }
                     datastore.createDocument(docId, body);
                 }
+                // we're not on the main thread, so we must close our own connection
+                datastore.getSQLDatabase().close();
             }
         }
         List<Thread> threads = new ArrayList<Thread>();

@@ -50,8 +50,6 @@ public class SQLiteWrapper implements SQLDatabase {
 
     private final String databaseFilePath;
 
-    private Set<WeakReference<SQLiteConnection>> allConnections =
-            Collections.synchronizedSet(new HashSet<WeakReference<SQLiteConnection>>());
     private ThreadLocal<SQLiteConnection> localConnection = new ThreadLocal<SQLiteConnection>();
 
     /**
@@ -95,7 +93,6 @@ public class SQLiteWrapper implements SQLDatabase {
     SQLiteConnection getConnection() {
         if (localConnection.get() == null) {
             SQLiteConnection conn = createNewConnection();
-            allConnections.add(new WeakReference<SQLiteConnection>(conn));
             localConnection.set(conn);
         }
 
@@ -103,6 +100,7 @@ public class SQLiteWrapper implements SQLDatabase {
     }
 
     SQLiteConnection createNewConnection() {
+       // System.out.println("createNewConnection on thread "+Thread.currentThread());
         try {
             SQLiteConnection conn = new SQLiteConnection(new File(this.databaseFilePath));
             conn.open();
@@ -215,20 +213,15 @@ public class SQLiteWrapper implements SQLDatabase {
         this.transactionStack.get().push(true);
     }
 
-    private void disposeAllConnections() {
-        synchronized (this) {
-            for (WeakReference<SQLiteConnection> conn : allConnections) {
-                if (conn != null && conn.get() != null && !conn.get().isDisposed()) {
-                    conn.get().dispose();
-                }
-            }
-            allConnections.clear();
-        }
-    }
-
     @Override
     public void close() {
-        disposeAllConnections();
+        // it's not possible to call dispose from other threads
+        // so the best we can do is call dispose on the connection
+        // for the same thread as us
+        SQLiteConnection conn = localConnection.get();
+        if (conn != null && !conn.isDisposed()) {
+            conn.dispose();
+        }
     }
 
     @Override

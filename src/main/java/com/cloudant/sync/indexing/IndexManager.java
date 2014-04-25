@@ -550,4 +550,9 @@ public class IndexManager {
             throw new IllegalArgumentException("fieldName is invalid.");
         }
     }
+
+    @Override
+    public void finalize() {
+        this.sqlDb.close();
+    }
 }
