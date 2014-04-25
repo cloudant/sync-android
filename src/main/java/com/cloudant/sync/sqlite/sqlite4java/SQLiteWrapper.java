@@ -100,7 +100,6 @@ public class SQLiteWrapper implements SQLDatabase {
     }
 
     SQLiteConnection createNewConnection() {
-       // System.out.println("createNewConnection on thread "+Thread.currentThread());
         try {
             SQLiteConnection conn = new SQLiteConnection(new File(this.databaseFilePath));
             conn.open();
