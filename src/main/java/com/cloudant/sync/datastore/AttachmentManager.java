@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -209,29 +210,23 @@ class AttachmentManager {
     protected DocumentRevision removeAttachments(DocumentRevision rev, String[] attachmentNames)
             throws ConflictException {
 
-        int nDeleted = 0;
+        boolean rowsDeleted = false;
 
-        for (String attachmentName : attachmentNames) {
-            // first see if it exists
-            SavedAttachment a = (SavedAttachment) this.getAttachment(rev, attachmentName);
-            if (a == null) {
-                Log.w(LOG_TAG, "Could not find attachment to delete from database with filename = "+attachmentName+", sequence = "+rev.getSequence());
-                continue;
-            }
-            // get the file in blob store
-            File f = this.fileFromKey(a.key);
-            boolean rowDeleted = datastore.getSQLDatabase().delete("attachments", " filename = ? and sequence = ? ",
-                    new String[]{attachmentName, String.valueOf(rev.getSequence())}) == 1;
-            if (!rowDeleted) {
-                Log.w(LOG_TAG, "Could not delete attachment from database with filename = "+attachmentName+", sequence = "+rev.getSequence());
-            }
-            if (rowDeleted) {
-                // only need to update the rev if we deleted the attachment from the local database
-                nDeleted++;
-            }
+        // args looks like {attName_1, ..., attName_n, sequence}
+        String[] args = new String[attachmentNames.length+1];
+        System.arraycopy(attachmentNames, 0, args, 0, attachmentNames.length);
+        args[args.length-1] = String.valueOf(rev.getSequence());
+
+        rowsDeleted = datastore.getSQLDatabase().delete("attachments",
+                String.format("filename in (%s) and sequence = ?",
+                        SQLDatabaseUtils.makePlaceholders(attachmentNames.length)),
+                args) > 0;
+
+        if (!rowsDeleted) {
+            Log.w(LOG_TAG, "No attachments were deleted for rev "+rev+" with attachmentNames "+ Arrays.toString(attachmentNames));
         }
 
-        if (nDeleted > 0) {
+        if (rowsDeleted) {
             // return a new rev for the version with attachment removed
             return datastore.updateDocument(rev.getId(), rev.getRevision(), rev.getBody());
         } else {

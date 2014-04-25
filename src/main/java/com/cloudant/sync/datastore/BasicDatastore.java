@@ -315,7 +315,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         for (List<Long> batch : batches) {
             String sql = String.format(
                     GET_DOCUMENTS_BY_INTERNAL_IDS,
-                    makePlaceholders(batch.size())
+                    SQLDatabaseUtils.makePlaceholders(batch.size())
             );
             String[] args = new String[batch.size()];
             for(int i = 0 ; i < batch.size() ; i ++) {
@@ -362,7 +362,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         Preconditions.checkNotNull(docIds, "Input document id list can not be null");
         String sql = String.format("SELECT " + FULL_DOCUMENT_COLS + " FROM revs, docs" +
                 " WHERE docid IN ( %1$s ) AND current = 1 AND docs.doc_id = revs.doc_id " +
-                " ORDER BY docs.doc_id ", makePlaceholders(docIds.size()));
+                " ORDER BY docs.doc_id ", SQLDatabaseUtils.makePlaceholders(docIds.size()));
         String[] args = docIds.toArray(new String[docIds.size()]);
         List<DocumentRevision> docs = getRevisionsFromRawQuery(sql, args);
         // Sort in memory since seems not able to sort them using SQL
@@ -391,20 +391,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             map.put(doc.getId(), doc);
         }
         return map;
-    }
-
-    String makePlaceholders(int len) {
-        if (len < 1) {
-            // It will lead to an invalid query anyway ..
-            throw new RuntimeException("No placeholders");
-        } else {
-            StringBuilder sb = new StringBuilder(len * 2 - 1);
-            sb.append("?");
-            for (int i = 1; i < len; i++) {
-                sb.append(",?");
-            }
-            return sb.toString();
-        }
     }
 
     @Override
@@ -1107,8 +1093,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 "SELECT docs.docid, revs.revid FROM docs, revs " +
                 "WHERE docs.doc_id = revs.doc_id AND docs.docid IN (%s) AND revs.revid IN (%s) " +
                 "ORDER BY docs.docid",
-                makePlaceholders(revisions.keySet().size()),
-                makePlaceholders(revisions.size()));
+                SQLDatabaseUtils.makePlaceholders(revisions.keySet().size()),
+                SQLDatabaseUtils.makePlaceholders(revisions.size()));
 
         String[] args = new String[revisions.keySet().size() + revisions.size()];
         String[] keys = revisions.keySet().toArray(new String[revisions.keySet().size()]);
