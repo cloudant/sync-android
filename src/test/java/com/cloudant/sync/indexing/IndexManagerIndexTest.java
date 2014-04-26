@@ -610,7 +610,7 @@ public class IndexManagerIndexTest {
     public void index_UpdateCrudMultiThreaded()
             throws IndexExistsException, SQLException, ConflictException,
                    InterruptedException {
-        int n_threads = 5;
+        int n_threads = 3;
         final int n_docs = 100;
 
         // We'll later search for search == success
