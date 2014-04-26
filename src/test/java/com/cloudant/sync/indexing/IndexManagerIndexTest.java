@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -606,11 +607,10 @@ public class IndexManagerIndexTest {
      * doesn't cause the index manager to balk.
      */
     @Test
-    @Ignore("Needs fixing for J2SE release, not a problem on Android")
     public void index_UpdateCrudMultiThreaded()
             throws IndexExistsException, SQLException, ConflictException,
                    InterruptedException {
-        int n_threads = 5;
+        int n_threads = 3;
         final int n_docs = 100;
 
         // We'll later search for search == success
@@ -618,7 +618,7 @@ public class IndexManagerIndexTest {
         final Map<String,String> nonmatching = ImmutableMap.of("search", "failure");
         indexManager.ensureIndexed("search", "search", IndexType.STRING);
 
-        final List<String> matching_ids = new ArrayList<String>();
+        final List<String> matching_ids = Collections.synchronizedList(new ArrayList<String>());
 
         // When run, this thread creates n_docs documents with unique
         // names in the datastore. A subset of these
@@ -644,6 +644,8 @@ public class IndexManagerIndexTest {
                     }
                     datastore.createDocument(docId, body);
                 }
+                // we're not on the main thread, so we must close our own connection
+                datastore.getSQLDatabase().close();
             }
         }
         List<Thread> threads = new ArrayList<Thread>();
@@ -661,7 +663,7 @@ public class IndexManagerIndexTest {
 
         // Check appropriate entries in index
         QueryBuilder q = new QueryBuilder();
-        q.index("search").equals("success");
+        q.index("search").equalTo("success");
         QueryResult result = indexManager.query(q.build());
 
         List<DocumentRevision> docRevisions = Lists.newArrayList(result);

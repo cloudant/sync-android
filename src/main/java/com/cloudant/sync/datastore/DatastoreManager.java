@@ -192,6 +192,7 @@ public class DatastoreManager {
             boolean dbDirectoryExist = new File(dbDirectory).exists();
             Log.i(LOG_TAG, "path: " + this.path);
             Log.i(LOG_TAG, "dbDirectory: " + dbDirectory);
+            Log.i(LOG_TAG, "dbDirectoryExist: " + dbDirectoryExist);
             // dbDirectory will created in BasicDatastore constructor
             // if it does not exist
             BasicDatastore ds = new BasicDatastore(dbDirectory, dbName);
