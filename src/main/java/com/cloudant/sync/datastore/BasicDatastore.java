@@ -41,6 +41,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -798,7 +799,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                     InputStream is = new Base64InputStream(new ByteArrayInputStream(data.getBytes()));
                     String type = (String)((Map<String,Object>)attachments.get(att)).get("content_type");
                     // inline attachments are automatically decompressed, so we don't have to worry about that
-                    UnsavedFileAttachment ufa = new UnsavedFileAttachment(is, att, type);
+                    UnsavedStreamAttachment ufa = new UnsavedStreamAttachment(is, att, type);
                     boolean result = this.attachmentManager.addAttachment(ufa, rev);
                     if (!result) {
                         Log.e(LOG_TAG, "There was a problem adding the attachment to the datastore; not force inserting this document: "+rev);

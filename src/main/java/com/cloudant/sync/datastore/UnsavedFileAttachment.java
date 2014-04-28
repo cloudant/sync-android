@@ -28,27 +28,22 @@ import java.io.InputStream;
  */
 public class UnsavedFileAttachment extends Attachment {
 
-    protected UnsavedFileAttachment(File file, String type) {
-        this.name = file.getName();
+    public UnsavedFileAttachment(File file, String type) {
         this.file = file;
+        this.name = file.getName();
         this.type = type;
     }
 
-    public UnsavedFileAttachment(InputStream inputStream, String name, String type) {
+    public UnsavedFileAttachment(File file, String name, String type) {
+        this.file = file;
         this.name = name;
-        this.inputStream = inputStream;
         this.type = type;
     }
 
     public InputStream getInputStream() throws IOException {
-        // if inputStream not set, then we must be streaming from file
-        if (inputStream == null) {
-            return new FileInputStream(file);
-        } else {
-            return inputStream;
-        }
+        return new FileInputStream(file);
     }
 
     private File file;
-    private InputStream inputStream;
+
 }
