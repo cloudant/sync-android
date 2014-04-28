@@ -48,4 +48,8 @@ public abstract class Attachment {
      */     
     public abstract InputStream getInputStream() throws IOException;
 
+    public String toString() {
+        return "Attachment: "+name+", type: "+type;
+    }
+
 }

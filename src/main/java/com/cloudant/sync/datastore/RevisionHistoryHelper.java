@@ -15,6 +15,7 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.common.CouchConstants;
+import com.cloudant.common.Log;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.util.CouchUtils;
@@ -41,6 +42,8 @@ import java.util.Map;
  * methods for working with document trees.</p>
  */
 public class RevisionHistoryHelper {
+
+    private final static String LOG_TAG = "RevisionHistoryHelper";
 
     // we are using json helper from mazha to it does not filter out
     // couchdb special fields
@@ -167,6 +170,7 @@ public class RevisionHistoryHelper {
                 // if we can't read the file containing the attachment then skip it
                 // (this should only occur if someone tampered with the attachments directory
                 // or something went seriously wrong)
+                Log.w(LOG_TAG, "Caught IOException in addAttachments whilst reading attachment " + att + ", skipping it: " + ioe);
                 continue;
             }
             // now we are done, add the attachment to the map

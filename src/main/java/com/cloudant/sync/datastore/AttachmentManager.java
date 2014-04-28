@@ -250,14 +250,18 @@ class AttachmentManager {
                 // if file isn't in the keys list, delete it
                 String keyForFile = f.getName();
                 if (!currentKeys.contains(keyForFile)) {
-                    boolean deleted = f.delete();
-                    if (!deleted) {
-                        Log.w(LOG_TAG, "Could not delete file from BLOB store: "+f.getAbsolutePath());
+                    try {
+                        boolean deleted = f.delete();
+                        if (!deleted) {
+                            Log.w(LOG_TAG, "Could not delete file from BLOB store: " + f.getAbsolutePath());
+                        }
+                    } catch (SecurityException e) {
+                        Log.w(LOG_TAG, "SecurityException when trying to delete file from BLOB store: " + f.getAbsolutePath() + ", "+e);
                     }
                 }
             }
         } catch (SQLException e) {
-            Log.e(LOG_TAG, "Problem executing SQL to fetch all attachment keys "+e);
+            Log.e(LOG_TAG, "Problem in purgeAttachments, executing SQL to fetch all attachment keys "+e);
         }
     }
 
