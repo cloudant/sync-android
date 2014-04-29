@@ -136,6 +136,36 @@ public class CouchURIHelper {
         return uriFor(uri);
     }
 
+    public URI attachmentUri(String db, String documentId, String attachmentId) {
+        Preconditions.checkNotNull(db, "db must not be null");
+        Preconditions.checkNotNull(documentId, "documentId must not be null");
+
+        String base_uri = String.format(
+                "%s/%s/%s/%s",
+                this.base,
+                this.encodePathComponent(db),
+                this.encodePathComponent(documentId),
+                this.encodePathComponent(attachmentId)
+        );
+        return uriFor(base_uri);
+    }
+
+    public URI attachmentUri(String db, String documentId, Map<String, Object> query, String attachmentId) {
+        Preconditions.checkNotNull(db, "db must not be null");
+        Preconditions.checkNotNull(documentId, "documentId must not be null");
+
+        String base_uri = String.format(
+                "%s/%s/%s/%s",
+                this.base,
+                this.encodePathComponent(db),
+                this.encodePathComponent(documentId),
+                this.encodePathComponent(attachmentId)
+        );
+        String uri = appendQueryString(base_uri, query);
+        return uriFor(uri);
+    }
+
+
     private String appendQueryString(String url, Map<String, Object> query) {
         if(query != null && query.size() > 0) {
             String queryString = this.queryAsString(query);

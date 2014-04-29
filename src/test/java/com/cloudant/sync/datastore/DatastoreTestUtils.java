@@ -35,8 +35,9 @@ public class DatastoreTestUtils {
         File dbFile = new File(path);
         FileUtils.touch(dbFile);
         SQLiteWrapper database = SQLiteWrapper.openSQLiteWrapper(dbFile.getAbsolutePath());
-        SQLDatabaseFactory.updateSchema(database, DatastoreConstants.SCHEMA_VERSION_3, 3);
-        SQLDatabaseFactory.updateSchema(database, DatastoreConstants.getSCHEMA_VERSION_4(), 4);
+        SQLDatabaseFactory.updateSchema(database, DatastoreConstants.getSchemaVersion3(), 3);
+        SQLDatabaseFactory.updateSchema(database, DatastoreConstants.getSchemaVersion4(), 4);
+        SQLDatabaseFactory.updateSchema(database, DatastoreConstants.getSchemaVersion5(), 5);
         return database;
     }
 }

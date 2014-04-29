@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.UUID;
 
@@ -79,4 +80,25 @@ public class TestUtils {
         FileUtils.touch(f);
         return f.getAbsolutePath();
     }
+
+    // iterate through both streams byte-for-byte and check they are equal
+    // exit false if we get to the end of one stream before the other (they are different lengths)
+    // or if two bytes at the same point in the streams aren't equal
+    public static boolean streamsEqual(InputStream is1, InputStream is2){
+        int c1, c2;
+        boolean equal = true;
+        try {
+            while ((c1 = is1.read()) != -1) {
+                c2 = is2.read();
+                if (c1 != c2) {
+                    equal = false;
+                    break;
+                }
+            }
+        } catch (IOException ioe) {
+            return false;
+        }
+        return equal;
+    }
+
 }

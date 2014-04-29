@@ -160,7 +160,7 @@ public interface DatastoreExtended extends Datastore {
      *
      * @see Datastore#getEventBus() 
      */
-    public void forceInsert(DocumentRevision rev, List<String> revisionHistory);
+    public void forceInsert(DocumentRevision rev, List<String> revisionHistory, Map<String, Object> attachments);
 
     /**
      * <p>Inserts a revision of a document with an existing revision ID</p>
@@ -174,7 +174,7 @@ public interface DatastoreExtended extends Datastore {
      * @param rev
      * @param revisionHistory
      *
-     * @see DatastoreExtended#forceInsert(DocumentRevision, java.util.List)
+     * @see DatastoreExtended#forceInsert(DocumentRevision, java.util.List, java.util.Map)
      */
     public void forceInsert(DocumentRevision rev, String... revisionHistory);
 

@@ -16,6 +16,12 @@ package com.cloudant.sync.util;
 
 import android.os.Build;
 
+import com.cloudant.common.Log;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.security.MessageDigest;
 import java.util.UUID;
 
 /**
@@ -37,4 +43,22 @@ public class Misc {
     public static String androidVersion() {
         return String.format("Android %s %s", Build.VERSION.CODENAME, Build.VERSION.SDK_INT);
     }
+
+    public static byte[] getSha1(InputStream shaFis) {
+        MessageDigest sha1;
+        try {
+            sha1 = MessageDigest.getInstance("SHA-1");
+            int bufSiz = 1024;
+            byte buf[] = new byte[bufSiz];
+            int bytesRead;
+            while ((bytesRead = shaFis.read(buf)) != -1) {
+                sha1.update(buf, 0, bytesRead);
+            }
+        } catch (Exception e) {
+            Log.w("getSha1", "Problem calculating SHA1 for stream: "+e);
+            return null;
+        }
+        return sha1.digest();
+    }
+
 }

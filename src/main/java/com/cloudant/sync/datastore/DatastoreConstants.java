@@ -41,7 +41,8 @@ class DatastoreConstants {
     // First-time initialization:
     // (Note: Declaring revs.sequence as AUTOINCREMENT means the values will always be
     // monotonically increasing, never reused. See <http://www.sqlite4java.org/autoinc.html>)
-    public static final String[] SCHEMA_VERSION_3 = {
+    public static String[] getSchemaVersion3() {
+        return new String[] {
             "    CREATE TABLE docs ( " +
             "        doc_id INTEGER PRIMARY KEY, " +
             "        docid TEXT UNIQUE NOT NULL); ",
@@ -88,25 +89,25 @@ class DatastoreConstants {
             "        remote TEXT NOT NULL, " +
             "        startPush BOOLEAN, " +
             "        last_sequence TEXT, " +
-            "        UNIQUE (remote, startPush)); " };
+            "        UNIQUE (remote, startPush)); "
+        };
+    };
 
-    private static final String[] SCHEMA_VERSION_4 = {
+    public static String[] getSchemaVersion4() {
+        return new String[] {
             "CREATE TABLE info ( " +
             "    key TEXT PRIMARY KEY, " +
             "    value TEXT); ",
-            "INSERT INTO INFO (key, value) VALUES ('privateUUID', '%s'); ",
-            "INSERT INTO INFO (key, value) VALUES ('publicUUID',  '%s'); " };
+            String.format("INSERT INTO INFO (key, value) VALUES ('privateUUID', '%s'); ", Misc.createUUID()),
+            String.format("INSERT INTO INFO (key, value) VALUES ('publicUUID',  '%s'); ", Misc.createUUID())
+        };
+    };
 
-    /**
-     * Returns SCHEMA_VERSION_4 with new UUIDs
-     *
-     * @return SCHEMA_VERSION_4 with new UUIDs
-     */
-    public static String[] getSCHEMA_VERSION_4() {
-        String[] result = new String[SCHEMA_VERSION_4.length];
-        result[0] = SCHEMA_VERSION_4[0];
-        result[1] = String.format(SCHEMA_VERSION_4[1], Misc.createUUID()) ;
-        result[2] = String.format(SCHEMA_VERSION_4[2], Misc.createUUID()) ;
-        return result;
-    }
+    public static String[] getSchemaVersion5() {
+        return new String[] {
+            "ALTER TABLE attachments ADD COLUMN encoding INTEGER DEFAULT 0; ",
+            "ALTER TABLE attachments ADD COLUMN encoded_length INTEGER DEFAULT 0; "
+        };
+    };
+
 }

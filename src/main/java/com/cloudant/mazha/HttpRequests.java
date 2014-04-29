@@ -37,6 +37,7 @@ import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -122,6 +123,13 @@ public class HttpRequests {
         HttpPut put = new HttpPut(uri);
         put.addHeader("Accept", "application/json");
         setEntity(put, payload);
+        return getStream(this.putResponse(put));
+    }
+
+    InputStream put(URI uri, String contentType, byte[] payload) {
+        HttpPut put = new HttpPut(uri);
+        put.addHeader("Accept", "application/json");
+        setEntity(put, contentType, payload);
         return getStream(this.putResponse(put));
     }
 
@@ -333,6 +341,12 @@ public class HttpRequests {
         } catch (UnsupportedEncodingException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    protected void setEntity(HttpEntityEnclosingRequestBase httpRequest, String contentType, byte[] data) {
+        ByteArrayEntity entity = new ByteArrayEntity(data);
+        entity.setContentType(contentType);
+        httpRequest.setEntity(entity);
     }
 
     InputStream getStream(HttpResponse response) {

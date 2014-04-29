@@ -55,8 +55,10 @@ public class QueryBuilder {
             bindArgs.add(values.get(colName));
         }
 
-        for(String whereArg : whereArgs) {
-            bindArgs.add(whereArg);
+        if (whereArgs != null) {
+            for (String whereArg : whereArgs) {
+                bindArgs.add(whereArg);
+            }
         }
 
         return bindArgs.toArray();

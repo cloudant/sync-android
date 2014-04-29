@@ -16,11 +16,13 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.common.Log;
 import com.cloudant.mazha.CouchConfig;
+import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
+import com.cloudant.sync.datastore.SavedAttachment;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -28,6 +30,7 @@ import com.google.common.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -256,7 +259,10 @@ class BasicPushStrategy implements ReplicationStrategy {
             for(String rev : missingRevisions) {
                 long sequence = tree.lookup(docId, rev).getSequence();
                 List<DocumentRevision> path = tree.getPathForNode(sequence);
-                docs.add(RevisionHistoryHelper.revisionHistoryToJson(path));
+                // get the attachments for the leaf of this path
+                DocumentRevision dr = path.get(0);
+                List<? extends Attachment> atts = this.sourceDb.getDbCore().attachmentsForRevision(dr);
+                docs.add(RevisionHistoryHelper.revisionHistoryToJson(path, atts));
             }
         }
         return docs;

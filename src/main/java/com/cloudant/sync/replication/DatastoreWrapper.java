@@ -85,8 +85,10 @@ class DatastoreWrapper {
             Log.v(LOG_TAG, "Bulk Inserting DocumentRevs: [ " + documentRevs.getId() + ", "
                     + documentRevs.getRev() + "," + documentRevs.getRevisions().getIds() + " ]");
             DocumentRevision doc = DocumentRevsUtils.createDocument(documentRevs);
+
             List<String> revisions = DocumentRevsUtils.createRevisionIdHistory(documentRevs);
-            dbCore.forceInsert(doc, revisions);
+            Map<String, Object> attachments = documentRevs.getAttachments();
+            dbCore.forceInsert(doc, revisions, attachments);
         }
     }
 
