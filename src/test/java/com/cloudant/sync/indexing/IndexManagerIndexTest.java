@@ -589,14 +589,14 @@ public class IndexManagerIndexTest {
         Index index = createAndGetIndex("title", "title", IndexType.STRING);
         // create
         DocumentRevision obj1 = datastore.createDocument(dbBodies.get(1));
-        this.assertIndexed(database, index, obj1.getId(), "Politik");
+        this.assertNotIndexed(database, index, obj1.getId());
         // update
         Map<String,Object> map = obj1.getBody().asMap();
         map.put("title", "Another Green Day");
         DocumentBody body = DocumentBodyFactory.create(map);
         DocumentRevision obj2 = datastore.updateDocument(obj1.getId(), obj1.getRevision(), body);
         Assert.assertEquals(obj1.getId(), obj2.getId());
-        this.assertIndexed(database, index, obj2.getId(), "Another Green Day");
+        this.assertNotIndexed(database, index, obj2.getId());
         // delete
         datastore.deleteDocument(obj2.getId(), obj2.getRevision());
         this.assertNotIndexed(database, index, obj2.getId());
