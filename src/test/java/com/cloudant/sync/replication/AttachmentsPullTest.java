@@ -42,7 +42,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     String attachmentData = "this is an attachment";
     String attachmentData2 = "this is a different attachment";
 
-    String bigAttachmentName = "WW006E-34-4.jpg";
+    String bigAttachmentName = "bonsai-boston.jpg";
     String bigTextAttachmentName = "lorem_long.txt";
 
     @Before
