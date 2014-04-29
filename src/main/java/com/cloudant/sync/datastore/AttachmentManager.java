@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -68,7 +69,7 @@ class AttachmentManager {
     private static final String SQL_ATTACHMENTS_SELECT_ALL_KEYS = "SELECT key " +
             " FROM attachments";
 
-    private String attachmentsDir;
+    public final String attachmentsDir;
 
     private BasicDatastore datastore;
 
@@ -82,7 +83,7 @@ class AttachmentManager {
         this.attachmentsDir = datastore.extensionDataFolder(EXTENSION_NAME);
     }
 
-    protected boolean addAttachment(Attachment a, DocumentRevision rev) {
+    protected boolean addAttachment(PreparedAttachment a, DocumentRevision rev) {
 
         // do it this way to only go thru inputstream once
         // * write to temp location using copyinputstreamtofile
@@ -91,16 +92,14 @@ class AttachmentManager {
         // * move file using sha1 as name
 
         try {
-            File tempFile = new File(this.attachmentsDir, "temp" + UUID.randomUUID());
-            FileUtils.copyInputStreamToFile(a.getInputStream(), tempFile);
 
             ContentValues values = new ContentValues();
             long sequence = rev.getSequence();
-            String filename = a.name;
-            byte[] sha1 = Misc.getSha1(new FileInputStream(tempFile));
-            String type = a.type;
+            String filename = a.attachment.name;
+            byte[] sha1 = a.sha1;
+            String type = a.attachment.type;
             int encoding = Encoding.Plain.ordinal();
-            long length = a.size;
+            long length = a.attachment.size;
             long revpos = CouchUtils.generationFromRevId(rev.getRevision());
 
             values.put("sequence", sequence);
@@ -118,12 +117,12 @@ class AttachmentManager {
             if (result == -1) {
                 // if we can't insert into DB then don't copy the attachment
                 Log.e(LOG_TAG, "Could not insert attachment " + a + " into database; not copying to attachments directory");
-                tempFile.delete();
+                a.tempFile.delete();
                 return false;
             }
             // move file to blob store, with file name based on sha1
             File newFile = fileFromKey(sha1);
-            FileUtils.moveFile(tempFile, newFile);
+            FileUtils.moveFile(a.tempFile, newFile);
         } catch (IOException e) {
             Log.e(LOG_TAG, "Got IOException in addAttachment: "+e);
             // TODO check if temp file is still there and delete it?
@@ -138,6 +137,17 @@ class AttachmentManager {
         // * save new (unmodified) revision which will have new _attachments when synced
         // * for each attachment, add attachment to db linked to this revision
 
+        List<PreparedAttachment> preparedAttachments = new ArrayList<PreparedAttachment>();
+
+        try {
+            for (Attachment a : attachments) {
+                preparedAttachments.add(new PreparedAttachment(a, this.attachmentsDir));
+            }
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "Failed to prepare attachment for rev "+rev+": "+e);
+            return null;
+        }
+
         try {
             this.datastore.getSQLDatabase().beginTransaction();
 
@@ -147,7 +157,7 @@ class AttachmentManager {
 
             boolean ok = true;
 
-            for (Attachment a : attachments) {
+            for (PreparedAttachment a : preparedAttachments) {
                 boolean result = this.addAttachment(a, newDocument);
                 if (!result) {
                     ok = false;

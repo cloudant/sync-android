@@ -800,9 +800,15 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                     String type = (String)((Map<String,Object>)attachments.get(att)).get("content_type");
                     // inline attachments are automatically decompressed, so we don't have to worry about that
                     UnsavedStreamAttachment ufa = new UnsavedStreamAttachment(is, att, type);
-                    boolean result = this.attachmentManager.addAttachment(ufa, rev);
+                    boolean result = false;
+                    try {
+                        PreparedAttachment preparedAttachment = new PreparedAttachment(ufa, this.attachmentManager.attachmentsDir);
+                        result = this.attachmentManager.addAttachment(preparedAttachment, rev);
+                    } catch (IOException e) {
+                        Log.e(LOG_TAG, "IOException when preparing attachment "+ufa+": "+e);
+                    }
                     if (!result) {
-                        Log.e(LOG_TAG, "There was a problem adding the attachment to the datastore; not force inserting this document: "+rev);
+                        Log.e(LOG_TAG, "There was a problem adding the attachment "+ufa+" to the datastore; not force inserting this document: "+rev);
                         ok = false;
                         break;
                     }
