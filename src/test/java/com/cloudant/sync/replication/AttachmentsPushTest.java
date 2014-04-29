@@ -114,8 +114,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         String attachmentName = "attachment_1.txt";
         populateSomeDataInLocalDatastore();
         File f = new File("fixture", attachmentName);
-        Attachment att = datastore.createAttachment(f, "text/plain");
-        Assert.assertThat(att, is(instanceOf(UnsavedFileAttachment.class)));
+        Attachment att = new UnsavedFileAttachment(f, "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
         DocumentRevision oldRevision = datastore.getDocument(id1);
@@ -144,10 +143,8 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         populateSomeDataInLocalDatastore();
         File f1 = new File("fixture", attachmentName1);
         File f2 = new File("fixture", attachmentName2);
-        Attachment att1 = datastore.createAttachment(f1, "text/plain");
-        Attachment att2 = datastore.createAttachment(f2, "text/plain");
-        Assert.assertThat(att1, is(instanceOf(UnsavedFileAttachment.class)));
-        Assert.assertThat(att2, is(instanceOf(UnsavedFileAttachment.class)));
+        Attachment att1 = new UnsavedFileAttachment(f1, "text/plain");
+        Attachment att2 = new UnsavedFileAttachment(f2, "text/plain");
         List<Attachment> atts1 = new ArrayList<Attachment>();
         atts1.add(att1);
         List<Attachment> atts2 = new ArrayList<Attachment>();

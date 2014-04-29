@@ -396,19 +396,6 @@ public interface Datastore {
             throws ConflictException;
 
     /**
-     * Helper method to create an attachment from a <code>File</code> on disk,
-     * suitable for passing to <code>updateAttachments</code>
-     *
-     * @param file File to attach
-     * @param contentType MIME content type of the file, for example
-     *                    <code>text/plain</code> or <code>image/jpeg</code>
-     * @return New attachment
-     *
-     * @see #updateAttachments(DocumentRevision, java.util.List)
-     */
-    public Attachment createAttachment(File file, String contentType);
-
-    /**
      * Close the datastore
      */
     public void close();

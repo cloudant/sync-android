@@ -1241,11 +1241,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public Attachment createAttachment(File f, String contentType) {
-        return new UnsavedFileAttachment(f, contentType);
-    }
-
-    @Override
     public EventBus getEventBus() {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         return eventBus;
