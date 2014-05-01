@@ -24,11 +24,15 @@ import com.cloudant.mazha.OkOpenRevision;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.MultipartAttachmentWriter;
+import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -130,9 +134,9 @@ class CouchClientWrapper implements CouchDB {
      * @see DocumentRevs
      */
     @Override
-    public List<DocumentRevs> getRevisions(String documentId, String... revisionIds) {
+    public List<DocumentRevs> getRevisions(String documentId, Collection<String> revisionIds, Collection<String> attsSince) {
         List<OpenRevision> openRevisions =
-                couchClient.getDocWithOpenRevisions(documentId, revisionIds);
+                couchClient.getDocWithOpenRevisions(documentId, revisionIds, attsSince);
 
         // expect all the open revisions return ok, return error is there is any missing
         List<DocumentRevs> documentRevs = new ArrayList<DocumentRevs>();
@@ -224,8 +228,23 @@ class CouchClientWrapper implements CouchDB {
     }
 
     @Override
+    public void putMultiparts(List<MultipartAttachmentWriter> multiparts) {
+        Log.v(LOG_TAG, "putMultiparts(), parts: " + multiparts);
+        for (MultipartAttachmentWriter mpw : multiparts) {
+            couchClient.putMultipart(mpw);
+        }
+    }
+
+    @Override
     public Map<String, Set<String>> revsDiff(Map<String, Set<String>> revisions) {
         return this.couchClient.revsDiff(revisions);
+    }
+
+    @Override
+    public UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType) {
+        InputStream is = this.couchClient.getAttachmentStream(id, rev, attachmentName);
+        UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is, attachmentName, contentType);
+        return usa;
     }
 
 }

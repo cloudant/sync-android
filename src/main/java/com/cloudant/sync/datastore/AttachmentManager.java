@@ -73,7 +73,7 @@ class AttachmentManager {
 
     private BasicDatastore datastore;
 
-    private enum Encoding {
+    public enum Encoding {
         Plain,
         Gzip
     }
@@ -98,8 +98,8 @@ class AttachmentManager {
             String filename = a.attachment.name;
             byte[] sha1 = a.sha1;
             String type = a.attachment.type;
-            int encoding = Encoding.Plain.ordinal();
-            long length = a.attachment.size;
+            int encoding = a.encoding.ordinal();
+            long length = a.attachment.getSize();
             long revpos = CouchUtils.generationFromRevId(rev.getRevision());
 
             values.put("sequence", sequence);
@@ -141,7 +141,7 @@ class AttachmentManager {
 
         try {
             for (Attachment a : attachments) {
-                preparedAttachments.add(new PreparedAttachment(a, this.attachmentsDir));
+                preparedAttachments.add(new PreparedAttachment(a, this.attachmentsDir, Encoding.Plain));
             }
         } catch (IOException e) {
             Log.e(LOG_TAG, "Failed to prepare attachment for rev "+rev+": "+e);
@@ -187,9 +187,10 @@ class AttachmentManager {
                 int sequence = c.getInt(0);
                 byte[] key = c.getBlob(2);
                 String type = c.getString(3);
+                int encoding = c.getInt(4);
                 int revpos = c.getInt(7);
                 File file = fileFromKey(key);
-                return new SavedAttachment(attachmentName, revpos, sequence, key, type, file);
+                return new SavedAttachment(attachmentName, revpos, sequence, key, type, file, Encoding.values()[encoding]);
             }
             return null;
         } catch (SQLException e) {
@@ -207,9 +208,10 @@ class AttachmentManager {
                 String name = c.getString(1);
                 byte[] key = c.getBlob(2);
                 String type = c.getString(3);
+                int encoding = c.getInt(4);
                 int revpos = c.getInt(7);
                 File file = fileFromKey(key);
-                atts.add(new SavedAttachment(name, revpos, sequence, key, type, file));
+                atts.add(new SavedAttachment(name, revpos, sequence, key, type, file, Encoding.values()[encoding]));
             }
             return atts;
         } catch (SQLException e) {

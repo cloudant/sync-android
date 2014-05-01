@@ -188,7 +188,12 @@ public class CouchClientWrapperTest extends CouchTestBase {
     @Test
     public void getRevisions_giveDocumentId() {
         Response[] responses = createDocAndUpdateTwoTimes(remoteDb);
-        List<DocumentRevs> documentRevs = remoteDb.getRevisions(responses[0].getId(), responses[2].getRev());
+
+        ArrayList<String> revIds = new ArrayList<String>();
+        ArrayList<String> attsSince = new ArrayList<String>();
+        revIds.add(responses[2].getRev());
+
+        List<DocumentRevs> documentRevs = remoteDb.getRevisions(responses[0].getId(), revIds, attsSince);
 
         Assert.assertNotNull(documentRevs);
         Assert.assertEquals(1, documentRevs.size());
@@ -223,7 +228,12 @@ public class CouchClientWrapperTest extends CouchTestBase {
     @Test
     public void getRevisions_deletedDocument() {
         Response[] responses = createDocUpdateTwoTimesThenDelete(remoteDb);
-        List<DocumentRevs> documentRevs = remoteDb.getRevisions(responses[0].getId(), responses[3].getRev());
+
+        ArrayList<String> revIds = new ArrayList<String>();
+        ArrayList<String> attsSince = new ArrayList<String>();
+        revIds.add(responses[3].getRev());
+
+        List<DocumentRevs> documentRevs = remoteDb.getRevisions(responses[0].getId(), revIds, attsSince);
 
         Assert.assertEquals(1, documentRevs.size());
         Assert.assertTrue(documentRevs.get(0).getDeleted());

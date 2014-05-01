@@ -44,6 +44,10 @@ public class UnsavedFileAttachment extends Attachment {
         return new FileInputStream(file);
     }
 
+    public long getSize() {
+        return file.length();
+    }
+
     private File file;
 
 }

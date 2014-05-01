@@ -20,7 +20,10 @@ import com.cloudant.common.RequireRunningCouchDB;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.internal.util.collections.ArrayUtils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -32,7 +35,9 @@ public class GetOpenRevisionsTest extends CouchClientTestBase {
     @Test(expected = IllegalArgumentException.class)
     public void getDocWithOpenRevisions_zeroOpenRev() {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
-        client.getDocWithOpenRevisions(res.getId(), new String[]{});
+        ArrayList<String> revIds = new ArrayList<String>();
+        ArrayList<String> attsSince = new ArrayList<String>();
+        client.getDocWithOpenRevisions(res.getId(), revIds, attsSince);
     }
 
     @Test
@@ -40,9 +45,12 @@ public class GetOpenRevisionsTest extends CouchClientTestBase {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
         String[] openRevs = ClientTestUtils.createDocumentWithConflicts(client, res);
         String openRev = openRevs[0];
+        ArrayList<String> revIds = new ArrayList<String>();
+        revIds.add(openRev);
+        ArrayList<String> attsSince = new ArrayList<String>();
 
         GetOpenRevisionsResponse response =
-                new GetOpenRevisionsResponse(client.getDocWithOpenRevisions(res.getId(), openRev));
+                new GetOpenRevisionsResponse(client.getDocWithOpenRevisions(res.getId(), revIds, attsSince));
         Assert.assertEquals(1, response.getOkRevisionMap().size());
         Assert.assertThat(response.getOkRevisionMap().keySet(), hasItems(openRev));
 
@@ -56,8 +64,9 @@ public class GetOpenRevisionsTest extends CouchClientTestBase {
     public void getDocWithOpenRevisions_threeOpenRevs_correctDataMustReturn() {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
         String[] openRevs = ClientTestUtils.createDocumentWithConflicts(client, res);
+        ArrayList<String> attsSince = new ArrayList<String>();
 
-        List<OpenRevision> openRevisionList = client.getDocWithOpenRevisions(res.getId(), openRevs);
+        List<OpenRevision> openRevisionList = client.getDocWithOpenRevisions(res.getId(), Arrays.asList(openRevs), attsSince);
         GetOpenRevisionsResponse response = new GetOpenRevisionsResponse(openRevisionList);
 
         Assert.assertEquals(3, response.getOkRevisionMap().size());
@@ -77,7 +86,13 @@ public class GetOpenRevisionsTest extends CouchClientTestBase {
         Response res2 = client.delete(res.getId(), openRevs[0]);
         Assert.assertThat(res2.getRev(), startsWith("4-"));
 
-        List<OpenRevision> openRevisionList = client.getDocWithOpenRevisions(res.getId(), res2.getRev(), openRevs[1], openRevs[2]);
+        ArrayList<String> revIds = new ArrayList<String>();
+        ArrayList<String> attsSince = new ArrayList<String>();
+        revIds.add(openRevs[1]);
+        revIds.add(openRevs[2]);
+        revIds.add(res2.getRev());
+
+        List<OpenRevision> openRevisionList = client.getDocWithOpenRevisions(res.getId(), revIds, attsSince);
         GetOpenRevisionsResponse response = new GetOpenRevisionsResponse(openRevisionList);
 
         Assert.assertEquals(3, response.getOkRevisionMap().size());
@@ -104,8 +119,12 @@ public class GetOpenRevisionsTest extends CouchClientTestBase {
 
         {
             String invalidRev = openRevs[2] + "bad";
+            ArrayList<String> revIds = new ArrayList<String>();
+            ArrayList<String> attsSince = new ArrayList<String>();
+            revIds.add(invalidRev);
+
             GetOpenRevisionsResponse response =
-                    new GetOpenRevisionsResponse(client.getDocWithOpenRevisions(res.getId(), invalidRev));
+                    new GetOpenRevisionsResponse(client.getDocWithOpenRevisions(res.getId(), revIds, attsSince));
 
             Assert.assertThat("No valid open revision", response.getOkRevisionMap().size(), equalTo(0));
             Assert.assertThat("Invalid open revision number", response.getMissingRevisionsMap().size(), equalTo(1));
@@ -115,10 +134,16 @@ public class GetOpenRevisionsTest extends CouchClientTestBase {
         {
             String invalidRev1 = openRevs[0] + "bad";
             String invalidRev2 = openRevs[1] + "bad";
+            ArrayList<String> revIds = new ArrayList<String>();
+            ArrayList<String> attsSince = new ArrayList<String>();
+            revIds.add(invalidRev1);
+            revIds.add(invalidRev2);
+            revIds.add(openRevs[0]);
+            revIds.add(openRevs[1]);
 
             GetOpenRevisionsResponse response =
                     new GetOpenRevisionsResponse(client.getDocWithOpenRevisions(res.getId(),
-                            invalidRev1, invalidRev2, openRevs[0], openRevs[1]));
+                            revIds, attsSince));
 
             Assert.assertThat("Valid valid revision should return as 'ok'",
                     response.getOkRevisionMap().size(), equalTo(2));
@@ -136,8 +161,10 @@ public class GetOpenRevisionsTest extends CouchClientTestBase {
     public void getDocWithOpenRevision_documentForest() {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
         String[] openRevs = ClientTestUtils.createDocumentForest(client, res);
+        ArrayList<String> revIds = new ArrayList<String>();
+        ArrayList<String> attsSince = new ArrayList<String>();
 
-        List<OpenRevision> openRevisionList = client.getDocWithOpenRevisions(res.getId(), openRevs);
+        List<OpenRevision> openRevisionList = client.getDocWithOpenRevisions(res.getId(), Arrays.asList(openRevs), attsSince);
 
         GetOpenRevisionsResponse response = new GetOpenRevisionsResponse(openRevisionList);
         Assert.assertEquals(2, response.getOkRevisionMap().size());

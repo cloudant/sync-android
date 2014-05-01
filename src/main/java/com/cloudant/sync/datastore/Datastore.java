@@ -399,5 +399,9 @@ public interface Datastore {
      * Close the datastore
      */
     public void close();
-}
 
+
+    public List<String> getPossibleAncestorRevisionIDs(String docId,
+                                                       String revId,
+                                                       int limit);
+}
