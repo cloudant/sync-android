@@ -370,6 +370,35 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return sortDocumentsAccordingToIdList(docIds, docs);
     }
 
+    @Override
+    public List<String> getPossibleAncestorRevisionIDs(String docId,
+                                                       String revId,
+                                                       int limit) {
+
+        int generation = CouchUtils.generationFromRevId(revId);
+        if (generation <= 1)
+            return null;
+        int sqlLimit = limit > 0 ? (int)limit : -1;     // SQL uses -1, not 0, to denote 'no limit'
+
+        String sql = "SELECT revid FROM revs, docs WHERE docs.docid=?"+
+                " and revs.deleted=0 and revs.json not null and revs.doc_id = docs.doc_id"+
+                " ORDER BY revs.sequence DESC";
+        ArrayList<String> ids = new ArrayList<String>();
+        try {
+            Cursor c = this.sqlDb.rawQuery(sql, new String[]{docId});
+            while (c.moveToNext() && limit-- > 0) {
+                String ancestorRevId = c.getString(0);
+                int ancestorGeneration = CouchUtils.generationFromRevId(ancestorRevId);
+                if (ancestorGeneration < generation) {
+                    ids.add(ancestorRevId);
+                }
+            }
+        } catch(SQLException sqe) {
+            return null;
+        }
+        return ids;
+    }
+
     private List<DocumentRevision> sortDocumentsAccordingToIdList(List<String> docIds, List<DocumentRevision> docs) {
         Map<String, DocumentRevision> idToDocs = putDocsIntoMap(docs);
         List<DocumentRevision> results = new ArrayList<DocumentRevision>();
@@ -431,7 +460,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             }
 
             String revisionId = CouchUtils.getFirstRevisionId();
-            long newSequence = insertRevision(docNumericID, revisionId, -1l, false, true, body.asBytes(), true);
+            long newSequence = insertRevision(docNumericID, revisionId, -1l, false, true, body.asBytes(), true, true);
             if (newSequence < 0) {
                 throw new IllegalStateException("Error inserting data, please checking data.");
             }
@@ -606,7 +635,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 // Deletion of non-winner leaf revision is mainly used when resolving
                 // conflicts.
                 this.insertRevision(preRevision.getInternalNumericId(), newRevisionId,
-                        preRevision.getSequence(), true, preRevision.isCurrent(), JSONUtils.EMPTY_JSON, false);
+                        preRevision.getSequence(), true, preRevision.isCurrent(), JSONUtils.EMPTY_JSON, false, false);
                 BasicDocumentRevision newRevision = this.getDocument(preRevision.getId(), newRevisionId);
                 documentDeleted = new DocumentDeleted(preRevision, newRevision);
             }
@@ -642,7 +671,14 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return this.sqlDb.insert("docs", args);
     }
 
-    private long insertRevision(long docNumericId, String revId, long parentSequence, boolean deleted, boolean current, byte[] data, boolean available) {
+    private long insertRevision(long docNumericId,
+                                String revId,
+                                long parentSequence,
+                                boolean deleted,
+                                boolean current,
+                                byte[] data,
+                                boolean available,
+                                boolean copyAttachments) {
 
         this.getSQLDatabase().beginTransaction();
         long newSequence;
@@ -665,14 +701,17 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             }
 
             // by default all the attachments from the previous rev will be carried over
-            String attsSql = "INSERT INTO attachments " +
-                    "(sequence, filename, key, type, length, revpos) " +
-                    "SELECT " + newSequence + ", filename, key, type, length, revpos " +
-                    "FROM attachments WHERE sequence=" + parentSequence;
-            try {
-                this.getSQLDatabase().execSQL(attsSql);
-            } catch (SQLException e) {
-                throw new IllegalStateException("Error copying attachments to new revision " + e);
+            if (copyAttachments) {
+                String attsSql = "INSERT INTO attachments " +
+                        "(sequence, filename, key, type, length, revpos) " +
+                        "SELECT " + newSequence + ", filename, key, type, length, revpos " +
+                        "FROM attachments WHERE sequence=" + parentSequence;
+
+                try {
+                    this.getSQLDatabase().execSQL(attsSql);
+                } catch (SQLException e) {
+                    throw new IllegalStateException("Error copying attachments to new revision " + e);
+                }
             }
 
             // inserted revision and copied attachments, so we are done
@@ -685,7 +724,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     private long insertStubRevision(long docNumricId, String revId, long parentSequence) {
-        return insertRevision(docNumricId, revId, parentSequence, false, false, JSONUtils.EMPTY_JSON, false);
+        // don't copy attachments
+        return insertRevision(docNumricId, revId, parentSequence, false, false, JSONUtils.EMPTY_JSON, false, false);
     }
 
     // Keep in mind we do not keep local document revision history
@@ -789,7 +829,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             long seq = 0;
             // sequence here is -1, but we need it to insert the attachment - also might be wanted by subscribers
             if (this.containsDocument(rev.getId())) {
-                seq = doForceInsertExistingDocumentWithHistory(rev, revisionHistory);
+                seq = doForceInsertExistingDocumentWithHistory(rev, revisionHistory, attachments);
                 rev.initialiseSequence(seq);
                 // TODO fetch the parent doc?
                 documentUpdated = new DocumentUpdated(null, rev);
@@ -799,24 +839,23 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 documentCreated = new DocumentCreated(rev);
             }
             // now deal with any attachments
-            if (attachments != null) {
-                for (String att : attachments.keySet()) {
-                    String data = (String)((Map<String,Object>)attachments.get(att)).get("data");
-                    InputStream is = new Base64InputStream(new ByteArrayInputStream(data.getBytes()));
-                    String type = (String)((Map<String,Object>)attachments.get(att)).get("content_type");
-                    // inline attachments are automatically decompressed, so we don't have to worry about that
-                    UnsavedStreamAttachment ufa = new UnsavedStreamAttachment(is, att, type);
-                    boolean result = false;
-                    try {
-                        PreparedAttachment preparedAttachment = new PreparedAttachment(ufa, this.attachmentManager.attachmentsDir);
-                        result = this.attachmentManager.addAttachment(preparedAttachment, rev);
-                    } catch (IOException e) {
-                        Log.e(LOG_TAG, "IOException when preparing attachment "+ufa+": "+e);
-                    }
-                    if (!result) {
-                        Log.e(LOG_TAG, "There was a problem adding the attachment "+ufa+" to the datastore; not force inserting this document: "+rev);
-                        ok = false;
-                        break;
+            if (Boolean.parseBoolean(System.getProperty("pull_attachments_inline", "false"))) {
+                if (attachments != null) {
+                    for (String att : attachments.keySet()) {
+                        Boolean stub = ((Map<String, Boolean>) attachments.get(att)).get("stub");
+                        if (stub != null && stub.booleanValue()) {
+                            // stubs get copied forward at the end of insertDocumentHistoryIntoExistingTree - nothing to do here
+                            continue;
+                        }
+                        String data = (String) ((Map<String, Object>) attachments.get(att)).get("data");
+                        InputStream is = new Base64InputStream(new ByteArrayInputStream(data.getBytes()));
+                        String type = (String) ((Map<String, Object>) attachments.get(att)).get("content_type");
+                        // inline attachments are automatically decompressed, so we don't have to worry about that
+                        UnsavedStreamAttachment ufa = new UnsavedStreamAttachment(is, att, type);
+                        ok = safeAddAttachment(ufa, rev, AttachmentManager.Encoding.Plain);
+                        if (!ok) {
+                            break;
+                        }
                     }
                 }
             }
@@ -833,6 +872,30 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 }
             }
         }
+    }
+
+
+    public boolean safeAddAttachment(Attachment ufa, DocumentRevision rev) {
+        return safeAddAttachment(ufa, rev, AttachmentManager.Encoding.Plain);
+    }
+
+    public boolean safeAddAttachment(Attachment ufa, DocumentRevision rev, String encodingStr) {
+        AttachmentManager.Encoding encoding = encodingStr != null && encodingStr.equals("gzip") ? AttachmentManager.Encoding.Gzip : AttachmentManager.Encoding.Plain;
+        return safeAddAttachment(ufa, rev, encoding);
+    }
+
+    private boolean safeAddAttachment(Attachment ufa, DocumentRevision rev, AttachmentManager.Encoding encoding) {
+        boolean result = false;
+        try {
+            PreparedAttachment preparedAttachment = new PreparedAttachment(ufa, this.attachmentManager.attachmentsDir, encoding);
+            result = this.attachmentManager.addAttachment(preparedAttachment, rev);
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "IOException when preparing attachment "+ufa+": "+e);
+        }
+        if (!result) {
+            Log.e(LOG_TAG, "There was a problem adding the attachment "+ufa+" to the datastore; not force inserting this document: "+rev);
+        }
+        return result;
     }
 
     @Override
@@ -863,7 +926,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
      * @param revisions   revision history to insert, it includes all revisions (include the revision of the DocumentRevision
      *                    as well) sorted in ascending order.
      */
-    private long doForceInsertExistingDocumentWithHistory(DocumentRevision newRevision, List<String> revisions) {
+    private long doForceInsertExistingDocumentWithHistory(DocumentRevision newRevision, List<String> revisions, Map<String, Object> attachments) {
         Log.v(LOG_TAG, "doForceInsertExistingDocumentWithHistory(): Revisions: " + revisions);
         Preconditions.checkNotNull(newRevision, "New document revision must not be null.");
         Preconditions.checkArgument(this.containsDocument(newRevision.getId()), "DocumentRevisionTree must exist.");
@@ -882,13 +945,14 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         if(parent == null) {
             sequence = insertDocumentHistoryToNewTree(newRevision, revisions, docNumericID, localRevs);
         } else {
-            sequence = insertDocumentHistoryIntoExistingTree(newRevision, revisions, docNumericID, localRevs);
+            sequence = insertDocumentHistoryIntoExistingTree(newRevision, revisions, docNumericID, localRevs, attachments);
         }
         return sequence;
     }
 
     private long insertDocumentHistoryIntoExistingTree(DocumentRevision newRevision, List<String> revisions,
-                                                       Long docNumericID, DocumentRevisionTree localRevs) {
+                                                       Long docNumericID, DocumentRevisionTree localRevs,
+                                                       Map<String, Object> attachments) {
         DocumentRevision parent = localRevs.lookup(newRevision.getId(), revisions.get(0));
         Preconditions.checkNotNull(parent, "Parent must not be null");
         BasicDocumentRevision previousLeaf = (BasicDocumentRevision) localRevs.getCurrentRevision();
@@ -924,7 +988,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         Log.v(LOG_TAG, "Inserting new revision, id: " + docNumericID + ", rev: " + revisions.get(i));
         String newRevisionId = revisions.get(revisions.size() - 1);
         this.changeDocumentToBeNotCurrent(parent.getSequence());
-        long sequence = insertRevision(docNumericID, newRevisionId, parent.getSequence(), newRevision.isDeleted(), true, newRevision.asBytes(), true);
+        // don't copy over attachments
+        long sequence = insertRevision(docNumericID, newRevisionId, parent.getSequence(), newRevision.isDeleted(), true, newRevision.asBytes(), true, false);
         BasicDocumentRevision newLeaf = getDocument(newRevision.getId(), newRevisionId);
         localRevs.add(newLeaf);
 
@@ -934,6 +999,25 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         if (previousLeaf.isCurrent()) {
             // we have a conflicts, and we need to resolve it.
             pickWinnerOfConflicts(localRevs, newLeaf, previousLeaf);
+        }
+
+        // copy stubbed attachments forward from last real revision to this revision
+        if (attachments != null) {
+            for (String att : attachments.keySet()) {
+                Boolean stub = ((Map<String, Boolean>) attachments.get(att)).get("stub");
+                if (stub != null && stub.booleanValue()) {
+                    // TODO filename escaping
+                    String attsSql = "INSERT INTO attachments " +
+                            "(sequence, filename, key, type, length, revpos) " +
+                            "SELECT " + sequence + ", filename, key, type, length, revpos " +
+                            "FROM attachments WHERE sequence=" + previousLeaf.getSequence() + " AND filename = \""+att+"\"";
+                    try {
+                        this.getSQLDatabase().execSQL(attsSql);
+                    } catch (SQLException sqe) {
+                        Log.e(LOG_TAG, "Error copying stubbed attachments: "+sqe);
+                    }
+                }
+            }
         }
 
         return sequence;
@@ -954,9 +1038,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             DocumentRevision newNode = this.getDocument(newRevision.getId(), revisions.get(i));
             localRevs.add(newNode);
         }
-
+        // don't copy attachments
         long sequence = insertRevision(docNumericID, newRevision.getRevision(), parentSequence, newRevision.isDeleted(), true,
-                newRevision.asBytes(), !newRevision.isDeleted());
+                newRevision.asBytes(), !newRevision.isDeleted(), false);
         BasicDocumentRevision newLeaf = getDocument(newRevision.getId(), newRevision.getRevision());
         localRevs.add(newLeaf);
 
@@ -1012,8 +1096,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             // Insert stub node
             parentSequence = insertStubRevision(docNumericID, revHistory.get(i), parentSequence);
         }
-        // Insert the leaf node
-        long sequence = insertRevision(docNumericID, revHistory.get(revHistory.size() - 1), parentSequence, rev.isDeleted(), true, rev.getBody().asBytes(), true);
+        // Insert the leaf node (don't copy attachments)
+        long sequence = insertRevision(docNumericID, revHistory.get(revHistory.size() - 1), parentSequence, rev.isDeleted(), true, rev.getBody().asBytes(), true, false);
         return sequence;
     }
 
@@ -1215,6 +1299,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 false,
                 true,
                 newWinner.asBytes(),
+                true,
                 true);
         return newRevisionId;
     }

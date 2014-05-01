@@ -29,14 +29,17 @@ import java.util.UUID;
 class PreparedAttachment {
 
     // Prepare attachment by copying it to a temp location and calculating its sha1
-    public PreparedAttachment(Attachment attachment, String attachmentsDir) throws IOException {
+    public PreparedAttachment(Attachment attachment, String attachmentsDir, AttachmentManager.Encoding encoding) throws IOException {
         this.attachment = attachment;
         this.tempFile = new File(attachmentsDir, "temp" + UUID.randomUUID());
         FileUtils.copyInputStreamToFile(attachment.getInputStream(), tempFile);
         this.sha1 = Misc.getSha1(new FileInputStream(tempFile));
+        this.encoding = encoding;
     }
 
     public final Attachment attachment;
     public final File tempFile;
     public final byte[] sha1;
+    public final AttachmentManager.Encoding encoding;
 }
+

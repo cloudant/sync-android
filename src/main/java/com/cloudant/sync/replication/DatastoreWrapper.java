@@ -15,6 +15,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.mazha.DocumentRevs;
+import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentRevision;
@@ -101,6 +102,10 @@ class DatastoreWrapper {
             allDocumentTrees.put(doc.getId(), tree);
         }
         return allDocumentTrees;
+    }
+
+    public boolean safeAddAttachment(Attachment ufa, DocumentRevision rev, String encoding) {
+        return this.dbCore.safeAddAttachment(ufa, rev, encoding);
     }
 
 }

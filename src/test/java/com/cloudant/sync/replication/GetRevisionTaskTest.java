@@ -51,16 +51,19 @@ public class GetRevisionTaskTest {
         DocumentRevs dr = new DocumentRevs();
         dr.setRevisions(revs);
         documentRevs.add(dr);
+        ArrayList<String> revIds = new ArrayList<String>();
+        revIds.add(revId);
+        ArrayList<String> attsSince = new ArrayList<String>();
 
         // stubs
-        when(sourceDB.getRevisions(docId, revId)).thenReturn(documentRevs);
+        when(sourceDB.getRevisions(docId, revIds, attsSince)).thenReturn(documentRevs);
 
         // exec
-        GetRevisionTask task = new GetRevisionTask(sourceDB, docId, revId);
+        GetRevisionTask task = new GetRevisionTask(sourceDB, docId, revIds, attsSince);
         DocumentRevsList actualDocumentRevs = task.call();
 
         // verify
-        verify(sourceDB).getRevisions(docId, revId);
+        verify(sourceDB).getRevisions(docId, revIds, attsSince);
 
         Assert.assertEquals(expected, actualDocumentRevs.get(0).getRevisions().getIds());
     }
@@ -72,30 +75,39 @@ public class GetRevisionTaskTest {
 
         String docId = "asdjfsdflkjsd";
         String revId = "10-asdfsafsadf";
+        ArrayList<String> revIds = new ArrayList<String>();
+        revIds.add(revId);
+        ArrayList<String> attsSince = new ArrayList<String>();
 
         // stubs
-        when(sourceDB.getRevisions(docId, revId)).thenThrow(IllegalArgumentException.class);
+        when(sourceDB.getRevisions(docId, revIds, attsSince)).thenThrow(IllegalArgumentException.class);
 
         //exec
-        GetRevisionTask task = new GetRevisionTask(sourceDB, docId, revId);
+        GetRevisionTask task = new GetRevisionTask(sourceDB, docId, revIds, attsSince);
         task.call();
     }
 
     @Test(expected = NullPointerException.class)
     public void test_null_docId() {
         CouchDB sourceDB = mock(CouchDB.class);
-        new GetRevisionTask(sourceDB, null, "revId");
+        ArrayList<String> revIds = new ArrayList<String>();
+        revIds.add("revId");
+        ArrayList<String> attsSince = new ArrayList<String>();
+        new GetRevisionTask(sourceDB, null, revIds, attsSince);
     }
 
     @Test(expected = NullPointerException.class)
     public void test_null_revId() {
         CouchDB sourceDB = mock(CouchDB.class);
         // The cast is to get rid of a compiler warning
-        new GetRevisionTask(sourceDB, "devId", (String[])null);
+        new GetRevisionTask(sourceDB, "devId", null, null);
     }
 
     @Test(expected = NullPointerException.class)
     public void test_null_sourceDb() {
-        new GetRevisionTask(null, "docId", "revId");
+        ArrayList<String> revIds = new ArrayList<String>();
+        revIds.add("revId");
+        ArrayList<String> attsSince = new ArrayList<String>();
+        new GetRevisionTask(null, "docId", revIds, attsSince);
     }
 }

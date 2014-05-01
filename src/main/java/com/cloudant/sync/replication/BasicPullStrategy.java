@@ -17,16 +17,23 @@ package com.cloudant.sync.replication;
 import com.cloudant.common.Log;
 import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.CouchConfig;
+import com.cloudant.mazha.DocumentRevs;
+import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.DatastoreExtended;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevsList;
+import com.cloudant.sync.datastore.DocumentRevsUtils;
+import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.util.JSONUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.EventBus;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -272,6 +279,24 @@ class BasicPullStrategy implements ReplicationStrategy {
                     if (this.cancel) { break; }
 
                     this.targetDb.bulkInsert(result);
+
+                    // now put together a list of attachments we need to download
+                    if (!Boolean.parseBoolean(System.getProperty("pull_attachments_inline", "false"))) {
+                        for (DocumentRevs documentRevs : result) {
+                            Map<String, Object> attachments = documentRevs.getAttachments();
+                            for (String a : attachments.keySet()) {
+                                Boolean stub = ((Map<String, Boolean>) attachments.get(a)).get("stub");
+                                if (stub != null && stub.booleanValue()) {
+                                    continue;
+                                }
+                                String contentType = ((Map<String, String>) attachments.get(a)).get("content_type");
+                                String encoding = (String) ((Map<String, Object>) attachments.get(a)).get("encoding");
+                                UnsavedStreamAttachment usa = this.sourceDb.getAttachmentStream(documentRevs.getId(), documentRevs.getRev(), a, contentType);
+                                DocumentRevision doc = this.targetDb.getDbCore().getDocument(documentRevs.getId());
+                                this.targetDb.safeAddAttachment(usa, doc, encoding);
+                            }
+                        }
+                    }
                     changesProcessed++;
                 }
             } catch (InterruptedException ex) {
@@ -313,10 +338,22 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     public List<Callable<DocumentRevsList>> createTasks(List<String> ids,
                                                         Map<String, Collection<String>> revisions) {
+
+
         List<Callable<DocumentRevsList>> tasks = new ArrayList<Callable<DocumentRevsList>>();
         for(String id : ids) {
+            // get list for atts_since (these are possible ancestors we have, it's ok to be eager
+            // and get all revision IDs higher up in the tree even if they're not our ancestors and
+            // belong to a different subtree)
+            HashSet<String> possibleAncestors = new HashSet<String>();
+            for (String revId : revisions.get(id)) {
+                List<String> thesePossibleAncestors = targetDb.getDbCore().getPossibleAncestorRevisionIDs(id, revId, 50);
+                if (thesePossibleAncestors != null) {
+                    possibleAncestors.addAll(thesePossibleAncestors);
+                }
+            }
             tasks.add(GetRevisionTask.createGetRevisionTask(this.sourceDb,
-                    id, revisions.get(id).toArray(new String[]{})));
+                    id, revisions.get(id), possibleAncestors));
         }
         return tasks;
     }

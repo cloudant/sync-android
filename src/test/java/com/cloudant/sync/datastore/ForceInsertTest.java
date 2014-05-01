@@ -65,6 +65,9 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
     @Test
     public void notification_forceinsertWithAttachments() {
 
+        // this test only makes sense if the data is inline base64 (there's no remote server to pull the attachment from)
+        System.setProperty("pull_attachments_inline", "true");
+
         // create a document and insert the first revision
         BasicDocumentRevision doc1_rev1 = datastore.createDocument(bodyOne);
         Map<String, Object> atts = new HashMap<String, Object>();
@@ -89,6 +92,10 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
 
     @Test
     public void notification_forceinsertWithAttachmentsError() throws IOException {
+
+        // this test only makes sense if the data is inline base64 (there's no remote server to pull the attachment from)
+        System.setProperty("pull_attachments_inline", "true");
+
         // try and force an IOException when setting the attachment, and check everything is OK:
 
         // create a read only zero-length file where the extensions dir would go, to cause an IO exception

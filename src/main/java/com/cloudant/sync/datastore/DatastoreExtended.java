@@ -145,11 +145,11 @@ public interface DatastoreExtended extends Datastore {
      * whether it's a conflict which needs to be grafted to the tree or
      * whether it's a newer version of the same branch we already have.</p>
      *
-     * <p>If the document was successfully inserted, a 
-     * {@link com.cloudant.sync.notifications.DocumentCreated DocumentCreated}, 
-     * {@link com.cloudant.sync.notifications.DocumentModified DocumentModified}, or 
-     * {@link com.cloudant.sync.notifications.DocumentDeleted DocumentDeleted} 
-     * event is posted on the event bus. The event will depend on the nature 
+     * <p>If the document was successfully inserted, a
+     * {@link com.cloudant.sync.notifications.DocumentCreated DocumentCreated},
+     * {@link com.cloudant.sync.notifications.DocumentModified DocumentModified}, or
+     * {@link com.cloudant.sync.notifications.DocumentDeleted DocumentDeleted}
+     * event is posted on the event bus. The event will depend on the nature
      * of the update made.</p>
      *
      * @param rev A {@code DocumentRevision} containing the information for a revision
@@ -158,7 +158,7 @@ public interface DatastoreExtended extends Datastore {
      *                        including the rev ID of {@code rev}. This list
      *                        needs to be sorted in ascending order.
      *
-     * @see Datastore#getEventBus() 
+     * @see Datastore#getEventBus()
      */
     public void forceInsert(DocumentRevision rev, List<String> revisionHistory, Map<String, Object> attachments);
 
@@ -241,4 +241,23 @@ public interface DatastoreExtended extends Datastore {
      * @see <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
      */
     public Map<String, Collection<String>> revsDiff(Multimap<String, String> revisions);
+
+    /**
+     * TODO
+     * @param ufa
+     * @param rev
+     * @return
+     */
+    public boolean safeAddAttachment(Attachment ufa, DocumentRevision rev);
+
+    /**
+     * TODO
+     * @param ufa
+     * @param rev
+     * @param encoding
+     * @return
+     */
+    public boolean safeAddAttachment(Attachment ufa, DocumentRevision rev, String encoding);
+
+
 }

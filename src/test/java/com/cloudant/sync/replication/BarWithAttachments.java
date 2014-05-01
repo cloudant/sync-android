@@ -18,7 +18,7 @@ import com.cloudant.sync.util.Document;
 
 import java.util.HashMap;
 
-public class Bar extends Document {
+public class BarWithAttachments extends Document {
 
     private String name;
     public String getName() {
@@ -36,10 +36,12 @@ public class Bar extends Document {
         this.age = age;
     }
 
+    public HashMap<String, Object> _attachments;
+
     @Override
-	public String toString() {
-		return "Bar: {name:" + name + ", age:" + age + "}";
-	}
+    public String toString() {
+        return "Bar: {name:" + name + ", age:" + age + "}";
+    }
 
     @Override
     public boolean equals(Object obj) {

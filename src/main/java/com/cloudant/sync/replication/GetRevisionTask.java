@@ -20,6 +20,8 @@ import com.cloudant.common.Log;
 import com.google.common.base.Preconditions;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -61,15 +63,16 @@ class GetRevisionTask implements Callable<DocumentRevsList> {
     private static final String LOG_TAG = "GetRevisionTask";
 
     private String documentId;
-    private String[] openRevisions;
+    private Collection<String> openRevisions;
+    private Collection<String> attsSince;
     CouchDB sourceDb;
 
-    public static Callable<DocumentRevsList> createGetRevisionTask(CouchDB sourceDb, String docId, String... openRevisions) {
-        GetRevisionTask task = new GetRevisionTask(sourceDb, docId, openRevisions);
+    public static Callable<DocumentRevsList> createGetRevisionTask(CouchDB sourceDb, String docId, Collection<String> openRevisions, Collection<String> attsSince) {
+        GetRevisionTask task = new GetRevisionTask(sourceDb, docId, openRevisions, attsSince);
         return new RetriableTask<DocumentRevsList>(task);
     }
 
-    public GetRevisionTask(CouchDB sourceDb, String docId, String... openRevisions) {
+   public GetRevisionTask(CouchDB sourceDb, String docId, Collection<String> openRevisions, Collection<String> attsSince) {
         Preconditions.checkNotNull(docId, "docId cannot be null");
         Preconditions.checkNotNull(openRevisions, "revId cannot be null");
         Preconditions.checkNotNull(sourceDb, "sourceDb cannot be null");
@@ -77,12 +80,13 @@ class GetRevisionTask implements Callable<DocumentRevsList> {
         this.documentId = docId;
         this.openRevisions = openRevisions;
         this.sourceDb = sourceDb;
+        this.attsSince = attsSince;
     }
 
     @Override
     public DocumentRevsList call() throws Exception {
         Log.v(this.LOG_TAG, "Fetching document: " + this.documentId);
-        return new DocumentRevsList(this.sourceDb.getRevisions(documentId, openRevisions));
+        return new DocumentRevsList(this.sourceDb.getRevisions(documentId, openRevisions, attsSince));
     }
 
     @Override

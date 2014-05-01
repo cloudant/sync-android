@@ -38,6 +38,7 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -54,6 +55,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Properties;
 
 public class HttpRequests {
@@ -75,6 +77,12 @@ public class HttpRequests {
     InputStream get(URI uri) {
         HttpGet get = new HttpGet(uri);
         get.addHeader("Accept", "application/json");
+        return get(get);
+    }
+
+    InputStream getCompressed(URI uri) {
+        HttpGet get = new HttpGet(uri);
+        get.addHeader("Accept-Encoding", "gzip");
         return get(get);
     }
 
@@ -130,6 +138,13 @@ public class HttpRequests {
         HttpPut put = new HttpPut(uri);
         put.addHeader("Accept", "application/json");
         setEntity(put, contentType, payload);
+        return getStream(this.putResponse(put));
+    }
+
+    InputStream putStream(URI uri, String contentType, InputStream is, long contentLength) {
+        HttpPut put = new HttpPut(uri);
+        put.addHeader("Accept", "application/json");
+        setEntity(put, contentType, is, contentLength);
         return getStream(this.putResponse(put));
     }
 
@@ -345,6 +360,12 @@ public class HttpRequests {
 
     protected void setEntity(HttpEntityEnclosingRequestBase httpRequest, String contentType, byte[] data) {
         ByteArrayEntity entity = new ByteArrayEntity(data);
+        entity.setContentType(contentType);
+        httpRequest.setEntity(entity);
+    }
+
+    protected void setEntity(HttpEntityEnclosingRequestBase httpRequest, String contentType, InputStream is, long contentLength) {
+        InputStreamEntity entity = new InputStreamEntity(is, contentLength);
         entity.setContentType(contentType);
         httpRequest.setEntity(entity);
     }
