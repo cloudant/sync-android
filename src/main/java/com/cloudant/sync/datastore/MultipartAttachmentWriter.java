@@ -1,36 +1,30 @@
+/**
+ * Copyright (c) 2014 Cloudant, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.util.JSONUtils;
-
-import org.apache.commons.codec.binary.Base64;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by tomblench on 24/02/2014.
  */
-
-// DocumentRevision setAttachments(DocumentRevision rev, List<Attachment> attachments);
-
-/*
-* Take a revision:
-* - It has had setAttachments called on it already
-* - With _attachments pre-populated
-* - Each attachment has content_type, length, digest
-* - Go thru the attachments dictionary in order
-* - Get the attachment out of the blob store
-*
-*/
-
-
 
 public class MultipartAttachmentWriter extends InputStream {
 
@@ -39,11 +33,12 @@ public class MultipartAttachmentWriter extends InputStream {
         this.basicBoundary = this.makeBoundary();
         this.boundary = ("--"+basicBoundary).getBytes();
         this.trailingBoundary = ("--"+basicBoundary+"--").getBytes();
-        components = new ArrayList<InputStream>();
-        // some preamble
 
+        components = new ArrayList<InputStream>();
+
+        // some preamble
         contentLength += boundary.length;
-        contentLength += 6;
+        contentLength += 6; // 3 * crlf
         contentLength += contentType.length;
 
         components.add(new ByteArrayInputStream(boundary));
@@ -68,7 +63,7 @@ public class MultipartAttachmentWriter extends InputStream {
     public void addAttachment(Attachment attachment) throws IOException {
 
         contentLength += boundary.length;
-        contentLength += 6;
+        contentLength += 6; // 3 * crlf
         contentLength += attachment.getSize();
 
         components.add(new ByteArrayInputStream(crlf));
@@ -79,9 +74,8 @@ public class MultipartAttachmentWriter extends InputStream {
     }
 
     public void close() {
-
         contentLength += trailingBoundary.length;
-        contentLength += 2;
+        contentLength += 2; // crlf
 
         components.add(new ByteArrayInputStream(crlf));
         components.add(new ByteArrayInputStream(trailingBoundary));
@@ -96,8 +90,6 @@ public class MultipartAttachmentWriter extends InputStream {
     private int currentComponentIdx;
 
     private ArrayList<InputStream> components;
-
-    private MessageDigest md5;
 
     private String id;
     private String revision;
