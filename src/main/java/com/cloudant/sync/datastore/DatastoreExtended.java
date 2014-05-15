@@ -243,21 +243,21 @@ public interface DatastoreExtended extends Datastore {
     public Map<String, Collection<String>> revsDiff(Multimap<String, String> revisions);
 
     /**
-     * TODO
-     * @param ufa
-     * @param rev
-     * @return
+     * Add attachment to document revision without throwing exceptions.
+     * @param att The attachment to add
+     * @param rev The DocumentRevision to add the attachment to
+     * @return true on success, false on failure
      */
-    public boolean safeAddAttachment(Attachment ufa, DocumentRevision rev);
+    public boolean safeAddAttachment(Attachment att, DocumentRevision rev);
 
     /**
-     * TODO
-     * @param ufa
-     * @param rev
-     * @param encoding
-     * @return
+     * Add attachment to document revision without throwing exceptions.
+     * @param att The attachment to add
+     * @param rev The DocumentRevision to add the attachment to
+     * @param encoding Valid values are "plain" or "gzip"
+     * @return true on success, false on failure
      */
-    public boolean safeAddAttachment(Attachment ufa, DocumentRevision rev, String encoding);
+    public boolean safeAddAttachment(Attachment att, DocumentRevision rev, String encoding);
 
 
 }

@@ -369,7 +369,6 @@ public interface Datastore {
      *
      * @return New revision.
      *
-     * @see #createAttachment(java.io.File, String)
      */
     public DocumentRevision updateAttachments(DocumentRevision rev,
                                               List<? extends Attachment> attachments)

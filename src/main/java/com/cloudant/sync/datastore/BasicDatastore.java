@@ -874,11 +874,12 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
-
+    @Override
     public boolean safeAddAttachment(Attachment ufa, DocumentRevision rev) {
         return safeAddAttachment(ufa, rev, AttachmentManager.Encoding.Plain);
     }
 
+    @Override
     public boolean safeAddAttachment(Attachment ufa, DocumentRevision rev, String encodingStr) {
         AttachmentManager.Encoding encoding = encodingStr != null && encodingStr.equals("gzip") ? AttachmentManager.Encoding.Gzip : AttachmentManager.Encoding.Plain;
         return safeAddAttachment(ufa, rev, encoding);
