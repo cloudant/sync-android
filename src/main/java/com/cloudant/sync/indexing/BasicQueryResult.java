@@ -53,11 +53,17 @@ class BasicQueryResult implements QueryResult {
 
     @Override
     public Iterator<DocumentRevision> iterator() {
+
+        /**
+         * Partitions a set of document IDs into batches of DocumentRevision
+         * objects, and provides an iterator over the whole, un-partitioned set
+         * of revision objects (as if they were not batched).
+         */
         return new Iterator<DocumentRevision>() {
 
-            // This iterator iterates through a list of "subIterator" in order,
-            // and each subIterator is a iterator for a subList.
+            /** List containing lists of partitions document IDs */
             private final List<List<String>> subLists = this.partition(documentIds, batchSize);
+            /** The current partition's iterator of document objects */
             private Iterator<DocumentRevision> subIterator = null;
 
             @Override
@@ -85,6 +91,8 @@ class BasicQueryResult implements QueryResult {
             }
 
             /**
+             * Partition a list of document IDs into batches of batchSize.
+             *
              * Return a mutable list of consecutive sublists.
              * Same as Guava's "Lists.partition" except the result list is mutable.
              * It is needed because this iterator removes sublist from the partitions
@@ -101,6 +109,13 @@ class BasicQueryResult implements QueryResult {
                 return res;
             }
 
+            /**
+             * Load the next partition of DocumentRevision objects for the
+             * iterator.
+             *
+             * @param ids the IDs of the revisions to load.
+             * @return an iterator over the DocumentRevision objects for `ids`.
+             */
             private Iterator<DocumentRevision> nextSubIterator(List<String> ids) {
                 HashMap<String, DocumentRevision> map = new HashMap<String, DocumentRevision>();
                 for(DocumentRevision revision : datastore.getDocumentsWithIds(ids)) {
