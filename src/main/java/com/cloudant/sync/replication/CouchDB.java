@@ -55,5 +55,5 @@ interface CouchDB {
     public void bulkSerializedDocs(List<String> serializedDocs);
     public void putMultiparts(List<MultipartAttachmentWriter> multiparts);
     public Map<String, Set<String>> revsDiff(Map<String, Set<String>> revisions);
-    public UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType);
+    public UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType, String encoding);
 }

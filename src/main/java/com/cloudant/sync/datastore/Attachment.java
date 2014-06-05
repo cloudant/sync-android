@@ -26,15 +26,26 @@ import java.io.InputStream;
  */
 public abstract class Attachment implements Comparable<Attachment>{
 
+    public Attachment(String name, String type, Encoding encoding) {
+        this.name = name;
+        this.type = type;
+        this.encoding = encoding;
+    }
+
     /**
      * Name of the attachment, must be unique for a given revision
      */
-    public String name;
+    public final String name;
 
     /**
      * MIME type of the attachment
      */
-    public String type;
+    public final String type;
+
+    /**
+     * Encoding - Plain or GZIP
+     */
+    public final Encoding encoding;
 
     /**
      * Size in bytes, may be -1 if not known (e.g., HTTP URL for new attachment)
@@ -54,6 +65,11 @@ public abstract class Attachment implements Comparable<Attachment>{
 
     public int compareTo(Attachment other) {
         return name.compareTo(other.name);
+    }
+
+    public enum Encoding {
+        Plain,
+        Gzip
     }
 
 }

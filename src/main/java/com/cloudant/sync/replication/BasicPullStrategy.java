@@ -30,6 +30,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.EventBus;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -291,10 +292,16 @@ class BasicPullStrategy implements ReplicationStrategy {
                                 }
                                 String contentType = ((Map<String, String>) attachments.get(a)).get("content_type");
                                 String encoding = (String) ((Map<String, Object>) attachments.get(a)).get("encoding");
-                                UnsavedStreamAttachment usa = this.sourceDb.getAttachmentStream(documentRevs.getId(), documentRevs.getRev(), a, contentType);
+                                UnsavedStreamAttachment usa = this.sourceDb.getAttachmentStream(documentRevs.getId(), documentRevs.getRev(), a, contentType, encoding);
                                 DocumentRevision doc = this.targetDb.getDbCore().getDocument(documentRevs.getId());
-                                this.targetDb.safeAddAttachment(usa, doc, encoding);
-                            }
+                                try {
+                                    this.targetDb.addAttachment(usa, doc);
+                                } catch (Exception e) {
+                                    Log.e(LOG_TAG, "There was a problem adding the attachment "+usa+" to the datastore for document "+doc+", terminating replication");
+                                    Log.e(LOG_TAG, "Exception was: "+e);
+                                    this.cancel = true;
+                                }
+                           }
                         }
                     }
                     changesProcessed++;

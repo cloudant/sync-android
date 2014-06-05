@@ -25,6 +25,8 @@ import com.cloudant.sync.datastore.DocumentRevsUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.common.Log;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,8 +106,8 @@ class DatastoreWrapper {
         return allDocumentTrees;
     }
 
-    public boolean safeAddAttachment(Attachment ufa, DocumentRevision rev, String encoding) {
-        return this.dbCore.safeAddAttachment(ufa, rev, encoding);
+    protected void addAttachment(Attachment att, DocumentRevision rev) throws IOException, SQLException {
+        this.dbCore.addAttachment(att, rev);
     }
 
 }

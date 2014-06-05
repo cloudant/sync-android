@@ -37,9 +37,9 @@ public class Bar extends Document {
     }
 
     @Override
-	public String toString() {
-		return "Bar: {name:" + name + ", age:" + age + "}";
-	}
+    public String toString() {
+        return "Bar: {name:" + name + ", age:" + age + "}";
+    }
 
     @Override
     public boolean equals(Object obj) {

@@ -38,8 +38,7 @@ public class RevisionHistoryHelperTest {
         m.put("name", "Tom");
 
         List<DocumentRevision> d = createDBObjects("Tom", "1-a");
-        List<? extends Attachment> atts = new ArrayList<Attachment>();
-        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d, atts));
+        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
 
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         Assert.assertEquals("1", documentRevs.getId());
@@ -76,8 +75,7 @@ public class RevisionHistoryHelperTest {
         m.put("name", "Tom");
 
         List<DocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
-        List<? extends Attachment> atts = new ArrayList<Attachment>();
-        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d, atts));
+        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
 
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         Assert.assertEquals("1", documentRevs.getId());
@@ -90,27 +88,23 @@ public class RevisionHistoryHelperTest {
     @Test(expected = IllegalArgumentException.class)
     public void revisionHistoryToJson_historyIsInAscendingOrder_exception() {
         List<DocumentRevision> d = createDBObjects("Tom", "1-a", "2-b");
-        List<? extends Attachment> atts = new ArrayList<Attachment>();
-        RevisionHistoryHelper.revisionHistoryToJson(d, atts);
+        RevisionHistoryHelper.revisionHistoryToJson(d);
     }
 
     @Test(expected = NullPointerException.class)
     public void revisionHistoryToJson_null_exception() {
-        List<? extends Attachment> atts = new ArrayList<Attachment>();
-        RevisionHistoryHelper.revisionHistoryToJson(null, atts);
+        RevisionHistoryHelper.revisionHistoryToJson(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void revisionHistoryToJson_zeroLengthHistory_exception() {
-        List<? extends Attachment> atts = new ArrayList<Attachment>();
-        RevisionHistoryHelper.revisionHistoryToJson(new ArrayList<DocumentRevision>(), atts);
+        RevisionHistoryHelper.revisionHistoryToJson(new ArrayList<DocumentRevision>());
     }
 
     @Test
     public void getRevisionPath_oneRevision_success() {
         List<DocumentRevision> d = createDBObjects("Tom", "1-a");
-        List<? extends Attachment> atts = new ArrayList<Attachment>();
-        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d, atts));
+        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         List<String> revisions = RevisionHistoryHelper.getRevisionPath(documentRevs);
         Assert.assertThat(revisions, equalTo(Arrays.asList("1-a")));
@@ -119,9 +113,7 @@ public class RevisionHistoryHelperTest {
     @Test
     public void getRevisionPath_twoRevision_success() {
         List<DocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
-        List<? extends Attachment> atts = new ArrayList<Attachment>();
-        List<Attachment> largeAtts = new ArrayList<Attachment>();
-        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d, atts));
+        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         List<String> revisions = RevisionHistoryHelper.getRevisionPath(documentRevs);
         Assert.assertThat(revisions, equalTo(Arrays.asList("2-b", "1-a")));
@@ -130,9 +122,7 @@ public class RevisionHistoryHelperTest {
     @Test(expected = IllegalArgumentException.class)
     public void getRevisionPath_revisionStartIsTooSmall_exception() {
         List<DocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
-        List<? extends Attachment> atts = new ArrayList<Attachment>();
-        List<Attachment> largeAtts = new ArrayList<Attachment>();
-        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d, atts));
+        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         addOneMoreIdToRevisions(documentRevs);
         RevisionHistoryHelper.getRevisionPath(documentRevs);
