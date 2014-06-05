@@ -22,6 +22,8 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.google.common.collect.Multimap;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -243,21 +245,14 @@ public interface DatastoreExtended extends Datastore {
     public Map<String, Collection<String>> revsDiff(Multimap<String, String> revisions);
 
     /**
-     * Add attachment to document revision without throwing exceptions.
+     * Add attachment to document revision without incrementing revision.
+     *
+     * Used by replicator when receiving new/updated attachments
+     *
      * @param att The attachment to add
      * @param rev The DocumentRevision to add the attachment to
      * @return true on success, false on failure
      */
-    public boolean safeAddAttachment(Attachment att, DocumentRevision rev);
-
-    /**
-     * Add attachment to document revision without throwing exceptions.
-     * @param att The attachment to add
-     * @param rev The DocumentRevision to add the attachment to
-     * @param encoding Valid values are "plain" or "gzip"
-     * @return true on success, false on failure
-     */
-    public boolean safeAddAttachment(Attachment att, DocumentRevision rev, String encoding);
-
+    public void addAttachment(Attachment att, DocumentRevision rev) throws IOException, SQLException;
 
 }

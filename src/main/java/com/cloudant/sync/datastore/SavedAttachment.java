@@ -27,20 +27,22 @@ import java.util.zip.GZIPInputStream;
 /**
  * An Attachment which has been retrieved from the Database
  */
-public class SavedAttachment extends Attachment {
+class SavedAttachment extends Attachment {
 
-    protected SavedAttachment(String name, long revpos, long seq, byte[] key, String type, File file, AttachmentManager.Encoding encoding) {
-        this.name = name;
+    // how many bytes should an attachment be to be considered large?
+    static final int largeSizeBytes = 65536;
+
+    protected SavedAttachment(String name, long revpos, long seq, byte[] key, String type, File file, Encoding encoding) {
+        super(name, type, encoding);
         this.revpos = revpos;
         this.seq = seq;
         this.key = key;
-        this.type = type;
         this.file = file;
         this.encoding = encoding;
     }
 
     public InputStream getInputStream() throws IOException {
-        if (encoding == AttachmentManager.Encoding.Gzip) {
+        if (encoding == Encoding.Gzip) {
             return new GZIPInputStream(new FileInputStream(file));
         } else {
             return new FileInputStream(file);
@@ -48,7 +50,7 @@ public class SavedAttachment extends Attachment {
     }
 
     public boolean isLarge() {
-        return this.getSize() > 65536;
+        return this.getSize() > largeSizeBytes;
     }
 
     public boolean shouldInline() {
@@ -69,6 +71,6 @@ public class SavedAttachment extends Attachment {
     protected final long seq;
     protected final byte[] key;  // sha of file, used for file path on disk.
     private final File file;
-    private AttachmentManager.Encoding encoding;
+    private Encoding encoding;
 
 }

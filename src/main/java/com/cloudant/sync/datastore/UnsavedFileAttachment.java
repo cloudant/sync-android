@@ -29,15 +29,13 @@ import java.io.InputStream;
 public class UnsavedFileAttachment extends Attachment {
 
     public UnsavedFileAttachment(File file, String type) {
+        super(file.getName(), type, Encoding.Plain);
         this.file = file;
-        this.name = file.getName();
-        this.type = type;
     }
 
-    public UnsavedFileAttachment(File file, String name, String type) {
+    public UnsavedFileAttachment(File file, String type, Encoding encoding) {
+        super(file.getName(), type, encoding);
         this.file = file;
-        this.name = name;
-        this.type = type;
     }
 
     public InputStream getInputStream() throws IOException {

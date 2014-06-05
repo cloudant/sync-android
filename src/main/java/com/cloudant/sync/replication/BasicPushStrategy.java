@@ -24,16 +24,13 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
-import com.cloudant.sync.datastore.SavedAttachment;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -221,6 +218,10 @@ class BasicPushStrategy implements ReplicationStrategy {
                 config.changeLimitPerBatch);
     }
 
+    /**
+     * A small value class containing a set of documents to push, some
+     * via multipart and some via _bulk_docs
+     */
     private class ItemsToPush
     {
         public ItemsToPush() {
@@ -289,7 +290,7 @@ class BasicPushStrategy implements ReplicationStrategy {
                 // get the json, and inline any small attachments
                 Map<String, Object> json = RevisionHistoryHelper.revisionHistoryToJson(path, atts);
                 // if there are any large atts we will get a multipart writer, otherwise null
-                MultipartAttachmentWriter mpw = RevisionHistoryHelper.addMultiparts(path, atts);
+                MultipartAttachmentWriter mpw = RevisionHistoryHelper.createMultipartWriter(path, atts);
 
                 // now we will have either a multipart or a plain doc
                 if (mpw == null) {

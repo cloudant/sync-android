@@ -24,22 +24,30 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Created by tomblench on 28/04/2014.
+ * An attachment which has been been copied to a temporary location and had its sha1 calculated,
+ * prior to being added to the datastore.
+ *
+ * In most cases, this class will only be used by the AttachmentManager and BasicDatastore classes.
  */
 class PreparedAttachment {
 
-    // Prepare attachment by copying it to a temp location and calculating its sha1
-    public PreparedAttachment(Attachment attachment, String attachmentsDir, AttachmentManager.Encoding encoding) throws IOException {
+    /**
+     * Prepare an attachment by copying it to a temp location and calculating its sha1.
+     *
+     * @param attachment The attachment to prepare
+     * @param attachmentsDir The 'BLOB store' or location where attachments are stored for this database
+     * @throws IOException
+     */
+    public PreparedAttachment(Attachment attachment,
+                              String attachmentsDir) throws IOException {
         this.attachment = attachment;
         this.tempFile = new File(attachmentsDir, "temp" + UUID.randomUUID());
         FileUtils.copyInputStreamToFile(attachment.getInputStream(), tempFile);
         this.sha1 = Misc.getSha1(new FileInputStream(tempFile));
-        this.encoding = encoding;
     }
 
     public final Attachment attachment;
     public final File tempFile;
     public final byte[] sha1;
-    public final AttachmentManager.Encoding encoding;
 }
 

@@ -17,18 +17,14 @@ package com.cloudant.sync.datastore;
 import com.cloudant.common.CouchConstants;
 import com.cloudant.common.Log;
 import com.cloudant.mazha.DocumentRevs;
-import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.util.CouchUtils;
 import com.google.common.base.Preconditions;
 
 import org.apache.commons.codec.binary.Base64OutputStream;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -95,9 +91,9 @@ public class RevisionHistoryHelper {
                 "Revision start must be bigger than revision ids' length");
         List<String> path = new ArrayList<String>();
         int start = documentRevs.getRevisions().getStart();
-        for(String revId : documentRevs.getRevisions().getIds()) {
+        for (String revId : documentRevs.getRevisions().getIds()) {
             path.add(start + "-" + revId);
-            start --;
+            start--;
         }
         return path;
     }
@@ -107,12 +103,26 @@ public class RevisionHistoryHelper {
     }
 
     /**
+     * Serialise a branch's revision history, without attachments.
+     * See {@link #revisionHistoryToJson(java.util.List, java.util.List)} for details.
+     * @param history list of {@code DocumentRevision}s.
+     * @return JSON-serialised {@code String} suitable for sending to CouchDB's
+     *      _bulk_docs endpoint.
+     */
+    public static Map<String, Object> revisionHistoryToJson(List<DocumentRevision> history) {
+        return revisionHistoryToJson(history, null);
+    }
+
+    /**
      * <p>Serialise a branch's revision history, in the form of a list of
      * {@link DocumentRevision}s, into the JSON format expected by CouchDB's _bulk_docs
      * endpoint.</p>
      *
      * @param history list of {@code DocumentRevision}s. This should be a complete list
      *                from the revision furthest down the branch to the root.
+     * @param attachments list of {@code Attachment}s, if any. This allows the {@code _attachments}
+     *                    dictionary to be correctly serialised. If there are no attachments, set
+     *                    to null.
      * @return JSON-serialised {@code String} suitable for sending to CouchDB's
      *      _bulk_docs endpoint.
      *
@@ -138,8 +148,12 @@ public class RevisionHistoryHelper {
         return m;
     }
 
-    public static MultipartAttachmentWriter addMultiparts(List<DocumentRevision> history,
-                                                           List<? extends Attachment> attachments) {
+    /**
+     * Create a MultipartAttachmentWriter object needed to subsequently write the JSON body and
+     * attachments as a multipart/related stream
+     */
+    public static MultipartAttachmentWriter createMultipartWriter(List<DocumentRevision> history,
+                                                                  List<? extends Attachment> attachments) {
 
         Preconditions.checkNotNull(history, "History must not be null");
         Preconditions.checkArgument(history.size() > 0, "History must have at least one DocumentRevision.");
@@ -179,6 +193,11 @@ public class RevisionHistoryHelper {
         return mpw;
     }
 
+    /**
+     * Add attachment entries to the _attachments dictionary of the revision
+     * If the attachment should be inlined, then insert the attachment data as a base64 string
+     * If it isn't inlined, set follows=true to show it will be included in the multipart/related
+     */
     private static void addAttachments(List<? extends Attachment> attachments,
                                    DocumentRevision revision,
                                    Map<String, Object> outMap) {
@@ -189,7 +208,6 @@ public class RevisionHistoryHelper {
             // we need to cast down to SavedAttachment, which we know is what the AttachmentManager gives us
             SavedAttachment savedAtt = (SavedAttachment)att;
             HashMap<String, Object> theAtt = new HashMap<String, Object>();
-            MultipartAttachmentWriter mpw = null;
             try {
                 if (savedAtt.revpos < revpos) {
                     // if the revpos of the current doc is higher than that of the attachment, it's a stub

@@ -73,17 +73,12 @@ class AttachmentManager {
 
     private BasicDatastore datastore;
 
-    public enum Encoding {
-        Plain,
-        Gzip
-    }
-
     public AttachmentManager(BasicDatastore datastore) {
         this.datastore = datastore;
         this.attachmentsDir = datastore.extensionDataFolder(EXTENSION_NAME);
     }
 
-    protected boolean addAttachment(PreparedAttachment a, DocumentRevision rev) {
+    public void addAttachment(PreparedAttachment a, DocumentRevision rev) throws IOException, SQLException {
 
         // do it this way to only go thru inputstream once
         // * write to temp location using copyinputstreamtofile
@@ -91,44 +86,35 @@ class AttachmentManager {
         // * stick it into database
         // * move file using sha1 as name
 
-        try {
+        ContentValues values = new ContentValues();
+        long sequence = rev.getSequence();
+        String filename = a.attachment.name;
+        byte[] sha1 = a.sha1;
+        String type = a.attachment.type;
+        int encoding = a.attachment.encoding.ordinal();
+        long length = a.attachment.getSize();
+        long revpos = CouchUtils.generationFromRevId(rev.getRevision());
 
-            ContentValues values = new ContentValues();
-            long sequence = rev.getSequence();
-            String filename = a.attachment.name;
-            byte[] sha1 = a.sha1;
-            String type = a.attachment.type;
-            int encoding = a.encoding.ordinal();
-            long length = a.attachment.getSize();
-            long revpos = CouchUtils.generationFromRevId(rev.getRevision());
+        values.put("sequence", sequence);
+        values.put("filename", filename);
+        values.put("key", sha1);
+        values.put("type", type);
+        values.put("encoding", encoding);
+        values.put("length", length);
+        values.put("encoded_length", length);
+        values.put("revpos", revpos);
 
-            values.put("sequence", sequence);
-            values.put("filename", filename);
-            values.put("key", sha1);
-            values.put("type", type);
-            values.put("encoding", encoding);
-            values.put("length", length);
-            values.put("encoded_length", length);
-            values.put("revpos", revpos);
-
-            // delete and insert in case there is already an attachment at this seq (eg copied over from a previous rev)
-            datastore.getSQLDatabase().delete("attachments", " filename = ? and sequence = ? ", new String[]{filename, String.valueOf(sequence)});
-            long result = datastore.getSQLDatabase().insert("attachments", values);
-            if (result == -1) {
-                // if we can't insert into DB then don't copy the attachment
-                Log.e(LOG_TAG, "Could not insert attachment " + a + " into database; not copying to attachments directory");
-                a.tempFile.delete();
-                return false;
-            }
-            // move file to blob store, with file name based on sha1
-            File newFile = fileFromKey(sha1);
-            FileUtils.moveFile(a.tempFile, newFile);
-        } catch (IOException e) {
-            Log.e(LOG_TAG, "Got IOException in addAttachment: "+e);
-            // TODO check if temp file is still there and delete it?
-            return false;
+        // delete and insert in case there is already an attachment at this seq (eg copied over from a previous rev)
+        datastore.getSQLDatabase().delete("attachments", " filename = ? and sequence = ? ", new String[]{filename, String.valueOf(sequence)});
+        long result = datastore.getSQLDatabase().insert("attachments", values);
+        if (result == -1) {
+            // if we can't insert into DB then don't copy the attachment
+            a.tempFile.delete();
+            throw new SQLException("Could not insert attachment " + a + " into database with values " + values + "; not copying to attachments directory");
         }
-        return true;
+        // move file to blob store, with file name based on sha1
+        File newFile = fileFromKey(sha1);
+        FileUtils.moveFile(a.tempFile, newFile);
     }
 
     protected DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException {
@@ -141,7 +127,7 @@ class AttachmentManager {
 
         try {
             for (Attachment a : attachments) {
-                preparedAttachments.add(new PreparedAttachment(a, this.attachmentsDir, Encoding.Plain));
+                preparedAttachments.add(new PreparedAttachment(a, this.attachmentsDir));
             }
         } catch (IOException e) {
             Log.e(LOG_TAG, "Failed to prepare attachment for rev "+rev+": "+e);
@@ -157,12 +143,13 @@ class AttachmentManager {
 
             boolean ok = true;
 
-            for (PreparedAttachment a : preparedAttachments) {
-                boolean result = this.addAttachment(a, newDocument);
-                if (!result) {
-                    ok = false;
-                    break;
+            try {
+                for (PreparedAttachment a : preparedAttachments) {
+                    this.addAttachment(a, newDocument);
                 }
+            } catch (Exception e) {
+                Log.e(LOG_TAG, "Failed to add attachment for rev "+rev+"; exception was "+e.getMessage());
+                ok = false;
             }
 
             if (ok) {
@@ -190,7 +177,7 @@ class AttachmentManager {
                 int encoding = c.getInt(4);
                 int revpos = c.getInt(7);
                 File file = fileFromKey(key);
-                return new SavedAttachment(attachmentName, revpos, sequence, key, type, file, Encoding.values()[encoding]);
+                return new SavedAttachment(attachmentName, revpos, sequence, key, type, file, Attachment.Encoding.values()[encoding]);
             }
             return null;
         } catch (SQLException e) {
@@ -211,13 +198,57 @@ class AttachmentManager {
                 int encoding = c.getInt(4);
                 int revpos = c.getInt(7);
                 File file = fileFromKey(key);
-                atts.add(new SavedAttachment(name, revpos, sequence, key, type, file, Encoding.values()[encoding]));
+                atts.add(new SavedAttachment(name, revpos, sequence, key, type, file, Attachment.Encoding.values()[encoding]));
             }
             return atts;
         } catch (SQLException e) {
             return null;
         }
     }
+
+    private void copyCursorValuesToNewSequence(Cursor c, long newSequence) {
+        while (c.moveToNext()) {
+            String filename = c.getString(1);
+            byte[] key = c.getBlob(2);
+            String type = c.getString(3);
+            int encoding = c.getInt(4);
+            int length = c.getInt(5);
+            int encoded_length = c.getInt(6);
+            int revpos = c.getInt(7);
+
+            ContentValues values = new ContentValues();
+            values.put("sequence", newSequence);
+            values.put("filename", filename);
+            values.put("key", key);
+            values.put("type", type);
+            values.put("encoding", encoding);
+            values.put("length", length);
+            values.put("encoded_length", encoded_length);
+            values.put("revpos", revpos);
+            datastore.getSQLDatabase().insert("attachments", values);
+        }
+    }
+
+    /**
+     * Called by BasicDatastore to copy one attachment to a new revision
+     * @param parentSequence
+     */
+    protected void copyAttachment(long parentSequence, long newSequence, String filename) throws SQLException {
+        Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT,
+                new String[]{filename, String.valueOf(parentSequence)});
+        copyCursorValuesToNewSequence(c, newSequence);
+    }
+
+    /**
+     * Called by BasicDatastore to copy attachments to a new revision
+     * @param parentSequence
+     */
+    protected void copyAttachments(long parentSequence, long newSequence) throws SQLException {
+        Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
+                new String[]{String.valueOf(parentSequence)});
+        copyCursorValuesToNewSequence(c, newSequence);
+    }
+
 
     protected DocumentRevision removeAttachments(DocumentRevision rev, String[] attachmentNames)
             throws ConflictException {
