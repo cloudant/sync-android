@@ -14,6 +14,8 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.replication.PushAttachmentsInline;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -53,12 +55,13 @@ class SavedAttachment extends Attachment {
         return this.getSize() > largeSizeBytes;
     }
 
-    public boolean shouldInline() {
+    public boolean shouldInline(PushAttachmentsInline inlinePreference) {
         // push_attachments_inline: false = always push multipart; small = push small attachments inline; true = always push inline
-        String pushPreference = System.getProperty("push_attachments_inline", "small");
-        if (pushPreference.equals("false") || (pushPreference.equals("small") && this.isLarge())) {
+        if (inlinePreference == PushAttachmentsInline.False || inlinePreference == PushAttachmentsInline.Small && this.isLarge()) {
+            System.out.println("inline false");
             return false;
         } else {
+            System.out.println("inline true");
             return true;
         }
     }

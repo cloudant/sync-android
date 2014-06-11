@@ -25,8 +25,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
-import org.apache.http.entity.InputStreamEntity;
-
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
@@ -294,14 +292,16 @@ public class CouchClient {
      * It must return a list because that is how CouchDB return its results.
      *
      */
-    public List<OpenRevision> getDocWithOpenRevisions(String id, Collection<String> revisions, Collection<String> attsSince) {
+    public List<OpenRevision> getDocWithOpenRevisions(String id, Collection<String> revisions,
+                                                      Collection<String> attsSince,
+                                                      boolean pullAttachmentsInline) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
         Preconditions.checkArgument(revisions.size() > 0, "Need at lease one open revision");
 
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("revs", true);
         // only pull attachments inline if we're configured to
-        if (Boolean.parseBoolean(System.getProperty("pull_attachments_inline", "false"))) {
+        if (pullAttachmentsInline) {
             options.put("attachments", true);
         } else {
             options.put("attachments", false);

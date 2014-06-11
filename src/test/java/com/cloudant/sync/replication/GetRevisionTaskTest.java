@@ -15,11 +15,15 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.mazha.DocumentRevs;
+import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.DatastoreManager;
+import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -27,14 +31,25 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
-
-@RunWith(JUnit4.class)
 
 /**
  * Test GetRevisionTask.
  */
+
+@RunWith(Parameterized.class)
 public class GetRevisionTaskTest {
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {false}, {true},
+        });
+    }
+
+    @Parameterized.Parameter
+    public boolean pullAttachmentsInline;
 
     @Test
     public void test_get_revision_task()
@@ -56,14 +71,14 @@ public class GetRevisionTaskTest {
         ArrayList<String> attsSince = new ArrayList<String>();
 
         // stubs
-        when(sourceDB.getRevisions(docId, revIds, attsSince)).thenReturn(documentRevs);
+        when(sourceDB.getRevisions(docId, revIds, attsSince, pullAttachmentsInline)).thenReturn(documentRevs);
 
         // exec
-        GetRevisionTask task = new GetRevisionTask(sourceDB, docId, revIds, attsSince);
+        GetRevisionTask task = new GetRevisionTask(sourceDB, docId, revIds, attsSince, pullAttachmentsInline);
         DocumentRevsList actualDocumentRevs = task.call();
 
         // verify
-        verify(sourceDB).getRevisions(docId, revIds, attsSince);
+        verify(sourceDB).getRevisions(docId, revIds, attsSince, pullAttachmentsInline);
 
         Assert.assertEquals(expected, actualDocumentRevs.get(0).getRevisions().getIds());
     }
@@ -80,10 +95,10 @@ public class GetRevisionTaskTest {
         ArrayList<String> attsSince = new ArrayList<String>();
 
         // stubs
-        when(sourceDB.getRevisions(docId, revIds, attsSince)).thenThrow(IllegalArgumentException.class);
+        when(sourceDB.getRevisions(docId, revIds, attsSince, pullAttachmentsInline)).thenThrow(IllegalArgumentException.class);
 
         //exec
-        GetRevisionTask task = new GetRevisionTask(sourceDB, docId, revIds, attsSince);
+        GetRevisionTask task = new GetRevisionTask(sourceDB, docId, revIds, attsSince, pullAttachmentsInline);
         task.call();
     }
 
@@ -93,14 +108,14 @@ public class GetRevisionTaskTest {
         ArrayList<String> revIds = new ArrayList<String>();
         revIds.add("revId");
         ArrayList<String> attsSince = new ArrayList<String>();
-        new GetRevisionTask(sourceDB, null, revIds, attsSince);
+        new GetRevisionTask(sourceDB, null, revIds, attsSince, pullAttachmentsInline);
     }
 
     @Test(expected = NullPointerException.class)
     public void test_null_revId() {
         CouchDB sourceDB = mock(CouchDB.class);
         // The cast is to get rid of a compiler warning
-        new GetRevisionTask(sourceDB, "devId", null, null);
+        new GetRevisionTask(sourceDB, "devId", null, null, pullAttachmentsInline);
     }
 
     @Test(expected = NullPointerException.class)
@@ -108,6 +123,6 @@ public class GetRevisionTaskTest {
         ArrayList<String> revIds = new ArrayList<String>();
         revIds.add("revId");
         ArrayList<String> attsSince = new ArrayList<String>();
-        new GetRevisionTask(null, "docId", revIds, attsSince);
+        new GetRevisionTask(null, "docId", revIds, attsSince, pullAttachmentsInline);
     }
 }

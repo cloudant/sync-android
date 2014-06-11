@@ -75,24 +75,24 @@ import java.util.ArrayList;
 public class MultipartAttachmentWriter extends InputStream {
 
     /**
-     * Construct a <code>MultipartAttachmentWriter</code> with a default boundary.
+     * Construct a <code>MultipartAttachmentWriter</code> with a default partBoundary.
      *
      * @see #makeBoundary()
      */
     public MultipartAttachmentWriter() {
-        // pick a boundary
-        this.basicBoundary = this.makeBoundary();
-        this.boundary = ("--"+basicBoundary).getBytes();
-        this.trailingBoundary = ("--"+basicBoundary+"--").getBytes();
+        // pick a partBoundary
+        this.boundary = this.makeBoundary();
+        this.partBoundary = ("--"+boundary).getBytes();
+        this.trailingBoundary = ("--"+boundary+"--").getBytes();
 
         components = new ArrayList<InputStream>();
 
         // some preamble
-        contentLength += boundary.length;
+        contentLength += partBoundary.length;
         contentLength += 6; // 3 * crlf
         contentLength += contentType.length;
 
-        components.add(new ByteArrayInputStream(boundary));
+        components.add(new ByteArrayInputStream(partBoundary));
         components.add(new ByteArrayInputStream(crlf));
         components.add(new ByteArrayInputStream(contentType));
         components.add(new ByteArrayInputStream(crlf));
@@ -123,19 +123,19 @@ public class MultipartAttachmentWriter extends InputStream {
      * @throws IOException
      */
     public void addAttachment(Attachment attachment) throws IOException {
-        contentLength += boundary.length;
+        contentLength += partBoundary.length;
         contentLength += 6; // 3 * crlf
         contentLength += attachment.getSize();
 
         components.add(new ByteArrayInputStream(crlf));
-        components.add(new ByteArrayInputStream(boundary));
+        components.add(new ByteArrayInputStream(partBoundary));
         components.add(new ByteArrayInputStream(crlf));
         components.add(new ByteArrayInputStream(crlf));
         components.add(attachment.getInputStream());
     }
 
     /**
-     * Add the trailing boundary to signify that all of the attachments are present.
+     * Add the trailing partBoundary to signify that all of the attachments are present.
      * This <b>must</b> be called before any client attempts to issue a read.
      */
     public void close() {
@@ -147,8 +147,8 @@ public class MultipartAttachmentWriter extends InputStream {
         currentComponentIdx = 0;
     }
 
-    private String basicBoundary;
-    private byte boundary[];
+    private String boundary;
+    private byte partBoundary[];
     private byte trailingBoundary[];
     private static byte crlf[] = "\r\n".getBytes();
     private static byte contentType[] = "content-type: application/json".getBytes();
@@ -216,9 +216,9 @@ public class MultipartAttachmentWriter extends InputStream {
     }
 
     /**
-     * Make a default boundary, consisting of 32 random characters in the range [a-z].
+     * Make a default partBoundary, consisting of 32 random characters in the range [a-z].
      * It is hoped this will be sufficiently random to not appear anywhere in the payload.
-     * @return The boundary
+     * @return The partBoundary
      */
     private String makeBoundary() {
         StringBuffer s = new StringBuffer();
@@ -233,10 +233,10 @@ public class MultipartAttachmentWriter extends InputStream {
     }
 
     /**
-     * @return The boundary used for this writer
+     * @return The partBoundary used for this writer
      */
     public String getBoundary() {
-        return basicBoundary;
+        return boundary;
     }
 
     /**

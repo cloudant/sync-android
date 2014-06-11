@@ -51,13 +51,13 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         revisionHistory.add(doc1_rev1.getRevision());
         
         // now do a force insert - we should get an updated event as it's already there
-        datastore.forceInsert(doc1_rev1, revisionHistory, null);
+        datastore.forceInsert(doc1_rev1, revisionHistory, null, false);
         boolean ok1 = NotificationTestUtils.waitForSignal(documentUpdated);
         Assert.assertTrue("Didn't receive document updated event", ok1);
 
         // now do a force insert but with a different id - we should get a (2nd) created event
         doc1_rev1.setId("new-id-12345");
-        datastore.forceInsert(doc1_rev1, revisionHistory, null);
+        datastore.forceInsert(doc1_rev1, revisionHistory, null, false);
         boolean ok2 = NotificationTestUtils.waitForSignal(documentCreated);
         Assert.assertTrue("Didn't receive document created event", ok2);
     }
@@ -66,7 +66,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
     public void notification_forceinsertWithAttachments() {
 
         // this test only makes sense if the data is inline base64 (there's no remote server to pull the attachment from)
-        System.setProperty("pull_attachments_inline", "true");
+        boolean pullAttachmentsInline = true;
 
         // create a document and insert the first revision
         BasicDocumentRevision doc1_rev1 = datastore.createDocument(bodyOne);
@@ -81,7 +81,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         revisionHistory.add(doc1_rev1.getRevision());
 
         // now do a force insert and then see if we get the attachment back
-        datastore.forceInsert(doc1_rev1, revisionHistory, atts);
+        datastore.forceInsert(doc1_rev1, revisionHistory, atts, pullAttachmentsInline);
 
         Attachment storedAtt = datastore.getAttachment(doc1_rev1, "att1");
         Assert.assertNotNull(storedAtt);
@@ -94,7 +94,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
     public void notification_forceinsertWithAttachmentsError() throws IOException {
 
         // this test only makes sense if the data is inline base64 (there's no remote server to pull the attachment from)
-        System.setProperty("pull_attachments_inline", "true");
+        boolean pullAttachmentsInline = true;
 
         // try and force an IOException when setting the attachment, and check everything is OK:
 
@@ -116,7 +116,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         doc1_rev1.setRevision("2-blah");
         revisionHistory.add(doc1_rev1.getRevision());
         // now do a force insert
-        datastore.forceInsert(doc1_rev1, revisionHistory, atts);
+        datastore.forceInsert(doc1_rev1, revisionHistory, atts, pullAttachmentsInline);
 
         // adding the attachment should have failed transactionally, so the rev should not exist as well
         DocumentRevision dr = datastore.getDocument(doc1_rev1.getId(), doc1_rev1.getRevision());

@@ -65,14 +65,22 @@ class GetRevisionTask implements Callable<DocumentRevsList> {
     private String documentId;
     private Collection<String> openRevisions;
     private Collection<String> attsSince;
+    private boolean pullAttachmentsInline;
     CouchDB sourceDb;
 
-    public static Callable<DocumentRevsList> createGetRevisionTask(CouchDB sourceDb, String docId, Collection<String> openRevisions, Collection<String> attsSince) {
-        GetRevisionTask task = new GetRevisionTask(sourceDb, docId, openRevisions, attsSince);
+    public static Callable<DocumentRevsList> createGetRevisionTask(CouchDB sourceDb,
+                                                                   String docId,
+                                                                   Collection<String> openRevisions,
+                                                                   Collection<String> attsSince,
+                                                                   boolean pullAttachmentsInline) {
+        GetRevisionTask task = new GetRevisionTask(sourceDb, docId, openRevisions, attsSince, pullAttachmentsInline);
         return new RetriableTask<DocumentRevsList>(task);
     }
 
-   public GetRevisionTask(CouchDB sourceDb, String docId, Collection<String> openRevisions, Collection<String> attsSince) {
+   public GetRevisionTask(CouchDB sourceDb,
+                          String docId, Collection<String> openRevisions,
+                          Collection<String> attsSince,
+                          boolean pullAttachmentsInline) {
         Preconditions.checkNotNull(docId, "docId cannot be null");
         Preconditions.checkNotNull(openRevisions, "revId cannot be null");
         Preconditions.checkNotNull(sourceDb, "sourceDb cannot be null");
@@ -81,12 +89,16 @@ class GetRevisionTask implements Callable<DocumentRevsList> {
         this.openRevisions = openRevisions;
         this.sourceDb = sourceDb;
         this.attsSince = attsSince;
+        this.pullAttachmentsInline = pullAttachmentsInline;
     }
 
     @Override
     public DocumentRevsList call() throws Exception {
         Log.v(this.LOG_TAG, "Fetching document: " + this.documentId);
-        return new DocumentRevsList(this.sourceDb.getRevisions(documentId, openRevisions, attsSince));
+        return new DocumentRevsList(this.sourceDb.getRevisions(documentId,
+                openRevisions,
+                attsSince,
+                pullAttachmentsInline));
     }
 
     @Override

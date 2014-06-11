@@ -48,6 +48,8 @@ import static org.hamcrest.core.Is.isA;
  * Created by tomblench on 26/03/2014.
  */
 
+@Category(RequireRunningCouchDB.class)
+@RunWith(Parameterized.class)
 public class AttachmentsPushTest extends ReplicationTestBase {
 
     String id1;
@@ -55,6 +57,16 @@ public class AttachmentsPushTest extends ReplicationTestBase {
     String id3;
 
     private TypedDatastore<Foo> fooTypedDatastore;
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {PushAttachmentsInline.False}, {PushAttachmentsInline.Small}, {PushAttachmentsInline.True}
+        });
+    }
+
+    @Parameterized.Parameter
+    public PushAttachmentsInline pushAttachmentsInline;
 
     @Before
     public void setUp() throws Exception {
@@ -230,7 +242,11 @@ public class AttachmentsPushTest extends ReplicationTestBase {
 
     private void push() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        BasicPushStrategy push = new BasicPushStrategy(this.createPushReplication());
+        BasicPushStrategy push = new BasicPushStrategy(this.createPushReplication(),
+                new PushConfiguration(PushConfiguration.DEFAULT_CHANGES_LIMIT_PER_BATCH,
+                        PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                        PushConfiguration.DEFAULT_BULK_INSERT_SIZE,
+                        pushAttachmentsInline));
         push.eventBus.register(listener);
 
         Thread t = new Thread(push);
@@ -239,10 +255,5 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
     }
-
-
-
-
-
 
 }
