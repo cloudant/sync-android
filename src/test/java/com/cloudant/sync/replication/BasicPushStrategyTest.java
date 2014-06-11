@@ -44,7 +44,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     private PushConfiguration createPushReplicationSetting() {
         return new PushConfiguration(PushConfiguration.DEFAULT_CHANGES_LIMIT_PER_BATCH,
-                PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN, 1);
+                PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN, 1, PushConfiguration.DEFAULT_PUSH_ATTACHMENTS_INLINE);
     }
 
     @After
@@ -195,7 +195,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     @Test
     public void push_changeLimitIsOne_batchCounterShouldBeCorrect() throws Exception {
         currentSetting = new PushConfiguration(1, PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                PushConfiguration.DEFAULT_BULK_INSERT_SIZE);
+                PushConfiguration.DEFAULT_BULK_INSERT_SIZE, PushConfiguration.DEFAULT_PUSH_ATTACHMENTS_INLINE);
         twoDocsCreatedAndThenPushed();
         assertPushReplicationStatus(2, 3, "2");
     }
@@ -213,7 +213,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     @Test
     public void push_twoBranchForSameTree_allBranchesShouldBePushed() throws Exception {
         currentSetting = new PushConfiguration(1, PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                PushConfiguration.DEFAULT_BULK_INSERT_SIZE);
+                PushConfiguration.DEFAULT_BULK_INSERT_SIZE, PushConfiguration.DEFAULT_PUSH_ATTACHMENTS_INLINE);
 
         DocumentRevision rev = createDbObject("5-e", createDBBody("Tom"));
         datastore.forceInsert(rev, "1-a", "2-b", "3-c", "4-d", "5-e");
@@ -250,7 +250,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     @Test
     public void push_twoTrees_allTreeShouldBePushed() throws Exception {
         currentSetting = new PushConfiguration(1, PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                PushConfiguration.DEFAULT_BULK_INSERT_SIZE);
+                PushConfiguration.DEFAULT_BULK_INSERT_SIZE, PushConfiguration.DEFAULT_PUSH_ATTACHMENTS_INLINE);
 
         DocumentRevision rev = createDbObject("4-d", createDBBody("Tom"));
         datastore.forceInsert(rev, "1-a", "2-b", "3-c", "4-d");
@@ -273,7 +273,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     @Test
     public void push_documentWithIdInChinese_docBePushed() throws Exception {
         currentSetting = new PushConfiguration(1, PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                PushConfiguration.DEFAULT_BULK_INSERT_SIZE);
+                PushConfiguration.DEFAULT_BULK_INSERT_SIZE, PushConfiguration.DEFAULT_PUSH_ATTACHMENTS_INLINE);
 
         String id = "\u738b\u4e1c\u5347";
         DocumentRevision rev = this.datastore.createDocument(id, createDBBody("Tom"));

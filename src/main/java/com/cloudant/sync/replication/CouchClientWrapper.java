@@ -38,8 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.attachment.AttachmentMarshaller;
-
 class CouchClientWrapper implements CouchDB {
 
     private final static String LOG_TAG = "CouchClientWrapper";
@@ -137,9 +135,12 @@ class CouchClientWrapper implements CouchDB {
      * @see DocumentRevs
      */
     @Override
-    public List<DocumentRevs> getRevisions(String documentId, Collection<String> revisionIds, Collection<String> attsSince) {
+    public List<DocumentRevs> getRevisions(String documentId,
+                                           Collection<String> revisionIds,
+                                           Collection<String> attsSince,
+                                           boolean pullAttachmentsInline) {
         List<OpenRevision> openRevisions =
-                couchClient.getDocWithOpenRevisions(documentId, revisionIds, attsSince);
+                couchClient.getDocWithOpenRevisions(documentId, revisionIds, attsSince, pullAttachmentsInline);
 
         // expect all the open revisions return ok, return error is there is any missing
         List<DocumentRevs> documentRevs = new ArrayList<DocumentRevs>();
@@ -231,11 +232,14 @@ class CouchClientWrapper implements CouchDB {
     }
 
     @Override
-    public void putMultiparts(List<MultipartAttachmentWriter> multiparts) {
+    public List<Response> putMultiparts(List<MultipartAttachmentWriter> multiparts) {
         Log.v(LOG_TAG, "putMultiparts(), parts: " + multiparts);
+        ArrayList<Response> responses = new ArrayList<Response>();
         for (MultipartAttachmentWriter mpw : multiparts) {
-            couchClient.putMultipart(mpw);
+            Response r = couchClient.putMultipart(mpw);
+            responses.add(r);
         }
+        return responses;
     }
 
     @Override

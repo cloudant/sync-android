@@ -288,9 +288,9 @@ class BasicPushStrategy implements ReplicationStrategy {
                 List<? extends Attachment> atts = this.sourceDb.getDbCore().attachmentsForRevision(dr);
 
                 // get the json, and inline any small attachments
-                Map<String, Object> json = RevisionHistoryHelper.revisionHistoryToJson(path, atts);
+                Map<String, Object> json = RevisionHistoryHelper.revisionHistoryToJson(path, atts, this.config.pushAttachmentsInline);
                 // if there are any large atts we will get a multipart writer, otherwise null
-                MultipartAttachmentWriter mpw = RevisionHistoryHelper.createMultipartWriter(path, atts);
+                MultipartAttachmentWriter mpw = RevisionHistoryHelper.createMultipartWriter(path, atts, this.config.pushAttachmentsInline);
 
                 // now we will have either a multipart or a plain doc
                 if (mpw == null) {

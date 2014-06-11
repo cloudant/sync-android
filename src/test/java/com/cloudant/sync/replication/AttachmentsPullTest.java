@@ -63,17 +63,6 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     @Parameterized.Parameter
     public boolean pullAttachmentsInline;
 
-    @Before
-    public void setUp() throws Exception {
-        System.setProperty("pull_attachments_inline", String.valueOf(pullAttachmentsInline));
-        super.setUp();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
-
     @Test
     public void pullRevisionsWithAttachments() {
         createRevisionAndAttachment();
@@ -300,7 +289,11 @@ public class AttachmentsPullTest extends ReplicationTestBase {
 
     private void pull() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        BasicPullStrategy pull = new BasicPullStrategy(this.createPullReplication());
+        BasicPullStrategy pull = new BasicPullStrategy(this.createPullReplication(),
+                null,
+                new PullConfiguration(PullConfiguration.DEFAULT_CHANGES_LIMIT_PER_BATCH,
+                        PullConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                        PullConfiguration.DEFAULT_INSERT_BATCH_SIZE, pullAttachmentsInline));
         pull.getEventBus().register(listener);
 
         Thread t = new Thread(pull);

@@ -116,7 +116,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     @Test
     public void pull_twoDocsWithBatchSizeOne_bothDocRevisionsShouldBePulled() throws Exception {
         this.config = new PullConfiguration(1, PullConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                PullConfiguration.DEFAULT_INSERT_BATCH_SIZE);
+                PullConfiguration.DEFAULT_INSERT_BATCH_SIZE, PullConfiguration.DEFAULT_PULL_ATTACHMENTS_INLINE);
         Assert.assertEquals(1, this.config.changeLimitPerBatch);
 
         Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);

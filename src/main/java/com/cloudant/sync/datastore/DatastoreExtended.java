@@ -162,7 +162,10 @@ public interface DatastoreExtended extends Datastore {
      *
      * @see Datastore#getEventBus()
      */
-    public void forceInsert(DocumentRevision rev, List<String> revisionHistory, Map<String, Object> attachments);
+    public void forceInsert(DocumentRevision rev,
+                            List<String> revisionHistory,
+                            Map<String, Object> attachments,
+                            boolean pullAttachmentsInline);
 
     /**
      * <p>Inserts a revision of a document with an existing revision ID</p>

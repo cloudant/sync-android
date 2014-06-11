@@ -197,10 +197,12 @@ public class DatabaseAssert {
      */
     static void checkOpenRevisionsAreIdentical(String documentId, String[] openRevisions,
                                                DatastoreExtended datastore, CouchClient client) {
+        boolean pullAttachmentsInline = false;
+
         ArrayList<String> attsSince = new ArrayList<String>();
 
         List<DocumentRevs> documentRevsList = convertToDocumentRevs(
-                client.getDocWithOpenRevisions(documentId, Arrays.asList(openRevisions), attsSince));
+                client.getDocWithOpenRevisions(documentId, Arrays.asList(openRevisions), attsSince, pullAttachmentsInline));
 
         DocumentRevisionTree tree = datastore.getAllRevisionsOfDocument(documentId);
         Assert.assertNotNull(tree);

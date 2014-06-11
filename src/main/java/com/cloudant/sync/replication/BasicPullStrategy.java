@@ -279,10 +279,10 @@ class BasicPullStrategy implements ReplicationStrategy {
                     // We promise not to insert documents after cancel is set
                     if (this.cancel) { break; }
 
-                    this.targetDb.bulkInsert(result);
+                    this.targetDb.bulkInsert(result, config.pullAttachmentsInline);
 
                     // now put together a list of attachments we need to download
-                    if (!Boolean.parseBoolean(System.getProperty("pull_attachments_inline", "false"))) {
+                    if (!config.pullAttachmentsInline) {
                         for (DocumentRevs documentRevs : result) {
                             Map<String, Object> attachments = documentRevs.getAttachments();
                             for (String a : attachments.keySet()) {
@@ -360,7 +360,10 @@ class BasicPullStrategy implements ReplicationStrategy {
                 }
             }
             tasks.add(GetRevisionTask.createGetRevisionTask(this.sourceDb,
-                    id, revisions.get(id), possibleAncestors));
+                    id,
+                    revisions.get(id),
+                    possibleAncestors,
+                    config.pullAttachmentsInline));
         }
         return tasks;
     }

@@ -23,16 +23,18 @@ class PullConfiguration {
     public static final int DEFAULT_CHANGES_LIMIT_PER_BATCH = 1000;
     public static final int DEFAULT_MAX_BATCH_COUNTER_PER_RUN = 100;
     public static final int DEFAULT_INSERT_BATCH_SIZE = 10;
+    public static final boolean DEFAULT_PULL_ATTACHMENTS_INLINE = false;
 
     final int changeLimitPerBatch;
     final int batchLimitPerRun;
     final int insertBatchSize;
+    final boolean pullAttachmentsInline;
 
     /**
      * <p>Construct a {@code PullConfiguration} with the default settings.</p>
      */
     public PullConfiguration() {
-        this(DEFAULT_CHANGES_LIMIT_PER_BATCH, DEFAULT_MAX_BATCH_COUNTER_PER_RUN, DEFAULT_INSERT_BATCH_SIZE);
+        this(DEFAULT_CHANGES_LIMIT_PER_BATCH, DEFAULT_MAX_BATCH_COUNTER_PER_RUN, DEFAULT_INSERT_BATCH_SIZE, DEFAULT_PULL_ATTACHMENTS_INLINE);
     }
 
     /**
@@ -45,9 +47,10 @@ class PullConfiguration {
      * @param insertBatchSize Number of changes inserted into local datastore
      *                        at a time.
      */
-    public PullConfiguration(int changeLimitPerBatch, int batchLimitPerRun, int insertBatchSize) {
+    public PullConfiguration(int changeLimitPerBatch, int batchLimitPerRun, int insertBatchSize, boolean pullAttachmentsInline) {
         this.changeLimitPerBatch = changeLimitPerBatch;
         this.batchLimitPerRun = batchLimitPerRun;
         this.insertBatchSize = insertBatchSize;
+        this.pullAttachmentsInline = pullAttachmentsInline;
     }
 }

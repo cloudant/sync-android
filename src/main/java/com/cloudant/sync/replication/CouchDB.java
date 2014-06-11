@@ -50,10 +50,13 @@ interface CouchDB {
 
     public ChangesResult changes(String lastSequence, int limit);
     public ChangesResult changes(Replication.Filter filter,String lastSequence, int limit);
-    public List<DocumentRevs> getRevisions(String documentId, Collection<String> revisionIds, Collection<String> attsSince);
+    public List<DocumentRevs> getRevisions(String documentId,
+                                           Collection<String> revisionIds,
+                                           Collection<String> attsSince,
+                                           boolean pullAttachmentsInline);
     public void bulk(List<DocumentRevision> revisions);
     public void bulkSerializedDocs(List<String> serializedDocs);
-    public void putMultiparts(List<MultipartAttachmentWriter> multiparts);
+    public List<Response> putMultiparts(List<MultipartAttachmentWriter> multiparts);
     public Map<String, Set<String>> revsDiff(Map<String, Set<String>> revisions);
     public UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType, String encoding);
 }

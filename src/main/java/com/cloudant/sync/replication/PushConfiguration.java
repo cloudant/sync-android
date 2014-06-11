@@ -23,16 +23,20 @@ class PushConfiguration {
     public static final int DEFAULT_CHANGES_LIMIT_PER_BATCH = 500;
     public static final int DEFAULT_MAX_BATCH_COUNTER_PER_RUN = 100;
     public static final int DEFAULT_BULK_INSERT_SIZE = 10;
+    // by default push small attachments as inline base64, and larger ones as multipart
+    public static final PushAttachmentsInline DEFAULT_PUSH_ATTACHMENTS_INLINE = PushAttachmentsInline.Small;
 
     final int changeLimitPerBatch;
     final int batchLimitPerRun;
     final int bulkInsertSize;
+    final PushAttachmentsInline pushAttachmentsInline;
 
     /**
      * <p>Construct a {@code PushConfiguration} with the default settings.</p>
      */
     public PushConfiguration() {
-        this(DEFAULT_CHANGES_LIMIT_PER_BATCH, DEFAULT_MAX_BATCH_COUNTER_PER_RUN, DEFAULT_BULK_INSERT_SIZE);
+        this(DEFAULT_CHANGES_LIMIT_PER_BATCH, DEFAULT_MAX_BATCH_COUNTER_PER_RUN, DEFAULT_BULK_INSERT_SIZE, DEFAULT_PUSH_ATTACHMENTS_INLINE);
+
     }
 
     /**
@@ -45,10 +49,13 @@ class PushConfiguration {
      *             Its intended use is to stop replications running for ever.
      * @param insertBatchSize Number of changes inserted into remote datastore
      *                        at a time.
+     * @param pushAttachmentsInline Strategy to decide whether to push attachment
+     *                              inline or separately.
      */
-    public PushConfiguration(int changeLimitPerBatch, int batchLimitPerRun, int insertBatchSize) {
+    public PushConfiguration(int changeLimitPerBatch, int batchLimitPerRun, int insertBatchSize, PushAttachmentsInline pushAttachmentsInline) {
         this.changeLimitPerBatch = changeLimitPerBatch;
         this.batchLimitPerRun = batchLimitPerRun;
         this.bulkInsertSize = insertBatchSize;
+        this.pushAttachmentsInline = pushAttachmentsInline;
     }
 }

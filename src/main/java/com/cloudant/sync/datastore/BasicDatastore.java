@@ -830,7 +830,10 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
 
     @Override
-    public void forceInsert(DocumentRevision rev, List<String> revisionHistory, Map<String, Object> attachments) {
+    public void forceInsert(DocumentRevision rev,
+                            List<String> revisionHistory,
+                            Map<String, Object> attachments,
+                            boolean pullAttachmentsInline) {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkNotNull(rev, "Input document revision can not be null");
         Preconditions.checkNotNull(revisionHistory, "Input revision history must not be null");
@@ -865,7 +868,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             }
 
             // now deal with any attachments
-            if (Boolean.parseBoolean(System.getProperty("pull_attachments_inline", "false"))) {
+            if (pullAttachmentsInline) {
                 if (attachments != null) {
                     for (String att : attachments.keySet()) {
                         Boolean stub = ((Map<String, Boolean>) attachments.get(att)).get("stub");
@@ -906,7 +909,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     @Override
     public void forceInsert(DocumentRevision rev, String... revisionHistory) {
         Preconditions.checkState(this.isOpen(), "Database is closed");
-        this.forceInsert(rev, Arrays.asList(revisionHistory), null);
+        this.forceInsert(rev, Arrays.asList(revisionHistory), null, false);
     }
 
     private boolean checkRevisionIsInCorrectOrder(List<String> revisionHistory) {

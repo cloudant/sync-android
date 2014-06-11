@@ -23,6 +23,14 @@ public class PushReplication extends Replication {
      */
     public Datastore source;
 
+    public enum PushAttachmentsInlineType {
+        False,
+        Small,
+        True
+    };
+
+    public PushAttachmentsInlineType pushAttachmentsInline;
+
     /**
      * Constructs a PushReplication object, configured by assigning to the
      * instance's attributes after construction.

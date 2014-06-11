@@ -17,6 +17,7 @@ package com.cloudant.sync.datastore;
 import com.cloudant.common.CouchConstants;
 import com.cloudant.common.Log;
 import com.cloudant.mazha.DocumentRevs;
+import com.cloudant.sync.replication.PushAttachmentsInline;
 import com.cloudant.sync.util.CouchUtils;
 import com.google.common.base.Preconditions;
 
@@ -102,15 +103,16 @@ public class RevisionHistoryHelper {
         return revisions.getStart() >= revisions.getIds().size();
     }
 
+
     /**
      * Serialise a branch's revision history, without attachments.
-     * See {@link #revisionHistoryToJson(java.util.List, java.util.List)} for details.
+     * See {@link #revisionHistoryToJson(java.util.List, java.util.List, com.cloudant.sync.replication.PushAttachmentsInline)} for details.
      * @param history list of {@code DocumentRevision}s.
      * @return JSON-serialised {@code String} suitable for sending to CouchDB's
      *      _bulk_docs endpoint.
      */
     public static Map<String, Object> revisionHistoryToJson(List<DocumentRevision> history) {
-        return revisionHistoryToJson(history, null);
+        return revisionHistoryToJson(history, null, null);
     }
 
     /**
@@ -123,13 +125,15 @@ public class RevisionHistoryHelper {
      * @param attachments list of {@code Attachment}s, if any. This allows the {@code _attachments}
      *                    dictionary to be correctly serialised. If there are no attachments, set
      *                    to null.
+     * @param inlinePreference strategy to decide whether to upload attachments inline or separately.
      * @return JSON-serialised {@code String} suitable for sending to CouchDB's
      *      _bulk_docs endpoint.
      *
      * @see com.cloudant.mazha.DocumentRevs
      */
     public static Map<String, Object> revisionHistoryToJson(List<DocumentRevision> history,
-                                                            List<? extends Attachment> attachments) {
+                                                            List<? extends Attachment> attachments,
+                                                            PushAttachmentsInline inlinePreference) {
         Preconditions.checkNotNull(history, "History must not be null");
         Preconditions.checkArgument(history.size() > 0, "History must have at least one DocumentRevision.");
         Preconditions.checkArgument(checkHistoryIsInDescendingOrder(history),
@@ -140,7 +144,7 @@ public class RevisionHistoryHelper {
         Map<String, Object> m = currentNode.asMap();
         if (attachments != null && !attachments.isEmpty()) {
             // graft attachments on to m for this particular revision here
-            addAttachments(attachments, currentNode, m);
+            addAttachments(attachments, currentNode, m, inlinePreference);
         }
 
         m.put(CouchConstants._revisions, createRevisions(history));
@@ -153,7 +157,8 @@ public class RevisionHistoryHelper {
      * attachments as a multipart/related stream
      */
     public static MultipartAttachmentWriter createMultipartWriter(List<DocumentRevision> history,
-                                                                  List<? extends Attachment> attachments) {
+                                                                  List<? extends Attachment> attachments,
+                                                                  PushAttachmentsInline inlinePreference) {
 
         Preconditions.checkNotNull(history, "History must not be null");
         Preconditions.checkArgument(history.size() > 0, "History must have at least one DocumentRevision.");
@@ -171,7 +176,7 @@ public class RevisionHistoryHelper {
                 if (savedAtt.revpos < revpos) {
                     ; // skip
                 } else {
-                    if (!savedAtt.shouldInline()) {
+                    if (!savedAtt.shouldInline(inlinePreference)) {
                         // add
                         if (mpw == null) {
                             // 1st time init
@@ -200,7 +205,8 @@ public class RevisionHistoryHelper {
      */
     private static void addAttachments(List<? extends Attachment> attachments,
                                    DocumentRevision revision,
-                                   Map<String, Object> outMap) {
+                                   Map<String, Object> outMap,
+                                   PushAttachmentsInline inlinePreference) {
         LinkedHashMap<String, Object> attsMap = new LinkedHashMap<String, Object>();
         int revpos = CouchUtils.generationFromRevId(revision.getRevision());
         outMap.put("_attachments", attsMap);
@@ -213,7 +219,7 @@ public class RevisionHistoryHelper {
                     // if the revpos of the current doc is higher than that of the attachment, it's a stub
                     theAtt.put("stub", true);
                 } else {
-                    if (!savedAtt.shouldInline()) {
+                    if (!savedAtt.shouldInline(inlinePreference)) {
                         theAtt.put("follows", true);
                     } else {
                         theAtt.put("follows", false);
