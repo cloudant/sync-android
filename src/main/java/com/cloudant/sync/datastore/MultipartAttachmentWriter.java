@@ -51,22 +51,17 @@ import java.util.ArrayList;
  *
  * <p>
  * The stream consists of a first MIME body which is the JSON document itself, which needs to have
- * the correct <code>_attachments</code> object.
- * </p>
- *
- * <p>
- * Currently
- * {@link com.cloudant.sync.datastore.RevisionHistoryHelper#addAttachments(java.util.List, DocumentRevision, java.util.Map)}
- * is responsible for correctly populating <code>_attachments</code>.
+ * the <code>_attachments</code> object correctly populated. This is currently done by
+ * {@link com.cloudant.sync.datastore.RevisionHistoryHelper#addAttachments(java.util.List, DocumentRevision, java.util.Map, com.cloudant.sync.replication.PushAttachmentsInline)}
  * </p>
  *
  * <p>
  * Attachments which are included in subsequent MIME bodies should have <code>follows</code> set to
- * true in the <code>_attachments</code> object.
+ * <code>true</code> in the <code>_attachments</code> object.
  * </p>
  *
  * @see com.cloudant.mazha.CouchClient#putMultipart(MultipartAttachmentWriter)
- * @see com.cloudant.sync.datastore.RevisionHistoryHelper#addAttachments(java.util.List, DocumentRevision, java.util.Map)
+ * @see com.cloudant.sync.datastore.RevisionHistoryHelper#addAttachments(java.util.List, DocumentRevision, java.util.Map, com.cloudant.sync.replication.PushAttachmentsInline)
  * @see <a href=http://couchdb.readthedocs.org/en/latest/api/document/common.html#creating-multiple-attachments>Creating Multiple Attachments</a>
  * @see <a href=http://tools.ietf.org/html/rfc2387>RFC 2387</a>
  *
@@ -75,7 +70,7 @@ import java.util.ArrayList;
 public class MultipartAttachmentWriter extends InputStream {
 
     /**
-     * Construct a <code>MultipartAttachmentWriter</code> with a default partBoundary.
+     * Construct a <code>MultipartAttachmentWriter</code> with a default <code>partBoundary</code>
      *
      * @see #makeBoundary()
      */
@@ -163,7 +158,7 @@ public class MultipartAttachmentWriter extends InputStream {
 
     /**
      * Read a single byte from the stream.
-     * @return The next byte in the stream, expressed as an int in the range [0.255].
+     * @return The next byte in the stream, expressed as an int in the range [0..255].
      *         If there are no more bytes available, return -1.
      * @throws java.io.IOException
      */
