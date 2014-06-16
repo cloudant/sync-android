@@ -68,7 +68,13 @@ public abstract class Attachment implements Comparable<Attachment>{
     }
 
     public enum Encoding {
+        /**
+         * Plain encoding: the contents are not compressed.
+         */
         Plain,
+        /**
+         * GZIP encoding: the contents are compressed using GZIP compression.
+         */
         Gzip
     }
 

@@ -179,7 +179,7 @@ public interface DatastoreExtended extends Datastore {
      * @param rev
      * @param revisionHistory
      *
-     * @see DatastoreExtended#forceInsert(DocumentRevision, java.util.List, java.util.Map)
+     * @see DatastoreExtended#forceInsert(DocumentRevision, java.util.List, java.util.Map, boolean)
      */
     public void forceInsert(DocumentRevision rev, String... revisionHistory);
 
@@ -254,7 +254,6 @@ public interface DatastoreExtended extends Datastore {
      *
      * @param att The attachment to add
      * @param rev The DocumentRevision to add the attachment to
-     * @return true on success, false on failure
      */
     public void addAttachment(Attachment att, DocumentRevision rev) throws IOException, SQLException;
 
