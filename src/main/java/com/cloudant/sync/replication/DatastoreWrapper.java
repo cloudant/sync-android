@@ -22,6 +22,7 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.DocumentRevsUtils;
+import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.common.Log;
 
@@ -106,8 +107,13 @@ class DatastoreWrapper {
         return allDocumentTrees;
     }
 
-    protected void addAttachment(Attachment att, DocumentRevision rev) throws IOException, SQLException {
+    protected PreparedAttachment prepareAttachment(Attachment att, DocumentRevision rev) throws IOException, SQLException {
+        return this.dbCore.prepareAttachment(att, rev);
+    }
+
+    protected void addAttachment(PreparedAttachment att, DocumentRevision rev) throws IOException, SQLException {
         this.dbCore.addAttachment(att, rev);
     }
+
 
 }
