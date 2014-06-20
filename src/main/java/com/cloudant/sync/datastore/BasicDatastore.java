@@ -882,7 +882,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                         // inline attachments are automatically decompressed, so we don't have to worry about that
                         UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is, att, type);
                         try {
-                            addAttachment(usa, rev);
+                            PreparedAttachment pa = prepareAttachment(usa, rev);
+                            addAttachment(pa, rev);
                         } catch (Exception e) {
                             Log.e(LOG_TAG, "There was a problem adding the attachment "+usa+" to the datastore for document "+rev);
                             Log.e(LOG_TAG, "Exception was: "+e);
@@ -1345,9 +1346,14 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public void addAttachment(Attachment att, DocumentRevision rev) throws IOException, SQLException {
+    public PreparedAttachment prepareAttachment(Attachment att, DocumentRevision rev) throws IOException {
         PreparedAttachment preparedAttachment = new PreparedAttachment(att, this.attachmentManager.attachmentsDir);
-        this.attachmentManager.addAttachment(preparedAttachment, rev);
+        return preparedAttachment;
+    }
+
+    @Override
+    public void addAttachment(PreparedAttachment att, DocumentRevision rev) throws IOException, SQLException {
+        this.attachmentManager.addAttachment(att, rev);
     }
 
     @Override

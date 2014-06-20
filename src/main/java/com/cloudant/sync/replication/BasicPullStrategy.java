@@ -23,6 +23,7 @@ import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.DocumentRevsUtils;
+import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.util.JSONUtils;
 import com.google.common.base.Preconditions;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -279,31 +281,66 @@ class BasicPullStrategy implements ReplicationStrategy {
                     // We promise not to insert documents after cancel is set
                     if (this.cancel) { break; }
 
-                    this.targetDb.bulkInsert(result, config.pullAttachmentsInline);
+                    HashMap<String, List<PreparedAttachment>> atts = new HashMap<String, List<PreparedAttachment>>();
 
                     // now put together a list of attachments we need to download
                     if (!config.pullAttachmentsInline) {
-                        for (DocumentRevs documentRevs : result) {
-                            Map<String, Object> attachments = documentRevs.getAttachments();
-                            for (String a : attachments.keySet()) {
-                                Boolean stub = ((Map<String, Boolean>) attachments.get(a)).get("stub");
-                                if (stub != null && stub.booleanValue()) {
-                                    continue;
+                        try {
+                            for (DocumentRevs documentRevs : result) {
+                                Map<String, Object> attachments = documentRevs.getAttachments();
+                                // keep track of attachments we are going to prepare
+                                ArrayList<PreparedAttachment> preparedAtts = new ArrayList<PreparedAttachment>();
+                                atts.put(documentRevs.getId(), preparedAtts);
+                                for (String attachmentName : attachments.keySet()) {
+                                    Boolean stub = ((Map<String, Boolean>) attachments.get(attachmentName)).get("stub");
+                                    if (stub != null && stub.booleanValue()) {
+                                        continue;
+                                    }
+                                    String contentType = ((Map<String, String>) attachments.get(attachmentName)).get("content_type");
+                                    String encoding = (String) ((Map<String, Object>) attachments.get(attachmentName)).get("encoding");
+                                    UnsavedStreamAttachment usa = this.sourceDb.getAttachmentStream(documentRevs.getId(), documentRevs.getRev(), attachmentName, contentType, encoding);
+                                    DocumentRevision doc = this.targetDb.getDbCore().getDocument(documentRevs.getId());
+
+                                    // by preparing the attachment here, it is downloaded outside of the database transaction
+                                    preparedAtts.add(this.targetDb.prepareAttachment(usa, doc));
                                 }
-                                String contentType = ((Map<String, String>) attachments.get(a)).get("content_type");
-                                String encoding = (String) ((Map<String, Object>) attachments.get(a)).get("encoding");
-                                UnsavedStreamAttachment usa = this.sourceDb.getAttachmentStream(documentRevs.getId(), documentRevs.getRev(), a, contentType, encoding);
-                                DocumentRevision doc = this.targetDb.getDbCore().getDocument(documentRevs.getId());
-                                try {
-                                    this.targetDb.addAttachment(usa, doc);
-                                } catch (Exception e) {
-                                    Log.e(LOG_TAG, "There was a problem adding the attachment "+usa+" to the datastore for document "+doc+", terminating replication");
-                                    Log.e(LOG_TAG, "Exception was: "+e);
-                                    this.cancel = true;
-                                }
-                           }
+                            }
+                        } catch (Exception e) {
+                            Log.e(LOG_TAG, "There was a problem downloading an attachment to the datastore, terminating replication");
+                            Log.e(LOG_TAG, "Exception was: " + e);
+                            this.cancel = true;
                         }
                     }
+
+                    if (this.cancel)
+                        break;
+
+                    boolean ok = true;
+                    // start tx
+                    this.targetDb.getDbCore().getSQLDatabase().beginTransaction();
+                    this.targetDb.bulkInsert(result, config.pullAttachmentsInline);
+
+                    // now add the attachments we have just downloaded
+                    try {
+                        for (String id : atts.keySet()) {
+                            DocumentRevision doc = this.targetDb.getDbCore().getDocument(id);
+                            for (PreparedAttachment att : atts.get(id)) {
+                                this.targetDb.addAttachment(att, doc);
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e(LOG_TAG, "There was a problem adding an attachment to the datastore, terminating replication");
+                        Log.e(LOG_TAG, "Exception was: " + e);
+                        this.cancel = true;
+                        ok = false;
+                    }
+
+                    if (ok) {
+                        this.targetDb.getDbCore().getSQLDatabase().setTransactionSuccessful();
+                    }
+                    // end tx
+                    this.targetDb.getDbCore().getSQLDatabase().endTransaction();
+
                     changesProcessed++;
                 }
             } catch (InterruptedException ex) {

@@ -248,6 +248,20 @@ public interface DatastoreExtended extends Datastore {
     public Map<String, Collection<String>> revsDiff(Multimap<String, String> revisions);
 
     /**
+     * Read attachment stream to a temporary location and calculate sha1,
+     * prior to being added to the datastore.
+     *
+     * Used by replicator when receiving new/updated attachments
+     *
+     * @param att Attachment to be prepared, providing data either from a file or a stream
+     * @param rev The revision this attachment is associated with
+     * @return
+     * @throws IOException
+     * @throws SQLException
+     */
+    public PreparedAttachment prepareAttachment(Attachment att, DocumentRevision rev) throws IOException;
+
+    /**
      * Add attachment to document revision without incrementing revision.
      *
      * Used by replicator when receiving new/updated attachments
@@ -255,6 +269,6 @@ public interface DatastoreExtended extends Datastore {
      * @param att The attachment to add
      * @param rev The DocumentRevision to add the attachment to
      */
-    public void addAttachment(Attachment att, DocumentRevision rev) throws IOException, SQLException;
+    public void addAttachment(PreparedAttachment att, DocumentRevision rev) throws IOException, SQLException;
 
 }

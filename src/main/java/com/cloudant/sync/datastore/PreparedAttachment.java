@@ -29,7 +29,7 @@ import java.util.UUID;
  *
  * In most cases, this class will only be used by the AttachmentManager and BasicDatastore classes.
  */
-class PreparedAttachment {
+public class PreparedAttachment {
 
     /**
      * Prepare an attachment by copying it to a temp location and calculating its sha1.
