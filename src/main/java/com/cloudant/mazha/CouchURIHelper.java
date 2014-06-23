@@ -18,6 +18,7 @@
 
 package com.cloudant.mazha;
 
+import com.cloudant.common.CouchConstants;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 
@@ -218,7 +219,14 @@ public class CouchURIHelper {
                     null, // query
                     null // fragment
             );
-            return uri.toASCIIString().replace("/", "%2F");
+            String encodedString = uri.toASCIIString().replace("/", "%2F");
+            if (encodedString.startsWith(CouchConstants._design_prefix_encoded)) {
+                // we replaced a the first slash in the design doc URL, which we shouldn't
+                // so let's put it back
+                return encodedString.replaceFirst("%2F", "/");
+            } else {
+                return encodedString;
+            }
         } catch (URISyntaxException e) {
             throw new RuntimeException(
                     "Couldn't encode path component " + in,
