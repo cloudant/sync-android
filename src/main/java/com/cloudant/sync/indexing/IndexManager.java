@@ -244,11 +244,20 @@ public class IndexManager {
      * changes the the {@code Datastore} since the last indexed sequence
      * number to be added to all the indexes that this {@code IndexManager}
      * knows about.</p>
+     *
+     * <p>Only indexes registered using {@link com.cloudant.sync.indexing.IndexManager#ensureIndexed(String, IndexType, IndexFunction)}
+     * or an overloaded version on this IndexManager object will be updated (as
+     * otherwise the update function isn't defined).</p>
      */
     public void updateAllIndexes() {
         Set<Index> all = this.getAllIndexes();
         for (Index index : all) {
-            updateIndex(index.getName());
+            // Be sure to only update indexes which have been registered
+            // using ensureIndexed this session.
+            String name = index.getName();
+            if (this.indexFunctionMap.containsKey(name)) {
+                updateIndex(name);
+            }
         }
     }
 
