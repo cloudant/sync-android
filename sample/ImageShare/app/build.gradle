@@ -19,6 +19,13 @@ android {
     }
 }
 
+repositories {
+    mavenLocal()
+    maven { url "http://cloudant.github.io/cloudant-sync-eap/repository/" }
+    mavenCentral()
+}
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.3.5'
 }

@@ -1,0 +1,131 @@
+package com.cloudant.imageshare;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.GridView;
+import android.widget.Toast;
+import com.cloudant.sync.datastore.DatastoreManager;
+import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.DocumentBody;
+import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.replication.ReplicatorFactory;
+import com.cloudant.sync.replication.Replicator;
+import com.cloudant.sync.replication.PushReplication;
+import java.net.URI;
+
+import java.io.File;
+import java.net.URISyntaxException;
+import java.util.concurrent.CountDownLatch;
+
+public class MainActivity extends Activity {
+
+    private Datastore ds;
+    private DatastoreManager manager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        //Create a grid of images
+        GridView gridview = (GridView) findViewById(R.id.gridview);
+        int screenW = getScreenW();
+        gridview.setColumnWidth(screenW/2);
+        ImageAdapter adapter = new ImageAdapter(this, screenW/2);
+        gridview.setAdapter(adapter);
+
+        initDatastore();
+
+        /*
+        Picture in the right column adds a document to a local datastore
+        while picture on the left adds it and replicates the whole database to remote.
+        */
+        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                // Create a document
+                DocumentBody doc = new BasicDoc("Position: " + position, "ID: " + id);
+                DocumentRevision revision = ds.createDocument(doc);
+
+                Toast.makeText(MainActivity.this,
+                                "Document " + revision.getId() + " written to local db",
+                                Toast.LENGTH_SHORT).show();
+                }
+        });
+    }
+
+    private int getScreenW(){
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+
+        return (int) (displayMetrics.widthPixels / displayMetrics.density);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }else if (id == R.id.action_replicate) {
+            replicateDatastore();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    public void initDatastore(){
+        // Create a DatastoreManager using application internal storage path
+        File path = getApplicationContext().getDir("datastores", 0);
+        manager = new DatastoreManager(path.getAbsolutePath());
+
+        ds = manager.openDatastore("my_datastore");
+    }
+
+    public void replicateDatastore(){
+        try {
+            URI uri = new URI("https://ptiurin.cloudant.com/sync-test");
+
+            // Create a replicator that replicates changes from the local
+            // datastore to the remote database.
+            // username/password can be Cloudant API keys
+            PushReplication push = new PushReplication();
+            push.username = "easkedindeinessellinksom";
+            push.password = "iIb7wVDGdbpDpamnywMkjsEx";
+            push.source = ds;
+            push.target = uri;
+            Replicator replicator = ReplicatorFactory.oneway(push);
+
+            // Use a CountDownLatch to provide a lightweight way to wait for completion
+            CountDownLatch latch = new CountDownLatch(1);
+            ReplicationListener listener = new ReplicationListener(latch);
+            replicator.getEventBus().register(listener);
+            replicator.start();
+            latch.await();
+            replicator.getEventBus().unregister(listener);
+
+            if (replicator.getState() != Replicator.State.COMPLETE) {
+                System.out.println("Error replicating TO remote");
+                System.out.println(listener.error);
+            }
+
+            Toast.makeText(MainActivity.this, "Local db is replicated.",
+                    Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Log.d("Exception found! ", e.toString());
+        }
+    }
+}
