@@ -678,6 +678,28 @@ public class IndexManagerIndexTest {
         }
     }
 
+    /**
+     * Test to be sure that calling updateAllIndexes doesn't throw
+     * an exception for indexes that exist in the database but haven't
+     * yet been registered with that IndexManager object.
+     */
+    @Test
+    public void index_UpdateAllIndexesDoesNotFailForUnregisteredIndexes()
+            throws IndexExistsException, SQLException, ConflictException,
+                    IOException {
+        IndexManager im1 = new IndexManager(datastore);
+        im1.ensureIndexed("title", "title", IndexType.STRING);
+
+        // create
+        Map<String,Object> map = new HashMap<String, Object>();
+        map.put("title", "Another Green Day");
+        DocumentBody body = DocumentBodyFactory.create(map);
+        datastore.createDocument(body);
+
+        IndexManager im2 = new IndexManager(datastore);
+        im2.updateAllIndexes();
+    }
+
     private void assertNotIndexed(SQLDatabase database,
                                Index index,
                                String docId) throws SQLException {
