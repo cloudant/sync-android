@@ -17,6 +17,7 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.replication.ReplicatorFactory;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.PushReplication;
+import com.cloudant.sync.replication.PullReplication;
 import java.net.URI;
 
 import java.io.File;
@@ -77,12 +78,15 @@ public class MainActivity extends Activity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }else if (id == R.id.action_replicate) {
-            replicateDatastore();
-            return true;
+        switch(item.getItemId()){
+            case R.id.action_settings:
+                return true;
+            case R.id.action_replicate:
+                replicateDatastore();
+                return true;
+            case R.id.action_pull_replicate:
+                pullReplicateDatastore();
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -125,6 +129,39 @@ public class MainActivity extends Activity {
             Toast.makeText(MainActivity.this, "Local db is replicated.",
                     Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
+            Log.d("Exception found! ", e.toString());
+        }
+    }
+
+    public void pullReplicateDatastore() {
+        try {
+            URI uri = new URI("https://ptiurin.cloudant.com/sync-test");
+
+            // username/password can be Cloudant API keys
+            PullReplication pull = new PullReplication();
+            pull.username = "easkedindeinessellinksom";
+            pull.password = "iIb7wVDGdbpDpamnywMkjsEx";
+            pull.target = ds;
+            pull.source = uri;
+            Replicator replicator = ReplicatorFactory.oneway(pull);
+
+            // Use a CountDownLatch to provide a lightweight way to wait for completion
+            CountDownLatch latch = new CountDownLatch(1);
+            ReplicationListener listener = new ReplicationListener(latch);
+            replicator.getEventBus().register(listener);
+            replicator.start();
+
+            latch.await();
+            replicator.getEventBus().unregister(listener);
+
+            if (replicator.getState() != Replicator.State.COMPLETE) {
+                System.out.println("Error replicating TO remote");
+                System.out.println(listener.error);
+            }
+
+            Toast.makeText(MainActivity.this, "Local db is updated.",
+                    Toast.LENGTH_SHORT).show();
+        } catch (Exception e){
             Log.d("Exception found! ", e.toString());
         }
     }
