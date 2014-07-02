@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 19
-    buildToolsVersion "19.1.0"
+    buildToolsVersion '19.1.0'
 
     defaultConfig {
         applicationId "com.cloudant.imageshare"
@@ -21,11 +21,17 @@ android {
 
 repositories {
     mavenLocal()
-    maven { url "http://cloudant.github.io/cloudant-sync-eap/repository/" }
+    maven { url 'http://cloudant.github.io/cloudant-sync-eap/repository/' }
+    flatDir {
+        dirs 'libs'
+    }
     mavenCentral()
 }
 
 dependencies {
+    compile name: 'sync-android-0.3.6-SNAPSHOT'
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.3.5'
+    //compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.3.5'
+    compile 'com.google.guava:guava:16.0.+'
+    compile 'commons-io:commons-io:1.4@jar'
 }
