@@ -1,7 +1,10 @@
 package com.cloudant.imageshare;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
@@ -10,6 +13,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.Toast;
+import android.content.Intent;
 
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DatastoreManager;
@@ -32,10 +36,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import static com.cloudant.imageshare.R.drawable.sample_0;
+
 public class MainActivity extends Activity {
 
     private Datastore ds;
     private DatastoreManager manager;
+    private ImageAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +53,7 @@ public class MainActivity extends Activity {
         GridView gridview = (GridView) findViewById(R.id.gridview);
         int screenW = getScreenW();
         gridview.setColumnWidth(screenW/2);
-        ImageAdapter adapter = new ImageAdapter(this, screenW/2);
+        adapter = new ImageAdapter(this, screenW/2);
         gridview.setAdapter(adapter);
 
         initDatastore();
@@ -58,10 +65,10 @@ public class MainActivity extends Activity {
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
                 // Create a document
-                DocumentBody doc = new BasicDoc("Position: " + position, "ID: " + id);
+                DocumentBody doc = new BasicDoc("Position " + position, "ID " + id);
                 DocumentRevision revision = ds.createDocument(doc);
 
-                //uploadAttachment(revision.getId(),"sample_" + position + ".jpg");
+                uploadAttachment(revision.getId(),"sample_" + position + ".jpg");
 
                 Toast.makeText(MainActivity.this,
                                 "Document " + revision.getId() + " written to local db",
@@ -89,6 +96,20 @@ public class MainActivity extends Activity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         switch(item.getItemId()){
+            case R.id.action_add:
+                /*adapter.addImage(this);
+                GridView gridview = (GridView) findViewById(R.id.gridview);
+                gridview.invalidate();
+                gridview.requestLayout();*/
+
+                //take the user to their chosen image selection app (gallery or file manager)
+                Intent pickIntent = new Intent();
+                pickIntent.setType("image/*");
+                pickIntent.setAction(Intent.ACTION_GET_CONTENT);
+                //we will handle the returned data in onActivityResult
+                startActivityForResult(Intent.createChooser(pickIntent, "Select Picture"), 1);
+                return true;
+
             case R.id.action_settings:
                 return true;
             case R.id.action_replicate:
@@ -99,6 +120,22 @@ public class MainActivity extends Activity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            try {
+                Uri imageUri = data.getData();
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+                adapter.addImage(bitmap);
+                GridView gridview = (GridView) findViewById(R.id.gridview);
+                gridview.invalidate();
+                gridview.requestLayout();
+            } catch (IOException e) {
+                Log.d("IOException found! ", e.toString());
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     public void initDatastore(){
@@ -180,8 +217,9 @@ public class MainActivity extends Activity {
 
     public void uploadAttachment(String id, String name){
         // simple 1-rev attachment
-        String attachmentName = name;
-        File f = new File("fixture", attachmentName);
+        //String attachmentName = name;
+        String attachmentName = "sample_0.jpg";
+        File f = new File(attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "image/jpeg");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);

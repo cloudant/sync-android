@@ -2,6 +2,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".Main" >
     <item
+        android:id="@+id/action_add"
+        android:icon="@drawable/ic_action_new"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom"
+        android:title="Add"/>
+    <item
         android:id="@+id/action_pull_replicate"
         android:orderInCategory="100"
         android:showAsAction="ifRoom"

@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="sync-android-0.3.6-SNAPSHOT">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/app/libs/sync-android-0.3.6-SNAPSHOT.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
