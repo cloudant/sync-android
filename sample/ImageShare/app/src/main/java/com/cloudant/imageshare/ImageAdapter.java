@@ -1,14 +1,24 @@
 package com.cloudant.imageshare;
 
 import android.content.Context;
+import android.content.CursorLoader;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 
 public class ImageAdapter extends BaseAdapter{
@@ -20,15 +30,16 @@ public class ImageAdapter extends BaseAdapter{
     public ImageAdapter(Context c, int layoutParam) {
         mContext = c;
         lSize = layoutParam;
-        mThumbIds = new ArrayList<Bitmap>();
+        mThumbBitmaps = new ArrayList<Bitmap>();
+        mThumbFiles = new ArrayList<InputStream>();
         Bitmap img0 = BitmapFactory.decodeResource(c.getResources(), R.drawable.sample_0);
         Bitmap img1 = BitmapFactory.decodeResource(c.getResources(), R.drawable.sample_1);
-        mThumbIds.add(img0);
-        mThumbIds.add(img1);
+        mThumbBitmaps.add(img0);
+        mThumbBitmaps.add(img1);
     }
 
     public int getCount() {
-        return mThumbIds.size();
+        return mThumbBitmaps.size();
     }
 
     public Object getItem(int position) {
@@ -51,25 +62,22 @@ public class ImageAdapter extends BaseAdapter{
             imageView = (ImageView) convertView;
         }
 
-        imageView.setImageBitmap(mThumbIds.get(position));
+        imageView.setImageBitmap(mThumbBitmaps.get(position));
         return imageView;
     }
 
-    public void addImage(Bitmap img){
-        mThumbIds.add(img);
+    public void addImage(Uri imageUri, Context c) throws IOException{
+        mThumbFiles.add(c.getContentResolver().openInputStream(imageUri));
+        //mThumbFiles.add(c.openFileInput(imageUri.);
+        Bitmap bitmap = MediaStore.Images.Media.getBitmap(c.getContentResolver(), imageUri);
+        mThumbBitmaps.add(bitmap);
+    }
+
+    public InputStream getStream(int position) throws FileNotFoundException{
+        return mThumbFiles.get(position-2);
     }
 
     // references to our images
-    private ArrayList<Bitmap> mThumbIds;
-            /*R.drawable.sample_2, R.drawable.sample_3
-            R.drawable.sample_4, R.drawable.sample_5,
-            R.drawable.sample_6, R.drawable.sample_7,
-            R.drawable.sample_0, R.drawable.sample_1,
-            R.drawable.sample_2, R.drawable.sample_3,
-            R.drawable.sample_4, R.drawable.sample_5,
-            R.drawable.sample_6, R.drawable.sample_7,
-            R.drawable.sample_0, R.drawable.sample_1,
-            R.drawable.sample_2, R.drawable.sample_3,
-            R.drawable.sample_4, R.drawable.sample_5,
-            R.drawable.sample_6, R.drawable.sample_7*/
+    private ArrayList<Bitmap> mThumbBitmaps;
+    private ArrayList<InputStream> mThumbFiles;
 }

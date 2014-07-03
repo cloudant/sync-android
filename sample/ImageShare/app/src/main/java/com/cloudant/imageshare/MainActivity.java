@@ -20,6 +20,7 @@ import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.replication.ReplicatorFactory;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.PushReplication;
@@ -28,6 +29,7 @@ import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 
 import java.io.File;
@@ -68,7 +70,7 @@ public class MainActivity extends Activity {
                 DocumentBody doc = new BasicDoc("Position " + position, "ID " + id);
                 DocumentRevision revision = ds.createDocument(doc);
 
-                uploadAttachment(revision.getId(),"sample_" + position + ".jpg");
+                uploadAttachment(revision.getId(), position);
 
                 Toast.makeText(MainActivity.this,
                                 "Document " + revision.getId() + " written to local db",
@@ -97,16 +99,10 @@ public class MainActivity extends Activity {
         // as you specify a parent activity in AndroidManifest.xml.
         switch(item.getItemId()){
             case R.id.action_add:
-                /*adapter.addImage(this);
-                GridView gridview = (GridView) findViewById(R.id.gridview);
-                gridview.invalidate();
-                gridview.requestLayout();*/
-
                 //take the user to their chosen image selection app (gallery or file manager)
                 Intent pickIntent = new Intent();
                 pickIntent.setType("image/*");
                 pickIntent.setAction(Intent.ACTION_GET_CONTENT);
-                //we will handle the returned data in onActivityResult
                 startActivityForResult(Intent.createChooser(pickIntent, "Select Picture"), 1);
                 return true;
 
@@ -123,11 +119,11 @@ public class MainActivity extends Activity {
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
+        if (resultCode == RESULT_OK && requestCode == 1) {
             try {
                 Uri imageUri = data.getData();
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
-                adapter.addImage(bitmap);
+                adapter.addImage(imageUri, this);
+                //reload the view
                 GridView gridview = (GridView) findViewById(R.id.gridview);
                 gridview.invalidate();
                 gridview.requestLayout();
@@ -142,7 +138,11 @@ public class MainActivity extends Activity {
         // Create a DatastoreManager using application internal storage path
         File path = getApplicationContext().getDir("datastores", 0);
         manager = new DatastoreManager(path.getAbsolutePath());
-
+        try {
+            manager.deleteDatastore("my_datastore");
+        } catch (IOException e){
+            Log.d("MainActivity:initDatastore", e.toString());
+        }
         ds = manager.openDatastore("my_datastore");
     }
 
@@ -215,23 +215,23 @@ public class MainActivity extends Activity {
         }
     }
 
-    public void uploadAttachment(String id, String name){
+    public void uploadAttachment(String id, int position){
+        Log.d("uploadAttachment", "At position: " + position);
         // simple 1-rev attachment
-        //String attachmentName = name;
-        String attachmentName = "sample_0.jpg";
-        File f = new File(attachmentName);
-        Attachment att = new UnsavedFileAttachment(f, "image/jpeg");
-        List<Attachment> atts = new ArrayList<Attachment>();
-        atts.add(att);
-        DocumentRevision oldRevision = ds.getDocument(id); //doc id
-        DocumentRevision newRevision = null;
+        //File f = adapter.getItem(position);
         try {
+            InputStream is = adapter.getStream(position);
+
+            Attachment att = new UnsavedStreamAttachment(is, "image" + position, "image/jpeg");
+            List<Attachment> atts = new ArrayList<Attachment>();
+            atts.add(att);
+            DocumentRevision oldRevision = ds.getDocument(id); //doc id
+            DocumentRevision newRevision = null;
             // set attachment
             newRevision = ds.updateAttachments(oldRevision, atts);
-        } catch (IOException ioe) {
-            Log.d("IOException thrown: ", ioe.toString());
-        } catch (ConflictException e) {
-            Log.d("ConflictException thrown: ", e.toString());
+            Log.d("Main","Doc with attachment: " + id);
+        } catch (Exception e) {
+            Log.d("Exception thrown: ", e.toString());
         }
         // push replication
         //push();

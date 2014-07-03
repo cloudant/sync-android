@@ -11,11 +11,11 @@ buildscript {
     repositories {
         mavenCentral()
     }
-    dependencies {
-        classpath "net.saliman:gradle-cobertura-plugin:2.1.0"
-    }
+//    dependencies {
+//        classpath "net.saliman:gradle-cobertura-plugin:2.1.0"
+//    }
 }
-apply plugin: 'cobertura'
+//apply plugin: 'cobertura'
 
 //
 // General settings
