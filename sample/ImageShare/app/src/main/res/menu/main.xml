@@ -17,6 +17,12 @@
         android:orderInCategory="100"
         android:showAsAction="ifRoom"
         android:title="Replicate"/>
+    <item
+        android:id="@+id/action_delete"
+        android:icon="@drawable/ic_action_discard"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom"
+        android:title="Delete"/>
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"

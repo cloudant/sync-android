@@ -36,7 +36,7 @@ dependencies {
     //    compile name: 'sync-android-0.3.6-SNAPSHOT'
     //    compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.cloudant:cloudant-sync-datastore-android:0.3.6-SNAPSHOT'
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.6'
     //    compile 'com.google.guava:guava:16.0.+'
     //    compile 'commons-io:commons-io:1.4@jar'
+    compile files('libs/commons-codec-1.4.jar')
 }

@@ -36,6 +36,7 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
 import static com.cloudant.imageshare.R.drawable.sample_0;
@@ -111,6 +112,13 @@ public class MainActivity extends Activity {
             case R.id.action_replicate:
                 replicateDatastore();
                 return true;
+            case R.id.action_delete:
+                try {
+                    manager.deleteDatastore("my_datastore");
+                    ds = manager.openDatastore("my_datastore");
+                } catch (IOException e) {
+                    Log.d("MainActivity", e.toString());
+                }
             case R.id.action_pull_replicate:
                 pullReplicateDatastore();
                 return true;
@@ -138,12 +146,23 @@ public class MainActivity extends Activity {
         // Create a DatastoreManager using application internal storage path
         File path = getApplicationContext().getDir("datastores", 0);
         manager = new DatastoreManager(path.getAbsolutePath());
-        try {
-            manager.deleteDatastore("my_datastore");
-        } catch (IOException e){
-            Log.d("MainActivity:initDatastore", e.toString());
-        }
         ds = manager.openDatastore("my_datastore");
+        loadImages();
+    }
+
+    //Load images from datastore
+    public void loadImages(){
+        // read all documents in one go
+        int pageSize = ds.getDocumentCount();
+        List<DocumentRevision> docs = ds.getAllDocuments(0, pageSize, true);
+        try {
+            for (DocumentRevision rev : docs) {
+                adapter.addImage(ds.getAttachment(rev, "image").getInputStream(), this);
+            }
+        } catch (Exception e){
+            Log.d("IOException:loadImages", e.toString());
+        }
+
     }
 
     public void replicateDatastore(){
@@ -222,14 +241,14 @@ public class MainActivity extends Activity {
         try {
             InputStream is = adapter.getStream(position);
 
-            Attachment att = new UnsavedStreamAttachment(is, "image" + position, "image/jpeg");
+            Attachment att = new UnsavedStreamAttachment(is, "image", "image/jpeg");
             List<Attachment> atts = new ArrayList<Attachment>();
             atts.add(att);
             DocumentRevision oldRevision = ds.getDocument(id); //doc id
             DocumentRevision newRevision = null;
             // set attachment
             newRevision = ds.updateAttachments(oldRevision, atts);
-            Log.d("Main","Doc with attachment: " + id);
+            Log.d("Main","Doc with attachment: " + id + " newRev: " + newRevision + " oldRev: " + oldRevision);
         } catch (Exception e) {
             Log.d("Exception thrown: ", e.toString());
         }

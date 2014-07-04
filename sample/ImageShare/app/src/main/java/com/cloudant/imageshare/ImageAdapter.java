@@ -73,6 +73,12 @@ public class ImageAdapter extends BaseAdapter{
         mThumbBitmaps.add(bitmap);
     }
 
+    public void addImage(InputStream is, Context c){
+        mThumbFiles.add(is);
+        Bitmap bitmap = BitmapFactory.decodeStream(is);
+        mThumbBitmaps.add(bitmap);
+    }
+
     public InputStream getStream(int position) throws FileNotFoundException{
         return mThumbFiles.get(position-2);
     }
