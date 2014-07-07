@@ -32,10 +32,10 @@ public class ImageAdapter extends BaseAdapter{
         lSize = layoutParam;
         mThumbBitmaps = new ArrayList<Bitmap>();
         mThumbFiles = new ArrayList<InputStream>();
-        Bitmap img0 = BitmapFactory.decodeResource(c.getResources(), R.drawable.sample_0);
+        /*Bitmap img0 = BitmapFactory.decodeResource(c.getResources(), R.drawable.sample_0);
         Bitmap img1 = BitmapFactory.decodeResource(c.getResources(), R.drawable.sample_1);
         mThumbBitmaps.add(img0);
-        mThumbBitmaps.add(img1);
+        mThumbBitmaps.add(img1);*/
     }
 
     public int getCount() {
@@ -73,14 +73,19 @@ public class ImageAdapter extends BaseAdapter{
         mThumbBitmaps.add(bitmap);
     }
 
-    public void addImage(InputStream is, Context c){
+    public void loadImage(InputStream is, Context c){
         mThumbFiles.add(is);
         Bitmap bitmap = BitmapFactory.decodeStream(is);
         mThumbBitmaps.add(bitmap);
     }
 
     public InputStream getStream(int position) throws FileNotFoundException{
-        return mThumbFiles.get(position-2);
+        return mThumbFiles.get(position);
+    }
+
+    public void clearImageData(){
+        mThumbBitmaps.clear();
+        mThumbFiles.clear();
     }
 
     // references to our images

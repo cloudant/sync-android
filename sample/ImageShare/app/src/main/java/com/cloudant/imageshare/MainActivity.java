@@ -1,10 +1,8 @@
 package com.cloudant.imageshare;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
@@ -15,7 +13,6 @@ import android.widget.GridView;
 import android.widget.Toast;
 import android.content.Intent;
 
-import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DocumentBody;
@@ -26,20 +23,16 @@ import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.PushReplication;
 import com.cloudant.sync.replication.PullReplication;
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.UnsavedFileAttachment;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
 import java.io.File;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-
-import static com.cloudant.imageshare.R.drawable.sample_0;
 
 public class MainActivity extends Activity {
 
@@ -52,22 +45,19 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //Create a grid of images
+        // Create a grid of images
         GridView gridview = (GridView) findViewById(R.id.gridview);
         int screenW = getScreenW();
         gridview.setColumnWidth(screenW/2);
         adapter = new ImageAdapter(this, screenW/2);
         gridview.setAdapter(adapter);
 
+        // Create an empty datastore
         initDatastore();
 
-        /*
-        Picture in the right column adds a document to a local datastore
-        while picture on the left adds it and replicates the whole database to remote.
-        */
+        // When a picture is clicked a new document is created and the image is added as attachment
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                // Create a document
                 DocumentBody doc = new BasicDoc("Position " + position, "ID " + id);
                 DocumentRevision revision = ds.createDocument(doc);
 
@@ -80,12 +70,6 @@ public class MainActivity extends Activity {
         });
     }
 
-    private int getScreenW(){
-        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-
-        return (int) (displayMetrics.widthPixels / displayMetrics.density);
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -95,46 +79,41 @@ public class MainActivity extends Activity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         switch(item.getItemId()){
             case R.id.action_add:
-                //take the user to their chosen image selection app (gallery or file manager)
+                // Take the user to their chosen image selection app (gallery or file manager)
                 Intent pickIntent = new Intent();
                 pickIntent.setType("image/*");
                 pickIntent.setAction(Intent.ACTION_GET_CONTENT);
                 startActivityForResult(Intent.createChooser(pickIntent, "Select Picture"), 1);
                 return true;
-
             case R.id.action_settings:
                 return true;
             case R.id.action_replicate:
-                replicateDatastore();
+                pushReplicateDatastore();
                 return true;
             case R.id.action_delete:
-                try {
-                    manager.deleteDatastore("my_datastore");
-                    ds = manager.openDatastore("my_datastore");
-                } catch (IOException e) {
-                    Log.d("MainActivity", e.toString());
-                }
+                deleteDatastore();
+                reloadView();
+                return true;
             case R.id.action_pull_replicate:
                 pullReplicateDatastore();
+                adapter.clearImageData();
+                loadDatastore();
+                reloadView();
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
+
+    // Processing the output of image selection app
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK && requestCode == 1) {
             try {
                 Uri imageUri = data.getData();
                 adapter.addImage(imageUri, this);
-                //reload the view
-                GridView gridview = (GridView) findViewById(R.id.gridview);
-                gridview.invalidate();
-                gridview.requestLayout();
+                reloadView();
             } catch (IOException e) {
                 Log.d("IOException found! ", e.toString());
             }
@@ -142,30 +121,52 @@ public class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    // Creates a DatastoreManager using application internal storage path
     public void initDatastore(){
-        // Create a DatastoreManager using application internal storage path
         File path = getApplicationContext().getDir("datastores", 0);
         manager = new DatastoreManager(path.getAbsolutePath());
         ds = manager.openDatastore("my_datastore");
-        loadImages();
+        loadDatastore();
     }
 
-    //Load images from datastore
-    public void loadImages(){
+    public void deleteDatastore(){
+        try {
+            manager.deleteDatastore("my_datastore");
+            ds = manager.openDatastore("my_datastore");
+        } catch (IOException e) {
+            Log.d("MainActivity", e.toString());
+        }
+        adapter.clearImageData();
+    }
+
+    // Load images from datastore
+    public void loadDatastore(){
         // read all documents in one go
         int pageSize = ds.getDocumentCount();
         List<DocumentRevision> docs = ds.getAllDocuments(0, pageSize, true);
-        try {
-            for (DocumentRevision rev : docs) {
-                adapter.addImage(ds.getAttachment(rev, "image").getInputStream(), this);
+        for (DocumentRevision rev : docs) {
+            try {
+                /*Log.d("rev",rev.getRevision());
+                Log.d("id",rev.getId());
+                Map<String,Object> m = rev.getBody().asMap();
+                if (m.isEmpty()) System.out.println("Empty body :(");
+                for (Map.Entry entry : m.entrySet()) {
+                    System.out.println(entry.getKey() + ", " + entry.getValue());
+                }
+                for (Attachment a : ds.attachmentsForRevision(rev)) {
+                    Log.d("attachment", a.toString());
+                } */
+                Attachment a = ds.getAttachment(rev, "image");
+                /*Log.d("name",a.name);
+                Log.d("size", "" + a.getSize());*/
+                adapter.loadImage(a.getInputStream(), this);
+            } catch (Exception e) {
+                Log.d("IOException:loadDatastore", e.toString());
             }
-        } catch (Exception e){
-            Log.d("IOException:loadImages", e.toString());
         }
-
     }
 
-    public void replicateDatastore(){
+    public void pushReplicateDatastore(){
         try {
             URI uri = new URI("https://" + getString(R.string.default_user)
                     + ".cloudant.com/" + getString(R.string.default_dbname));
@@ -189,14 +190,13 @@ public class MainActivity extends Activity {
             replicator.getEventBus().unregister(listener);
 
             if (replicator.getState() != Replicator.State.COMPLETE) {
-                System.out.println("Error replicating TO remote");
-                System.out.println(listener.error);
+                Log.d("MainActivity","Error replicating TO remote" + listener.error.toString());
+            } else {
+                Toast.makeText(MainActivity.this, "Local db is replicated.",
+                        Toast.LENGTH_SHORT).show();
             }
-
-            Toast.makeText(MainActivity.this, "Local db is replicated.",
-                    Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            Log.d("Exception found! ", e.toString());
+            Log.d("PushReplicate exception", e.toString());
         }
     }
 
@@ -223,21 +223,17 @@ public class MainActivity extends Activity {
             replicator.getEventBus().unregister(listener);
 
             if (replicator.getState() != Replicator.State.COMPLETE) {
-                System.out.println("Error replicating TO remote");
-                System.out.println(listener.error);
+                Log.d("MainActivity","Error replicating FROM remote" + listener.error.toString());
+            } else {
+                Toast.makeText(MainActivity.this, "Local db is updated.",
+                        Toast.LENGTH_SHORT).show();
             }
-
-            Toast.makeText(MainActivity.this, "Local db is updated.",
-                    Toast.LENGTH_SHORT).show();
         } catch (Exception e){
-            Log.d("Exception found! ", e.toString());
+            Log.d("PullReplicate exception", e.toString());
         }
     }
 
     public void uploadAttachment(String id, int position){
-        Log.d("uploadAttachment", "At position: " + position);
-        // simple 1-rev attachment
-        //File f = adapter.getItem(position);
         try {
             InputStream is = adapter.getStream(position);
 
@@ -248,11 +244,19 @@ public class MainActivity extends Activity {
             DocumentRevision newRevision = null;
             // set attachment
             newRevision = ds.updateAttachments(oldRevision, atts);
-            Log.d("Main","Doc with attachment: " + id + " newRev: " + newRevision + " oldRev: " + oldRevision);
         } catch (Exception e) {
-            Log.d("Exception thrown: ", e.toString());
+            Log.d("UploadAttachment exception", e.toString());
         }
-        // push replication
-        //push();
+    }
+
+    private void reloadView(){
+        GridView gridview = (GridView) findViewById(R.id.gridview);
+        gridview.invalidate();
+        gridview.requestLayout();
+    }
+
+    private int getScreenW(){
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        return (int) (displayMetrics.widthPixels / displayMetrics.density);
     }
 }
