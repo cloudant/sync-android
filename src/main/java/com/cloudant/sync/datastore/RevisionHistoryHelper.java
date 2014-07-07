@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.android.Base64OutputStreamFactory;
 import com.cloudant.common.CouchConstants;
 import com.cloudant.common.Log;
 import com.cloudant.mazha.DocumentRevs;
@@ -21,11 +22,10 @@ import com.cloudant.sync.replication.PushAttachmentsInline;
 import com.cloudant.sync.util.CouchUtils;
 import com.google.common.base.Preconditions;
 
-import org.apache.commons.codec.binary.Base64OutputStream;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -225,7 +225,7 @@ public class RevisionHistoryHelper {
                         theAtt.put("follows", false);
                         // base64 encode this attachment
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        Base64OutputStream bos = new Base64OutputStream(baos, true, 0, null);
+                        OutputStream bos = Base64OutputStreamFactory.get(baos);
                         InputStream fis = savedAtt.getInputStream();
                         int bufSiz = 1024;
                         byte[] buf = new byte[bufSiz];

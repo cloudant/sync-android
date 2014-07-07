@@ -17,6 +17,7 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.android.Base64InputStreamFactory;
 import com.cloudant.common.Log;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
@@ -36,12 +37,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.EventBus;
 
-import org.apache.commons.codec.binary.Base64InputStream;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -877,7 +875,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                             continue;
                         }
                         String data = (String) ((Map<String, Object>) attachments.get(att)).get("data");
-                        InputStream is = new Base64InputStream(new ByteArrayInputStream(data.getBytes()));
+                        InputStream is = Base64InputStreamFactory.get(new ByteArrayInputStream(data.getBytes()));
                         String type = (String) ((Map<String, Object>) attachments.get(att)).get("content_type");
                         // inline attachments are automatically decompressed, so we don't have to worry about that
                         UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is, att, type);
