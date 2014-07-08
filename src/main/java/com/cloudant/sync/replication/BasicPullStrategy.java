@@ -291,10 +291,24 @@ class BasicPullStrategy implements ReplicationStrategy {
                                 // keep track of attachments we are going to prepare
                                 ArrayList<PreparedAttachment> preparedAtts = new ArrayList<PreparedAttachment>();
                                 atts.put(documentRevs.getId(), preparedAtts);
+
                                 for (String attachmentName : attachments.keySet()) {
-                                    Boolean stub = ((Map<String, Boolean>) attachments.get(attachmentName)).get("stub");
-                                    if (stub != null && stub.booleanValue()) {
-                                        continue;
+                                    int revpos = (Integer) ((Map<String, Object>) attachments.get(attachmentName)).get("revpos");
+                                    // do we already have the attachment @ this revpos?
+                                    // look back up the tree for this document and see:
+                                    // if we already have it, then we don't need to fetch it
+                                    DocumentRevs.Revisions revs = documentRevs.getRevisions();
+                                    int offset = revs.getStart() - revpos;
+                                    if (offset >= 0 && offset < revs.getIds().size()) {
+                                        String revId = String.valueOf(revpos) + "-" + revs.getIds().get(offset);
+                                        DocumentRevision dr = this.targetDb.getDbCore().getDocument(documentRevs.getId(), revId);
+                                        if (dr != null) {
+                                            Attachment a = this.targetDb.getDbCore().getAttachment(dr, attachmentName);
+                                            if (a != null) {
+                                                // skip attachment, already got it
+                                                continue;
+                                            }
+                                        }
                                     }
                                     String contentType = ((Map<String, String>) attachments.get(attachmentName)).get("content_type");
                                     String encoding = (String) ((Map<String, Object>) attachments.get(attachmentName)).get("encoding");
