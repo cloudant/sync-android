@@ -21,6 +21,7 @@ import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.Misc;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.FileExistsException;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -114,7 +115,13 @@ class AttachmentManager {
         }
         // move file to blob store, with file name based on sha1
         File newFile = fileFromKey(sha1);
-        FileUtils.moveFile(a.tempFile, newFile);
+        try{
+            FileUtils.moveFile(a.tempFile, newFile);
+        } catch (FileExistsException fee) {
+            // File with same SHA1 hash in the store, we assume it's the same content so can discard
+            // the duplicate data we have just downloaded
+            a.tempFile.delete();
+        }
     }
 
     protected DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException {
