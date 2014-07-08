@@ -303,12 +303,12 @@ public class CouchClient {
         // only pull attachments inline if we're configured to
         if (pullAttachmentsInline) {
             options.put("attachments", true);
+            if (attsSince != null) {
+                options.put("atts_since", getJson().toJson(attsSince));
+            }
         } else {
             options.put("attachments", false);
             options.put("att_encoding_info", true);
-        }
-        if (attsSince != null) {
-            options.put("atts_since", getJson().toJson(attsSince));
         }
         options.put("open_revs", getJson().toJson(revisions));
         return this.getDocument(id, options, new TypeReference<List<OpenRevision>>() {

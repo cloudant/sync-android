@@ -164,8 +164,8 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     @Test
     public void dontPullAttachmentAlreadyPulled() {
         try {
-            // create a rev with an attachment, then update it without attachment
-            // ensure updated version no longer has attachment associated with it locally
+            // create a rev with an attachment, then update it keeping attachment
+            // TODO we need to somehow check the attachment wasn't re-downloaded
             createRevisionAndBigTextAttachment();
             pull();
             DocumentRevision docRev1 = datastore.getDocument(id, rev);
