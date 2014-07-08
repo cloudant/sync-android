@@ -2,6 +2,7 @@ package com.cloudant.imageshare;
 
 import android.app.Activity;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -24,14 +25,15 @@ import com.cloudant.sync.replication.PushReplication;
 import com.cloudant.sync.replication.PullReplication;
 import com.cloudant.sync.datastore.Attachment;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 public class MainActivity extends Activity {
@@ -39,11 +41,15 @@ public class MainActivity extends Activity {
     private Datastore ds;
     private DatastoreManager manager;
     private ImageAdapter adapter;
+    private boolean isEmulator = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Check if running on emulator
+        isEmulator = "generic".equals(Build.BRAND.toLowerCase());
 
         // Create a grid of images
         GridView gridview = (GridView) findViewById(R.id.gridview);
@@ -81,11 +87,16 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()){
             case R.id.action_add:
-                // Take the user to their chosen image selection app (gallery or file manager)
-                Intent pickIntent = new Intent();
-                pickIntent.setType("image/*");
-                pickIntent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(pickIntent, "Select Picture"), 1);
+                if (isEmulator){
+                    loadAsset();
+                    reloadView();
+                } else {
+                    // Take the user to their chosen image selection app (gallery or file manager)
+                    Intent pickIntent = new Intent();
+                    pickIntent.setType("image/*");
+                    pickIntent.setAction(Intent.ACTION_GET_CONTENT);
+                    startActivityForResult(Intent.createChooser(pickIntent, "Select Picture"), 1);
+                }
                 return true;
             case R.id.action_settings:
                 return true;
@@ -246,6 +257,40 @@ public class MainActivity extends Activity {
             newRevision = ds.updateAttachments(oldRevision, atts);
         } catch (Exception e) {
             Log.d("UploadAttachment exception", e.toString());
+        }
+    }
+
+    // Move an asset to a file and pass it to adapter
+    private void loadAsset(){
+        try {
+            InputStream in = null;
+            OutputStream out = null;
+            //in = getAssets().open("sample_0.jpg");
+            in = getResources().openRawResource(R.raw.sample_5);
+            String outs = "/data/data/com.cloudant.imageshare/";
+            Log.d("out", outs);
+            File outFile = new File(outs, "image.jpg");
+
+            out = new FileOutputStream(outFile);
+            copyFile(in, out);
+            in.close();
+            in = null;
+            out.flush();
+            out.close();
+            out = null;
+            outs = "file:///" + outs;
+            Uri uri = Uri.parse(outs + "image.jpg");
+            adapter.addImage(uri, this);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private void copyFile(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[1024];
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
         }
     }
 

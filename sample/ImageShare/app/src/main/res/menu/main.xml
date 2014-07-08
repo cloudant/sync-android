@@ -16,7 +16,7 @@
         android:id="@+id/action_replicate"
         android:orderInCategory="100"
         android:showAsAction="ifRoom"
-        android:title="Replicate"/>
+        android:title="Push"/>
     <item
         android:id="@+id/action_delete"
         android:icon="@drawable/ic_action_discard"
