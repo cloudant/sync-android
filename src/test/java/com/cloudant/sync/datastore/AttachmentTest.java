@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.mazha.Document;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.util.Misc;
 
@@ -223,6 +224,42 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             Assert.assertEquals("Didn't get expected number of attachments", atts.size(), attsForRev.size());
         } catch (ConflictException ce){
             Assert.fail("ConflictException thrown: "+ce);
+        }
+    }
+
+    @Test
+    public void duplicateAttachmentTest() {
+        BasicDocumentRevision doc1Rev1 = datastore.createDocument(bodyOne);
+        BasicDocumentRevision doc2Rev1 = datastore.createDocument(bodyTwo);
+
+        File attachmentFile = new File("fixture", "attachment_1.txt");
+        Attachment att1 = new UnsavedFileAttachment(attachmentFile, "text/plain");
+        Attachment att2 = new UnsavedFileAttachment(attachmentFile, "text/plain");
+
+        List<Attachment> doc1Atts = new ArrayList<Attachment>();
+        List<Attachment> doc2Atts = new ArrayList<Attachment>();
+        doc1Atts.add(att1);
+        doc2Atts.add(att2);
+
+        DocumentRevision newRevisionDoc1 = null;
+        DocumentRevision newRevisionDoc2 = null;
+
+        try {
+            newRevisionDoc1 = datastore.updateAttachments(doc1Rev1, doc1Atts);
+            Assert.assertNotNull("Doc1 revision is null", newRevisionDoc1);
+            List<? extends Attachment> attsForRev = datastore
+                .attachmentsForRevision(newRevisionDoc1);
+            Assert.assertEquals("Didn't get expected number of attachments", doc1Atts.size(),
+                attsForRev.size());
+
+            newRevisionDoc2 = datastore.updateAttachments(doc2Rev1, doc2Atts);
+            Assert.assertNotNull("Doc2 revision is null", newRevisionDoc2);
+            attsForRev = datastore.attachmentsForRevision(newRevisionDoc2);
+            Assert.assertEquals("Didn't get expected number of attachments", doc2Atts.size(),
+                attsForRev.size());
+
+        } catch (ConflictException conflictException) {
+            Assert.fail("Conflict Exception thrown "+conflictException);
         }
     }
 
