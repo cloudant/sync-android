@@ -26,9 +26,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.params.HttpClientParams;
+import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.conn.params.ConnPerRoute;
@@ -40,6 +42,8 @@ import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
@@ -193,15 +197,15 @@ public class HttpRequests {
      */
     private HttpClient createHttpClient(CouchConfig config) {
         try {
+            this.host = new HttpHost(config.getHost(), config.getPort(), config.getProtocol());
+            this.context = new BasicHttpContext();
+
             HttpParams params = getHttpConnectionParams(config);
             ClientConnectionManager manager = getClientConnectionManager(params);
 
             DefaultHttpClient httpClient = new DefaultHttpClient(manager, params);
             addHttpBasicAuth(config, httpClient);
             addDebuggingInterceptor(httpClient);
-
-            this.host = new HttpHost(config.getHost(), config.getPort(), config.getProtocol());
-            this.context = new BasicHttpContext();
 
             return httpClient;
         } catch (Exception e) {
@@ -272,17 +276,23 @@ public class HttpRequests {
 
     private void addHttpBasicAuth(CouchConfig config, DefaultHttpClient httpclient) {
         // basic authentication
-        if (config.getUsername() != null && config.getPassword() != null) {
+
+        String username = config.getUsername();
+        String password = config.getPassword();
+
+        if ((username != null && !username.isEmpty())
+                && (password != null && !password.isEmpty())) {
             httpclient.getCredentialsProvider().setCredentials(
                     new AuthScope(config.getHost(),
                             config.getPort()),
                     new UsernamePasswordCredentials(config.getUsername(),
                             config.getPassword()));
-            // Auth cache?
-//            AuthCache authCache = new BasicAuthCache();
-//            BasicScheme basicAuth = new BasicScheme();
-//            authCache.put(host, basicAuth);
-//            context.setAttribute(ClientContext.AUTH_CACHE, authCache);
+
+            // use AuthCache to enable preemptive authentication
+            AuthCache authCache = new BasicAuthCache();
+            BasicScheme basicAuth = new BasicScheme();
+            authCache.put(host, basicAuth);
+            context.setAttribute(ClientContext.AUTH_CACHE, authCache);
         }
     }
 
