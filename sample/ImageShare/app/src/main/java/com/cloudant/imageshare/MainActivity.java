@@ -1,6 +1,10 @@
 package com.cloudant.imageshare;
 
 import android.app.Activity;
+import android.app.Application;
+import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -33,10 +37,12 @@ import java.net.URI;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity{
 
     private Datastore ds;
     private DatastoreManager manager;
@@ -44,7 +50,7 @@ public class MainActivity extends Activity {
     private boolean isEmulator = false;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -59,7 +65,12 @@ public class MainActivity extends Activity {
         gridview.setAdapter(adapter);
 
         // Create an empty datastore
-        initDatastore();
+        try {
+            initDatastore();
+        } catch (IOException e){
+            e.printStackTrace();
+            System.exit(1);
+        }
 
         // When a picture is clicked a new document is created and the image is added as attachment
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -84,11 +95,12 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item){
         switch(item.getItemId()){
             case R.id.action_add:
                 if (isEmulator){
-                    loadAsset();
+                    loadAsset(getResources().openRawResource(R.raw.sample_5));
+                    //adapter.loadImage(getResources().openRawResource(R.raw.sample_5), this);
                     reloadView();
                 } else {
                     // Take the user to their chosen image selection app (gallery or file manager)
@@ -113,6 +125,11 @@ public class MainActivity extends Activity {
                 loadDatastore();
                 reloadView();
                 return true;
+            case R.id.action_refresh:
+                adapter.clearImageData();
+                loadDatastore();
+                reloadView();
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -133,7 +150,7 @@ public class MainActivity extends Activity {
     }
 
     // Creates a DatastoreManager using application internal storage path
-    public void initDatastore(){
+    public void initDatastore() throws IOException{
         File path = getApplicationContext().getDir("datastores", 0);
         manager = new DatastoreManager(path.getAbsolutePath());
         ds = manager.openDatastore("my_datastore");
@@ -151,29 +168,42 @@ public class MainActivity extends Activity {
     }
 
     // Load images from datastore
-    public void loadDatastore(){
-        // read all documents in one go
-        int pageSize = ds.getDocumentCount();
-        List<DocumentRevision> docs = ds.getAllDocuments(0, pageSize, true);
-        for (DocumentRevision rev : docs) {
-            try {
-                /*Log.d("rev",rev.getRevision());
-                Log.d("id",rev.getId());
-                Map<String,Object> m = rev.getBody().asMap();
+    public void loadDatastore() {
+        try {
+            // read all documents in one go
+            int pageSize = ds.getDocumentCount();
+            List<DocumentRevision> docs = ds.getAllDocuments(0, pageSize, true);
+            for (DocumentRevision rev : docs) {
+                Log.d("rev", rev.getRevision());
+                Log.d("id", rev.getId());
+                Map<String, Object> m = rev.getBody().asMap();
                 if (m.isEmpty()) System.out.println("Empty body :(");
                 for (Map.Entry entry : m.entrySet()) {
                     System.out.println(entry.getKey() + ", " + entry.getValue());
                 }
                 for (Attachment a : ds.attachmentsForRevision(rev)) {
                     Log.d("attachment", a.toString());
-                } */
-                Attachment a = ds.getAttachment(rev, "image");
-                /*Log.d("name",a.name);
-                Log.d("size", "" + a.getSize());*/
+                }
+                Attachment a = ds.getAttachment(rev, "image.jpg");
+                if (a == null) {
+                    Log.d("null", "Doc " + rev.getId() + " has no attachments.");
+                    continue;
+                }
+                Log.d("name", a.name);
+                Log.d("size", "" + a.getSize());
+                InputStream is = a.getInputStream();
+                //Log.d("available", ""+is.available());
+                //loadAsset(is);
+                byte[] byte_buf = new byte[10];
+                is.read(byte_buf);
+                Log.d("buf", Arrays.toString(byte_buf));
+                //is.reset();
+                Bitmap bitmap = BitmapFactory.decodeStream(a.getInputStream());
                 adapter.loadImage(a.getInputStream(), this);
-            } catch (Exception e) {
-                Log.d("IOException:loadDatastore", e.toString());
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
         }
     }
 
@@ -248,7 +278,7 @@ public class MainActivity extends Activity {
         try {
             InputStream is = adapter.getStream(position);
 
-            Attachment att = new UnsavedStreamAttachment(is, "image", "image/jpeg");
+            Attachment att = new UnsavedStreamAttachment(is, "image.jpg", "image/jpeg");
             List<Attachment> atts = new ArrayList<Attachment>();
             atts.add(att);
             DocumentRevision oldRevision = ds.getDocument(id); //doc id
@@ -261,12 +291,11 @@ public class MainActivity extends Activity {
     }
 
     // Move an asset to a file and pass it to adapter
-    private void loadAsset(){
+    private void loadAsset(InputStream in_s){
         try {
             InputStream in = null;
             OutputStream out = null;
-            //in = getAssets().open("sample_0.jpg");
-            in = getResources().openRawResource(R.raw.sample_5);
+            in = in_s;
             String outs = "/data/data/com.cloudant.imageshare/";
             Log.d("out", outs);
             File outFile = new File(outs, "image.jpg");

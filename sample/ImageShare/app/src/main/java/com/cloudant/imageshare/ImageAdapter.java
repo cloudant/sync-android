@@ -14,6 +14,7 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -61,21 +62,21 @@ public class ImageAdapter extends BaseAdapter{
         } else {
             imageView = (ImageView) convertView;
         }
-
+        imageView.setBackgroundColor(0xFFFFFFCC);
         imageView.setImageBitmap(mThumbBitmaps.get(position));
         return imageView;
     }
 
     public void addImage(Uri imageUri, Context c) throws IOException{
         mThumbFiles.add(c.getContentResolver().openInputStream(imageUri));
-        //mThumbFiles.add(c.openFileInput(imageUri.);
         Bitmap bitmap = MediaStore.Images.Media.getBitmap(c.getContentResolver(), imageUri);
         mThumbBitmaps.add(bitmap);
     }
 
     public void loadImage(InputStream is, Context c){
-        mThumbFiles.add(is);
-        Bitmap bitmap = BitmapFactory.decodeStream(is);
+        BufferedInputStream bs = new BufferedInputStream(is);
+        mThumbFiles.add(bs);
+        Bitmap bitmap = BitmapFactory.decodeStream(bs);
         mThumbBitmaps.add(bitmap);
     }
 

@@ -25,7 +25,7 @@ android {
 
 repositories {
     mavenLocal()
-    maven { url 'file:///Users/pettyurin/sync-android/build/repo' }
+    maven { url 'file:///Users/pettyurin/sync-master/sync-android/build/repo' }
     flatDir {
         dirs 'libs'
     }
