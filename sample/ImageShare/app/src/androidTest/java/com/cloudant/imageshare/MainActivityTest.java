@@ -54,6 +54,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     private Context context;
     private HttpClient httpClient;
 
+    int[] raws = {R.raw.pic1,R.raw.pic2,R.raw.pic3,R.raw.pic4,R.raw.pic5};
+
     public MainActivityTest() {
         super(MainActivity.class);
     }
@@ -69,7 +71,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         context = testActivity.getApplicationContext();
         File path = context.getDir("datastores", 0);
         datastoreManager = new DatastoreManager(path.getAbsolutePath());
-        datastoreManager.deleteDatastore("my_datastore");
+        try {
+            datastoreManager.deleteDatastore("my_datastore");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         ds = datastoreManager.openDatastore("my_datastore");
         HttpResponse r = loadNewDB("sync-test-1");
     }
@@ -78,22 +84,24 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     protected void tearDown() throws Exception{
         datastoreManager.deleteDatastore("my_datastore");
         HttpResponse r = deleteDB("sync-test-1");
+        super.tearDown();
     }
 
-    public void testPreconditions() {
+    /*public void testPreconditions() {
         assertNotNull("MainActivity is null", testActivity);
         assertNotNull("datastoreManager is null", datastoreManager);
         assertNotNull("Datastore is null", ds);
         assertEquals("my_datastore", ds.getDatastoreName());
-    }
+    }*/
 
-    public void test() throws Exception{
-        int[] raws = {R.raw.pic1,R.raw.pic2,R.raw.pic3,R.raw.pic4,R.raw.pic5};
+    public void testAllImages() throws Exception{
         for (int image : raws) {
             InputStream is = testActivity.getResources().openRawResource(image);
 
             // Check if decoding works
             Bitmap bitmap = BitmapFactory.decodeStream(is);
+            assertNotNull("Bitamp is null before replication", bitmap);
+            is.reset();
 
             Uri image_uri = loadAsset(is);
             assertNotNull("Uri is null", image_uri);
@@ -124,14 +132,87 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
             // Check again if decoding works
             Bitmap bitmap = BitmapFactory.decodeStream(a.getInputStream());
+            assertNotNull("Bitamp is null after replication", bitmap);
         }
     }
 
-    public void pullReplicateDatastore(String dbname) throws Exception{
+    public void testIm0() throws Exception{
+        InputStream is = testActivity.getResources().openRawResource(raws[0]);
+        individualImageCheck(is);
+    }
+
+    public void testIm1() throws Exception{
+        InputStream is = testActivity.getResources().openRawResource(raws[1]);
+        individualImageCheck(is);
+    }
+
+    public void testIm2() throws Exception{
+        InputStream is = testActivity.getResources().openRawResource(raws[2]);
+        individualImageCheck(is);
+    }
+
+    public void testIm3() throws Exception{
+        InputStream is = testActivity.getResources().openRawResource(raws[3]);
+        individualImageCheck(is);
+    }
+
+    public void testIm4() throws Exception{
+        InputStream is = testActivity.getResources().openRawResource(raws[4]);
+        individualImageCheck(is);
+    }
+
+    public void testLargeAttachment() throws Exception{
+        InputStream is = testActivity.getResources().openRawResource(R.raw.big_photo);
+        individualImageCheck(is);
+    }
+
+    private void individualImageCheck(InputStream is) throws Exception{
+        // Check if decoding works
+        Bitmap bitmap = BitmapFactory.decodeStream(is);
+        assertNotNull("Bitamp is null before replication", bitmap);
+        is.reset();
+
+        Uri image_uri = loadAsset(is);
+        assertNotNull("Uri is null", image_uri);
+
+        DocumentBody doc = new BasicDoc("Marco", "Polo");
+        assertEquals("Polo", doc.asMap().get("Marco"));
+
+        DocumentRevision revision = ds.createDocument(doc);
+        assertEquals("Polo", ds.getDocument(revision.getId()).getBody().asMap().get("Marco"));
+
+        DocumentRevision newRevision = addAttachment(revision, image_uri);
+        assertNotNull(ds.getAttachment(newRevision, "image.jpg"));
+
+        //Push/Pull
+        pushReplicateDatastore("sync-test-1");
+
+        datastoreManager.deleteDatastore("my_datastore");
+        ds = datastoreManager.openDatastore("my_datastore");
+
+        pullReplicateDatastore("sync-test-1");
+
+        // read document
+        DocumentRevision final_rev = ds.getDocument(newRevision.getId());
+        Attachment a = ds.getAttachment(final_rev, "image.jpg");
+        assertNotNull("Attachment is null",a);
+
+        // Check again if decoding works
+        bitmap = BitmapFactory.decodeStream(a.getInputStream());
+        assertNotNull("Bitamp is null after replication", bitmap);
+    }
+
+    private void pullReplicateDatastore(String dbname) throws Exception{
         URI uri = new URI("http://10.0.2.2:5984/" + dbname);
+        //URI uri = new URI("https://" + testActivity.getString(R.string.default_user)
+        //        + ".cloudant.com/" + testActivity.getString(R.string.default_dbname));
 
         // username/password can be Cloudant API keys
         PullReplication pull = new PullReplication();
+
+        pull.username = testActivity.getString(R.string.default_api_key);
+        pull.password = testActivity.getString(R.string.default_api_password);
+
         pull.target = ds;
         pull.source = uri;
         Replicator replicator = ReplicatorFactory.oneway(pull);
@@ -149,8 +230,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     private void pushReplicateDatastore(String dbname) throws Exception{
         URI uri = new URI("http://10.0.2.2:5984/" + dbname);
+        //URI uri = new URI("https://" + testActivity.getString(R.string.default_user)
+        //        + ".cloudant.com/" + testActivity.getString(R.string.default_dbname));
 
         PushReplication push = new PushReplication();
+
+        push.username = testActivity.getString(R.string.default_api_key);
+        push.password = testActivity.getString(R.string.default_api_password);
+
         push.source = ds;
         push.target = uri;
         Replicator replicator = ReplicatorFactory.oneway(push);
