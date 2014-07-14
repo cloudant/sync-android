@@ -60,10 +60,6 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         super(MainActivity.class);
     }
 
-    /*public MainActivityTest(Class<MainActivity> activityClass) {
-        super(activityClass);
-    }*/
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -106,6 +102,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             Uri image_uri = loadAsset(is);
             assertNotNull("Uri is null", image_uri);
 
+            // Check if decoding works after the image copied into its temporary location
+            /*is = testActivity.getContentResolver().openInputStream(image_uri);
+            bitmap = BitmapFactory.decodeStream(is);
+            assertNotNull("Bitamp is null after copy into temp file", bitmap);
+            is.reset(); */
+
             DocumentBody doc = new BasicDoc("Marco", "Polo");
             assertEquals("Polo", doc.asMap().get("Marco"));
 
@@ -122,7 +124,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         pullReplicateDatastore("sync-test-1");
 
-        // read all documents in one go
+        // Read all documents in one go
         int pageSize = ds.getDocumentCount();
         List<DocumentRevision> docs = ds.getAllDocuments(0, pageSize, true);
         for (DocumentRevision rev : docs) {
@@ -166,7 +168,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         individualImageCheck(is);
     }
 
-    private void individualImageCheck(InputStream is) throws Exception{
+    private void individualImageCheck(InputStream is) throws Exception {
         // Check if decoding works
         Bitmap bitmap = BitmapFactory.decodeStream(is);
         assertNotNull("Bitamp is null before replication", bitmap);
@@ -174,6 +176,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         Uri image_uri = loadAsset(is);
         assertNotNull("Uri is null", image_uri);
+
+        // Check if decoding works after the image copied into its temporary location
+        /*is = testActivity.getContentResolver().openInputStream(image_uri);
+        bitmap = BitmapFactory.decodeStream(is);
+        assertNotNull("Bitamp is null after copy into temp file", bitmap);
+        is.reset();*/
 
         DocumentBody doc = new BasicDoc("Marco", "Polo");
         assertEquals("Polo", doc.asMap().get("Marco"));
@@ -184,7 +192,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         DocumentRevision newRevision = addAttachment(revision, image_uri);
         assertNotNull(ds.getAttachment(newRevision, "image.jpg"));
 
-        //Push/Pull
+        // Push/Pull
         pushReplicateDatastore("sync-test-1");
 
         datastoreManager.deleteDatastore("my_datastore");
@@ -192,7 +200,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         pullReplicateDatastore("sync-test-1");
 
-        // read document
+        // Read document
         DocumentRevision final_rev = ds.getDocument(newRevision.getId());
         Attachment a = ds.getAttachment(final_rev, "image.jpg");
         assertNotNull("Attachment is null",a);
@@ -202,7 +210,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertNotNull("Bitamp is null after replication", bitmap);
     }
 
-    private void pullReplicateDatastore(String dbname) throws Exception{
+    private void pullReplicateDatastore(String dbname) throws Exception {
         URI uri = new URI("http://10.0.2.2:5984/" + dbname);
         //URI uri = new URI("https://" + testActivity.getString(R.string.default_user)
         //        + ".cloudant.com/" + testActivity.getString(R.string.default_dbname));

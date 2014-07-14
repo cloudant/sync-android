@@ -23,6 +23,7 @@ import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
+import com.cloudant.sync.replication.Replication;
 import com.cloudant.sync.replication.ReplicatorFactory;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.PushReplication;
@@ -49,6 +50,11 @@ public class MainActivity extends Activity{
     private ImageAdapter adapter;
     private boolean isEmulator = false;
 
+    private enum ReplicationType {
+        Pull,
+        Push
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -63,6 +69,7 @@ public class MainActivity extends Activity{
         gridview.setColumnWidth(screenW/2);
         adapter = new ImageAdapter(this, screenW/2);
         gridview.setAdapter(adapter);
+        reloadView(); //TODO: Check if makes the difference with regards to column num
 
         // Create an empty datastore
         try {
@@ -100,7 +107,6 @@ public class MainActivity extends Activity{
             case R.id.action_add:
                 if (isEmulator){
                     loadAsset(getResources().openRawResource(R.raw.sample_5));
-                    //adapter.loadImage(getResources().openRawResource(R.raw.sample_5), this);
                     reloadView();
                 } else {
                     // Take the user to their chosen image selection app (gallery or file manager)
@@ -108,19 +114,20 @@ public class MainActivity extends Activity{
                     pickIntent.setType("image/*");
                     pickIntent.setAction(Intent.ACTION_GET_CONTENT);
                     startActivityForResult(Intent.createChooser(pickIntent, "Select Picture"), 1);
+                    reloadView();
                 }
                 return true;
             case R.id.action_settings:
                 return true;
             case R.id.action_replicate:
-                pushReplicateDatastore();
+                replicateDatastore(ReplicationType.Push);
                 return true;
             case R.id.action_delete:
                 deleteDatastore();
                 reloadView();
                 return true;
             case R.id.action_pull_replicate:
-                pullReplicateDatastore();
+                replicateDatastore(ReplicationType.Pull);
                 adapter.clearImageData();
                 loadDatastore();
                 reloadView();
@@ -141,7 +148,6 @@ public class MainActivity extends Activity{
             try {
                 Uri imageUri = data.getData();
                 adapter.addImage(imageUri, this);
-                reloadView();
             } catch (IOException e) {
                 Log.d("IOException found! ", e.toString());
             }
@@ -150,7 +156,7 @@ public class MainActivity extends Activity{
     }
 
     // Creates a DatastoreManager using application internal storage path
-    public void initDatastore() throws IOException{
+    public void initDatastore() throws IOException {
         File path = getApplicationContext().getDir("datastores", 0);
         manager = new DatastoreManager(path.getAbsolutePath());
         ds = manager.openDatastore("my_datastore");
@@ -170,35 +176,11 @@ public class MainActivity extends Activity{
     // Load images from datastore
     public void loadDatastore() {
         try {
-            // read all documents in one go
+            // Read all documents in one go
             int pageSize = ds.getDocumentCount();
             List<DocumentRevision> docs = ds.getAllDocuments(0, pageSize, true);
             for (DocumentRevision rev : docs) {
-                Log.d("rev", rev.getRevision());
-                Log.d("id", rev.getId());
-                Map<String, Object> m = rev.getBody().asMap();
-                if (m.isEmpty()) System.out.println("Empty body :(");
-                for (Map.Entry entry : m.entrySet()) {
-                    System.out.println(entry.getKey() + ", " + entry.getValue());
-                }
-                for (Attachment a : ds.attachmentsForRevision(rev)) {
-                    Log.d("attachment", a.toString());
-                }
                 Attachment a = ds.getAttachment(rev, "image.jpg");
-                if (a == null) {
-                    Log.d("null", "Doc " + rev.getId() + " has no attachments.");
-                    continue;
-                }
-                Log.d("name", a.name);
-                Log.d("size", "" + a.getSize());
-                InputStream is = a.getInputStream();
-                //Log.d("available", ""+is.available());
-                //loadAsset(is);
-                byte[] byte_buf = new byte[10];
-                is.read(byte_buf);
-                Log.d("buf", Arrays.toString(byte_buf));
-                //is.reset();
-                Bitmap bitmap = BitmapFactory.decodeStream(a.getInputStream());
                 adapter.loadImage(a.getInputStream(), this);
             }
         } catch (IOException e) {
@@ -207,74 +189,51 @@ public class MainActivity extends Activity{
         }
     }
 
-    public void pushReplicateDatastore(){
+    public void replicateDatastore(ReplicationType r){
         try {
             URI uri = new URI("https://" + getString(R.string.default_user)
                     + ".cloudant.com/" + getString(R.string.default_dbname));
+            //URI uri = new URI("http://10.0.2.2:5984/sync-test");
 
-            // Create a replicator that replicates changes from the local
-            // datastore to the remote database.
-            // username/password can be Cloudant API keys
-            PushReplication push = new PushReplication();
-            push.username = getString(R.string.default_api_key);
-            push.password = getString(R.string.default_api_password);
-            push.source = ds;
-            push.target = uri;
-            Replicator replicator = ReplicatorFactory.oneway(push);
+
+            Replication replication;
+            if (r == ReplicationType.Pull) {
+                PullReplication pull = new PullReplication();
+                pull.target = ds;
+                pull.source = uri;
+                replication = pull;
+            } else {
+                PushReplication push = new PushReplication();
+                push.source = ds;
+                push.target = uri;
+                replication = push;
+            }
+
+            replication.username = getString(R.string.default_api_key);
+            replication.password = getString(R.string.default_api_password);
+            Replicator replicator = ReplicatorFactory.oneway(replication);
 
             // Use a CountDownLatch to provide a lightweight way to wait for completion
             CountDownLatch latch = new CountDownLatch(1);
             ReplicationListener listener = new ReplicationListener(latch);
             replicator.getEventBus().register(listener);
             replicator.start();
+
             latch.await();
             replicator.getEventBus().unregister(listener);
 
             if (replicator.getState() != Replicator.State.COMPLETE) {
-                Log.d("MainActivity","Error replicating TO remote" + listener.error.toString());
+                Log.d("MainActivity","Error replicating" + listener.error.toString());
             } else {
-                Toast.makeText(MainActivity.this, "Local db is replicated.",
+                Toast.makeText(MainActivity.this, "Replication finished",
                         Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
-            Log.d("PushReplicate exception", e.toString());
+            Log.d(r.toString() + "Replicate exception", e.toString());
         }
     }
 
-    public void pullReplicateDatastore() {
-        try {
-            URI uri = new URI("https://" + getString(R.string.default_user)
-                               + ".cloudant.com/" + getString(R.string.default_dbname));
-
-            // username/password can be Cloudant API keys
-            PullReplication pull = new PullReplication();
-            pull.username = getString(R.string.default_api_key);
-            pull.password = getString(R.string.default_api_password);
-            pull.target = ds;
-            pull.source = uri;
-            Replicator replicator = ReplicatorFactory.oneway(pull);
-
-            // Use a CountDownLatch to provide a lightweight way to wait for completion
-            CountDownLatch latch = new CountDownLatch(1);
-            ReplicationListener listener = new ReplicationListener(latch);
-            replicator.getEventBus().register(listener);
-            replicator.start();
-
-            latch.await();
-            replicator.getEventBus().unregister(listener);
-
-            if (replicator.getState() != Replicator.State.COMPLETE) {
-                Log.d("MainActivity","Error replicating FROM remote" + listener.error.toString());
-            } else {
-                Toast.makeText(MainActivity.this, "Local db is updated.",
-                        Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e){
-            Log.d("PullReplicate exception", e.toString());
-        }
-    }
-
-    public void uploadAttachment(String id, int position){
+    public void uploadAttachment(String id, int position) {
         try {
             InputStream is = adapter.getStream(position);
 
@@ -291,7 +250,8 @@ public class MainActivity extends Activity{
     }
 
     // Move an asset to a file and pass it to adapter
-    private void loadAsset(InputStream in_s){
+    //TODO: Investigate why attachment cannot be loaded from the asset
+    private void loadAsset(InputStream in_s) {
         try {
             InputStream in = null;
             OutputStream out = null;
@@ -310,7 +270,7 @@ public class MainActivity extends Activity{
             outs = "file:///" + outs;
             Uri uri = Uri.parse(outs + "image.jpg");
             adapter.addImage(uri, this);
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -323,13 +283,13 @@ public class MainActivity extends Activity{
         }
     }
 
-    private void reloadView(){
+    private void reloadView() {
         GridView gridview = (GridView) findViewById(R.id.gridview);
         gridview.invalidate();
         gridview.requestLayout();
     }
 
-    private int getScreenW(){
+    private int getScreenW() {
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
         return (int) (displayMetrics.widthPixels / displayMetrics.density);
     }
