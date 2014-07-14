@@ -608,7 +608,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public void deleteDocument(String docId, String prevRevId) throws ConflictException {
+    public DocumentRevision deleteDocument(String docId, String prevRevId) throws ConflictException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
                 "Input document id can not be empty");
@@ -616,6 +616,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 "Input previous revision id can not be empty");
 
         CouchUtils.validateRevisionId(prevRevId);
+
+        DocumentRevision deletedRevision = null;
 
         DocumentDeleted documentDeleted = null;
         this.sqlDb.beginTransaction();
@@ -651,8 +653,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 options.available = false;
                 options.copyAttachments = false;
                 this.insertRevision(options);
-                BasicDocumentRevision newRevision = this.getDocument(preRevision.getId(), newRevisionId);
-                documentDeleted = new DocumentDeleted(preRevision, newRevision);
+                deletedRevision = this.getDocument(preRevision.getId(), newRevisionId);
+                documentDeleted = new DocumentDeleted(preRevision, deletedRevision);
             }
 
             // Very tricky! Must call setTransactionSuccessful() even no change
@@ -666,6 +668,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 eventBus.post(documentDeleted);
             }
         }
+
+        return deletedRevision;
     }
 
     @Override

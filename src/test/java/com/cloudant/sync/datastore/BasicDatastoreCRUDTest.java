@@ -219,12 +219,18 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     public void deleteDocument_previousRevisionWasWinner_newRevisionInsertedAsWinner()
             throws ConflictException {
         BasicDocumentRevision rev1 = datastore.createDocument(bodyOne);
-        this.datastore.deleteDocument(rev1.getId(), rev1.getRevision());
+        
+        DocumentRevision deletedRev = this.datastore.deleteDocument(rev1.getId(), rev1.getRevision());
+        Assert.assertEquals(2, CouchUtils.generationFromRevId(deletedRev.getRevision()));
+        Assert.assertTrue(deletedRev.isDeleted());
+        Assert.assertTrue(deletedRev.isCurrent());
+
         DocumentRevisionTree tree = this.datastore.getAllRevisionsOfDocument(rev1.getId());
         BasicDocumentRevision rev2 = (BasicDocumentRevision) tree.getCurrentRevision();
         Assert.assertEquals(2, CouchUtils.generationFromRevId(rev2.getRevision()));
         Assert.assertTrue(rev2.isDeleted());
         Assert.assertTrue(rev2.isCurrent());
+
     }
 
     @Test

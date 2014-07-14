@@ -238,7 +238,7 @@ public interface Datastore {
      *
      * @see Datastore#getEventBus()
      */
-    public void deleteDocument(String documentId, String revisionId) throws ConflictException;
+    public DocumentRevision deleteDocument(String documentId, String revisionId) throws ConflictException;
 
     /**
      * <p>Retrieves the datastore's current sequence number.</p>
