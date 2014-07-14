@@ -200,9 +200,12 @@ public class MultipartAttachmentWriter extends InputStream {
                 continue;
             }
             howMuch = Math.min(bytes.length - currentOffset, currentComponent.available());
+            if (howMuch == 0) {
+                break;
+            }
             amountRead += currentComponent.read(bytes, currentOffset, howMuch);
             currentOffset += howMuch;
-        } while (currentComponentIdx < components.size()-1 && howMuch > 0);
+        } while (currentComponentIdx < components.size()-1);
 
         // signal EOF if we don't have any more
         int retnum =  amountRead > 0 ? amountRead : -1;

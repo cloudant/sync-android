@@ -236,6 +236,11 @@ public class RevisionHistoryHelper {
                                 bos.write(buf, 0, n);
                             }
                         } while (n > 0);
+                        // out of paranoia, close and flush - docs don't say what you have to do to
+                        // ensure all base64 is written, but close seems to do the right thing with
+                        // the apache codec implementation
+                        bos.flush();
+                        bos.close();
                         theAtt.put("data", baos.toString());  //base64 of data
                     }
                     theAtt.put("length", savedAtt.getSize());

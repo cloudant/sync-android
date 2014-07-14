@@ -95,6 +95,10 @@ public class TestUtils {
                     break;
                 }
             }
+            if (is2.read() != -1) {
+                // more bytes in the 2nd stream
+                return false;
+            }
         } catch (IOException ioe) {
             return false;
         }
