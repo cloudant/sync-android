@@ -199,8 +199,9 @@ public class MultipartAttachmentWriter extends InputStream {
                 ++currentComponentIdx;
                 continue;
             }
-            howMuch = Math.min(bytes.length - currentOffset, currentComponent.available());
-            if (howMuch == 0) {
+            // try to read enough bytes to fill the rest of the bytes array
+            howMuch = bytes.length - currentOffset;
+            if (howMuch <= 0) {
                 break;
             }
             amountRead += currentComponent.read(bytes, currentOffset, howMuch);
