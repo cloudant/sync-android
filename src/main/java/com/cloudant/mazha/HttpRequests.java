@@ -269,7 +269,7 @@ public class HttpRequests {
         try {
             properties.load(Resources.newInputStreamSupplier(url).getInput());
             return properties.getProperty("user.agent", default_user_agent);
-        } catch (IOException ioException) {
+        } catch (Exception ioException) {
             return default_user_agent;
         }
     }

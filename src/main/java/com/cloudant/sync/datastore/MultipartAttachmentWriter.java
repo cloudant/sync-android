@@ -69,14 +69,29 @@ import java.util.ArrayList;
 
 public class MultipartAttachmentWriter extends InputStream {
 
+    private int totalWritten = 0;
     /**
-     * Construct a <code>MultipartAttachmentWriter</code> with a default <code>partBoundary</code>
+     * Construct a <code>MultipartAttachmentWriter</code> with a default <code>boundary</code>
      *
      * @see #makeBoundary()
      */
     public MultipartAttachmentWriter() {
-        // pick a partBoundary
+        // auto generate a boundary
         this.boundary = this.makeBoundary();
+        this.setup();
+    }
+
+    /**
+     * Construct a <code>MultipartAttachmentWriter</code> with a specific <code>boundary</code>
+     */
+    public MultipartAttachmentWriter(String boundary) {
+        // pick a boundary
+        this.boundary = boundary;
+        this.setup();
+    }
+
+    // common constructor stuff
+    private void setup() {
         this.partBoundary = ("--"+boundary).getBytes();
         this.trailingBoundary = ("--"+boundary+"--").getBytes();
 
@@ -163,23 +178,17 @@ public class MultipartAttachmentWriter extends InputStream {
      * @throws java.io.IOException
      */
     public int read() throws java.io.IOException {
-
-        byte[] buf = new byte[1];
-        int amountRead = read(buf);
-
-        // read(byte[]) can return 0 if there are no bytes available or -1 to signal EOF
-        // in either case, return -1 to indicate we are done
-        if (amountRead != 1) {
-            return -1;
-        }
-        // return the character we read
-        // convert from 2s complement
-        int c = buf[0];
-        if (c < 0) {
-            return c + 256;
-        } else {
-            return c;
-        }
+        int c;
+        do {
+            c = components.get(currentComponentIdx).read();
+            if (c != -1) {
+                return c;
+            } else {
+                ++currentComponentIdx;
+            }
+        } while (currentComponentIdx < components.size());
+        // we got through all the components, end of stream
+        return -1;
     }
 
     /**
@@ -195,18 +204,20 @@ public class MultipartAttachmentWriter extends InputStream {
         int howMuch = 0;
         do {
             InputStream currentComponent = components.get(currentComponentIdx);
-            if (currentComponent.available() == 0) {
-                ++currentComponentIdx;
-                continue;
-            }
             // try to read enough bytes to fill the rest of the bytes array
             howMuch = bytes.length - currentOffset;
             if (howMuch <= 0) {
                 break;
             }
-            amountRead += currentComponent.read(bytes, currentOffset, howMuch);
+            int read = currentComponent.read(bytes, currentOffset, howMuch);
+            if (read <= 0) {
+                currentComponentIdx++;
+                continue;
+            }
+            amountRead += read;
             currentOffset += howMuch;
-        } while (currentComponentIdx < components.size()-1);
+            totalWritten += amountRead;
+        } while (currentComponentIdx < components.size());
 
         // signal EOF if we don't have any more
         int retnum =  amountRead > 0 ? amountRead : -1;

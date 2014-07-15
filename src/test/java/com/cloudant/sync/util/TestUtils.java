@@ -90,6 +90,10 @@ public class TestUtils {
         try {
             while ((c1 = is1.read()) != -1) {
                 c2 = is2.read();
+                // % is 'any' metacharacter
+                if (c1 == '%') {
+                    continue;
+                }
                 if (c1 != c2) {
                     equal = false;
                     break;

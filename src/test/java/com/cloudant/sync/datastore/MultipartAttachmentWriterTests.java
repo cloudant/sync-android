@@ -25,7 +25,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,77 +73,74 @@ public class MultipartAttachmentWriterTests {
     }
 
     @Test
-    public void Add1000TextAttachmentsTest() {
-        try {
-            DocumentRevision doc = datastore.createDocument(bodyOne);
-            ArrayList<Attachment> attachments = new ArrayList<Attachment>();
+    public void Add1000TextAttachmentsTest() throws Exception {
+        DocumentRevision doc = datastore.createDocument(bodyOne);
+        ArrayList<Attachment> attachments = new ArrayList<Attachment>();
 
-            MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
-            mpw.setBody(doc);
+        MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
+        mpw.setBody(doc);
 
-            for (int i=0; i<1000; i++) {
-                String name = "attachment" + UUID.randomUUID();
-                StringBuilder s = new StringBuilder();
-                s.append("this is some data for ");
-                s.append(name);
-                for (int c=0;c<Math.random()*100;c++) {
-                    s.append("+");
-                }
-                byte[] bytes = (s.toString()).getBytes();
-                Attachment att0 = new UnsavedStreamAttachment(new ByteArrayInputStream(bytes), name, "text/plain");
-                mpw.addAttachment(att0);
+        for (int i=0; i<1000; i++) {
+            String name = "attachment" + UUID.randomUUID();
+            StringBuilder s = new StringBuilder();
+            s.append("this is some data for ");
+            s.append(name);
+            for (int c=0;c<Math.random()*100;c++) {
+                s.append("+");
             }
-            mpw.close();
-
-            int amountRead = 0;
-            int totalRead = 0;
-
-            do {
-                byte buf[] = new byte[chunkSize];
-                amountRead = mpw.read(buf);
-                if (amountRead > 0) {
-                    totalRead += amountRead;
-                    System.out.print(new String(buf, 0, amountRead));
-                }
-            } while(amountRead > 0);
-
-            Assert.assertEquals(totalRead, mpw.getContentLength());
-
-        } catch (Exception e) {
-            System.out.println("aarg "+e);
+            byte[] bytes = (s.toString()).getBytes();
+            Attachment att0 = new UnsavedStreamAttachment(new ByteArrayInputStream(bytes), name, "text/plain");
+            mpw.addAttachment(att0);
         }
+        mpw.close();
+
+        int amountRead = 0;
+        int totalRead = 0;
+
+        do {
+            byte buf[] = new byte[chunkSize];
+            amountRead = mpw.read(buf);
+            if (amountRead > 0) {
+                totalRead += amountRead;
+                System.out.print(new String(buf, 0, amountRead));
+            }
+        } while(amountRead > 0);
+
+        Assert.assertEquals(totalRead, mpw.getContentLength());
     }
 
 
     @Test
-    public void AddImageAttachmentTest() {
-        try {
-            DocumentRevision doc = datastore.createDocument(bodyOne);
-            ArrayList<Attachment> attachments = new ArrayList<Attachment>();
+    public void AddImageAttachmentTest() throws Exception {
+        DocumentRevision doc = datastore.createDocument(bodyOne);
+        ArrayList<Attachment> attachments = new ArrayList<Attachment>();
 
-            MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
-            mpw.setBody(doc);
+        MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
+        mpw.setBody(doc);
 
-            Attachment att0 = new UnsavedFileAttachment(new File("fixture", "bonsai-boston.jpg"), "image/jpeg");
-            mpw.addAttachment(att0);
-            mpw.close();
+        Attachment att0 = new UnsavedFileAttachment(new File("fixture", "bonsai-boston.jpg"), "image/jpeg");
+        mpw.addAttachment(att0);
+        mpw.close();
 
-            int amountRead = 0;
-            int totalRead = 0;
+        int amountRead = 0;
+        int totalRead = 0;
 
-            do {
-                byte buf[] = new byte[chunkSize];
-                amountRead = mpw.read(buf);
-                if (amountRead > 0) {
-                    totalRead += amountRead;
-                }
-            } while(amountRead > 0);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-            Assert.assertEquals(totalRead, mpw.getContentLength());
+        do {
+            byte buf[] = new byte[chunkSize];
+            amountRead = mpw.read(buf);
+            if (amountRead > 0) {
+                bos.write(buf, 0, amountRead);
+                totalRead += amountRead;
+            }
+        } while(amountRead > 0);
 
-        } catch (Exception e) {
-            System.out.println("aarg "+e);
-        }
+        bos.flush();
+        bos.close();
+        Assert.assertEquals(totalRead, mpw.getContentLength());
+        FileInputStream fis = new FileInputStream(new File("fixture", "AddImageAttachmentTest_expected.mime"));
+        Assert.assertTrue(TestUtils.streamsEqual(fis, new ByteArrayInputStream(bos.toByteArray())));
     }
 
 }
