@@ -26,6 +26,7 @@ import com.cloudant.sync.replication.PushReplication;
 import com.cloudant.sync.replication.PullReplication;
 import com.cloudant.sync.datastore.Attachment;
 
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -176,7 +177,7 @@ public class MainActivity extends Activity{
             List<DocumentRevision> docs = ds.getAllDocuments(0, pageSize, true);
             for (DocumentRevision rev : docs) {
                 Attachment a = ds.getAttachment(rev, "image.jpg");
-                adapter.loadImage(a.getInputStream(), this);
+                adapter.loadImage(a, this);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -186,9 +187,9 @@ public class MainActivity extends Activity{
 
     public void replicateDatastore(ReplicationType r){
         try {
-            URI uri = new URI("https://" + getString(R.string.default_user)
-                    + ".cloudant.com/" + getString(R.string.default_dbname));
-            //URI uri = new URI("http://10.0.2.2:5984/sync-test");
+            //URI uri = new URI("https://" + getString(R.string.default_user)
+            //        + ".cloudant.com/" + getString(R.string.default_dbname));
+            URI uri = new URI("http://10.0.2.2:5984/sync-test");
 
 
             Replication replication;
@@ -204,8 +205,8 @@ public class MainActivity extends Activity{
                 replication = push;
             }
 
-            replication.username = getString(R.string.default_api_key);
-            replication.password = getString(R.string.default_api_password);
+            //replication.username = getString(R.string.default_api_key);
+            //replication.password = getString(R.string.default_api_password);
             Replicator replicator = ReplicatorFactory.oneway(replication);
 
             // Use a CountDownLatch to provide a lightweight way to wait for completion
@@ -245,7 +246,6 @@ public class MainActivity extends Activity{
     }
 
     // Move an asset to a file and pass it to adapter
-    //TODO: Investigate why attachment cannot be loaded from the asset
     private void loadAsset(InputStream in_s) {
         try {
             InputStream in = null;

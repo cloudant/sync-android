@@ -14,6 +14,8 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 
+import com.cloudant.sync.datastore.Attachment;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -65,14 +67,14 @@ public class ImageAdapter extends BaseAdapter{
 
     public void addImage(Uri imageUri, Context c) throws IOException{
         mThumbFiles.add(c.getContentResolver().openInputStream(imageUri));
-        Bitmap bitmap = loadBitmap(imageUri);
+        Bitmap bitmap = loadBitmap(imageUri, c);
         mThumbBitmaps.add(bitmap);
     }
 
-    public void loadImage(InputStream is, Context c){
-        BufferedInputStream bs = new BufferedInputStream(is);
-        mThumbFiles.add(bs);
-        Bitmap bitmap = loadBitmap(bs);
+    public void loadImage(Attachment a, Context c) throws IOException{
+        //BufferedInputStream bs = new BufferedInputStream(is);
+        mThumbFiles.add(a.getInputStream());
+        Bitmap bitmap = loadBitmap(a);
         mThumbBitmaps.add(bitmap);
     }
 
@@ -85,26 +87,26 @@ public class ImageAdapter extends BaseAdapter{
         mThumbFiles.clear();
     }
 
-    public Bitmap loadBitmap(InputStream is){
+    public Bitmap loadBitmap(Uri imageUri, Context c) throws IOException{
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        BitmapFactory.decodeStream(is, null, options);
+        BitmapFactory.decodeStream(c.getContentResolver().openInputStream(imageUri), null, options);
 
         options.inSampleSize = calculateSampleSize(options, lSize,lSize);
 
         options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeStream(is, null, options);
+        return BitmapFactory.decodeStream(c.getContentResolver().openInputStream(imageUri), null, options);
     }
 
-    public Bitmap loadBitmap(Uri uri){
+    public Bitmap loadBitmap(Attachment a) throws IOException{
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(uri.getPath(),options);
+        BitmapFactory.decodeStream(a.getInputStream(), null, options);
 
         options.inSampleSize = calculateSampleSize(options, lSize,lSize);
 
         options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeFile(uri.getPath(),options);
+        return BitmapFactory.decodeStream(a.getInputStream(), null, options);
     }
 
     public static int calculateSampleSize( BitmapFactory.Options options,
