@@ -93,7 +93,7 @@ class AttachmentManager {
         byte[] sha1 = a.sha1;
         String type = a.attachment.type;
         int encoding = a.attachment.encoding.ordinal();
-        long length = a.attachment.getSize();
+        long length = a.tempFile.length();
         long revpos = CouchUtils.generationFromRevId(rev.getRevision());
 
         values.put("sequence", sequence);
