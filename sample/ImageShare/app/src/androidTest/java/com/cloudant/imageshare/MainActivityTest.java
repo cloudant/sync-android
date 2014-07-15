@@ -1,17 +1,13 @@
 package com.cloudant.imageshare;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Debug;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.ActivityUnitTestCase;
-import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.cloudant.imageshare.MainActivity;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreManager;
@@ -20,10 +16,9 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.replication.PullReplication;
 import com.cloudant.sync.replication.PushReplication;
+import com.cloudant.sync.replication.Replication;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorFactory;
-
-import junit.framework.TestCase;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -32,18 +27,14 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.Exception;
-import java.net.HttpCookie;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActivity> {
@@ -55,6 +46,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     private HttpClient httpClient;
 
     int[] raws = {R.raw.pic1,R.raw.pic2,R.raw.pic3,R.raw.pic4,R.raw.pic5};
+
+    private enum ReplicationType {
+        Pull,
+        Push
+    }
 
     public MainActivityTest() {
         super(MainActivity.class);
@@ -99,7 +95,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertNotNull("Bitamp is null before replication", bitmap);
             is.reset();
 
-            Uri image_uri = loadAsset(is);
+            Uri image_uri = createTempFile(is);
             assertNotNull("Uri is null", image_uri);
 
             // Check if decoding works after the image copied into its temporary location
@@ -114,15 +110,16 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             DocumentRevision revision = ds.createDocument(doc);
             assertEquals("Polo", ds.getDocument(revision.getId()).getBody().asMap().get("Marco"));
 
-            DocumentRevision newRevision = addAttachment(revision, image_uri);
+            InputStream stream = context.getContentResolver().openInputStream(image_uri);
+            DocumentRevision newRevision = addAttachment(revision, stream);
             assertNotNull(ds.getAttachment(newRevision, "image.jpg"));
         }
-        pushReplicateDatastore("sync-test-1");
+        replicateDatastore(ReplicationType.Push, "sync-test-1");
 
         datastoreManager.deleteDatastore("my_datastore");
         ds = datastoreManager.openDatastore("my_datastore");
 
-        pullReplicateDatastore("sync-test-1");
+        replicateDatastore(ReplicationType.Pull, "sync-test-1");
 
         // Read all documents in one go
         int pageSize = ds.getDocumentCount();
@@ -140,42 +137,64 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     public void testIm0() throws Exception{
         InputStream is = testActivity.getResources().openRawResource(raws[0]);
-        individualImageCheck(is);
+        Uri uri = loadAsset(is);
+        InputStream stream = context.getContentResolver().openInputStream(uri);
+        individualImageCheck(stream);
     }
 
     public void testIm1() throws Exception{
         InputStream is = testActivity.getResources().openRawResource(raws[1]);
-        individualImageCheck(is);
+        Uri uri = loadAsset(is);
+        InputStream stream = context.getContentResolver().openInputStream(uri);
+        individualImageCheck(stream);
     }
 
     public void testIm2() throws Exception{
         InputStream is = testActivity.getResources().openRawResource(raws[2]);
-        individualImageCheck(is);
+        Uri uri = loadAsset(is);
+        InputStream stream = context.getContentResolver().openInputStream(uri);
+        individualImageCheck(stream);
     }
 
     public void testIm3() throws Exception{
         InputStream is = testActivity.getResources().openRawResource(raws[3]);
-        individualImageCheck(is);
+        Uri uri = loadAsset(is);
+        InputStream stream = context.getContentResolver().openInputStream(uri);
+        individualImageCheck(stream);
     }
 
     public void testIm4() throws Exception{
         InputStream is = testActivity.getResources().openRawResource(raws[4]);
+        Uri uri = loadAsset(is);
+        InputStream stream = context.getContentResolver().openInputStream(uri);
+        individualImageCheck(stream);
+    }
+
+    public void testReadingFromAsset() throws Exception{
+        InputStream is = testActivity.getResources().openRawResource(raws[4]);
+        //Uri uri = loadAsset(is);
         individualImageCheck(is);
     }
 
     public void testLargeAttachment() throws Exception{
         InputStream is = testActivity.getResources().openRawResource(R.raw.big_photo);
-        individualImageCheck(is);
+        Uri uri = loadAsset(is);
+        InputStream stream = context.getContentResolver().openInputStream(uri);
+        individualImageCheck(stream);
     }
 
-    private void individualImageCheck(InputStream is) throws Exception {
+    private Uri loadAsset(InputStream is) throws IOException{
         // Check if decoding works
-        Bitmap bitmap = BitmapFactory.decodeStream(is);
+        Bitmap bitmap = testActivity.adapter.loadBitmap(is);
         assertNotNull("Bitamp is null before replication", bitmap);
         is.reset();
 
-        Uri image_uri = loadAsset(is);
+        Uri image_uri = createTempFile(is);
         assertNotNull("Uri is null", image_uri);
+        return  image_uri;
+    }
+
+    private void individualImageCheck(InputStream is) throws Exception {
 
         // Check if decoding works after the image copied into its temporary location
         /*is = testActivity.getContentResolver().openInputStream(image_uri);
@@ -189,16 +208,16 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         DocumentRevision revision = ds.createDocument(doc);
         assertEquals("Polo", ds.getDocument(revision.getId()).getBody().asMap().get("Marco"));
 
-        DocumentRevision newRevision = addAttachment(revision, image_uri);
+        DocumentRevision newRevision = addAttachment(revision, is);
         assertNotNull(ds.getAttachment(newRevision, "image.jpg"));
 
         // Push/Pull
-        pushReplicateDatastore("sync-test-1");
+        replicateDatastore(ReplicationType.Push, "sync-test-1");
 
         datastoreManager.deleteDatastore("my_datastore");
         ds = datastoreManager.openDatastore("my_datastore");
 
-        pullReplicateDatastore("sync-test-1");
+        replicateDatastore(ReplicationType.Pull, "sync-test-1");
 
         // Read document
         DocumentRevision final_rev = ds.getDocument(newRevision.getId());
@@ -206,24 +225,32 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertNotNull("Attachment is null",a);
 
         // Check again if decoding works
-        bitmap = BitmapFactory.decodeStream(a.getInputStream());
+        Bitmap bitmap = BitmapFactory.decodeStream(a.getInputStream());
         assertNotNull("Bitamp is null after replication", bitmap);
     }
 
-    private void pullReplicateDatastore(String dbname) throws Exception {
+    public void replicateDatastore(ReplicationType r, String dbname) throws Exception {
         URI uri = new URI("http://10.0.2.2:5984/" + dbname);
         //URI uri = new URI("https://" + testActivity.getString(R.string.default_user)
         //        + ".cloudant.com/" + testActivity.getString(R.string.default_dbname));
 
-        // username/password can be Cloudant API keys
-        PullReplication pull = new PullReplication();
 
-        pull.username = testActivity.getString(R.string.default_api_key);
-        pull.password = testActivity.getString(R.string.default_api_password);
+        Replication replication;
+        if (r == ReplicationType.Pull) {
+            PullReplication pull = new PullReplication();
+            pull.target = ds;
+            pull.source = uri;
+            replication = pull;
+        } else {
+            PushReplication push = new PushReplication();
+            push.source = ds;
+            push.target = uri;
+            replication = push;
+        }
 
-        pull.target = ds;
-        pull.source = uri;
-        Replicator replicator = ReplicatorFactory.oneway(pull);
+        //pull.username = testActivity.getString(R.string.default_api_key);
+        //pull.password = testActivity.getString(R.string.default_api_password);
+        Replicator replicator = ReplicatorFactory.oneway(replication);
 
         // Use a CountDownLatch to provide a lightweight way to wait for completion
         CountDownLatch latch = new CountDownLatch(1);
@@ -236,33 +263,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(Replicator.State.COMPLETE, replicator.getState());
     }
 
-    private void pushReplicateDatastore(String dbname) throws Exception{
-        URI uri = new URI("http://10.0.2.2:5984/" + dbname);
-        //URI uri = new URI("https://" + testActivity.getString(R.string.default_user)
-        //        + ".cloudant.com/" + testActivity.getString(R.string.default_dbname));
-
-        PushReplication push = new PushReplication();
-
-        push.username = testActivity.getString(R.string.default_api_key);
-        push.password = testActivity.getString(R.string.default_api_password);
-
-        push.source = ds;
-        push.target = uri;
-        Replicator replicator = ReplicatorFactory.oneway(push);
-
-        // Use a CountDownLatch to provide a lightweight way to wait for completion
-        CountDownLatch latch = new CountDownLatch(1);
-        ReplicationListener listener = new ReplicationListener(latch);
-        replicator.getEventBus().register(listener);
-        replicator.start();
-        latch.await();
-        replicator.getEventBus().unregister(listener);
-
-        assertEquals(Replicator.State.COMPLETE, replicator.getState());
-    }
-
-    private DocumentRevision addAttachment(DocumentRevision revision, Uri image_uri) throws Exception{
-        InputStream stream = context.getContentResolver().openInputStream(image_uri);
+    private DocumentRevision addAttachment(DocumentRevision revision, InputStream stream) throws Exception{
         Attachment att = new UnsavedStreamAttachment(stream, "image.jpg", "image/jpeg");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
@@ -285,7 +286,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     }
 
     // Move an asset to a file and pass it to adapter
-    private Uri loadAsset(InputStream in_s){
+    private Uri createTempFile (InputStream in_s){
         try {
             InputStream in = null;
             OutputStream out = null;

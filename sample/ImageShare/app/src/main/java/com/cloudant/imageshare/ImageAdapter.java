@@ -33,10 +33,6 @@ public class ImageAdapter extends BaseAdapter{
         lSize = layoutParam;
         mThumbBitmaps = new ArrayList<Bitmap>();
         mThumbFiles = new ArrayList<InputStream>();
-        /*Bitmap img0 = BitmapFactory.decodeResource(c.getResources(), R.drawable.sample_0);
-        Bitmap img1 = BitmapFactory.decodeResource(c.getResources(), R.drawable.sample_1);
-        mThumbBitmaps.add(img0);
-        mThumbBitmaps.add(img1);*/
     }
 
     public int getCount() {
@@ -69,14 +65,14 @@ public class ImageAdapter extends BaseAdapter{
 
     public void addImage(Uri imageUri, Context c) throws IOException{
         mThumbFiles.add(c.getContentResolver().openInputStream(imageUri));
-        Bitmap bitmap = MediaStore.Images.Media.getBitmap(c.getContentResolver(), imageUri);
+        Bitmap bitmap = loadBitmap(imageUri);
         mThumbBitmaps.add(bitmap);
     }
 
     public void loadImage(InputStream is, Context c){
         BufferedInputStream bs = new BufferedInputStream(is);
         mThumbFiles.add(bs);
-        Bitmap bitmap = BitmapFactory.decodeStream(bs);
+        Bitmap bitmap = loadBitmap(bs);
         mThumbBitmaps.add(bitmap);
     }
 
@@ -87,6 +83,52 @@ public class ImageAdapter extends BaseAdapter{
     public void clearImageData(){
         mThumbBitmaps.clear();
         mThumbFiles.clear();
+    }
+
+    public Bitmap loadBitmap(InputStream is){
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeStream(is, null, options);
+
+        options.inSampleSize = calculateSampleSize(options, lSize,lSize);
+
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeStream(is, null, options);
+    }
+
+    public Bitmap loadBitmap(Uri uri){
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(uri.getPath(),options);
+
+        options.inSampleSize = calculateSampleSize(options, lSize,lSize);
+
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(uri.getPath(),options);
+    }
+
+    public static int calculateSampleSize( BitmapFactory.Options options,
+                                           int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) > reqHeight
+                    && (halfWidth / inSampleSize) > reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        Log.d("SampleSize", "" +inSampleSize);
+        return inSampleSize;
     }
 
     // references to our images

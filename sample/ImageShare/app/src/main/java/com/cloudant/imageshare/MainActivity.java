@@ -1,10 +1,6 @@
 package com.cloudant.imageshare;
 
 import android.app.Activity;
-import android.app.Application;
-import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -47,7 +43,7 @@ public class MainActivity extends Activity{
 
     private Datastore ds;
     private DatastoreManager manager;
-    private ImageAdapter adapter;
+    public ImageAdapter adapter;
     private boolean isEmulator = false;
 
     private enum ReplicationType {
@@ -65,11 +61,10 @@ public class MainActivity extends Activity{
 
         // Create a grid of images
         GridView gridview = (GridView) findViewById(R.id.gridview);
-        int screenW = getScreenW();
+        int screenW = getScreenW() - 40;
         gridview.setColumnWidth(screenW/2);
         adapter = new ImageAdapter(this, screenW/2);
         gridview.setAdapter(adapter);
-        reloadView(); //TODO: Check if makes the difference with regards to column num
 
         // Create an empty datastore
         try {
@@ -106,7 +101,7 @@ public class MainActivity extends Activity{
         switch(item.getItemId()){
             case R.id.action_add:
                 if (isEmulator){
-                    loadAsset(getResources().openRawResource(R.raw.sample_5));
+                    loadAsset(getResources().openRawResource(R.raw.big_photo));
                     reloadView();
                 } else {
                     // Take the user to their chosen image selection app (gallery or file manager)
@@ -114,7 +109,6 @@ public class MainActivity extends Activity{
                     pickIntent.setType("image/*");
                     pickIntent.setAction(Intent.ACTION_GET_CONTENT);
                     startActivityForResult(Intent.createChooser(pickIntent, "Select Picture"), 1);
-                    reloadView();
                 }
                 return true;
             case R.id.action_settings:
@@ -148,6 +142,7 @@ public class MainActivity extends Activity{
             try {
                 Uri imageUri = data.getData();
                 adapter.addImage(imageUri, this);
+                reloadView();
             } catch (IOException e) {
                 Log.d("IOException found! ", e.toString());
             }
