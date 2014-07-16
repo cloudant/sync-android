@@ -27,6 +27,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -136,71 +137,63 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     }
 
     public void testIm0() throws Exception{
-        InputStream is = testActivity.getResources().openRawResource(raws[0]);
-        Uri uri = loadAsset(is);
+        Uri uri = Uri.parse("android.resource://com.cloudant.imageshare/" + raws[0]);
+        Bitmap bitmap = testActivity.adapter.loadBitmap(uri,testActivity.getApplicationContext());
+        assertNotNull(bitmap);
         InputStream stream = context.getContentResolver().openInputStream(uri);
         individualImageCheck(stream);
     }
 
     public void testIm1() throws Exception{
-        InputStream is = testActivity.getResources().openRawResource(raws[1]);
-        Uri uri = loadAsset(is);
+        Uri uri = Uri.parse("android.resource://com.cloudant.imageshare/" + raws[1]);
+        Bitmap bitmap = testActivity.adapter.loadBitmap(uri,testActivity.getApplicationContext());
+        assertNotNull(bitmap);
         InputStream stream = context.getContentResolver().openInputStream(uri);
         individualImageCheck(stream);
     }
 
     public void testIm2() throws Exception{
-        InputStream is = testActivity.getResources().openRawResource(raws[2]);
-        Uri uri = loadAsset(is);
+        Uri uri = Uri.parse("android.resource://com.cloudant.imageshare/" + raws[2]);
+        Bitmap bitmap = testActivity.adapter.loadBitmap(uri,testActivity.getApplicationContext());
+        assertNotNull(bitmap);
         InputStream stream = context.getContentResolver().openInputStream(uri);
         individualImageCheck(stream);
     }
 
     public void testIm3() throws Exception{
-        InputStream is = testActivity.getResources().openRawResource(raws[3]);
-        Uri uri = loadAsset(is);
+        Uri uri = Uri.parse("android.resource://com.cloudant.imageshare/" + raws[3]);
+        Bitmap bitmap = testActivity.adapter.loadBitmap(uri,testActivity.getApplicationContext());
+        assertNotNull(bitmap);
         InputStream stream = context.getContentResolver().openInputStream(uri);
         individualImageCheck(stream);
     }
 
     public void testIm4() throws Exception{
-        InputStream is = testActivity.getResources().openRawResource(raws[4]);
-        Uri uri = loadAsset(is);
+        Uri uri = Uri.parse("android.resource://com.cloudant.imageshare/" + raws[4]);
+        Bitmap bitmap = testActivity.adapter.loadBitmap(uri,testActivity.getApplicationContext());
+        assertNotNull(bitmap);
         InputStream stream = context.getContentResolver().openInputStream(uri);
         individualImageCheck(stream);
     }
 
-    public void testReadingFromAsset() throws Exception{
-        InputStream is = testActivity.getResources().openRawResource(raws[4]);
-        //Uri uri = loadAsset(is);
-        individualImageCheck(is);
+    public void testFileAttachment() throws Exception{
+        Uri uri = Uri.parse("android.resource://com.cloudant.imageshare/" + raws[4]);
+        Uri new_uri = createTempFile(context.getContentResolver().openInputStream(uri));
+        assertNotNull("Uri is null", new_uri);
+        Bitmap bitmap = testActivity.adapter.loadBitmap(new_uri,testActivity.getApplicationContext());
+        assertNotNull(bitmap);
+
+        InputStream stream = context.getContentResolver().openInputStream(new_uri);
+        individualImageCheck(stream);
     }
 
     public void testLargeAttachment() throws Exception{
-        InputStream is = testActivity.getResources().openRawResource(R.raw.big_photo);
-        Uri uri = loadAsset(is);
+        Uri uri = Uri.parse("android.resource://com.cloudant.imageshare/" + R.raw.big_photo);
         InputStream stream = context.getContentResolver().openInputStream(uri);
         individualImageCheck(stream);
     }
 
-    private Uri loadAsset(InputStream is) throws IOException{
-        // Check if decoding works
-        Bitmap bitmap = testActivity.adapter.loadBitmap(is);
-        assertNotNull("Bitamp is null before replication", bitmap);
-        is.reset();
-
-        Uri image_uri = createTempFile(is);
-        assertNotNull("Uri is null", image_uri);
-        return  image_uri;
-    }
-
     private void individualImageCheck(InputStream is) throws Exception {
-
-        // Check if decoding works after the image copied into its temporary location
-        /*is = testActivity.getContentResolver().openInputStream(image_uri);
-        bitmap = BitmapFactory.decodeStream(is);
-        assertNotNull("Bitamp is null after copy into temp file", bitmap);
-        is.reset();*/
 
         DocumentBody doc = new BasicDoc("Marco", "Polo");
         assertEquals("Polo", doc.asMap().get("Marco"));

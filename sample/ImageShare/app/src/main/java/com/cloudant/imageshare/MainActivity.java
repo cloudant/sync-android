@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Debug;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
@@ -102,7 +103,13 @@ public class MainActivity extends Activity{
         switch(item.getItemId()){
             case R.id.action_add:
                 if (isEmulator){
-                    loadAsset(getResources().openRawResource(R.raw.big_photo));
+                    Uri path = Uri.parse("android.resource://com.cloudant.imageshare/" +
+                                         R.raw.big_photo);
+                    try {
+                        adapter.addImage(path, this);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     reloadView();
                 } else {
                     // Take the user to their chosen image selection app (gallery or file manager)
@@ -242,39 +249,6 @@ public class MainActivity extends Activity{
             newRevision = ds.updateAttachments(oldRevision, atts);
         } catch (Exception e) {
             Log.d("UploadAttachment exception", e.toString());
-        }
-    }
-
-    // Move an asset to a file and pass it to adapter
-    private void loadAsset(InputStream in_s) {
-        try {
-            InputStream in = null;
-            OutputStream out = null;
-            in = in_s;
-            String outs = "/data/data/com.cloudant.imageshare/";
-            Log.d("out", outs);
-            File outFile = new File(outs, "image.jpg");
-
-            out = new FileOutputStream(outFile);
-            copyFile(in, out);
-            in.close();
-            in = null;
-            out.flush();
-            out.close();
-            out = null;
-            outs = "file:///" + outs;
-            Uri uri = Uri.parse(outs + "image.jpg");
-            adapter.addImage(uri, this);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void copyFile(InputStream in, OutputStream out) throws IOException {
-        byte[] buffer = new byte[1024];
-        int read;
-        while ((read = in.read(buffer)) != -1) {
-            out.write(buffer, 0, read);
         }
     }
 
