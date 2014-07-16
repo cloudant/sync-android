@@ -68,35 +68,6 @@ public class ChangesFeedTest extends CouchClientTestBase {
         }
     }
 
-    @Test
-    public void changes_limitByOne_dbChangesMustReturnedAndLimitedByOne() {
-        Response res1 = ClientTestUtils.createHelloWorldDoc(client);
-        Response res2 = ClientTestUtils.createHelloWorldDoc(client);
-        String lastSeq = "0";
-
-        {
-            ChangesResult changes = client.changes(lastSeq, 1);
-            Map<String, List<String>> changedRevIds = findChangedRevisionIds(changes);
-
-            Assert.assertThat(changedRevIds.size(), is(equalTo(1)));
-            // this assertion sometime fails with Cloudant and I suspect it has to do with
-            // the clustering nature?
-            Assert.assertThat(changedRevIds.keySet(), hasItem(res1.getId()));
-            Assert.assertThat(changedRevIds.get(res1.getId()), hasItem(res1.getRev()));
-
-            lastSeq = changes.getLastSeq();
-        }
-
-        {
-            ChangesResult changes = client.changes(lastSeq, 1);
-            Map<String, List<String>> changedRevIds = findChangedRevisionIds(changes);
-
-            Assert.assertThat(changedRevIds.size(), is(equalTo(1)));
-            Assert.assertThat(changedRevIds.keySet(), hasItem(res2.getId()));
-            Assert.assertThat(changedRevIds.get(res2.getId()), hasItem(res2.getRev()));
-        }
-    }
-
     public Map<String, List<String>> findChangedRevisionIds(ChangesResult changesResult) {
         Map<String, List<String>> res = new HashMap<String, List<String>>();
         for(ChangesResult.Row row: changesResult.getResults()) {
