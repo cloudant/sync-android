@@ -21,7 +21,7 @@ The API is quite different from CouchDB's; we retain the
 [MVCC](http://en.wikipedia.org/wiki/Multiversion_concurrency_control) data
 model but not the HTTP-centric API.
 
-This library is for Android, an [iOS][ios] version is also available.
+This library is for Android and Java SE; an [iOS][ios] version is also available.
 
 [ios]: https://github.com/cloudant/CDTDatastore
 
@@ -38,9 +38,11 @@ a dependency via [maven][maven] or [gradle][gradle].
 [maven]: http://maven.apache.org/
 [gradle]: http://www.gradle.org/
 
-There is currently one jar file for the datastore:
+There are currently three jar files for the datastore:
 
-* `cloudant-sync-datastore-android` contains the main datastore.
+* `cloudant-sync-datastore-core`: the main datastore classes.
+* `cloudant-sync-datastore-android`: Android specific classes.
+* `cloudant-sync-datastore-javase`: Java SE specific classes.
 
 ### Gradle
 
@@ -55,7 +57,11 @@ repositories {
 
 dependencies {
     // Other dependencies
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-core', version:'0.3.5'
+    // include this if you're targeting Android
     compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.3.5'
+    // include this if you're targeting Java SE
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-javase', version:'0.3.5'
 }
 ```
 
@@ -84,7 +90,21 @@ It's a similar story in maven, add the repo and the dependency:
     ...
     <dependency>
       <groupId>com.cloudant</groupId>
+      <artifactId>cloudant-sync-datastore-core</artifactId>
+      <version>0.3.5</version>
+      <scope>compile</scope>
+    </dependency>
+    <!-- include this if you're targeting Android -->
+    <dependency>
+      <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-android</artifactId>
+      <version>0.3.5</version>
+      <scope>compile</scope>
+    </dependency>
+    <!-- include this if you're targeting Java SE -->
+    <dependency>
+      <groupId>com.cloudant</groupId>
+      <artifactId>cloudant-sync-datastore-javase</artifactId>
       <version>0.3.5</version>
       <scope>compile</scope>
     </dependency>

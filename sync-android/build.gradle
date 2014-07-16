@@ -1,0 +1,48 @@
+dependencies {
+    compile project(':sync-core')
+
+    compile group: 'com.google.android', name: 'android', version:'4.0.1.2'
+}
+
+//
+// Publishing
+//
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            
+            from components.java
+            
+            groupId 'com.cloudant'
+            artifactId 'cloudant-sync-datastore-android'
+            
+            pom.withXml {
+                Node rootNode = asNode()
+                
+                rootNode.appendNode('name', 'Cloudant Sync Datastore Android: Android components')
+                rootNode.appendNode('description', 'A JSON document datastore that syncs')
+                rootNode.appendNode('url', 'https://cloudant.com/')
+                rootNode.appendNode('packaging', 'jar')
+                
+                Node scmNode = rootNode.appendNode('scm')
+                scmNode.appendNode('url', 'https://github.com/cloudant/sync-android')
+                scmNode.appendNode('connection', 'https://github.com/cloudant/sync-android.git')
+                
+                Node licencesNode = rootNode.appendNode('licenses')
+                Node licenceNode = licencesNode.appendNode('license')
+                licenceNode.appendNode('name', 'The Apache Software License, Version 2.0')
+                licenceNode.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
+                licenceNode.appendNode('distribution', 'repo')
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url "$buildDir/repo"
+        }
+    }
+}
+
+

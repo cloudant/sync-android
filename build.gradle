@@ -1,158 +1,80 @@
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'idea'
-apply plugin: 'maven-publish'
+// ************ //
+// COMMON STUFF
+// ************ //
 
-//
-// Build plugins
-//
+subprojects {
 
-buildscript {
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
+
+    //
+    // Build plugins
+    //
+
+    buildscript {
+        repositories {
+            mavenCentral()
+        }
+        dependencies {
+            classpath "net.saliman:gradle-cobertura-plugin:2.1.0"
+        }
+    }
+
+    //
+    // General settings
+    //
+
+    group = 'com.cloudant'
+    version = '0.3.6-SNAPSHOT'
+
+    description = """cloudant-sync"""
+
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
+
+    defaultTasks 'build'
+
     repositories {
+        mavenLocal()
         mavenCentral()
-    }
-    dependencies {
-        classpath "net.saliman:gradle-cobertura-plugin:2.1.0"
-    }
-}
-apply plugin: 'cobertura'
-
-//
-// General settings
-//
-
-group = 'com.cloudant'
-version = '0.3.6-SNAPSHOT'
-
-description = """cloudant-sync"""
-
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
-
-defaultTasks 'build'
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-    maven { url "http://cloudant.github.io/cloudant-sync-eap/repository/" }
-}
-
-dependencies {
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.1.1'
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.2.3'
-    compile group: 'com.almworks.sqlite4java', name: 'sqlite4java', version:'0.282'
-    compile group: 'com.google.guava', name: 'guava', version:'15.0'
-    compile group: 'commons-io', name: 'commons-io', version:'2.4'
-    compile group: 'com.google.android', name: 'android', version:'4.0.1.2'
-
-    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version:'1.3'
-    testCompile group: 'junit', name: 'junit', version:'4.11'
-    testCompile group: 'org.mockito', name: 'mockito-all', version:'1.9.5'
-}
-
-//
-// Allow developer-local configuration to be applied (e.g., customising
-// location of maven repo).
-//
-
-def localGradleScript = file("local.gradle")
-if (localGradleScript.exists()) {
-    apply from: localGradleScript
-}
-
-//
-// Docs
-//
-
-javadoc {
-    excludes = ["**/*sql*/**", "**/common/**", "**/android/**", "**/mazha/**"]
-    options.showFromPublic()
-    title = "cloudant-sync-datastore-android ${version} API"
-}
-
-//
-// Publishing
-//
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-
-            groupId 'com.cloudant'
-            artifactId 'cloudant-sync-datastore-android'
-
-            pom.withXml {
-                Node rootNode = asNode()
-
-                rootNode.appendNode('name', 'Cloudant Sync Datastore Android')
-                rootNode.appendNode('description', 'A JSON document datastore that syncs')
-                rootNode.appendNode('url', 'https://cloudant.com/')
-                rootNode.appendNode('packaging', 'jar')
-
-                Node scmNode = rootNode.appendNode('scm')
-                scmNode.appendNode('url', 'https://github.com/cloudant/sync-android')
-                scmNode.appendNode('connection', 'https://github.com/cloudant/sync-android.git')
-
-                Node licencesNode = rootNode.appendNode('licenses')
-                Node licenceNode = licencesNode.appendNode('license')
-                licenceNode.appendNode('name', 'The Apache Software License, Version 2.0')
-                licenceNode.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
-                licenceNode.appendNode('distribution', 'repo')
-            }
-        }
+        maven { url "http://cloudant.github.io/cloudant-sync-eap/repository/" }
     }
 
-    repositories {
-        maven {
-            url "$buildDir/repo"
-        }
+    //
+    // Allow developer-local configuration to be applied (e.g., customising
+    // location of maven repo).
+    //
+
+    def localGradleScript = file("../local.gradle")
+    if (localGradleScript.exists()) {
+        apply from: localGradleScript
     }
-}
 
-//
-// Tests
-//
+    //
+    // Docs
+    //
 
-tasks.withType(Test) {
-    systemProperty "sqlite4java.library.path", "native"
-    systemProperty "file.encoding", "UTF-8"
-}
-
-test {
-    useJUnit {
-        excludeCategories 'com.cloudant.common.SystemTest', 'com.cloudant.common.RequireRunningCouchDB', 'com.cloudant.common.PerformanceTest'
+    javadoc {
+        excludes = ["**/*sql*/**", "**/common/**", "**/android/**", "**/mazha/**"]
+        options.showFromPublic()
+        title = "cloudant-sync-datastore-android ${version} API"
     }
-}
 
-task integrationTest(type: Test, dependsOn: testClasses) {
-    useJUnit {
-        excludeCategories 'com.cloudant.common.SystemTest', 'com.cloudant.common.PerformanceTest'
+    //
+    // Misc. tasks
+    //
+
+    task listJars << {
+        configurations.testCompile.each { File file -> println file.name }
     }
+
 }
 
-task performanceTest(type: Test, dependsOn: testClasses) {
-    useJUnit {
-        includeCategories 'com.cloudant.common.PerformanceTest'
-    }
-}
-
-task systemTest(type: Test, dependsOn: testClasses) {
-    // Run all tests
-}
-
-//
-// Misc. tasks
-//
-
-task listJars << {
-    configurations.testCompile.each { File file -> println file.name }
-}
-
-//for Ant filter for "processResources" task
-import org.apache.tools.ant.filters.ReplaceTokens
-processResources {
-    filter ReplaceTokens, tokens: [
-            "version": project.version
-    ]
+// see http://issues.gradle.org/browse/GRADLE-1876
+// run javadoc over union of all projects
+task docs(type: Javadoc) {
+    source subprojects.collect {project -> project.sourceSets.main.allJava } 
+    classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath}) 
+    destinationDir = new File(projectDir, 'docs')
 }
