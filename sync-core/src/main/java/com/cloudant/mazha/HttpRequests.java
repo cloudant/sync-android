@@ -19,18 +19,30 @@
 package com.cloudant.mazha;
 
 
+
 import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.util.Misc;
+
+import com.google.common.base.Strings;
 import com.google.common.io.Resources;
+
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.*;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.AuthCache;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpResponseInterceptor;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.*;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.params.HttpClientParams;
-import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.conn.params.ConnPerRoute;
@@ -42,8 +54,6 @@ import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
@@ -59,7 +69,6 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Properties;
 
 public class HttpRequests {
@@ -72,9 +81,20 @@ public class HttpRequests {
     private BasicHttpContext context;
     private boolean debugging;
 
+    private String authHeaderValue;
+
     public HttpRequests(CouchConfig config) {
         this.httpClient = createHttpClient(config);
         this.jsonHelper = new JSONHelper();
+        String username = config.getUsername();
+        String password = config.getPassword();
+
+        if (!Strings.isNullOrEmpty(username)  &&  !Strings.isNullOrEmpty(password)) {
+            String authString = username + ":" + password;
+            Base64 base64 = new Base64();
+            authHeaderValue = "Basic " + new String(base64.encode(authString.getBytes()));
+        }
+
     }
 
     // HTTP GET Requests
@@ -181,8 +201,11 @@ public class HttpRequests {
      * @param request The HTTP request to execute.
      * @return {@link org.apache.http.HttpResponse}
      */
-    protected HttpResponse executeRequest(HttpRequestBase request) {
+    private HttpResponse executeRequest(HttpRequestBase request) {
         try {
+            if (authHeaderValue != null) {
+                request.addHeader("Authorization", authHeaderValue);
+            }
             HttpResponse response = httpClient.execute(host, request, context);
             validate(request, response);
             return response;
@@ -204,7 +227,6 @@ public class HttpRequests {
             ClientConnectionManager manager = getClientConnectionManager(params);
 
             DefaultHttpClient httpClient = new DefaultHttpClient(manager, params);
-            addHttpBasicAuth(config, httpClient);
             addDebuggingInterceptor(httpClient);
 
             return httpClient;
@@ -281,28 +303,6 @@ public class HttpRequests {
             return properties.getProperty("user.agent", default_user_agent);
         } catch (Exception ioException) {
             return default_user_agent;
-        }
-    }
-
-    private void addHttpBasicAuth(CouchConfig config, DefaultHttpClient httpclient) {
-        // basic authentication
-
-        String username = config.getUsername();
-        String password = config.getPassword();
-
-        if ((username != null && !username.isEmpty())
-                && (password != null && !password.isEmpty())) {
-            httpclient.getCredentialsProvider().setCredentials(
-                    new AuthScope(config.getHost(),
-                            config.getPort()),
-                    new UsernamePasswordCredentials(config.getUsername(),
-                            config.getPassword()));
-
-            // use AuthCache to enable preemptive authentication
-            AuthCache authCache = new BasicAuthCache();
-            BasicScheme basicAuth = new BasicScheme();
-            authCache.put(host, basicAuth);
-            context.setAttribute(ClientContext.AUTH_CACHE, authCache);
         }
     }
 
