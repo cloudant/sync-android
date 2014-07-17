@@ -2,11 +2,13 @@ package com.cloudant.imageshare;
 
 import android.app.Activity;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Debug;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,6 +29,16 @@ import com.cloudant.sync.replication.PushReplication;
 import com.cloudant.sync.replication.PullReplication;
 import com.cloudant.sync.datastore.Attachment;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -40,6 +52,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends Activity{
 
@@ -47,6 +60,7 @@ public class MainActivity extends Activity{
     private DatastoreManager manager;
     public ImageAdapter adapter;
     private boolean isEmulator = false;
+    private String api_key, api_pass;
 
     private enum ReplicationType {
         Pull,
@@ -57,6 +71,21 @@ public class MainActivity extends Activity{
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        api_key = getString(R.string.default_api_key);
+        api_pass = getString(R.string.default_api_password);
+
+        try {
+            String link = "aaaabbbbcccc";
+            String api_server = getString(R.string.default_api_server);
+            Pair auth = new AsyncRequest().execute(api_server,link).get();
+            api_key = (String) auth.first;
+            api_pass = (String) auth.second;
+            Log.d("main thread KEY", api_key);
+            Log.d("main thread Pass", api_pass);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
 
         // Check if running on emulator
         isEmulator = "generic".equals(Build.BRAND.toLowerCase());
@@ -212,8 +241,8 @@ public class MainActivity extends Activity{
                 replication = push;
             }
 
-            //replication.username = getString(R.string.default_api_key);
-            //replication.password = getString(R.string.default_api_password);
+            //replication.username = api_key;
+            //replication.password = api_pass;
             Replicator replicator = ReplicatorFactory.oneway(replication);
 
             // Use a CountDownLatch to provide a lightweight way to wait for completion
