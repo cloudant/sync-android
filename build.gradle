@@ -2,6 +2,14 @@
 // COMMON STUFF
 // ************ //
 
+apply plugin: 'java'
+
+dependencies {
+    compile project(':sync-core')
+    compile project(':sync-javase')
+    compile project(':sync-android')
+}
+
 subprojects {
 
     apply plugin: 'java'
