@@ -2,6 +2,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".Main" >
     <item
+        android:id="@+id/action_connect"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom"
+        android:title="Connect"/>
+    <item
         android:id="@+id/action_share"
         android:orderInCategory="100"
         android:showAsAction="ifRoom"
@@ -38,8 +43,9 @@
         android:icon="@drawable/ic_action_discard"
         android:orderInCategory="100"
         android:showAsAction="ifRoom"
-        android:title="Delete"/>
-    <item android:id="@+id/action_settings"
+        android:title="Local delete"/>
+    <item
+        android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"
         android:showAsAction="never" />

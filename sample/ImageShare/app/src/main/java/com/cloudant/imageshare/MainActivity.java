@@ -1,6 +1,8 @@
 package com.cloudant.imageshare;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -14,6 +16,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.Toast;
 import android.content.Intent;
@@ -112,7 +115,7 @@ public class MainActivity extends Activity{
             case R.id.action_add:
                 if (isEmulator){
                     Uri path = Uri.parse("android.resource://com.cloudant.imageshare/" +
-                                         R.raw.big_photo);
+                                         R.raw.pic1);
                     try {
                         adapter.addImage(path, this);
                     } catch (IOException e) {
@@ -155,6 +158,9 @@ public class MainActivity extends Activity{
                 sendIntent.setType("text/plain");
                 startActivity(sendIntent);
                 return true;
+            case R.id.action_connect:
+                buildDialog();
+                return true;
             case R.id.action_new:
                 try {
                     createRemoteDatabase();
@@ -164,6 +170,35 @@ public class MainActivity extends Activity{
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void buildDialog(){
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+        alert.setTitle("Database name");
+
+        // Set an EditText view to get user input
+        final EditText input = new EditText(this);
+        alert.setView(input);
+
+        alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                String value = input.getText().toString();
+                try {
+                    connectToRemoteDatabase(value);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                // Canceled.
+            }
+        });
+
+        alert.show();
     }
 
     // Processing the output of image selection app
@@ -218,9 +253,10 @@ public class MainActivity extends Activity{
 
     public void replicateDatastore(ReplicationType r){
         try {
-            //URI uri = new URI("https://" + getString(R.string.default_user)
-            //        + ".cloudant.com/" + db_name);
-            URI uri = new URI("http://10.0.2.2:5984/sync-test");
+            Log.d("db", db_name);
+            URI uri = new URI("https://" + getString(R.string.default_user)
+                    + ".cloudant.com/" + db_name);
+            //URI uri = new URI("http://10.0.2.2:5984/sync-test");
 
 
             Replication replication;
@@ -236,8 +272,8 @@ public class MainActivity extends Activity{
                 replication = push;
             }
 
-            //replication.username = api_key;
-            //replication.password = api_pass;
+            replication.username = api_key;
+            replication.password = api_pass;
             Replicator replicator = ReplicatorFactory.oneway(replication);
 
             // Use a CountDownLatch to provide a lightweight way to wait for completion
@@ -283,17 +319,16 @@ public class MainActivity extends Activity{
         JSONObject json = new JSONObject(response);
         api_key = json.get("key").toString();
         api_pass = json.get("password").toString();
-        String db = json.get("db name").toString();
+        db_name = json.get("db name").toString();
         Log.d("main thread KEY", api_key);
         Log.d("main thread Pass", api_pass);
-        Log.d("db", db);
+        Log.d("db", db_name);
         saveToPrefs(api_key, api_pass, db_name);
     }
 
-    private void connectToRemoteDatabase() throws Exception{
-        String link = "db1be4e0ef270ab2c61f63";
+    private void connectToRemoteDatabase(String db) throws Exception{
         String api_server = getString(R.string.default_api_server) + "/get_key";
-        AsyncTask httpRequest = new AsyncRequestAPI().execute(api_server, link);
+        AsyncTask httpRequest = new AsyncRequestAPI().execute(api_server, db);
         String response = (String) httpRequest.get();
         JSONObject json = new JSONObject(response);
         api_key = json.get("key").toString();
