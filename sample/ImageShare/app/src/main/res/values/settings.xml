@@ -5,6 +5,6 @@
     <string name="default_dbname">sync-test</string>
     <string name="default_api_key">slitirsetardiarshossecti</string>
     <string name="default_api_password">StlnoKlpUMALPGJWM0vrtqnI</string>
-    <string name="default_api_server">http://10.0.2.2:5000/get_key</string>
+    <string name="default_api_server">http://10.0.2.2:5000</string>
 
 </resources>

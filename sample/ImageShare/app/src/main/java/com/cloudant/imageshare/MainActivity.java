@@ -1,11 +1,12 @@
 package com.cloudant.imageshare;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Debug;
+import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Pair;
@@ -29,28 +30,16 @@ import com.cloudant.sync.replication.PushReplication;
 import com.cloudant.sync.replication.PullReplication;
 import com.cloudant.sync.datastore.Attachment;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
+import org.apache.http.HttpRequest;
 import org.json.JSONObject;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
@@ -61,6 +50,8 @@ public class MainActivity extends Activity{
     public ImageAdapter adapter;
     private boolean isEmulator = false;
     private String api_key, api_pass;
+    private String db_name;
+    //private AsyncTask httpRequest;
 
     private enum ReplicationType {
         Pull,
@@ -72,20 +63,8 @@ public class MainActivity extends Activity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        api_key = getString(R.string.default_api_key);
-        api_pass = getString(R.string.default_api_password);
-
-        try {
-            String link = "aaaabbbbcccc";
-            String api_server = getString(R.string.default_api_server);
-            Pair auth = new AsyncRequest().execute(api_server,link).get();
-            api_key = (String) auth.first;
-            api_pass = (String) auth.second;
-            Log.d("main thread KEY", api_key);
-            Log.d("main thread Pass", api_pass);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+        // Get the API key if it's already stored in preferences
+        getDataFromPrefs();
 
         // Check if running on emulator
         isEmulator = "generic".equals(Build.BRAND.toLowerCase());
@@ -168,10 +147,24 @@ public class MainActivity extends Activity{
                 loadDatastore();
                 reloadView();
                 return true;
+            case R.id.action_share:
+                Intent sendIntent = new Intent();
+                sendIntent.setAction(Intent.ACTION_SEND);
+                Log.d("Db name", db_name);
+                sendIntent.putExtra(Intent.EXTRA_TEXT, db_name);
+                sendIntent.setType("text/plain");
+                startActivity(sendIntent);
+                return true;
+            case R.id.action_new:
+                try {
+                    createRemoteDatabase();
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
-
 
     // Processing the output of image selection app
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -186,6 +179,8 @@ public class MainActivity extends Activity{
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
+
+
 
     // Creates a DatastoreManager using application internal storage path
     public void initDatastore() throws IOException {
@@ -224,7 +219,7 @@ public class MainActivity extends Activity{
     public void replicateDatastore(ReplicationType r){
         try {
             //URI uri = new URI("https://" + getString(R.string.default_user)
-            //        + ".cloudant.com/" + getString(R.string.default_dbname));
+            //        + ".cloudant.com/" + db_name);
             URI uri = new URI("http://10.0.2.2:5984/sync-test");
 
 
@@ -278,6 +273,55 @@ public class MainActivity extends Activity{
             newRevision = ds.updateAttachments(oldRevision, atts);
         } catch (Exception e) {
             Log.d("UploadAttachment exception", e.toString());
+        }
+    }
+
+    private void createRemoteDatabase() throws Exception {
+        String api_server = getString(R.string.default_api_server);
+        AsyncTask request = new AsyncRequestNewDB().execute(api_server);
+        String response = (String) request.get();
+        JSONObject json = new JSONObject(response);
+        api_key = json.get("key").toString();
+        api_pass = json.get("password").toString();
+        String db = json.get("db name").toString();
+        Log.d("main thread KEY", api_key);
+        Log.d("main thread Pass", api_pass);
+        Log.d("db", db);
+        saveToPrefs(api_key, api_pass, db_name);
+    }
+
+    private void connectToRemoteDatabase() throws Exception{
+        String link = "db1be4e0ef270ab2c61f63";
+        String api_server = getString(R.string.default_api_server) + "/get_key";
+        AsyncTask httpRequest = new AsyncRequestAPI().execute(api_server, link);
+        String response = (String) httpRequest.get();
+        JSONObject json = new JSONObject(response);
+        api_key = json.get("key").toString();
+        api_pass = json.get("password").toString();
+        Log.d("main thread KEY", api_key);
+        Log.d("main thread Pass", api_pass);
+        saveToPrefs(api_key, api_pass, db_name);
+    }
+
+    private void saveToPrefs(String key, String pass, String db) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        final SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("key", key);
+        editor.putString("pass", pass);
+        editor.putString("db", db);
+        editor.commit();
+    }
+
+    private boolean getDataFromPrefs() {
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        try {
+            api_key = sharedPrefs.getString("key", getString(R.string.default_api_key));
+            api_pass = sharedPrefs.getString("pass", getString(R.string.default_api_password));
+            db_name = sharedPrefs.getString("db", getString(R.string.default_dbname));
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 

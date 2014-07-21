@@ -2,6 +2,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".Main" >
     <item
+        android:id="@+id/action_share"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom"
+        android:title="Share"/>
+    <item
+        android:id="@+id/action_new"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom"
+        android:title="New DB"/>
+    <item
         android:id="@+id/action_refresh"
         android:icon="@drawable/ic_action_refresh"
         android:orderInCategory="100"
