@@ -29,12 +29,12 @@ public class ImageAdapter extends BaseAdapter{
     private Context mContext;
     //layout size
     private int lSize;
+    private ArrayList<Bitmap> mThumbBitmaps;
 
     public ImageAdapter(Context c, int layoutParam) {
         mContext = c;
         lSize = layoutParam;
         mThumbBitmaps = new ArrayList<Bitmap>();
-        mThumbFiles = new ArrayList<InputStream>();
     }
 
     public int getCount() {
@@ -60,31 +60,22 @@ public class ImageAdapter extends BaseAdapter{
         } else {
             imageView = (ImageView) convertView;
         }
-        imageView.setBackgroundColor(0xFFFFFFCC);
         imageView.setImageBitmap(mThumbBitmaps.get(position));
         return imageView;
     }
 
     public void addImage(Uri imageUri, Context c) throws IOException{
-        mThumbFiles.add(c.getContentResolver().openInputStream(imageUri));
         Bitmap bitmap = loadBitmap(imageUri, c);
         mThumbBitmaps.add(bitmap);
     }
 
-    public void loadImage(Attachment a, Context c) throws IOException{
-        //BufferedInputStream bs = new BufferedInputStream(is);
-        mThumbFiles.add(a.getInputStream());
+    public void addImage(Attachment a) throws IOException{
         Bitmap bitmap = loadBitmap(a);
         mThumbBitmaps.add(bitmap);
     }
 
-    public InputStream getStream(int position) throws FileNotFoundException{
-        return mThumbFiles.get(position);
-    }
-
     public void clearImageData(){
         mThumbBitmaps.clear();
-        mThumbFiles.clear();
     }
 
     public Bitmap loadBitmap(Uri imageUri, Context c) throws IOException{
@@ -109,6 +100,7 @@ public class ImageAdapter extends BaseAdapter{
         return BitmapFactory.decodeStream(a.getInputStream(), null, options);
     }
 
+    // Decode large bitmaps efficiently
     public static int calculateSampleSize( BitmapFactory.Options options,
                                            int reqWidth, int reqHeight) {
         // Raw height and width of image
@@ -128,12 +120,6 @@ public class ImageAdapter extends BaseAdapter{
                 inSampleSize *= 2;
             }
         }
-
-        Log.d("SampleSize", "" +inSampleSize);
         return inSampleSize;
     }
-
-    // references to our images
-    private ArrayList<Bitmap> mThumbBitmaps;
-    private ArrayList<InputStream> mThumbFiles;
 }

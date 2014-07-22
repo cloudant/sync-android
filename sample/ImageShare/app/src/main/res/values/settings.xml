@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="default_user">ptiurin</string>
-    <string name="default_dbname">sync-test</string>
-    <string name="default_api_key">slitirsetardiarshossecti</string>
-    <string name="default_api_password">StlnoKlpUMALPGJWM0vrtqnI</string>
+    <string name="default_user">Add default user here</string>
+    <string name="default_dbname">Add default db here</string>
+    <string name="default_api_key">Add API key here</string>
+    <string name="default_api_password">Add password here</string>
     <string name="default_api_server">http://10.0.2.2:5000</string>
 
 </resources>

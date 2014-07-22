@@ -10,12 +10,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
-import android.util.Log;
-import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.Toast;
@@ -33,7 +29,6 @@ import com.cloudant.sync.replication.PushReplication;
 import com.cloudant.sync.replication.PullReplication;
 import com.cloudant.sync.datastore.Attachment;
 
-import org.apache.http.HttpRequest;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -44,7 +39,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends Activity{
 
@@ -52,9 +46,9 @@ public class MainActivity extends Activity{
     private DatastoreManager manager;
     public ImageAdapter adapter;
     private boolean isEmulator = false;
-    private String api_key, api_pass;
+    private String api_key;
+    private String api_pass;
     private String db_name;
-    //private AsyncTask httpRequest;
 
     private enum ReplicationType {
         Pull,
@@ -62,7 +56,7 @@ public class MainActivity extends Activity{
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState){
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -73,33 +67,10 @@ public class MainActivity extends Activity{
         isEmulator = "generic".equals(Build.BRAND.toLowerCase());
 
         // Create a grid of images
-        GridView gridview = (GridView) findViewById(R.id.gridview);
-        int screenW = getScreenW() - 40;
-        gridview.setColumnWidth(screenW/2);
-        adapter = new ImageAdapter(this, screenW/2);
-        gridview.setAdapter(adapter);
+        createGrid();
 
         // Create an empty datastore
-        try {
-            initDatastore();
-        } catch (IOException e){
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        // When a picture is clicked a new document is created and the image is added as attachment
-        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                DocumentBody doc = new BasicDoc("Position " + position, "ID " + id);
-                DocumentRevision revision = ds.createDocument(doc);
-
-                uploadAttachment(revision.getId(), position);
-
-                Toast.makeText(MainActivity.this,
-                                "Document " + revision.getId() + " written to local db",
-                                Toast.LENGTH_SHORT).show();
-                }
-        });
+        initDatastore();
     }
 
     @Override
@@ -113,22 +84,7 @@ public class MainActivity extends Activity{
     public boolean onOptionsItemSelected(MenuItem item){
         switch(item.getItemId()){
             case R.id.action_add:
-                if (isEmulator){
-                    Uri path = Uri.parse("android.resource://com.cloudant.imageshare/" +
-                                         R.raw.pic1);
-                    try {
-                        adapter.addImage(path, this);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    reloadView();
-                } else {
-                    // Take the user to their chosen image selection app (gallery or file manager)
-                    Intent pickIntent = new Intent();
-                    pickIntent.setType("image/*");
-                    pickIntent.setAction(Intent.ACTION_GET_CONTENT);
-                    startActivityForResult(Intent.createChooser(pickIntent, "Select Picture"), 1);
-                }
+                addImage();
                 return true;
             case R.id.action_settings:
                 return true;
@@ -153,7 +109,6 @@ public class MainActivity extends Activity{
             case R.id.action_share:
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND);
-                Log.d("Db name", db_name);
                 sendIntent.putExtra(Intent.EXTRA_TEXT, db_name);
                 sendIntent.setType("text/plain");
                 startActivity(sendIntent);
@@ -164,20 +119,51 @@ public class MainActivity extends Activity{
             case R.id.action_new:
                 try {
                     createRemoteDatabase();
+                    Toast.makeText(MainActivity.this,
+                            "Remote database was created",
+                            Toast.LENGTH_SHORT).show();
                 } catch (Exception e){
                     e.printStackTrace();
+                    Toast.makeText(MainActivity.this,
+                            "Remote database was NOT created",
+                            Toast.LENGTH_SHORT).show();
                 }
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
+    // Load the image into the grid view add it to a document in local db
+    public void addImage(){
+        if (isEmulator){
+            Uri path = Uri.parse("android.resource://com.cloudant.imageshare/" +
+                    R.raw.pic1);
+            try {
+                createDoc(path);
+                Toast.makeText(MainActivity.this,
+                        "Document was written to local db",
+                        Toast.LENGTH_SHORT).show();
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast.makeText(MainActivity.this,
+                        "Writing to local db failed",
+                        Toast.LENGTH_SHORT).show();
+            }
+            reloadView();
+        } else {
+            // Take the user to their chosen image selection app (gallery or file manager)
+            Intent pickIntent = new Intent();
+            pickIntent.setType("image/*");
+            pickIntent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(pickIntent, "Select Picture"), 1);
+        }
+    }
+
+    // Opens the dialog for user to input the remote database name
     private void buildDialog(){
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
         alert.setTitle("Database name");
-
-        // Set an EditText view to get user input
         final EditText input = new EditText(this);
         alert.setView(input);
 
@@ -186,8 +172,14 @@ public class MainActivity extends Activity{
                 String value = input.getText().toString();
                 try {
                     connectToRemoteDatabase(value);
+                    Toast.makeText(MainActivity.this,
+                            "Connected to remote database",
+                            Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
                     e.printStackTrace();
+                    Toast.makeText(MainActivity.this,
+                            "Failed to connect to remote database",
+                            Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -206,10 +198,16 @@ public class MainActivity extends Activity{
         if (resultCode == RESULT_OK && requestCode == 1) {
             try {
                 Uri imageUri = data.getData();
-                adapter.addImage(imageUri, this);
+                createDoc(imageUri);
                 reloadView();
+                Toast.makeText(MainActivity.this,
+                        "Document was written to local db",
+                        Toast.LENGTH_SHORT).show();
             } catch (IOException e) {
-                Log.d("IOException found! ", e.toString());
+                e.printStackTrace();
+                Toast.makeText(MainActivity.this,
+                        "Writing to local db failed",
+                        Toast.LENGTH_SHORT).show();
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -218,19 +216,26 @@ public class MainActivity extends Activity{
 
 
     // Creates a DatastoreManager using application internal storage path
-    public void initDatastore() throws IOException {
+    public void initDatastore() {
         File path = getApplicationContext().getDir("datastores", 0);
         manager = new DatastoreManager(path.getAbsolutePath());
         ds = manager.openDatastore("my_datastore");
         loadDatastore();
     }
 
+    // Delete and open a new local datastore
     public void deleteDatastore(){
         try {
             manager.deleteDatastore("my_datastore");
             ds = manager.openDatastore("my_datastore");
+            Toast.makeText(MainActivity.this,
+                    "Database deleted",
+                    Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
-            Log.d("MainActivity", e.toString());
+            e.printStackTrace();
+            Toast.makeText(MainActivity.this,
+                    "Database deletion failed",
+                    Toast.LENGTH_SHORT).show();
         }
         adapter.clearImageData();
     }
@@ -243,7 +248,7 @@ public class MainActivity extends Activity{
             List<DocumentRevision> docs = ds.getAllDocuments(0, pageSize, true);
             for (DocumentRevision rev : docs) {
                 Attachment a = ds.getAttachment(rev, "image.jpg");
-                adapter.loadImage(a, this);
+                adapter.addImage(a);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -253,11 +258,9 @@ public class MainActivity extends Activity{
 
     public void replicateDatastore(ReplicationType r){
         try {
-            Log.d("db", db_name);
             URI uri = new URI("https://" + getString(R.string.default_user)
                     + ".cloudant.com/" + db_name);
             //URI uri = new URI("http://10.0.2.2:5984/sync-test");
-
 
             Replication replication;
             if (r == ReplicationType.Pull) {
@@ -286,29 +289,46 @@ public class MainActivity extends Activity{
             replicator.getEventBus().unregister(listener);
 
             if (replicator.getState() != Replicator.State.COMPLETE) {
-                Log.d("MainActivity","Error replicating" + listener.error.toString());
+                Toast.makeText(MainActivity.this,
+                        "Replication error",
+                        Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(MainActivity.this, "Replication finished",
+                Toast.makeText(MainActivity.this,
+                        "Replication finished",
                         Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
-            Log.d(r.toString() + "Replicate exception", e.toString());
+            e.printStackTrace();
+            Toast.makeText(MainActivity.this,
+                    "Replication failed",
+                    Toast.LENGTH_SHORT).show();
         }
     }
 
-    public void uploadAttachment(String id, int position) {
-        try {
-            InputStream is = adapter.getStream(position);
+    // Creates a document in local database with given attachment
+    public void createDoc(Uri path) throws IOException{
+        adapter.addImage(path, this);
+        InputStream is = getContentResolver().openInputStream(path);
+        DocumentBody doc = new BasicDoc("Marco","Polo");
+        DocumentRevision revision = ds.createDocument(doc);
+        uploadAttachment(revision.getId(), is);
+    }
 
+    // Adds attachment to a document
+    public void uploadAttachment(String id, InputStream is) {
+        try {
             Attachment att = new UnsavedStreamAttachment(is, "image.jpg", "image/jpeg");
             List<Attachment> atts = new ArrayList<Attachment>();
             atts.add(att);
             DocumentRevision oldRevision = ds.getDocument(id); //doc id
             DocumentRevision newRevision = null;
             // set attachment
-            newRevision = ds.updateAttachments(oldRevision, atts);
+            ds.updateAttachments(oldRevision, atts);
         } catch (Exception e) {
-            Log.d("UploadAttachment exception", e.toString());
+            e.printStackTrace();
+            Toast.makeText(MainActivity.this,
+                    "Attachment was not added",
+                    Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -320,9 +340,6 @@ public class MainActivity extends Activity{
         api_key = json.get("key").toString();
         api_pass = json.get("password").toString();
         db_name = json.get("db name").toString();
-        Log.d("main thread KEY", api_key);
-        Log.d("main thread Pass", api_pass);
-        Log.d("db", db_name);
         saveToPrefs(api_key, api_pass, db_name);
     }
 
@@ -333,11 +350,10 @@ public class MainActivity extends Activity{
         JSONObject json = new JSONObject(response);
         api_key = json.get("key").toString();
         api_pass = json.get("password").toString();
-        Log.d("main thread KEY", api_key);
-        Log.d("main thread Pass", api_pass);
         saveToPrefs(api_key, api_pass, db_name);
     }
 
+    // Saves authentication data to local preferences
     private void saveToPrefs(String key, String pass, String db) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         final SharedPreferences.Editor editor = prefs.edit();
@@ -347,27 +363,33 @@ public class MainActivity extends Activity{
         editor.commit();
     }
 
-    private boolean getDataFromPrefs() {
+    // Checks local preferences for authentication data, if not found - loads default values
+    private void getDataFromPrefs() {
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         try {
             api_key = sharedPrefs.getString("key", getString(R.string.default_api_key));
             api_pass = sharedPrefs.getString("pass", getString(R.string.default_api_password));
             db_name = sharedPrefs.getString("db", getString(R.string.default_dbname));
-            return true;
         } catch (Exception e) {
+            // Close the app if no authentication data can be loaded
             e.printStackTrace();
-            return false;
+            System.exit(1);
         }
+    }
+
+    // Creates grid of images
+    private void createGrid(){
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        GridView gridview = (GridView) findViewById(R.id.gridview);
+        int screenW = displayMetrics.widthPixels - 40;
+        gridview.setColumnWidth(screenW/2);
+        adapter = new ImageAdapter(this, screenW/2);
+        gridview.setAdapter(adapter);
     }
 
     private void reloadView() {
         GridView gridview = (GridView) findViewById(R.id.gridview);
         gridview.invalidate();
         gridview.requestLayout();
-    }
-
-    private int getScreenW() {
-        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        return (int) (displayMetrics.widthPixels / displayMetrics.density);
     }
 }
