@@ -86,8 +86,6 @@ public class MainActivity extends Activity{
             case R.id.action_add:
                 addImage();
                 return true;
-            case R.id.action_settings:
-                return true;
             case R.id.action_replicate:
                 replicateDatastore(ReplicationType.Push);
                 return true;
@@ -97,11 +95,6 @@ public class MainActivity extends Activity{
                 return true;
             case R.id.action_pull_replicate:
                 replicateDatastore(ReplicationType.Pull);
-                adapter.clearImageData();
-                loadDatastore();
-                reloadView();
-                return true;
-            case R.id.action_refresh:
                 adapter.clearImageData();
                 loadDatastore();
                 reloadView();

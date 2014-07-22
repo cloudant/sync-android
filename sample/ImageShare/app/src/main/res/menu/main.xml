@@ -17,12 +17,6 @@
         android:showAsAction="ifRoom"
         android:title="New DB"/>
     <item
-        android:id="@+id/action_refresh"
-        android:icon="@drawable/ic_action_refresh"
-        android:orderInCategory="100"
-        android:showAsAction="ifRoom"
-        android:title="Refresh"/>
-    <item
         android:id="@+id/action_add"
         android:icon="@drawable/ic_action_new"
         android:orderInCategory="100"
@@ -44,9 +38,4 @@
         android:orderInCategory="100"
         android:showAsAction="ifRoom"
         android:title="Local delete"/>
-    <item
-        android:id="@+id/action_settings"
-        android:title="@string/action_settings"
-        android:orderInCategory="100"
-        android:showAsAction="never" />
 </menu>
