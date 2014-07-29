@@ -14,6 +14,14 @@ This application shows how to use Sync to add document attachments, replicate th
 
 Alternatively, you can add `db_name`, `api_key` and `api_password` to `res/values/settings.xml` if you want to test the app without running an authentication script. You would also need to create `db_name` database yourself. However, in this case connecting to a different database and creating a new database will not work.
 
+To run the authentication server you will need:
+
+1. [Python][Python] 2.7 installed.
+
+[Python]: https://www.python.org/downloads
+
+2. Python libraries `argparse`, `requests` and `Flask`.
+
 ## Build
 
 You will need [gradle][gradle] 1.8 installed to build the sample application.
