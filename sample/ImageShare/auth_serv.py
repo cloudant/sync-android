@@ -23,7 +23,7 @@ def create_db():
             break
 
     key = gen_key(db_name)
-    json = "{'db name':%s,'key':%s,'password':%s}" % \
+    json = "{\"db name\":\"%s\",\"key\":\"%s\",\"password\":\"%s\"}" % \
         (db_name, key.json()["key"], key.json()["password"])
     return json
 
