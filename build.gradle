@@ -4,6 +4,14 @@
 
 apply plugin: 'java'
 
+//
+// General settings
+//
+
+group = 'com.cloudant'
+version = '0.3.6-SNAPSHOT'
+description = """cloudant-sync"""
+
 dependencies {
     compile project(':sync-core')
     compile project(':sync-javase')
@@ -29,15 +37,6 @@ subprojects {
         }
     }
 
-    //
-    // General settings
-    //
-
-    group = 'com.cloudant'
-    version = '0.3.6-SNAPSHOT'
-
-    description = """cloudant-sync"""
-
     sourceCompatibility = 1.6
     targetCompatibility = 1.6
 
@@ -49,14 +48,15 @@ subprojects {
         maven { url "http://cloudant.github.io/cloudant-sync-eap/repository/" }
     }
 
-    //
-    // Allow developer-local configuration to be applied (e.g., customising
-    // location of maven repo).
-    //
-
-    def localGradleScript = file("../local.gradle")
-    if (localGradleScript.exists()) {
-        apply from: localGradleScript
+    // local.gradle defines ghpages, so we want to publish somewhere specific for release
+    if (project.hasProperty('ghpages')) {
+        publishing {
+            repositories {
+                maven {
+                    url "$ghpages/repository"
+                }
+            }
+        }
     }
 
     //
@@ -79,6 +79,10 @@ subprojects {
 
 }
 
+//
+// *** DOCS AND PUBLISHING ***
+//
+
 // see http://issues.gradle.org/browse/GRADLE-1876
 // run javadoc over union of all projects
 task docs(type: Javadoc) {
@@ -86,3 +90,17 @@ task docs(type: Javadoc) {
     classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath}) 
     destinationDir = new File(projectDir, 'docs')
 }
+
+// tasks below require the ghpages variable to be set
+task publishDocsVersioned(type: Sync, dependsOn: docs) {
+    from "docs"
+    into "$ghpages/docs/${rootProject.version}"
+}
+
+task publishDocsLatest(type: Sync, dependsOn: docs) {
+    from "docs"
+    into "$ghpages/docs/latest"
+}
+
+// Publish docs and maven artifacts to GH repo
+task publishAll(dependsOn: [publishDocsVersioned, publishDocsLatest, subprojects.publish])
