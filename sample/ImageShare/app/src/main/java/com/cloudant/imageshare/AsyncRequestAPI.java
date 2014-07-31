@@ -10,6 +10,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
@@ -30,9 +31,13 @@ public class AsyncRequestAPI extends AsyncTask<String, String, String>{
             URI uri = new URI(params[0]);
             HttpClient httpClient = new DefaultHttpClient();
             HttpPut put = new HttpPut(uri);
-            List<NameValuePair> pairs = new ArrayList<NameValuePair>();
-            pairs.add(new BasicNameValuePair("db", params[1]));
-            put.setEntity(new UrlEncodedFormEntity(pairs));
+            put.setHeader("Content-type", "application/json");
+            //List<NameValuePair> pairs = new ArrayList<NameValuePair>();
+            //pairs.add(new BasicNameValuePair("db", params[1]));
+            JSONObject json = new JSONObject();
+            json.put("db", params[1]);
+            StringEntity se = new StringEntity(json.toString());
+            put.setEntity(se);
             HttpResponse response = httpClient.execute(put);
             StatusLine l = response.getStatusLine();
             if (l.getStatusCode() != 200) {

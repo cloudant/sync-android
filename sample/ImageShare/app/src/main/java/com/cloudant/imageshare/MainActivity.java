@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -332,7 +333,7 @@ public class MainActivity extends Activity{
         JSONObject json = new JSONObject(response);
         api_key = json.get("key").toString();
         api_pass = json.get("password").toString();
-        db_name = json.get("db name").toString();
+        db_name = json.get("db_name").toString();
         saveToPrefs(api_key, api_pass, db_name);
     }
 
@@ -342,6 +343,7 @@ public class MainActivity extends Activity{
         String response = (String) httpRequest.get();
         JSONObject json = new JSONObject(response);
         api_key = json.get("key").toString();
+        db_name = db;
         api_pass = json.get("password").toString();
         saveToPrefs(api_key, api_pass, db_name);
     }
