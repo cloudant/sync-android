@@ -92,15 +92,17 @@ task docs(type: Javadoc) {
 }
 
 // tasks below require the ghpages variable to be set
-task publishDocsVersioned(type: Sync, dependsOn: docs) {
-    from "docs"
-    into "$ghpages/docs/${rootProject.version}"
+if (project.hasProperty('ghpages')) {
+    task publishDocsVersioned(type: Sync, dependsOn: docs) {
+        from "docs"
+        into "$ghpages/docs/${rootProject.version}"
+    }
+    
+    task publishDocsLatest(type: Sync, dependsOn: docs) {
+        from "docs"
+        into "$ghpages/docs/latest"
+    }
+    
+    // Publish docs and maven artifacts to GH repo
+    task publishAll(dependsOn: [publishDocsVersioned, publishDocsLatest, subprojects.publish])
 }
-
-task publishDocsLatest(type: Sync, dependsOn: docs) {
-    from "docs"
-    into "$ghpages/docs/latest"
-}
-
-// Publish docs and maven artifacts to GH repo
-task publishAll(dependsOn: [publishDocsVersioned, publishDocsLatest, subprojects.publish])
