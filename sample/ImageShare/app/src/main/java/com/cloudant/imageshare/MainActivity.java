@@ -50,6 +50,7 @@ public class MainActivity extends Activity{
     private String api_key;
     private String api_pass;
     private String db_name;
+    private String account;
 
     private enum ReplicationType {
         Pull,
@@ -252,7 +253,7 @@ public class MainActivity extends Activity{
 
     public void replicateDatastore(ReplicationType r){
         try {
-            URI uri = new URI("https://" + getString(R.string.default_user)
+            URI uri = new URI("https://" + account
                     + ".cloudant.com/" + db_name);
             //URI uri = new URI("http://10.0.2.2:5984/sync-test");
 
@@ -331,10 +332,11 @@ public class MainActivity extends Activity{
         AsyncTask request = new AsyncRequestNewDB().execute(api_server);
         String response = (String) request.get();
         JSONObject json = new JSONObject(response);
-        api_key = json.get("key").toString();
-        api_pass = json.get("password").toString();
-        db_name = json.get("db_name").toString();
-        saveToPrefs(api_key, api_pass, db_name);
+        api_key = json.getString("key");
+        api_pass = json.getString("password");
+        db_name = json.getString("db_name");
+        account = json.getString("login");
+        saveToPrefs();
     }
 
     private void connectToRemoteDatabase(String db) throws Exception{
@@ -342,19 +344,21 @@ public class MainActivity extends Activity{
         AsyncTask httpRequest = new AsyncRequestAPI().execute(api_server, db);
         String response = (String) httpRequest.get();
         JSONObject json = new JSONObject(response);
-        api_key = json.get("key").toString();
+        api_key = json.getString("key");
         db_name = db;
-        api_pass = json.get("password").toString();
-        saveToPrefs(api_key, api_pass, db_name);
+        api_pass = json.getString("password");
+        account = json.getString("login");
+        saveToPrefs();
     }
 
     // Saves authentication data to local preferences
-    private void saveToPrefs(String key, String pass, String db) {
+    private void saveToPrefs() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         final SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("key", key);
-        editor.putString("pass", pass);
-        editor.putString("db", db);
+        editor.putString("key", api_key);
+        editor.putString("pass", api_pass);
+        editor.putString("db", db_name);
+        editor.putString("account", account);
         editor.commit();
     }
 
@@ -365,6 +369,7 @@ public class MainActivity extends Activity{
             api_key = sharedPrefs.getString("key", getString(R.string.default_api_key));
             api_pass = sharedPrefs.getString("pass", getString(R.string.default_api_password));
             db_name = sharedPrefs.getString("db", getString(R.string.default_dbname));
+            db_name = sharedPrefs.getString("account", getString(R.string.default_user));
         } catch (Exception e) {
             // Close the app if no authentication data can be loaded
             e.printStackTrace();
