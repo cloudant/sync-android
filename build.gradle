@@ -8,9 +8,11 @@ apply plugin: 'java'
 // General settings
 //
 
-group = 'com.cloudant'
-version = '0.4.0'
-description = """cloudant-sync"""
+allprojects {
+    group = 'com.cloudant'
+    version = '0.4.0'
+    description = """cloudant-sync"""
+}
 
 dependencies {
     compile project(':sync-core')
@@ -60,16 +62,6 @@ subprojects {
     }
 
     //
-    // Docs
-    //
-
-    javadoc {
-        excludes = ["**/*sql*/**", "**/common/**", "**/android/**", "**/mazha/**"]
-        options.showFromPublic()
-        title = "cloudant-sync-datastore-android ${version} API"
-    }
-
-    //
     // Misc. tasks
     //
 
@@ -86,20 +78,22 @@ subprojects {
 // see http://issues.gradle.org/browse/GRADLE-1876
 // run javadoc over union of all projects
 task docs(type: Javadoc) {
-    source subprojects.collect {project -> project.sourceSets.main.allJava } 
+    options.showFromPublic()
+    title = "sync-android ${version} API"
+    source subprojects.collect {project -> project.sourceSets.main.allJava.matching{exclude "**/*sql*/**", "**/common/**", "**/android/**", "**/mazha/**" }}
     classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath}) 
-    destinationDir = new File(projectDir, 'docs')
+    destinationDir = new File(projectDir, 'build/docs')
 }
 
 // tasks below require the ghpages variable to be set
 if (project.hasProperty('ghpages')) {
     task publishDocsVersioned(type: Sync, dependsOn: docs) {
-        from "docs"
+        from "build/docs"
         into "$ghpages/docs/${rootProject.version}"
     }
-    
+        
     task publishDocsLatest(type: Sync, dependsOn: docs) {
-        from "docs"
+        from "build/docs"
         into "$ghpages/docs/latest"
     }
     
