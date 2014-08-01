@@ -1,12 +1,9 @@
 package com.cloudant.imageshare;
 
 import android.content.Context;
-import android.content.CursorLoader;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,13 +13,12 @@ import android.widget.ImageView;
 
 import com.cloudant.sync.datastore.Attachment;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
+
+/**
+ * Holds image data of the grid view.
+ */
 
 public class ImageAdapter extends BaseAdapter{
 
@@ -49,7 +45,7 @@ public class ImageAdapter extends BaseAdapter{
         return 0;
     }
 
-    // create a new ImageView for each item referenced by the Adapter
+    /** Creates a new ImageView for each item referenced by the Adapter */
     public View getView(int position, View convertView, ViewGroup parent) {
         ImageView imageView;
         if (convertView == null) {  // if it's not recycled, initialize some attributes
@@ -81,12 +77,16 @@ public class ImageAdapter extends BaseAdapter{
     public Bitmap loadBitmap(Uri imageUri, Context c) throws IOException{
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        BitmapFactory.decodeStream(c.getContentResolver().openInputStream(imageUri), null, options);
+        BitmapFactory.decodeStream(c.getContentResolver().openInputStream(imageUri),
+                                   null,
+                                   options);
 
         options.inSampleSize = calculateSampleSize(options, lSize,lSize);
 
         options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeStream(c.getContentResolver().openInputStream(imageUri), null, options);
+        return BitmapFactory.decodeStream(c.getContentResolver().openInputStream(imageUri),
+                                          null,
+                                          options);
     }
 
     public Bitmap loadBitmap(Attachment a) throws IOException{
@@ -100,8 +100,8 @@ public class ImageAdapter extends BaseAdapter{
         return BitmapFactory.decodeStream(a.getInputStream(), null, options);
     }
 
-    // Decode large bitmaps efficiently
-    public static int calculateSampleSize( BitmapFactory.Options options,
+    /** Used to decode large bitmaps efficiently */
+    private static int calculateSampleSize( BitmapFactory.Options options,
                                            int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;

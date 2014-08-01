@@ -9,12 +9,11 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.json.JSONObject;
 
 import java.net.URI;
 
 /**
- * Created by pettyurin on 7/21/14.
+ * Queries the authentication server to create a new database.
  */
 public class AsyncRequestNewDB extends AsyncTask<String, Void, String> {
 

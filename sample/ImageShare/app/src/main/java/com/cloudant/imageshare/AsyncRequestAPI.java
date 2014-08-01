@@ -2,26 +2,20 @@ package com.cloudant.imageshare;
 
 import android.os.AsyncTask;
 import android.util.Log;
-import android.util.Pair;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * Created by pettyurin on 7/17/14.
+ * Queries authentication server for API information for given database.
  */
 public class AsyncRequestAPI extends AsyncTask<String, String, String>{
 

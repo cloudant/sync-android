@@ -124,11 +124,13 @@ public class MainActivity extends Activity{
                             Toast.LENGTH_SHORT).show();
                 }
                 return true;
+            default:
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    // Load the image into the grid view add it to a document in local db
+    /** Load the image into the grid view add it to a document in local db */
     public void addImage(){
         if (isEmulator){
             Uri path = Uri.parse("android.resource://com.cloudant.imageshare/" +
@@ -154,7 +156,7 @@ public class MainActivity extends Activity{
         }
     }
 
-    // Opens the dialog for user to input the remote database name
+    /** Opens the dialog for user to input the remote database name */
     private void buildDialog(){
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
@@ -188,7 +190,7 @@ public class MainActivity extends Activity{
         alert.show();
     }
 
-    // Processing the output of image selection app
+    /** Processing the output of image selection app */
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK && requestCode == 1) {
             try {
@@ -210,7 +212,7 @@ public class MainActivity extends Activity{
 
 
 
-    // Creates a DatastoreManager using application internal storage path
+    /** Creates a DatastoreManager using application internal storage path */
     public void initDatastore() {
         File path = getApplicationContext().getDir("datastores", 0);
         manager = new DatastoreManager(path.getAbsolutePath());
@@ -218,7 +220,7 @@ public class MainActivity extends Activity{
         loadDatastore();
     }
 
-    // Delete and open a new local datastore
+    /** Delete and open a new local datastore */
     public void deleteDatastore(){
         try {
             manager.deleteDatastore("my_datastore");
@@ -235,7 +237,7 @@ public class MainActivity extends Activity{
         adapter.clearImageData();
     }
 
-    // Load images from datastore
+    /** Load images from datastore */
     public void loadDatastore() {
         try {
             // Read all documents in one go
@@ -300,7 +302,7 @@ public class MainActivity extends Activity{
         }
     }
 
-    // Creates a document in local database with given attachment
+    /** Creates a document in local database with given attachment */
     public void createDoc(Uri path) throws IOException{
         adapter.addImage(path, this);
         InputStream is = getContentResolver().openInputStream(path);
@@ -309,7 +311,7 @@ public class MainActivity extends Activity{
         uploadAttachment(revision.getId(), is);
     }
 
-    // Adds attachment to a document
+    /** Adds attachment to a document */
     public void uploadAttachment(String id, InputStream is) {
         try {
             Attachment att = new UnsavedStreamAttachment(is, "image.jpg", "image/jpeg");
@@ -351,7 +353,7 @@ public class MainActivity extends Activity{
         saveToPrefs();
     }
 
-    // Saves authentication data to local preferences
+    /** Saves authentication data to local preferences */
     private void saveToPrefs() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         final SharedPreferences.Editor editor = prefs.edit();
@@ -362,7 +364,7 @@ public class MainActivity extends Activity{
         editor.commit();
     }
 
-    // Checks local preferences for authentication data, if not found - loads default values
+    /** Checks local preferences for authentication data, if not found - loads default values */
     private void getDataFromPrefs() {
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         try {
@@ -377,7 +379,7 @@ public class MainActivity extends Activity{
         }
     }
 
-    // Creates grid of images
+    /** Creates grid of images */
     private void createGrid(){
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
         GridView gridview = (GridView) findViewById(R.id.gridview);
