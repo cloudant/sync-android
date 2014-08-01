@@ -1,3 +1,20 @@
+# 0.4.0 (2014-08-01)
+
+- [NEW] Separate builds for Android and standard Java.
+  The library is now distributed as 3 jars: 1 core jar, a Java SE-specific jar and an
+  Android-specific jar.
+- [FIX] Always send basic authentication instead of waiting for a 401 challenge on each
+  request.
+- [FIX] Fix possible crash when calling updateAllIndexes.
+- [FIX] Fix replication of design documents.
+- [BETA] Add API to Datastore for handling attachments.
+   See javadoc and code for BasicDatastore *Attachment methods.
+   This feature is in beta and the API will be changed in the near future.
+- [FIX] Update indexes at query time.
+   Previously indexes were updated each time a document was created or modified, which was
+   inefficient.
+- [FIX] Fix some SQLite multi-threading issues.
+
 # 0.3.5 (2014-03-24)
 
 - [FIX] Update indexes automatically after documents in the datastore are
