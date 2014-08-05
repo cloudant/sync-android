@@ -77,18 +77,16 @@ $ gradle integrationTest
 
 Certain tests need a running CouchDB instance, by default they use the local
 CouchDB. To run tests with Cloudant, you need to set your Cloudant account
-credentials: add the following to `local.gradle` in the same folder as
+credentials: add the following to `gradle.properties` in the same folder as
 `build.gradle`:
 
-```groovy
-tasks.withType(Test) {
-    systemProperty "test.with.cloudant", [true|false]
-    systemProperty "test.cloudant.username", "yourCloudantUserName"
-    systemProperty "test.cloudant.password", "yourCloudantPassword"
-}
+```
+systemProp.test.with.cloudant=[true|false]
+systemProp.test.cloudant.username=yourCloudantUserName
+systemProp.test.cloudant.password=yourCloudantPassword
 ```
 
-Your local.gradle should NEVER be checked into git repo as it contains your
+Your gradle.properties should NEVER be checked into git repo as it contains your
 cloudant credentials.
 
 ### Code coverage
@@ -103,13 +101,15 @@ $ gradle coberturaReport systemTest
 
 Code coverage metrics end up in `build/reports`.
 
-## Using the IDEA IDE
+## Using Android Studio / IDEA IDE
 
 The best way to get everything set up correctly is to use IDEA's JetGradle plugin
 to automatically generate and configure an IDEA project. IDEA will then keep the 
 project in sync with the `.gradle` file.
 
 Install this via Preferences -> Plugins (under IDE Settings) -> Gradle.
+
+For Android Studio, this plugin is already installed.
 
 You can then use File -> Import Project to create the IDEA project, which will allow
 you to run gradle tasks from IDEA in addition to setting up dependencies correctly. Just
@@ -123,3 +123,16 @@ $ gradle idea
 ```
 
 See http://www.gradle.org/docs/current/userguide/idea_plugin.html.
+
+### Running JUnit tests in the IDE
+
+To run JUnit tests from Android Studio / IDEA, you will need to add some configuration to tell it
+where the SQLite native library lives.
+
+* In the menu, select Run -> Edit Configurations
+* In the left hand pane, select Defaults -> JUnit
+* Set VM options to:
+```
+-ea -Dsqlite4java.library.path=native
+```
+
