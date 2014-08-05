@@ -15,6 +15,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,12 +32,12 @@ public class PushReplicatorTest extends ReplicationTestBase {
 
     @Before
     public void setUp() throws Exception {
+
         super.setUp();
         source = getURI();
 
         PushReplication push = this.createPushReplication();
         replicator = (BasicReplicator) ReplicatorFactory.oneway(push);
-        prepareTwoDocumentsInLocalDB();
     }
 
     private void prepareTwoDocumentsInLocalDB() {
@@ -51,6 +52,8 @@ public class PushReplicatorTest extends ReplicationTestBase {
 
     @Test
     public void start_StartedThenComplete() throws InterruptedException {
+        prepareTwoDocumentsInLocalDB();
+
         TestReplicationListener listener = new TestReplicationListener();
         Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
         replicator.getEventBus().register(listener);
@@ -66,5 +69,46 @@ public class PushReplicatorTest extends ReplicationTestBase {
 
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
+    }
+
+    @Test
+    public void start_StartedThenStopped() throws InterruptedException {
+
+        int count = 5000;
+        for (int i = 0; i < count; i++) {
+            BarUtils.createBar(datastore, "docnum", i);
+        }
+
+        TestReplicationListener listener = new TestReplicationListener();
+        Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
+        replicator.getEventBus().register(listener);
+        replicator.start();
+        Assert.assertEquals(Replicator.State.STARTED, replicator.getState());
+        Thread.sleep(1000); //just to make sure a few docs are pushed
+        replicator.stop();
+
+        //force wait for the replicator to finish stopping before making tests.
+        int maxTries = 1000*60; //60 seconds is the longest we'll wait
+        int haveBeenWaiting = 0;
+        while (!listener.finishCalled && !listener.errorCalled) {
+            Thread.sleep(1000);
+            if (haveBeenWaiting >= maxTries) {
+                Assert.fail("replicator did not stop after waiting 60 seconds.");
+                break;
+            }
+            haveBeenWaiting += 1000;
+        }
+
+        Assert.assertTrue(listener.finishCalled);
+        Assert.assertFalse(listener.errorCalled);
+
+        if (count != remoteDb.changes("0", 10000).size()) {
+            Assert.assertEquals(Replicator.State.STOPPED, replicator.getState());
+        }
+        else {
+            Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
+            Assert.fail("replicator did not stop before all docs were pushed");
+        }
+
     }
 }
