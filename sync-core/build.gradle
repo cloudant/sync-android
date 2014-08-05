@@ -28,8 +28,12 @@ task copyFixtures(type: Copy) {
 }
 
 tasks.withType(Test) {
-    // pick up properties from command line, gradle.properties first
-    systemProperties = System.properties
+    // pick up properties named test.* from command line, gradle.properties first
+    System.properties.each { prop ->
+                             if (prop.key.startsWith("test")) {
+                                 systemProperty prop.key, prop.value
+                             }
+    }
 
     // the native dir is one directory up from the core project dir
     systemProperty "sqlite4java.library.path", "../native"
