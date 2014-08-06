@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.indexing;
 
+import com.cloudant.common.PerformanceTest;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
@@ -31,6 +32,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.File;
 import java.io.IOException;
@@ -301,8 +303,10 @@ public class IndexManagerIndexTest {
             throws IndexExistsException, SQLException, IOException {
         indexManager.ensureIndexed("class", "class", IndexType.INTEGER);
         Index index = indexManager.getIndex("class");
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/index_really_big_long.json"));
+
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/index_really_big_long.json"));
         BasicDocumentRevision obj1 = datastore.createDocument(DocumentBodyFactory.create(data));
+
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "class", obj1);
     }
@@ -312,8 +316,9 @@ public class IndexManagerIndexTest {
             throws IndexExistsException, SQLException, IOException {
         indexManager.ensureIndexed("class", "class", IndexType.INTEGER);
         Index index = indexManager.getIndex("class");
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/index_float.json"));
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/index_float.json"));
         BasicDocumentRevision obj1 = datastore.createDocument(DocumentBodyFactory.create(data));
+
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "class", obj1);
     }
@@ -324,8 +329,9 @@ public class IndexManagerIndexTest {
             throws IndexExistsException, SQLException, IOException {
         indexManager.ensureIndexed("class", "class", IndexType.INTEGER);
         Index index = indexManager.getIndex("class");
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/index_string.json"));
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/index_string.json"));
         BasicDocumentRevision obj1 = datastore.createDocument(DocumentBodyFactory.create(data));
+
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj1);
     }
 
@@ -333,7 +339,7 @@ public class IndexManagerIndexTest {
     public void indexString_documentWithValidField_indexRowShouldBeAdded()
             throws IndexExistsException, SQLException, IOException {
         Index index = createAndGetIndex("StringIndex", "stringIndex", IndexType.STRING);
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/string_index_valid_field.json"));
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/string_index_valid_field.json"));
         BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "stringIndex", obj);
@@ -343,7 +349,8 @@ public class IndexManagerIndexTest {
     public void indexString_documentWithInvalidField_indexRowShouldNotBeAdded()
             throws IndexExistsException, IOException, SQLException {
         Index index = createAndGetIndex("StringIndex", "stringIndex", IndexType.STRING);
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/string_index_invalid_field.json"));
+
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/string_index_invalid_field.json"));
         BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj);
     }
@@ -385,12 +392,13 @@ public class IndexManagerIndexTest {
     public void indexString_documentUpdatedWithInvalidValue_indexValueShouldBeRemoved() throws Exception {
         Index index = createAndGetIndex("stringIndex", "stringIndex", IndexType.STRING);
 
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/string_index_valid_field.json"));
+
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/string_index_valid_field.json"));
         BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "stringIndex", obj);
 
-        byte[] data2 = FileUtils.readFileToByteArray(new File("fixture/string_index_invalid_field.json"));
+        byte[] data2 = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/string_index_invalid_field.json"));
         BasicDocumentRevision obj2 = datastore.updateDocument(obj.getId(), obj.getRevision(), DocumentBodyFactory.create(data2));
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj2);
@@ -400,7 +408,7 @@ public class IndexManagerIndexTest {
     public void indexString_documentDeleted_indexRowShouldBeRemoved() throws Exception {
         Index index = createAndGetIndex("stringIndex", "stringIndex", IndexType.STRING);
 
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/string_index_valid_field.json"));
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/string_index_valid_field.json"));
         BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "stringIndex", obj);
@@ -414,8 +422,9 @@ public class IndexManagerIndexTest {
     public void indexInteger_documentCreated_indexRowShouldBeAdded() throws Exception {
         Index index = createAndGetIndex("integerIndex", "integerIndex", IndexType.INTEGER);
 
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/integer_index_valid_field.json"));
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_valid_field.json"));
         BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "integerIndex", obj);
     }
@@ -424,7 +433,7 @@ public class IndexManagerIndexTest {
     public void indexInteger_documentCreatedWithInvalidIndexValue_indexRowShouldNotBeAdded() throws Exception {
         Index index = createAndGetIndex("integerIndex", "integerIndex", IndexType.INTEGER);
 
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/integer_index_invalid_field.json"));
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_invalid_field.json"));
         BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj);
@@ -434,12 +443,12 @@ public class IndexManagerIndexTest {
     public void indexInteger_documentUpdated_indexValueShouldBeUpdate() throws Exception {
         Index index = createAndGetIndex("integerIndex", "integerIndex", IndexType.INTEGER);
 
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/integer_index_valid_field.json"));
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_valid_field.json"));
         BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "integerIndex", obj);
 
-        byte[] data2 = FileUtils.readFileToByteArray(new File("fixture/integer_index_valid_field_updated.json"));
+        byte[] data2 = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_valid_field_updated.json"));
         BasicDocumentRevision obj2 = datastore.createDocument(DocumentBodyFactory.create(data2));
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "integerIndex", obj2);
@@ -449,13 +458,14 @@ public class IndexManagerIndexTest {
     public void indexInteger_documentUpdatedFromInvalidToValidValue_indexValueShouldBeUpdate() throws Exception {
         Index index = createAndGetIndex("integerIndex", "integerIndex", IndexType.INTEGER);
 
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/integer_index_invalid_field.json"));
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_invalid_field.json"));
         BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj);
 
-        byte[] data2 = FileUtils.readFileToByteArray(new File("fixture/integer_index_valid_field.json"));
+        byte[] data2 = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_valid_field.json"));
         BasicDocumentRevision obj2 = datastore.createDocument(DocumentBodyFactory.create(data2));
+
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "integerIndex", obj2);
     }
@@ -464,13 +474,14 @@ public class IndexManagerIndexTest {
     public void indexInteger_documentUpdatedWithInvalidIndexValue_indexRowShouldBeRemoved() throws Exception {
         Index index = createAndGetIndex("integerIndex", "integerIndex", IndexType.INTEGER);
 
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/integer_index_valid_field.json"));
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_valid_field.json"));
         BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "integerIndex", obj);
 
-        byte[] data2 = FileUtils.readFileToByteArray(new File("fixture/integer_index_invalid_field.json"));
+        byte[] data2 = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_invalid_field.json"));
         BasicDocumentRevision obj2 = datastore.createDocument(DocumentBodyFactory.create(data2));
+
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj2);
     }
@@ -479,7 +490,7 @@ public class IndexManagerIndexTest {
     public void indexInteger_documentDeleted_indexRowShouldBeRemoved() throws Exception {
         Index index = createAndGetIndex("integerIndex", "integerIndex", IndexType.INTEGER);
 
-        byte[] data = FileUtils.readFileToByteArray(new File("fixture/integer_index_valid_field.json"));
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_valid_field.json"));
         BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "integerIndex", obj);
@@ -562,6 +573,7 @@ public class IndexManagerIndexTest {
         this.assertIndexed(database, index, rev.getId(), " Pop", "Rock ", " R & B ");
     }
 
+    @Category(PerformanceTest.class)
     @Test
     public void index_fieldWith10KValues_allValuesShouldBeAdded()
             throws IndexExistsException, SQLException, IOException {
@@ -643,7 +655,8 @@ public class IndexManagerIndexTest {
                     datastore.createDocument(docId, body);
                 }
                 // we're not on the main thread, so we must close our own connection
-                datastore.getSQLDatabase().close();
+                // TODO this crashes out on android - temp workaround until we find a real fix
+                //datastore.getSQLDatabase().close();
             }
         }
         List<Thread> threads = new ArrayList<Thread>();

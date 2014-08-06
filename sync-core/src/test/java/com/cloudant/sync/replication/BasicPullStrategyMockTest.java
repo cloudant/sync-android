@@ -148,7 +148,7 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         verify(mockListener, never()).error(any(ReplicationStrategyErrored.class));
     }
     
-    private class StrategyListener {
+    public class StrategyListener {
 
         @Subscribe
         public void complete(ReplicationStrategyCompleted rc) {

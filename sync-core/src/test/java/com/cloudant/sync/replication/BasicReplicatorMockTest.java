@@ -314,7 +314,7 @@ public class BasicReplicatorMockTest {
      * This ReplicationListener allows us to make sure that a replicator's
      * start() method can be called from the complete/error handler.
      */
-    private class Listener {
+    public class Listener {
 
         boolean errorThrown = false;
         boolean run = false;

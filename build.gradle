@@ -100,3 +100,7 @@ if (project.hasProperty('ghpages')) {
     // Publish docs and maven artifacts to GH repo
     task publishAll(dependsOn: [publishDocsVersioned, publishDocsLatest, subprojects.publish])
 }
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.10'
+}

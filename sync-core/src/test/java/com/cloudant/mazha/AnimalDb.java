@@ -1,6 +1,8 @@
 package com.cloudant.mazha;
 
 import com.cloudant.mazha.json.JSONHelper;
+import com.cloudant.sync.util.TestUtils;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 
@@ -14,7 +16,7 @@ public class AnimalDb {
         try {
             JSONHelper jsonHelper =  new JSONHelper();
             for(int i = 0 ; i < 10 ; i ++) {
-                String animal = FileUtils.readFileToString(new File("fixture/animaldb/animaldb_animal" + i + ".json"));
+                String animal = FileUtils.readFileToString(TestUtils.loadFixture("fixture/animaldb/animaldb_animal" + i + ".json"));
                 Response response = client.create(jsonHelper.fromJson(new StringReader(animal)));
                 Assert.assertTrue(response.getOk());
             }
@@ -27,11 +29,12 @@ public class AnimalDb {
         try {
             JSONHelper jsonHelper =  new JSONHelper();
             for(int i = 0 ; i < 10 ; i ++) {
-                String animal = FileUtils.readFileToString(new File("fixture/animaldb/animaldb_animal" + i + ".json"));
+                String animal = FileUtils.readFileToString(TestUtils.loadFixture("fixture/animaldb" +
+                        "/animaldb_animal" + i + ".json"));
                 Response response = client.create(jsonHelper.fromJson(new StringReader(animal)));
                 Assert.assertTrue(response.getOk());
             }
-            String filter = FileUtils.readFileToString(new File("fixture/animaldb/animaldb_filter.json"));
+            String filter = FileUtils.readFileToString(TestUtils.loadFixture("fixture/animaldb/animaldb_filter.json"));
             Response response = client.create(jsonHelper.fromJson(new StringReader(filter)));
             Assert.assertTrue(response.getOk());
         } catch (IOException e) {

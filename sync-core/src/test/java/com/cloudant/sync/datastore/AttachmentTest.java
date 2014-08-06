@@ -16,6 +16,7 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.util.Misc;
+import com.cloudant.sync.util.TestUtils;
 
 import static org.hamcrest.CoreMatchers.is;
 import org.junit.Assert;
@@ -37,7 +38,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     public void setAndGetAttachmentsTest() {
         String attachmentName = "attachment_1.txt";
         BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
-        File f = new File("fixture", attachmentName);
+        File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
@@ -65,9 +66,9 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     @Test
     public void setBadAttachmentsTest() {
         BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
-        Attachment att1 = new UnsavedFileAttachment(new File("fixture", "attachment_1.txt"), "text/plain");
-        Attachment att2 = new UnsavedFileAttachment(new File("fixture", "/nonexistentfile"), "text/plain");
-        Attachment att3 = new UnsavedFileAttachment(new File("fixture", "attachment_2.txt"), "text/plain");
+        Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_1.txt"), "text/plain");
+        Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/nonexistentfile"), "text/plain");
+        Attachment att3 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_2.txt"), "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att1);
         atts.add(att2);
@@ -100,7 +101,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         } catch (ConflictException ce) {
             Assert.fail("ConflictException thrown: "+ce);
         }
-        File f = new File("fixture", attachmentName);
+        File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
@@ -109,24 +110,22 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void createDeleteAttachmentsTest() {
+    public void createDeleteAttachmentsTest() throws Exception{
 
         BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
-        Attachment att1 = new UnsavedFileAttachment(new File("fixture", "attachment_1.txt"), "text/plain");
-        Attachment att2 = new UnsavedFileAttachment(new File("fixture", "attachment_2.txt"), "text/plain");
+        Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_1.txt"), "text/plain");
+        Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_2.txt"), "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att1);
         atts.add(att2);
         BasicDocumentRevision rev2 = null;
-        try {
-            rev2 = datastore.updateAttachments(rev_1, atts);
-            Assert.assertNotNull("Revision null", rev2);
-        } catch (ConflictException ce){
-            Assert.fail("ConflictException thrown: "+ce);
-        }
+
+        rev2 = datastore.updateAttachments(rev_1, atts);
+        Assert.assertNotNull("Revision null", rev2);
+
 
         BasicDocumentRevision rev3 = null;
-        try {
+
             rev3 = datastore.removeAttachments(rev2, new String[]{"attachment_1.txt"});
             datastore.compact();
             Assert.assertNotNull("Revision null", rev3);
@@ -146,9 +145,6 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             int count = attachments.listFiles().length;
             Assert.assertEquals("Did not find 1 file in blob store", 1, count);
 
-        } catch (Exception e) {
-            Assert.fail("Exception thrown: "+e);
-        }
 
     }
 
@@ -171,22 +167,18 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void createDeleteAttachmentsFailTest() {
+    public void createDeleteAttachmentsFailTest() throws Exception {
         // check that an attachment 'going missing' from the blob store doesn't stop us deleting it
         // from the database
         String attachmentName = "attachment_1.txt";
         BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
-        File f = new File("fixture", attachmentName);
+        File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
         BasicDocumentRevision rev2 = null;
-        try {
-            rev2 = datastore.updateAttachments(rev_1, atts);
-            Assert.assertNotNull("Revision null", rev2);
-        } catch (ConflictException ce){
-            Assert.fail("ConflictException thrown: "+ce);
-        }
+        rev2 = datastore.updateAttachments(rev_1, atts);
+        Assert.assertNotNull("Revision null", rev2);
 
         BasicDocumentRevision rev3 = null;
         // clear out the attachment directory
@@ -194,13 +186,9 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         for(File attFile : attachments.listFiles()) {
             attFile.delete();
         }
+        rev3 = datastore.removeAttachments(rev2, new String[]{attachmentName});
+        Assert.assertNotNull("Revision null", rev3);
 
-        try {
-            rev3 = datastore.removeAttachments(rev2, new String[]{attachmentName});
-            Assert.assertNotNull("Revision null", rev3);
-        } catch (Exception e) {
-            Assert.fail("Exception thrown: "+e);
-        }
         // check that there are no attachments now associated with this doc
         Assert.assertTrue("Revision should have 0 attachments", datastore.attachmentsForRevision(rev3).isEmpty());
     }
@@ -210,8 +198,8 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     public void attachmentsForRevisionTest() {
         BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
 
-        Attachment att1 = new UnsavedFileAttachment(new File("fixture", "attachment_1.txt"), "text/plain");
-        Attachment att2 = new UnsavedFileAttachment(new File("fixture", "attachment_2.txt"), "text/plain");
+        Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_1.txt"), "text/plain");
+        Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_2.txt"), "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att1);
         atts.add(att2);
@@ -230,7 +218,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         BasicDocumentRevision doc1Rev1 = datastore.createDocument(bodyOne);
         BasicDocumentRevision doc2Rev1 = datastore.createDocument(bodyTwo);
 
-        File attachmentFile = new File("fixture", "attachment_1.txt");
+        File attachmentFile = TestUtils.loadFixture("fixture/attachment_1.txt");
         Attachment att1 = new UnsavedFileAttachment(attachmentFile, "text/plain");
         Attachment att2 = new UnsavedFileAttachment(attachmentFile, "text/plain");
 

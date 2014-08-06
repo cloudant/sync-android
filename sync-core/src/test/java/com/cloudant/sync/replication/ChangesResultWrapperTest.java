@@ -17,6 +17,7 @@ package com.cloudant.sync.replication;
 import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.sync.util.JSONUtils;
+import com.cloudant.sync.util.TestUtils;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
@@ -42,7 +43,7 @@ public class ChangesResultWrapperTest {
     @Test
     public void load_data_from_file_with_really_long_last_sequence() throws Exception {
         String expectedLastSeq = "7-g1AAAADfeJzLYWBgYMlgTmGQS0lKzi9KdUhJMjTUyyrNSS3QS87JL01JzCvRy0styQGqY0pkSLL___9_ViIbmg5jXDqSHIBkUj1YEwOx1uSxAEmGBiAF1LcfU6MJfo0HIBqBNjJmAQBtaklG";
-        ChangesResult changes = getChangeResultFromFile(new File("./fixture/change_feed_0.json"));
+        ChangesResult changes = getChangeResultFromFile(TestUtils.loadFixture("fixture/change_feed_0.json"));
         Assert.assertNotNull(changes);
         Assert.assertEquals(3, changes.size());
         Assert.assertEquals(expectedLastSeq, changes.getLastSeq());
@@ -50,14 +51,14 @@ public class ChangesResultWrapperTest {
 
     @Test
     public void test_load_data_from_file() throws Exception {
-        ChangesResult changes = getChangeResultFromFile(new File("./fixture/change_feed_1.json"));
+        ChangesResult changes = getChangeResultFromFile(TestUtils.loadFixture("fixture/change_feed_1.json"));
         Assert.assertNotNull(changes);
         Assert.assertEquals(2, changes.size());
     }
 
     @Test
     public void openRevisions_twoRows() throws Exception {
-        ChangesResult data = getChangeResultFromFile(new File("./fixture/change_feed_0.json"));
+        ChangesResult data = getChangeResultFromFile(TestUtils.loadFixture("fixture/change_feed_0.json"));
         ChangesResultWrapper changes = new ChangesResultWrapper(data);
 
         Multimap<String, String> openRevisionsList1 = changes.openRevisions(0, 1);
@@ -69,7 +70,7 @@ public class ChangesResultWrapperTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void openRevisions_invalidIndexMinusOne_exception() throws Exception {
-        ChangesResult data = getChangeResultFromFile(new File("./fixture/change_feed_0.json"));
+        ChangesResult data = getChangeResultFromFile(TestUtils.loadFixture("fixture/change_feed_0.json"));
         ChangesResultWrapper changes = new ChangesResultWrapper(data);
         changes.openRevisions(-1, 2);
     }
@@ -81,14 +82,14 @@ public class ChangesResultWrapperTest {
 
     @Test
     public void size() throws IOException {
-        ChangesResult data = getChangeResultFromFile(new File("./fixture/change_feed_1.json"));
+        ChangesResult data = getChangeResultFromFile(TestUtils.loadFixture("fixture/change_feed_1.json"));
         ChangesResultWrapper changes = new ChangesResultWrapper(data);
         Assert.assertEquals(2, changes.size());
     }
 
     @Test
     public void tenK_changesRow() throws IOException {
-        ChangesResult data = getChangeResultFromFile(new File("./fixture/10K_changes_feeds.json"));
+        ChangesResult data = getChangeResultFromFile(TestUtils.loadFixture("fixture/10K_changes_feeds.json"));
         ChangesResultWrapper changes = new ChangesResultWrapper(data);
         Assert.assertEquals(10000, changes.size());
     }

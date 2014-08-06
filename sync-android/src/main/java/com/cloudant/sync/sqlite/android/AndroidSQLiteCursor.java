@@ -98,4 +98,10 @@ public class AndroidSQLiteCursor implements Cursor {
     public int getColumnIndexOrThrow(String columnName) throws IllegalArgumentException {
         return this.internalCursor.getColumnIndexOrThrow(columnName);
     }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        this.internalCursor.close();
+    }
 }

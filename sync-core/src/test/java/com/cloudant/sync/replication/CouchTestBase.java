@@ -18,6 +18,9 @@ package com.cloudant.sync.replication;
 import com.cloudant.mazha.CloudantConfig;
 import com.cloudant.mazha.CouchClientTestBase;
 import com.cloudant.mazha.CouchConfig;
+import com.cloudant.sync.util.Misc;
+
+import java.lang.reflect.Field;
 
 /**
  * Test base for tests that need to run against different CouchDb instances (local CouchDB, remote CouchDB,
@@ -29,6 +32,31 @@ public abstract class CouchTestBase {
         if(CouchClientTestBase.TEST_WITH_CLOUDANT) {
             return CloudantConfig.defaultConfig();
         } else {
+
+            if(Misc.isRunningOnAndroid()){
+                //lots of nasty reflection goes here :(
+
+                try {
+                    CouchConfig config = CouchConfig.defaultConfig();
+
+                    Field host = config.getClass().getDeclaredField("couchdb_host");
+                    host.setAccessible(true);
+
+                    Class buildConfigClass = Class.forName("cloudant.com.androidtest.BuildConfig");
+                    Field ip = buildConfigClass.getField("ip");
+                    String ipAddress = (String)ip.get(null);
+                    host.set(config,ipAddress);
+
+                } catch (Exception e){
+                    e.printStackTrace();
+                } catch (Throwable t){
+                    t.printStackTrace();
+                }
+
+
+            }
+
+
             return CouchConfig.defaultConfig();
         }
     }

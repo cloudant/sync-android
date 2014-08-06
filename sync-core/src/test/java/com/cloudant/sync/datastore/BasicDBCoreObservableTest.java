@@ -59,10 +59,10 @@ public class BasicDBCoreObservableTest {
         this.core = new BasicDatastore(database_dir, "test");
         this.database = this.core.getSQLDatabase();
 
-        this.jsonData = FileUtils.readFileToByteArray(new File(documentOneFile));
+        this.jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         this.bodyOne = new BasicDocumentBody(jsonData);
 
-        this.jsonData = FileUtils.readFileToByteArray(new File(documentTwoFile));
+        this.jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentTwoFile));
         this.bodyTwo = new BasicDocumentBody(jsonData);
 
         this.testObserver = new TestObserver(core);

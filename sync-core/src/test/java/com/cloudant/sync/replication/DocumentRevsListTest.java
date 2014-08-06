@@ -17,6 +17,8 @@ package com.cloudant.sync.replication;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.util.JSONUtils;
+import com.cloudant.sync.util.TestUtils;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,8 +39,9 @@ public class DocumentRevsListTest {
 
     @Before
     public void setup() throws IOException {
-        documentRevs1 = getDocumentRevsFromFile(new File("./fixture/document_revs_only_one_revision.json"));
-        documentRevs2 = getDocumentRevsFromFile(new File("./fixture/document_revs_with_everything.json"));
+        documentRevs1 = getDocumentRevsFromFile(TestUtils.loadFixture("" +
+                "fixture/document_revs_only_one_revision.json"));
+        documentRevs2 = getDocumentRevsFromFile(TestUtils.loadFixture("fixture/document_revs_with_everything.json"));
         documentRevs = new ArrayList<DocumentRevs>();
         documentRevs.add(documentRevs1);
         documentRevs.add(documentRevs2);
@@ -75,8 +78,8 @@ public class DocumentRevsListTest {
 
     @Test
     public void order_by_min_generation() throws IOException {
-        documentRevs1 = getDocumentRevsFromFile(new File("./fixture/document_revs_only_one_revision.json"));
-        documentRevs2 = getDocumentRevsFromFile(new File("./fixture/document_revs_only_two_revision.json"));
+        documentRevs1 = getDocumentRevsFromFile(TestUtils.loadFixture("fixture/document_revs_only_one_revision.json"));
+        documentRevs2 = getDocumentRevsFromFile(TestUtils.loadFixture("fixture/document_revs_only_two_revision.json"));
 
         documentRevs = new ArrayList<DocumentRevs>();
         documentRevs.add(documentRevs2);

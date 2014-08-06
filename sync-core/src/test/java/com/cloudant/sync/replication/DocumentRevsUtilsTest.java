@@ -18,6 +18,10 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevsUtils;
 import com.cloudant.sync.util.JSONUtils;
+import com.cloudant.sync.util.TestUtils;
+
+import junit.framework.TestCase;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,7 +37,8 @@ public class DocumentRevsUtilsTest {
 
     @Test
     public void test_load_data_from_file() throws IOException {
-        DocumentRevs documentRevs = getDocumentRevsFromFile(new File("./fixture/document_revs_with_everything.json"));
+        DocumentRevs documentRevs = getDocumentRevsFromFile(TestUtils.loadFixture
+                ("fixture/document_revs_with_everything.json"));
         Assert.assertNotNull(documentRevs);
         Assert.assertEquals("cdb1a2fec33d146fe07a44ea823bf3ae", documentRevs.getId());
         Assert.assertEquals("4-47d7102726fc89914431cb217ab7bace", documentRevs.getRev());
@@ -49,7 +54,7 @@ public class DocumentRevsUtilsTest {
 
     @Test
     public void createRevisionIdHistory_historyWithFourIds() throws IOException {
-        DocumentRevs documentRevs = getDocumentRevsFromFile(new File("./fixture/document_revs_with_everything.json"));
+        DocumentRevs documentRevs = getDocumentRevsFromFile(TestUtils.loadFixture("fixture/document_revs_with_everything.json"));
         List<String> revisions = DocumentRevsUtils.createRevisionIdHistory(documentRevs);
         Assert.assertEquals(4, revisions.size());
         Assert.assertEquals("1-421ff3d58df47ea6c5e83ca65efb2fa9", revisions.get(0));
@@ -60,7 +65,7 @@ public class DocumentRevsUtilsTest {
 
     @Test
     public void createRevisionIdHistory_onlyOneRevision() throws IOException {
-        DocumentRevs documentRevs = getDocumentRevsFromFile(new File("./fixture/document_revs_only_one_revision.json"));
+        DocumentRevs documentRevs = getDocumentRevsFromFile(TestUtils.loadFixture("fixture/document_revs_only_one_revision.json"));
         List<String> revisions = DocumentRevsUtils.createRevisionIdHistory(documentRevs);
         Assert.assertEquals(1, revisions.size());
         Assert.assertEquals("1-47d7102726fc89914431cb217ab7bace", revisions.get(0));
@@ -73,8 +78,10 @@ public class DocumentRevsUtilsTest {
 
     @Test
     public void createDocument() throws Exception {
-        DocumentRevs documentRevs = getDocumentRevsFromFile(new File("./fixture/document_revs_with_everything.json"));
+
+        DocumentRevs documentRevs = getDocumentRevsFromFile(TestUtils.loadFixture("fixture/document_revs_with_everything.json"));
         BasicDocumentRevision documentRevision = DocumentRevsUtils.createDocument(documentRevs);
+
         Assert.assertEquals("cdb1a2fec33d146fe07a44ea823bf3ae", documentRevision.getId());
         Assert.assertEquals("4-47d7102726fc89914431cb217ab7bace", documentRevision.getRevision());
 
@@ -92,8 +99,9 @@ public class DocumentRevsUtilsTest {
 
     @Test
     public void createDocument_deletedDocument_documentMarkedAsDeleted() throws Exception {
-        DocumentRevs documentRevs = getDocumentRevsFromFile(new File("./fixture/document_revs_deleted.json"));
+        DocumentRevs documentRevs = getDocumentRevsFromFile(TestUtils.loadFixture("fixture/document_revs_deleted.json"));
         BasicDocumentRevision documentRevision = DocumentRevsUtils.createDocument(documentRevs);
+
         Assert.assertTrue(documentRevision.isDeleted());
     }
 }

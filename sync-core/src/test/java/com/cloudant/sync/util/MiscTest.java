@@ -28,6 +28,10 @@ public class MiscTest {
 
     @Test
     public void isRunningOnAndroid_returnFalse() {
+
+        if(Misc.isRunningOnAndroid())
+            return; //this test is invalid for android
+
         Boolean runningOnAndroid = Misc.isRunningOnAndroid();
         Assert.assertFalse(runningOnAndroid);
     }

@@ -45,6 +45,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     @After
     public void tearDown() throws Exception {
+        TestUtils.deleteDatabaseQuietly(database);
         cleanUpTempFiles();
     }
 

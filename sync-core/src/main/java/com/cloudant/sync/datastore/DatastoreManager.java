@@ -166,22 +166,20 @@ public class DatastoreManager {
         Preconditions.checkNotNull(dbName, "Datastore name must not be null");
 
         synchronized (openedDatastores) {
+            if (openedDatastores.containsKey(dbName)) {
+                openedDatastores.get(dbName).close();
+                openedDatastores.remove(dbName);
+            }
             String dbDirectory = getDatastoreDirectory(dbName);
             File dir = new File(dbDirectory);
-            try {
-                if (!dir.exists()) {
-                    String msg = String.format(
-                            "Datastore %s doesn't exist on disk", dbName
-                            );
-                    throw new IOException(msg);
-                } else {
-                    FileUtils.deleteDirectory(dir);
-                    eventBus.post(new DatabaseDeleted(dbName));
-                }
-            } finally {
-                if(openedDatastores.containsKey(dbName)) {
-                    openedDatastores.remove(dbName);
-                }
+            if (!dir.exists()) {
+                String msg = String.format(
+                        "Datastore %s doesn't exist on disk", dbName
+                        );
+                throw new IOException(msg);
+            } else {
+                FileUtils.deleteDirectory(dir);
+                eventBus.post(new DatabaseDeleted(dbName));
             }
         }
     }

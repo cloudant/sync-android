@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class CouchURIHelperTest {
 
@@ -122,7 +123,7 @@ public class CouchURIHelperTest {
     public void buildDocumentUri_options_encodeSeparators() throws Exception {
         URI expected = this.create(uriBase + "test/path1%2Fpath2?d%26etail%3D=%26%3D%3Dds%26&revs=[1-2]");
 
-        Map<String, Object> options = new HashMap<String, Object>();
+        TreeMap<String, Object> options = new TreeMap<String, Object>();
         options.put("revs", "[1-2]");
         options.put("d&etail=", "&==ds&");
         URI actual = helper.documentUri(db, "path1/path2", options);

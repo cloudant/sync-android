@@ -1,5 +1,7 @@
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.util.TestUtils;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +54,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
         String attachmentName = "attachment_1.txt";
-        File f = new File("fixture", attachmentName);
+        File f = TestUtils.loadFixture("fixture/" + attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         update.attachments.put(attachmentName, att);
         BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
@@ -81,7 +83,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
     public void updateAttachments() throws ConflictException, IOException {
         MutableDocumentRevision update = saved.mutableCopy();
         String attachmentName = "attachment_1.txt";
-        File f = new File("fixture", attachmentName);
+        File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         update.attachments.put(attachmentName, att);
         BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
@@ -100,7 +102,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
         String attachmentName = "doesnt_exist_attachment";
-        File f = new File("fixture", attachmentName);
+        File f = TestUtils.loadFixture("fixture/"+ attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         update.attachments.put(attachmentName, att);
         BasicDocumentRevision updated = null;

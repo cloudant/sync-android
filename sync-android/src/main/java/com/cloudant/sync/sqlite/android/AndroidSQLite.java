@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.sqlite.android;
 
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
@@ -112,8 +113,14 @@ public class AndroidSQLite extends SQLDatabase {
 
     @Override
     public long insertWithOnConflict(String table, ContentValues initialValues, int conflictAlgorithm) {
+        //android DB will thrown an exception rather than return a -1 row id if there is a failure
+        // so we catch constraintException and return -1
+        try {
         return this.database.insertWithOnConflict(table, null,
                 createAndroidContentValues(initialValues), conflictAlgorithm);
+        } catch (SQLiteConstraintException sqlce){
+            return -1;
+        }
     }
 
     private android.content.ContentValues createAndroidContentValues(ContentValues values) {
@@ -138,6 +145,8 @@ public class AndroidSQLite extends SQLDatabase {
                 newValues.put(key, (Short)value);
             } else if(value instanceof String) {
                 newValues.put(key, (String)value);
+            } else if( value == null) {
+                newValues.putNull(key);
             } else {
                 throw new IllegalArgumentException("Unsupported data type: " + value.getClass());
             }

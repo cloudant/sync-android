@@ -20,11 +20,11 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
 
-
 import com.cloudant.common.CouchConstants;
 import com.cloudant.common.CouchUtils;
 import com.cloudant.mazha.json.JSONHelper;
 
+import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -32,6 +32,7 @@ import org.junit.Assert;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -210,7 +211,7 @@ public class ClientTestUtils {
         HttpRequests requests = couchClient.getHttpClient();
         InputStream in = requests.get(uri);
 
-        JSONObject jsonObject = new JSONObject(new JSONTokener(new InputStreamReader(in)));
+        JSONObject jsonObject = new JSONObject(new JSONTokener(IOUtils.toString(in)));
         JSONArray revsInfo = jsonObject.getJSONArray("_revs_info");
 
         List<String> revisions = new ArrayList<String>(revsInfo.length());

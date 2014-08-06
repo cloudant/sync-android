@@ -148,7 +148,7 @@ public class JSONUtilsTest {
     }
 
     private byte[] readJsonDataFromFile(String filename) throws IOException {
-        byte[] data = FileUtils.readFileToByteArray(new File(filename));
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture(filename));
         return data;
     }
 }
