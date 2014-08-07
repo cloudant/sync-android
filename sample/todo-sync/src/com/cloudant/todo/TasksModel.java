@@ -3,14 +3,14 @@ package com.cloudant.todo;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreManager;
+import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
-import com.cloudant.sync.replication.ErrorInfo;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorFactory;
-import com.cloudant.sync.util.TypedDatastore;
-import com.google.common.eventbus.EventBus;
+import com.cloudant.sync.util.JSONUtils;
 import com.google.common.eventbus.Subscribe;
 
 import android.content.Context;
@@ -20,6 +20,7 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import java.io.IOException;
 import java.lang.RuntimeException;
 import java.util.ArrayList;
 import java.io.File;
@@ -40,7 +41,6 @@ class TasksModel {
     private static final String TASKS_DATASTORE_NAME = "tasks";
 
     private final Datastore mDatastore;
-    private final TypedDatastore<Task> mTasksDatastore;
 
     private Replicator mPushReplicator;
     private Replicator mPullReplicator;
@@ -63,10 +63,6 @@ class TasksModel {
         this.mDatastore = manager.openDatastore(TASKS_DATASTORE_NAME);
 
         Log.d(LOG_TAG, "Set up database at " + path.getAbsolutePath());
-
-        // A TypedDatastore handles object mapping from DBObject to another
-        // class, saving us some code in this class for CRUD methods.
-        this.mTasksDatastore = new TypedDatastore<Task>(Task.class, this.mDatastore);
 
         // Set up the replicator objects from the app's settings.
         try {
@@ -104,7 +100,15 @@ class TasksModel {
      * @return new revision of the document
      */
     public Task createDocument(Task task) {
-        return this.mTasksDatastore.createDocument(task);
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(task.asMap());
+        try {
+            DocumentRevision created = this.mDatastore.createDocumentFromRevision(rev);
+            return Task.fromRevision(created);
+        } catch (IOException ioe) {
+            // we're not dealing with attachments, so we can safely ignore this exception
+            return null;
+        }
     }
 
     /**
@@ -114,9 +118,16 @@ class TasksModel {
      * @throws ConflictException if the task passed in has a rev which doesn't
      *      match the current rev in the datastore.
      */
-    public Task updateDocument(Task task)
-            throws ConflictException {
-        return this.mTasksDatastore.updateDocument(task);
+    public Task updateDocument(Task task) throws ConflictException {
+        MutableDocumentRevision rev = task.getDocumentRevision().mutableCopy();
+        rev.body = DocumentBodyFactory.create(task.asMap());
+        try {
+            DocumentRevision updated = this.mDatastore.updateDocumentFromRevision(rev);
+            return Task.fromRevision(updated);
+        } catch (IOException ioe) {
+            // we're not dealing with attachments, so we can safely ignore this exception
+            return null;
+        }
     }
 
     /**
@@ -125,9 +136,8 @@ class TasksModel {
      * @throws ConflictException if the task passed in has a rev which doesn't
      *      match the current rev in the datastore.
      */
-    public void deleteDocument(Task task)
-            throws ConflictException {
-        this.mTasksDatastore.deleteDocument(task);
+    public void deleteDocument(Task task) throws ConflictException {
+        this.mDatastore.deleteDocumentFromRevision(task.getDocumentRevision());
     }
 
     /**
@@ -139,10 +149,9 @@ class TasksModel {
         List<Task> tasks = new ArrayList<Task>();
 
         // Filter all documents down to those of type Task.
-        for(DocumentRevision obj : all) {
-            Map<String, Object> map = obj.asMap();
-            if(map.containsKey("type") && map.get("type").equals(Task.DOC_TYPE)) {
-                Task t = this.mTasksDatastore.deserializeDocumentRevision(obj);
+        for(DocumentRevision rev : all) {
+            Task t = Task.fromRevision(rev);
+            if (t != null) {
                 tasks.add(t);
             }
         }

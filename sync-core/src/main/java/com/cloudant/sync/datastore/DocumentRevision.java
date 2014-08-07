@@ -17,6 +17,8 @@
 
 package com.cloudant.sync.datastore;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -51,7 +53,6 @@ public interface DocumentRevision extends Comparable<DocumentRevision> {
      * <p>Returns the {@code DocumentBody} of the document.</p>
      */
     public DocumentBody getBody();
-
 
     /**
      * <p>Returns the sequence number of this revision.</p>
@@ -114,5 +115,22 @@ public interface DocumentRevision extends Comparable<DocumentRevision> {
      * @return  the internal numeric ID of this document revision.
      */
     public long getInternalNumericId();
+
+    // NB the key is purely for the user's convenience and doesn't have to be the same as the attachment name
+    public Map<String, Attachment> getAttachments();
+
+    /**
+     * <p>Return a mutable copy of this <code>DocumentRevision</code>.</p>
+     *
+     * <p>The mutable copy can be used to change the body and attachments.</p>
+     *
+     * <p>Mutable copies can be created or updated in the datastore by calling the appropriate
+     * methods on the <code>Datastore</code></p>.
+     *
+     * @return a mutable copy of the document revision
+     * @see Datastore#createDocumentFromRevision(MutableDocumentRevision)
+     * @see Datastore#updateDocumentFromRevision(MutableDocumentRevision)
+     */
+    public MutableDocumentRevision mutableCopy();
 
 }

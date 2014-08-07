@@ -16,9 +16,11 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.sqlite.Cursor;
 
+import java.util.List;
+
 class SQLDatabaseUtils {
 
-    static BasicDocumentRevision getFullRevisionFromCurrentCursor(Cursor cursor) {
+    static BasicDocumentRevision getFullRevisionFromCurrentCursor(Cursor cursor, List<? extends Attachment> attachments) {
         String docId = cursor.getString(0);
         long internalId = cursor.getLong(1);
         String revId = cursor.getString(2);
@@ -42,10 +44,11 @@ class SQLDatabaseUtils {
                 .setDeleted(deleted)
                 .setSequence(sequence)
                 .setInternalId(internalId)
-                .setCurrnet(current)
-                .setParent(parent);
+                .setCurrent(current)
+                .setParent(parent)
+                .setAttachments(attachments);
 
-        return builder.buildBasicDBObject();
+        return builder.build();
     }
 
     static String makePlaceholders(int len) {

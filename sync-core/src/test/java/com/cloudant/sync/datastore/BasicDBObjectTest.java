@@ -46,7 +46,7 @@ public class BasicDBObjectTest {
         this.builder.setInternalId(INTERNAL_ID);
         this.builder.setDeleted(Boolean.TRUE);
 
-        BasicDocumentRevision td = this.builder.buildBasicDBObject();
+        BasicDocumentRevision td = this.builder.build();
         Assert.assertEquals(DOCUMENT_ID, td.getId());
         Assert.assertEquals(REVISION_ID, td.getRevision());
         Assert.assertFalse(td.isLocal());

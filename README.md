@@ -138,7 +138,15 @@ Datastore ds = manager.openDatastore("my_datastore");
 
 // Create a document
 DocumentBody body = new BasicDBBody(jsonData);
-DocumentRevision revision = ds.createDocument(body);
+MutableDocumentRevision revision = new MutableDocumentRevision();
+revision.body = body;
+DocumentRevision saved = ds.createDocumentFromRevision(revision);
+
+// Add an attachment -- binary data like a JPEG
+UnsavedFileAttachment att1 = new UnsavedFileAttachment(new File("/path/to/image.jpg"),
+                                                       "image/jpeg");
+revision.attachments.put(att1.name, att1);
+DocumentRevision updated = ds.createDocumentFromRevision(revision);
 
 // Read a document
 DocumentRevision aRevision = ds.getDocument(revision.getId());

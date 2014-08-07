@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -124,12 +125,48 @@ class AttachmentManager {
         }
     }
 
+    protected void setAttachments(DocumentRevision rev, Map<String, Attachment> attachments) throws IOException {
+
+        // set attachments for revision:
+        // * prepare new attachments and add them
+        // * copy existing attachments forward to the next revision
+
+        if (attachments == null || attachments.size() == 0) {
+            // nothing to do
+            return;
+        }
+
+        try {
+            this.datastore.getSQLDatabase().beginTransaction();
+            for (Attachment a : attachments.values()) {
+                if (!(a instanceof SavedAttachment)) {
+                    // go thru unsaved attachments and prepare and add them
+                    this.addAttachment(new PreparedAttachment(a, this.attachmentsDir), rev);
+                } else {
+                    // go thru existing and new saved attachments and add them (adding for the existing will just copy them forward to this revision)
+                    long parentSequence = ((SavedAttachment) a).seq;
+                    long newSequence = rev.getSequence();
+                    copyAttachment(parentSequence, newSequence, a.name);
+                }
+            }
+            this.datastore.getSQLDatabase().setTransactionSuccessful();
+        } catch (SQLException sqe) {
+            throw new SQLRuntimeException("SQLException setting attachment for rev"+rev, sqe);
+        } finally {
+            this.datastore.getSQLDatabase().endTransaction();
+        }
+    }
+
     protected DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException {
 
         // add attachments and then return new revision:
         // * save new (unmodified) revision which will have new _attachments when synced
         // * for each attachment, add attachment to db linked to this revision
 
+        if (attachments == null || attachments.size() == 0) {
+            // nothing to do
+            return rev;
+        }
         List<PreparedAttachment> preparedAttachments = new ArrayList<PreparedAttachment>();
 
         try {
@@ -192,10 +229,9 @@ class AttachmentManager {
         }
     }
 
-    protected List<? extends Attachment> attachmentsForRevision(DocumentRevision rev) {
+    protected List<? extends Attachment> attachmentsForRevision(long sequence) {
         try {
             LinkedList<SavedAttachment> atts = new LinkedList<SavedAttachment>();
-            long sequence = rev.getSequence();
             Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
                     new String[]{String.valueOf(sequence)});
             while (c.moveToNext()) {

@@ -14,6 +14,8 @@
 
 package com.cloudant.sync.datastore;
 
+import java.util.List;
+
 /**
  * <p>Build {@code DocumentRevision}s in a chained manner.</p>
  */
@@ -28,21 +30,21 @@ public class DocumentRevisionBuilder {
     private boolean deleted = false;
     private long docInternalId = -1;
     private long parent = -1;
+    private List<? extends Attachment> attachments = null;
 
     /**
      * <p>Builds and returns the {@code BasicDocumentRevision} for this builder.</p>
      * @return the {@code BasicDocumentRevision} for this builder
      */
-    protected BasicDocumentRevision buildBasicDBObject() {
-        return new BasicDocumentRevision(docId, revId, body, sequence, docInternalId, deleted, current, parent);
-    }
-
-    /**
-     * <p>Builds and returns the {@code DocumentRevision} for this builder.</p>
-     * @return the {@code DocumentRevision} for this builder
-     */
-    public DocumentRevision build() {
-        return new BasicDocumentRevision(docId, revId, body, sequence, docInternalId, deleted, current, parent);
+    public BasicDocumentRevision build() {
+        BasicDocumentRevision.BasicDocumentRevisionOptions options = new BasicDocumentRevision.BasicDocumentRevisionOptions();
+        options.sequence = sequence;
+        options.docInternalId = docInternalId;
+        options.deleted = deleted;
+        options.current = current;
+        options.parent = parent;
+        options.attachments = attachments;
+        return new BasicDocumentRevision(docId, revId, body, options);
     }
 
     /**
@@ -114,7 +116,7 @@ public class DocumentRevisionBuilder {
      * @param current whether this document revision is the winning revision
      * @return the builder object for chained calls
      */
-    public DocumentRevisionBuilder setCurrnet(boolean current) {
+    public DocumentRevisionBuilder setCurrent(boolean current) {
         this.current = current;
         return this;
     }
@@ -158,4 +160,16 @@ public class DocumentRevisionBuilder {
         this.parent = parent;
         return this;
     }
+
+    /**
+     * <p>Sets the attachments associated with the document for this builder.</p>
+     * @param attachments list of attachments associated with the document
+     * @return the builder object for chained calls
+     */
+    public DocumentRevisionBuilder setAttachments(List<? extends Attachment> attachments) {
+        this.attachments = attachments;
+        return this;
+    }
+
+
 }

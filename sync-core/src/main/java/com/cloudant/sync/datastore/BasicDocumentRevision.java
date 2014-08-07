@@ -20,6 +20,10 @@ package com.cloudant.sync.datastore;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.JSONUtils;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,19 +43,37 @@ class BasicDocumentRevision implements DocumentRevision {
 
     private int generation = -1;
 
-    BasicDocumentRevision(String docId, String revId, DocumentBody body, long sequence, long docInternalId, boolean deleted, boolean current, long parent) {
+    private Map<String, Attachment> attachments;
+
+    static class BasicDocumentRevisionOptions {
+        long sequence;
+        long docInternalId;
+        boolean deleted;
+        boolean current;
+        long parent;
+        List<? extends Attachment> attachments;
+    }
+
+    BasicDocumentRevision(String docId, String revId, DocumentBody body, BasicDocumentRevisionOptions options) {
         CouchUtils.validateRevisionId(revId);
         CouchUtils.validateDocumentId(docId);
         assert body != null;
 
         this.id = docId;
         this.revision = revId;
-        this.deleted = deleted;
+        this.deleted = options.deleted;
         this.body = body;
-        this.sequence = sequence;
-        this.current = current;
-        this.internalNumericId = docInternalId;
-        this.parent = parent;
+        this.sequence = options.sequence;
+        this.current = options.current;
+        this.internalNumericId = options.docInternalId;
+        this.parent = options.parent;
+        this.attachments = new HashMap<String, Attachment>();
+        if (options.attachments != null) {
+            for (Attachment att : options.attachments) {
+                this.attachments.put(att.name, att);
+            }
+        }
+
     }
 
     BasicDocumentRevision(String docId, String revId, DocumentBody body) {
@@ -209,4 +231,20 @@ class BasicDocumentRevision implements DocumentRevision {
     public int compareTo(DocumentRevision o) {
         return Long.valueOf(getSequence()).compareTo(o.getSequence());
     }
+
+    @Override
+    public MutableDocumentRevision mutableCopy() {
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.docId = this.getId();
+        rev.body = this.getBody();
+        rev.sourceRevisionId = this.getRevision();
+        rev.attachments = this.attachments;
+        return rev;
+    }
+
+    @Override
+    public Map<String, Attachment> getAttachments() {
+        return Collections.unmodifiableMap(attachments);
+    }
+
 }

@@ -191,7 +191,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             String sql = (rev == null) ? GET_DOCUMENT_CURRENT_REVISION : GET_DOCUMENT_GIVEN_REVISION;
             cursor = this.sqlDb.rawQuery(sql, args);
             if (cursor.moveToFirst()) {
-                return SQLDatabaseUtils.getFullRevisionFromCurrentCursor(cursor);
+                long sequence = cursor.getLong(3);
+                List<? extends Attachment> atts = attachmentManager.attachmentsForRevision(sequence);
+                return SQLDatabaseUtils.getFullRevisionFromCurrentCursor(cursor, atts);
             } else {
                 return null;
             }
@@ -226,7 +228,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             DocumentRevisionTree tree = new DocumentRevisionTree();
             cursor = this.sqlDb.rawQuery(sql, args);
             while (cursor.moveToNext()) {
-                DocumentRevision rev = SQLDatabaseUtils.getFullRevisionFromCurrentCursor(cursor);
+                long sequence = cursor.getLong(3);
+                List<? extends Attachment> atts = attachmentManager.attachmentsForRevision(sequence);
+                DocumentRevision rev = SQLDatabaseUtils.getFullRevisionFromCurrentCursor(cursor, atts);
                 Log.v(LOG_TAG, "Rev: " + rev);
                 tree.add(rev);
             }
@@ -466,7 +470,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             options.current = true;
             options.data = body.asBytes();
             options.available = true;
-            options.copyAttachments = true;
+            options.copyAttachments = false;
             long newSequence = insertRevision(options);
             if (newSequence < 0) {
                 throw new IllegalStateException("Error inserting data, please checking data.");
@@ -533,10 +537,10 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     @Override
     public BasicDocumentRevision updateDocument(String docId, String prevRevId, final DocumentBody body)
             throws ConflictException {
-        return updateDocument(docId, prevRevId, body, true);
+        return updateDocument(docId, prevRevId, body, true, true);
     }
 
-    BasicDocumentRevision updateDocument(String docId, String prevRevId, final DocumentBody body, boolean validateBody)
+    BasicDocumentRevision updateDocument(String docId, String prevRevId, final DocumentBody body, boolean validateBody, boolean copyAttachments)
             throws ConflictException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
@@ -562,7 +566,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             }
 
             this.checkOffPreviousWinnerRevisionStatus(preRevision);
-            String newRevisionId = this.insertNewWinnerRevision(body, preRevision);
+            String newRevisionId = this.insertNewWinnerRevision(body, preRevision, copyAttachments);
             BasicDocumentRevision newRevision = this.getDocument(preRevision.getId(), newRevisionId);
 
             this.sqlDb.setTransactionSuccessful();
@@ -794,7 +798,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         try {
             cursor = this.sqlDb.rawQuery(sql, args);
             while (cursor.moveToNext()) {
-                DocumentRevision row = SQLDatabaseUtils.getFullRevisionFromCurrentCursor(cursor);
+                long sequence = cursor.getLong(3);
+                List<? extends Attachment> atts = attachmentManager.attachmentsForRevision(sequence);
+                DocumentRevision row = SQLDatabaseUtils.getFullRevisionFromCurrentCursor(cursor, atts);
                 result.add(row);
             }
         } catch (SQLException e) {
@@ -1323,7 +1329,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
-    private String insertNewWinnerRevision(DocumentBody newWinner, DocumentRevision oldWinner) {
+    private String insertNewWinnerRevision(DocumentBody newWinner, DocumentRevision oldWinner, boolean copyAttachments) {
         String newRevisionId = CouchUtils.generateNextRevisionId(oldWinner.getRevision());
 
         InsertRevisionOptions options = new InsertRevisionOptions();
@@ -1334,7 +1340,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         options.current = true;
         options.data = newWinner.asBytes();
         options.available = true;
-        options.copyAttachments = true;
+        options.copyAttachments = copyAttachments;
         this.insertRevision(options);
 
         return newRevisionId;
@@ -1370,7 +1376,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     @Override
     public List<? extends Attachment> attachmentsForRevision(DocumentRevision rev) {
-        return this.attachmentManager.attachmentsForRevision(rev);
+        return this.attachmentManager.attachmentsForRevision(rev.getSequence());
     }
 
     @Override
@@ -1383,4 +1389,85 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         return eventBus;
     }
+
+    @Override
+    public DocumentRevision createDocumentFromRevision(MutableDocumentRevision rev) throws IOException {
+        Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
+        // create docid if docid is null
+        if (rev.docId == null) {
+            rev.docId = CouchUtils.generateDocumentId();
+        }
+        // set body and attachments in one tx
+        try {
+            this.getSQLDatabase().beginTransaction();
+            // save document with body
+            BasicDocumentRevision saved = createDocument(rev.docId, rev.body);
+            // set attachments
+            this.attachmentManager.setAttachments(saved, rev.attachments);
+            this.getSQLDatabase().setTransactionSuccessful();
+            // now re-fetch the revision with updated attachments
+            DocumentRevision updatedWithAttachments = this.getDocument(saved.getId(), saved.getRevision());
+            return updatedWithAttachments;
+        } finally {
+            this.getSQLDatabase().endTransaction();
+        }
+    }
+
+    @Override
+    public DocumentRevision updateDocumentFromRevision(MutableDocumentRevision rev) throws ConflictException, IOException {
+        Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
+        // update body and attachments in one tx
+        try {
+            this.getSQLDatabase().beginTransaction();
+            // update document with new body
+            DocumentRevision updated = updateDocument(rev.docId, rev.sourceRevisionId, rev.body, true, false);
+            // set attachments
+            this.attachmentManager.setAttachments(updated, rev.attachments);
+            this.getSQLDatabase().setTransactionSuccessful();
+            // now re-fetch the revision with updated attachments
+            DocumentRevision updatedWithAttachments = this.getDocument(updated.getId(), updated.getRevision());
+            return updatedWithAttachments;
+        } finally {
+            this.getSQLDatabase().endTransaction();
+        }
+    }
+
+    @Override
+    public DocumentRevision deleteDocumentFromRevision(DocumentRevision rev) throws ConflictException {
+        Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
+        return deleteDocument(rev.getId(), rev.getRevision());
+    }
+
+    // delete all leaf nodes
+    @Override
+    public List<DocumentRevision> deleteDocument(String id) throws ConflictException {
+        Preconditions.checkNotNull(id, "id can not be null");
+        // to return
+        ArrayList<DocumentRevision> deleted = new ArrayList<DocumentRevision>();
+        Cursor cursor = null;
+        // delete all in one tx
+        try {
+            this.getSQLDatabase().beginTransaction();
+            // get revid for each leaf
+            final String sql = "SELECT revs.revid FROM docs,revs " +
+                    "WHERE revs.doc_id = docs.doc_id " +
+                    "AND docs.docid = ? " +
+                    "AND deleted = 0 AND revs.sequence NOT IN " +
+                    "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
+
+            cursor = this.sqlDb.rawQuery(sql, new String[]{id});
+            while (cursor.moveToNext()) {
+                String revId = cursor.getString(0);
+                deleted.add(deleteDocument(id, revId));
+            }
+            this.getSQLDatabase().setTransactionSuccessful();
+            return deleted;
+        } catch (SQLException sqe) {
+            throw new SQLRuntimeException("SQLException in deleteDocument, not deleting revisions", sqe);
+        } finally {
+            this.getSQLDatabase().endTransaction();
+            DatabaseUtils.closeCursorQuietly(cursor);
+        }
+    }
+
 }

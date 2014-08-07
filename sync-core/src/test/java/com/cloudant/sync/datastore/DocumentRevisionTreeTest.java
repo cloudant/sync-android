@@ -51,30 +51,81 @@ public class DocumentRevisionTreeTest {
          *         -> f3 -> f4
          **/
 
-        d1 = new BasicDocumentRevision( "id1", "1-rev", b, 1l, 1l, false, false, -1l);
-        d2 = new BasicDocumentRevision( "id1", "2-rev", b, 2l, 1l, false, false, 1l);
-        d3 = new BasicDocumentRevision( "id1", "3-rev", b, 3l, 1l, false, false, 2l);
-        d4 = new BasicDocumentRevision( "id1", "4-rev", b, 4l, 1l, false, false, 3l);
-        d5 = new BasicDocumentRevision( "id1", "5-rev", b, 5l, 1l, false, true, 4l);
+        BasicDocumentRevision.BasicDocumentRevisionOptions opts = new BasicDocumentRevision.BasicDocumentRevisionOptions();
+        opts.docInternalId = 1l;
 
-        c3 = new BasicDocumentRevision( "id1", "3-rev2", b, 6l, 1l, false, false, 2l);
-        c4 = new BasicDocumentRevision( "id1", "4-rev2", b, 7l, 1l, false, true, 6l);
+        opts.sequence = 1l;
+        opts.parent = -1l;
+        d1 = new BasicDocumentRevision( "id1", "1-rev", b, opts);
 
-        e1 = new BasicDocumentRevision( "id1", "1-rev-star", b, 8l, 1l, false, false, -1l);
-        e2 = new BasicDocumentRevision( "id1", "2-rev-star", b, 9l, 1l, false, false, 8l);
-        e3 = new BasicDocumentRevision( "id1", "3-rev-star", b, 10l, 1l, false, false, 9l);
+        opts.sequence = 2l;
+        opts.parent = 1l;
+        d2 = new BasicDocumentRevision( "id1", "2-rev", b, opts);
 
-        f3 = new BasicDocumentRevision( "id1", "3-rev-star-star", b, 11l, 1l, false, false, 9l);
-        f4 = new BasicDocumentRevision( "id1", "4-rev-star-star", b, 12l, 1l, false, false, 11l);
+        opts.sequence = 3l;
+        opts.parent = 2l;
+        d3 = new BasicDocumentRevision( "id1", "3-rev", b, opts);
+
+        opts.sequence = 4l;
+        opts.parent = 3l;
+        d4 = new BasicDocumentRevision( "id1", "4-rev", b, opts);
+
+        opts.sequence = 5l;
+        opts.parent = 4l;
+        opts.current = true;
+        d5 = new BasicDocumentRevision( "id1", "5-rev", b, opts);
+
+        opts = new BasicDocumentRevision.BasicDocumentRevisionOptions();
+        opts.sequence = 6l;
+        opts.parent = 2l;
+
+        c3 = new BasicDocumentRevision( "id1", "3-rev2", b, opts);
+        opts.sequence = 7l;
+        opts.parent = 6l;
+        opts.current = true;
+        c4 = new BasicDocumentRevision( "id1", "4-rev2", b, opts);
+
+        opts = new BasicDocumentRevision.BasicDocumentRevisionOptions();
+        opts.sequence = 8l;
+        opts.parent = -1l;
+        e1 = new BasicDocumentRevision( "id1", "1-rev-star", b, opts);
+
+        opts.sequence = 9l;
+        opts.parent = 8l;
+        e2 = new BasicDocumentRevision( "id1", "2-rev-star", b, opts);
+
+        opts.sequence = 10l;
+        opts.parent = 9l;
+        e3 = new BasicDocumentRevision( "id1", "3-rev-star", b, opts);
+
+        opts.sequence = 11l;
+        opts.parent = 9l;
+        f3 = new BasicDocumentRevision( "id1", "3-rev-star-star", b, opts);
+
+        opts.sequence = 12l;
+        opts.parent = 11l;
+        f4 = new BasicDocumentRevision( "id1", "4-rev-star-star", b, opts);
 
         /**
          * x2 -> x3
          *  |
          *    -> y3
          */
-        x2 = new BasicDocumentRevision( "id2", "2-x", b, 12l, 2l, false, false, -1l);
-        x3 = new BasicDocumentRevision( "id2", "3-x", b, 13l, 2l, false, false, 12l);
-        y3 = new BasicDocumentRevision( "id2", "3-y", b, 14l, 2l, false, false, 12l);
+
+        opts = new BasicDocumentRevision.BasicDocumentRevisionOptions();
+        opts.docInternalId = 2l;
+
+        opts.sequence = 12l;
+        opts.parent = -1l;
+        x2 = new BasicDocumentRevision( "id2", "2-x", b, opts);
+
+        opts.sequence = 13l;
+        opts.parent = 12l;
+        x3 = new BasicDocumentRevision( "id2", "3-x", b, opts);
+
+        opts.sequence = 14l;
+        opts.parent = 12l;
+        y3 = new BasicDocumentRevision( "id2", "3-y", b, opts);
     }
 
     @Test

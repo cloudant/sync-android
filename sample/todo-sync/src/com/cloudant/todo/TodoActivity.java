@@ -34,22 +34,22 @@ public class TodoActivity
     static final String LOG_TAG = "TodoActivity";
 
     private static final int DIALOG_NEW_TASK = 1;
-	private static final int DIALOG_PROGRESS = 2;
+    private static final int DIALOG_PROGRESS = 2;
 
-	static final String SETTINGS_CLOUDANT_USER = "pref_key_username";
-	static final String SETTINGS_CLOUDANT_DB = "pref_key_dbname";
-	static final String SETTINGS_CLOUDANT_API_KEY = "pref_key_api_key";
-	static final String SETTINGS_CLOUDANT_API_SECRET = "pref_key_api_password";
+    static final String SETTINGS_CLOUDANT_USER = "pref_key_username";
+    static final String SETTINGS_CLOUDANT_DB = "pref_key_dbname";
+    static final String SETTINGS_CLOUDANT_API_KEY = "pref_key_api_key";
+    static final String SETTINGS_CLOUDANT_API_SECRET = "pref_key_api_password";
 
     // Main data model object
-	private static TasksModel sTasks;
-	private TaskAdapter mTaskAdapter;
+    private static TasksModel sTasks;
+    private TaskAdapter mTaskAdapter;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		Log.d(LOG_TAG, "onCreate()");
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_todo);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "onCreate()");
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_todo);
 
         // Load default settings when we're first created.
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
@@ -184,16 +184,16 @@ public class TodoActivity
     }
 
     @Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.todo, menu);
-		return true;
-	}
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.todo, menu);
+        return true;
+    }
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle item selection
-		switch (item.getItemId()) {
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
             case R.id.action_new:
                 this.showDialog(DIALOG_NEW_TASK);
                 return true;
@@ -212,11 +212,11 @@ public class TodoActivity
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
-		}
-	}
+        }
+    }
 
-	@Override
-	protected Dialog onCreateDialog(int id, Bundle args) {
+    @Override
+    protected Dialog onCreateDialog(int id, Bundle args) {
         switch (id) {
             case DIALOG_NEW_TASK:
                 return createNewTaskDialog();
@@ -225,10 +225,10 @@ public class TodoActivity
             default:
                 throw new RuntimeException("No dialog defined for id: " + id);
         }
-	}
+    }
 
-	public Dialog createProgressDialog() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    public Dialog createProgressDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         final View v = this.getLayoutInflater().inflate(R.layout.dialog_loading, null);
 
         DialogInterface.OnClickListener negativeClick = new DialogInterface.OnClickListener() {
@@ -253,10 +253,10 @@ public class TodoActivity
         builder.setView(v).setNegativeButton("Stop", negativeClick).setOnKeyListener(keyListener);
 
         return builder.create();
-	}
+    }
 
-	public Dialog createNewTaskDialog() {
-	    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    public Dialog createNewTaskDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View v = this.getLayoutInflater().inflate(R.layout.dialog_new_task, null);
         final EditText description = (EditText) v.findViewById(R.id.new_task_desc);
 
@@ -315,15 +315,15 @@ public class TodoActivity
             }
         });
 
-		return d;
-	}
+        return d;
+    }
 
-	@Override
-	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
-			String key) {
-		Log.d(LOG_TAG, "onSharedPreferenceChanged()");
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+                                          String key) {
+        Log.d(LOG_TAG, "onSharedPreferenceChanged()");
         reloadReplicationSettings();
-	}
+    }
 
     ActionMode mActionMode = null;
     private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
