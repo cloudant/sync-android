@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
 
-    DocumentRevision saved;
+    BasicDocumentRevision saved;
 
     @Before
     public void setUp() throws Exception {
@@ -28,7 +28,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
     // Delete a MutableCopy
     @Test
     public void deleteFromRevision() throws ConflictException {
-        DocumentRevision deleted = datastore.deleteDocumentFromRevision(saved);
+        BasicDocumentRevision deleted = datastore.deleteDocumentFromRevision(saved);
         Assert.assertNotNull("Deleted DocumentRevision is null", deleted);
         Assert.assertTrue("Deleted DocumentRevision is not flagged as deleted", deleted.isDeleted());
     }
@@ -37,7 +37,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
     @Test
     public void deleteNullRevision() throws ConflictException {
         try {
-            DocumentRevision deleted = datastore.deleteDocumentFromRevision(null);
+            BasicDocumentRevision deleted = datastore.deleteDocumentFromRevision(null);
             Assert.fail("NullPointerException expected");
         } catch (NullPointerException npe) {
             ;
@@ -49,7 +49,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
     public void deleteConflictRevision() throws ConflictException, IOException {
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
-        DocumentRevision updatedStale = datastore.updateDocumentFromRevision(update);
+        BasicDocumentRevision updatedStale = datastore.updateDocumentFromRevision(update);
         MutableDocumentRevision updateStale = updatedStale.mutableCopy();
         updateStale.attachments = null;
         updateStale.body = DocumentBodyFactory.create("{\"description\": \"this update will get committed\"}".getBytes());
@@ -83,18 +83,18 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
 
         // assert on leaves in db before deleting
         Assert.assertEquals("Expected 10 leaves", 10, datastore.getAllRevisionsOfDocument(saved.getId()).leafs().size());
-        for(DocumentRevision rev : datastore.getAllRevisionsOfDocument(saved.getId()).leafRevisions()) {
+        for(BasicDocumentRevision rev : datastore.getAllRevisionsOfDocument(saved.getId()).leafRevisions()) {
             Assert.assertTrue("Expected rev to not be deleted", !rev.isDeleted());
         }
         // do the delete
-        List<DocumentRevision> deleted = datastore.deleteDocument(saved.getId());
+        List<BasicDocumentRevision> deleted = datastore.deleteDocument(saved.getId());
         // assert on deleted documents returned
         Assert.assertEquals("Expected 10 leaves", 10, deleted.size());
-        for(DocumentRevision rev : deleted) {
+        for(BasicDocumentRevision rev : deleted) {
             Assert.assertTrue("Expected rev to be deleted", rev.isDeleted());
         }
         // assert on leaves in db (should be same as those returned)
-        for(DocumentRevision rev : datastore.getAllRevisionsOfDocument(saved.getId()).leafRevisions()) {
+        for(BasicDocumentRevision rev : datastore.getAllRevisionsOfDocument(saved.getId()).leafRevisions()) {
             Assert.assertTrue("Expected rev to be deleted", rev.isDeleted());
         }
     }
@@ -102,7 +102,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
     @Test
     public void deleteAllNullRevision() throws ConflictException {
         try {
-            List<DocumentRevision> deleted = datastore.deleteDocument(null);
+            List<BasicDocumentRevision> deleted = datastore.deleteDocument(null);
             Assert.fail("NullPointerException expected");
         } catch (NullPointerException npe) {
             ;
@@ -111,7 +111,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
 
     @Test
     public void deleteAllNonExistentRevision() throws ConflictException {
-        List<DocumentRevision> deleted = datastore.deleteDocument("abc123");
+        List<BasicDocumentRevision> deleted = datastore.deleteDocument("abc123");
         Assert.assertEquals("Deleted list should be empty", true, deleted.isEmpty());
 
     }

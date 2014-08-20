@@ -19,7 +19,7 @@ import com.cloudant.mazha.CouchClient;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.DatastoreExtended;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.indexing.IndexManager;
 import com.cloudant.sync.indexing.QueryBuilder;
@@ -149,7 +149,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         Bar bar1 = oneDocCreatedAndThenPulled();
         Response res = BarUtils.deleteBar(remoteDb, bar1.getId());
         this.pull();
-        DocumentRevision object = datastore.getDocument(res.getId(), res.getRev());
+        BasicDocumentRevision object = datastore.getDocument(res.getId(), res.getRev());
         Assert.assertNotNull(object);
         Assert.assertTrue(object.isDeleted());
     }

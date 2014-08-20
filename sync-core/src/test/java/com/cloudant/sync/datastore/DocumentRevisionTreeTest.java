@@ -29,13 +29,13 @@ import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 public class DocumentRevisionTreeTest {
 
     DocumentBody b;
-    DocumentRevision d1, d2, d3, d4, d5;
-    DocumentRevision c3, c4;
-    DocumentRevision e1, e2, e3;
-    DocumentRevision f3, f4;
+    BasicDocumentRevision d1, d2, d3, d4, d5;
+    BasicDocumentRevision c3, c4;
+    BasicDocumentRevision e1, e2, e3;
+    BasicDocumentRevision f3, f4;
 
-    DocumentRevision x2, x3;
-    DocumentRevision y3;
+    BasicDocumentRevision x2, x3;
+    BasicDocumentRevision y3;
 
     @Before
     public void startUp() {
@@ -203,7 +203,7 @@ public class DocumentRevisionTreeTest {
         t.add(c3).add(c4);
 
         Assert.assertNull(t.bySequence(-2l));
-        DocumentRevision d = t.bySequence(d2.getSequence());
+        BasicDocumentRevision d = t.bySequence(d2.getSequence());
         Assert.assertTrue(d.getSequence() == d2.getSequence());
     }
 
@@ -213,10 +213,10 @@ public class DocumentRevisionTreeTest {
         t.add(d2).add(d3).add(d4).add(d5);
         t.add(c3).add(c4);
 
-        DocumentRevision d = t.lookup(d3.getId(), d3.getRevision());
+        BasicDocumentRevision d = t.lookup(d3.getId(), d3.getRevision());
         Assert.assertNotNull(d);
 
-        DocumentRevision m = t.lookup("haha", "hehe");
+        BasicDocumentRevision m = t.lookup("haha", "hehe");
         Assert.assertNull(m);
     }
 
@@ -239,7 +239,7 @@ public class DocumentRevisionTreeTest {
         t.add(c3).add(c4);
 
         Assert.assertEquals(2, t.leafs().size());
-        List<DocumentRevision> l = new ArrayList<DocumentRevision>();
+        List<BasicDocumentRevision> l = new ArrayList<BasicDocumentRevision>();
         for(DocumentRevisionTree.DocumentRevisionNode n : t.leafs()) {
             l.add(n.getData());
         }
@@ -270,7 +270,7 @@ public class DocumentRevisionTreeTest {
         t.add(c3).add(c4);
 
         {
-            List<DocumentRevision> p = t.getPathForNode(d5.getSequence());
+            List<BasicDocumentRevision> p = t.getPathForNode(d5.getSequence());
             Assert.assertEquals(5, p.size());
             Assert.assertEquals(p.get(4).getSequence(), d1.getSequence());
             Assert.assertEquals(p.get(3).getSequence(), d2.getSequence());
@@ -281,7 +281,7 @@ public class DocumentRevisionTreeTest {
 
 
         {
-            List<DocumentRevision> p2 = t.getPathForNode(c4.getSequence());
+            List<BasicDocumentRevision> p2 = t.getPathForNode(c4.getSequence());
             Assert.assertEquals(4, p2.size());
             Assert.assertEquals(p2.get(3).getSequence(), d1.getSequence());
             Assert.assertEquals(p2.get(2).getSequence(), d2.getSequence());

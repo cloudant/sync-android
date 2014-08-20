@@ -15,7 +15,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.mazha.DocumentRevs;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevsUtils;
 import com.cloudant.sync.util.JSONUtils;
 import org.apache.commons.io.FileUtils;
@@ -74,7 +74,7 @@ public class DocumentRevsUtilsTest {
     @Test
     public void createDocument() throws Exception {
         DocumentRevs documentRevs = getDocumentRevsFromFile(new File("./fixture/document_revs_with_everything.json"));
-        DocumentRevision documentRevision = DocumentRevsUtils.createDocument(documentRevs);
+        BasicDocumentRevision documentRevision = DocumentRevsUtils.createDocument(documentRevs);
         Assert.assertEquals("cdb1a2fec33d146fe07a44ea823bf3ae", documentRevision.getId());
         Assert.assertEquals("4-47d7102726fc89914431cb217ab7bace", documentRevision.getRevision());
 
@@ -93,7 +93,7 @@ public class DocumentRevsUtilsTest {
     @Test
     public void createDocument_deletedDocument_documentMarkedAsDeleted() throws Exception {
         DocumentRevs documentRevs = getDocumentRevsFromFile(new File("./fixture/document_revs_deleted.json"));
-        DocumentRevision documentRevision = DocumentRevsUtils.createDocument(documentRevs);
+        BasicDocumentRevision documentRevision = DocumentRevsUtils.createDocument(documentRevs);
         Assert.assertTrue(documentRevision.isDeleted());
     }
 }

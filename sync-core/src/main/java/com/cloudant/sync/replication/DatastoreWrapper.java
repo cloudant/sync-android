@@ -18,7 +18,7 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DatastoreExtended;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.DocumentRevsUtils;
@@ -31,7 +31,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 class DatastoreWrapper {
 
@@ -53,7 +52,7 @@ class DatastoreWrapper {
 
     public String getCheckpoint(String replicatorIdentifier) {
         Log.i(LOG_TAG, "getCheckpoint(): " + replicatorIdentifier);
-        DocumentRevision doc = dbCore.getLocalDocument(getCheckpointDocumentId(replicatorIdentifier));
+        BasicDocumentRevision doc = dbCore.getLocalDocument(getCheckpointDocumentId(replicatorIdentifier));
         if(doc == null) {
             return null;
         }
@@ -69,7 +68,7 @@ class DatastoreWrapper {
     public void putCheckpoint(String replicatorIdentifier, String sequence) {
         Log.i(LOG_TAG, "putCheckpoint(): " + replicatorIdentifier);
         String checkpointDocumentId = getCheckpointDocumentId(replicatorIdentifier);
-        DocumentRevision doc = dbCore.getLocalDocument(checkpointDocumentId);
+        BasicDocumentRevision doc = dbCore.getLocalDocument(checkpointDocumentId);
         Map<String, String> checkpointDoc = new HashMap<String, String>();
         checkpointDoc.put("lastSequence", sequence);
         byte[] json = JSONUtils.serializeAsBytes(checkpointDoc);
@@ -88,7 +87,7 @@ class DatastoreWrapper {
         for(DocumentRevs documentRevs: documentRevsList) {
             Log.v(LOG_TAG, "Bulk Inserting DocumentRevs: [ " + documentRevs.getId() + ", "
                     + documentRevs.getRev() + "," + documentRevs.getRevisions().getIds() + " ]");
-            DocumentRevision doc = DocumentRevsUtils.createDocument(documentRevs);
+            BasicDocumentRevision doc = DocumentRevsUtils.createDocument(documentRevs);
 
             List<String> revisions = DocumentRevsUtils.createRevisionIdHistory(documentRevs);
             Map<String, Object> attachments = documentRevs.getAttachments();
@@ -96,10 +95,10 @@ class DatastoreWrapper {
         }
     }
 
-    Map<String, DocumentRevisionTree> getDocumentTrees(List<DocumentRevision> documents) {
+    Map<String, DocumentRevisionTree> getDocumentTrees(List<BasicDocumentRevision> documents) {
         Map<String, DocumentRevisionTree> allDocumentTrees =
                 new HashMap<String, DocumentRevisionTree>();
-        for(DocumentRevision doc: documents) {
+        for(BasicDocumentRevision doc: documents) {
             DocumentRevisionTree tree =
                     this.dbCore.getAllRevisionsOfDocument(doc.getId());
             allDocumentTrees.put(doc.getId(), tree);
@@ -107,11 +106,11 @@ class DatastoreWrapper {
         return allDocumentTrees;
     }
 
-    protected PreparedAttachment prepareAttachment(Attachment att, DocumentRevision rev) throws IOException, SQLException {
+    protected PreparedAttachment prepareAttachment(Attachment att, BasicDocumentRevision rev) throws IOException, SQLException {
         return this.dbCore.prepareAttachment(att, rev);
     }
 
-    protected void addAttachment(PreparedAttachment att, DocumentRevision rev) throws IOException, SQLException {
+    protected void addAttachment(PreparedAttachment att, BasicDocumentRevision rev) throws IOException, SQLException {
         this.dbCore.addAttachment(att, rev);
     }
 

@@ -1,6 +1,6 @@
 package com.cloudant.sync.notifications;
 
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 
 public class DocumentDeleted extends DocumentModified {
 
@@ -16,8 +16,8 @@ public class DocumentDeleted extends DocumentModified {
      *            New (empty) document revision
      * 
      */
-    public DocumentDeleted(DocumentRevision prevDocument,
-            DocumentRevision newDocument) {
+    public DocumentDeleted(BasicDocumentRevision prevDocument,
+            BasicDocumentRevision newDocument) {
         super(prevDocument, newDocument);
     }
 

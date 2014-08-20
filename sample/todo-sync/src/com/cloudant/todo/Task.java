@@ -1,6 +1,6 @@
 package com.cloudant.todo;
 
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,8 +27,8 @@ public class Task {
     }
 
     // this is the revision in the database representing this task
-    private DocumentRevision rev;
-    public DocumentRevision getDocumentRevision() {
+    private BasicDocumentRevision rev;
+    public BasicDocumentRevision getDocumentRevision() {
         return rev;
     }
 
@@ -62,7 +62,7 @@ public class Task {
         return "{ desc: " + getDescription() + ", completed: " + isCompleted() + "}";
     }
 
-    public static Task fromRevision(DocumentRevision rev) {
+    public static Task fromRevision(BasicDocumentRevision rev) {
         Task t = new Task();
         t.rev = rev;
         // this could also be done by a fancy object mapper

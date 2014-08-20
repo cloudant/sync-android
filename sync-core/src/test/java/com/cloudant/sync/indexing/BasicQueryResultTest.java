@@ -16,7 +16,7 @@ package com.cloudant.sync.indexing;
 
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -68,10 +68,10 @@ public class BasicQueryResultTest {
     public void iterator() {
         List<String> ids = getAllDBObjectIds();
         QueryResult res = new BasicQueryResult(ids, datastore);
-        Iterator<DocumentRevision> i = res.iterator();
+        Iterator<BasicDocumentRevision> i = res.iterator();
         int count = 0;
         while(i.hasNext()) {
-            DocumentRevision obj = i.next();
+            BasicDocumentRevision obj = i.next();
             Assert.assertTrue(ids.contains(obj.getId()));
             count ++;
         }
@@ -85,15 +85,15 @@ public class BasicQueryResultTest {
         List<String> documentIds = res.documentIds();
         Assert.assertEquals(ids.size(), documentIds.size());
         for(int i = 0 ; i < ids.size() ; i ++) {
-            DocumentRevision o = datastore.getDocument(documentIds.get(i));
+            BasicDocumentRevision o = datastore.getDocument(documentIds.get(i));
             Assert.assertTrue(ids.get(i).equals(o.getId()));
         }
     }
 
     private List<String> getAllDBObjectIds() {
-        List<DocumentRevision> data = datastore.getAllDocuments(0, 100, true);
+        List<BasicDocumentRevision> data = datastore.getAllDocuments(0, 100, true);
         List<String> ids = new ArrayList<String>();
-        for(DocumentRevision obj : data) {
+        for(BasicDocumentRevision obj : data) {
             ids.add(obj.getId());
         }
         return ids;
@@ -119,7 +119,7 @@ public class BasicQueryResultTest {
         QueryResult res = new BasicQueryResult(ids, datastore);
         Assert.assertFalse(res.iterator().hasNext());
         int count = 0;
-        for(DocumentRevision ignored : res) {
+        for(BasicDocumentRevision ignored : res) {
             count ++;
         }
         Assert.assertEquals(0, count);
@@ -152,7 +152,7 @@ public class BasicQueryResultTest {
             m.put("name", "Tom");
             m.put("tag", "tag" + i);
             DocumentBody body = DocumentBodyFactory.create(m);
-            DocumentRevision doc = datastore.createDocument(body);
+            BasicDocumentRevision doc = datastore.createDocument(body);
             ids.add(doc.getId());
         }
         QueryResult qr = new BasicQueryResult(ids, datastore);
@@ -162,7 +162,7 @@ public class BasicQueryResultTest {
 
     private void assertQueryResult(QueryResult qr, List<String> ids) {
         List<String> expected = new ArrayList<String>(ids);
-        for(DocumentRevision rev : qr) {
+        for(BasicDocumentRevision rev : qr) {
             Assert.assertEquals(expected.remove(0), rev.getId());
         }
         Assert.assertTrue(expected.size() == 0);

@@ -17,7 +17,7 @@ package com.cloudant.sync.util;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentNotFoundException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -37,11 +37,11 @@ public class TypedDatastore<T extends Document> {
     }
 
     /**
-     * <p>Returns passed {@link DocumentRevision} deserialised to a concrete type.</p>
+     * <p>Returns passed {@link com.cloudant.sync.datastore.BasicDocumentRevision} deserialised to a concrete type.</p>
      * @param documentRevision document to deserialise
      * @return the deserialised version
      */
-    public T deserializeDocumentRevision(DocumentRevision documentRevision) {
+    public T deserializeDocumentRevision(BasicDocumentRevision documentRevision) {
         T document = JSONUtils.deserialize(documentRevision.asBytes(), klass);
         document.setId(documentRevision.getId());
         document.setRevision(documentRevision.getRevision());
@@ -56,7 +56,7 @@ public class TypedDatastore<T extends Document> {
      * @see Datastore#getDocument(String)
      */
     public T getDocument(String documentId) {
-        DocumentRevision documentRevision = this.datastore.getDocument(documentId);
+        BasicDocumentRevision documentRevision = this.datastore.getDocument(documentId);
 
         if(documentRevision == null) {
             throw new DocumentNotFoundException("DocumentRevisionTree does not exist with id: " + documentId);
@@ -78,7 +78,7 @@ public class TypedDatastore<T extends Document> {
      * @see Datastore#getDocument(String, String)
      */
     public T getDocument(String documentId, String revisionId) {
-        DocumentRevision documentRevision = this.datastore.getDocument(documentId, revisionId);
+        BasicDocumentRevision documentRevision = this.datastore.getDocument(documentId, revisionId);
 
         if(documentRevision == null) {
             throw new DocumentNotFoundException("DocumentRevisionTree does not exist with id: " + documentId);
@@ -100,7 +100,7 @@ public class TypedDatastore<T extends Document> {
      * @see Datastore#containsDocument(String, String)
      */
     public boolean containsDocument(String documentId, String revisionId) {
-        DocumentRevision documentRevision = this.datastore.getDocument(documentId, revisionId);
+        BasicDocumentRevision documentRevision = this.datastore.getDocument(documentId, revisionId);
         return documentRevision != null;
     }
 
@@ -113,7 +113,7 @@ public class TypedDatastore<T extends Document> {
      * @see Datastore#containsDocument(String)
      */
     public boolean containsDocument(String documentId) {
-        DocumentRevision documentRevision = this.datastore.getDocument(documentId);
+        BasicDocumentRevision documentRevision = this.datastore.getDocument(documentId);
         return documentRevision != null;
     }
 
@@ -145,7 +145,7 @@ public class TypedDatastore<T extends Document> {
         Preconditions.checkArgument(document.getId() == null, "DocumentRevisionTree id should be null.");
 
         byte[] json = JSONUtils.serializeAsBytes(document);
-        DocumentRevision documentRevision = this.datastore.createDocument(DocumentBodyFactory.create(json));
+        BasicDocumentRevision documentRevision = this.datastore.createDocument(DocumentBodyFactory.create(json));
         T savedDocument = JSONUtils.deserialize(documentRevision.asBytes(), (Class<T>)document.getClass());
         savedDocument.setId(documentRevision.getId());
         savedDocument.setRevision(documentRevision.getRevision());
@@ -170,7 +170,7 @@ public class TypedDatastore<T extends Document> {
         String id = document.getId();
         String revision = document.getRevision();
         byte[] json = JSONUtils.serializeAsBytes(document);
-        DocumentRevision documentRevision = this.datastore.updateDocument(id, revision, DocumentBodyFactory.create(json));
+        BasicDocumentRevision documentRevision = this.datastore.updateDocument(id, revision, DocumentBodyFactory.create(json));
 
         T updatedDocument = JSONUtils.deserialize(documentRevision.asBytes(), (Class<T>)document.getClass());
         updatedDocument.setId(documentRevision.getId());

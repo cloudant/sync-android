@@ -107,7 +107,7 @@ public class TypedDatastoreTest {
 
         this.fooTypedDatastore.deleteDocument(savedFoo);
 
-        DocumentRevision deletedObj = core.getDocument(savedFoo.getId());
+        BasicDocumentRevision deletedObj = core.getDocument(savedFoo.getId());
         Assert.assertTrue(deletedObj.isDeleted());
     }
 
@@ -120,7 +120,7 @@ public class TypedDatastoreTest {
                 savedFoo.getRevision()
         );
 
-        DocumentRevision deletedObj = core.getDocument(savedFoo.getId());
+        BasicDocumentRevision deletedObj = core.getDocument(savedFoo.getId());
         Assert.assertTrue(deletedObj.isDeleted());
     }
 

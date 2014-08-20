@@ -20,7 +20,6 @@ package com.cloudant.sync.datastore;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.JSONUtils;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +29,7 @@ import java.util.Map;
  *  Revision of a document.
  *
  */
-class BasicDocumentRevision implements DocumentRevision {
+public class BasicDocumentRevision implements DocumentRevision, Comparable<BasicDocumentRevision> {
 
     private final DocumentBody body;
 
@@ -47,10 +46,15 @@ class BasicDocumentRevision implements DocumentRevision {
 
     static class BasicDocumentRevisionOptions {
         long sequence;
+        // doc_id in revs table
         long docInternalId;
+        // is revision deleted?
         boolean deleted;
+        // is revision current? ("winning")
         boolean current;
+        // parent sequence number
         long parent;
+        // attachments associated with this revision
         List<? extends Attachment> attachments;
     }
 
@@ -128,22 +132,49 @@ class BasicDocumentRevision implements DocumentRevision {
         return revision.endsWith("-local");
     }
 
-    @Override
+    /**
+     * <p>Returns {@code true} if this revision is the current winner for the
+     * document.</p>
+     */
     public boolean isCurrent(){
         return current;
     }
 
-    @Override
+    /**
+     * <p>Returns the sequence number of this revision's parent revision.</p>
+     *
+     * <p>If this number is less than or equal to zero, it means this
+     * revision is the root of a document tree. A document may have more than
+     * one tree, under certain circumstances, such as two documents with the
+     * same ID being created in different datastores that are later replicated
+     * across.</p>
+     */
     public long getParent() {
         return this.parent;
     }
 
+    /**
+     * <p>Returns the internal numeric ID of this document revision.</p>
+     *
+     * <p>This can be useful for efficient storage by plugins extending the
+     * datastore.</p>
+     *
+     * @return  the internal numeric ID of this document revision.
+     */
     public long getInternalNumericId(){
         return internalNumericId;
     }
 
     Map<String, Object> map = null;
-    @Override
+
+    /**
+     * <p>Returns the JSON body of the document revision as a {@code Map}
+     * object.</p>
+     *
+     * <p>This Map includes reserved fields such as {@code _id} and
+     * {@code _rev}. Changing the byte array may affect the {@code DocumentRevision},
+     * as only a shallow copy is returned.</p>
+     */
     public Map<String,Object> asMap() {
         if(map == null) {
             map = addMetaProperties(body.asMap());
@@ -162,7 +193,14 @@ class BasicDocumentRevision implements DocumentRevision {
         return map;
     }
 
-    @Override
+    /**
+     * <p>Returns the JSON body of the document revision as a {@code byte}
+     * array.</p>
+     *
+     * <p>This byte array includes reserved fields such as {@code _id} and
+     * {@code _rev}. Changing the byte array does not affect the document
+     * revisions contents.</p>
+     */
     public byte[] asBytes() {
         byte[] result = null;
         if(body != null) {
@@ -171,7 +209,9 @@ class BasicDocumentRevision implements DocumentRevision {
         return result;
     }
 
-    @Override
+    /**
+     * <p>Returns {@code true} if this revision is marked deleted.</p>
+     */
     public boolean isDeleted() {
         return deleted;
     }
@@ -180,6 +220,12 @@ class BasicDocumentRevision implements DocumentRevision {
         this.deleted = deleted;
     }
 
+    /**
+     * <p>Returns the sequence number of this revision.</p>
+     *
+     * <p>The sequence number is unique across the database, it is updated
+     * for every modification to the datastore.</p>
+     */
     public long getSequence() {
         return sequence;
     }
@@ -218,7 +264,7 @@ class BasicDocumentRevision implements DocumentRevision {
             return false;
         if (getClass() != that.getClass())
             return false;
-        DocumentRevision other = (DocumentRevision) that;
+        BasicDocumentRevision other = (BasicDocumentRevision) that;
         if (id == null) {
             if (other.getId() != null)
                 return false;
@@ -228,16 +274,26 @@ class BasicDocumentRevision implements DocumentRevision {
     }
 
     @Override
-    public int compareTo(DocumentRevision o) {
+    public int compareTo(BasicDocumentRevision o) {
         return Long.valueOf(getSequence()).compareTo(o.getSequence());
     }
 
-    @Override
+    /**
+     * <p>Return a mutable copy of this <code>DocumentRevision</code>.</p>
+     *
+     * <p>The mutable copy can be used to change the body and attachments.</p>
+     *
+     * <p>Mutable copies can be created or updated in the datastore by calling the appropriate
+     * methods on the <code>Datastore</code></p>.
+     *
+     * @return a mutable copy of the document revision
+     * @see Datastore#createDocumentFromRevision(MutableDocumentRevision)
+     * @see Datastore#updateDocumentFromRevision(MutableDocumentRevision)
+     */
     public MutableDocumentRevision mutableCopy() {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
+        MutableDocumentRevision rev = new MutableDocumentRevision(this.getRevision());
         rev.docId = this.getId();
         rev.body = this.getBody();
-        rev.sourceRevisionId = this.getRevision();
         rev.attachments = this.attachments;
         return rev;
     }

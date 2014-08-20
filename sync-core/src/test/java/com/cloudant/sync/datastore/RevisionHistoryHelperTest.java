@@ -37,7 +37,7 @@ public class RevisionHistoryHelperTest {
         Map m = new HashMap<String, Object>();
         m.put("name", "Tom");
 
-        List<DocumentRevision> d = createDBObjects("Tom", "1-a");
+        List<BasicDocumentRevision> d = createDBObjects("Tom", "1-a");
         String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
 
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
@@ -49,15 +49,15 @@ public class RevisionHistoryHelperTest {
 
     }
 
-    private List<DocumentRevision> createDBObjects(String name, String... revisions) {
-        List<DocumentRevision> res = new ArrayList<DocumentRevision>();
+    private List<BasicDocumentRevision> createDBObjects(String name, String... revisions) {
+        List<BasicDocumentRevision> res = new ArrayList<BasicDocumentRevision>();
         for(String revision : revisions) {
             res.add(createDBObject(name, revision));
         }
         return res;
     }
 
-    private DocumentRevision createDBObject(String name, String rev) {
+    private BasicDocumentRevision createDBObject(String name, String rev) {
         Map m = new HashMap<String, Object>();
         m.put("name", name);
         DocumentBody body = BasicDocumentBody.bodyWith(m);
@@ -74,7 +74,7 @@ public class RevisionHistoryHelperTest {
         Map m = new HashMap<String, Object>();
         m.put("name", "Tom");
 
-        List<DocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
+        List<BasicDocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
         String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
 
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
@@ -87,7 +87,7 @@ public class RevisionHistoryHelperTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void revisionHistoryToJson_historyIsInAscendingOrder_exception() {
-        List<DocumentRevision> d = createDBObjects("Tom", "1-a", "2-b");
+        List<BasicDocumentRevision> d = createDBObjects("Tom", "1-a", "2-b");
         RevisionHistoryHelper.revisionHistoryToJson(d);
     }
 
@@ -98,12 +98,12 @@ public class RevisionHistoryHelperTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void revisionHistoryToJson_zeroLengthHistory_exception() {
-        RevisionHistoryHelper.revisionHistoryToJson(new ArrayList<DocumentRevision>());
+        RevisionHistoryHelper.revisionHistoryToJson(new ArrayList<BasicDocumentRevision>());
     }
 
     @Test
     public void getRevisionPath_oneRevision_success() {
-        List<DocumentRevision> d = createDBObjects("Tom", "1-a");
+        List<BasicDocumentRevision> d = createDBObjects("Tom", "1-a");
         String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         List<String> revisions = RevisionHistoryHelper.getRevisionPath(documentRevs);
@@ -112,7 +112,7 @@ public class RevisionHistoryHelperTest {
 
     @Test
     public void getRevisionPath_twoRevision_success() {
-        List<DocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
+        List<BasicDocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
         String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         List<String> revisions = RevisionHistoryHelper.getRevisionPath(documentRevs);
@@ -121,7 +121,7 @@ public class RevisionHistoryHelperTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void getRevisionPath_revisionStartIsTooSmall_exception() {
-        List<DocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
+        List<BasicDocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
         String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         addOneMoreIdToRevisions(documentRevs);

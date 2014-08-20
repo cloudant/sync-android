@@ -6,14 +6,13 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 
 /**
  * Created by tomblench on 08/08/2014.
  */
 public class MutableDocumentCopyTest extends BasicDatastoreTestBase{
 
-    DocumentRevision saved;
+    BasicDocumentRevision saved;
     String initialAtt1 = "attachment_1.txt";
     String initialAtt2 = "attachment_2.txt";
 
@@ -47,9 +46,9 @@ public class MutableDocumentCopyTest extends BasicDatastoreTestBase{
         File f = new File("fixture", attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "image/jpeg");
         update.attachments.put(attachmentName, att);
-        DocumentRevision updated = datastore.createDocumentFromRevision(update);
+        BasicDocumentRevision updated = datastore.createDocumentFromRevision(update);
         Assert.assertNotNull("Updated document is null", updated);
-        DocumentRevision retrieved = datastore.getDocument(update.docId);
+        BasicDocumentRevision retrieved = datastore.getDocument(update.docId);
         Assert.assertNotNull("Retrieved document is null", retrieved);
         // check the new attachment is present
         Attachment retrievedAtt = datastore.getAttachment(updated, attachmentName);
@@ -73,9 +72,9 @@ public class MutableDocumentCopyTest extends BasicDatastoreTestBase{
         update.body = bodyTwo;
         update.docId = "copy";
         update.attachments = null;
-        DocumentRevision updated = datastore.createDocumentFromRevision(update);
+        BasicDocumentRevision updated = datastore.createDocumentFromRevision(update);
         Assert.assertNotNull("Updated document is null", updated);
-        DocumentRevision retrieved = datastore.getDocument(update.docId);
+        BasicDocumentRevision retrieved = datastore.getDocument(update.docId);
         Assert.assertNotNull("Retrieved document is null", retrieved);
         // check the new attachment is present
         Assert.assertEquals("Attachment count not 0", 0, datastore.attachmentsForRevision(updated).size());
@@ -89,7 +88,7 @@ public class MutableDocumentCopyTest extends BasicDatastoreTestBase{
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
         try {
-            DocumentRevision updated = datastore.createDocumentFromRevision(update);
+            BasicDocumentRevision updated = datastore.createDocumentFromRevision(update);
             Assert.fail("Expected IllegalArgumentException, not thrown");
         } catch (IllegalArgumentException e) {
             ;

@@ -4,13 +4,12 @@ import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorFactory;
-import com.cloudant.sync.util.JSONUtils;
 import com.google.common.eventbus.Subscribe;
 
 import android.content.Context;
@@ -24,7 +23,6 @@ import java.io.IOException;
 import java.lang.RuntimeException;
 import java.util.ArrayList;
 import java.io.File;
-import java.util.Map;
 import java.util.List;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -103,7 +101,7 @@ class TasksModel {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.body = DocumentBodyFactory.create(task.asMap());
         try {
-            DocumentRevision created = this.mDatastore.createDocumentFromRevision(rev);
+            BasicDocumentRevision created = this.mDatastore.createDocumentFromRevision(rev);
             return Task.fromRevision(created);
         } catch (IOException ioe) {
             // we're not dealing with attachments, so we can safely ignore this exception
@@ -122,7 +120,7 @@ class TasksModel {
         MutableDocumentRevision rev = task.getDocumentRevision().mutableCopy();
         rev.body = DocumentBodyFactory.create(task.asMap());
         try {
-            DocumentRevision updated = this.mDatastore.updateDocumentFromRevision(rev);
+            BasicDocumentRevision updated = this.mDatastore.updateDocumentFromRevision(rev);
             return Task.fromRevision(updated);
         } catch (IOException ioe) {
             // we're not dealing with attachments, so we can safely ignore this exception
@@ -145,11 +143,11 @@ class TasksModel {
      */
     public List<Task> allTasks() {
         int nDocs = this.mDatastore.getDocumentCount();
-        List<DocumentRevision> all = this.mDatastore.getAllDocuments(0, nDocs, true);
+        List<BasicDocumentRevision> all = this.mDatastore.getAllDocuments(0, nDocs, true);
         List<Task> tasks = new ArrayList<Task>();
 
         // Filter all documents down to those of type Task.
-        for(DocumentRevision rev : all) {
+        for(BasicDocumentRevision rev : all) {
             Task t = Task.fromRevision(rev);
             if (t != null) {
                 tasks.add(t);

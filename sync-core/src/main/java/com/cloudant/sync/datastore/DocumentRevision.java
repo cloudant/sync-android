@@ -17,8 +17,6 @@
 
 package com.cloudant.sync.datastore;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -37,7 +35,7 @@ import java.util.Map;
  * typically set only the revision content rather than the metadata
  * explicitly.</p>
  */
-public interface DocumentRevision extends Comparable<DocumentRevision> {
+public interface DocumentRevision {
 
     /**
      * <p>Returns the unique identifier of the document.</p>
@@ -54,83 +52,7 @@ public interface DocumentRevision extends Comparable<DocumentRevision> {
      */
     public DocumentBody getBody();
 
-    /**
-     * <p>Returns the sequence number of this revision.</p>
-     *
-     * <p>The sequence number is unique across the database, it is updated
-     * for every modification to the datastore.</p>
-     */
-    public long getSequence();
-
-    public void initialiseSequence(long sequence);
-
-    /**
-     * <p>Returns the sequence number of this revision's parent revision.</p>
-     *
-     * <p>If this number is less than or equal to zero, it means this
-     * revision is the root of a document tree. A document may have more than
-     * one tree, under certain circumstances, such as two documents with the
-     * same ID being created in different datastores that are later replicated
-     * across.</p>
-     */
-    public long getParent();
-
-    /**
-     * <p>Returns {@code true} if this revision is marked deleted.</p>
-     */
-    public boolean isDeleted();
-
-    /**
-     * <p>Returns {@code true} if this revision is the current winner for the
-     * document.</p>
-     */
-    public boolean isCurrent();
-
-    /**
-     * <p>Returns the JSON body of the document revision as a {@code byte}
-     * array.</p>
-     *
-     * <p>This byte array includes reserved fields such as {@code _id} and
-     * {@code _rev}. Changing the byte array does not affect the document
-     * revisions contents.</p>
-     */
-    public byte[] asBytes();
-
-    /**
-     * <p>Returns the JSON body of the document revision as a {@code Map}
-     * object.</p>
-     *
-     * <p>This Map includes reserved fields such as {@code _id} and
-     * {@code _rev}. Changing the byte array may affect the {@code DocumentRevision},
-     * as only a shallow copy is returned.</p>
-     */
-    public Map<String, Object> asMap();
-
-    /**
-     * <p>Returns the internal numeric ID of this document revision.</p>
-     *
-     * <p>This can be useful for efficient storage by plugins extending the
-     * datastore.</p>
-     *
-     * @return  the internal numeric ID of this document revision.
-     */
-    public long getInternalNumericId();
-
     // NB the key is purely for the user's convenience and doesn't have to be the same as the attachment name
     public Map<String, Attachment> getAttachments();
-
-    /**
-     * <p>Return a mutable copy of this <code>DocumentRevision</code>.</p>
-     *
-     * <p>The mutable copy can be used to change the body and attachments.</p>
-     *
-     * <p>Mutable copies can be created or updated in the datastore by calling the appropriate
-     * methods on the <code>Datastore</code></p>.
-     *
-     * @return a mutable copy of the document revision
-     * @see Datastore#createDocumentFromRevision(MutableDocumentRevision)
-     * @see Datastore#updateDocumentFromRevision(MutableDocumentRevision)
-     */
-    public MutableDocumentRevision mutableCopy();
 
 }

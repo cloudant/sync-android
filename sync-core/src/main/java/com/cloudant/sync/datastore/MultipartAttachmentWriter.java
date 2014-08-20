@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * <p>
  * The stream consists of a first MIME body which is the JSON document itself, which needs to have
  * the <code>_attachments</code> object correctly populated. This is currently done by
- * {@link com.cloudant.sync.datastore.RevisionHistoryHelper#addAttachments(java.util.List, DocumentRevision, java.util.Map, com.cloudant.sync.replication.PushAttachmentsInline)}
+ * {@link com.cloudant.sync.datastore.RevisionHistoryHelper#addAttachments(java.util.List, BasicDocumentRevision, java.util.Map, com.cloudant.sync.replication.PushAttachmentsInline)}
  * </p>
  *
  * <p>
@@ -61,7 +61,7 @@ import java.util.ArrayList;
  * </p>
  *
  * @see com.cloudant.mazha.CouchClient#putMultipart(MultipartAttachmentWriter)
- * @see com.cloudant.sync.datastore.RevisionHistoryHelper#addAttachments(java.util.List, DocumentRevision, java.util.Map, com.cloudant.sync.replication.PushAttachmentsInline)
+ * @see com.cloudant.sync.datastore.RevisionHistoryHelper#addAttachments(java.util.List, BasicDocumentRevision, java.util.Map, com.cloudant.sync.replication.PushAttachmentsInline)
  * @see <a href=http://couchdb.readthedocs.org/en/latest/api/document/common.html#creating-multiple-attachments>Creating Multiple Attachments</a>
  * @see <a href=http://tools.ietf.org/html/rfc2387>RFC 2387</a>
  *
@@ -114,7 +114,7 @@ public class MultipartAttachmentWriter extends InputStream {
      *
      * @param body The DocumentRevision to be serialised as JSON
      */
-    public void setBody(DocumentRevision body) {
+    public void setBody(BasicDocumentRevision body) {
         byte[] bodyBytes = JSONUtils.serializeAsBytes(body.asMap());
 
         contentLength += bodyBytes.length;

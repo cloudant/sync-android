@@ -62,7 +62,7 @@ public class DocumentRevisionBuilder {
      * local document.</p>
      * @return the {@code DocumentRevision} for this builder as a local document
      */
-    public DocumentRevision buildLocalDocument() {
+    public BasicDocumentRevision buildLocalDocument() {
         assert this.revId.endsWith("-local");
         return new BasicDocumentRevision(docId, revId, body);
     }
@@ -76,7 +76,7 @@ public class DocumentRevisionBuilder {
      *
      * @return the stub {@code DocumentRevision} for this builder
      */
-    public DocumentRevision buildStub() {
+    public BasicDocumentRevision buildStub() {
         assert body == null;
         return new BasicDocumentRevision(docId, revId);
     }

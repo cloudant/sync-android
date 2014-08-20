@@ -17,7 +17,7 @@ package com.cloudant.sync.replication;
 import com.cloudant.mazha.ClientTestUtils;
 import com.cloudant.mazha.CouchDbInfo;
 import com.cloudant.mazha.Response;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.util.AbstractTreeNode;
 
@@ -132,13 +132,13 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
     }
 
 
-    private void extractRevisionIDsFromChildren(AbstractTreeNode<DocumentRevision> node,
+    private void extractRevisionIDsFromChildren(AbstractTreeNode<BasicDocumentRevision> node,
                                                 List<String> documentRevisions){
 
         if(node.hasChildren()) {
-            Iterator<AbstractTreeNode<DocumentRevision>> iterator = node.iterateChildren();
+            Iterator<AbstractTreeNode<BasicDocumentRevision>> iterator = node.iterateChildren();
             while(iterator.hasNext()){
-                AbstractTreeNode<DocumentRevision> absNode = iterator.next();
+                AbstractTreeNode<BasicDocumentRevision> absNode = iterator.next();
                 documentRevisions.add(absNode.getData().getRevision());
                 extractRevisionIDsFromChildren(absNode, documentRevisions);
             }

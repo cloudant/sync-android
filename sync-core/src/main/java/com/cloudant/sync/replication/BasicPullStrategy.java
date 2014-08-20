@@ -20,9 +20,8 @@ import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.DatastoreExtended;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevsList;
-import com.cloudant.sync.datastore.DocumentRevsUtils;
 import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.util.JSONUtils;
@@ -31,8 +30,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.EventBus;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -301,7 +298,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                                     int offset = revs.getStart() - revpos;
                                     if (offset >= 0 && offset < revs.getIds().size()) {
                                         String revId = String.valueOf(revpos) + "-" + revs.getIds().get(offset);
-                                        DocumentRevision dr = this.targetDb.getDbCore().getDocument(documentRevs.getId(), revId);
+                                        BasicDocumentRevision dr = this.targetDb.getDbCore().getDocument(documentRevs.getId(), revId);
                                         if (dr != null) {
                                             Attachment a = this.targetDb.getDbCore().getAttachment(dr, attachmentName);
                                             if (a != null) {
@@ -313,7 +310,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                                     String contentType = ((Map<String, String>) attachments.get(attachmentName)).get("content_type");
                                     String encoding = (String) ((Map<String, Object>) attachments.get(attachmentName)).get("encoding");
                                     UnsavedStreamAttachment usa = this.sourceDb.getAttachmentStream(documentRevs.getId(), documentRevs.getRev(), attachmentName, contentType, encoding);
-                                    DocumentRevision doc = this.targetDb.getDbCore().getDocument(documentRevs.getId());
+                                    BasicDocumentRevision doc = this.targetDb.getDbCore().getDocument(documentRevs.getId());
 
                                     // by preparing the attachment here, it is downloaded outside of the database transaction
                                     preparedAtts.add(this.targetDb.prepareAttachment(usa, doc));
@@ -337,7 +334,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                     // now add the attachments we have just downloaded
                     try {
                         for (String id : atts.keySet()) {
-                            DocumentRevision doc = this.targetDb.getDbCore().getDocument(id);
+                            BasicDocumentRevision doc = this.targetDb.getDbCore().getDocument(id);
                             for (PreparedAttachment att : atts.get(id)) {
                                 this.targetDb.addAttachment(att, doc);
                             }

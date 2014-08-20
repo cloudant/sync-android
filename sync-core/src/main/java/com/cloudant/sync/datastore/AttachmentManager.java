@@ -18,24 +18,22 @@ import com.cloudant.common.Log;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.util.CouchUtils;
-import com.cloudant.sync.util.Misc;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileExistsException;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Created by tomblench on 14/03/2014.
@@ -80,7 +78,7 @@ class AttachmentManager {
         this.attachmentsDir = datastore.extensionDataFolder(EXTENSION_NAME);
     }
 
-    public void addAttachment(PreparedAttachment a, DocumentRevision rev) throws IOException, SQLException {
+    public void addAttachment(PreparedAttachment a, BasicDocumentRevision rev) throws IOException, SQLException {
 
         // do it this way to only go thru inputstream once
         // * write to temp location using copyinputstreamtofile
@@ -125,29 +123,63 @@ class AttachmentManager {
         }
     }
 
-    protected void setAttachments(DocumentRevision rev, Map<String, Attachment> attachments) throws IOException {
+    class PreparedAndSavedAttachments
+    {
+        List<SavedAttachment> savedAttachments = new ArrayList<SavedAttachment>();
+        List<PreparedAttachment> preparedAttachments = new ArrayList<PreparedAttachment>();
 
-        // set attachments for revision:
-        // * prepare new attachments and add them
-        // * copy existing attachments forward to the next revision
+        public boolean isEmpty() {
+            return savedAttachments.isEmpty() && preparedAttachments.isEmpty();
+        }
+    }
+
+    // take a set of attachments, and:
+    // * if attachment is saved, add it to the saved list
+    // * if attachment is not saved, prepare it, and add it to the prepared list
+    // this way, the attachments are sifted through ready to be added in the database for a given revision
+    protected PreparedAndSavedAttachments prepareAttachments(Collection<? extends Attachment> attachments) throws IOException {
+        // actually a list of prepared or saved attachments
+        PreparedAndSavedAttachments preparedAndSavedAttachments = new PreparedAndSavedAttachments();
 
         if (attachments == null || attachments.size() == 0) {
+            // nothing to do
+            return null;
+        }
+
+        for (Attachment a : attachments) {
+            if (!(a instanceof SavedAttachment)) {
+                preparedAndSavedAttachments.preparedAttachments.add(new PreparedAttachment(a, this.attachmentsDir));
+            } else {
+                preparedAndSavedAttachments.savedAttachments.add((SavedAttachment)a);
+            }
+        }
+
+        return preparedAndSavedAttachments;
+    }
+
+    protected void setAttachments(BasicDocumentRevision rev, PreparedAndSavedAttachments preparedAndSavedAttachments) throws IOException {
+
+        // set attachments for revision:
+        // * prepared attachments are added
+        // * copy existing attachments forward to the next revision
+
+        if (preparedAndSavedAttachments == null || preparedAndSavedAttachments.isEmpty()) {
             // nothing to do
             return;
         }
 
         try {
             this.datastore.getSQLDatabase().beginTransaction();
-            for (Attachment a : attachments.values()) {
-                if (!(a instanceof SavedAttachment)) {
-                    // go thru unsaved attachments and prepare and add them
-                    this.addAttachment(new PreparedAttachment(a, this.attachmentsDir), rev);
-                } else {
-                    // go thru existing and new saved attachments and add them (adding for the existing will just copy them forward to this revision)
-                    long parentSequence = ((SavedAttachment) a).seq;
-                    long newSequence = rev.getSequence();
-                    copyAttachment(parentSequence, newSequence, a.name);
-                }
+            for (PreparedAttachment a : preparedAndSavedAttachments.preparedAttachments) {
+                // go thru prepared attachments and add them
+                this.addAttachment(a, rev);
+            }
+            for (SavedAttachment a : preparedAndSavedAttachments.savedAttachments) {
+                // go thru existing (from previous rev) and new (from another document) saved attachments
+                // and add them (the effect on existing attachments is to copy them forward to this revision)
+                long parentSequence = ((SavedAttachment) a).seq;
+                long newSequence = rev.getSequence();
+                this.copyAttachment(parentSequence, newSequence, a.name);
             }
             this.datastore.getSQLDatabase().setTransactionSuccessful();
         } catch (SQLException sqe) {
@@ -157,7 +189,7 @@ class AttachmentManager {
         }
     }
 
-    protected DocumentRevision updateAttachments(DocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException {
+    protected BasicDocumentRevision updateAttachments(BasicDocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException {
 
         // add attachments and then return new revision:
         // * save new (unmodified) revision which will have new _attachments when synced
@@ -181,7 +213,7 @@ class AttachmentManager {
         try {
             this.datastore.getSQLDatabase().beginTransaction();
 
-            DocumentRevision newDocument = datastore.updateDocument(rev.getId(),
+            BasicDocumentRevision newDocument = datastore.updateDocument(rev.getId(),
                     rev.getRevision(),
                     rev.getBody());
 
@@ -210,7 +242,7 @@ class AttachmentManager {
         }
     }
 
-    protected Attachment getAttachment(DocumentRevision rev, String attachmentName) {
+    protected Attachment getAttachment(BasicDocumentRevision rev, String attachmentName) {
         try {
             Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT,
                     new String[]{attachmentName, String.valueOf(rev.getSequence())});
@@ -293,7 +325,7 @@ class AttachmentManager {
     }
 
 
-    protected DocumentRevision removeAttachments(DocumentRevision rev, String[] attachmentNames)
+    protected BasicDocumentRevision removeAttachments(BasicDocumentRevision rev, String[] attachmentNames)
             throws ConflictException {
 
         boolean rowsDeleted = false;
@@ -305,7 +337,7 @@ class AttachmentManager {
 
         rowsDeleted = datastore.getSQLDatabase().delete("attachments",
                 String.format("filename in (%s) and sequence = ?",
-                        SQLDatabaseUtils.makePlaceholders(attachmentNames.length)),
+                        DatabaseUtils.makePlaceholders(attachmentNames.length)),
                 args) > 0;
 
         if (!rowsDeleted) {

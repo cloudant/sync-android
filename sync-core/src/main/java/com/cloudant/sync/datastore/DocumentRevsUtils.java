@@ -50,7 +50,7 @@ public class DocumentRevsUtils {
         return revisionHistory;
     }
 
-    public static DocumentRevision createDocument(DocumentRevs documentRevs) {
+    public static BasicDocumentRevision createDocument(DocumentRevs documentRevs) {
         validateDocumentRevs(documentRevs);
 
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();

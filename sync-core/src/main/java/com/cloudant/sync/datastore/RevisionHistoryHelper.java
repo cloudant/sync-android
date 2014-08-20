@@ -111,13 +111,13 @@ public class RevisionHistoryHelper {
      * @return JSON-serialised {@code String} suitable for sending to CouchDB's
      *      _bulk_docs endpoint.
      */
-    public static Map<String, Object> revisionHistoryToJson(List<DocumentRevision> history) {
+    public static Map<String, Object> revisionHistoryToJson(List<BasicDocumentRevision> history) {
         return revisionHistoryToJson(history, null, null);
     }
 
     /**
      * <p>Serialise a branch's revision history, in the form of a list of
-     * {@link DocumentRevision}s, into the JSON format expected by CouchDB's _bulk_docs
+     * {@link BasicDocumentRevision}s, into the JSON format expected by CouchDB's _bulk_docs
      * endpoint.</p>
      *
      * @param history list of {@code DocumentRevision}s. This should be a complete list
@@ -131,7 +131,7 @@ public class RevisionHistoryHelper {
      *
      * @see com.cloudant.mazha.DocumentRevs
      */
-    public static Map<String, Object> revisionHistoryToJson(List<DocumentRevision> history,
+    public static Map<String, Object> revisionHistoryToJson(List<BasicDocumentRevision> history,
                                                             List<? extends Attachment> attachments,
                                                             PushAttachmentsInline inlinePreference) {
         Preconditions.checkNotNull(history, "History must not be null");
@@ -139,7 +139,7 @@ public class RevisionHistoryHelper {
         Preconditions.checkArgument(checkHistoryIsInDescendingOrder(history),
                 "History must be in descending order.");
 
-        DocumentRevision currentNode = history.get(0);
+        BasicDocumentRevision currentNode = history.get(0);
 
         Map<String, Object> m = currentNode.asMap();
         if (attachments != null && !attachments.isEmpty()) {
@@ -156,7 +156,7 @@ public class RevisionHistoryHelper {
      * Create a MultipartAttachmentWriter object needed to subsequently write the JSON body and
      * attachments as a multipart/related stream
      */
-    public static MultipartAttachmentWriter createMultipartWriter(List<DocumentRevision> history,
+    public static MultipartAttachmentWriter createMultipartWriter(List<BasicDocumentRevision> history,
                                                                   List<? extends Attachment> attachments,
                                                                   PushAttachmentsInline inlinePreference) {
 
@@ -165,7 +165,7 @@ public class RevisionHistoryHelper {
         Preconditions.checkArgument(checkHistoryIsInDescendingOrder(history),
                 "History must be in descending order.");
 
-        DocumentRevision currentNode = history.get(0);
+        BasicDocumentRevision currentNode = history.get(0);
 
         MultipartAttachmentWriter mpw = null;
         int revpos = CouchUtils.generationFromRevId(currentNode.getRevision());
@@ -204,7 +204,7 @@ public class RevisionHistoryHelper {
      * If it isn't inlined, set follows=true to show it will be included in the multipart/related
      */
     private static void addAttachments(List<? extends Attachment> attachments,
-                                   DocumentRevision revision,
+                                   BasicDocumentRevision revision,
                                    Map<String, Object> outMap,
                                    PushAttachmentsInline inlinePreference) {
         LinkedHashMap<String, Object> attsMap = new LinkedHashMap<String, Object>();
@@ -259,11 +259,11 @@ public class RevisionHistoryHelper {
         }
     }
 
-    private static Map<String, Object> createRevisions(List<DocumentRevision> history) {
-        DocumentRevision currentNode = history.get(0);
+    private static Map<String, Object> createRevisions(List<BasicDocumentRevision> history) {
+        BasicDocumentRevision currentNode = history.get(0);
         int start = CouchUtils.generationFromRevId(currentNode.getRevision());
         List<String> ids = new ArrayList<String>();
-        for(DocumentRevision obj : history) {
+        for(BasicDocumentRevision obj : history) {
             ids.add(CouchUtils.getRevisionIdSuffix(obj.getRevision()));
         }
         Map revisions = new HashMap<String, Object>();
@@ -272,7 +272,7 @@ public class RevisionHistoryHelper {
         return revisions;
     }
 
-    private static boolean checkHistoryIsInDescendingOrder(List<DocumentRevision> history) {
+    private static boolean checkHistoryIsInDescendingOrder(List<BasicDocumentRevision> history) {
         for(int i = 0 ; i < history.size() - 1 ; i ++) {
             int l = CouchUtils.generationFromRevId(history.get(i).getRevision());
             int m = CouchUtils.generationFromRevId(history.get(i+1).getRevision());

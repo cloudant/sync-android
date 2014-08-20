@@ -14,11 +14,9 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.mazha.Document;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.util.Misc;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,7 +41,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
-        DocumentRevision newRevision = null;
+        BasicDocumentRevision newRevision = null;
         try {
             newRevision = datastore.updateAttachments(rev_1, atts);
         } catch (ConflictException ce){
@@ -74,7 +72,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         atts.add(att1);
         atts.add(att2);
         atts.add(att3);
-        DocumentRevision newRevision = null;
+        BasicDocumentRevision newRevision = null;
         try {
             newRevision = datastore.updateAttachments(rev_1, atts);
             Assert.assertNull("newRevision not null", newRevision);
@@ -106,7 +104,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
-        DocumentRevision newRevision = null;
+        BasicDocumentRevision newRevision = null;
         newRevision = datastore.updateAttachments(rev_1, atts);
     }
 
@@ -119,7 +117,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att1);
         atts.add(att2);
-        DocumentRevision rev2 = null;
+        BasicDocumentRevision rev2 = null;
         try {
             rev2 = datastore.updateAttachments(rev_1, atts);
             Assert.assertNotNull("Revision null", rev2);
@@ -127,7 +125,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             Assert.fail("ConflictException thrown: "+ce);
         }
 
-        DocumentRevision rev3 = null;
+        BasicDocumentRevision rev3 = null;
         try {
             rev3 = datastore.removeAttachments(rev2, new String[]{"attachment_1.txt"});
             datastore.compact();
@@ -162,7 +160,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         String attachmentName = "attachment_1.txt";
         BasicDocumentRevision rev1 = datastore.createDocument(bodyOne);
 
-        DocumentRevision rev2 = null;
+        BasicDocumentRevision rev2 = null;
         try {
             rev2 = datastore.removeAttachments(rev1, new String[]{attachmentName});
             Assert.assertEquals("Revisions not the same", rev2, rev1);
@@ -182,7 +180,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
-        DocumentRevision rev2 = null;
+        BasicDocumentRevision rev2 = null;
         try {
             rev2 = datastore.updateAttachments(rev_1, atts);
             Assert.assertNotNull("Revision null", rev2);
@@ -190,7 +188,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             Assert.fail("ConflictException thrown: "+ce);
         }
 
-        DocumentRevision rev3 = null;
+        BasicDocumentRevision rev3 = null;
         // clear out the attachment directory
         File attachments = new File(datastore.datastoreDir + "/extensions/com.cloudant.attachments");
         for(File attFile : attachments.listFiles()) {
@@ -217,7 +215,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att1);
         atts.add(att2);
-        DocumentRevision newRevision = null;
+        BasicDocumentRevision newRevision = null;
         try {
             newRevision = datastore.updateAttachments(rev_1, atts);
             List<? extends Attachment> attsForRev = datastore.attachmentsForRevision(newRevision);
@@ -241,8 +239,8 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         doc1Atts.add(att1);
         doc2Atts.add(att2);
 
-        DocumentRevision newRevisionDoc1 = null;
-        DocumentRevision newRevisionDoc2 = null;
+        BasicDocumentRevision newRevisionDoc1 = null;
+        BasicDocumentRevision newRevisionDoc2 = null;
 
         try {
             newRevisionDoc1 = datastore.updateAttachments(doc1Rev1, doc1Atts);

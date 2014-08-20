@@ -13,7 +13,7 @@ import java.io.IOException;
 public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestBase{
 
 
-    DocumentRevision saved;
+    BasicDocumentRevision saved;
 
     @Before
     public void setUp() throws Exception {
@@ -29,7 +29,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
     public void updateBody() throws ConflictException, IOException {
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
-        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
         Assert.assertNotNull("Updated DocumentRevision is null", updated);
     }
 
@@ -39,7 +39,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = null;
         try {
-            DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+            BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
             Assert.fail("Expected NullPointerException");
         } catch (NullPointerException npe) {
             ;
@@ -55,7 +55,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         File f = new File("fixture", attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         update.attachments.put(attachmentName, att);
-        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
         Assert.assertNotNull("Updated DocumentRevision is null", updated);
         Attachment retrievedAtt = datastore.getAttachment(updated, attachmentName);
         Assert.assertNotNull("Retrieved attachment is null", retrievedAtt);
@@ -70,7 +70,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
         update.attachments = null;
-        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
         Assert.assertNotNull("Updated DocumentRevision is null", updated);
         // also get the attachments through the documentrev
         Assert.assertEquals("Revision should have 0 attachments", 0, updated.getAttachments().size());
@@ -84,7 +84,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         File f = new File("fixture", attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         update.attachments.put(attachmentName, att);
-        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
         Assert.assertNotNull("Updated DocumentRevision is null", updated);
         Attachment retrievedAtt = datastore.getAttachment(updated, attachmentName);
         Assert.assertNotNull("Retrieved attachment is null", retrievedAtt);
@@ -103,7 +103,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         File f = new File("fixture", attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         update.attachments.put(attachmentName, att);
-        DocumentRevision updated = null;
+        BasicDocumentRevision updated = null;
         try {
             updated = datastore.updateDocumentFromRevision(update);
             Assert.fail("Expected IOException; not thrown");

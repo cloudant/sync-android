@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.indexing;
 
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import junit.framework.Assert;
@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class IndexTestUtils {
 
-    public static void assertDBObjectNotInIndex(SQLDatabase database, Index index, DocumentRevision o)
+    public static void assertDBObjectNotInIndex(SQLDatabase database, Index index, BasicDocumentRevision o)
             throws SQLException {
         String table = String.format(IndexManager.TABLE_INDEX_NAME_FORMAT, index.getName());
         Cursor cursor = database.rawQuery("SELECT value FROM " + table + " where docid = ?",
@@ -32,7 +32,7 @@ public class IndexTestUtils {
         Assert.assertFalse(cursor.moveToFirst());
     }
 
-    public static void assertDBObjectInIndex(SQLDatabase database, Index index, String fieldName, DocumentRevision o)
+    public static void assertDBObjectInIndex(SQLDatabase database, Index index, String fieldName, BasicDocumentRevision o)
             throws SQLException {
         Map<String, Object> m = o.getBody().asMap();
         Assert.assertTrue(m.containsKey(fieldName));
@@ -43,7 +43,7 @@ public class IndexTestUtils {
     public static void assertDBObjectInIndexWithValue(
             SQLDatabase database,
             Index index,
-            DocumentRevision o,
+            BasicDocumentRevision o,
             Object valueObject) throws SQLException {
         String indexTable = String.format(IndexManager.TABLE_INDEX_NAME_FORMAT, index.getName());
         Cursor cursor = database.rawQuery("SELECT value FROM " + indexTable + " where docid = ?",
