@@ -70,7 +70,7 @@ public interface Datastore {
     /**
      * <p>Adds a new document with an ID and body.</p>
      *
-     * <p>If the document was successfully created, a 
+     * <p>If the document is successfully created, a
      * {@link com.cloudant.sync.notifications.DocumentCreated DocumentCreated} 
      * event is posted on the event bus.</p>
      *
@@ -93,7 +93,7 @@ public interface Datastore {
      * <p>The document's ID will be auto-generated, and can be found by
      * inspecting the returned {@code DocumentRevision}.</p>
      *
-     * <p>If the document was successfully created, a 
+     * <p>If the document is successfully created, a
      * {@link com.cloudant.sync.notifications.DocumentCreated DocumentCreated} 
      * event is posted on the event bus.</p>
      *
@@ -198,7 +198,7 @@ public interface Datastore {
      * <p>The {@code prevRevisionId} must match the current winning revision
      * for the document.</p>
      *
-     * <p>If the document was successfully updated, a 
+     * <p>If the document is successfully updated, a
      * {@link com.cloudant.sync.notifications.DocumentUpdated DocumentUpdated} 
      * event is posted on the event bus.</p>
      *
@@ -225,7 +225,7 @@ public interface Datastore {
      * future replication operations can successfully replicate the deletion.
      * </p>
      *
-     * <p>If the document was successfully deleted, a 
+     * <p>If the document is successfully deleted, a
      * {@link com.cloudant.sync.notifications.DocumentDeleted DocumentDeleted} 
      * event is posted on the event bus.</p>
      *
@@ -436,7 +436,7 @@ public interface Datastore {
      * <p>If the ID in <code>rev</code> is null, the document's ID will be auto-generated,
      * and can be found by inspecting the returned {@code DocumentRevision}.</p>
      *
-     * <p>If the document was successfully created, a
+     * <p>If the document is successfully created, a
      * {@link com.cloudant.sync.notifications.DocumentCreated DocumentCreated}
      * event is posted on the event bus.</p>
      *
@@ -454,7 +454,7 @@ public interface Datastore {
      *
      * <p>{@code rev} must be a current revision for this document.</p>
      *
-     * <p>If the document was successfully updated, a
+     * <p>If the document is successfully updated, a
      * {@link com.cloudant.sync.notifications.DocumentUpdated DocumentUpdated}
      * event is posted on the event bus.</p>
      *
@@ -473,7 +473,7 @@ public interface Datastore {
      * future replication operations can successfully replicate the deletion.
      * </p>
      *
-     * <p>If the document was successfully deleted, a
+     * <p>If the document is successfully deleted, a
      * {@link com.cloudant.sync.notifications.DocumentDeleted DocumentDeleted}
      * event is posted on the event bus.</p>
      *
