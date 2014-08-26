@@ -12,7 +12,7 @@ public class MutableDocumentRevision implements DocumentRevision
     public String docId;
 
     // ctor with no source revision id: this revision hasn't been saved yet
-    MutableDocumentRevision() {
+    public MutableDocumentRevision() {
         this.attachments = new HashMap<String, Attachment>();
         this.sourceRevisionId = null;
     }
