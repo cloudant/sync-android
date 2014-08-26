@@ -1,3 +1,16 @@
+# 0.7.1 (2014-08-26) 
+
+- [NEW] A new CRUD and Attachments API has been introduced. See
+  doc/crud.md for details, along with a cookbook on using the new API.
+- [DEPRECATED] Some existing attachments and CRUD APIs have been
+  deprecated and marked with the @Deprecated annotation. These will be
+  removed before version 1.0.
+- [FIX] Conflict resolution has been enhanced. The revision tree is
+  now properly preserved, whereas previously a new revision was always
+  created even if this was not necessary. Additionally,
+  `ConflictResolver`s can return `MutableDocumentRevision`s. See
+  doc/conflicts.md for details.
+
 # 0.4.0 (2014-08-01)
 
 - [NEW] Separate builds for Android and standard Java.
