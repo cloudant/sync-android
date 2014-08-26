@@ -16,15 +16,15 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.common.Log;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,7 +88,7 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
     private void assertDataDeleted() {
         for(String id : cache.getAllDeletedIds()) {
             Log.i(LOG_TAG, "Deleted id: " + id);
-            DocumentRevision obj = datastore.getDocument(id);
+            BasicDocumentRevision obj = datastore.getDocument(id);
             Log.i(LOG_TAG, "Deleted: " + obj.isDeleted());
             Assert.assertTrue(obj.isDeleted());
         }
@@ -98,7 +98,7 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
         for(String id : cache.getAllDocumentIds()) {
             Bar bar = cache.getData(id);
             Log.i(LOG_TAG, "Id: " + bar);
-            DocumentRevision obj = datastore.getDocument(bar.getId(), bar.getRevision());
+            BasicDocumentRevision obj = datastore.getDocument(bar.getId(), bar.getRevision());
             Assert.assertNotNull(obj);
         }
     }

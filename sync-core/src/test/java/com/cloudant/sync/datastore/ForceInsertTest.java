@@ -119,7 +119,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         datastore.forceInsert(doc1_rev1, revisionHistory, atts, pullAttachmentsInline);
 
         // adding the attachment should have failed transactionally, so the rev should not exist as well
-        DocumentRevision dr = datastore.getDocument(doc1_rev1.getId(), doc1_rev1.getRevision());
+        BasicDocumentRevision dr = datastore.getDocument(doc1_rev1.getId(), doc1_rev1.getRevision());
         Assert.assertNull("Document should not exist at this revision", dr);
 
         Attachment storedAtt = datastore.getAttachment(doc1_rev1, "att1");

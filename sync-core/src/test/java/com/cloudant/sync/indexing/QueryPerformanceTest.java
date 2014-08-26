@@ -18,7 +18,7 @@ import com.cloudant.common.PerformanceTest;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.TestUtils;
 import org.junit.After;
@@ -42,7 +42,7 @@ public class QueryPerformanceTest {
     DatastoreExtended datastore = null;
     IndexManager indexManager = null;
     private String datastoreManagerPath;
-    List<DocumentRevision> revs = new ArrayList<DocumentRevision>();
+    List<BasicDocumentRevision> revs = new ArrayList<BasicDocumentRevision>();
 
     @Before
     public void setUp() throws IOException, SQLException, IndexExistsException {
@@ -142,7 +142,7 @@ public class QueryPerformanceTest {
     }
 
     public void test_queryResult(QueryResult r) {
-        for(DocumentRevision revision : r) {
+        for(BasicDocumentRevision revision : r) {
             // Does nothing
         }
     }

@@ -20,7 +20,7 @@ import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.DatastoreExtended;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
@@ -239,11 +239,11 @@ class BasicPushStrategy implements ReplicationStrategy {
 
         // Process the changes themselves in batches, where we post a batch
         // at a time to the remote database's _bulk_docs endpoint.
-        List<List<DocumentRevision>> batches = Lists.partition(
+        List<List<BasicDocumentRevision>> batches = Lists.partition(
                 changes.getResults(),
                 config.bulkInsertSize
         );
-        for (List<DocumentRevision> batch : batches) {
+        for (List<BasicDocumentRevision> batch : batches) {
 
             if (this.cancel) { break; }
 
@@ -281,10 +281,10 @@ class BasicPushStrategy implements ReplicationStrategy {
             DocumentRevisionTree tree = allTrees.get(docId);
             for(String rev : missingRevisions) {
                 long sequence = tree.lookup(docId, rev).getSequence();
-                List<DocumentRevision> path = tree.getPathForNode(sequence);
+                List<BasicDocumentRevision> path = tree.getPathForNode(sequence);
 
                 // get the attachments for the leaf of this path
-                DocumentRevision dr = path.get(0);
+                BasicDocumentRevision dr = path.get(0);
                 List<? extends Attachment> atts = this.sourceDb.getDbCore().attachmentsForRevision(dr);
 
                 // get the json, and inline any small attachments

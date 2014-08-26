@@ -17,12 +17,10 @@ package com.cloudant.sync.replication;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.util.TestUtils;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -71,7 +69,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         } catch (Exception e) {
             Assert.fail("Pull error " + e);
         }
-        DocumentRevision docRev = datastore.getDocument(id, rev);
+        BasicDocumentRevision docRev = datastore.getDocument(id, rev);
         Attachment a = datastore.getAttachment(docRev, attachmentName);
         Assert.assertNotNull("Attachment is null", a);
         Assert.assertEquals(attachmentName, a.name);
@@ -87,7 +85,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         } catch (Exception e) {
             Assert.fail("Pull error " + e);
         }
-        DocumentRevision docRev2 = datastore.getDocument(id, rev);
+        BasicDocumentRevision docRev2 = datastore.getDocument(id, rev);
         Attachment a2 = datastore.getAttachment(docRev2, attachmentName);
         Assert.assertNotNull("Attachment is null", a2);
         Assert.assertEquals(attachmentName, a2.name);
@@ -111,7 +109,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         } catch (Exception e) {
             Assert.fail("Create/pull error " + e);
         }
-        DocumentRevision docRev = datastore.getDocument(id, rev);
+        BasicDocumentRevision docRev = datastore.getDocument(id, rev);
         Attachment a = datastore.getAttachment(docRev, bigAttachmentName);
         Assert.assertNotNull("Attachment is null", a);
         Assert.assertEquals(bigAttachmentName, a.name);
@@ -130,7 +128,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         } catch (Exception e) {
             Assert.fail("Create/pull error " + e);
         }
-        DocumentRevision docRev = datastore.getDocument(id, rev);
+        BasicDocumentRevision docRev = datastore.getDocument(id, rev);
         Attachment a = datastore.getAttachment(docRev, bigTextAttachmentName);
         Assert.assertNotNull("Attachment is null", a);
         Assert.assertEquals(bigTextAttachmentName, a.name);
@@ -148,11 +146,11 @@ public class AttachmentsPullTest extends ReplicationTestBase {
             // ensure updated version no longer has attachment associated with it locally
             createRevisionAndBigTextAttachment();
             pull();
-            DocumentRevision docRev1 = datastore.getDocument(id, rev);
+            BasicDocumentRevision docRev1 = datastore.getDocument(id, rev);
             Attachment a1 = datastore.getAttachment(docRev1, bigTextAttachmentName);
             updateRevision();
             pull();
-            DocumentRevision docRev2 = datastore.getDocument(id, rev);
+            BasicDocumentRevision docRev2 = datastore.getDocument(id, rev);
             Attachment a2 = datastore.getAttachment(docRev2, bigTextAttachmentName);
             Assert.assertNull(a2);
 
@@ -168,12 +166,12 @@ public class AttachmentsPullTest extends ReplicationTestBase {
             // TODO we need to somehow check the attachment wasn't re-downloaded
             createRevisionAndBigTextAttachment();
             pull();
-            DocumentRevision docRev1 = datastore.getDocument(id, rev);
+            BasicDocumentRevision docRev1 = datastore.getDocument(id, rev);
             Attachment a1 = datastore.getAttachment(docRev1, bigTextAttachmentName);
             updateRevisionAndKeepAttachment();
             updateRevisionAndKeepAttachment();
             pull();
-            DocumentRevision docRev2 = datastore.getDocument(id, rev);
+            BasicDocumentRevision docRev2 = datastore.getDocument(id, rev);
             Attachment a2 = datastore.getAttachment(docRev2, bigTextAttachmentName);
             Assert.assertNotNull(a2);
 

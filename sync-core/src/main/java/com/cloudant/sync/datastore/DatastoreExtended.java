@@ -18,7 +18,6 @@
 package com.cloudant.sync.datastore;
 
 
-import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.google.common.collect.Multimap;
 
@@ -27,7 +26,6 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * <p>{@code DatastoreExtended} adds further, lesser-used methods to the
@@ -50,7 +48,7 @@ public interface DatastoreExtended extends Datastore {
      * @param body       JSON body for the document
      * @return {@code DocumentRevision} of the newly created document
      */
-    public DocumentRevision createLocalDocument(String documentId, DocumentBody body);
+    public BasicDocumentRevision createLocalDocument(String documentId, DocumentBody body);
 
     /**
      * <p>Adds a new local document with an auto-generated ID.</p>
@@ -63,7 +61,7 @@ public interface DatastoreExtended extends Datastore {
      *
      * @see DatastoreExtended#createLocalDocument(String, DocumentBody)
      */
-    public DocumentRevision createLocalDocument(DocumentBody body);
+    public BasicDocumentRevision createLocalDocument(DocumentBody body);
 
     /**
      * <p>Returns the current winning revision of a local document.</p>
@@ -71,7 +69,7 @@ public interface DatastoreExtended extends Datastore {
      * @param documentId id of the local document
      * @return {@code DocumentRevision} of the document
      */
-    public DocumentRevision getLocalDocument(String documentId);
+    public BasicDocumentRevision getLocalDocument(String documentId);
 
     /**
      * <p>Returns a given revision local document.</p>
@@ -80,7 +78,7 @@ public interface DatastoreExtended extends Datastore {
      * @param revisionId id of the revision
      * @return specified revision as DocumentRevision of a local document
      */
-    public DocumentRevision getLocalDocument(String documentId, String revisionId);
+    public BasicDocumentRevision getLocalDocument(String documentId, String revisionId);
 
     /**
      * <p>Updates a local document that exists in the datastore with a new
@@ -95,7 +93,7 @@ public interface DatastoreExtended extends Datastore {
      * @param body body of the new revision
      * @return @{code DocumentRevision} for the updated revision
      */
-    public DocumentRevision updateLocalDocument(String documentId, String prevRevisionId, DocumentBody body);
+    public BasicDocumentRevision updateLocalDocument(String documentId, String prevRevisionId, DocumentBody body);
 
     /**
      * <p>Deletes a local document.</p>
@@ -162,7 +160,7 @@ public interface DatastoreExtended extends Datastore {
      *
      * @see Datastore#getEventBus()
      */
-    public void forceInsert(DocumentRevision rev,
+    public void forceInsert(BasicDocumentRevision rev,
                             List<String> revisionHistory,
                             Map<String, Object> attachments,
                             boolean pullAttachmentsInline);
@@ -179,9 +177,9 @@ public interface DatastoreExtended extends Datastore {
      * @param rev
      * @param revisionHistory
      *
-     * @see DatastoreExtended#forceInsert(DocumentRevision, java.util.List, java.util.Map, boolean)
+     * @see DatastoreExtended#forceInsert(BasicDocumentRevision, java.util.List, java.util.Map, boolean)
      */
-    public void forceInsert(DocumentRevision rev, String... revisionHistory);
+    public void forceInsert(BasicDocumentRevision rev, String... revisionHistory);
 
     /**
      * <p>Returns a handle to the SQLite database used for low-level
@@ -259,7 +257,7 @@ public interface DatastoreExtended extends Datastore {
      * @throws IOException
      * @throws SQLException
      */
-    public PreparedAttachment prepareAttachment(Attachment att, DocumentRevision rev) throws IOException;
+    public PreparedAttachment prepareAttachment(Attachment att, BasicDocumentRevision rev) throws IOException;
 
     /**
      * Add attachment to document revision without incrementing revision.
@@ -269,6 +267,6 @@ public interface DatastoreExtended extends Datastore {
      * @param att The attachment to add
      * @param rev The DocumentRevision to add the attachment to
      */
-    public void addAttachment(PreparedAttachment att, DocumentRevision rev) throws IOException, SQLException;
+    public void addAttachment(PreparedAttachment att, BasicDocumentRevision rev) throws IOException, SQLException;
 
 }

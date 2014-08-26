@@ -17,7 +17,7 @@ package com.cloudant.sync.indexing;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBody;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.TestUtils;
 import org.junit.After;
@@ -38,7 +38,7 @@ public class IndexManagerQueryTest {
     DatastoreExtended datastore = null;
     IndexManager indexManager = null;
     List<DocumentBody> dbBodies = null;
-    List<DocumentRevision> revisions = null;
+    List<BasicDocumentRevision> revisions = null;
     private String datastoreManagerPath;
 
     @Before
@@ -189,7 +189,7 @@ public class IndexManagerQueryTest {
         indexManager.ensureIndexed("Artist", "artist");
         indexManager.ensureIndexed("Year", "year", IndexType.INTEGER);
 
-        revisions = new ArrayList<DocumentRevision>();
+        revisions = new ArrayList<BasicDocumentRevision>();
         for (DocumentBody b : dbBodies) {
             revisions.add(datastore.createDocument(b));
         }
@@ -260,7 +260,7 @@ public class IndexManagerQueryTest {
         QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThanOrEqual(0l).sortBy("Year").build());
         Assert.assertEquals(7, result.size());
         int prevYear = 0;
-        for(DocumentRevision doc  : result) {
+        for(BasicDocumentRevision doc  : result) {
             int year = (Integer)doc.getBody().asMap().get("year");
             Assert.assertTrue(year >= prevYear);
             prevYear = year;
@@ -272,7 +272,7 @@ public class IndexManagerQueryTest {
         QueryResult result = indexManager.query(new QueryBuilder().index("Year").greaterThanOrEqual(0l).sortBy("Year", SortDirection.Descending).build());
         Assert.assertEquals(7, result.size());
         int prevYear = 9999;
-        for(DocumentRevision doc  : result) {
+        for(BasicDocumentRevision doc  : result) {
             int year = (Integer)doc.getBody().asMap().get("year");
             Assert.assertTrue(year <= prevYear);
             prevYear = year;

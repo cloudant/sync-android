@@ -98,7 +98,7 @@ public class DatastoreManagerTest {
     @Test(expected = IllegalStateException.class)
     public void deleteDatastore_createDocumentUsingDeletedDatastore_exception() throws Exception {
         Datastore ds = createAndAssertDatastore();
-        DocumentRevision object = ds.createDocument(createDBBody("Tom"));
+        BasicDocumentRevision object = ds.createDocument(createDBBody("Tom"));
         Assert.assertNotNull(object);
 
         manager.deleteDatastore("mydatastore");

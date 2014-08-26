@@ -17,12 +17,11 @@ package com.cloudant.sync.replication;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.util.TestUtils;
 import com.cloudant.sync.util.TypedDatastore;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,9 +39,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.core.Is.isA;
 
 /**
  * Created by tomblench on 26/03/2014.
@@ -133,8 +130,8 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
-        DocumentRevision oldRevision = datastore.getDocument(id1);
-        DocumentRevision newRevision = null;
+        BasicDocumentRevision oldRevision = datastore.getDocument(id1);
+        BasicDocumentRevision newRevision = null;
         try {
             // set attachment
             newRevision = datastore.updateAttachments(oldRevision, atts);
@@ -160,8 +157,8 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         Attachment att = new UnsavedFileAttachment(f, "image/jpeg");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
-        DocumentRevision oldRevision = datastore.getDocument(id1);
-        DocumentRevision newRevision = null;
+        BasicDocumentRevision oldRevision = datastore.getDocument(id1);
+        BasicDocumentRevision newRevision = null;
         try {
             // set attachment
             newRevision = datastore.updateAttachments(oldRevision, atts);
@@ -192,8 +189,8 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         atts1.add(att1);
         List<Attachment> atts2 = new ArrayList<Attachment>();
         atts2.add(att2);
-        DocumentRevision rev1 = datastore.getDocument(id1);
-        DocumentRevision rev2 = null;
+        BasicDocumentRevision rev1 = datastore.getDocument(id1);
+        BasicDocumentRevision rev2 = null;
         try {
             // set attachment
             rev2 = datastore.updateAttachments(rev1, atts1);
@@ -204,12 +201,12 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         // push replication - att1 should be uploaded
         push();
 
-        DocumentRevision rev3 = datastore.updateDocument(rev2.getId(), rev2.getRevision(), rev2.getBody());
+        BasicDocumentRevision rev3 = datastore.updateDocument(rev2.getId(), rev2.getRevision(), rev2.getBody());
 
         // push replication - no atts should be uploaded
         push();
 
-        DocumentRevision rev4 = null;
+        BasicDocumentRevision rev4 = null;
         try {
             // set attachment
             rev4 = datastore.updateAttachments(rev3, atts2);

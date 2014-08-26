@@ -172,7 +172,7 @@ public class IndexManager {
      *          with the same name has already been registered.
      *
      * @see com.cloudant.sync.indexing.QueryBuilder
-     * @see com.cloudant.sync.datastore.DocumentRevision
+     * @see com.cloudant.sync.datastore.BasicDocumentRevision
      * @see IndexType
      * @see IndexFunction
      */
@@ -271,7 +271,7 @@ public class IndexManager {
     }
 
     private void updateIndex(Index index, Changes changes) {
-        for (DocumentRevision ob : changes.getResults()) {
+        for (BasicDocumentRevision ob : changes.getResults()) {
             indexDocument(index, ob.getId(), ob.asMap());
         }
         updateIndexLastSequence(index.getName(), changes.getLastSequence());

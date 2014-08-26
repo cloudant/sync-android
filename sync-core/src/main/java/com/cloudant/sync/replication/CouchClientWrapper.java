@@ -24,7 +24,7 @@ import com.cloudant.mazha.OkOpenRevision;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.google.common.base.Preconditions;
@@ -202,11 +202,11 @@ class CouchClientWrapper implements CouchDB {
     }
 
     @Override
-    public void bulk(List<DocumentRevision> revisions) {
+    public void bulk(List<BasicDocumentRevision> revisions) {
         Log.i(LOG_TAG, "bulk()");
 
         List<Map> allObjs = new ArrayList<Map>();
-        for (DocumentRevision obj : revisions) {
+        for (BasicDocumentRevision obj : revisions) {
             Log.d(LOG_TAG, "Object body: " + obj.getBody().toString());
             allObjs.add(obj.asMap());
         }

@@ -17,7 +17,7 @@ package com.cloudant.sync.replication;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.util.TypedDatastore;
 import org.junit.After;
@@ -120,21 +120,21 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         {
             DocumentRevisionTree t1 = datastore.getAllRevisionsOfDocument(id1);
             Assert.assertEquals(2, t1.leafs().size());
-            DocumentRevision c = t1.getCurrentRevision();
+            BasicDocumentRevision c = t1.getCurrentRevision();
             Assert.assertEquals(4, t1.depth(c.getSequence()));
         }
 
         {
             DocumentRevisionTree t2 = datastore.getAllRevisionsOfDocument(id2);
             Assert.assertEquals(2, t2.leafs().size());
-            DocumentRevision c = t2.getCurrentRevision();
+            BasicDocumentRevision c = t2.getCurrentRevision();
             Assert.assertEquals(2, t2.depth(c.getSequence()));
         }
 
         {
             DocumentRevisionTree t3 = datastore.getAllRevisionsOfDocument(id3);
             Assert.assertEquals(2, t3.leafs().size());
-            DocumentRevision c = t3.getCurrentRevision();
+            BasicDocumentRevision c = t3.getCurrentRevision();
             Assert.assertEquals(4, t3.depth(c.getSequence()));
         }
     }

@@ -28,7 +28,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -74,7 +73,7 @@ public class MultipartAttachmentWriterTests {
 
     @Test
     public void Add1000TextAttachmentsTest() throws Exception {
-        DocumentRevision doc = datastore.createDocument(bodyOne);
+        BasicDocumentRevision doc = datastore.createDocument(bodyOne);
         ArrayList<Attachment> attachments = new ArrayList<Attachment>();
 
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
@@ -112,7 +111,7 @@ public class MultipartAttachmentWriterTests {
 
     @Test
     public void AddImageAttachmentTest() throws Exception {
-        DocumentRevision doc = datastore.createDocument(bodyOne);
+        BasicDocumentRevision doc = datastore.createDocument(bodyOne);
         ArrayList<Attachment> attachments = new ArrayList<Attachment>();
 
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();

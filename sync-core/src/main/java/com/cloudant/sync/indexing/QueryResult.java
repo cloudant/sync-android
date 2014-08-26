@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.indexing;
 
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ import java.util.List;
  *
  * @see IndexManager
  */
-public interface QueryResult extends Iterable<DocumentRevision> {
+public interface QueryResult extends Iterable<BasicDocumentRevision> {
 
     /**
      * Returns the number of documents in this query result.

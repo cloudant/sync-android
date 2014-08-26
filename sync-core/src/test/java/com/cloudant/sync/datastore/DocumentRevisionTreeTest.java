@@ -29,13 +29,13 @@ import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 public class DocumentRevisionTreeTest {
 
     DocumentBody b;
-    DocumentRevision d1, d2, d3, d4, d5;
-    DocumentRevision c3, c4;
-    DocumentRevision e1, e2, e3;
-    DocumentRevision f3, f4;
+    BasicDocumentRevision d1, d2, d3, d4, d5;
+    BasicDocumentRevision c3, c4;
+    BasicDocumentRevision e1, e2, e3;
+    BasicDocumentRevision f3, f4;
 
-    DocumentRevision x2, x3;
-    DocumentRevision y3;
+    BasicDocumentRevision x2, x3;
+    BasicDocumentRevision y3;
 
     @Before
     public void startUp() {
@@ -51,30 +51,81 @@ public class DocumentRevisionTreeTest {
          *         -> f3 -> f4
          **/
 
-        d1 = new BasicDocumentRevision( "id1", "1-rev", b, 1l, 1l, false, false, -1l);
-        d2 = new BasicDocumentRevision( "id1", "2-rev", b, 2l, 1l, false, false, 1l);
-        d3 = new BasicDocumentRevision( "id1", "3-rev", b, 3l, 1l, false, false, 2l);
-        d4 = new BasicDocumentRevision( "id1", "4-rev", b, 4l, 1l, false, false, 3l);
-        d5 = new BasicDocumentRevision( "id1", "5-rev", b, 5l, 1l, false, true, 4l);
+        BasicDocumentRevision.BasicDocumentRevisionOptions opts = new BasicDocumentRevision.BasicDocumentRevisionOptions();
+        opts.docInternalId = 1l;
 
-        c3 = new BasicDocumentRevision( "id1", "3-rev2", b, 6l, 1l, false, false, 2l);
-        c4 = new BasicDocumentRevision( "id1", "4-rev2", b, 7l, 1l, false, true, 6l);
+        opts.sequence = 1l;
+        opts.parent = -1l;
+        d1 = new BasicDocumentRevision( "id1", "1-rev", b, opts);
 
-        e1 = new BasicDocumentRevision( "id1", "1-rev-star", b, 8l, 1l, false, false, -1l);
-        e2 = new BasicDocumentRevision( "id1", "2-rev-star", b, 9l, 1l, false, false, 8l);
-        e3 = new BasicDocumentRevision( "id1", "3-rev-star", b, 10l, 1l, false, false, 9l);
+        opts.sequence = 2l;
+        opts.parent = 1l;
+        d2 = new BasicDocumentRevision( "id1", "2-rev", b, opts);
 
-        f3 = new BasicDocumentRevision( "id1", "3-rev-star-star", b, 11l, 1l, false, false, 9l);
-        f4 = new BasicDocumentRevision( "id1", "4-rev-star-star", b, 12l, 1l, false, false, 11l);
+        opts.sequence = 3l;
+        opts.parent = 2l;
+        d3 = new BasicDocumentRevision( "id1", "3-rev", b, opts);
+
+        opts.sequence = 4l;
+        opts.parent = 3l;
+        d4 = new BasicDocumentRevision( "id1", "4-rev", b, opts);
+
+        opts.sequence = 5l;
+        opts.parent = 4l;
+        opts.current = true;
+        d5 = new BasicDocumentRevision( "id1", "5-rev", b, opts);
+
+        opts = new BasicDocumentRevision.BasicDocumentRevisionOptions();
+        opts.sequence = 6l;
+        opts.parent = 2l;
+
+        c3 = new BasicDocumentRevision( "id1", "3-rev2", b, opts);
+        opts.sequence = 7l;
+        opts.parent = 6l;
+        opts.current = true;
+        c4 = new BasicDocumentRevision( "id1", "4-rev2", b, opts);
+
+        opts = new BasicDocumentRevision.BasicDocumentRevisionOptions();
+        opts.sequence = 8l;
+        opts.parent = -1l;
+        e1 = new BasicDocumentRevision( "id1", "1-rev-star", b, opts);
+
+        opts.sequence = 9l;
+        opts.parent = 8l;
+        e2 = new BasicDocumentRevision( "id1", "2-rev-star", b, opts);
+
+        opts.sequence = 10l;
+        opts.parent = 9l;
+        e3 = new BasicDocumentRevision( "id1", "3-rev-star", b, opts);
+
+        opts.sequence = 11l;
+        opts.parent = 9l;
+        f3 = new BasicDocumentRevision( "id1", "3-rev-star-star", b, opts);
+
+        opts.sequence = 12l;
+        opts.parent = 11l;
+        f4 = new BasicDocumentRevision( "id1", "4-rev-star-star", b, opts);
 
         /**
          * x2 -> x3
          *  |
          *    -> y3
          */
-        x2 = new BasicDocumentRevision( "id2", "2-x", b, 12l, 2l, false, false, -1l);
-        x3 = new BasicDocumentRevision( "id2", "3-x", b, 13l, 2l, false, false, 12l);
-        y3 = new BasicDocumentRevision( "id2", "3-y", b, 14l, 2l, false, false, 12l);
+
+        opts = new BasicDocumentRevision.BasicDocumentRevisionOptions();
+        opts.docInternalId = 2l;
+
+        opts.sequence = 12l;
+        opts.parent = -1l;
+        x2 = new BasicDocumentRevision( "id2", "2-x", b, opts);
+
+        opts.sequence = 13l;
+        opts.parent = 12l;
+        x3 = new BasicDocumentRevision( "id2", "3-x", b, opts);
+
+        opts.sequence = 14l;
+        opts.parent = 12l;
+        y3 = new BasicDocumentRevision( "id2", "3-y", b, opts);
     }
 
     @Test
@@ -152,7 +203,7 @@ public class DocumentRevisionTreeTest {
         t.add(c3).add(c4);
 
         Assert.assertNull(t.bySequence(-2l));
-        DocumentRevision d = t.bySequence(d2.getSequence());
+        BasicDocumentRevision d = t.bySequence(d2.getSequence());
         Assert.assertTrue(d.getSequence() == d2.getSequence());
     }
 
@@ -162,10 +213,10 @@ public class DocumentRevisionTreeTest {
         t.add(d2).add(d3).add(d4).add(d5);
         t.add(c3).add(c4);
 
-        DocumentRevision d = t.lookup(d3.getId(), d3.getRevision());
+        BasicDocumentRevision d = t.lookup(d3.getId(), d3.getRevision());
         Assert.assertNotNull(d);
 
-        DocumentRevision m = t.lookup("haha", "hehe");
+        BasicDocumentRevision m = t.lookup("haha", "hehe");
         Assert.assertNull(m);
     }
 
@@ -188,7 +239,7 @@ public class DocumentRevisionTreeTest {
         t.add(c3).add(c4);
 
         Assert.assertEquals(2, t.leafs().size());
-        List<DocumentRevision> l = new ArrayList<DocumentRevision>();
+        List<BasicDocumentRevision> l = new ArrayList<BasicDocumentRevision>();
         for(DocumentRevisionTree.DocumentRevisionNode n : t.leafs()) {
             l.add(n.getData());
         }
@@ -219,7 +270,7 @@ public class DocumentRevisionTreeTest {
         t.add(c3).add(c4);
 
         {
-            List<DocumentRevision> p = t.getPathForNode(d5.getSequence());
+            List<BasicDocumentRevision> p = t.getPathForNode(d5.getSequence());
             Assert.assertEquals(5, p.size());
             Assert.assertEquals(p.get(4).getSequence(), d1.getSequence());
             Assert.assertEquals(p.get(3).getSequence(), d2.getSequence());
@@ -230,7 +281,7 @@ public class DocumentRevisionTreeTest {
 
 
         {
-            List<DocumentRevision> p2 = t.getPathForNode(c4.getSequence());
+            List<BasicDocumentRevision> p2 = t.getPathForNode(c4.getSequence());
             Assert.assertEquals(4, p2.size());
             Assert.assertEquals(p2.get(3).getSequence(), d1.getSequence());
             Assert.assertEquals(p2.get(2).getSequence(), d2.getSequence());

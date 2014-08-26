@@ -19,6 +19,8 @@ import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -33,8 +35,8 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
 
     @Test
     public void getConflictedDocumentIds_oneConflictWithTwoConflictedLeafs() {
-        DocumentRevision rev = this.createDocumentRevision("Tom");
-        DocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "1-rev", "Jerry");
+        BasicDocumentRevision rev = this.createDocumentRevision("Tom");
+        BasicDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "1-rev", "Jerry");
         this.datastore.forceInsert(newRev, "1-rev");
         Iterator<String> iterator = this.datastore.getConflictedDocumentIds();
         List<String> conflictedDocId = Lists.newArrayList(iterator);
@@ -45,10 +47,10 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
 
     @Test
     public void getConflictedDocumentIds_conflictWithThreeConflictedLeafs() {
-        DocumentRevision rev = this.createDocumentRevision("Tom");
-        DocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "4-a", "Jerry");
+        BasicDocumentRevision rev = this.createDocumentRevision("Tom");
+        BasicDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "4-a", "Jerry");
         this.datastore.forceInsert(newRev, "1-a", "2-a", "3-a", "4-a");
-        DocumentRevision newRev2 = this.createDetachedDocumentRevision(rev.getId(), "3-b", "Harry");
+        BasicDocumentRevision newRev2 = this.createDetachedDocumentRevision(rev.getId(), "3-b", "Harry");
         this.datastore.forceInsert(newRev2, "1-b", "2-b", "3-b");
 
         Iterator<String> iterator = this.datastore.getConflictedDocumentIds();
@@ -59,9 +61,9 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
 
     @Test
     public void getConflictedDocumentIds_oneDeletedLeafAndOneLiveLeaf_conflicts() throws ConflictException {
-        DocumentRevision rev = this.createDocumentRevision("Tom");
+        BasicDocumentRevision rev = this.createDocumentRevision("Tom");
         this.datastore.deleteDocument(rev.getId(), rev.getRevision());
-        DocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "4-a", "Jerry");
+        BasicDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "4-a", "Jerry");
         this.datastore.forceInsert(newRev, "1-a", "2-a", "3-a", "4-a");
 
         Iterator<String> iterator = this.datastore.getConflictedDocumentIds();
@@ -91,12 +93,12 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
 
     @Test
     public void resolveConflictsForDocument_twoConflictAndException_nothing()
-            throws ConflictException {
+            throws ConflictException, IOException {
         String docId = this.createConflictedDocument();
         long expectedSequence = this.datastore.getLastSequence();
         this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
             @Override
-            public DocumentRevision resolve(String docId, List<DocumentRevision> conflicts) {
+            public BasicDocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts) {
                 throw new IllegalStateException("Mocked error");
             }
         });
@@ -106,12 +108,12 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
 
     @Test
     public void resolveConflictsForDocument_twoConflictAndReturnNull_nothing()
-            throws ConflictException {
+            throws ConflictException, IOException {
         String docId = this.createConflictedDocument();
         long expectedSequence = this.datastore.getLastSequence();
         this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
             @Override
-            public DocumentRevision resolve(String docId, List<DocumentRevision> conflicts) {
+            public BasicDocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts) {
                 return null;
             }
         });
@@ -121,7 +123,109 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
 
     @Test
     public void resolveConflictsForDocument_twoConflictAndNewWinner_newWinnerInserted()
-            throws ConflictException {
+            throws ConflictException, IOException {
+        String docId = this.createConflictedDocument();
+        DocumentRevisionTree oldTree = this.datastore.getAllRevisionsOfDocument(docId);
+        Assert.assertTrue(oldTree.hasConflicts());
+        // new sequence will be increased by 1 due to deleting one document
+        long expectedSequence = this.datastore.getLastSequence() + 1;
+
+        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+            @Override
+            public BasicDocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts) {
+                Assert.assertEquals(2, conflicts.size());
+                for(BasicDocumentRevision rev : conflicts) {
+                    if (rev.asMap().get("name").equals("Tom")) {
+                        return rev;
+                    }
+                }
+                return null;
+            }
+        });
+        long actualSequence = this.datastore.getLastSequence();
+        Assert.assertEquals(expectedSequence, actualSequence);
+
+        DocumentRevisionTree newTree = this.datastore.getAllRevisionsOfDocument(docId);
+        Assert.assertFalse(newTree.hasConflicts());
+        BasicDocumentRevision newWinner = newTree.getCurrentRevision();
+        Assert.assertEquals("Tom", newWinner.asMap().get("name"));
+    }
+
+    // attachments on the non-current document, check they get copied over when we select it
+    @Test
+    public void resolveConflictsForDocument_twoConflictAndNewWinner_newWinnerInsertedWithAttachments()
+            throws ConflictException, IOException {
+        String docId = this.createConflictedDocumentWithAttachments();
+        DocumentRevisionTree oldTree = this.datastore.getAllRevisionsOfDocument(docId);
+        Assert.assertTrue(oldTree.hasConflicts());
+        // new sequence will be increased by 1 due to deleting one document
+        long expectedSequence = this.datastore.getLastSequence() + 1;
+
+        // check the winner is the one without attachments
+        Assert.assertEquals("Jerry", this.datastore.getDocument(docId).asMap().get("name"));
+        Assert.assertTrue(this.datastore.getDocument(docId).getAttachments().isEmpty());
+
+        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+            @Override
+            public BasicDocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts) {
+                Assert.assertEquals(2, conflicts.size());
+                for(BasicDocumentRevision rev : conflicts) {
+                    if (rev.asMap().get("name").equals("Tom")) {
+                        return rev;
+                    }
+                }
+                return null;
+            }
+        });
+        long actualSequence = this.datastore.getLastSequence();
+        Assert.assertEquals(expectedSequence, actualSequence);
+
+        DocumentRevisionTree newTree = this.datastore.getAllRevisionsOfDocument(docId);
+        Assert.assertFalse(newTree.hasConflicts());
+        BasicDocumentRevision newWinner = newTree.getCurrentRevision();
+        Assert.assertEquals("Tom", newWinner.asMap().get("name"));
+        Assert.assertNotNull(newWinner.getAttachments().get("att1"));
+    }
+
+    // attachments on the current document, check they don't get carried over
+    @Test
+    public void resolveConflictsForDocument_twoConflictAndNewWinner_newWinnerInsertedWithAttachments2()
+            throws ConflictException, IOException {
+        String docId = this.createConflictedDocumentWithAttachmentsWinning();
+        DocumentRevisionTree oldTree = this.datastore.getAllRevisionsOfDocument(docId);
+        Assert.assertTrue(oldTree.hasConflicts());
+        // new sequence will be increased by 1 due to deleting one document
+        long expectedSequence = this.datastore.getLastSequence() + 1;
+
+        // check the winner is the one with attachments
+        Assert.assertEquals("Jerry With Attachments", this.datastore.getDocument(docId).asMap().get("name"));
+        Assert.assertEquals(1, this.datastore.getDocument(docId).getAttachments().size());
+
+        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+            @Override
+            public BasicDocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts) {
+                Assert.assertEquals(2, conflicts.size());
+                for(BasicDocumentRevision rev : conflicts) {
+                    if (rev.asMap().get("name").equals("Tom")) {
+                        return rev;
+                    }
+                }
+                return null;
+            }
+        });
+        long actualSequence = this.datastore.getLastSequence();
+        Assert.assertEquals(expectedSequence, actualSequence);
+
+        DocumentRevisionTree newTree = this.datastore.getAllRevisionsOfDocument(docId);
+        Assert.assertFalse(newTree.hasConflicts());
+        BasicDocumentRevision newWinner = newTree.getCurrentRevision();
+        Assert.assertEquals("Tom", newWinner.asMap().get("name"));
+        Assert.assertTrue(newWinner.getAttachments().isEmpty());
+    }
+
+    @Test
+    public void resolveConflictsForDocument_twoConflictAndNewWinner_newWinnerInsertedMutableWithAttachments()
+            throws ConflictException, IOException {
         String docId = this.createConflictedDocument();
         DocumentRevisionTree oldTree = this.datastore.getAllRevisionsOfDocument(docId);
         Assert.assertTrue(oldTree.hasConflicts());
@@ -129,9 +233,12 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
 
         this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
             @Override
-            public DocumentRevision resolve(String docId, List<DocumentRevision> conflicts) {
+            public DocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts) {
                 Assert.assertEquals(2, conflicts.size());
-                return createDetachedDocumentRevision(docId, "1-ignored", "Carl");
+                MutableDocumentRevision rev = conflicts.get(0).mutableCopy();
+                rev.body = DocumentBodyFactory.create("{\"name\": \"mutable\"}".getBytes());
+                rev.attachments.put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "att1", "text/plain"));
+                return rev;
             }
         });
         long actualSequence = this.datastore.getLastSequence();
@@ -139,23 +246,71 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
 
         DocumentRevisionTree newTree = this.datastore.getAllRevisionsOfDocument(docId);
         Assert.assertFalse(newTree.hasConflicts());
-        DocumentRevision newWinner = newTree.getCurrentRevision();
-        Assert.assertEquals("Carl", newWinner.asMap().get("name"));
+        BasicDocumentRevision newWinner = newTree.getCurrentRevision();
+        Assert.assertEquals("mutable", newWinner.asMap().get("name"));
+        Assert.assertNotNull(newWinner.getAttachments().get("att1"));
+    }
+
+    // test to ensure correct failure mode when user returns a new ('unrooted') mutable document
+    @Test
+    public void resolveConflictsForDocument_twoConflictAndNewWinner_newWinnerInsertedNewMutableFails()
+            throws ConflictException, IOException {
+        String docId = this.createConflictedDocument();
+        DocumentRevisionTree oldTree = this.datastore.getAllRevisionsOfDocument(docId);
+        Assert.assertTrue(oldTree.hasConflicts());
+
+        BasicDocumentRevision oldWinner = oldTree.getCurrentRevision();
+        Assert.assertEquals("Jerry", oldWinner.asMap().get("name"));
+        Assert.assertFalse(oldWinner.isDeleted());
+
+        // not updated
+        long expectedSequence = this.datastore.getLastSequence();
+
+        try {
+            // should throw IllegalArgumentException because sourceRevId is null
+            this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+                @Override
+                public DocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts) {
+                    Assert.assertEquals(2, conflicts.size());
+                    MutableDocumentRevision rev = new MutableDocumentRevision();
+                    rev.body = DocumentBodyFactory.create("{\"name\": \"mutable\"}".getBytes());
+                    rev.attachments.put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "att1", "text/plain"));
+                    return rev;
+                }
+            });
+            Assert.fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+            ;
+        }
+        long actualSequence = this.datastore.getLastSequence();
+        Assert.assertEquals(expectedSequence, actualSequence);
+
+        DocumentRevisionTree newTree = this.datastore.getAllRevisionsOfDocument(docId);
+        Assert.assertTrue(newTree.hasConflicts());
+        BasicDocumentRevision newWinner = newTree.getCurrentRevision();
+        Assert.assertEquals("Jerry", newWinner.asMap().get("name"));
+        Assert.assertFalse(newWinner.isDeleted());
     }
 
     @Test
     public void resolveConflictsForDocument_threeConflictAndNewWinner_newWinnerInserted()
-            throws ConflictException {
+            throws ConflictException, IOException {
         String docId = this.createConflictedDocumentWithThreeLeafs();
         DocumentRevisionTree oldTree = this.datastore.getAllRevisionsOfDocument(docId);
         Assert.assertTrue(oldTree.hasConflicts());
-        long expectedSequence = this.datastore.getLastSequence() + 3;
+        // new sequence will be increased by 2 due to deleting 2 documents
+        long expectedSequence = this.datastore.getLastSequence() + 2;
 
         this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
             @Override
-            public DocumentRevision resolve(String docId, List<DocumentRevision> conflicts) {
+            public BasicDocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts) {
                 Assert.assertEquals(3, conflicts.size());
-                return createDetachedDocumentRevision(docId, "1-ignored", "Aaron");
+                for(BasicDocumentRevision rev : conflicts) {
+                    if (rev.asMap().get("name").equals("Tom")) {
+                        return rev;
+                    }
+                }
+                return null;
             }
         });
         long actualSequence = this.datastore.getLastSequence();
@@ -163,26 +318,29 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
 
         DocumentRevisionTree newTree = this.datastore.getAllRevisionsOfDocument(docId);
         Assert.assertFalse(newTree.hasConflicts());
-        DocumentRevision newWinner = newTree.getCurrentRevision();
-        Assert.assertEquals("Aaron", newWinner.asMap().get("name"));
+        BasicDocumentRevision newWinner = newTree.getCurrentRevision();
+        Assert.assertEquals("Tom", newWinner.asMap().get("name"));
     }
 
     @Test
     public void resolveConflictsForDocument_threeConflictAndNewWinnerAsDeleted_documentDeleted()
-            throws ConflictException {
-        String docId = this.createConflictedDocumentWithThreeLeafs();
+            throws ConflictException, IOException {
+        String docId = this.createConflictedDocumentWithThreeLeafsOneDeleted();
         DocumentRevisionTree oldTree = this.datastore.getAllRevisionsOfDocument(docId);
         Assert.assertTrue(oldTree.hasConflicts());
-        long expectedSequence = this.datastore.getLastSequence() + 3;
+        // new sequence will be increased by 2 due to deleting 2 documents
+        long expectedSequence = this.datastore.getLastSequence() + 2;
 
         this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
             @Override
-            public DocumentRevision resolve(String docId, List<DocumentRevision> conflicts) {
+            public BasicDocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts) {
                 Assert.assertEquals(3, conflicts.size());
-                BasicDocumentRevision revision =
-                        (BasicDocumentRevision)createDetachedDocumentRevision(docId, "1-ignored", "Aaron");
-                revision.setDeleted(true);
-                return revision;
+                for(BasicDocumentRevision rev : conflicts) {
+                    if (rev.getSequence() == 2) { // this was "name: Tom" but was deleted
+                        return rev;
+                    }
+                }
+                return null;
             }
         });
         long actualSequence = this.datastore.getLastSequence();
@@ -190,31 +348,33 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
 
         DocumentRevisionTree newTree = this.datastore.getAllRevisionsOfDocument(docId);
         Assert.assertFalse(newTree.hasConflicts());
-        DocumentRevision newWinner = newTree.getCurrentRevision();
+
+        BasicDocumentRevision newWinner = newTree.getCurrentRevision();
         Assert.assertTrue(newWinner.isDeleted());
     }
 
     @Test
     public void resolveConflictsForDocument_timestampBasedResolver_revisionWithLatestTimestampWins()
-            throws ConflictException {
+            throws ConflictException, IOException {
         long ts = System.currentTimeMillis();
         DocumentBody body1 = this.createDocumentBody("Tom", ts);
-        DocumentRevision rev = this.datastore.createDocument(body1);
-        DocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "4-a", "Jerry", ts + 1);
+        BasicDocumentRevision rev = this.datastore.createDocument(body1);
+        BasicDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "4-a", "Jerry", ts + 1);
         this.datastore.forceInsert(newRev, "1-a", "2-a", "3-a", "4-a");
-        DocumentRevision newRev2 = this.createDetachedDocumentRevision(rev.getId(), "2-b", "Carl", ts + 2);
+        BasicDocumentRevision newRev2 = this.createDetachedDocumentRevision(rev.getId(), "2-b", "Carl", ts + 2);
         this.datastore.forceInsert(newRev2, "1-b", "2-b");
 
-        DocumentRevision oldWinner = this.datastore.getDocument(rev.getId());
+        BasicDocumentRevision oldWinner = this.datastore.getDocument(rev.getId());
         Assert.assertEquals("4-a", oldWinner.getRevision());
         Assert.assertEquals("Jerry", oldWinner.getBody().asMap().get("name"));
 
         this.datastore.resolveConflictsForDocument(rev.getId(), new TimestampBasedConflictsResolver());
 
-        DocumentRevision newWinner = this.datastore.getDocument(rev.getId());
+        BasicDocumentRevision newWinner = this.datastore.getDocument(rev.getId());
         Assert.assertEquals("Carl", newWinner.asMap().get("name"));
         int generation = CouchUtils.generationFromRevId(newWinner.getRevision());
-        Assert.assertEquals(Integer.valueOf(5), Integer.valueOf(generation));
+        // last (by timestamp) to be inserted was Carl, 2-b
+        Assert.assertEquals(Integer.valueOf(2), Integer.valueOf(generation));
     }
 
     private void testWithConflictCount(int conflictCount) {
@@ -237,32 +397,75 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
     }
 
     private String createConflictedDocument() {
-        DocumentRevision rev = this.createDocumentRevision("Tom");
-        DocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "2-a", "Jerry");
+        BasicDocumentRevision rev = this.createDocumentRevision("Tom");
+        BasicDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "2-a", "Jerry");
         this.datastore.forceInsert(newRev, "1-a", "2-a");
         return rev.getId();
     }
 
-    private String createConflictedDocumentWithThreeLeafs() {
-        DocumentRevision rev = this.createDocumentRevision("Tom");
-        DocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "2-a", "Jerry");
+    private String createConflictedDocumentWithAttachments() throws IOException {
+        BasicDocumentRevision rev = this.createDocumentRevisionWithAttachment("Tom");
+        BasicDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "2-a", "Jerry");
         this.datastore.forceInsert(newRev, "1-a", "2-a");
-        DocumentRevision newRev2 = this.createDetachedDocumentRevision(rev.getId(), "4-b", "Carl");
+        return rev.getId();
+    }
+
+    // attachments on the 'winning' side
+    private String createConflictedDocumentWithAttachmentsWinning() throws IOException, ConflictException {
+        BasicDocumentRevision rev = this.createDocumentRevision("Tom");
+        BasicDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "2-a", "Jerry");
+        this.datastore.forceInsert(newRev, "1-a", "2-a");
+        BasicDocumentRevision current = this.datastore.getDocument(rev.getId());
+        BasicDocumentRevision rev2 = this.updateDocumentRevisionWithAttachment(rev.getId(), current.getRevision(), "Jerry With Attachments");
+        return rev.getId();
+    }
+
+
+    private String createConflictedDocumentWithThreeLeafs() {
+        BasicDocumentRevision rev = this.createDocumentRevision("Tom");
+        BasicDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "2-a", "Jerry");
+        this.datastore.forceInsert(newRev, "1-a", "2-a");
+        BasicDocumentRevision newRev2 = this.createDetachedDocumentRevision(rev.getId(), "4-b", "Carl");
+        this.datastore.forceInsert(newRev2, "1-b", "2-b", "3-b", "4-b");
+        return rev.getId();
+    }
+
+    private String createConflictedDocumentWithThreeLeafsOneDeleted() throws ConflictException{
+        BasicDocumentRevision rev = this.createDocumentRevision("Tom");
+        this.datastore.deleteDocument(rev.getId(), rev.getRevision());
+        BasicDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "2-a", "Jerry");
+        this.datastore.forceInsert(newRev, "1-a", "2-a");
+        BasicDocumentRevision newRev2 = this.createDetachedDocumentRevision(rev.getId(), "4-b", "Carl");
         this.datastore.forceInsert(newRev2, "1-b", "2-b", "3-b", "4-b");
         return rev.getId();
     }
 
 
-    private DocumentRevision createDocumentRevision(String name) {
+    private BasicDocumentRevision createDocumentRevision(String name) {
         DocumentBody body = createDocumentBody(name);
         return this.datastore.createDocument(body);
     }
 
-    private DocumentRevision createDetachedDocumentRevision(String docId, String rev, String name) {
+    private BasicDocumentRevision createDocumentRevisionWithAttachment(String name) throws IOException {
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = createDocumentBody(name);
+        rev.attachments.put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "att1", "text/plain"));
+        return this.datastore.createDocumentFromRevision(rev);
+    }
+
+    private BasicDocumentRevision updateDocumentRevisionWithAttachment(String docId, String revId, String name) throws ConflictException, IOException {
+        MutableDocumentRevision rev = new MutableDocumentRevision(revId);
+        rev.docId = docId;
+        rev.body = createDocumentBody(name);
+        rev.attachments.put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "att1", "text/plain"));
+        return this.datastore.updateDocumentFromRevision(rev);
+    }
+
+    private BasicDocumentRevision createDetachedDocumentRevision(String docId, String rev, String name) {
         return createDetachedDocumentRevision(docId, rev, name, System.currentTimeMillis());
     }
 
-    private DocumentRevision createDetachedDocumentRevision(String docId, String rev, String name, long ts) {
+    private BasicDocumentRevision createDetachedDocumentRevision(String docId, String rev, String name, long ts) {
         DocumentBody body = this.createDocumentBody(name, ts);
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
         builder.setDocId(docId);

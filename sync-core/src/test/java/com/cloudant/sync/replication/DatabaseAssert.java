@@ -22,10 +22,11 @@ import com.cloudant.mazha.OkOpenRevision;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
 import com.cloudant.common.Log;
+
 import org.junit.Assert;
 
 import java.util.ArrayList;
@@ -58,10 +59,10 @@ public class DatabaseAssert {
         final String id;
         final boolean deleted;
 
-        final DocumentRevision documentRevision;
+        final BasicDocumentRevision documentRevision;
         final ChangesResult.Row row;
 
-        public ChangeRowAdaptor(DocumentRevision object) {
+        public ChangeRowAdaptor(BasicDocumentRevision object) {
             this.id = object.getId();
             this.deleted = object.isDeleted();
 
@@ -102,7 +103,7 @@ public class DatabaseAssert {
         Changes changesBatch = datastore.changes(0, BATCH_LIMIT);
         while(changesBatch.size() > 0) {
 
-            for (DocumentRevision object : changesBatch.getResults()) {
+            for (BasicDocumentRevision object : changesBatch.getResults()) {
                 ChangeRowAdaptor adaptor = new ChangeRowAdaptor(object);
                 if (alreadyChecked.contains(adaptor.id)) {
                     continue;
@@ -183,7 +184,7 @@ public class DatabaseAssert {
      * Assert the specified document is deleted in both remote CouchDb and local datastore.
      */
     static void checkBothDeleted(String id, DatastoreExtended datastore, CouchClient client) {
-        DocumentRevision documentRevision = datastore.getDocument(id);
+        BasicDocumentRevision documentRevision = datastore.getDocument(id);
         Assert.assertTrue(documentRevision.isDeleted());
 
         Map<String, Object> m = client.getDocument(id, documentRevision.getRevision());
@@ -260,7 +261,7 @@ public class DatabaseAssert {
         Map<String, List<String>> res = new HashMap<String, List<String>>();
         for(DocumentRevisionTree.DocumentRevisionNode revision : tree.leafs()) {
             List<String> path = new ArrayList<String>();
-            for(DocumentRevision object : tree.getPathForNode(revision.getData().getSequence())) {
+            for(BasicDocumentRevision object : tree.getPathForNode(revision.getData().getSequence())) {
                 path.add(object.getRevision());
             }
             res.put(revision.getData().getRevision(), path);

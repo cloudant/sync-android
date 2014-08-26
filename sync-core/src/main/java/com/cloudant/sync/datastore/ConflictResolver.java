@@ -29,5 +29,5 @@ public interface ConflictResolver {
      *
      * @see com.cloudant.sync.datastore.Datastore#resolveConflictsForDocument(String, ConflictResolver)
      */
-    DocumentRevision resolve(String docId, List<DocumentRevision> conflicts);
+    DocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts);
 }

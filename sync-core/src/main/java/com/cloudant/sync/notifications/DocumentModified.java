@@ -1,6 +1,6 @@
 package com.cloudant.sync.notifications;
 
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 
 public class DocumentModified {
 
@@ -13,13 +13,13 @@ public class DocumentModified {
      *            New document revision
      */
 
-    public DocumentModified(DocumentRevision prevDocument,
-            DocumentRevision newDocument) {
+    public DocumentModified(BasicDocumentRevision prevDocument,
+            BasicDocumentRevision newDocument) {
         this.prevDocument = prevDocument;
         this.newDocument = newDocument;
     }
 
-    public final DocumentRevision prevDocument;
-    public final DocumentRevision newDocument;
+    public final BasicDocumentRevision prevDocument;
+    public final BasicDocumentRevision newDocument;
 
 }

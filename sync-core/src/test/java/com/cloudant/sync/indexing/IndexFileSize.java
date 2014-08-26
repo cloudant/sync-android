@@ -5,7 +5,7 @@ import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.util.TestUtils;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -65,7 +65,7 @@ public class IndexFileSize {
             m.put("name", "tom");
             m.put("age", 12);
             DocumentBody body = DocumentBodyFactory.create(m);
-            DocumentRevision rev = datastore.createDocument(body);
+            BasicDocumentRevision rev = datastore.createDocument(body);
 
             if(i == p) {
                 indexManager.updateAllIndexes();
@@ -90,7 +90,7 @@ public class IndexFileSize {
             m.put("name", "tom");
             m.put("age", 12);
             DocumentBody body = DocumentBodyFactory.create(m);
-            DocumentRevision rev = datastore.createDocument(body);
+            BasicDocumentRevision rev = datastore.createDocument(body);
 
             if(i == p) {
                 File file = new File(datastoreManagerPath + File.separator + "dbsize" + File.separator + "db.sync");

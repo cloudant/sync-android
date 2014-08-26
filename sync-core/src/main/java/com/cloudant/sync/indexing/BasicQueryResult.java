@@ -15,7 +15,7 @@
 package com.cloudant.sync.indexing;
 
 import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
@@ -52,19 +52,19 @@ class BasicQueryResult implements QueryResult {
     }
 
     @Override
-    public Iterator<DocumentRevision> iterator() {
+    public Iterator<BasicDocumentRevision> iterator() {
 
         /**
          * Partitions a set of document IDs into batches of DocumentRevision
          * objects, and provides an iterator over the whole, un-partitioned set
          * of revision objects (as if they were not batched).
          */
-        return new Iterator<DocumentRevision>() {
+        return new Iterator<BasicDocumentRevision>() {
 
             /** List containing lists of partitions document IDs */
             private final List<List<String>> subLists = this.partition(documentIds, batchSize);
             /** The current partition's iterator of document objects */
-            private Iterator<DocumentRevision> subIterator = null;
+            private Iterator<BasicDocumentRevision> subIterator = null;
 
             @Override
             public boolean hasNext() {
@@ -76,7 +76,7 @@ class BasicQueryResult implements QueryResult {
             }
 
             @Override
-            public DocumentRevision next() {
+            public BasicDocumentRevision next() {
                 if(subIterator == null || !subIterator.hasNext()) {
                     List<String> ids = subLists.remove(0);
                     subIterator = this.nextSubIterator(ids);
@@ -116,15 +116,15 @@ class BasicQueryResult implements QueryResult {
              * @param ids the IDs of the revisions to load.
              * @return an iterator over the DocumentRevision objects for `ids`.
              */
-            private Iterator<DocumentRevision> nextSubIterator(List<String> ids) {
-                HashMap<String, DocumentRevision> map = new HashMap<String, DocumentRevision>();
-                for(DocumentRevision revision : datastore.getDocumentsWithIds(ids)) {
+            private Iterator<BasicDocumentRevision> nextSubIterator(List<String> ids) {
+                HashMap<String, BasicDocumentRevision> map = new HashMap<String, BasicDocumentRevision>();
+                for(BasicDocumentRevision revision : datastore.getDocumentsWithIds(ids)) {
                     map.put(revision.getId(), revision);
                 }
-                List<DocumentRevision> revisions = new ArrayList<DocumentRevision>(ids.size());
+                List<BasicDocumentRevision> revisions = new ArrayList<BasicDocumentRevision>(ids.size());
                 // return list of DocumentRevision that in the same order as input "ids"
                 for(String id : ids) {
-                    DocumentRevision revision = map.get(id);
+                    BasicDocumentRevision revision = map.get(id);
                     if(revision != null ) {
                         revisions.add(revision);
                     }
