@@ -15,6 +15,8 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.util.CouchUtils;
+import com.cloudant.sync.util.TestUtils;
+
 import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -35,10 +37,10 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        jsonData = FileUtils.readFileToByteArray(new File(documentOneFile));
+        jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         bodyOne = new BasicDocumentBody(jsonData);
 
-        jsonData = FileUtils.readFileToByteArray(new File(documentTwoFile));
+        jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentTwoFile));
         bodyTwo = new BasicDocumentBody(jsonData);
     }
 

@@ -53,6 +53,7 @@ public class TypedDatastoreTest {
 
     @After
     public void tearDown() throws Exception {
+        TestUtils.deleteDatabaseQuietly(this.core.getSQLDatabase());
         TestUtils.deleteTempTestingDir(database_dir);
     }
 

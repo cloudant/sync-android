@@ -15,6 +15,8 @@
 package com.cloudant.mazha;
 
 import com.cloudant.mazha.json.JSONHelper;
+import com.cloudant.sync.util.TestUtils;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,13 +40,14 @@ public class DocumentRevsTest {
 
     @Test(expected = RuntimeException.class)
     public void deserialization_unknownSpecialField() throws IOException {
-        String s = FileUtils.readFileToString(new File("fixture/document_revs_with_unknown_special_field.json"));
+        String s = FileUtils.readFileToString(TestUtils.loadFixture("fixture" +
+                    "/document_revs_with_unknown_special_field.json"));
         jsonHelper.fromJson(new StringReader(s), DocumentRevs.class);
     }
 
     @Test
     public void deserialization_others() throws IOException {
-        String s = FileUtils.readFileToString(new File("fixture/document_revs_others.json"));
+        String s = FileUtils.readFileToString(TestUtils.loadFixture("fixture/document_revs_others.json"));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(s), DocumentRevs.class);
         Map<String, Object> others = documentRevs.getOthers();
         Assert.assertThat(others.keySet(), hasSize(2));
@@ -55,7 +58,7 @@ public class DocumentRevsTest {
 
     @Test
     public void deserialization_withAttachments() throws IOException {
-        String s = FileUtils.readFileToString(new File("fixture/document_revs_with_attachments_1.json"));
+        String s = FileUtils.readFileToString(TestUtils.loadFixture("fixture/document_revs_with_attachments_1.json"));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(s), DocumentRevs.class);
 
         Assert.assertEquals("Reston", documentRevs.getId());

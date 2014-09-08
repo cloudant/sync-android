@@ -51,15 +51,16 @@ public class BasicDatastoreForceInsertTest {
         datastore = new BasicDatastore(database_dir, "test");
         database = datastore.getSQLDatabase();
 
-        jsonData = FileUtils.readFileToByteArray(new File(documentOneFile));
+        jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         bodyOne = new BasicDocumentBody(jsonData);
 
-        jsonData = FileUtils.readFileToByteArray(new File(documentTwoFile));
+        jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentTwoFile));
         bodyTwo = new BasicDocumentBody(jsonData);
     }
 
     @After
     public void tearDown() throws Exception {
+        TestUtils.deleteDatabaseQuietly(database);
         TestUtils.deleteTempTestingDir(database_dir);
     }
 

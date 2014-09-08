@@ -126,7 +126,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         // simple 1-rev attachment
         String attachmentName = "attachment_1.txt";
         populateSomeDataInLocalDatastore();
-        File f = new File("fixture", attachmentName);
+        File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
@@ -153,7 +153,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         // simple 1-rev attachment
         String attachmentName = "bonsai-boston.jpg";
         populateSomeDataInLocalDatastore();
-        File f = new File("fixture", attachmentName);
+        File f = TestUtils.loadFixture("fixture/"+ attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "image/jpeg");
         List<Attachment> atts = new ArrayList<Attachment>();
         atts.add(att);
@@ -181,8 +181,8 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         String attachmentName1 = "attachment_1.txt";
         String attachmentName2 = "attachment_2.txt";
         populateSomeDataInLocalDatastore();
-        File f1 = new File("fixture", attachmentName1);
-        File f2 = new File("fixture", attachmentName2);
+        File f1 = TestUtils.loadFixture("fixture/"+ attachmentName1);
+        File f2 = TestUtils.loadFixture("fixture/"+ attachmentName2);
         Attachment att1 = new UnsavedFileAttachment(f1, "text/plain");
         Attachment att2 = new UnsavedFileAttachment(f2, "text/plain");
         List<Attachment> atts1 = new ArrayList<Attachment>();

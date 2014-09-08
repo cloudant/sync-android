@@ -21,6 +21,9 @@ import com.cloudant.sync.sqlite.SQLDatabaseFactory;
 
 import org.apache.commons.io.FileUtils;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +35,7 @@ public class TestUtils {
     private final static String DATABASE_FILE_EXT = ".sqlite4java";
 
     public static DocumentBody createBDBody(String filePath) throws IOException {
-        byte[] data = FileUtils.readFileToByteArray(new File(filePath));
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture(filePath));
         return DocumentBodyFactory.create(data);
 
     }
@@ -110,5 +113,45 @@ public class TestUtils {
         }
         return equal;
     }
+
+    /**
+     * Load a test fixture, by either suffixing a path to the external storage directory for an android
+     * emulator or device, or directly going to the fixture directory in the working directory to
+     * create a file object from which to read a fixture.
+     * @param fileName the name of a fixture to read
+     * @return {@link java.io.File} object An file object representing a fixture on disk
+     */
+   public static File loadFixture(String fileName){
+       if(Misc.isRunningOnAndroid()){
+           //yay more reflection goes here
+
+           try {
+               Class env = Class.forName("android.os.Environment");
+               Method externalStorageMethod = env.getMethod("getExternalStorageDirectory");
+
+               File sdcard = (File) externalStorageMethod.invoke(null);
+               return new File(sdcard, fileName);
+           } catch (ClassNotFoundException e){
+               //couldn't find the needed classed
+               e.printStackTrace();
+               return null;
+           } catch (NoSuchMethodException e){
+               e.printStackTrace();
+               return null;
+           } catch (IllegalAccessException e){
+               e.printStackTrace();
+               return null;
+           } catch (InvocationTargetException e){
+               e.printStackTrace();
+               return null;
+           }
+
+       }else {
+           //just return the new File object
+           return new File(fileName);
+
+       }
+   }
+
 
 }

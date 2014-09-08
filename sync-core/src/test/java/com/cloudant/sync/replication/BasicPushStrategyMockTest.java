@@ -145,7 +145,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
         Assert.assertEquals(0, pushStrategy.getBatchCounter());
     }
     
-    private class StrategyListener {
+    public class StrategyListener {
 
         @Subscribe
         public void complete(ReplicationStrategyCompleted rc) {

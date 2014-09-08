@@ -21,7 +21,10 @@ import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionBuilder;
 import com.cloudant.sync.util.CouchUtils;
+import com.cloudant.sync.util.TestUtils;
+
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.validator.routines.InetAddressValidator;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -55,8 +58,8 @@ public class CouchClientWrapperTest extends CouchTestBase {
     @Before
     public void setup() throws IOException {
         remoteDb = new CouchClientWrapper(CLOUDANT_TEST_DB_NAME, super.getCouchConfig());
-        bodyOne = DocumentBodyFactory.create(FileUtils.readFileToByteArray(new File(documentOneFile)));
-        bodyTwo = DocumentBodyFactory.create(FileUtils.readFileToByteArray(new File(documentTwoFile)));
+        bodyOne = DocumentBodyFactory.create(FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile)));
+        bodyTwo = DocumentBodyFactory.create(FileUtils.readFileToByteArray(TestUtils.loadFixture(documentTwoFile)));
 
         CouchClientWrapperDbUtils.deleteDbQuietly(remoteDb);
         remoteDb.createDatabase();
@@ -91,13 +94,16 @@ public class CouchClientWrapperTest extends CouchTestBase {
 
     @Test
     public void getIdentifier() {
+        String hostConfig = getCouchConfig().getHost();
         String identifier = remoteDb.getIdentifier();
-        String couchDbId = "http://127.0.0.1:5984/couch_client_wrapper_test";
+        String couchDbId = String.format("http://%s:5984/couch_client_wrapper_test",hostConfig);
         String cloudantId = String.format(
                 "https://%s.cloudant.com:443/couch_client_wrapper_test",
                 CloudantConfig.defaultConfig().getUsername());
 
-        if(getCouchConfig().getHost().startsWith("127")) {
+
+
+        if(InetAddressValidator.getInstance().isValid(hostConfig)) {
             Assert.assertEquals(couchDbId, identifier);
         } else {
             Assert.assertEquals(cloudantId, identifier);

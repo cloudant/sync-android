@@ -1,0 +1,165 @@
+apply plugin: 'com.android.application'
+
+def testResultsFile = "testResults_"+UUID.randomUUID().toString()+".xml"
+def scriptLocation = project.projectDir.getAbsolutePath(); //this is the location of THIS file
+def testSrcDir = "../../sync-core/src/test/java/" // this is the location of your test code, relative to this file
+
+android {
+    def hostName = "10.0.2.2"
+    def classes = findAllTestClasses(new File("$scriptLocation/$testSrcDir")).toString().replace("[","{").replace("]","}");
+
+    compileSdkVersion 20
+    buildToolsVersion "20.0.0"
+
+    defaultConfig {
+        applicationId "cloudant.com.androidtest"
+        minSdkVersion 15
+        targetSdkVersion 20
+        versionCode 1
+        versionName "1.0"
+        buildConfigField "String", "ip", "\"$hostName\""
+        buildConfigField "Class[]", "classToTests", "$classes"
+        buildConfigField "String", "testOutputFile", "\"$testResultsFile\""
+        buildConfigField "Class[]", "testExcludes", "{com.cloudant.common.SystemTest.class, com.cloudant.common.RequireRunningCouchDB.class, com.cloudant.common.PerformanceTest.class}"
+    }
+
+    productFlavors {
+        standardTest{
+            // we don't need to override the standard config
+        }
+        integrationTest {
+            buildConfigField "Class[]", "testExcludes", "{com.cloudant.common.SystemTest.class, com.cloudant.common.PerformanceTest.class}"
+        }
+        performanceTest {
+            buildConfigField "Class[]", "testExcludes", "{com.cloudant.common.SystemTest.class, com.cloudant.common.RequireRunningCouchDB.class}"
+        }
+        systemTest {
+            buildConfigField "Class[]", "testExcludes", "{}"
+        }
+    }
+
+    buildTypes {
+        release {
+            runProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs = ['src/main/java',
+                            "$scriptLocation/../../sync-core/src/test/java/",
+                            "$scriptLocation/../../sync-core/src/main/java/",
+                            "$scriptLocation/../../sync-android/src/test/java/",
+                            "$scriptLocation/../../sync-android/src/main/java/"]
+        }
+    }
+
+    packagingOptions {
+        exclude 'LICENSE.txt'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    // since our test harness is a standard android app which will run our tests,
+    // we include the dependencies necessary for build and test here
+
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.1.1'
+    compile group: 'com.google.guava', name: 'guava', version: '15.0'
+    compile group: 'commons-io', name: 'commons-io', version: '2.4'
+    compile group: 'commons-codec', name: 'commons-codec', version: '1.9'
+    compile group: 'org.hamcrest', name: 'hamcrest-library', version: '1.3'
+    compile group: 'junit', name: 'junit', version: '4.11'
+    compile group: 'org.mockito', name: 'mockito-core', version: '1.9.5'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
+    compile group: 'com.google.dexmaker', name: 'dexmaker-mockito', version: '1.1'
+    compile group: 'com.google.dexmaker', name: 'dexmaker', version: '1.1'
+    compile group: 'commons-validator', name: 'commons-validator', version: '1.4.0'
+
+    compile ('org.objenesis:objenesis:2.1'){
+        // the current version of objenesis which mockito depends on is buggy on android, so force a newer version
+        force true
+    }
+
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+task(uploadFixtures,type:Exec) {
+    // need to upload the fixtures to the device/emulator external storage
+    // this will work irrespective of current working directory due to use of $scriptLocation
+    def android = "$System.env.ANDROID_HOME"
+    commandLine "$android/platform-tools/adb","push", "-p", "$scriptLocation/../../fixture", "/sdcard/fixture"
+}
+
+def findAllTestClasses(File root){
+    // get all the files in test directories
+    def classNames =new ArrayList<String>()
+    // TOOD filter out anything that doesn't have a .java extension
+    processDir(root, root).each { file -> classNames.add(file.replaceAll(".java\$",".class")) }
+    return classNames;
+}
+
+// recursively process directories:
+// for each file, get the trailing path/to/file.java (relative to root)
+// and convert to a class name like path.to.file.class
+def processDir(File root, File directory){
+
+    def processedFiles =new ArrayList<String>()
+
+    for(File f : directory.listFiles()){
+        if(f.isDirectory()){
+            def returned = processDir(root, f)
+            processedFiles.addAll(returned)
+        } else {
+            def filePath = f.getAbsolutePath();
+            def rootPath = root.getAbsolutePath();
+            // we want to get the full path after the root
+            def components = filePath.split("^"+rootPath+"/");
+            if (components.length != 2)
+                continue;
+            def className = components[1].replace('/','.')
+            processedFiles.add(className)
+        }
+    }
+
+    return processedFiles
+}
+
+task(startTestApp,type:Exec,dependsOn:uploadFixtures){
+    def android = "$System.env.ANDROID_HOME"
+    commandLine "$android/platform-tools/adb","shell", "am", "start","-n", "cloudant.com.androidtest/.MyActivity"
+}
+
+task(waitForTestAppToFinishTests,dependsOn:startTestApp) << {
+
+    def runAgain = true
+    def android = "$System.env.ANDROID_HOME";
+
+    while (runAgain) {
+
+        def output = new ByteArrayOutputStream()
+        exec {
+            commandLine "$android/platform-tools/adb","pull", "-p", "/sdcard/$testResultsFile", "$project.buildDir.absolutePath/test-results/$testResultsFile"
+            errorOutput = output
+            ignoreExitValue = true
+        }
+        if (output.toString().contains("Transferring")) {
+            runAgain = false
+        } else {
+            runAgain = true
+            sleep(60*1000)
+        }
+    }
+}

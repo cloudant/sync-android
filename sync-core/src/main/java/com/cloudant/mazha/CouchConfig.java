@@ -26,7 +26,7 @@ import java.net.URISyntaxException;
 public class CouchConfig {
 
     private static final String couchdb_protocol = "http";
-    private static final String couchdb_host= "127.0.0.1";
+    private static  String couchdb_host= "127.0.0.1";
     private static final int couchdb_port = 5984;
     private static final String couchdb_username= "";
     private static final String couchdb_password= "";

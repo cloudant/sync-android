@@ -1,5 +1,7 @@
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.util.TestUtils;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,8 +24,8 @@ public class MutableDocumentCopyTest extends BasicDatastoreTestBase{
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "doc1";
         rev.body  = bodyOne;
-        rev.attachments.put(initialAtt1, new UnsavedFileAttachment(new File("fixture", initialAtt1), "text/plain"));
-        rev.attachments.put(initialAtt2, new UnsavedFileAttachment(new File("fixture", initialAtt2), "text/plain"));
+        rev.attachments.put(initialAtt1, new UnsavedFileAttachment(TestUtils.loadFixture("fixture/"+ initialAtt1), "text/plain"));
+        rev.attachments.put(initialAtt2, new UnsavedFileAttachment(TestUtils.loadFixture("fixture/"+ initialAtt2), "text/plain"));
         saved = datastore.createDocumentFromRevision(rev);
         Assert.assertNotNull("Saved DocumentRevision is null", saved);
         Attachment retrievedAtt1 = datastore.getAttachment(saved, initialAtt1);
@@ -43,7 +45,7 @@ public class MutableDocumentCopyTest extends BasicDatastoreTestBase{
         update.body = bodyTwo;
         update.docId = "copy";
         String attachmentName = "bonsai-boston.jpg";
-        File f = new File("fixture", attachmentName);
+        File f = TestUtils.loadFixture("fixture/"+ attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "image/jpeg");
         update.attachments.put(attachmentName, att);
         BasicDocumentRevision updated = datastore.createDocumentFromRevision(update);

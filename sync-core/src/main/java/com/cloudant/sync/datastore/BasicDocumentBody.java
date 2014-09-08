@@ -18,6 +18,7 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.util.JSONUtils;
+import com.google.common.base.Preconditions;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,7 +39,7 @@ final class BasicDocumentBody implements DocumentBody {
     }
 
     protected BasicDocumentBody(Map map) {
-        assert map != null;
+        Preconditions.checkArgument(map != null);
         if(JSONUtils.isValidJSON(map)) {
             this.map = map;
         } else {

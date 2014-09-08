@@ -46,6 +46,7 @@ public class SQLDatabaseFactory {
                 Method m = c.getMethod("createAndroidSQLite", String.class);
                 return (SQLDatabase)m.invoke(null, dbFilename);
             } catch (Exception e) {
+                e.printStackTrace();
                 return null;
             }
         } else {
@@ -54,6 +55,7 @@ public class SQLDatabaseFactory {
                 Method m = c.getMethod("openSQLiteWrapper", String.class);
                 return (SQLDatabase)m.invoke(null, dbFilename);
             } catch (Exception e) {
+                e.printStackTrace();
                 return null;
             }
         }

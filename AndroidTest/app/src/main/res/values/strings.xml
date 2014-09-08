@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">AndroidTest</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="runningTests">Running Tests</string>
+    <string name="title_activity_test_information">TestInformation</string>
+    <string name="failure_reason">Failure Reason</string>
+    <string name="exception">Exception</string>
+
+</resources>

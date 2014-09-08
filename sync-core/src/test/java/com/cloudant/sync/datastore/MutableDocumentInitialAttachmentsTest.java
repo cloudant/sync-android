@@ -1,5 +1,7 @@
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.util.TestUtils;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,9 +25,9 @@ public class MutableDocumentInitialAttachmentsTest extends BasicDatastoreTestBas
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "doc1";
         rev.body  = bodyOne;
-        rev.attachments.put(initialAtt1, new UnsavedFileAttachment(new File("fixture", initialAtt1),
+        rev.attachments.put(initialAtt1, new UnsavedFileAttachment(TestUtils.loadFixture("fixture/" + initialAtt1),
                 "text/plain"));
-        rev.attachments.put(initialAtt2, new UnsavedFileAttachment(new File("fixture", initialAtt2),
+        rev.attachments.put(initialAtt2, new UnsavedFileAttachment(TestUtils.loadFixture("fixture/"+ initialAtt2),
                 "text/plain"));
         saved = datastore.createDocumentFromRevision(rev);
         Assert.assertNotNull("Saved DocumentRevision is null", saved);
@@ -85,7 +87,7 @@ public class MutableDocumentInitialAttachmentsTest extends BasicDatastoreTestBas
     public void addAttachment() throws ConflictException, IOException {
         MutableDocumentRevision update = saved.mutableCopy();
         String attachmentName = "bonsai-boston.jpg";
-        File f = new File("fixture", attachmentName);
+        File f = TestUtils.loadFixture("fixture/"+ attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "image/jpeg");
         update.attachments.put(attachmentName, att);
         BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);

@@ -114,7 +114,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         Assert.assertNotNull("Attachment is null", a);
         Assert.assertEquals(bigAttachmentName, a.name);
         try {
-            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new FileInputStream(new File("fixture", bigAttachmentName)), a.getInputStream()));
+            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new FileInputStream(TestUtils.loadFixture("fixture/"+bigAttachmentName)), a.getInputStream()));
         } catch (IOException ioe) {
             Assert.fail("Exception thrown " + ioe);
         }
@@ -133,7 +133,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         Assert.assertNotNull("Attachment is null", a);
         Assert.assertEquals(bigTextAttachmentName, a.name);
         try {
-            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new FileInputStream(new File("fixture", bigTextAttachmentName)), a.getInputStream()));
+            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new FileInputStream(TestUtils.loadFixture("fixture/"+ bigTextAttachmentName)), a.getInputStream()));
         } catch (IOException ioe) {
             Assert.fail("Exception thrown " + ioe);
         }
@@ -233,7 +233,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         Response res = remoteDb.create(bar);
         bar = remoteDb.get(Bar.class, res.getId());
 
-        File f = new File("fixture", bigAttachmentName);
+        File f = TestUtils.loadFixture("fixture/"+bigAttachmentName);
         FileInputStream fis = new FileInputStream(f);
         byte[] data = new byte[(int)f.length()];
         fis.read(data);
@@ -255,7 +255,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         Response res = remoteDb.create(bar);
         bar = remoteDb.get(Bar.class, res.getId());
 
-        File f = new File("fixture", bigTextAttachmentName);
+        File f = TestUtils.loadFixture("fixture/"+bigTextAttachmentName);
         FileInputStream fis = new FileInputStream(f);
         byte[] data = new byte[(int)f.length()];
         fis.read(data);

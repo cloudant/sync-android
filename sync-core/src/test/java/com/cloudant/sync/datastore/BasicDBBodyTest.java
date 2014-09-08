@@ -15,6 +15,8 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.util.JSONUtils;
+import com.cloudant.sync.util.TestUtils;
+
 import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
@@ -34,11 +36,11 @@ public class BasicDBBodyTest {
 
     @Before
     public void setUp() throws Exception {
-        jsonData = FileUtils.readFileToByteArray(new File(documentOneFile));
+        jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
     }
 
     // No null input should be used
-    @Test(expected = AssertionError.class)
+    @Test(expected = IllegalArgumentException.class)
     public void constructor_nullInput_exception() {
         Map m = null;
         new BasicDocumentBody(m);
@@ -80,7 +82,7 @@ public class BasicDBBodyTest {
 
     @Test
     public void asMap_differentNumberTypes_jacksonPicksNaturalMapping() throws IOException {
-        byte[] d = FileUtils.readFileToByteArray(new File("fixture/basic_bdbody_test_as_map.json"));
+        byte[] d = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/basic_bdbody_test_as_map.json"));
         DocumentBody body = new BasicDocumentBody(d);
         Assert.assertEquals("-101", body.asMap().get("StringValue"));
 

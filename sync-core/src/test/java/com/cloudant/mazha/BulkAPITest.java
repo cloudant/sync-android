@@ -18,6 +18,8 @@ import com.cloudant.common.CouchConstants;
 import com.cloudant.common.CouchUtils;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.json.JSONHelper;
+import com.cloudant.sync.util.TestUtils;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -166,7 +168,7 @@ public class BulkAPITest extends CouchClientTestBase {
 
     @Test
     public void bulkSerializedDoc_oneDocWithOneRev_success() throws IOException {
-        String jsonData = FileUtils.readFileToString(new File("fixture/bulk_docs_1.json"));
+        String jsonData = FileUtils.readFileToString(TestUtils.loadFixture("fixture/bulk_docs_1.json"));
         List<Response> responseList = client.bulkSerializedDocs(jsonData);
 
         Assert.assertEquals(0, responseList.size());
@@ -179,7 +181,7 @@ public class BulkAPITest extends CouchClientTestBase {
 
     @Test
     public void bulkSerializedDoc_oneDocWithThreeRev_success() throws IOException {
-        String jsonData = FileUtils.readFileToString(new File("fixture/bulk_docs_2.json"));
+        String jsonData = FileUtils.readFileToString(TestUtils.loadFixture("fixture/bulk_docs_2.json"));
         List<Response> responseList = client.bulkSerializedDocs(jsonData);
 
         Assert.assertEquals(0, responseList.size());
@@ -192,8 +194,8 @@ public class BulkAPITest extends CouchClientTestBase {
 
     @Test
     public void bulkSerializedDoc_twoDocs_success() throws IOException {
-        String jsonData1 = FileUtils.readFileToString(new File("fixture/bulk_docs_1.json"));
-        String jsonData2 = FileUtils.readFileToString(new File("fixture/bulk_docs_2.json"));
+        String jsonData1 = FileUtils.readFileToString(TestUtils.loadFixture("fixture/bulk_docs_1.json"));
+        String jsonData2 = FileUtils.readFileToString(TestUtils.loadFixture("fixture/bulk_docs_2.json"));
         List<Response> responseList = client.bulkSerializedDocs(jsonData1, jsonData2);
 
         Assert.assertEquals(0, responseList.size());
@@ -217,8 +219,8 @@ public class BulkAPITest extends CouchClientTestBase {
 
     @Test
     public void bulkSerializedDoc_twoDocsWithSameId_conflictsCreated() throws IOException {
-        String jsonData1 = FileUtils.readFileToString(new File("fixture/bulk_docs_2.json"));
-        String jsonData2 = FileUtils.readFileToString(new File("fixture/bulk_docs_3.json"));
+        String jsonData1 = FileUtils.readFileToString(TestUtils.loadFixture("fixture/bulk_docs_2.json"));
+        String jsonData2 = FileUtils.readFileToString(TestUtils.loadFixture("fixture/bulk_docs_3.json"));
         List<Response> responseList = client.bulkSerializedDocs(jsonData1, jsonData2);
 
         Assert.assertEquals(0, responseList.size());
@@ -234,8 +236,8 @@ public class BulkAPITest extends CouchClientTestBase {
 
     @Test
     public void bulkSerializedDoc_twoDocsWithSameIdDifferentTrees_conflictsCreated() throws IOException {
-        String jsonData1 = FileUtils.readFileToString(new File("fixture/bulk_docs_3.json"));
-        String jsonData2 = FileUtils.readFileToString(new File("fixture/bulk_docs_4.json"));
+        String jsonData1 = FileUtils.readFileToString(TestUtils.loadFixture("fixture/bulk_docs_3.json"));
+        String jsonData2 = FileUtils.readFileToString(TestUtils.loadFixture("fixture/bulk_docs_4.json"));
         List<Response> responseList = client.bulkSerializedDocs(jsonData1, jsonData2);
 
         Assert.assertEquals(0, responseList.size());
@@ -251,7 +253,7 @@ public class BulkAPITest extends CouchClientTestBase {
 
     @Test
     public void bulkSerializedDoc_revDoesNotMathRevHistory_seemsLikeRevIsIgnored() throws IOException {
-        String jsonData1 = FileUtils.readFileToString(new File("fixture/bulk_docs_rev_not_match.json"));
+        String jsonData1 = FileUtils.readFileToString(TestUtils.loadFixture("fixture/bulk_docs_rev_not_match.json"));
         List<Response> responseList = client.bulkSerializedDocs(jsonData1);
         Assert.assertEquals(0, responseList.size());
         Map<String, Object> doc = client.getDocument("2");
@@ -263,16 +265,16 @@ public class BulkAPITest extends CouchClientTestBase {
 
     @Test(expected = CouchException.class)
     public void bulkSerializedDoc_badJson_exception() throws IOException {
-        String jsonData1 = FileUtils.readFileToString(new File("fixture/bulk_docs_bad_json.json"));
-        client.bulkSerializedDocs(jsonData1);
+            String jsonData1 = FileUtils.readFileToString(TestUtils.loadFixture("fixture/bulk_docs_bad_json.json"));
+            client.bulkSerializedDocs(jsonData1);
     }
 
     @Test
     public void bulkSerializedDoc_badJsonAndGoodJson_exception() throws IOException {
         // All or nothing? Good!
         try {
-            String jsonData1 = FileUtils.readFileToString(new File("fixture/bulk_docs_1.json"));
-            String jsonData2 = FileUtils.readFileToString(new File("fixture/bulk_docs_bad_json.json"));
+            String jsonData1 = FileUtils.readFileToString(TestUtils.loadFixture("fixture/bulk_docs_1.json"));
+            String jsonData2 = FileUtils.readFileToString(TestUtils.loadFixture("fixture/bulk_docs_bad_json.json"));
             List<Response> responseList = client.bulkSerializedDocs(jsonData1, jsonData2);
         } catch (CouchException e) {
         }

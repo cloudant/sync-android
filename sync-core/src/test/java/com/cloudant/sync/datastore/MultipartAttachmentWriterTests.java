@@ -117,7 +117,7 @@ public class MultipartAttachmentWriterTests {
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
         mpw.setBody(doc);
 
-        Attachment att0 = new UnsavedFileAttachment(new File("fixture", "bonsai-boston.jpg"), "image/jpeg");
+        Attachment att0 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/bonsai-boston.jpg"), "image/jpeg");
         mpw.addAttachment(att0);
         mpw.close();
 
@@ -138,7 +138,7 @@ public class MultipartAttachmentWriterTests {
         bos.flush();
         bos.close();
         Assert.assertEquals(totalRead, mpw.getContentLength());
-        FileInputStream fis = new FileInputStream(new File("fixture", "AddImageAttachmentTest_expected.mime"));
+        FileInputStream fis = new FileInputStream(TestUtils.loadFixture("fixture/AddImageAttachmentTest_expected.mime"));
         Assert.assertTrue(TestUtils.streamsEqual(fis, new ByteArrayInputStream(bos.toByteArray())));
     }
 
