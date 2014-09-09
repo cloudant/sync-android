@@ -68,6 +68,8 @@ public class IndexManagerIndexTest {
 
     @After
     public void tearDown() throws Exception {
+        datastore.close();
+        indexManager.close();
         TestUtils.deleteDatabaseQuietly(database);
         TestUtils.deleteTempTestingDir(datastoreManagerPath);
     }
@@ -655,8 +657,7 @@ public class IndexManagerIndexTest {
                     datastore.createDocument(docId, body);
                 }
                 // we're not on the main thread, so we must close our own connection
-                // TODO this crashes out on android - temp workaround until we find a real fix
-                //datastore.getSQLDatabase().close();
+                datastore.close();
             }
         }
         List<Thread> threads = new ArrayList<Thread>();
@@ -698,17 +699,28 @@ public class IndexManagerIndexTest {
     public void index_UpdateAllIndexesDoesNotFailForUnregisteredIndexes()
             throws IndexExistsException, SQLException, ConflictException,
                     IOException {
-        IndexManager im1 = new IndexManager(datastore);
-        im1.ensureIndexed("title", "title", IndexType.STRING);
+        IndexManager im1 = null;
+        IndexManager im2 = null;
+        try {
+             im1 = new IndexManager(datastore);
+            im1.ensureIndexed("title", "title", IndexType.STRING);
 
-        // create
-        Map<String,Object> map = new HashMap<String, Object>();
-        map.put("title", "Another Green Day");
-        DocumentBody body = DocumentBodyFactory.create(map);
-        datastore.createDocument(body);
+            // create
+            Map<String, Object> map = new HashMap<String, Object>();
+            map.put("title", "Another Green Day");
+            DocumentBody body = DocumentBodyFactory.create(map);
+            datastore.createDocument(body);
 
-        IndexManager im2 = new IndexManager(datastore);
-        im2.updateAllIndexes();
+             im2 = new IndexManager(datastore);
+            im2.updateAllIndexes();
+        } finally {
+            if(im1 != null) {
+                im1.close();
+            }
+            if(im2!=null) {
+                im2.close();
+            }
+        }
     }
 
     private void assertNotIndexed(SQLDatabase database,

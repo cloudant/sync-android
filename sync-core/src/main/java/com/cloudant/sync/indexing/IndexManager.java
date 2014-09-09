@@ -562,4 +562,9 @@ public class IndexManager {
     public void finalize() {
         this.sqlDb.close();
     }
+
+
+    public void close(){
+        this.sqlDb.close();
+    }
 }

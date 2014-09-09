@@ -50,25 +50,37 @@ public class DatabaseNotificationsMoreTest {
     @Test
     public void notification_database_opened() {
         Datastore ds = datastoreManager.openDatastore("test123");
-        Assert.assertThat(databaseCreated, hasSize(1));
-        Assert.assertThat(databaseOpened, hasSize(1));
-        Assert.assertEquals("test123", databaseCreated.get(0).dbName);
-        Assert.assertEquals("test123", databaseOpened.get(0).dbName);
+        try {
+            Assert.assertThat(databaseCreated, hasSize(1));
+            Assert.assertThat(databaseOpened, hasSize(1));
+            Assert.assertEquals("test123", databaseCreated.get(0).dbName);
+            Assert.assertEquals("test123", databaseOpened.get(0).dbName);
+        } finally {
+            ds.close();
+        }
     }
 
     @Test
     public void notification_database_openedTwice() {
         Datastore ds = datastoreManager.openDatastore("test123");
-        Assert.assertNotNull(ds);
-        Assert.assertThat(databaseCreated, hasSize(1));
-        Assert.assertThat(databaseOpened, hasSize(1));
-        Assert.assertEquals("test123", databaseCreated.get(0).dbName);
-        Assert.assertEquals("test123", databaseOpened.get(0).dbName);
+        Datastore ds1 = null ;
+        try {
+            Assert.assertNotNull(ds);
+            Assert.assertThat(databaseCreated, hasSize(1));
+            Assert.assertThat(databaseOpened, hasSize(1));
+            Assert.assertEquals("test123", databaseCreated.get(0).dbName);
+            Assert.assertEquals("test123", databaseOpened.get(0).dbName);
 
-        Datastore ds1 = datastoreManager.openDatastore("test123");
-        Assert.assertThat(databaseCreated, hasSize(1));
-        Assert.assertThat(databaseOpened, hasSize(1));
-        Assert.assertNotNull(ds1);
+            ds1 = datastoreManager.openDatastore("test123");
+            Assert.assertThat(databaseCreated, hasSize(1));
+            Assert.assertThat(databaseOpened, hasSize(1));
+            Assert.assertNotNull(ds1);
+        } finally {
+            ds.close();
+            if(ds1 != null){
+                ds1.close();
+            }
+        }
     }
 
     @Test
@@ -92,11 +104,15 @@ public class DatabaseNotificationsMoreTest {
         // DatabaseCreated event should NOT be fired.
         this.clearAllEventList();
         Datastore ds1 = datastoreManager.openDatastore("test123");
-        Assert.assertNotNull(ds1);
-        Assert.assertThat(databaseCreated, hasSize(0));
-        Assert.assertThat(databaseOpened, hasSize(1));
-        Assert.assertThat(databaseClosed, hasSize(0));
-        Assert.assertEquals("test123", databaseOpened.get(0).dbName);
+        try {
+            Assert.assertNotNull(ds1);
+            Assert.assertThat(databaseCreated, hasSize(0));
+            Assert.assertThat(databaseOpened, hasSize(1));
+            Assert.assertThat(databaseClosed, hasSize(0));
+            Assert.assertEquals("test123", databaseOpened.get(0).dbName);
+        } finally {
+            ds1.close();
+        }
     }
 
     private void clearAllEventList() {

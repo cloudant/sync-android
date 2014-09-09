@@ -1,7 +1,6 @@
 package cloudant.com.androidtest;
 
 import android.app.ListActivity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -13,10 +12,6 @@ import android.widget.ListView;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.cloudant.common.PerformanceTest;
-import com.cloudant.common.RequireRunningCouchDB;
-import com.cloudant.common.SystemTest;
 
 import org.junit.experimental.categories.Categories;
 import org.junit.runner.JUnitCore;

@@ -64,20 +64,27 @@ public class DatastoreManagerTest {
 
     @Test
     public void openDatastore_name_dbShouldBeCreated() {
-        createAndAssertDatastore();
+        Datastore ds = createAndAssertDatastore();
+        ds.close();
     }
 
     private Datastore createAndAssertDatastore() {
         Datastore ds = manager.openDatastore("mydatastore");
         Assert.assertNotNull(ds);
+        boolean assertsFailed = true;
+        try {
+            String dbDir = TEST_PATH + "/mydatastore";
+            Assert.assertTrue(new File(dbDir).exists());
+            Assert.assertTrue(new File(dbDir).isDirectory());
 
-        String dbDir = TEST_PATH + "/mydatastore";
-        Assert.assertTrue(new File(dbDir).exists());
-        Assert.assertTrue(new File(dbDir).isDirectory());
-
-        String dbFile = dbDir + "/db.sync";
-        Assert.assertTrue(new File(dbFile).exists());
-        Assert.assertTrue(new File(dbFile).isFile());
+            String dbFile = dbDir + "/db.sync";
+            Assert.assertTrue(new File(dbFile).exists());
+            Assert.assertTrue(new File(dbFile).isFile());
+            assertsFailed = false;
+        } finally {
+            if(assertsFailed)
+                ds.close();
+        }
         return ds;
     }
 

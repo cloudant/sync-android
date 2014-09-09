@@ -196,4 +196,8 @@ public class TypedDatastore<T extends Document> {
 
         this.datastore.deleteDocument(documentId, revisionId);
     }
+
+    public void close(){
+        this.datastore.close();
+    }
 }

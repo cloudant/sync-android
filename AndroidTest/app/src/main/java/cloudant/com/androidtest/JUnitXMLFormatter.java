@@ -44,14 +44,10 @@ public class JUnitXMLFormatter implements XMLConstants {
             //default to a file under a dir
             outputFile = new File(outputFile,"TestResults.xml");
         }
-
         try {
-            BufferedOutputStream buffer = new BufferedOutputStream(new FileOutputStream(outputFile));
             builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         } catch(ParserConfigurationException e){
             //do nothing
-        } catch (FileNotFoundException e){
-            // TODO should do something about that
         }
     }
 

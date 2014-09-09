@@ -63,6 +63,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     @After
     public void tearDown() throws Exception {
         super.tearDown();
+        this.barTypedDatastore.close();
     }
 
     @Test
@@ -186,6 +187,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
         Assert.assertEquals(0, replication.getDocumentCounter());
         Assert.assertEquals(1, replication.getBatchCounter());
+
     }
 
     private List<String> findRevisionOfLeafs(DocumentRevisionTree docTree) {
@@ -352,16 +354,20 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         Assert.assertEquals(0, datastore.getDocumentCount());
 
         IndexManager im = new IndexManager(datastore);
-        im.ensureIndexed("diet", "diet");
+        try {
+            im.ensureIndexed("diet", "diet");
 
-        AnimalDb.populateWithoutFilter(remoteDb.couchClient);
-        this.pull();
+            AnimalDb.populateWithoutFilter(remoteDb.couchClient);
+            this.pull();
 
-        Assert.assertEquals(10, datastore.getDocumentCount());
+            Assert.assertEquals(10, datastore.getDocumentCount());
 
-        QueryBuilder qb = new QueryBuilder();
-        QueryResult qr = im.query(qb.index("diet").equalTo("herbivore").build());
-        Assert.assertEquals(4, qr.size());
+            QueryBuilder qb = new QueryBuilder();
+            QueryResult qr = im.query(qb.index("diet").equalTo("herbivore").build());
+            Assert.assertEquals(4, qr.size());
+        } finally {
+            im.close();
+        }
 
     }
 

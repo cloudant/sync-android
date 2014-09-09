@@ -59,6 +59,8 @@ public class IndexManagerQueryTest {
 
     @After
     public void tearDown() throws Exception {
+        indexManager.close();
+        datastore.close();
         TestUtils.deleteDatabaseQuietly(database);
         TestUtils.deleteTempTestingDir(datastoreManagerPath);
     }
