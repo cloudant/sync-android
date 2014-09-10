@@ -85,7 +85,7 @@ Once you have created one or more documents, retrieve them by ID:
 
 ```java
 String docId = revision.docId;
-DocumentRevision retrieved = datastore.getDocument(docId);
+BasicDocumentRevision retrieved = datastore.getDocument(docId);
 ```
 
 You get an immutable revision back from this method call. To make changes to
@@ -98,9 +98,9 @@ To update a document, call `mutableCopy()` on the original document revision,
 make your changes and save the document:
 
 ```java
-MutableDocumentRevision update = retrieved.getMutableCopy();
+MutableDocumentRevision update = retrieved.mutableCopy();
 
-Map<String, Object> json = retrieved.body.asMap();
+Map<String, Object> json = retrieved.getBody().asMap();
 json.put("completed", true);
 update.body = DocumentBodyFactory.create(json);
 
@@ -152,12 +152,12 @@ in the `attachments` map:
 // Create a new document
 MutableDocumentRevision rev = new MutableDocumentRevision();
 // or get an existing one and create a mutable copy
-DocumentRevision retrieved = datastore.getDocument("mydoc");
+BasicDocumentRevision retrieved = datastore.getDocument("mydoc");
 MutableDocumentRevision = retrieved.mutableCopy();
 
 rev.body = DocumentBodyFactory.create( ... );
 UnsavedFileAttachment att1 = new UnsavedFileAttachment(
-    new File("/path/to/image.jpg", "image/jpeg"));
+    new File("/path/to/image.jpg"), "image/jpeg");
 
 // As with the document body, you can replace the attachments
 rev.attachments = new HashMap<String, Attachment>();
@@ -174,7 +174,7 @@ memory.
 
 ```java
 UnsavedFileAttachment att1 = new UnsavedFileAttachment(
-    new File("/path/to/image.jpg", "image/jpeg"));
+    new File("/path/to/image.jpg"), "image/jpeg");
 
 byte[] imageData;
 // ByteArrayInputStream adapts imageData to be used as a stream
@@ -182,8 +182,8 @@ UnsavedStreamAttachment att2 = new UnsavedStreamAttachment(
     new ByteArrayInputStream(imageData), "cute_cat.jpg", "image/jpeg");
 
 MutableDocumentRevision rev = new MutableDocumentRevision();
-rev.attachments.put(att1.name, att1);
-rev.attachments.put(att2.name, att2);
+rev.getAttachments().put(att1.name, att1);
+rev.getAttachments().put(att2.name, att2);
 DocumentRevision saved = datastore.createDocumentFromRevision(rev);
 ```
 
@@ -192,7 +192,7 @@ map. Then use `getInputStream()` to read the data:
 
 ```java
 DocumentRevision retrieved = datastore.getDocument("myDoc");
-Attachment att = retrieved.attachments.get("cute_cat.jpg");
+Attachment att = retrieved.getAttachments().get("cute_cat.jpg");
 InputStream is = att.getInputStream();
 
 // get all bytes in memory if required
@@ -203,7 +203,7 @@ is.read(data);
 To remove an attachment, remove it from the `attachments` map:
 
 ```java
-DocumentRevision retrieved = datastore.getDocument("myDoc");
+BasicDocumentRevision retrieved = datastore.getDocument("myDoc");
 MutableDocumentRevision update = retrieved.mutableCopy();
 update.remove("cute_cat.jpg");
 DocumentRevision updated = datastore.updateDocumentFromRevision(update);

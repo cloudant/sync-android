@@ -32,6 +32,10 @@ needing to poll:
 
 ```java
 import com.google.common.eventbus.Subscribe;
+import java.util.concurrent.CountDownLatch;
+import com.cloudant.sync.notifications.ReplicationCompleted;
+import com.cloudant.sync.notifications.ReplicationErrored;
+import com.cloudant.sync.replication.ErrorInfo;
 
 /**
  * A {@code ReplicationListener} that sets a latch when it's told the
@@ -62,7 +66,7 @@ private class Listener {
 Next we replicate a local datastore to a remote database:
 
 ```java
-import com.cloudant.sync.replication.ReplicationFactory;
+import com.cloudant.sync.replication.ReplicatorFactory;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.PushReplication;
 
@@ -81,7 +85,7 @@ push.target = uri;
 Replicator replicator = ReplicatorFactory.oneway(push);
 
 // Use a CountDownLatch to provide a lightweight way to wait for completion
-latch = new CountDownLatch(1);
+CountDownLatch latch = new CountDownLatch(1);
 Listener listener = new Listener(latch);
 replicator.getEventBus().register(listener);
 replicator.start();
@@ -102,7 +106,7 @@ Datastore ds = manager.openDatastore("my_datastore");
 // Create a replictor that replicates changes from the remote
 // database to the local datastore.
 // username/password can be Cloudant API keys
-PullReplicator pull = new PullReplicator();
+PullReplication pull = new PullReplication();
 pull.username = "username";
 pull.password = "password";
 pull.source = uri;
@@ -111,7 +115,7 @@ pull.target = ds;
 Replicator replicator = ReplicatorFactory.oneway(pull);
 
 // Use a CountDownLatch to provide a lightweight way to wait for completion
-latch = new CountDownLatch(1);
+CountDownLatch latch = new CountDownLatch(1);
 Listener listener = new Listener(latch);
 replicator.getEventBus().register(listener);
 replicator.start();
