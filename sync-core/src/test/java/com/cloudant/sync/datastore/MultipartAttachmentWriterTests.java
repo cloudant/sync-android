@@ -68,6 +68,7 @@ public class MultipartAttachmentWriterTests {
 
     @After
     public void tearDown() throws Exception {
+        datastore.close();
         TestUtils.deleteTempTestingDir(datastore_manager_dir);
     }
 

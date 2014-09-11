@@ -43,17 +43,25 @@ public class DatabaseNotificationsTest {
     @Test
     public void notification_database_opened() {
         databaseOpened = new CountDownLatch(1);
-        datastoreManager.openDatastore("test123");
-        boolean ok = NotificationTestUtils.waitForSignal(databaseOpened);
-        Assert.assertTrue("Didn't receive database opened event", ok);
+        Datastore ds = datastoreManager.openDatastore("test123");
+        try {
+            boolean ok = NotificationTestUtils.waitForSignal(databaseOpened);
+            Assert.assertTrue("Didn't receive database opened event", ok);
+        } finally {
+            ds.close();
+        }
     }
 
     @Test
     public void notification_database_created() {
         databaseCreated = new CountDownLatch(1);
-        datastoreManager.openDatastore("test123");
-        boolean ok = NotificationTestUtils.waitForSignal(databaseCreated);
-        Assert.assertTrue("Didn't receive database created event", ok);
+        Datastore ds = datastoreManager.openDatastore("test123");
+        try {
+            boolean ok = NotificationTestUtils.waitForSignal(databaseCreated);
+            Assert.assertTrue("Didn't receive database created event", ok);
+        } finally {
+            ds.close();
+        }
     }
 
     @Test
@@ -73,20 +81,28 @@ public class DatabaseNotificationsTest {
     public void notification_database_closed() {
         databaseClosed = new CountDownLatch((1));
         Datastore ds = datastoreManager.openDatastore("testDatabaseClosed");
-        ds.getEventBus().register(this);
-        ds.close();
-        boolean ok = NotificationTestUtils.waitForSignal(databaseClosed);
-        Assert.assertTrue("Did not received database closed event", ok);
+        try {
+            ds.getEventBus().register(this);
+            ds.close();
+            boolean ok = NotificationTestUtils.waitForSignal(databaseClosed);
+            Assert.assertTrue("Did not received database closed event", ok);
+        } finally {
+            ds.close();
+        }
     }
 
     @Test
     public void notification_databaseClosed_databaseManagerShouldPostDatabaseClosedEvent() {
         databaseClosed = new CountDownLatch((1));
         Datastore ds = datastoreManager.openDatastore("testDatabaseClosed");
-        datastoreManager.getEventBus().register(this);
-        ds.close();
-        boolean ok = NotificationTestUtils.waitForSignal(databaseClosed);
-        Assert.assertTrue("Did not received database closed event", ok);
+        try {
+            datastoreManager.getEventBus().register(this);
+            ds.close();
+            boolean ok = NotificationTestUtils.waitForSignal(databaseClosed);
+            Assert.assertTrue("Did not received database closed event", ok);
+        } finally {
+            ds.close();
+        }
     }
 
     @Subscribe
