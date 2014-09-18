@@ -9,6 +9,7 @@ The main requirements are:
 
 * Java 1.6
 * Gradle 1.8+
+* Android SDK
 
 Optionally, and recommended:
 
@@ -55,6 +56,10 @@ Again, using brew:
 $ brew install couchdb
 ```
 
+### Android SDK
+
+Follow the instructions provided on the android developer site.
+
 ## Building the library
 
 The project should build out of the box with:
@@ -89,6 +94,37 @@ And in another terminal:
 ```bash
 $ gradle integrationTest
 ```
+
+#### Running integration tests on Android
+
+
+Running the integration tests on android requires the running of a dedicated test app,
+in addition to the requirements for Java SE integration tests. 
+
+The test application build scripts require a running emulator and the ```ANDROID_HOME```
+ environment variable to be set
+
+The minimum requirements for an android emulator:
+
+* Minimum API Level 15 (Target API Level is 20)
+* An SD card
+
+This test app can be run via gradle
+
+
+```bash
+$ gradle clean installStandardTestDebug waitForTestAppToFinishTests
+```
+The app will run all tests on specified by the build variant on first start up, to rerun tests
+you must rerun the gradle build.
+
+#### Collecting Test Results
+
+Test Results are displayed via the app, a test report is also available for CI builds.
+The test result report is in the same format as the ANT JUnit task reports. These style reports can be interpreted by 
+Jenkins and other systems.  The reports are located under the ``` build/test-results/ ``` the file name is automatically generated 
+by the build scripts, the base file name is ```testResults_``` it is suffixed with a UUID for that build.
+
 
 #### Testing using Cloudant
 
