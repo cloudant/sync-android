@@ -56,8 +56,8 @@ public class DatastoreManagerTest {
         Assert.assertTrue("Aalfd_sn9".matches(DatastoreManager.LEGAL_CHARACTERS));
         Assert.assertTrue("a_alf_dsn9".matches(DatastoreManager.LEGAL_CHARACTERS));
         Assert.assertFalse("0Aalfdsn9".matches(DatastoreManager.LEGAL_CHARACTERS));
-        Assert.assertFalse("Aa-lfdsn9".matches(DatastoreManager.LEGAL_CHARACTERS));
-        Assert.assertFalse("Aa/lfdsn9".matches(DatastoreManager.LEGAL_CHARACTERS));
+        Assert.assertTrue("Aa-lfdsn9".matches(DatastoreManager.LEGAL_CHARACTERS));
+        Assert.assertTrue("Aa/lfdsn9".matches(DatastoreManager.LEGAL_CHARACTERS));
         Assert.assertFalse("Aa lfdsn9".matches(DatastoreManager.LEGAL_CHARACTERS));
         Assert.assertFalse("".matches(DatastoreManager.LEGAL_CHARACTERS));
     }
@@ -119,5 +119,22 @@ public class DatastoreManagerTest {
         Map m = new HashMap<String, Object>();
         m.put("name", name);
         return new BasicDocumentBody(m);
+    }
+
+    @Test
+    public void createDatastoreWithForwardSlashChar() throws Exception {
+        Datastore ds = manager.openDatastore("datastore/mynewdatastore");
+        try {
+            String dbDir = TEST_PATH + "/datastore.mynewdatastore";
+            Assert.assertTrue(new File(dbDir).exists());
+            Assert.assertTrue(new File(dbDir).isDirectory());
+            String dbFile = dbDir + "/db.sync";
+            Assert.assertTrue(new File(dbFile).exists());
+            Assert.assertTrue(new File(dbFile).isFile());
+        } finally {
+            ds.close();
+        }
+
+
     }
 }

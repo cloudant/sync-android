@@ -59,7 +59,7 @@ public class DatastoreManager {
     /**
      * The regex used to validate a datastore name, {@value}.
      */
-    protected static final String LEGAL_CHARACTERS = "^[a-zA-Z]+[a-zA-Z0-9_]*";
+    protected static final String LEGAL_CHARACTERS = "^[a-zA-Z]+[a-zA-Z0-9_\\Q-$()/\\E]*";
 
     private final EventBus eventBus = new EventBus();
 
@@ -126,9 +126,9 @@ public class DatastoreManager {
      */
     public Datastore openDatastore(String dbName) {
         Preconditions.checkArgument(dbName.matches(LEGAL_CHARACTERS),
-                "Database name can only contain letter, underscore and digit, " +
-                        "and start with letter: " + dbName);
-
+                "A database must be named with all lowercase letters (a-z), digits (0-9),"
+                  + " or any of the _$()+-/ characters. The name has to start with a"
+                  + " lowercase letter (a-z).");
         if (!openedDatastores.containsKey(dbName)) {
             synchronized (openedDatastores) {
                 if (!openedDatastores.containsKey(dbName)) {
@@ -207,7 +207,7 @@ public class DatastoreManager {
     }
 
     private String getDatastoreDirectory(String dbName) {
-        return FilenameUtils.concat(this.path, dbName);
+        return FilenameUtils.concat(this.path, dbName.replace("/","."));
     }
 
     /**
