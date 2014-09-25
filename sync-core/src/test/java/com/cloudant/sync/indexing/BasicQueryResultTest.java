@@ -19,6 +19,7 @@ import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.TestUtils;
 import org.junit.After;
@@ -48,7 +49,9 @@ public class BasicQueryResultTest {
         database = datastore.getSQLDatabase();
 
         for (int i = 0; i < 8; i++) {
-            datastore.createDocument(TestUtils.createBDBody("fixture/index" + "_" + i + ".json"));
+            MutableDocumentRevision rev = new MutableDocumentRevision();
+            rev.body = TestUtils.createBDBody("fixture/index" + "_" + i + ".json");
+            datastore.createDocumentFromRevision(rev);
         }
     }
 
@@ -136,23 +139,25 @@ public class BasicQueryResultTest {
     }
 
     @Test
-    public void iterable_queryResultHas51DocumentsAndUseDefaultBatchSize50_iterationWorks() {
+    public void iterable_queryResultHas51DocumentsAndUseDefaultBatchSize50_iterationWorks() throws IOException {
         testQueryResultBatchWithSize(51);
     }
 
     @Test
-    public void iterable_queryResultHas1KDocumentsAndUseDefaultBatchSize50_iterationWorks() {
+    public void iterable_queryResultHas1KDocumentsAndUseDefaultBatchSize50_iterationWorks() throws IOException {
         testQueryResultBatchWithSize(1000);
     }
 
-    private void testQueryResultBatchWithSize(int queryResultSize) {
+    private void testQueryResultBatchWithSize(int queryResultSize) throws IOException {
         List<String> ids = new ArrayList<String>(queryResultSize);
         for(int i = 0 ; i < queryResultSize ; i ++) {
             Map m = new HashMap<String, String>();
             m.put("name", "Tom");
             m.put("tag", "tag" + i);
             DocumentBody body = DocumentBodyFactory.create(m);
-            BasicDocumentRevision doc = datastore.createDocument(body);
+            MutableDocumentRevision rev = new MutableDocumentRevision();
+            rev.body = body;
+            BasicDocumentRevision doc = datastore.createDocumentFromRevision(rev);
             ids.add(doc.getId());
         }
         QueryResult qr = new BasicQueryResult(ids, datastore);

@@ -5,6 +5,7 @@ import com.google.common.collect.Multimap;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -18,8 +19,10 @@ public class BasicDatastoreRevsDiffTest extends BasicDatastoreTestBase{
     }
 
     @Test
-    public void revsDiff_oneDocOneRev_returnNothing() {
-        BasicDocumentRevision rev = datastore.createDocument(bodyOne);
+    public void revsDiff_oneDocOneRev_returnNothing() throws IOException {
+        MutableDocumentRevision revMut = new MutableDocumentRevision();
+        revMut.body = bodyOne;
+        BasicDocumentRevision rev = datastore.createDocumentFromRevision(revMut);
         Multimap<String, String> revs = HashMultimap.create();
         revs.put(rev.getId(), rev.getRevision());
         Map<String, Collection<String>> missingRevs = datastore.revsDiff(revs);
@@ -27,8 +30,10 @@ public class BasicDatastoreRevsDiffTest extends BasicDatastoreTestBase{
     }
 
     @Test
-    public void revsDiff_oneDocOneRev_returnOne() {
-        BasicDocumentRevision rev = datastore.createDocument(bodyOne);
+    public void revsDiff_oneDocOneRev_returnOne() throws IOException {
+        MutableDocumentRevision revMut = new MutableDocumentRevision();
+        revMut.body = bodyOne;
+        BasicDocumentRevision rev = datastore.createDocumentFromRevision(revMut);
         Multimap<String, String> revs = HashMultimap.create();
         revs.put(rev.getId(), "2-a");
         Map<String, Collection<String>> missingRevs = datastore.revsDiff(revs);
@@ -37,10 +42,13 @@ public class BasicDatastoreRevsDiffTest extends BasicDatastoreTestBase{
     }
 
     @Test
-    public void revsDiff_oneDocTwoRevs_returnNothing() throws ConflictException {
-        BasicDocumentRevision rev1 = datastore.createDocument(bodyOne);
-        BasicDocumentRevision rev2 =
-                (BasicDocumentRevision) datastore.updateDocument(rev1.getId(), rev1.getRevision(), bodyTwo);
+    public void revsDiff_oneDocTwoRevs_returnNothing() throws ConflictException, IOException {
+        MutableDocumentRevision revMut1 = new MutableDocumentRevision();
+        revMut1.body = bodyOne;
+        BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(revMut1);
+        MutableDocumentRevision rev2Mut = rev1.mutableCopy();
+        rev2Mut.body = bodyTwo;
+        BasicDocumentRevision rev2 = datastore.updateDocumentFromRevision(rev2Mut);
         Multimap<String, String> revs = HashMultimap.create();
         revs.put(rev1.getId(), rev1.getRevision());
         revs.put(rev2.getId(), rev2.getRevision());
@@ -49,9 +57,13 @@ public class BasicDatastoreRevsDiffTest extends BasicDatastoreTestBase{
     }
 
     @Test
-    public void revsDiff_twoDoc_returnOneDoc() {
-        BasicDocumentRevision rev1 = datastore.createDocument(bodyOne);
-        BasicDocumentRevision rev2 = datastore.createDocument(bodyTwo);
+    public void revsDiff_twoDoc_returnOneDoc() throws IOException {
+        MutableDocumentRevision revMut1 = new MutableDocumentRevision();
+        revMut1.body = bodyOne;
+        BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(revMut1);
+        MutableDocumentRevision revMut2 = new MutableDocumentRevision();
+        revMut2.body = bodyTwo;
+        BasicDocumentRevision rev2 = datastore.createDocumentFromRevision(revMut2);
         Multimap<String, String> revs = HashMultimap.create();
         revs.put(rev1.getId(), rev1.getRevision());
         revs.put(rev1.getId(), "2-a");
@@ -63,9 +75,13 @@ public class BasicDatastoreRevsDiffTest extends BasicDatastoreTestBase{
     }
 
     @Test
-    public void revsDiff_twoDoc_returnTwoDocs() {
-        BasicDocumentRevision rev1 = datastore.createDocument(bodyOne);
-        BasicDocumentRevision rev2 = datastore.createDocument(bodyTwo);
+    public void revsDiff_twoDoc_returnTwoDocs() throws IOException {
+        MutableDocumentRevision revMut1 = new MutableDocumentRevision();
+        revMut1.body = bodyOne;
+        BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(revMut1);
+        MutableDocumentRevision revMut2 = new MutableDocumentRevision();
+        revMut2.body = bodyTwo;
+        BasicDocumentRevision rev2 = datastore.createDocumentFromRevision(revMut2);
 
         Multimap<String, String> revs = HashMultimap.create();
         revs.put(rev1.getId(), rev1.getRevision());
@@ -80,9 +96,13 @@ public class BasicDatastoreRevsDiffTest extends BasicDatastoreTestBase{
     }
 
     @Test
-    public void revsDiff_oneDocWithManyRevisions_onlyNonExistingRevisionsReturned() {
-        BasicDocumentRevision rev1 = datastore.createDocument(bodyOne);
-        BasicDocumentRevision rev2 = datastore.createDocument(bodyTwo);
+    public void revsDiff_oneDocWithManyRevisions_onlyNonExistingRevisionsReturned() throws IOException {
+        MutableDocumentRevision revMut1 = new MutableDocumentRevision();
+        revMut1.body = bodyOne;
+        BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(revMut1);
+        MutableDocumentRevision revMut2 = new MutableDocumentRevision();
+        revMut2.body = bodyTwo;
+        BasicDocumentRevision rev2 = datastore.createDocumentFromRevision(revMut2);
 
         Multimap<String, String> revs = HashMultimap.create();
         // Add two existing revisions first, and then add many

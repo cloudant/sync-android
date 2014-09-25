@@ -41,11 +41,13 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void notification_forceinsert() {
+    public void notification_forceinsert() throws IOException {
         documentUpdated = new CountDownLatch(1);
         documentCreated = new CountDownLatch(2); // 2 because the call to createDocument will also fire
         // create a document and insert the first revision
-        BasicDocumentRevision doc1_rev1 = datastore.createDocument(bodyOne);   
+        MutableDocumentRevision doc1_rev1Mut = new MutableDocumentRevision();
+        doc1_rev1Mut.body = bodyOne;
+        BasicDocumentRevision doc1_rev1 = datastore.createDocumentFromRevision(doc1_rev1Mut);
 
         ArrayList<String> revisionHistory = new ArrayList<String>();
         revisionHistory.add(doc1_rev1.getRevision());
@@ -63,13 +65,15 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void notification_forceinsertWithAttachments() {
+    public void notification_forceinsertWithAttachments() throws IOException {
 
         // this test only makes sense if the data is inline base64 (there's no remote server to pull the attachment from)
         boolean pullAttachmentsInline = true;
 
         // create a document and insert the first revision
-        BasicDocumentRevision doc1_rev1 = datastore.createDocument(bodyOne);
+        MutableDocumentRevision doc1_rev1Mut = new MutableDocumentRevision();
+        doc1_rev1Mut.body = bodyOne;
+        BasicDocumentRevision doc1_rev1 = datastore.createDocumentFromRevision(doc1_rev1Mut);
         Map<String, Object> atts = new HashMap<String, Object>();
         Map<String, Object> att1 = new HashMap<String, Object>();
 
@@ -103,7 +107,9 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         extensions.createNewFile();
         extensions.setWritable(false);
 
-        BasicDocumentRevision doc1_rev1 = datastore.createDocument(bodyOne);
+        MutableDocumentRevision doc1_rev1Mut = new MutableDocumentRevision();
+        doc1_rev1Mut.body = bodyOne;
+        BasicDocumentRevision doc1_rev1 = datastore.createDocumentFromRevision(doc1_rev1Mut);
         Map<String, Object> atts = new HashMap<String, Object>();
         Map<String, Object> att1 = new HashMap<String, Object>();
 

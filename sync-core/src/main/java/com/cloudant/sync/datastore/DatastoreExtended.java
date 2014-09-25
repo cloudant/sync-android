@@ -269,4 +269,23 @@ public interface DatastoreExtended extends Datastore {
      */
     public void addAttachment(PreparedAttachment att, BasicDocumentRevision rev) throws IOException, SQLException;
 
+    /**
+     * <p>Returns attachment <code>attachmentName</code> for the revision.</p>
+     *
+     * <p>Used by replicator when pushing attachments</p>
+     *
+     * @return <code>Attachment</code> or null if there is no attachment with that name.
+     */
+    public Attachment getAttachment(BasicDocumentRevision rev, String attachmentName);
+
+    /**
+     * <p>Returns all attachments for the revision.</p>
+     *
+     * <p>Used by replicator when pulling attachments</p>
+     *
+     * @return List of <code>Attachment</code>
+     */
+    public List<? extends Attachment> attachmentsForRevision(BasicDocumentRevision rev);
+
+
 }

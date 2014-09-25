@@ -20,6 +20,7 @@ import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionBuilder;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -277,14 +278,17 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
                 PushConfiguration.DEFAULT_BULK_INSERT_SIZE, PushConfiguration.DEFAULT_PUSH_ATTACHMENTS_INLINE);
 
         String id = "\u738b\u4e1c\u5347";
-        BasicDocumentRevision rev = this.datastore.createDocument(id, createDBBody("Tom"));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = createDBBody("Tom");
+        rev.docId = id;
+        BasicDocumentRevision saved = datastore.createDocumentFromRevision(rev);
 
         this.push();
         assertPushReplicationStatus(1, 2, "1");
 
         Map<String, Object> m = couchClient.getDocument(id);
         Assert.assertEquals(id, m.get("_id"));
-        Assert.assertEquals(rev.getRevision(), m.get("_rev"));
+        Assert.assertEquals(saved.getRevision(), m.get("_rev"));
         Assert.assertEquals("Tom", m.get("name"));
     }
 

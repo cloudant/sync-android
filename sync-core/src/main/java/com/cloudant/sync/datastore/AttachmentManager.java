@@ -52,8 +52,8 @@ class AttachmentManager {
             "length, " +
             "encoded_length, " +
             "revpos " +
-            " FROM attachments " +
-            " WHERE filename = ? and sequence = ?";
+            "FROM attachments " +
+            "WHERE filename = ? and sequence = ?";
 
     private static final String SQL_ATTACHMENTS_SELECT_ALL = "SELECT sequence, " +
             "filename, " +
@@ -63,11 +63,13 @@ class AttachmentManager {
             "length, " +
             "encoded_length, " +
             "revpos " +
-            " FROM attachments " +
-            " WHERE sequence = ?";
+            "FROM attachments " +
+            "WHERE sequence = ?";
 
-    private static final String SQL_ATTACHMENTS_SELECT_ALL_KEYS = "SELECT key " +
-            " FROM attachments";
+    private static final String SQL_ATTACHMENTS_SELECT_KEYS_LEAF_REVS = "SELECT DISTINCT key " +
+            "FROM attachments atts " +
+            "WHERE atts.sequence NOT IN " +
+            "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
 
     public final String attachmentsDir;
 
@@ -189,59 +191,6 @@ class AttachmentManager {
         }
     }
 
-    protected BasicDocumentRevision updateAttachments(BasicDocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException {
-
-        // add attachments and then return new revision:
-        // * save new (unmodified) revision which will have new _attachments when synced
-        // * for each attachment, add attachment to db linked to this revision
-
-        if (attachments == null || attachments.size() == 0) {
-            // nothing to do
-            return rev;
-        }
-        List<PreparedAttachment> preparedAttachments = new ArrayList<PreparedAttachment>();
-
-        try {
-            for (Attachment a : attachments) {
-                preparedAttachments.add(new PreparedAttachment(a, this.attachmentsDir));
-            }
-        } catch (IOException e) {
-            Log.e(LOG_TAG, "Failed to prepare attachment for rev "+rev+": "+e);
-            return null;
-        }
-
-        try {
-            this.datastore.getSQLDatabase().beginTransaction();
-
-            BasicDocumentRevision newDocument = datastore.updateDocument(rev.getId(),
-                    rev.getRevision(),
-                    rev.getBody());
-
-            boolean ok = true;
-
-            try {
-                for (PreparedAttachment a : preparedAttachments) {
-                    this.addAttachment(a, newDocument);
-                }
-            } catch (Exception e) {
-                Log.e(LOG_TAG, "Failed to add attachment for rev "+rev+"; exception was "+e.getMessage());
-                ok = false;
-            }
-
-            if (ok) {
-                this.datastore.getSQLDatabase().setTransactionSuccessful();
-            }
-
-            if (ok) {
-                return newDocument;
-            } else {
-                return null;
-            }
-        } finally {
-            this.datastore.getSQLDatabase().endTransaction();
-        }
-    }
-
     protected Attachment getAttachment(BasicDocumentRevision rev, String attachmentName) {
         try {
             Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT,
@@ -324,48 +273,20 @@ class AttachmentManager {
         copyCursorValuesToNewSequence(c, newSequence);
     }
 
-
-    protected BasicDocumentRevision removeAttachments(BasicDocumentRevision rev, String[] attachmentNames)
-            throws ConflictException {
-
-        boolean rowsDeleted = false;
-
-        // args looks like {attName_1, ..., attName_n, sequence}
-        String[] args = new String[attachmentNames.length+1];
-        System.arraycopy(attachmentNames, 0, args, 0, attachmentNames.length);
-        args[args.length-1] = String.valueOf(rev.getSequence());
-
-        rowsDeleted = datastore.getSQLDatabase().delete("attachments",
-                String.format("filename in (%s) and sequence = ?",
-                        DatabaseUtils.makePlaceholders(attachmentNames.length)),
-                args) > 0;
-
-        if (!rowsDeleted) {
-            Log.w(LOG_TAG, "No attachments were deleted for rev "+rev+" with attachmentNames "+ Arrays.toString(attachmentNames));
-        }
-
-        if (rowsDeleted) {
-            // return a new rev for the version with attachment removed
-            return datastore.updateDocument(rev.getId(), rev.getRevision(), rev.getBody());
-        } else {
-            // nothing deleted, just return the same rev
-            return rev;
-        }
-    }
-
     protected void purgeAttachments() {
         // it's easier to deal with Strings since java doesn't know how to compare byte[]s
         Set<String> currentKeys = new HashSet<String>();
         try {
-            // get all keys from attachments table
-            Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
+
+            // get all keys from attachments table for leaf nodes
+            Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_KEYS_LEAF_REVS, null);
             while (c.moveToNext()) {
                 byte[] key = c.getBlob(0);
                 currentKeys.add(keyToString(key));
             }
             // iterate thru attachments dir
             for (File f : new File(attachmentsDir).listFiles()) {
-                // if file isn't in the keys list, delete it
+                // if file is isn't the keys list, delete it
                 String keyForFile = f.getName();
                 if (!currentKeys.contains(keyForFile)) {
                     try {
@@ -378,6 +299,7 @@ class AttachmentManager {
                     }
                 }
             }
+            // TODO delete these attachments table entries
         } catch (SQLException e) {
             Log.e(LOG_TAG, "Problem in purgeAttachments, executing SQL to fetch all attachment keys "+e);
         }

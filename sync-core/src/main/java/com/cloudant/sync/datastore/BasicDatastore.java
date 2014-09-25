@@ -438,15 +438,13 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return doGetLocalDocument(docId, revId);
     }
 
-    @Override
-    public BasicDocumentRevision createDocument(final DocumentBody body) {
+    private BasicDocumentRevision createDocument(final DocumentBody body) {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         String documentId = CouchUtils.generateDocumentId();
         return createDocument(documentId, body);
     }
 
-    @Override
-    public BasicDocumentRevision createDocument(String docId, final DocumentBody body) {
+    private BasicDocumentRevision createDocument(String docId, final DocumentBody body) {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         CouchUtils.validateDocumentId(docId);
         Preconditions.checkNotNull(body, "Input document body can not be null");
@@ -534,13 +532,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
-    @Override
-    public BasicDocumentRevision updateDocument(String docId, String prevRevId, final DocumentBody body)
-            throws ConflictException {
-        return updateDocument(docId, prevRevId, body, true, true);
-    }
-
-    BasicDocumentRevision updateDocument(String docId, String prevRevId, final DocumentBody body, boolean validateBody, boolean copyAttachments)
+    private BasicDocumentRevision updateDocument(String docId, String prevRevId, final DocumentBody body, boolean validateBody, boolean copyAttachments)
             throws ConflictException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
@@ -611,8 +603,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
-    @Override
-    public BasicDocumentRevision deleteDocument(String docId, String prevRevId) throws ConflictException {
+    private BasicDocumentRevision deleteDocument(String docId, String prevRevId) throws ConflictException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
                 "Input document id can not be empty");
@@ -1157,7 +1148,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         Log.v(LOG_TAG, "Deleting JSON of old revisions...");
         ContentValues args = new ContentValues();
         args.put("json", (String) null);
-        this.sqlDb.update("revs", args, "current=0", null);
+        int i = this.sqlDb.update("revs", args, "current=0", null);
 
         Log.v(LOG_TAG, "Deleting old attachments...");
         this.attachmentManager.purgeAttachments();
@@ -1433,11 +1424,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public BasicDocumentRevision updateAttachments(BasicDocumentRevision rev, List<? extends Attachment> attachments) throws ConflictException {
-        return this.attachmentManager.updateAttachments(rev, attachments);
-    }
-
-    @Override
     public Attachment getAttachment(BasicDocumentRevision rev, String attachmentName) {
         return this.attachmentManager.getAttachment(rev, attachmentName);
     }
@@ -1447,10 +1433,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return this.attachmentManager.attachmentsForRevision(rev.getSequence());
     }
 
-    @Override
-    public BasicDocumentRevision removeAttachments(BasicDocumentRevision rev, String[] attachmentNames) throws ConflictException {
-        return this.attachmentManager.removeAttachments(rev, attachmentNames);
-    }
 
     @Override
     public EventBus getEventBus() {

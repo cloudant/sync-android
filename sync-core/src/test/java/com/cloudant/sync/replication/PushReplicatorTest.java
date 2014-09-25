@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.IOException;
 import java.net.URI;
 
 @Category(RequireRunningCouchDB.class)
@@ -40,7 +41,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
         replicator = (BasicReplicator) ReplicatorFactory.oneway(push);
     }
 
-    private void prepareTwoDocumentsInLocalDB() {
+    private void prepareTwoDocumentsInLocalDB() throws IOException {
         Bar bar1 = BarUtils.createBar(datastore, "Tom", 31);
         Bar bar2 = BarUtils.createBar(datastore, "Jerry", 52);
     }
@@ -51,7 +52,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
     }
 
     @Test
-    public void start_StartedThenComplete() throws InterruptedException {
+    public void start_StartedThenComplete() throws InterruptedException, IOException {
         prepareTwoDocumentsInLocalDB();
 
         TestReplicationListener listener = new TestReplicationListener();
@@ -72,7 +73,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
     }
 
     @Test
-    public void start_StartedThenStopped() throws InterruptedException {
+    public void start_StartedThenStopped() throws InterruptedException, IOException {
 
         int count = 5000;
         for (int i = 0; i < count; i++) {

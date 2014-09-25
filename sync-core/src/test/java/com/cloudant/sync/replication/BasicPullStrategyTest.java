@@ -24,7 +24,6 @@ import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.indexing.IndexManager;
 import com.cloudant.sync.indexing.QueryBuilder;
 import com.cloudant.sync.indexing.QueryResult;
-import com.cloudant.sync.util.TypedDatastore;
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Assert;
@@ -35,6 +34,7 @@ import org.junit.experimental.categories.Category;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.startsWith;
@@ -46,24 +46,16 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     PullConfiguration config = null;
     BasicPullStrategy replicator = null;
-    private TypedDatastore<Bar> barTypedDatastore;
 
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-        
-        this.barTypedDatastore = new TypedDatastore<Bar>(
-                Bar.class,
-                this.datastore
-        );
-
-        config = new PullConfiguration();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-        this.barTypedDatastore.close();
+    private Bar getDocument(String id) {
+        BasicDocumentRevision rev = this.datastore.getDocument(id);
+        Bar bar = new Bar();
+        Map<String, Object> m = rev.getBody().asMap();
+        bar.setAge((Integer)m.get("age"));
+        bar.setName((String)m.get("name"));
+        bar.setId(rev.getId());
+        bar.setRevision(rev.getRevision());
+        return bar;
     }
 
     @Test
@@ -83,7 +75,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     private Bar oneDocCreatedAndThenPulled() throws Exception {
         Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
         this.pull();
-        Bar bar2 = this.barTypedDatastore.getDocument(bar1.getId());
+        Bar bar2 = this.getDocument(bar1.getId());
         Assert.assertEquals(bar1, bar2);
         return bar1;
     }
@@ -93,7 +85,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
         Bar bar2 = BarUtils.updateBar(remoteDb, bar1.getId(), "Jerry", 41);
         this.pull();
-        Bar bar3 = this.barTypedDatastore.getDocument(bar1.getId());
+        Bar bar3 = this.getDocument(bar1.getId());
         Assert.assertEquals(bar2, bar3);
         Assert.assertThat(bar3.getRevision(), startsWith("2-"));
         Assert.assertEquals(1, replicator.getDocumentCounter());
@@ -105,9 +97,9 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
         Bar bar2 = BarUtils.createBar(remoteDb, "Jerry", 41);
         this.pull();
-        Bar bar3 = this.barTypedDatastore.getDocument(bar1.getId());
+        Bar bar3 = this.getDocument(bar1.getId());
         Assert.assertEquals(bar1, bar3);
-        Bar bar4 = this.barTypedDatastore.getDocument(bar2.getId());
+        Bar bar4 = this.getDocument(bar2.getId());
         Assert.assertEquals(bar2, bar4);
 
         Assert.assertEquals(2, replicator.getDocumentCounter());
@@ -123,9 +115,9 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
         Bar bar2 = BarUtils.createBar(remoteDb, "Jerry", 41);
         this.pull();
-        Bar bar3 = this.barTypedDatastore.getDocument(bar1.getId());
+        Bar bar3 = this.getDocument(bar1.getId());
         Assert.assertEquals(bar1, bar3);
-        Bar bar4 = this.barTypedDatastore.getDocument(bar2.getId());
+        Bar bar4 = this.getDocument(bar2.getId());
         Assert.assertEquals(bar2, bar4);
 
         Assert.assertEquals(2, replicator.getDocumentCounter());
@@ -138,7 +130,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
         Bar bar3 = BarUtils.updateBar(remoteDb, bar1.getId(), "Jerry", 41);
         this.pull();
-        Bar bar4 = this.barTypedDatastore.getDocument(bar1.getId());
+        Bar bar4 = this.getDocument(bar1.getId());
         Assert.assertEquals(bar3, bar4);
 
         Assert.assertEquals(1, replicator.getDocumentCounter());
@@ -219,7 +211,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         CouchClient client = remoteDb.getCouchClient();
         Bar bar = oneDocCreatedAndThenPulled();
         {
-            Bar bar1 = this.barTypedDatastore.getDocument(bar.getId());
+            Bar bar1 = this.getDocument(bar.getId());
             bar1.setRevision("1-zzz");
             bar1.setName("Jerry");
             bar1.setAge(100);
@@ -229,7 +221,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         }
         this.pull();
         {
-            Bar bar2 = this.barTypedDatastore.getDocument(bar.getId());
+            Bar bar2 = this.getDocument(bar.getId());
             Assert.assertEquals("1-zzz", bar2.getRevision());
             Assert.assertEquals("Jerry", bar2.getName());
             Assert.assertTrue(100 == bar2.getAge());
@@ -243,7 +235,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         Assert.assertEquals(id, bar.getId());
         this.pull();
         {
-            Bar bar2 = this.barTypedDatastore.getDocument(bar.getId());
+            Bar bar2 = this.getDocument(bar.getId());
             Assert.assertEquals(bar.getId(), bar2.getId());
             Assert.assertEquals(bar.getRevision(), bar2.getRevision());
             Assert.assertEquals("Tom", bar2.getName());
