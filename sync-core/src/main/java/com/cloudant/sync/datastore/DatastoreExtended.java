@@ -253,7 +253,7 @@ public interface DatastoreExtended extends Datastore {
      *
      * @param att Attachment to be prepared, providing data either from a file or a stream
      * @param rev The revision this attachment is associated with
-     * @return
+     * @return A prepared attachment, ready to be added to the datastore
      * @throws IOException
      * @throws SQLException
      */

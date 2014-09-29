@@ -43,7 +43,8 @@ import java.util.List;
  * the same document in-between replications. MVCC exposes these branches as
  * conflicted documents. These conflicts should be resolved by user-code, by
  * marking all but one of the leaf nodes of the branches as "deleted", using
- * the {@link Datastore#deleteDocument(String, String)} method. When the
+ * the {@link Datastore#deleteDocumentFromRevision(BasicDocumentRevision)}
+ * method. When the
  * datastore is next replicated with a remote datastore, this fix will be
  * propagated, thereby resolving the conflicted document across the set of
  * peers.</p>
@@ -71,7 +72,7 @@ public interface Datastore {
      * <p>Returns the current winning revision of a document.</p>
      *
      * <p>Previously deleted documents can be retrieved
-     * (via tombstones, see {@link Datastore#deleteDocument(String, String)})
+     * (via tombstones, see {@link Datastore#deleteDocumentFromRevision(BasicDocumentRevision)})
      * </p>
      *
      * @param documentId ID of document to retrieve.
@@ -87,7 +88,7 @@ public interface Datastore {
      * revision may contain the metadata but not content of the revision.</p>
      *
      * <p>Previously deleted documents can be retrieved
-     * (via tombstones, see {@link Datastore#deleteDocument(String, String)})
+     * (via tombstones, see {@link Datastore#deleteDocumentFromRevision(BasicDocumentRevision)})
      * </p>
      *
      * @param documentId ID of the document
