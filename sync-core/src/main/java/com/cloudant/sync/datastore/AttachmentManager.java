@@ -66,10 +66,8 @@ class AttachmentManager {
             "FROM attachments " +
             "WHERE sequence = ?";
 
-    private static final String SQL_ATTACHMENTS_SELECT_KEYS_LEAF_REVS = "SELECT DISTINCT key " +
-            "FROM attachments atts " +
-            "WHERE atts.sequence NOT IN " +
-            "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
+    private static final String SQL_ATTACHMENTS_SELECT_ALL_KEYS = "SELECT key " +
+            "FROM attachments";
 
     public final String attachmentsDir;
 
@@ -277,16 +275,18 @@ class AttachmentManager {
         // it's easier to deal with Strings since java doesn't know how to compare byte[]s
         Set<String> currentKeys = new HashSet<String>();
         try {
-
+            // delete attachment table entries for revs which have been purged
+            datastore.getSQLDatabase().delete("attachments", "sequence IN " +
+                "(SELECT sequence from revs WHERE json IS null)", null);
             // get all keys from attachments table for leaf nodes
-            Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_KEYS_LEAF_REVS, null);
+            Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
             while (c.moveToNext()) {
                 byte[] key = c.getBlob(0);
                 currentKeys.add(keyToString(key));
             }
             // iterate thru attachments dir
             for (File f : new File(attachmentsDir).listFiles()) {
-                // if file is isn't the keys list, delete it
+                // if file isn't in the keys list, delete it
                 String keyForFile = f.getName();
                 if (!currentKeys.contains(keyForFile)) {
                     try {
@@ -299,7 +299,6 @@ class AttachmentManager {
                     }
                 }
             }
-            // TODO delete these attachments table entries
         } catch (SQLException e) {
             Log.e(LOG_TAG, "Problem in purgeAttachments, executing SQL to fetch all attachment keys "+e);
         }
