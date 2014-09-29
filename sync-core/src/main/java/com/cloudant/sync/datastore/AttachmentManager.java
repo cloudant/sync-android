@@ -278,7 +278,7 @@ class AttachmentManager {
             // delete attachment table entries for revs which have been purged
             datastore.getSQLDatabase().delete("attachments", "sequence IN " +
                 "(SELECT sequence from revs WHERE json IS null)", null);
-            // get all keys from attachments table for leaf nodes
+            // get all keys from attachments table
             Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
             while (c.moveToNext()) {
                 byte[] key = c.getBlob(0);
