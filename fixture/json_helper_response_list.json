@@ -1,0 +1,13 @@
+[
+    {
+        "ok":true,
+        "id":"myId",
+        "rev":"1-IPromiseIamARevision"
+    },
+    {
+        "ok":false,
+        "error":"403",
+        "reason":"Forbidden"
+    }
+
+]
