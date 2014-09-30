@@ -316,4 +316,17 @@ public class CouchClientWrapperTest extends CouchTestBase {
 
         return objects;
     }
+
+    @Test
+    public void accessAndUpdateRemoteDbWithSlashInName() throws Exception {
+        //do a little set up for this specific test
+        remoteDb = new CouchClientWrapper("myslash/encoded_db", super.getCouchConfig());
+        CouchClientWrapperDbUtils.deleteDbQuietly(remoteDb);
+        remoteDb.createDatabase();
+        Bar bar1 = new Bar();
+        Response res1 = remoteDb.create(bar1);
+        Assert.assertNotNull(res1);
+        Assert.assertTrue(res1.getOk());
+
+    }
 }

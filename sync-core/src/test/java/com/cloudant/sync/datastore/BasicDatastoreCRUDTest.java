@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -543,6 +544,16 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         // Test count and offsets for descending and ascending
         getAllDocuments_testCountAndOffset(objectCount, documentRevisions, false);
         getAllDocuments_testCountAndOffset(objectCount, reversedObjects, true);
+    }
+
+    @Test
+    public void createDbWithSlashAndCreateDocument() throws IOException {
+            Datastore datastore = datastoreManager.openDatastore("dbwith/aslash");
+            MutableDocumentRevision rev = new MutableDocumentRevision();
+            rev.body = bodyOne;
+            BasicDocumentRevision doc = datastore.createDocumentFromRevision(rev);
+            validateNewlyCreatedDocument(doc);
+            datastore.close();
     }
 
     private void getAllDocuments_testCountAndOffset(int objectCount, List<BasicDocumentRevision> expectedDocumentRevisions, boolean descending) {
