@@ -150,7 +150,6 @@ public class IndexManager {
      */
     public void ensureIndexed(String indexName, String fieldName, IndexType type)
             throws IndexExistsException {
-        IndexManager.validateFieldName(fieldName);
         this.ensureIndexed(indexName, type, new FieldIndexFunction(fieldName));
     }
 
@@ -549,12 +548,6 @@ public class IndexManager {
     static void validateIndexName(String name) {
         if(!pattern.matcher(name).matches()) {
             throw new IllegalArgumentException("indexName is invalid.");
-        }
-    }
-
-    static void validateFieldName(String name) {
-        if(!pattern.matcher(name).matches()) {
-            throw new IllegalArgumentException("fieldName is invalid.");
         }
     }
 
