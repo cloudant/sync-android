@@ -358,6 +358,18 @@ public class IndexManagerIndexTest {
     }
 
     @Test
+    public void indexString_documentWithUnicodeKey_ShouldBeIndexed()
+            throws IndexExistsException, IOException, SQLException {
+        Index index = createAndGetIndex("Dog", "\uD83D\uDC36", IndexType.STRING);
+        Index index2 = createAndGetIndex("Sun", "☀", IndexType.STRING);
+        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/string_index_unicode_key.json"));
+        BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+        indexManager.updateAllIndexes();
+        IndexTestUtils.assertDBObjectInIndex(database, index, "\uD83D\uDC36", obj);
+        IndexTestUtils.assertDBObjectInIndex(database, index2, "☀", obj);
+    }
+
+    @Test
     public void indexString_documentUpdated_indexRowShouldBeUpdated() throws Exception {
         Index index = createAndGetIndex("stringIndex", "stringIndex", IndexType.STRING);
 
