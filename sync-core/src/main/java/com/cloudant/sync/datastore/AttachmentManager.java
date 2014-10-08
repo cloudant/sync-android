@@ -18,6 +18,7 @@ import com.cloudant.common.Log;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.util.CouchUtils;
+import com.cloudant.sync.util.DatabaseUtils;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileExistsException;
@@ -32,7 +33,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -190,8 +190,9 @@ class AttachmentManager {
     }
 
     protected Attachment getAttachment(BasicDocumentRevision rev, String attachmentName) {
+        Cursor c = null;
         try {
-            Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT,
+             c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT,
                     new String[]{attachmentName, String.valueOf(rev.getSequence())});
             if (c.moveToFirst()) {
                 int sequence = c.getInt(0);
@@ -202,16 +203,20 @@ class AttachmentManager {
                 File file = fileFromKey(key);
                 return new SavedAttachment(attachmentName, revpos, sequence, key, type, file, Attachment.Encoding.values()[encoding]);
             }
+
             return null;
         } catch (SQLException e) {
             return null;
+        } finally {
+            DatabaseUtils.closeCursorQuietly(c);
         }
     }
 
     protected List<? extends Attachment> attachmentsForRevision(long sequence) {
+        Cursor c = null;
         try {
             LinkedList<SavedAttachment> atts = new LinkedList<SavedAttachment>();
-            Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
+            c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
                     new String[]{String.valueOf(sequence)});
             while (c.moveToNext()) {
                 String name = c.getString(1);
@@ -225,6 +230,8 @@ class AttachmentManager {
             return atts;
         } catch (SQLException e) {
             return null;
+        } finally {
+            DatabaseUtils.closeCursorQuietly(c);
         }
     }
 
@@ -259,6 +266,7 @@ class AttachmentManager {
         Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT,
                 new String[]{filename, String.valueOf(parentSequence)});
         copyCursorValuesToNewSequence(c, newSequence);
+        DatabaseUtils.closeCursorQuietly(c);
     }
 
     /**
@@ -269,17 +277,19 @@ class AttachmentManager {
         Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
                 new String[]{String.valueOf(parentSequence)});
         copyCursorValuesToNewSequence(c, newSequence);
+        DatabaseUtils.closeCursorQuietly(c);
     }
 
     protected void purgeAttachments() {
         // it's easier to deal with Strings since java doesn't know how to compare byte[]s
         Set<String> currentKeys = new HashSet<String>();
+        Cursor c = null;
         try {
             // delete attachment table entries for revs which have been purged
             datastore.getSQLDatabase().delete("attachments", "sequence IN " +
                 "(SELECT sequence from revs WHERE json IS null)", null);
             // get all keys from attachments table
-            Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
+             c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
             while (c.moveToNext()) {
                 byte[] key = c.getBlob(0);
                 currentKeys.add(keyToString(key));
@@ -301,6 +311,8 @@ class AttachmentManager {
             }
         } catch (SQLException e) {
             Log.e(LOG_TAG, "Problem in purgeAttachments, executing SQL to fetch all attachment keys "+e);
+        }finally {
+           DatabaseUtils.closeCursorQuietly(c);
         }
     }
 

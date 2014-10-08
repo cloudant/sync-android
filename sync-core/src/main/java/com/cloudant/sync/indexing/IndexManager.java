@@ -21,6 +21,7 @@ import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseFactory;
+import com.cloudant.sync.util.DatabaseUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
 
@@ -488,13 +489,16 @@ public class IndexManager {
 
     private List<String> executeIndexJoinQueryForDocumentIds(String sql) {
         List<String> ids = new ArrayList<String>();
+        Cursor cursor = null;
         try {
-            Cursor cursor = this.sqlDb.rawQuery(sql, new String[]{});
+             cursor = this.sqlDb.rawQuery(sql, new String[]{});
             while (cursor.moveToNext()) {
                 ids.add(cursor.getString(0));
             }
         } catch (SQLException e) {
             throw new IllegalArgumentException("Can not execute the query: " + sql, e);
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
         }
         return ids;
     }
@@ -521,9 +525,9 @@ public class IndexManager {
 
         String table = constructIndexTableName(indexName);
         String sql = String.format(SQL_SELECT_UNIQUE, table);
-
+        Cursor cursor = null;
         try {
-            Cursor cursor = this.sqlDb.rawQuery(sql, new String[]{});
+            cursor = this.sqlDb.rawQuery(sql, new String[]{});
             while (cursor.moveToNext()) {
                 switch(index.getIndexType()) {
                     case INTEGER:
@@ -536,6 +540,8 @@ public class IndexManager {
             }
         } catch (SQLException e) {
             throw new IllegalArgumentException("Can not execute the query: " + sql, e);
+        } finally {
+            cursor.close();
         }
         return values;
     }
