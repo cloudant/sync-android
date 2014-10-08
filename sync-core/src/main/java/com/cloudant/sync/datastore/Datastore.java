@@ -43,7 +43,8 @@ import java.util.List;
  * the same document in-between replications. MVCC exposes these branches as
  * conflicted documents. These conflicts should be resolved by user-code, by
  * marking all but one of the leaf nodes of the branches as "deleted", using
- * the {@link Datastore#deleteDocument(String, String)} method. When the
+ * the {@link Datastore#deleteDocumentFromRevision(BasicDocumentRevision)}
+ * method. When the
  * datastore is next replicated with a remote datastore, this fix will be
  * propagated, thereby resolving the conflicted document across the set of
  * peers.</p>
@@ -68,51 +69,10 @@ public interface Datastore {
     public String getDatastoreName();
 
     /**
-     * <p>Adds a new document with an ID and body.</p>
-     *
-     * <p>If the document is successfully created, a
-     * {@link com.cloudant.sync.notifications.DocumentCreated DocumentCreated} 
-     * event is posted on the event bus.</p>
-     *
-     * <p>This method is deprecated and {@link Datastore#createDocumentFromRevision(MutableDocumentRevision)}
-     * should be used instead.</p>
-     *
-     * @param documentId id for the document
-     * @param body       JSON body for the document
-     * @return {@code DocumentRevision} of the newly created document
-     *
-     * @see Datastore#getEventBus()
-     */
-
-    @Deprecated
-    public BasicDocumentRevision createDocument(String documentId, final DocumentBody body);
-
-    /**
-     * <p>Adds a new document with an auto-generated ID.</p>
-     *
-     * <p>The document's ID will be auto-generated, and can be found by
-     * inspecting the returned {@code DocumentRevision}.</p>
-     *
-     * <p>If the document is successfully created, a
-     * {@link com.cloudant.sync.notifications.DocumentCreated DocumentCreated} 
-     * event is posted on the event bus.</p>
-     *
-     * <p>This method is deprecated and {@link Datastore#createDocumentFromRevision(MutableDocumentRevision)}
-     * should be used instead.</p>
-     *
-     * @param body JSON body for the document
-     * @return {@code DocumentRevision} of the newly created document
-     *
-     * @see Datastore#getEventBus()
-     */
-    @Deprecated
-    public BasicDocumentRevision createDocument(final DocumentBody body);
-
-    /**
      * <p>Returns the current winning revision of a document.</p>
      *
      * <p>Previously deleted documents can be retrieved
-     * (via tombstones, see {@link Datastore#deleteDocument(String, String)})
+     * (via tombstones, see {@link Datastore#deleteDocumentFromRevision(BasicDocumentRevision)})
      * </p>
      *
      * @param documentId ID of document to retrieve.
@@ -128,7 +88,7 @@ public interface Datastore {
      * revision may contain the metadata but not content of the revision.</p>
      *
      * <p>Previously deleted documents can be retrieved
-     * (via tombstones, see {@link Datastore#deleteDocument(String, String)})
+     * (via tombstones, see {@link Datastore#deleteDocumentFromRevision(BasicDocumentRevision)})
      * </p>
      *
      * @param documentId ID of the document
@@ -190,65 +150,6 @@ public interface Datastore {
      * @return list of {@code DocumentRevision} objects.
      */
     public List<BasicDocumentRevision> getDocumentsWithIds(List<String> documentIds);
-
-    /**
-     * <p>Updates a document that exists in the datastore with a new revision.
-     * </p>
-     *
-     * <p>The {@code prevRevisionId} must match the current winning revision
-     * for the document.</p>
-     *
-     * <p>If the document is successfully updated, a
-     * {@link com.cloudant.sync.notifications.DocumentUpdated DocumentUpdated} 
-     * event is posted on the event bus.</p>
-     *
-     * <p>This method is deprecated and {@link Datastore#updateDocumentFromRevision(MutableDocumentRevision)}
-     * should be used instead.</p>
-     *
-     * @param documentId ID of the document
-     * @param prevRevisionId revision id of the document's current winning
-     *                       revision
-     * @param body body of the new revision
-     * @return @{code DocumentRevision} for the updated revision
-     *
-     * @throws ConflictException if the {@code prevRevisionId} is incorrect.
-     *
-     * @see Datastore#getEventBus()
-     */
-    @Deprecated
-    public BasicDocumentRevision updateDocument(String documentId, String prevRevisionId, final DocumentBody body) throws ConflictException;
-
-    /**
-     * <p>Deletes a document from the datastore.</p>
-     *
-     * <p>This operation leaves a "tombstone" for the deleted document, so that
-     * future replication operations can successfully replicate the deletion.
-     * </p>
-     *
-     * <p>If the document is successfully deleted, a
-     * {@link com.cloudant.sync.notifications.DocumentDeleted DocumentDeleted} 
-     * event is posted on the event bus.</p>
-     *
-     * <p>If the input revision is already deleted, nothing will be changed. </p>
-     *
-     * <p>When resolving conflicts, this method can be used to delete any non-deleted
-     * leaf revision of a document. {@link Datastore#resolveConflictsForDocument} handles this
-     * deletion step during conflict resolution, so it's not usually necessary to call this
-     * method in this way from client code. See the doc/conflicts.md document for
-     * more details.</p>
-     *
-     * <p>This method is deprecated and {@link Datastore#deleteDocumentFromRevision(BasicDocumentRevision)}
-     * should be used instead.</p>
-     *
-     * @param documentId ID of the document to delete.
-     * @param revisionId revision id of the document's current winning revision
-     * @throws ConflictException if the revisionId is not the current revision
-     *
-     * @see Datastore#getEventBus()
-     * @see Datastore#resolveConflictsForDocument
-     */
-    @Deprecated
-    public BasicDocumentRevision deleteDocument(String documentId, String revisionId) throws ConflictException;
 
     /**
      * <p>Retrieves the datastore's current sequence number.</p>
@@ -340,85 +241,6 @@ public interface Datastore {
      */
     public void resolveConflictsForDocument(String docId, ConflictResolver resolver)
         throws ConflictException, IOException;
-
-    /**
-     * <p>Returns attachment <code>attachmentName</code> for the revision.</p>
-     *
-     * <p>This method is deprecated; attachments should be retrieved directly from the
-     * {@link com.cloudant.sync.datastore.MutableDocumentRevision} instead.</p>
-     *
-     * @return <code>Attachment</code> or null if there is no attachment with that name.
-     */
-    @Deprecated
-    public Attachment getAttachment(BasicDocumentRevision rev, String attachmentName);
-
-    /**
-     * <p>Returns all attachments for the revision.</p>
-     *
-     * <p>This method is deprecated; attachments should be retrieved directly from the
-     * {@link com.cloudant.sync.datastore.MutableDocumentRevision} instead.</p>
-     *
-     * @return List of <code>Attachment</code>
-     */
-    @Deprecated
-    public List<? extends Attachment> attachmentsForRevision(BasicDocumentRevision rev);
-
-    /**
-     * <p>
-     * Set the content of attachments on a document, creating
-     * new revision of the document.
-     * </p>
-     *
-     * <p>
-     * Existing attachments with the same name will be replaced,
-     * new attachments will be created, and attachments already
-     * existing on the document which are not included in
-     * <code>attachments</code> will remain as attachments on the document.
-     * </p>
-     *
-     * <p>
-     * Multiple attachments can be added with one call to this method.
-     * This avoids creating unnecessary <code>DocumentRevision</code>s which
-     * differ only by their attachments.
-     * </p>
-     *
-     * <p>This method is deprecated; attachments should be updated directly through the
-     * {@link com.cloudant.sync.datastore.MutableDocumentRevision} instead.</p>
-     *
-     * @param rev The <code>DocumentRevision</code> to update
-     * @param attachments List of attachments to create or replace
-     *
-     * @return New revision.
-     *
-     */
-    @Deprecated
-    public BasicDocumentRevision updateAttachments(BasicDocumentRevision rev,
-                                              List<? extends Attachment> attachments)
-            throws ConflictException, IOException;
-
-    /**
-     * <p>
-     * Remove attachments <code>attachmentNames</code> from a document, creating a new revision
-     * of the document.
-     * </p>
-     *
-     * <p>
-     * Multiple attachments can be removed with one call to this method.
-     * This avoids creating unnecessary <code>DocumentRevision</code>s which
-     * differ only by their attachments.
-     * </p>
-     *
-     * <p>This method is deprecated; attachments should be removed directly from the
-     * {@link com.cloudant.sync.datastore.MutableDocumentRevision} instead.</p>
-     *
-     * @param rev The <code>DocumentRevision</code> to update
-     * @param attachmentNames Array of attachment names to remove
-     *
-     * @return New revision.
-     */
-    @Deprecated
-    public BasicDocumentRevision removeAttachments(BasicDocumentRevision rev, String[] attachmentNames)
-            throws ConflictException;
 
     /**
      * Close the datastore

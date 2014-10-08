@@ -18,14 +18,18 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
-import com.cloudant.sync.util.TypedDatastore;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 @Category(RequireRunningCouchDB.class)
@@ -34,22 +38,6 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
     String id1;
     String id2;
     String id3;
-    private TypedDatastore<Foo> fooTypedDatastore;
-
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-
-        this.fooTypedDatastore = new TypedDatastore<Foo>(
-                Foo.class,
-                this.datastore
-        );
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
 
     /**
      * After all documents are created:
@@ -58,7 +46,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
      * Doc 2: 1 -> 2
      * Doc 3: 1 -> 2 -> 3
      */
-    private void populateSomeDataInLocalDatastore() throws ConflictException {
+    private void populateSomeDataInLocalDatastore() throws ConflictException, IOException {
 
         id1 = createDocInDatastore("Doc 1");
         Assert.assertNotNull(id1);
@@ -75,18 +63,20 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         updateDocInDatastore(id3, "Doc 3");
     }
 
-    public String createDocInDatastore(String d) throws ConflictException {
-        Foo foo = new Foo();
-        foo.setFoo(d + " (from local)");
-        foo = this.fooTypedDatastore.createDocument(foo);
-        return foo.getId();
+    public String createDocInDatastore(String d) throws IOException {
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        Map<String, String> m = new HashMap<String, String>();
+        m.put("data", d);
+        rev.body = DocumentBodyFactory.create(m);
+        return datastore.createDocumentFromRevision(rev).getId();
     }
 
-    public String updateDocInDatastore(String id, String data) throws ConflictException {
-        Foo foo = this.fooTypedDatastore.getDocument(id);
-        foo.setFoo(data + " (from local)");
-        foo = this.fooTypedDatastore.updateDocument(foo);
-        return foo.getId();
+    public String updateDocInDatastore(String id, String data) throws ConflictException, IOException {
+        MutableDocumentRevision rev = datastore.getDocument(id).mutableCopy();
+        Map<String, String> m = new HashMap<String, String>();
+        m.put("data", data);
+        rev.body = DocumentBodyFactory.create(m);
+        return datastore.updateDocumentFromRevision(rev).getId();
     }
 
     @Test
@@ -146,7 +136,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
     }
 
     public void checkDocumentIsSynced(String id) {
-        Foo fooLocal = this.fooTypedDatastore.getDocument(id);
+        BasicDocumentRevision fooLocal = this.datastore.getDocument(id);
         Map fooRemote = remoteDb.get(Map.class, id);
         Assert.assertEquals(fooLocal.getId(), fooRemote.get("_id"));
         Assert.assertEquals(fooLocal.getRevision(), fooRemote.get("_rev"));
@@ -161,7 +151,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
      *
      * where "L" means local version.
      */
-    private void updateDataInLocalDatastore() throws ConflictException {
+    private void updateDataInLocalDatastore() throws ConflictException, IOException {
         // Doc 1: 1 -> 2 -> 3 -> 4L -> 5L
         updateDocInDatastore(id1, "Doc 1");
         updateDocInDatastore(id1, "Doc 1");

@@ -18,9 +18,14 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.DatastoreManager;
+import com.cloudant.sync.datastore.DocumentBody;
+import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.DocumentRevisionBuilder;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.util.TestUtils;
-import com.cloudant.sync.util.TypedDatastore;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -37,7 +42,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 
@@ -53,8 +60,6 @@ public class AttachmentsPushTest extends ReplicationTestBase {
     String id2;
     String id3;
 
-    private TypedDatastore<Foo> fooTypedDatastore;
-
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -65,23 +70,6 @@ public class AttachmentsPushTest extends ReplicationTestBase {
     @Parameterized.Parameter
     public PushAttachmentsInline pushAttachmentsInline;
 
-    @Before
-    public void setUp() throws Exception {
-
-        super.setUp();
-
-        this.fooTypedDatastore = new TypedDatastore<Foo>(
-                Foo.class,
-                this.datastore
-        );
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
-
-
     /**
      * After all documents are created:
      *
@@ -89,7 +77,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
      * Doc 2: 1 -> 2
      * Doc 3: 1 -> 2 -> 3
      */
-    private void populateSomeDataInLocalDatastore() throws ConflictException {
+    private void populateSomeDataInLocalDatastore() throws ConflictException, IOException {
 
         id1 = createDocInDatastore("Doc 1");
         Assert.assertNotNull(id1);
@@ -106,19 +94,21 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         updateDocInDatastore(id3, "Doc 3");
     }
 
-    public String createDocInDatastore(String d) throws ConflictException {
-        Foo foo = new Foo();
-        foo.setFoo(d + " (from local)");
-        foo = this.fooTypedDatastore.createDocument(foo);
-        return foo.getId();
+    public String createDocInDatastore(String d) throws IOException {
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        Map<String, String> m = new HashMap<String, String>();
+        m.put("data", d);
+        rev.body = DocumentBodyFactory.create(m);
+        return datastore.createDocumentFromRevision(rev).getId();
     }
 
 
-    public String updateDocInDatastore(String id, String data) throws ConflictException {
-        Foo foo = this.fooTypedDatastore.getDocument(id);
-        foo.setFoo(data + " (from local)");
-        foo = this.fooTypedDatastore.updateDocument(foo);
-        return foo.getId();
+    public String updateDocInDatastore(String id, String data) throws ConflictException, IOException {
+        MutableDocumentRevision rev = datastore.getDocument(id).mutableCopy();
+        Map<String, String> m = new HashMap<String, String>();
+        m.put("data", data);
+        rev.body = DocumentBodyFactory.create(m);
+        return datastore.updateDocumentFromRevision(rev).getId();
     }
 
     @Test
@@ -128,13 +118,13 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         populateSomeDataInLocalDatastore();
         File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
-        List<Attachment> atts = new ArrayList<Attachment>();
-        atts.add(att);
         BasicDocumentRevision oldRevision = datastore.getDocument(id1);
         BasicDocumentRevision newRevision = null;
         try {
             // set attachment
-            newRevision = datastore.updateAttachments(oldRevision, atts);
+            MutableDocumentRevision oldRevision_mut = oldRevision.mutableCopy();
+            oldRevision_mut.attachments.put(attachmentName, att);
+            newRevision = datastore.updateDocumentFromRevision(oldRevision_mut);
         } catch (IOException ioe) {
             Assert.fail("IOException thrown: " + ioe);
         }
@@ -155,13 +145,13 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         populateSomeDataInLocalDatastore();
         File f = TestUtils.loadFixture("fixture/"+ attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "image/jpeg");
-        List<Attachment> atts = new ArrayList<Attachment>();
-        atts.add(att);
         BasicDocumentRevision oldRevision = datastore.getDocument(id1);
         BasicDocumentRevision newRevision = null;
         try {
             // set attachment
-            newRevision = datastore.updateAttachments(oldRevision, atts);
+            MutableDocumentRevision oldRevision_mut = oldRevision.mutableCopy();
+            oldRevision_mut.attachments.put(attachmentName, att);
+            newRevision = datastore.updateDocumentFromRevision(oldRevision_mut);
         } catch (IOException ioe) {
             Assert.fail("IOException thrown: " + ioe);
         }
@@ -185,15 +175,13 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         File f2 = TestUtils.loadFixture("fixture/"+ attachmentName2);
         Attachment att1 = new UnsavedFileAttachment(f1, "text/plain");
         Attachment att2 = new UnsavedFileAttachment(f2, "text/plain");
-        List<Attachment> atts1 = new ArrayList<Attachment>();
-        atts1.add(att1);
-        List<Attachment> atts2 = new ArrayList<Attachment>();
-        atts2.add(att2);
         BasicDocumentRevision rev1 = datastore.getDocument(id1);
         BasicDocumentRevision rev2 = null;
         try {
             // set attachment
-            rev2 = datastore.updateAttachments(rev1, atts1);
+            MutableDocumentRevision rev1_mut = rev1.mutableCopy();
+            rev1_mut.attachments.put(attachmentName1, att1);
+            rev2 = datastore.updateDocumentFromRevision(rev1_mut);
         } catch (IOException ioe) {
             Assert.fail("IOException thrown: "+ioe);
         }
@@ -201,7 +189,8 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         // push replication - att1 should be uploaded
         push();
 
-        BasicDocumentRevision rev3 = datastore.updateDocument(rev2.getId(), rev2.getRevision(), rev2.getBody());
+        MutableDocumentRevision rev2_mut = rev2.mutableCopy();
+        BasicDocumentRevision rev3 = datastore.updateDocumentFromRevision(rev2_mut);
 
         // push replication - no atts should be uploaded
         push();
@@ -209,7 +198,10 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         BasicDocumentRevision rev4 = null;
         try {
             // set attachment
-            rev4 = datastore.updateAttachments(rev3, atts2);
+            MutableDocumentRevision rev3_mut = rev3.mutableCopy();
+            rev3_mut.attachments.put(attachmentName2, att2);
+            rev4 = datastore.updateDocumentFromRevision(rev3_mut);
+
         } catch (IOException ioe) {
             Assert.fail("IOException thrown: "+ioe);
         }

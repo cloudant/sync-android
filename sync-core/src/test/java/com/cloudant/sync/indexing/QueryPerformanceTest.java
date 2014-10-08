@@ -19,6 +19,7 @@ import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.TestUtils;
 import org.junit.After;
@@ -58,7 +59,7 @@ public class QueryPerformanceTest {
         prepareDataForQueryTest();
     }
 
-    private void prepareDataForQueryTest() {
+    private void prepareDataForQueryTest() throws IOException {
         List<Map> data = new ArrayList<Map>();
         addMap(data, 10, "tom");
         addMap(data, 100, "jerry");
@@ -67,7 +68,9 @@ public class QueryPerformanceTest {
         Collections.shuffle(data);
 
         for(Map m : data) {
-            revs.add(datastore.createDocument(DocumentBodyFactory.create(m)));
+            MutableDocumentRevision rev = new MutableDocumentRevision();
+            rev.body = (DocumentBodyFactory.create(m));
+            revs.add(datastore.createDocumentFromRevision(rev));
         }
     }
 

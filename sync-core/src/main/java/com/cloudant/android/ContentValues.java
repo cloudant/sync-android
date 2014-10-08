@@ -466,46 +466,9 @@ public class ContentValues {
         return mValues.keySet();
     }
 
-//    public static final Parcelable.Creator<ContentValues> CREATOR =
-//            new Parcelable.Creator<ContentValues>() {
-//        @SuppressWarnings({"deprecation", "unchecked"})
-//        public ContentValues createFromParcel(Parcel in) {
-//            // TODO - what ClassLoader should be passed to readHashMap?
-//            HashMap<String, Object> values = in.readHashMap(null);
-//            return new ContentValues(values);
-//        }
-//
-//        public ContentValues[] newArray(int size) {
-//            return new ContentValues[size];
-//        }
-//    };
 
     public int describeContents() {
         return 0;
-    }
-
-//    @SuppressWarnings("deprecation")
-//    public void writeToParcel(Parcel parcel, int flags) {
-//        parcel.writeMap(mValues);
-//    }
-
-    /**
-     * Unsupported, here until we get proper bulk insert APIs.
-     * {@hide}
-     */
-    @Deprecated
-    public void putStringArrayList(String key, ArrayList<String> value) {
-        mValues.put(key, value);
-    }
-
-    /**
-     * Unsupported, here until we get proper bulk insert APIs.
-     * {@hide}
-     */
-    @SuppressWarnings("unchecked")
-    @Deprecated
-    public ArrayList<String> getStringArrayList(String key) {
-        return (ArrayList<String>) mValues.get(key);
     }
 
     /**

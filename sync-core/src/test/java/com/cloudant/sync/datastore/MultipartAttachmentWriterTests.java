@@ -74,8 +74,9 @@ public class MultipartAttachmentWriterTests {
 
     @Test
     public void Add1000TextAttachmentsTest() throws Exception {
-        BasicDocumentRevision doc = datastore.createDocument(bodyOne);
-        ArrayList<Attachment> attachments = new ArrayList<Attachment>();
+        MutableDocumentRevision docMut = new MutableDocumentRevision();
+        docMut.body = bodyOne;
+        BasicDocumentRevision doc = datastore.createDocumentFromRevision(docMut);
 
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
         mpw.setBody(doc);
@@ -112,8 +113,9 @@ public class MultipartAttachmentWriterTests {
 
     @Test
     public void AddImageAttachmentTest() throws Exception {
-        BasicDocumentRevision doc = datastore.createDocument(bodyOne);
-        ArrayList<Attachment> attachments = new ArrayList<Attachment>();
+        MutableDocumentRevision docMut = new MutableDocumentRevision();
+        docMut.body = bodyOne;
+        BasicDocumentRevision doc = datastore.createDocumentFromRevision(docMut);
 
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
         mpw.setBody(doc);

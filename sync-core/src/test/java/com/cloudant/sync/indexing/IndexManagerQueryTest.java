@@ -18,6 +18,7 @@ import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.TestUtils;
 import org.junit.After;
@@ -70,7 +71,9 @@ public class IndexManagerQueryTest {
         DocumentBody body = TestUtils.createBDBody("fixture/index_chinese_character.json");
         String albumName = (String) body.asMap().get("album");
         String artistName = (String) body.asMap().get("artist");
-        datastore.createDocument(body);
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = body;
+        datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         {
             QueryResult result = indexManager.query(new QueryBuilder().index("Album").equalTo(albumName).build());
@@ -85,7 +88,9 @@ public class IndexManagerQueryTest {
     @Test
     public void query_specialCharacter() throws IOException {
         DocumentBody body = TestUtils.createBDBody("fixture/index_special_character.json");
-        datastore.createDocument(body);
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = body;
+        datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         {
             QueryResult result = indexManager.query(new QueryBuilder().index("Album").equalTo("\\\\//").build());
@@ -186,14 +191,16 @@ public class IndexManagerQueryTest {
         Assert.assertEquals(2, result.size());
     }
 
-    private void prepareDataForQueryTest() throws IndexExistsException {
+    private void prepareDataForQueryTest() throws IndexExistsException, IOException {
         indexManager.ensureIndexed("Album", "album");
         indexManager.ensureIndexed("Artist", "artist");
         indexManager.ensureIndexed("Year", "year", IndexType.INTEGER);
 
         revisions = new ArrayList<BasicDocumentRevision>();
         for (DocumentBody b : dbBodies) {
-            revisions.add(datastore.createDocument(b));
+            MutableDocumentRevision rev = new MutableDocumentRevision();
+            rev.body = b;
+            revisions.add(datastore.createDocumentFromRevision(rev));
         }
 
         indexManager.ensureIndexed("A", "a");

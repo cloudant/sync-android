@@ -73,9 +73,9 @@ import java.util.*;
  *     revisions {@code 4} and {@code 3^}.</li>
  *     <li>Merge these documents together in some way.</li>
  *     <li>Save a new revision in the {@code 4} branch using
- *     {@link Datastore#updateDocument(String, String, DocumentBody)}</li>
+ *     {@link Datastore#updateDocumentFromRevision(MutableDocumentRevision)}</li>
  *     <li>Delete the {@code 3^} revision using
- *     {@link Datastore#deleteDocument(String, String)}.</li>
+ *     {@link Datastore#deleteDocumentFromRevision(BasicDocumentRevision)}</li>
  * </ol>
  *
  * <p>This process leaves us still with two branches. Because only one

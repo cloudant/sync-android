@@ -17,13 +17,16 @@ package com.cloudant.sync.replication;
 import com.cloudant.common.CouchConstants;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.Response;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreExtended;
+import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.util.CouchUtils;
-import com.cloudant.sync.util.TypedDatastore;
 import org.junit.Assert;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,9 +36,6 @@ import static org.hamcrest.CoreMatchers.*;
 
 public class BarUtils {
 
-    private static TypedDatastore<Bar> getBarDatastore(Datastore db) {
-        return new TypedDatastore<Bar>(Bar.class, (DatastoreExtended)db);
-    }
 
     public static Bar createBar(CouchClientWrapper db, String id, String name, int age) {
         Bar bar = new Bar();
@@ -71,25 +71,36 @@ public class BarUtils {
         bar.setName(name);
         bar.setAge(age);
 
+
+
+        // TODO
+        /*
         TypedDatastore<Bar> datastore = getBarDatastore((DatastoreExtended) db);
         Bar barCreated = datastore.createDocument(bar);
 
         Assert.assertNotNull(barCreated);
         Assert.assertThat(barCreated.getRevision(), startsWith("1-"));
-        return barCreated;
+        return barCreated;*/
+        return null;
     }
 
-    public static Bar createBar(Datastore db, String name, int age) {
+    public static Bar createBar(Datastore db, String name, int age) throws IOException {
         Bar bar = new Bar();
         bar.setName(name);
         bar.setAge(age);
 
-        TypedDatastore<Bar> datastore = getBarDatastore(db);
-        Bar barCreated = datastore.createDocument(bar);
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        Map<String, Object> m = new HashMap<String, Object>();
+        m.put("name", name);
+        m.put("age", age);
+        rev.body = DocumentBodyFactory.create(m);
+        BasicDocumentRevision saved = db.createDocumentFromRevision(rev);
+        bar.setRevision(saved.getRevision());
+        bar.setId(saved.getId());
 
-        Assert.assertNotNull(barCreated);
-        Assert.assertThat(barCreated.getRevision(), startsWith("1-"));
-        return barCreated;
+        Assert.assertNotNull(saved);
+        Assert.assertThat(saved.getRevision(), startsWith("1-"));
+        return bar;
     }
 
     public static Bar updateBar(CouchClientWrapper db, String id, String name, int age) {
@@ -105,17 +116,26 @@ public class BarUtils {
         return updatedBar;
     }
 
-    public static Bar updateBar(Datastore db, String id, String name, int age) throws ConflictException {
-        TypedDatastore<Bar> datastore = getBarDatastore(db);
-        Bar bar = datastore.getDocument(id);
+    public static Bar updateBar(Datastore db, String id, String name, int age) throws ConflictException, IOException {
+        Bar bar = new Bar();
         bar.setName(name);
         bar.setAge(age);
-        int oldGeneration = CouchUtils.generationFromRevId(bar.getRevision());
 
-        Bar bar2 = datastore.updateDocument(bar);
-        Assert.assertNotNull(bar2);
-        Assert.assertThat(bar2.getRevision(), startsWith((oldGeneration + 1) + "-"));
-        return bar2;
+        BasicDocumentRevision rev = db.getDocument(id);
+        MutableDocumentRevision revMut = rev.mutableCopy();
+        int oldGeneration = CouchUtils.generationFromRevId(rev.getRevision());
+        Map<String, Object> m = new HashMap<String, Object>();
+        m.put("name", name);
+        m.put("age", age);
+        revMut.body = DocumentBodyFactory.create(m);
+        BasicDocumentRevision saved = db.updateDocumentFromRevision(revMut);
+
+        bar.setRevision(saved.getRevision());
+        bar.setId(saved.getId());
+
+        Assert.assertNotNull(saved);
+        Assert.assertThat(saved.getRevision(), startsWith((oldGeneration + 1) + "-"));
+        return bar;
     }
 
     public static Response deleteBar(CouchClientWrapper db, String id) {
@@ -129,9 +149,7 @@ public class BarUtils {
     }
 
     public static void deleteBar(Datastore db, String id) throws ConflictException {
-        TypedDatastore<Bar> datastore = getBarDatastore(db);
-        Bar bar = datastore.getDocument(id);
-        datastore.deleteDocument(bar);
+        db.deleteDocument(id);
     }
 
     /**

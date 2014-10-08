@@ -71,17 +71,23 @@ public class BasicDBCoreObservableTest {
 
         Assert.assertEquals(-1L, testObserver.getSequence());
 
-        BasicDocumentRevision doc1 = core.createDocument(bodyOne);
+        MutableDocumentRevision doc1Mut = new MutableDocumentRevision();
+        doc1Mut.body = bodyOne;
+        BasicDocumentRevision doc1 = core.createDocumentFromRevision(doc1Mut);
         Assert.assertNotNull(doc1);
         Assert.assertEquals(1L, core.getLastSequence());
         Assert.assertEquals(1L, testObserver.getSequence());
 
-        BasicDocumentRevision doc2 = core.createDocument(bodyOne);
+        MutableDocumentRevision doc2Mut = new MutableDocumentRevision();
+        doc2Mut.body = bodyOne;
+        BasicDocumentRevision doc2 = core.createDocumentFromRevision(doc2Mut);
         Assert.assertNotNull(doc2);
         Assert.assertEquals(2L, core.getLastSequence());
         Assert.assertEquals(2L, testObserver.getSequence());
 
-        BasicDocumentRevision doc1_1 = core.updateDocument(doc1.getId(), doc1.getRevision(), bodyTwo);
+        MutableDocumentRevision doc1_1Mut = doc1.mutableCopy();
+        doc1_1Mut.body = bodyTwo;
+        BasicDocumentRevision doc1_1 = core.updateDocumentFromRevision(doc1_1Mut);
         Assert.assertNotNull(doc1_1);
         Assert.assertEquals(3L, core.getLastSequence());
         Assert.assertEquals(3L, testObserver.getSequence());

@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.io.File;
+import java.io.IOException;
 
 public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
 
@@ -49,21 +50,33 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
         super.testDown();
     }
 
-    void createTwoDocuments() {
-        BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
+    void createTwoDocuments() throws IOException {
+        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
+        rev_1Mut.body = bodyOne;
+        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
-        BasicDocumentRevision rev_2 = datastore.createDocument(bodyTwo);
+        MutableDocumentRevision rev_2Mut = new MutableDocumentRevision();
+        rev_2Mut.body = bodyTwo;
+        BasicDocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
         validateNewlyCreatedDocument(rev_2);
     }
 
-    BasicDocumentRevision[] createThreeDocuments() throws ConflictException {
-        BasicDocumentRevision rev_1 = datastore.createDocument(bodyOne);
+    BasicDocumentRevision[] createThreeDocuments() throws ConflictException, IOException {
+        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
+        rev_1Mut.body = bodyOne;
+        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
-        BasicDocumentRevision rev_2 = datastore.createDocument(bodyTwo);
+        MutableDocumentRevision rev_2Mut = new MutableDocumentRevision();
+        rev_2Mut.body = bodyTwo;
+        BasicDocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
         validateNewlyCreatedDocument(rev_2);
-        BasicDocumentRevision rev_3 = datastore.createDocument(bodyTwo);
+        MutableDocumentRevision rev_3Mut = new MutableDocumentRevision();
+        rev_3Mut.body = bodyTwo;
+        BasicDocumentRevision rev_3 = datastore.createDocumentFromRevision(rev_3Mut);
         validateNewlyCreatedDocument(rev_3);
-        BasicDocumentRevision rev_4 = (BasicDocumentRevision)datastore.updateDocument(rev_3.getId(), rev_3.getRevision(), bodyOne);
+        MutableDocumentRevision rev_3_a = rev_3.mutableCopy();
+        rev_3_a.body = bodyOne;
+        BasicDocumentRevision rev_4 = datastore.updateDocumentFromRevision(rev_3_a);
         Assert.assertNotNull(rev_4);
         return new BasicDocumentRevision[] { rev_1, rev_2, rev_4 };
     }

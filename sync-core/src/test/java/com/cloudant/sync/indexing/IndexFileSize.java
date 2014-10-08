@@ -6,6 +6,7 @@ import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.util.TestUtils;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -54,7 +55,7 @@ public class IndexFileSize {
         }
     }
 
-    public List<Long> withIndex() throws Exception {
+    public List<Long> withIndex() throws Exception, IOException {
         Datastore datastore = datastoreManager.openDatastore("dbsize");
         IndexManager indexManager = new IndexManager(datastore);
         indexManager.ensureIndexed("name", "name");
@@ -65,7 +66,9 @@ public class IndexFileSize {
             m.put("name", "tom");
             m.put("age", 12);
             DocumentBody body = DocumentBodyFactory.create(m);
-            BasicDocumentRevision rev = datastore.createDocument(body);
+            MutableDocumentRevision revMut = new MutableDocumentRevision();
+            revMut.body = body;
+            BasicDocumentRevision rev = datastore.createDocumentFromRevision(revMut);
 
             if(i == p) {
                 indexManager.updateAllIndexes();
@@ -90,7 +93,9 @@ public class IndexFileSize {
             m.put("name", "tom");
             m.put("age", 12);
             DocumentBody body = DocumentBodyFactory.create(m);
-            BasicDocumentRevision rev = datastore.createDocument(body);
+            MutableDocumentRevision revMut = new MutableDocumentRevision();
+            revMut.body = body;
+            BasicDocumentRevision rev = datastore.createDocumentFromRevision(revMut);
 
             if(i == p) {
                 File file = new File(datastoreManagerPath + File.separator + "dbsize" + File.separator + "db.sync");

@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -121,15 +122,17 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_longerPathFromRemoteDB_remoteDBWins() throws ConflictException {
+    public void forceInsert_longerPathFromRemoteDB_remoteDBWins() throws ConflictException, IOException {
 
         {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            BasicDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
-            BasicDocumentRevision updateObj = datastore.updateDocument(insertedObj.getId(), insertedObj.getRevision(), bodyTwo);
-            Assert.assertNotNull(updateObj);
+            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
+            insertedObj.body = bodyTwo;
+            BasicDocumentRevision updatedObj = datastore.updateDocumentFromRevision(insertedObj);
+
+            Assert.assertNotNull(updatedObj);
 
             assertDBObjectIsCorrect(OBJECT_ID, 5, bodyTwo);
         }
@@ -150,14 +153,17 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_longerPathFromLocalDB_localDBWins() throws ConflictException {
+    public void forceInsert_longerPathFromLocalDB_localDBWins() throws ConflictException, IOException {
         {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            BasicDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
-            BasicDocumentRevision updateObj = datastore.updateDocument(insertedObj.getId(), insertedObj.getRevision(), bodyTwo);
-            BasicDocumentRevision updateObj2 = datastore.updateDocument(updateObj.getId(), updateObj.getRevision(), bodyTwo);
+            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
+            insertedObj.body = bodyTwo;
+            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
+            insertedObj.body = bodyTwo;
+            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+
             Assert.assertNotNull(updateObj2);
 
             assertDBObjectIsCorrect(OBJECT_ID, 6, bodyTwo);
@@ -183,14 +189,17 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_sameLengthOfPath_remoteRevisionWins() throws ConflictException {
+    public void forceInsert_sameLengthOfPath_remoteRevisionWins() throws ConflictException, IOException {
         {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "3-rev", "4-rev");
 
-            BasicDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
-            BasicDocumentRevision updateObj = datastore.updateDocument(insertedObj.getId(), insertedObj.getRevision(), bodyTwo);
-            BasicDocumentRevision updateObj2 = datastore.updateDocument(updateObj.getId(), updateObj.getRevision(), bodyTwo);
+            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
+            insertedObj.body = bodyTwo;
+            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
+            insertedObj.body = bodyTwo;
+            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+
             Assert.assertNotNull(updateObj2);
 
             assertDBObjectIsCorrect(OBJECT_ID, 6, bodyTwo);
@@ -232,14 +241,17 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_sameLengthOfPath_localRevisionWins() throws ConflictException {
+    public void forceInsert_sameLengthOfPath_localRevisionWins() throws ConflictException, IOException {
         {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "3-rev", "4-rev");
 
-            BasicDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
-            BasicDocumentRevision updateObj = datastore.updateDocument(insertedObj.getId(), insertedObj.getRevision(), bodyTwo);
-            BasicDocumentRevision updateObj2 = datastore.updateDocument(updateObj.getId(), updateObj.getRevision(), bodyTwo);
+            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
+            insertedObj.body = bodyTwo;
+            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
+            insertedObj.body = bodyTwo;
+            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+
             Assert.assertNotNull(updateObj2);
 
             assertDBObjectIsCorrect(OBJECT_ID, 6, bodyTwo);
@@ -281,7 +293,7 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_conflictsWithDocDeletedInLocalDB_nonDeletionWins() throws ConflictException {
+    public void forceInsert_conflictsWithDocDeletedInLocalDB_nonDeletionWins() throws ConflictException, IOException {
         List<String> revs = new ArrayList<String>();
         revs.add("1-rev");
         revs.add("2-rev");
@@ -291,13 +303,15 @@ public class BasicDatastoreForceInsertTest {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            BasicDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
-            BasicDocumentRevision updateObj = datastore.updateDocument(insertedObj.getId(), insertedObj.getRevision(), bodyTwo);
-            BasicDocumentRevision updateObj2 = datastore.updateDocument(updateObj.getId(), updateObj.getRevision(), bodyTwo);
+            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
+            insertedObj.body = bodyTwo;
+            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
+            updateObj.body = bodyTwo;
+            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
             Assert.assertNotNull(updateObj2);
 
             // Delete the document from the local database
-            datastore.deleteDocument(updateObj2.getId(), updateObj2.getRevision());
+            datastore.deleteDocumentFromRevision(updateObj2);
             BasicDocumentRevision deletedObj = datastore.getDocument(OBJECT_ID);
             Assert.assertTrue(deletedObj.isDeleted());
         }
@@ -317,14 +331,17 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_conflictsWithDocDeletedInRemoteDB_nonDeletionWins() throws ConflictException {
+    public void forceInsert_conflictsWithDocDeletedInRemoteDB_nonDeletionWins() throws ConflictException, IOException {
         {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            BasicDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
-            BasicDocumentRevision updateObj = datastore.updateDocument(insertedObj.getId(), insertedObj.getRevision(), bodyTwo);
-            BasicDocumentRevision updateObj2 = datastore.updateDocument(updateObj.getId(), updateObj.getRevision(), bodyTwo);
+            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
+            insertedObj.body = bodyTwo;
+            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
+            updateObj.body = bodyTwo;
+            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            Assert.assertNotNull(updateObj2);
         }
 
         {

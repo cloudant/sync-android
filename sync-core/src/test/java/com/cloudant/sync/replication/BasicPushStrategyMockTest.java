@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentMatcher;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
@@ -85,7 +86,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
     }
 
     @Test
-    public void push_noMissingRevisions_noDataShouldBePushed() throws URISyntaxException {
+    public void push_noMissingRevisions_noDataShouldBePushed() throws URISyntaxException, IOException {
         //Prepare
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);

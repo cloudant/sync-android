@@ -21,6 +21,7 @@ import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
@@ -52,7 +53,7 @@ public class IndexManagerIndexTest {
     SQLDatabase database = null;
     DatastoreExtended datastore = null;
     IndexManager indexManager = null;
-    List<DocumentBody> dbBodies = null;
+    List<MutableDocumentRevision> dbBodies = null;
     private String datastoreManagerPath;
 
     @Before
@@ -75,9 +76,12 @@ public class IndexManagerIndexTest {
     }
 
     private void createTestBDBodies() throws IOException {
-        dbBodies = new ArrayList<DocumentBody>();
+        dbBodies = new ArrayList<MutableDocumentRevision>();
         for (int i = 0; i < 7; i++) {
-            dbBodies.add(TestUtils.createBDBody("fixture/index" + "_" + i + ".json"));
+            DocumentBody b = TestUtils.createBDBody("fixture/index" + "_" + i + ".json");
+            MutableDocumentRevision rev = new MutableDocumentRevision();
+            rev.body = b;
+            dbBodies.add(rev);
         }
     }
 
@@ -203,10 +207,10 @@ public class IndexManagerIndexTest {
 
     @Test
     public void ensuredIndexed_documentExistBeforeIndexCreated_existingDocShouldBeIndexed()
-            throws IndexExistsException, SQLException {
-        BasicDocumentRevision obj0 = datastore.createDocument(dbBodies.get(0));
-        BasicDocumentRevision obj1 = datastore.createDocument(dbBodies.get(1));
-        BasicDocumentRevision obj2 = datastore.createDocument(dbBodies.get(2));
+            throws IndexExistsException, SQLException, IOException {
+        BasicDocumentRevision obj0 = datastore.createDocumentFromRevision(dbBodies.get(0));
+        BasicDocumentRevision obj1 = datastore.createDocumentFromRevision(dbBodies.get(1));
+        BasicDocumentRevision obj2 = datastore.createDocumentFromRevision(dbBodies.get(2));
 
         Index index = createAndGetIndex("album", "album", IndexType.STRING);
 
@@ -217,10 +221,10 @@ public class IndexManagerIndexTest {
 
     @Test
     public void ensure_custom_indexing_function_used_non_null_indexed()
-            throws IndexExistsException, SQLException {
-        BasicDocumentRevision obj0 = datastore.createDocument(dbBodies.get(0));
-        BasicDocumentRevision obj1 = datastore.createDocument(dbBodies.get(1));
-        BasicDocumentRevision obj2 = datastore.createDocument(dbBodies.get(2));
+            throws IndexExistsException, SQLException, IOException {
+        BasicDocumentRevision obj0 = datastore.createDocumentFromRevision(dbBodies.get(0));
+        BasicDocumentRevision obj1 = datastore.createDocumentFromRevision(dbBodies.get(1));
+        BasicDocumentRevision obj2 = datastore.createDocumentFromRevision(dbBodies.get(2));
 
         final class TestIF implements IndexFunction<String> {
             public List<String> indexedValues(String indexName, Map map) {
@@ -243,10 +247,10 @@ public class IndexManagerIndexTest {
 
     @Test
     public void ensure_custom_indexing_function_used_null_not_indexed()
-            throws IndexExistsException, SQLException {
-        BasicDocumentRevision obj0 = datastore.createDocument(dbBodies.get(0));
-        BasicDocumentRevision obj1 = datastore.createDocument(dbBodies.get(1));
-        BasicDocumentRevision obj2 = datastore.createDocument(dbBodies.get(2));
+            throws IndexExistsException, SQLException, IOException {
+        BasicDocumentRevision obj0 = datastore.createDocumentFromRevision(dbBodies.get(0));
+        BasicDocumentRevision obj1 = datastore.createDocumentFromRevision(dbBodies.get(1));
+        BasicDocumentRevision obj2 = datastore.createDocumentFromRevision(dbBodies.get(2));
 
         final class TestIF implements IndexFunction<String> {
             public List<String> indexedValues(String indexName, Map map) {
@@ -268,12 +272,12 @@ public class IndexManagerIndexTest {
 
     @Test
     public void createStringIndex_documentInsertedAfterIndexCreated_documentShouldBeIndexed()
-            throws IndexExistsException, SQLException {
+            throws IndexExistsException, SQLException, IOException {
         Index index =  createAndGetIndex("album", "album", IndexType.STRING);
 
-        BasicDocumentRevision obj0 = datastore.createDocument(dbBodies.get(0));
-        BasicDocumentRevision obj1 = datastore.createDocument(dbBodies.get(1));
-        BasicDocumentRevision obj2 = datastore.createDocument(dbBodies.get(2));
+        BasicDocumentRevision obj0 = datastore.createDocumentFromRevision(dbBodies.get(0));
+        BasicDocumentRevision obj1 = datastore.createDocumentFromRevision(dbBodies.get(1));
+        BasicDocumentRevision obj2 = datastore.createDocumentFromRevision(dbBodies.get(2));
 
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj0);
@@ -283,18 +287,18 @@ public class IndexManagerIndexTest {
 
     @Test
     public void createLongIndex_documentInsertedAfterIndexCreated_documentShouldBeIndexed()
-            throws IndexExistsException, SQLException {
+            throws IndexExistsException, SQLException, IOException {
         indexManager.ensureIndexed("class", "class", IndexType.INTEGER);
         Index index = indexManager.getIndex("class");
 
         {
-            BasicDocumentRevision obj0 = datastore.createDocument(dbBodies.get(0));
+            BasicDocumentRevision obj0 = datastore.createDocumentFromRevision(dbBodies.get(0));
             indexManager.updateAllIndexes();
             IndexTestUtils.assertDBObjectNotInIndex(database, index, obj0);
         }
 
         {
-            BasicDocumentRevision obj1 = datastore.createDocument(dbBodies.get(1));
+            BasicDocumentRevision obj1 = datastore.createDocumentFromRevision(dbBodies.get(1));
             indexManager.updateAllIndexes();
             IndexTestUtils.assertDBObjectInIndex(database, index, "class", obj1);
         }
@@ -307,7 +311,9 @@ public class IndexManagerIndexTest {
         Index index = indexManager.getIndex("class");
 
         byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/index_really_big_long.json"));
-        BasicDocumentRevision obj1 = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(data);
+        BasicDocumentRevision obj1 = datastore.createDocumentFromRevision(rev);
 
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "class", obj1);
@@ -319,7 +325,9 @@ public class IndexManagerIndexTest {
         indexManager.ensureIndexed("class", "class", IndexType.INTEGER);
         Index index = indexManager.getIndex("class");
         byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/index_float.json"));
-        BasicDocumentRevision obj1 = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(data);
+        BasicDocumentRevision obj1 = datastore.createDocumentFromRevision(rev);
 
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "class", obj1);
@@ -332,9 +340,11 @@ public class IndexManagerIndexTest {
         indexManager.ensureIndexed("class", "class", IndexType.INTEGER);
         Index index = indexManager.getIndex("class");
         byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/index_string.json"));
-        BasicDocumentRevision obj1 = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(data);
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
 
-        IndexTestUtils.assertDBObjectNotInIndex(database, index, obj1);
+        IndexTestUtils.assertDBObjectNotInIndex(database, index, obj);
     }
 
     @Test
@@ -342,7 +352,9 @@ public class IndexManagerIndexTest {
             throws IndexExistsException, SQLException, IOException {
         Index index = createAndGetIndex("StringIndex", "stringIndex", IndexType.STRING);
         byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/string_index_valid_field.json"));
-        BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(data);
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "stringIndex", obj);
     }
@@ -353,7 +365,9 @@ public class IndexManagerIndexTest {
         Index index = createAndGetIndex("StringIndex", "stringIndex", IndexType.STRING);
 
         byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/string_index_invalid_field.json"));
-        BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(data);
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj);
     }
 
@@ -373,12 +387,15 @@ public class IndexManagerIndexTest {
     public void indexString_documentUpdated_indexRowShouldBeUpdated() throws Exception {
         Index index = createAndGetIndex("stringIndex", "stringIndex", IndexType.STRING);
 
-        BasicDocumentRevision obj = datastore.createDocument(TestUtils.createBDBody("fixture/string_index_valid_field.json"));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = TestUtils.createBDBody("fixture/string_index_valid_field.json");
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "stringIndex", obj);
 
-        BasicDocumentRevision obj2 = datastore.updateDocument(obj.getId(), obj.getRevision(),
-                TestUtils.createBDBody("fixture/string_index_valid_field_updated.json"));
+        MutableDocumentRevision rev2 = obj.mutableCopy();
+        rev2.body = TestUtils.createBDBody("fixture/string_index_valid_field_updated.json");
+        BasicDocumentRevision obj2 = datastore.updateDocumentFromRevision(rev2);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "stringIndex", obj2);
     }
@@ -387,12 +404,15 @@ public class IndexManagerIndexTest {
     public void indexString_documentUpdatedFromInvalidToValidValue_indexRowShouldBeUpdated() throws Exception {
         Index index = createAndGetIndex("stringIndex", "stringIndex", IndexType.STRING);
 
-        BasicDocumentRevision obj = datastore.createDocument(TestUtils.createBDBody("fixture/string_index_invalid_field.json"));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = TestUtils.createBDBody("fixture/string_index_invalid_field.json");
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj);
 
-        BasicDocumentRevision obj2 = datastore.updateDocument(obj.getId(), obj.getRevision(),
-                TestUtils.createBDBody("fixture/string_index_valid_field.json"));
+        MutableDocumentRevision rev2 = obj.mutableCopy();
+        rev2.body = TestUtils.createBDBody("fixture/string_index_valid_field.json");
+        BasicDocumentRevision obj2 = datastore.updateDocumentFromRevision(rev2);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "stringIndex", obj2);
     }
@@ -406,14 +426,15 @@ public class IndexManagerIndexTest {
     public void indexString_documentUpdatedWithInvalidValue_indexValueShouldBeRemoved() throws Exception {
         Index index = createAndGetIndex("stringIndex", "stringIndex", IndexType.STRING);
 
-
-        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/string_index_valid_field.json"));
-        BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = TestUtils.createBDBody("fixture/string_index_valid_field.json");
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "stringIndex", obj);
 
-        byte[] data2 = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/string_index_invalid_field.json"));
-        BasicDocumentRevision obj2 = datastore.updateDocument(obj.getId(), obj.getRevision(), DocumentBodyFactory.create(data2));
+        MutableDocumentRevision rev2 = obj.mutableCopy();
+        rev2.body = TestUtils.createBDBody("fixture/string_index_invalid_field.json");
+        BasicDocumentRevision obj2 = datastore.updateDocumentFromRevision(rev2);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj2);
     }
@@ -422,12 +443,13 @@ public class IndexManagerIndexTest {
     public void indexString_documentDeleted_indexRowShouldBeRemoved() throws Exception {
         Index index = createAndGetIndex("stringIndex", "stringIndex", IndexType.STRING);
 
-        byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/string_index_valid_field.json"));
-        BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = TestUtils.createBDBody("fixture/string_index_valid_field.json");
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "stringIndex", obj);
 
-        datastore.deleteDocument(obj.getId(), obj.getRevision());
+        datastore.deleteDocumentFromRevision(obj);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj);
     }
@@ -437,7 +459,9 @@ public class IndexManagerIndexTest {
         Index index = createAndGetIndex("integerIndex", "integerIndex", IndexType.INTEGER);
 
         byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_valid_field.json"));
-        BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(data);
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
 
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "integerIndex", obj);
@@ -448,7 +472,9 @@ public class IndexManagerIndexTest {
         Index index = createAndGetIndex("integerIndex", "integerIndex", IndexType.INTEGER);
 
         byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_invalid_field.json"));
-        BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(data);
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj);
     }
@@ -458,12 +484,16 @@ public class IndexManagerIndexTest {
         Index index = createAndGetIndex("integerIndex", "integerIndex", IndexType.INTEGER);
 
         byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_valid_field.json"));
-        BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(data);
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "integerIndex", obj);
 
         byte[] data2 = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_valid_field_updated.json"));
-        BasicDocumentRevision obj2 = datastore.createDocument(DocumentBodyFactory.create(data2));
+        MutableDocumentRevision rev2 = new MutableDocumentRevision();
+        rev2.body = DocumentBodyFactory.create(data2);
+        BasicDocumentRevision obj2 = datastore.createDocumentFromRevision(rev2);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "integerIndex", obj2);
     }
@@ -473,12 +503,16 @@ public class IndexManagerIndexTest {
         Index index = createAndGetIndex("integerIndex", "integerIndex", IndexType.INTEGER);
 
         byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_invalid_field.json"));
-        BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(data);
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj);
 
         byte[] data2 = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_valid_field.json"));
-        BasicDocumentRevision obj2 = datastore.createDocument(DocumentBodyFactory.create(data2));
+        MutableDocumentRevision rev2 = new MutableDocumentRevision();
+        rev2.body = DocumentBodyFactory.create(data2);
+        BasicDocumentRevision obj2 = datastore.createDocumentFromRevision(rev2);
 
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "integerIndex", obj2);
@@ -489,12 +523,16 @@ public class IndexManagerIndexTest {
         Index index = createAndGetIndex("integerIndex", "integerIndex", IndexType.INTEGER);
 
         byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_valid_field.json"));
-        BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(data);
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "integerIndex", obj);
 
         byte[] data2 = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_invalid_field.json"));
-        BasicDocumentRevision obj2 = datastore.createDocument(DocumentBodyFactory.create(data2));
+        MutableDocumentRevision rev2 = new MutableDocumentRevision();
+        rev2.body = DocumentBodyFactory.create(data2);
+        BasicDocumentRevision obj2 = datastore.createDocumentFromRevision(rev2);
 
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj2);
@@ -505,20 +543,22 @@ public class IndexManagerIndexTest {
         Index index = createAndGetIndex("integerIndex", "integerIndex", IndexType.INTEGER);
 
         byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/integer_index_valid_field.json"));
-        BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(data);
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "integerIndex", obj);
 
-        datastore.deleteDocument(obj.getId(), obj.getRevision());
+        datastore.deleteDocumentFromRevision(obj);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectNotInIndex(database, index, obj);
     }
 
     @Test
     public void multiIndex_documentWithoutTheField_notIndexed()
-            throws IndexExistsException, SQLException {
+            throws IndexExistsException, SQLException, IOException {
         Index index = createAndGetIndex("Genre", "Genre", IndexType.STRING);
-        BasicDocumentRevision rev = datastore.createDocument(dbBodies.get(0));
+        BasicDocumentRevision rev = datastore.createDocumentFromRevision(dbBodies.get(0));
         indexManager.updateAllIndexes();
         Index index2 = indexManager.getIndex("Genre");
         Assert.assertEquals(Long.valueOf(datastore.getLastSequence()),
@@ -528,9 +568,9 @@ public class IndexManagerIndexTest {
 
     @Test
     public void multiIndex_documentFieldWithListOfTwo_twoIndexValueAdded()
-            throws IndexExistsException, SQLException {
+            throws IndexExistsException, SQLException, IOException {
         Index index = createAndGetIndex("Genre", "Genre", IndexType.STRING);
-        BasicDocumentRevision rev = datastore.createDocument(dbBodies.get(1));
+        BasicDocumentRevision rev = datastore.createDocumentFromRevision(dbBodies.get(1));
         indexManager.updateAllIndexes();
         Index index2 = indexManager.getIndex("Genre");
         Assert.assertEquals(Long.valueOf(datastore.getLastSequence()),
@@ -540,9 +580,9 @@ public class IndexManagerIndexTest {
 
     @Test
     public void multiIndex_documentFieldWithListOfOne_oneIndexValueAdded()
-            throws IndexExistsException, SQLException {
+            throws IndexExistsException, SQLException, IOException {
         Index index = createAndGetIndex("Genre", "Genre", IndexType.STRING);
-        BasicDocumentRevision rev = datastore.createDocument(dbBodies.get(3));
+        BasicDocumentRevision rev = datastore.createDocumentFromRevision(dbBodies.get(3));
         indexManager.updateAllIndexes();
         Index index2 = indexManager.getIndex("Genre");
         Assert.assertEquals(Long.valueOf(datastore.getLastSequence()),
@@ -552,9 +592,9 @@ public class IndexManagerIndexTest {
 
     @Test
     public void multiIndex_documentFieldWithDuplicatedValues_noDuplicatedValuesAdded()
-            throws IndexExistsException, SQLException {
+            throws IndexExistsException, SQLException, IOException {
         Index index = createAndGetIndex("Genre", "Genre", IndexType.STRING);
-        BasicDocumentRevision rev = datastore.createDocument(dbBodies.get(4));
+        BasicDocumentRevision rev = datastore.createDocumentFromRevision(dbBodies.get(4));
         // this Document has field: genre: [ "Pop", "Pop" ], and assert
         // only one entry added for "Pop"
         indexManager.updateAllIndexes();
@@ -567,24 +607,25 @@ public class IndexManagerIndexTest {
     @Test
     public void index_fieldWithUnsupportedValue_unsupportedValueShouldBeIgnored()
             throws IndexExistsException, SQLException, IOException {
-
-        DocumentBody body = TestUtils.createBDBody("fixture/index_with_unsupported_value.json");
-        BasicDocumentRevision rev = datastore.createDocument(body);
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = TestUtils.createBDBody("fixture/index_with_unsupported_value.json");
+        BasicDocumentRevision doc = datastore.createDocumentFromRevision(rev);
         Index index = createAndGetIndex("Genre", "Genre", IndexType.STRING);
         Assert.assertEquals(Long.valueOf(datastore.getLastSequence()),
                 Long.valueOf(index.getLastSequence()));
-        this.assertIndexed(database, index, rev.getId(), "Pop", "Rock");
+        this.assertIndexed(database, index, doc.getId(), "Pop", "Rock");
     }
 
     @Test
     public void index_valueWithLeadingTailingSpaces_spacesRemoved()
             throws IndexExistsException, SQLException, IOException {
-        DocumentBody body = TestUtils.createBDBody("fixture/index_with_spaces.json");
-        BasicDocumentRevision rev = datastore.createDocument(body);
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = TestUtils.createBDBody("fixture/index_with_spaces.json");
+        BasicDocumentRevision doc = datastore.createDocumentFromRevision(rev);
         Index index = createAndGetIndex("Genre", "Genre", IndexType.STRING);
         Assert.assertEquals(Long.valueOf(datastore.getLastSequence()),
                 Long.valueOf(index.getLastSequence()));
-        this.assertIndexed(database, index, rev.getId(), " Pop", "Rock ", " R & B ");
+        this.assertIndexed(database, index, doc.getId(), " Pop", "Rock ", " R & B ");
     }
 
     @Category(PerformanceTest.class)
@@ -598,31 +639,35 @@ public class IndexManagerIndexTest {
         }
         m.put("Tag", tags);
         DocumentBody body = DocumentBodyFactory.create(m);
-        BasicDocumentRevision rev = datastore.createDocument(body);
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = body;
+        BasicDocumentRevision doc = datastore.createDocumentFromRevision(rev);
 
         Index index = createAndGetIndex("Tag", "Tag", IndexType.STRING);
         Assert.assertEquals(Long.valueOf(datastore.getLastSequence()),
                 Long.valueOf(index.getLastSequence()));
-        this.assertIndexed(database, index, rev.getId(), tags.toArray(new String[]{}));
+        this.assertIndexed(database, index, doc.getId(), tags.toArray(new String[]{}));
     }
 
     // test that index updates itself on create/update/delete
     @Test
     public void index_UpdateCrud()
-            throws IndexExistsException, SQLException, ConflictException {
+            throws IndexExistsException, SQLException, ConflictException, IOException {
         Index index = createAndGetIndex("title", "title", IndexType.STRING);
         // create
-        BasicDocumentRevision obj1 = datastore.createDocument(dbBodies.get(1));
+        BasicDocumentRevision obj1 = datastore.createDocumentFromRevision(dbBodies.get(1));
         this.assertNotIndexed(database, index, obj1.getId());
         // update
         Map<String,Object> map = obj1.getBody().asMap();
         map.put("title", "Another Green Day");
         DocumentBody body = DocumentBodyFactory.create(map);
-        BasicDocumentRevision obj2 = datastore.updateDocument(obj1.getId(), obj1.getRevision(), body);
+        MutableDocumentRevision obj1_mut = obj1.mutableCopy();
+        obj1_mut.body = body;
+        BasicDocumentRevision obj2 = datastore.updateDocumentFromRevision(obj1_mut);
         Assert.assertEquals(obj1.getId(), obj2.getId());
         this.assertNotIndexed(database, index, obj2.getId());
         // delete
-        datastore.deleteDocument(obj2.getId(), obj2.getRevision());
+        datastore.deleteDocumentFromRevision(obj2);
         this.assertNotIndexed(database, index, obj2.getId());
     }
 
@@ -666,7 +711,14 @@ public class IndexManagerIndexTest {
                     } else {
                         body = DocumentBodyFactory.create(nonmatching);
                     }
-                    datastore.createDocument(docId, body);
+                    MutableDocumentRevision rev = new MutableDocumentRevision();
+                    rev.docId = docId;
+                    rev.body = body;
+                    try {
+                        datastore.createDocumentFromRevision(rev);
+                    } catch (IOException ioe) {
+                        System.out.println("IOException "+ioe);
+                    }
                 }
                 // we're not on the main thread, so we must close our own connection
                 datastore.close();
@@ -721,7 +773,9 @@ public class IndexManagerIndexTest {
             Map<String, Object> map = new HashMap<String, Object>();
             map.put("title", "Another Green Day");
             DocumentBody body = DocumentBodyFactory.create(map);
-            datastore.createDocument(body);
+            MutableDocumentRevision rev = new MutableDocumentRevision();
+            rev.body = body;
+            datastore.createDocumentFromRevision(rev);
 
              im2 = new IndexManager(datastore);
             im2.updateAllIndexes();

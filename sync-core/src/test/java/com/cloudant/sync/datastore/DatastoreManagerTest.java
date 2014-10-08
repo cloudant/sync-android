@@ -105,20 +105,22 @@ public class DatastoreManagerTest {
     @Test(expected = IllegalStateException.class)
     public void deleteDatastore_createDocumentUsingDeletedDatastore_exception() throws Exception {
         Datastore ds = createAndAssertDatastore();
-        BasicDocumentRevision object = ds.createDocument(createDBBody("Tom"));
+        BasicDocumentRevision object = ds.createDocumentFromRevision(createDBBody("Tom"));
         Assert.assertNotNull(object);
 
         manager.deleteDatastore("mydatastore");
         String dbDir = TEST_PATH + "/mydatastore";
         Assert.assertFalse(new File(dbDir).exists());
 
-        ds.createDocument(createDBBody("Jerry"));
+        ds.createDocumentFromRevision(createDBBody("Jerry"));
     }
 
-    public DocumentBody createDBBody(String name) {
+    public MutableDocumentRevision createDBBody(String name) throws IOException {
         Map m = new HashMap<String, Object>();
         m.put("name", name);
-        return new BasicDocumentBody(m);
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = new BasicDocumentBody(m);
+        return rev;
     }
 
     @Test

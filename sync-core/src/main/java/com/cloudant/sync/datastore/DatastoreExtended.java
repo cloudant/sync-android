@@ -253,7 +253,7 @@ public interface DatastoreExtended extends Datastore {
      *
      * @param att Attachment to be prepared, providing data either from a file or a stream
      * @param rev The revision this attachment is associated with
-     * @return
+     * @return A prepared attachment, ready to be added to the datastore
      * @throws IOException
      * @throws SQLException
      */
@@ -268,5 +268,24 @@ public interface DatastoreExtended extends Datastore {
      * @param rev The DocumentRevision to add the attachment to
      */
     public void addAttachment(PreparedAttachment att, BasicDocumentRevision rev) throws IOException, SQLException;
+
+    /**
+     * <p>Returns attachment <code>attachmentName</code> for the revision.</p>
+     *
+     * <p>Used by replicator when pushing attachments</p>
+     *
+     * @return <code>Attachment</code> or null if there is no attachment with that name.
+     */
+    public Attachment getAttachment(BasicDocumentRevision rev, String attachmentName);
+
+    /**
+     * <p>Returns all attachments for the revision.</p>
+     *
+     * <p>Used by replicator when pulling attachments</p>
+     *
+     * @return List of <code>Attachment</code>
+     */
+    public List<? extends Attachment> attachmentsForRevision(BasicDocumentRevision rev);
+
 
 }

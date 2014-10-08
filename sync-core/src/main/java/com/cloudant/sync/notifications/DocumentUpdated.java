@@ -8,7 +8,8 @@ public class DocumentUpdated extends DocumentModified {
      * Event for document update
      * 
      * <p>This event is posted by
-     * {@link com.cloudant.sync.datastore.Datastore#updateDocument updateDocument}.</p>
+     * {@link com.cloudant.sync.datastore.Datastore#updateDocumentFromRevision(com.cloudant.sync.datastore.MutableDocumentRevision)}
+     * </p>
      *
      * @param prevDocument
      *            Previous document revision

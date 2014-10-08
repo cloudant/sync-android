@@ -17,6 +17,8 @@ package com.cloudant.sync.datastore;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
+
 import static org.hamcrest.CoreMatchers.hasItems;
 
 public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
@@ -35,7 +37,7 @@ public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void changes_sinceZero_twoDocumentsShouldBeReturned() {
+    public void changes_sinceZero_twoDocumentsShouldBeReturned() throws IOException {
         createTwoDocuments();
 
         Changes changes = datastore.changes(0, 100);
@@ -43,7 +45,7 @@ public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void changes_sinceZeroThenSinceTwo_lastSequenceOfEmptyChangeSetMightNotBeZero() {
+    public void changes_sinceZeroThenSinceTwo_lastSequenceOfEmptyChangeSetMightNotBeZero() throws IOException {
         createTwoDocuments();
 
         Changes changes = datastore.changes(0, 100);
@@ -57,7 +59,7 @@ public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void changes_sinceMinusOno_twoDocumentsShouldBeReturned() {
+    public void changes_sinceMinusOno_twoDocumentsShouldBeReturned() throws IOException {
         createTwoDocuments();
         Changes changes = datastore.changes(-1, 100);
         Assert.assertEquals(2, changes.size());
@@ -65,13 +67,13 @@ public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void changes_limitMinusOne_exception() {
+    public void changes_limitMinusOne_exception() throws IOException {
         createTwoDocuments();
         datastore.changes(0, -1);
     }
 
     @Test
-    public void changes_sinceOne_oneDocumentsShouldBeReturned() throws ConflictException {
+    public void changes_sinceOne_oneDocumentsShouldBeReturned() throws ConflictException, IOException{
         createThreeDocuments();
 
         Changes changes = datastore.changes(2, 100);
