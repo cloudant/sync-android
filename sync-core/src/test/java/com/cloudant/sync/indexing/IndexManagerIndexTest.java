@@ -377,7 +377,9 @@ public class IndexManagerIndexTest {
         Index index = createAndGetIndex("Dog", "\uD83D\uDC36", IndexType.STRING);
         Index index2 = createAndGetIndex("Sun", "☀", IndexType.STRING);
         byte[] data = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/string_index_unicode_key.json"));
-        BasicDocumentRevision obj = datastore.createDocument(DocumentBodyFactory.create(data));
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.body = DocumentBodyFactory.create(data);
+        BasicDocumentRevision obj = datastore.createDocumentFromRevision(rev);
         indexManager.updateAllIndexes();
         IndexTestUtils.assertDBObjectInIndex(database, index, "\uD83D\uDC36", obj);
         IndexTestUtils.assertDBObjectInIndex(database, index2, "☀", obj);
