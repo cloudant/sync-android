@@ -341,8 +341,9 @@ public class IndexManager {
      */
     protected Index getIndex(String name) {
         IndexManager.validateIndexName(name);
+        Cursor cursor = null;
         try {
-            Cursor cursor = this.sqlDb.rawQuery(IndexManager.SQL_SELECT_INDEX_BY_NAME, new String[]{name});
+            cursor = this.sqlDb.rawQuery(IndexManager.SQL_SELECT_INDEX_BY_NAME, new String[]{name});
             if (cursor.moveToFirst()) {
                 String indexName = cursor.getString(0);
                 IndexType type = IndexType.valueOf(cursor.getString(1));
@@ -353,6 +354,8 @@ public class IndexManager {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Error getting index: " + name, e);
+        }finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
         }
     }
 
@@ -363,8 +366,9 @@ public class IndexManager {
      */
     protected Set<Index> getAllIndexes() {
         Set<Index> result = new HashSet<Index>();
+        Cursor cursor = null;
         try {
-            Cursor cursor = this.sqlDb.rawQuery(IndexManager.SQL_SELECT_ALL_INDEX, new String[]{});
+             cursor = this.sqlDb.rawQuery(IndexManager.SQL_SELECT_ALL_INDEX, new String[]{});
             while (cursor.moveToNext()) {
                 String indexName = cursor.getString(0);
                 IndexType type = IndexType.valueOf(cursor.getString(1));
@@ -373,6 +377,8 @@ public class IndexManager {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Error getting all indexes", e);
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
         }
         return result;
     }
@@ -541,7 +547,7 @@ public class IndexManager {
         } catch (SQLException e) {
             throw new IllegalArgumentException("Can not execute the query: " + sql, e);
         } finally {
-            cursor.close();
+            DatabaseUtils.closeCursorQuietly(cursor);
         }
         return values;
     }
