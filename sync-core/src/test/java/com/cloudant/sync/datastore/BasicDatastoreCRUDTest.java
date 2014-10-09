@@ -16,6 +16,8 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.util.CouchUtils;
+import com.cloudant.sync.util.DatabaseUtils;
+
 import org.junit.Assert;
 import org.junit.Test;
 

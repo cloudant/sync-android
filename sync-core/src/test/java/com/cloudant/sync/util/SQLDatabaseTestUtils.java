@@ -51,7 +51,7 @@ public class SQLDatabaseTestUtils {
             }
             return tables;
         } finally {
-            cursor.close();
+
         }
     }
 

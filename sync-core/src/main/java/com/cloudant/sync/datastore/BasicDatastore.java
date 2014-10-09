@@ -28,6 +28,7 @@ import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseFactory;
 import com.cloudant.sync.util.CouchUtils;
+import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -385,8 +386,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 " and revs.deleted=0 and revs.json not null and revs.doc_id = docs.doc_id"+
                 " ORDER BY revs.sequence DESC";
         ArrayList<String> ids = new ArrayList<String>();
+        Cursor c = null;
         try {
-            Cursor c = this.sqlDb.rawQuery(sql, new String[]{docId});
+            c = this.sqlDb.rawQuery(sql, new String[]{docId});
             while (c.moveToNext() && limit > 0) {
                 String ancestorRevId = c.getString(0);
                 int ancestorGeneration = CouchUtils.generationFromRevId(ancestorRevId);
@@ -397,6 +399,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             }
         } catch(SQLException sqe) {
             return null;
+        } finally {
+            DatabaseUtils.closeCursorQuietly(c);
         }
         return ids;
     }

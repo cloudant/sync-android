@@ -12,16 +12,16 @@
  * and limitations under the License.
  */
 
-package com.cloudant.sync.datastore;
+package com.cloudant.sync.util;
 
 import com.cloudant.common.Log;
 import com.cloudant.sync.sqlite.Cursor;
 
-class DatabaseUtils {
+public  class DatabaseUtils {
 
     private final static String LOG_TAG = "DatabaseUtils";
 
-    static void closeCursorQuietly(Cursor cursor) {
+    public static void closeCursorQuietly(Cursor cursor) {
         try {
             if (cursor != null) {
                 cursor.close();
@@ -31,7 +31,7 @@ class DatabaseUtils {
         }
     }
 
-    static String makePlaceholders(int len) {
+    public static String makePlaceholders(int len) {
         if (len < 1) {
             // It will lead to an invalid query anyway ..
             throw new RuntimeException("No placeholders");

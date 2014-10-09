@@ -21,6 +21,7 @@ import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseFactory;
+import com.cloudant.sync.util.DatabaseUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
 
@@ -340,8 +341,9 @@ public class IndexManager {
      */
     protected Index getIndex(String name) {
         IndexManager.validateIndexName(name);
+        Cursor cursor = null;
         try {
-            Cursor cursor = this.sqlDb.rawQuery(IndexManager.SQL_SELECT_INDEX_BY_NAME, new String[]{name});
+            cursor = this.sqlDb.rawQuery(IndexManager.SQL_SELECT_INDEX_BY_NAME, new String[]{name});
             if (cursor.moveToFirst()) {
                 String indexName = cursor.getString(0);
                 IndexType type = IndexType.valueOf(cursor.getString(1));
@@ -352,6 +354,8 @@ public class IndexManager {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Error getting index: " + name, e);
+        }finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
         }
     }
 
@@ -362,8 +366,9 @@ public class IndexManager {
      */
     protected Set<Index> getAllIndexes() {
         Set<Index> result = new HashSet<Index>();
+        Cursor cursor = null;
         try {
-            Cursor cursor = this.sqlDb.rawQuery(IndexManager.SQL_SELECT_ALL_INDEX, new String[]{});
+             cursor = this.sqlDb.rawQuery(IndexManager.SQL_SELECT_ALL_INDEX, new String[]{});
             while (cursor.moveToNext()) {
                 String indexName = cursor.getString(0);
                 IndexType type = IndexType.valueOf(cursor.getString(1));
@@ -372,6 +377,8 @@ public class IndexManager {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Error getting all indexes", e);
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
         }
         return result;
     }
@@ -488,13 +495,16 @@ public class IndexManager {
 
     private List<String> executeIndexJoinQueryForDocumentIds(String sql) {
         List<String> ids = new ArrayList<String>();
+        Cursor cursor = null;
         try {
-            Cursor cursor = this.sqlDb.rawQuery(sql, new String[]{});
+             cursor = this.sqlDb.rawQuery(sql, new String[]{});
             while (cursor.moveToNext()) {
                 ids.add(cursor.getString(0));
             }
         } catch (SQLException e) {
             throw new IllegalArgumentException("Can not execute the query: " + sql, e);
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
         }
         return ids;
     }
@@ -521,9 +531,9 @@ public class IndexManager {
 
         String table = constructIndexTableName(indexName);
         String sql = String.format(SQL_SELECT_UNIQUE, table);
-
+        Cursor cursor = null;
         try {
-            Cursor cursor = this.sqlDb.rawQuery(sql, new String[]{});
+            cursor = this.sqlDb.rawQuery(sql, new String[]{});
             while (cursor.moveToNext()) {
                 switch(index.getIndexType()) {
                     case INTEGER:
@@ -536,6 +546,8 @@ public class IndexManager {
             }
         } catch (SQLException e) {
             throw new IllegalArgumentException("Can not execute the query: " + sql, e);
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
         }
         return values;
     }
