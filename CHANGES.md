@@ -1,3 +1,13 @@
+# 0.9.0 (2014-10-9)
+
+- [REMOVED] Removed deprecated APIs
+- [REMOVED] Removed TypedDatastore class
+- [FIX] Fixed issue where some cursors were left open
+- [FIX] Fixed issue  where regexp for database names was too restrictive
+- [FIX] Fixed indexmanager bug which prevented fields with certain names being indexed
+- [FIX] Fixed issues where sqlite connections were not being closed correctly
+- [NEW] Added proguard example configuration file 
+
 # 0.7.1 (2014-08-26) 
 
 - [NEW] A new CRUD and Attachments API has been introduced. See
