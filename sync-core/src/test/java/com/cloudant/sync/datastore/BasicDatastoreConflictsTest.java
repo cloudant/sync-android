@@ -379,6 +379,50 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
         Assert.assertEquals(Integer.valueOf(2), Integer.valueOf(generation));
     }
 
+    @Test
+    public void resurrectWinningDocument() throws IOException, ConflictException {
+        // create n conflicted docs, delete winner, then create another
+        BasicDocumentRevision rev = this.createDocumentRevision("Tom");
+        int count = 10;
+        // create child docs 2-a, 2-c,...
+        for (int i=0; i<count; i++) {
+            BasicDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), (String.format("2-%c",'a'+i)), "Jerry");
+            this.datastore.forceInsert(newRev, rev.getRevision(), newRev.getRevision());
+            BasicDocumentRevision retrieved = this.datastore.getDocument(newRev.getId(), newRev.getRevision());
+        }
+        BasicDocumentRevision winner = this.datastore.getDocument(rev.getId());
+        BasicDocumentRevision deleted = this.datastore.deleteDocumentFromRevision(winner);
+        MutableDocumentRevision newRev = new MutableDocumentRevision();
+        newRev.docId = rev.getId();
+        newRev.body = DocumentBodyFactory.create("{\"data\": \"I am the resurrection\"}".getBytes());
+        BasicDocumentRevision resurrected = this.datastore.createDocumentFromRevision(newRev);
+        // 1 -> 2{a,b,c,...} -> 3 (deleted) -> 4
+        Assert.assertEquals(4, resurrected.getGeneration());
+        // check that 'resurrected' doc's parent is the deleted one
+        Assert.assertEquals(deleted.getSequence(), resurrected.getParent());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void resurrectWinningDocumentFails() throws IOException, ConflictException {
+        // as above, but a non-winning rev is marked deleted
+        BasicDocumentRevision rev = this.createDocumentRevision("Tom");
+        int count = 10;
+        // create child docs 2-a, 2-c,...
+        for (int i=0; i<count; i++) {
+            BasicDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), (String.format("2-%c",'a'+i)), "Jerry");
+            this.datastore.forceInsert(newRev, rev.getRevision(), newRev.getRevision());
+            BasicDocumentRevision retrieved = this.datastore.getDocument(newRev.getId(), newRev.getRevision());
+        }
+        // first guaranteed to be non-winner since winner is last to sort lexigraphically
+        BasicDocumentRevision nonWinner = this.datastore.getAllRevisionsOfDocument(rev.getId()).leafRevisions().get(0);
+        BasicDocumentRevision deletedNonWinner = this.datastore.deleteDocumentFromRevision(nonWinner);
+
+        MutableDocumentRevision newRev = new MutableDocumentRevision();
+        newRev.docId = rev.getId();
+        newRev.body = DocumentBodyFactory.create("{\"data\": \"I am the resurrection\"}".getBytes());
+        BasicDocumentRevision resurrected = this.datastore.createDocumentFromRevision(newRev);
+    }
+
     private void testWithConflictCount(int conflictCount) throws IOException {
         List<String> expectedConflicts = createConflictDocuments(conflictCount);
         Iterator<String> iterator = this.datastore.getConflictedDocumentIds();
