@@ -457,17 +457,35 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         DocumentCreated documentCreated = null;
         this.sqlDb.beginTransaction();
         try {
-            long docNumericID = insertDocumentID(docId);
-            if (docNumericID < 0) {
-                throw new IllegalArgumentException("Can not insert new doc, likely the docId exists already: "
-                        + docId);
+            // check if the docid exists first:
+
+            // if it does exist:
+            // * if winning leaf deleted, root the 'created' document there
+            // * else raise error
+            // if it does not exist:
+            // * normal insert logic for a new document
+
+            InsertRevisionOptions options = new InsertRevisionOptions();
+            BasicDocumentRevision potentialParent = this.getDocument(docId);
+            if (potentialParent != null) {
+                if (!potentialParent.isDeleted()) {
+                    // current winner not deleted, can't insert
+                    throw new IllegalArgumentException("Can not insert new doc, likely the docId exists already: "
+                            + docId);
+                }
+                // if we got here, parent rev was deleted
+                this.setCurrent(potentialParent, false);
+                options.revId = CouchUtils.generateNextRevisionId(potentialParent.getRevision());
+                options.docNumericId = potentialParent.getInternalNumericId();
+                options.parentSequence = potentialParent.getSequence();
+            } else {
+                // otherwise we are doing a 'normal' create document
+                long docNumericId = insertDocumentID(docId);
+                options.revId = CouchUtils.getFirstRevisionId();
+                options.docNumericId = docNumericId;
+                options.parentSequence = -1l;
             }
 
-            String revisionId = CouchUtils.getFirstRevisionId();
-            InsertRevisionOptions options = new InsertRevisionOptions();
-            options.docNumericId = docNumericID;
-            options.revId = revisionId;
-            options.parentSequence = -1l;
             options.deleted = false;
             options.current = true;
             options.data = body.asBytes();
@@ -475,10 +493,10 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             options.copyAttachments = false;
             long newSequence = insertRevision(options);
             if (newSequence < 0) {
-                throw new IllegalStateException("Error inserting data, please checking data.");
+                throw new IllegalStateException("Error inserting new revision: "+options);
             }
 
-            BasicDocumentRevision doc = getDocument(docId, revisionId);
+            BasicDocumentRevision doc = getDocument(docId, options.revId);
             documentCreated = new DocumentCreated(doc);
             
             Log.d(LOG_TAG, "New document created: " + doc.toString());
@@ -702,6 +720,19 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         public boolean available;
         // copy attachments from previous revision?
         public boolean copyAttachments;
+
+        @Override
+        public String toString() {
+            return "InsertRevisionOptions{" +
+                    "copyAttachments=" + copyAttachments +
+                    ", docNumericId=" + docNumericId +
+                    ", revId='" + revId + '\'' +
+                    ", parentSequence=" + parentSequence +
+                    ", deleted=" + deleted +
+                    ", current=" + current +
+                    ", available=" + available +
+                    '}';
+        }
     }
 
     private long insertRevision(InsertRevisionOptions options) {
