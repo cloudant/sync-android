@@ -112,7 +112,7 @@ public class CouchURIHelperTest {
     public void buildDocumentUri_options_optionsEncoded() throws Exception {
         URI expected = this.create(uriBase + "test/path1%2Fpath2?detail=true&revs=[1-2]");
 
-        Map<String, Object> options = new HashMap<String, Object>();
+        Map<String, Object> options = new TreeMap<String, Object>();
         options.put("revs", "[1-2]");
         options.put("detail", true);
         URI actual = helper.documentUri(db, "path1/path2", options);
@@ -134,7 +134,7 @@ public class CouchURIHelperTest {
     public void buildVeryEscapedUri() throws Exception {
         URI expected = this.create(uriBase + "%2FSDF@%23%25$%23)KLDfdffdg%C3%A9/%2FSF@%23%25$%23)DFGKLDfdffdg%C3%A9%2Fpath2?detail=/SDF@%23%25$%23)%C3%A9&revs=[1-2]");
 
-        Map<String, Object> options = new HashMap<String, Object>();
+        Map<String, Object> options = new TreeMap<String, Object>();
         options.put("revs", "[1-2]");
         options.put("detail", "/SDF@#%$#)\u00E9");
         URI actual = helper.documentUri("/SDF@#%$#)KLDfdffdg\u00E9", "/SF@#%$#)DFGKLDfdffdg\u00E9/path2", options);

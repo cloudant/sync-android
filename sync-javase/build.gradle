@@ -1,7 +1,7 @@
 dependencies {
     compile project(':sync-core')
 
-    compile group: 'com.almworks.sqlite4java', name: 'sqlite4java', version:'0.282'
+    compile group: 'com.almworks.sqlite4java', name: 'sqlite4java', version:'1.0.392'
 
     // there are a couple of unit tests in this project
     testCompile group: 'org.hamcrest', name: 'hamcrest-all', version:'1.3'
