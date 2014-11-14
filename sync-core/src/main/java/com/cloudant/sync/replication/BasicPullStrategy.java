@@ -278,7 +278,10 @@ class BasicPullStrategy implements ReplicationStrategy {
                     // We promise not to insert documents after cancel is set
                     if (this.cancel) { break; }
 
-                    HashMap<String, List<PreparedAttachment>> atts = new HashMap<String, List<PreparedAttachment>>();
+                    // attachments, keyed by docId and revId, so that
+                    // we can add the attachments to the correct leaf
+                    // nodes
+                    HashMap<String[], List<PreparedAttachment>> atts = new HashMap<String[], List<PreparedAttachment>>();
 
                     // now put together a list of attachments we need to download
                     if (!config.pullAttachmentsInline) {
@@ -287,7 +290,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                                 Map<String, Object> attachments = documentRevs.getAttachments();
                                 // keep track of attachments we are going to prepare
                                 ArrayList<PreparedAttachment> preparedAtts = new ArrayList<PreparedAttachment>();
-                                atts.put(documentRevs.getId(), preparedAtts);
+                                atts.put(new String[]{documentRevs.getId(), documentRevs.getRev()}, preparedAtts);
 
                                 for (String attachmentName : attachments.keySet()) {
                                     int revpos = (Integer) ((Map<String, Object>) attachments.get(attachmentName)).get("revpos");
@@ -333,9 +336,11 @@ class BasicPullStrategy implements ReplicationStrategy {
 
                     // now add the attachments we have just downloaded
                     try {
-                        for (String id : atts.keySet()) {
-                            BasicDocumentRevision doc = this.targetDb.getDbCore().getDocument(id);
-                            for (PreparedAttachment att : atts.get(id)) {
+                        for (String[] key : atts.keySet()) {
+                            String id = key[0];
+                            String rev = key[1];
+                            BasicDocumentRevision doc = this.targetDb.getDbCore().getDocument(id, rev);
+                            for (PreparedAttachment att : atts.get(key)) {
                                 this.targetDb.addAttachment(att, doc);
                             }
                         }
