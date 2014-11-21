@@ -29,13 +29,13 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     public String datastoreManagerPath = null;
 
-    DatastoreManager datastoreManager = null;
-    DatastoreExtended datastore = null;
-    SQLDatabase database = null;
-    DatastoreWrapper datastoreWrapper = null;
+    protected DatastoreManager datastoreManager = null;
+    protected DatastoreExtended datastore = null;
+    protected SQLDatabase database = null;
+    protected DatastoreWrapper datastoreWrapper = null;
 
-    CouchClientWrapper remoteDb = null;
-    CouchClient couchClient = null;
+    protected CouchClientWrapper remoteDb = null;
+    protected CouchClient couchClient = null;
 
     @Before
     public void setUp() throws Exception {

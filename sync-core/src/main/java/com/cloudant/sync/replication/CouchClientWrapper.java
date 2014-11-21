@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-class CouchClientWrapper implements CouchDB {
+public class CouchClientWrapper implements CouchDB {
 
     private final static String LOG_TAG = "CouchClientWrapper";
     public static final int SOCKET_TIMEOUT_DEFAULT = 30000;

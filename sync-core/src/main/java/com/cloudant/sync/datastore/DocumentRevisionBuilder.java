@@ -14,12 +14,40 @@
 
 package com.cloudant.sync.datastore;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>Build {@code DocumentRevision}s in a chained manner.</p>
  */
 public class DocumentRevisionBuilder {
+
+
+    static {
+        // these values are defined http://docs.couchdb.org/en/latest/api/document/common.html
+
+        allowedPrefixes = Arrays.asList(new String[]{
+                "_id",
+                "_rev",
+                "_deleted",
+                "_attachments",
+                "_conflicts",
+                "_deleted_conflicts",
+                "_local_seq",
+                "_revs_info",
+                "_revisions"
+        });
+
+    }
+
+    private static List<String> allowedPrefixes;
 
     private String docId = null;
     private String revId = null;
@@ -169,6 +197,73 @@ public class DocumentRevisionBuilder {
     public DocumentRevisionBuilder setAttachments(List<? extends Attachment> attachments) {
         this.attachments = attachments;
         return this;
+    }
+
+    /**
+     * Builds a BasicDocumentRevision from a Map of values from a CouchDB instance
+     * @param documentURI The URI of the document
+     * @param map The map of key value pairs fom the CouchDB server
+     * @return A complete document revision representing the data from the Map
+     * @throws IOException If attachments fail to be decoded correctly.
+     */
+    public static BasicDocumentRevision buildRevisionFromMap(URI documentURI, Map<String, ? extends Object> map) throws IOException {
+
+        for (String key : map.keySet()) {
+
+            if (key.startsWith("_") && !allowedPrefixes.contains(key)) {
+                throw new IllegalArgumentException("Custom _ prefix keys are not allowed");
+            }
+        }
+
+        String docId = (String) map.get("_id");
+        String revId = (String) map.get("_rev");
+        Boolean deleted = map.get("_deleted") == null ? false : (Boolean) map.get("_deleted");
+        Map<String, ?> attachmentDataMap = (Map<String, ?>) map.get("_attachments");
+        List<Attachment> attachments = new LinkedList<Attachment>();
+
+        if(attachmentDataMap != null) {
+
+            for (String key : attachmentDataMap.keySet()) {
+                documentURI.getQuery();
+                String attachmentURIPath = documentURI.getPath()+"/"+key;
+
+                URI attachmentURI= null;
+                try {
+                    attachmentURI = new URI(documentURI.getScheme(),
+                            documentURI.getAuthority(),
+                            attachmentURIPath,
+                            documentURI.getQuery(),
+                            documentURI.getFragment());
+                } catch (URISyntaxException e) {
+                    throw new IllegalArgumentException(e);
+                }
+
+                SavedHttpAttachment attachment =
+                        new SavedHttpAttachment(key,
+                                (Map<String, Object>) attachmentDataMap.get(key),
+                                attachmentURI);
+                attachments.add(attachment);
+
+            }
+        }
+
+
+        Map<String, Object> body = new HashMap<String, Object>();
+        Set<String> keys = map.keySet();
+
+        keys.removeAll(allowedPrefixes);
+
+        for (String key : keys) {
+            body.put(key, map.get(key));
+        }
+
+        DocumentBody docBody = DocumentBodyFactory.create(body);
+
+        DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
+        builder.setDocId(docId).setRevId(revId).setDeleted(deleted).setBody(docBody).setAttachments(attachments);
+
+        return builder.build();
+
     }
 
 
