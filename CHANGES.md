@@ -1,3 +1,11 @@
+# 0.9.1 (2014-11-21)
+
+- [Upgraded] Upgraded SQLite4java to version 1.0.392
+- [FIX] Fixed issue where resurrected documents where handled in correctly
+- [FIX] Fixed dataloss issue where conflicted document attachments were lost
+
+
+
 # 0.9.0 (2014-10-9)
 
 - [REMOVED] Removed deprecated APIs
