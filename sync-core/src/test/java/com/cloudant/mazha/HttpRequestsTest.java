@@ -16,6 +16,10 @@ package com.cloudant.mazha;
 
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.client.params.HttpClientParams;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +45,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
                 couchConfig.getHost(),
                 couchConfig.getPort()
         );
-        this.client = new HttpRequests(couchConfig);
+        this.client = super.client.getHttpClient();
     }
 
     @Test
@@ -57,4 +61,5 @@ public class HttpRequestsTest extends CouchClientTestBase {
     public void shutdown() {
         client.shutdown();
     }
+
 }

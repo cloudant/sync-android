@@ -77,119 +77,139 @@ public class HttpRequests {
     private HttpClient httpClient;
     private JSONHelper jsonHelper;
 
-    private HttpHost host;
     private BasicHttpContext context;
     private boolean debugging;
 
     private String authHeaderValue;
 
-    public HttpRequests(CouchConfig config) {
-        this.httpClient = createHttpClient(config);
+    /**
+     * Create a HttpRequests object with requests constants, such as username, password and other
+     * HttpParameters. The user agent parameter will be set internally so it is constant
+     *
+     * @param params Parameters for the HttpConnection
+     * @param username Username for Basic Auth
+     * @param password Password for Basic Auth
+     */
+    public HttpRequests(HttpParams params, String username, String password){
         this.jsonHelper = new JSONHelper();
-        String username = config.getUsername();
-        String password = config.getPassword();
+        this.context = new BasicHttpContext();
+
+        // Always want to send userAgent param as us and set routing information
+        // Set the specified user agent and register standard protocols.
+        HttpProtocolParams.setUserAgent(params, this.getUserAgent());
+
+        ConnManagerParams.setMaxConnectionsPerRoute(params, new ConnPerRoute() {
+            @Override
+            public int getMaxForRoute(HttpRoute route) {
+                return CONN_PER_ROUT;
+            }
+        });
+
+        ClientConnectionManager manager = getClientConnectionManager(params);
+        DefaultHttpClient httpClient = new DefaultHttpClient(manager,params);
+        addDebuggingInterceptor(httpClient);
+        this.httpClient = httpClient;
 
         if (!Strings.isNullOrEmpty(username)  &&  !Strings.isNullOrEmpty(password)) {
             String authString = username + ":" + password;
             Base64 base64 = new Base64();
             authHeaderValue = "Basic " + new String(base64.encode(authString.getBytes()));
         }
-
     }
 
     // HTTP GET Requests
-    InputStream get(URI uri) {
+    public InputStream get(URI uri) {
         HttpGet get = new HttpGet(uri);
         get.addHeader("Accept", "application/json");
         return get(get);
     }
 
-    InputStream getCompressed(URI uri) {
+    public InputStream getCompressed(URI uri) {
         HttpGet get = new HttpGet(uri);
         get.addHeader("Accept-Encoding", "gzip");
         return get(get);
     }
 
-    InputStream get(HttpGet httpGet) {
+    public InputStream get(HttpGet httpGet) {
         HttpResponse response = executeRequest(httpGet);
         return getStream(response);
     }
 
-    HttpResponse getResponse(URI uri) {
+    public HttpResponse getResponse(URI uri) {
         HttpGet get = new HttpGet(uri);
         get.addHeader("Accept", "application/json");
         return getResponse(get);
     }
 
-    HttpResponse getResponse(HttpGet httpGet) {
+    public HttpResponse getResponse(HttpGet httpGet) {
         return executeRequest(httpGet);
     }
 
     // HTTP DELETE Requests
-    InputStream delete(URI uri) {
+    public InputStream delete(URI uri) {
         HttpDelete delete = new HttpDelete(uri);
         return delete(delete);
     }
 
-    InputStream delete(HttpDelete delete) {
+    public InputStream delete(HttpDelete delete) {
         HttpResponse response = deleteResponse(delete);
         return getStream(response);
     }
 
-    HttpResponse deleteResponse(URI uri) {
+    public HttpResponse deleteResponse(URI uri) {
         HttpDelete delete = new HttpDelete(uri);
         return deleteResponse(delete);
     }
 
-    HttpResponse deleteResponse(HttpDelete delete) {
+    public HttpResponse deleteResponse(HttpDelete delete) {
         return executeRequest(delete);
     }
 
     // HTTP PUT Requests
-    InputStream put(URI uri) {
+    public InputStream put(URI uri) {
         HttpPut put = new HttpPut(uri);
         return getStream(this.putResponse(put));
     }
 
-    InputStream put(URI uri, String payload) {
+    public InputStream put(URI uri, String payload) {
         HttpPut put = new HttpPut(uri);
         put.addHeader("Accept", "application/json");
         setEntity(put, payload);
         return getStream(this.putResponse(put));
     }
 
-    InputStream put(URI uri, String contentType, byte[] payload) {
+    public InputStream put(URI uri, String contentType, byte[] payload) {
         HttpPut put = new HttpPut(uri);
         put.addHeader("Accept", "application/json");
         setEntity(put, contentType, payload);
         return getStream(this.putResponse(put));
     }
 
-    InputStream putStream(URI uri, String contentType, InputStream is, long contentLength) {
+    public InputStream putStream(URI uri, String contentType, InputStream is, long contentLength) {
         HttpPut put = new HttpPut(uri);
         put.addHeader("Accept", "application/json");
         setEntity(put, contentType, is, contentLength);
         return getStream(this.putResponse(put));
     }
 
-    HttpResponse putResponse(HttpPut put) {
+    public HttpResponse putResponse(HttpPut put) {
         return executeRequest(put);
     }
 
     // HTTP POST Requests
-    InputStream post(URI uri, String payload) {
+    public InputStream post(URI uri, String payload) {
         HttpResponse response = postResponse(uri, payload);
         return getStream(response);
     }
 
-    HttpResponse postResponse(URI uri, String payload) {
+    public HttpResponse postResponse(URI uri, String payload) {
         HttpPost post = new HttpPost(uri);
         setEntity(post, payload);
         return executeRequest(post);
     }
 
     // HTTP HEAD Requests
-    HttpResponse head(URI uri) {
+    public HttpResponse head(URI uri) {
         HttpHead head = new HttpHead(uri);
         return executeRequest(head);
     }
@@ -206,7 +226,7 @@ public class HttpRequests {
             if (authHeaderValue != null) {
                 request.addHeader("Authorization", authHeaderValue);
             }
-            HttpResponse response = httpClient.execute(host, request, context);
+            HttpResponse response = httpClient.execute(request, context);
             validate(request, response);
             return response;
         } catch (IOException e) {
@@ -215,25 +235,7 @@ public class HttpRequests {
         }
     }
 
-    /**
-     * @return {@link org.apache.http.impl.client.DefaultHttpClient} instance.
-     */
-    private HttpClient createHttpClient(CouchConfig config) {
-        try {
-            this.host = new HttpHost(config.getHost(), config.getPort(), config.getProtocol());
-            this.context = new BasicHttpContext();
 
-            HttpParams params = getHttpConnectionParams(config);
-            ClientConnectionManager manager = getClientConnectionManager(params);
-
-            DefaultHttpClient httpClient = new DefaultHttpClient(manager, params);
-            addDebuggingInterceptor(httpClient);
-
-            return httpClient;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-    }
 
     private ClientConnectionManager getClientConnectionManager(HttpParams params) {
         SchemeRegistry schemeRegistry = new SchemeRegistry();
@@ -244,31 +246,7 @@ public class HttpRequests {
         return new ThreadSafeClientConnManager(params, schemeRegistry);
     }
 
-    private HttpParams getHttpConnectionParams(CouchConfig config) {
-        BasicHttpParams params = new BasicHttpParams();
 
-        // Turn off stale checking.  Our connections break all the time anyway,
-        // and it's not worth it to pay the penalty of checking every time.
-        HttpConnectionParams.setStaleCheckingEnabled(params, config.isStaleConnectionCheckingEnabled());
-        HttpConnectionParams.setConnectionTimeout(params, config.getConnectionTimeout());
-        HttpConnectionParams.setSoTimeout(params, config.getSocketTimeout());
-        HttpConnectionParams.setSocketBufferSize(params, config.getBufferSize());
-
-        // Don't handle redirects -- return them to the caller.  Our code
-        // often wants to re-POST after a redirect, which we must do ourselves.
-        HttpClientParams.setRedirecting(params, config.isHandleRedirectEnabled());
-
-        // Set the specified user agent and register standard protocols.
-        HttpProtocolParams.setUserAgent(params, this.getUserAgent());
-
-        ConnManagerParams.setMaxConnectionsPerRoute(params, new ConnPerRoute() {
-            @Override
-            public int getMaxForRoute(HttpRoute route) {
-                return CONN_PER_ROUT;
-            }
-        });
-        return params;
-    }
 
     private static final String default_user_agent = "CloudantSync";
     private static String userAgent = null;
