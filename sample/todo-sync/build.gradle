@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.12+'
+        classpath 'com.android.tools.build:gradle:0.13+'
     }
 }
 apply plugin: 'android'
@@ -18,8 +18,8 @@ repositories {
 }
 
 dependencies {
-    compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.9.1')
-    compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-core', version:'0.9.1')
+    compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.9.2')
+    compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-core', version:'0.9.2')
 }
 
 android {

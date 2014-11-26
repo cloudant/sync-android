@@ -1,10 +1,14 @@
+# 0.9.2 (2014-11-26)
+
+- [FIX] Fixed a build issue with 0.9.1. The jars for 0.9.1 were built
+  incorrectly, causing Android users to experience the error
+  'Error:duplicate files during packaging of APK'
+
 # 0.9.1 (2014-11-21)
 
 - [Upgraded] Upgraded SQLite4java to version 1.0.392
 - [FIX] Fixed issue where resurrected documents where handled in correctly
 - [FIX] Fixed dataloss issue where conflicted document attachments were lost
-
-
 
 # 0.9.0 (2014-10-9)
 
