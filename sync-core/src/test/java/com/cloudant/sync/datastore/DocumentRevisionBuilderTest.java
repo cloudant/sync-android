@@ -6,6 +6,7 @@ import com.cloudant.sync.replication.ReplicationTestBase;
 import com.cloudant.sync.util.TestUtils;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.Assert;
 
@@ -20,23 +21,31 @@ import java.util.Map;
 
 public class DocumentRevisionBuilderTest extends ReplicationTestBase {
 
-    @Test
-    public void buildRevisionFromMapValidMap() throws Exception {
+    Map<String,Object> documentRev;
+    Map<String, String>body;
+    URI documentURI;
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        documentRev  = new HashMap<String,Object>();
+        documentRev.put("_id","someIdHere");
+        documentRev.put("_rev","3-750dac460a6cc41e6999f8943b8e603e");
+        documentRev.put("aKey","aValue");
+        documentRev.put("hello","world");
 
-        Map<String,String> jsonMap = new HashMap<String,String>();
-        jsonMap.put("_id","someIdHere");
-        jsonMap.put("_rev","3-750dac460a6cc41e6999f8943b8e603e");
-        jsonMap.put("aKey","aValue");
-        jsonMap.put("hello","world");
-
-        Map<String,String> body = new HashMap<String,String>();
+        body = new HashMap<String,String>();
         body.put("aKey","aValue");
         body.put("hello","world");
 
-        URI uri = new URI("http://localhost:5984");
+        documentURI =  new URI(remoteDb.getCouchClient().getDefaultDBUri().toString()+"/someIdHere");
+    }
+
+
+    @Test
+    public void buildRevisionFromMapValidMap() throws Exception {
 
         DocumentRevision revision =
-                DocumentRevisionBuilder.buildRevisionFromMap(uri,jsonMap);
+                DocumentRevisionBuilder.buildRevisionFromMap(documentURI, documentRev);
 
 
         Assert.assertNotNull(revision);
@@ -49,21 +58,10 @@ public class DocumentRevisionBuilderTest extends ReplicationTestBase {
     @Test
     public void buildRevisionFromMapValidMapDelectedDoc() throws Exception {
 
-        Map<String,Object> jsonMap = new HashMap<String,Object>();
-        jsonMap.put("_id","someIdHere");
-        jsonMap.put("_rev","3-750dac460a6cc41e6999f8943b8e603e");
-        jsonMap.put("_deleted",Boolean.TRUE);
-        jsonMap.put("aKey","aValue");
-        jsonMap.put("hello","world");
-
-        Map<String,String> body = new HashMap<String,String>();
-        body.put("aKey","aValue");
-        body.put("hello","world");
-
-        URI uri = new URI("http://localhost:5984");
+        documentRev.put("_deleted", Boolean.TRUE);
 
         BasicDocumentRevision revision =
-                DocumentRevisionBuilder.buildRevisionFromMap(uri,jsonMap);
+                DocumentRevisionBuilder.buildRevisionFromMap(documentURI, documentRev);
 
 
         Assert.assertNotNull(revision);
@@ -77,28 +75,16 @@ public class DocumentRevisionBuilderTest extends ReplicationTestBase {
     @Test
     public void buildRevisionFromMapValidMapAllFields() throws Exception {
 
-        Map<String,Object> jsonMap = new HashMap<String,Object>();
-        jsonMap.put("_id","someIdHere");
-        jsonMap.put("_rev","3-750dac460a6cc41e6999f8943b8e603e");
-        jsonMap.put("aKey","aValue");
-        jsonMap.put("hello","world");
-        jsonMap.put("_attachments",new HashMap<String,String>());
-        jsonMap.put("_conflicts",new String[0]);
-        jsonMap.put("_deleted_conflicts",new HashMap<String,Object>());
-        jsonMap.put("_local_seq",1);
-        jsonMap.put("_revs_info",new HashMap<String,Object>());
-        jsonMap.put("_revisions",new String[0]);
-
-
-        Map<String,String> body = new HashMap<String,String>();
-        body.put("aKey","aValue");
-        body.put("hello","world");
-
-        URI uri = new URI("http://localhost:5984");
+        //add missing valid _ prefixed keys to map
+        documentRev.put("_attachments",new HashMap<String,String>());
+        documentRev.put("_conflicts",new String[0]);
+        documentRev.put("_deleted_conflicts",new HashMap<String,Object>());
+        documentRev.put("_local_seq",1);
+        documentRev.put("_revs_info",new HashMap<String,Object>());
+        documentRev.put("_revisions",new String[0]);
 
         BasicDocumentRevision revision =
-                DocumentRevisionBuilder.buildRevisionFromMap(uri,jsonMap);
-
+                DocumentRevisionBuilder.buildRevisionFromMap(documentURI,documentRev);
 
         Assert.assertNotNull(revision);
         Assert.assertEquals(body,revision.getBody().asMap());
@@ -110,22 +96,10 @@ public class DocumentRevisionBuilderTest extends ReplicationTestBase {
 
     @Test(expected = IllegalArgumentException.class)
     public void buildRevisionFromMapInValidMap() throws Exception {
-
-        Map<String,String> jsonMap = new HashMap<String,String>();
-        jsonMap.put("_id","someIdHere");
-        jsonMap.put("_rev","3-750dac460a6cc41e6999f8943b8e603e");
-        jsonMap.put("_notValidKey","not valid");
-        jsonMap.put("aKey","aValue");
-        jsonMap.put("hello","world");
-
-        Map<String,String> body = new HashMap<String,String>();
-        body.put("aKey","aValue");
-        body.put("hello","world");
-
-        URI uri = new URI("http://localhost:5984");
+        documentRev.put("_notValidKey","not valid");
 
         DocumentRevision revision =
-                DocumentRevisionBuilder.buildRevisionFromMap(uri,jsonMap);
+                DocumentRevisionBuilder.buildRevisionFromMap(documentURI,documentRev);
 
     }
 
@@ -137,46 +111,17 @@ public class DocumentRevisionBuilderTest extends ReplicationTestBase {
         File file = TestUtils.loadFixture("fixture/bonsai-boston.jpg");
 
         byte[] unencodedAttachment = FileUtils.readFileToByteArray(file);
-
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        OutputStream out = Base64OutputStreamFactory.get(byteArrayOutputStream);
-        out.write(unencodedAttachment);
-        out.flush();
-        byteArrayOutputStream.flush();
-        out.close();
-        byteArrayOutputStream.close();
-
-        byte[] encodedAttachment = byteArrayOutputStream.toByteArray();
-
-        String encodedAttachmentString = new String(encodedAttachment);
-
-
-        Map<String,Object> jsonMap = new HashMap<String,Object>();
-        jsonMap.put("_id","someIdHere");
-        jsonMap.put("_rev","3-750dac460a6cc41e6999f8943b8e603e");
-        jsonMap.put("aKey","aValue");
-        jsonMap.put("hello","world");
+        byte[] encodedAttachment = this.encodeAttachment(unencodedAttachment);
 
         Map<String,Map<String,Object>> attachments = new HashMap<String,Map<String,Object>>();
-        Map<String,Object> bonsai = new HashMap<String,Object>();
-        bonsai.put("length",encodedAttachmentString.length());
-        bonsai.put("digest","thisisahasiswear");
-        bonsai.put("revops",1);
-        bonsai.put("content_type","image/jpeg");
-        bonsai.put("stub", false);
-        bonsai.put("data",encodedAttachmentString);
+        Map<String,Object> bonsai = createAttachmentMap(encodedAttachment,"image/jpeg",false);
 
         attachments.put("bonsai-boston.jpg",bonsai);
-        jsonMap.put("_attachments",attachments);
+        documentRev.put("_attachments", attachments);
 
-        Map<String,String> body = new HashMap<String,String>();
-        body.put("aKey","aValue");
-        body.put("hello","world");
-
-        URI uri = new URI("http://localhost:5984/someIdHere");
 
         DocumentRevision revision =
-                DocumentRevisionBuilder.buildRevisionFromMap(uri,jsonMap);
+                DocumentRevisionBuilder.buildRevisionFromMap(documentURI,documentRev);
 
 
         Assert.assertNotNull(revision);
@@ -199,18 +144,7 @@ public class DocumentRevisionBuilderTest extends ReplicationTestBase {
         File file = TestUtils.loadFixture("fixture/bonsai-boston.jpg");
 
         byte[] unencodedAttachment = FileUtils.readFileToByteArray(file);
-
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        OutputStream out = Base64OutputStreamFactory.get(byteArrayOutputStream);
-        out.write(unencodedAttachment);
-
-        //close and flush all streams
-        out.flush();
-        byteArrayOutputStream.flush();
-        out.close();
-        byteArrayOutputStream.close();
-
-        byte[] encodedAttachment = byteArrayOutputStream.toByteArray();
+        byte[] encodedAttachment = this.encodeAttachment(unencodedAttachment);
 
         String encodedAttachmentString = new String(encodedAttachment);
 
@@ -219,50 +153,28 @@ public class DocumentRevisionBuilderTest extends ReplicationTestBase {
         Map<String,Object> remoteDoc = new HashMap<String,Object>();
         remoteDoc.put("_id","someIdHere");
         Map<String,Map<String,Object>> remoteAttachments = new HashMap<String,Map<String,Object>>();
-        Map<String,Object> remoteBonsai = new HashMap<String,Object>();
-        remoteBonsai.put("length",encodedAttachmentString.length());
-        remoteBonsai.put("digest","thisisahasiswear");
-        remoteBonsai.put("revops",1);
-        remoteBonsai.put("content_type","image/jpeg");
-        remoteBonsai.put("data",encodedAttachmentString);
+        Map<String,Object> remoteBonsai = createAttachmentMap(encodedAttachment,"image/jpeg",false);//new HashMap<String,Object>();
 
         remoteAttachments.put("bonsai-boston.jpg",remoteBonsai);
         remoteDoc.put("_attachments",remoteAttachments);
-
 
         remoteDb.create(remoteDoc);
 
 
         //build up the test json map
 
-
-        Map<String,Object> jsonMap = new HashMap<String,Object>();
-        jsonMap.put("_id","someIdHere");
-        jsonMap.put("_rev","3-750dac460a6cc41e6999f8943b8e603e");
-        jsonMap.put("aKey","aValue");
-        jsonMap.put("hello","world");
-
         Map<String,Map<String,Object>> attachments = new HashMap<String,Map<String,Object>>();
-        Map<String,Object> bonsai = new HashMap<String,Object>();
-        bonsai.put("length",unencodedAttachment.length);
-        bonsai.put("digest","thisisahasiswear");
-        bonsai.put("revops",1);
-        bonsai.put("content_type","image/jpeg");
-        bonsai.put("stub",true);
+        Map<String,Object> bonsai = createAttachmentMap(encodedAttachment,"image/jpeg",true);
 
         attachments.put("bonsai-boston.jpg",bonsai);
-        jsonMap.put("_attachments",attachments);
-
-        Map<String,String> body = new HashMap<String,String>();
-        body.put("aKey","aValue");
-        body.put("hello","world");
+        documentRev.put("_attachments",attachments);
 
         URI uri =  new URI(remoteDb.getCouchClient().getDefaultDBUri().toString()+"/"+"someIdHere");
 
         //create the document revision and test
 
         DocumentRevision revision =
-                DocumentRevisionBuilder.buildRevisionFromMap(uri,jsonMap);
+                DocumentRevisionBuilder.buildRevisionFromMap(uri,documentRev);
 
 
         Assert.assertNotNull(revision);
@@ -284,32 +196,14 @@ public class DocumentRevisionBuilderTest extends ReplicationTestBase {
         File file = TestUtils.loadFixture("fixture/bonsai-boston.jpg");
 
         byte[] unencodedAttachment = FileUtils.readFileToByteArray(file);
-
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        OutputStream out = Base64OutputStreamFactory.get(byteArrayOutputStream);
-        out.write(unencodedAttachment);
-
-        //close and flush all streams
-        out.flush();
-        byteArrayOutputStream.flush();
-        out.close();
-        byteArrayOutputStream.close();
-
-        byte[] encodedAttachment = byteArrayOutputStream.toByteArray();
-
-        String encodedAttachmentString = new String(encodedAttachment);
+        byte[] encodedAttachment = this.encodeAttachment(unencodedAttachment);
 
         //create a revision on a couchDB instance so we can test the download
         //of attachments
         Map<String,Object> remoteDoc = new HashMap<String,Object>();
         remoteDoc.put("_id","someIdHere");
         Map<String,Map<String,Object>> remoteAttachments = new HashMap<String,Map<String,Object>>();
-        Map<String,Object> remoteBonsai = new HashMap<String,Object>();
-        remoteBonsai.put("length",encodedAttachmentString.length());
-        remoteBonsai.put("digest","thisisahasiswear");
-        remoteBonsai.put("revops",1);
-        remoteBonsai.put("content_type","image/jpeg");
-        remoteBonsai.put("data",encodedAttachmentString);
+        Map<String,Object> remoteBonsai = createAttachmentMap(encodedAttachment,"image/jpeg",false);
 
         remoteAttachments.put("bonsai-boston.jpg",remoteBonsai);
         remoteDoc.put("_attachments",remoteAttachments);
@@ -324,34 +218,18 @@ public class DocumentRevisionBuilderTest extends ReplicationTestBase {
 
         //build up the test json map
 
-
-        Map<String,Object> jsonMap = new HashMap<String,Object>();
-        jsonMap.put("_id","someIdHere");
-        jsonMap.put("_rev","3-750dac460a6cc41e6999f8943b8e603e");
-        jsonMap.put("aKey","aValue");
-        jsonMap.put("hello","world");
-
         Map<String,Map<String,Object>> attachments = new HashMap<String,Map<String,Object>>();
-        Map<String,Object> bonsai = new HashMap<String,Object>();
-        bonsai.put("length",unencodedAttachment.length);
-        bonsai.put("digest","thisisahasiswear");
-        bonsai.put("revops",1);
-        bonsai.put("content_type","image/jpeg");
-        bonsai.put("stub",true);
+        Map<String,Object> bonsai = this.createAttachmentMap(encodedAttachment,"image/jpeg",true);
 
         attachments.put("bonsai-boston.jpg",bonsai);
-        jsonMap.put("_attachments",attachments);
-
-        Map<String,String> body = new HashMap<String,String>();
-        body.put("aKey","aValue");
-        body.put("hello","world");
+        documentRev.put("_attachments",attachments);
 
         URI uri =  new URI(remoteDb.getCouchClient().getDefaultDBUri().toString()+"/"+"someIdHere"+"?rev="+response.getRev());
 
         //create the document revision and test
 
         DocumentRevision revision =
-                DocumentRevisionBuilder.buildRevisionFromMap(uri,jsonMap);
+                DocumentRevisionBuilder.buildRevisionFromMap(uri,documentRev);
 
 
         Assert.assertNotNull(revision);
@@ -373,70 +251,31 @@ public class DocumentRevisionBuilderTest extends ReplicationTestBase {
         String attachmentText = "Hello World";
 
         byte[] unencodedAttachment = attachmentText.getBytes();
-
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        OutputStream out = Base64OutputStreamFactory.get(byteArrayOutputStream);
-        out.write(unencodedAttachment);
-
-        //close and flush all streams
-        out.flush();
-        byteArrayOutputStream.flush();
-        out.close();
-        byteArrayOutputStream.close();
-
-        byte[] encodedAttachment = byteArrayOutputStream.toByteArray();
-
-        String encodedAttachmentString = new String(encodedAttachment);
+        byte[] encodedAttachment = this.encodeAttachment(unencodedAttachment);
 
         //create a revision on a couchDB instance so we can test the download
         //of attachments
         Map<String,Object> remoteDoc = new HashMap<String,Object>();
         remoteDoc.put("_id","someIdHere");
         Map<String,Map<String,Object>> remoteAttachments = new HashMap<String,Map<String,Object>>();
-        Map<String,Object> remoteBonsai = new HashMap<String,Object>();
-        remoteBonsai.put("length",encodedAttachmentString.length());
-        remoteBonsai.put("digest","thisisahasiswear");
-        remoteBonsai.put("revops",1);
-        remoteBonsai.put("content_type","text/plain");
-        remoteBonsai.put("data",encodedAttachmentString);
 
-        remoteAttachments.put("hello.txt",remoteBonsai);
+        remoteAttachments.put("hello.txt",this.createAttachmentMap(encodedAttachment,"text/plain",false));
         remoteDoc.put("_attachments",remoteAttachments);
 
-
         remoteDb.create(remoteDoc);
-
-
-        //build up the test json map
-
-
-        Map<String,Object> jsonMap = new HashMap<String,Object>();
-        jsonMap.put("_id","someIdHere");
-        jsonMap.put("_rev","3-750dac460a6cc41e6999f8943b8e603e");
-        jsonMap.put("aKey","aValue");
-        jsonMap.put("hello","world");
+        documentURI = new URI(remoteDb.getCouchClient().getDefaultDBUri().toString()+"/"+"someIdHere");
 
         Map<String,Map<String,Object>> attachments = new HashMap<String,Map<String,Object>>();
-        Map<String,Object> bonsai = new HashMap<String,Object>();
-        bonsai.put("length",unencodedAttachment.length);
-        bonsai.put("digest","thisisahasiswear");
-        bonsai.put("revops",1);
-        bonsai.put("content_type","text/plain");
-        bonsai.put("stub",true);
+        Map<String,Object> bonsai = createAttachmentMap(encodedAttachment,"text/plain",true);//new HashMap<String,Object>();
+        bonsai.put("encoding","gzip");
 
         attachments.put("hello.txt",bonsai);
-        jsonMap.put("_attachments",attachments);
-
-        Map<String,String> body = new HashMap<String,String>();
-        body.put("aKey","aValue");
-        body.put("hello","world");
-
-        URI uri =  new URI(remoteDb.getCouchClient().getDefaultDBUri().toString()+"/"+"someIdHere");
+        documentRev.put("_attachments",attachments);
 
         //create the document revision and test
 
         DocumentRevision revision =
-                DocumentRevisionBuilder.buildRevisionFromMap(uri,jsonMap);
+                DocumentRevisionBuilder.buildRevisionFromMap(documentURI,documentRev);
 
 
         Assert.assertNotNull(revision);
@@ -448,6 +287,39 @@ public class DocumentRevisionBuilderTest extends ReplicationTestBase {
         InputStream expectedInputStream = new ByteArrayInputStream(unencodedAttachment);
         Assert.assertTrue(TestUtils.streamsEqual(expectedInputStream, attachmentInputStream));
 
+    }
+
+    private Map<String,Object> createAttachmentMap(byte[] encodedAttachment,String contentType,boolean stub){
+        String encodedAttachmentString = new String(encodedAttachment);
+
+
+        Map<String,Object> remoteBonsai = new HashMap<String,Object>();
+        remoteBonsai.put("length",encodedAttachmentString.length());
+        remoteBonsai.put("digest","thisisahasiswear");
+        remoteBonsai.put("revpos",1);
+        remoteBonsai.put("content_type",contentType);
+        remoteBonsai.put("stub",stub);
+        if(!stub) {
+            remoteBonsai.put("data", encodedAttachmentString);
+        }
+
+
+        return remoteBonsai;
+    }
+
+    private byte[] encodeAttachment(byte[] unencodedAttachment) throws Exception {
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        OutputStream out = Base64OutputStreamFactory.get(byteArrayOutputStream);
+        out.write(unencodedAttachment);
+
+        //close and flush all streams
+        out.flush();
+        byteArrayOutputStream.flush();
+        out.close();
+        byteArrayOutputStream.close();
+
+        return byteArrayOutputStream.toByteArray();
     }
 
 
