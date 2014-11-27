@@ -190,10 +190,7 @@ public abstract class Replication {
     }
 
     String extractDatabaseName(URI uri) {
-        String db =  uri.getPath().substring(1);
-        if(db.contains("/"))
-            throw new IllegalArgumentException("DB name can not contain slash: '/'");
-        return db;
+        return uri.getPath().substring(1);
     }
 
     void checkURI(URI uri) {

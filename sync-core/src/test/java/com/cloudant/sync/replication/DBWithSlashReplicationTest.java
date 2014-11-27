@@ -1,24 +1,14 @@
-/*
- * Copyright (c) 2014 Cloudant, Inc. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
- * except in compliance with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the
- * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the specific language governing permissions
- * and limitations under the License.
- */
-
 package com.cloudant.sync.replication;
 
 import com.cloudant.mazha.ClientTestUtils;
 import com.cloudant.mazha.CouchDbInfo;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentBody;
+import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.util.AbstractTreeNode;
 
 import org.junit.Assert;
@@ -32,32 +22,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class CompactedDBReplicationTest extends ReplicationTestBase {
-
+/**
+ * Created by rhys on 28/11/14.
+ */
+public class DBWithSlashReplicationTest extends ReplicationTestBase {
 
     URI source;
     BasicReplicator replicator;
-    boolean testWithCloudant = false;
 
     @Before
     public void setUp() throws Exception {
-       super.setUp();
-       source = getURI();
-
-       String cloudantTest = System.getProperty("test.with.cloudant");
-       testWithCloudant = Boolean.parseBoolean(cloudantTest);
+        super.setUp();
+        source = getURI();
     }
 
-
-
     @Test
-    public void replicationFromCompactedDB() throws Exception{
-        // if the test case is running against Cloudant, this test should not execute since
-        // Cloudant returns 403 - Forbidden when attempting to call _compact
-        if(testWithCloudant){
-            return;
-        }
-
+    public void replicationPullAndPushDbWithSlash() throws Exception{
         String documentName;
         Bar bar = BarUtils.createBar(remoteDb, "Bob", 12);
         Response res = couchClient.create(bar);
@@ -72,18 +52,6 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
             res = couchClient.update(bar.getId(), bar);
             Assert.assertTrue("Failure during DB creation", res.getOk());
         }
-
-        // compact database
-
-        URI postURI = new URI(source.toString() + "/_compact");
-
-        Assert.assertEquals(ClientTestUtils.executeHttpPostRequest(couchClient, postURI, ""), 202);
-        CouchDbInfo info = couchClient.getDbInfo(getDbName());
-
-        while(info.isCompactRunning()) {
-            Thread.sleep(10);
-            info = couchClient.getDbInfo(getDbName());
-        };
 
         // replicate with compacted database
 
@@ -108,7 +76,13 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
 
         // compare remote revisions with local revisions
 
-        URI getURI = new URI(source.toString() + "/" + documentName + "?revs_info=true");
+
+        String dbname =  source.getPath().substring(1);
+        String dbnameEncoded = dbname.replace("/", "%2F");
+        String dbURI = source.toString().replace(dbname,dbnameEncoded);
+
+
+        URI getURI = new URI( dbURI + "/" + documentName + "?revs_info=true");
 
         List<String> remoteRevs = ClientTestUtils.getRemoteRevisionIDs(couchClient, getURI);
         List<String> localRevs = new ArrayList<String>();
@@ -128,9 +102,57 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
                     localRevs.contains(rev));
         }
 
+        //now create some local revs
+        BasicDocumentRevision revision = datastore.getDocument(documentName);
+
+        for(int i=0;i<10;i++){
+            MutableDocumentRevision mutableDocumentRevision = revision.mutableCopy();
+            Map<String,Object> body = mutableDocumentRevision.body.asMap();
+            Number age = (Number)body.get("age");
+            age =  age.intValue() + 1;
+            body.put("age",age);
+            mutableDocumentRevision.body = DocumentBodyFactory.create(body);
+            revision = datastore.updateDocumentFromRevision(mutableDocumentRevision);
+        }
+
+        // push the changes to the remote
+        PushReplication push = createPushReplication();
+        replicator = (BasicReplicator)ReplicatorFactory.oneway(push);
+        replicator.getEventBus().register(listener);
+        replicator.start();
+        Assert.assertEquals(Replicator.State.STARTED, replicator.getState());
+
+        while(replicator.getState() != Replicator.State.COMPLETE){
+            Thread.sleep(1000);
+        }
+
+        Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());;
+
+        Assert.assertTrue(listener.finishCalled);
+        Assert.assertFalse(listener.errorCalled);
+
+
+        //compare local revs to remote
+        remoteRevs = ClientTestUtils.getRemoteRevisionIDs(couchClient, getURI);
+        localRevs = new ArrayList<String>();
+        localRevsTree = datastore.getAllRevisionsOfDocument(bar.getId());
+
+        roots = localRevsTree.roots();
+        rootSet = roots.keySet();
+        for(Long l:rootSet){
+            DocumentRevisionTree.DocumentRevisionNode node = roots.get(l);
+            localRevs.add(node.getData().getRevision());
+            extractRevisionIDsFromChildren(node, localRevs);
+
+        }
+
+        for(String rev: localRevs){
+            Assert.assertTrue("Local revision missing from remote replica, rev missing: " + rev,
+                    remoteRevs.contains(rev));
+        }
+
 
     }
-
 
     private void extractRevisionIDsFromChildren(AbstractTreeNode<BasicDocumentRevision> node,
                                                 List<String> documentRevisions){
@@ -146,25 +168,8 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
 
     }
 
-    @Test
-    public void testExtractDbNameSlashes() throws Exception {
-        PullReplication pull = createPullReplication();
-        URI uri = new URI("http://my.api.server.url/complexed/path/to/database_name");
-        String dbName = pull.extractDatabaseName(uri);
-        Assert.assertEquals(dbName,"complexed/path/to/database_name");
-
+    @Override
+    String getDbName() {
+        return "dbwith/aslash";
     }
-
-    @Test
-    public void testExtractDBNameNoSlashes() throws Exception {
-        PullReplication pull = createPullReplication();
-        URI uri = new URI("http://your.server.url/database_name");
-        String dbName = pull.extractDatabaseName(uri);
-        Assert.assertEquals(dbName,"database_name");
-
-    }
-
-
-
-
 }
