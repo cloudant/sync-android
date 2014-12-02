@@ -78,4 +78,14 @@ public abstract class Attachment implements Comparable<Attachment>{
         Gzip
     }
 
+    public static Encoding getEncodingFromString(String encodingString){
+        if(encodingString == null || encodingString.isEmpty() || encodingString.equalsIgnoreCase("Plain")){
+            return Encoding.Plain;
+        } else if(encodingString.equalsIgnoreCase("gzip")){
+            return Encoding.Gzip;
+        } else {
+            throw new IllegalArgumentException("Unsupported encoding");
+        }
+    }
+
 }

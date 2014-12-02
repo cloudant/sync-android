@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 
 /**
@@ -35,6 +36,7 @@ public class SavedHttpAttachment extends Attachment {
     private URI attachmentURI;
     private int size;
     private byte[] data;
+    private Encoding encoding;
 
 
     /**
@@ -51,6 +53,8 @@ public class SavedHttpAttachment extends Attachment {
          Boolean stub = (Boolean) attachmentData.get("stub");
          Number length = (Number)attachmentData.get("length");
          String data = (String)attachmentData.get("data");
+         String encoding =  (String)attachmentData.get("encoding");
+         this.encoding = Attachment.getEncodingFromString(encoding);
          if(!stub){
             byte[] dataArray =  data.getBytes();
             InputStream is = Base64InputStreamFactory.get(new ByteArrayInputStream(dataArray));
@@ -71,7 +75,11 @@ public class SavedHttpAttachment extends Attachment {
     public InputStream getInputStream() throws IOException {
         if( data == null) {
             HttpRequests requests = new HttpRequests(new BasicHttpParams(), null, null);
-            return requests.get(attachmentURI);
+            if(encoding == Encoding.Gzip) {
+                return new GZIPInputStream(requests.getCompressed(attachmentURI));
+            } else {
+                return requests.get(attachmentURI);
+            }
         } else {
             return new ByteArrayInputStream(data);
         }

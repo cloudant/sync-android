@@ -250,7 +250,7 @@ public class CouchClientWrapper implements CouchDB {
     @Override
     public UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType, String encodingStr) {
         InputStream is = this.couchClient.getAttachmentStream(id, rev, attachmentName);
-        Attachment.Encoding encoding = encodingStr != null && encodingStr.equals("gzip") ? Attachment.Encoding.Gzip : Attachment.Encoding.Plain;
+        Attachment.Encoding encoding = Attachment.getEncodingFromString(encodingStr);
         UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is, attachmentName, contentType, encoding);
         return usa;
     }
