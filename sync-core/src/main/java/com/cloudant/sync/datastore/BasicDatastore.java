@@ -1176,9 +1176,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         this.sqlDb.update("revs", args, "sequence=?", whereArgs);
     }
 
-    /**
-     * Compacts the sqlDatabase storage by removing the bodies and attachments of obsolete revisions.
-     */
+    @Override
     public void compact() {
         Log.v(LOG_TAG, "Deleting JSON of old revisions...");
         ContentValues args = new ContentValues();
