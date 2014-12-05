@@ -340,15 +340,32 @@ public class DocumentRevisionTree {
         return res;
     }
 
+
     /**
      * <p>Returns the leaf revisions</p>
      *
-     * @return the set of the DocumentRevision
+     * <p>This is the same as calling
+     * {@link com.cloudant.sync.datastore.DocumentRevisionTree#leafRevisions(boolean)} with
+     * <code>false</code> as the parameter</p>
+     *
+     * @return a list of {@link com.cloudant.sync.datastore.DocumentRevision} objects.
      */
-    public List<BasicDocumentRevision> leafRevisions() {
+    public List<BasicDocumentRevision> leafRevisions(){
+        return this.leafRevisions(false);
+    }
+    /**
+     * <p>Returns the leaf revisions</p>
+     *
+     * @param excludeDeleted if true, exclude deleted leaf revisions from list
+     * @return a list of {@link com.cloudant.sync.datastore.DocumentRevision} objects.
+     */
+    public List<BasicDocumentRevision> leafRevisions(boolean excludeDeleted) {
         List<BasicDocumentRevision> res = new ArrayList<BasicDocumentRevision>();
         for(DocumentRevisionNode obj : leafs()) {
-            res.add(obj.getData());
+            BasicDocumentRevision revision = obj.getData();
+            if (!excludeDeleted || (excludeDeleted && !revision.isDeleted())){
+                res.add(revision);
+            }
         }
         return res;
     }
