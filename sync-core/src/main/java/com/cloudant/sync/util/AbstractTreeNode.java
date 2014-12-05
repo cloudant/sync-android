@@ -14,17 +14,18 @@
 
 package com.cloudant.sync.util;
 
-import com.cloudant.common.Log;
-
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.Logger;
 
 /**
  * Internal utility class
  * @param <T>
  */
 public abstract class AbstractTreeNode<T> {
+
+    private final static Logger logger = Logger.getLogger(AbstractTreeNode.class.getCanonicalName());
 
     private T data;
     private int depth = 0;
@@ -77,7 +78,7 @@ public abstract class AbstractTreeNode<T> {
 
     @Override
     public boolean equals(Object that) {
-        Log.d("AbstractTreeNode", "equals()");
+        logger.entering("AbstractTreeNode","equals",that);
         if(!(that instanceof AbstractTreeNode)) {
             return false;
         }

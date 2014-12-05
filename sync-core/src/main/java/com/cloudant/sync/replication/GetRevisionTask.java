@@ -16,13 +16,12 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.common.RetriableTask;
 import com.cloudant.sync.datastore.DocumentRevsList;
-import com.cloudant.common.Log;
 import com.google.common.base.Preconditions;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.logging.Logger;
 
 /**
  * GetRevisionTask handles calling getting the revision tree for a given docId and open
@@ -61,6 +60,7 @@ import java.util.concurrent.Callable;
 class GetRevisionTask implements Callable<DocumentRevsList> {
 
     private static final String LOG_TAG = "GetRevisionTask";
+    private static final Logger logger = Logger.getLogger(GetRevisionTask.class.getCanonicalName());
 
     private String documentId;
     private Collection<String> openRevisions;
@@ -94,7 +94,7 @@ class GetRevisionTask implements Callable<DocumentRevsList> {
 
     @Override
     public DocumentRevsList call() throws Exception {
-        Log.v(this.LOG_TAG, "Fetching document: " + this.documentId);
+        logger.finer("Fetching document: " + this.documentId);
         return new DocumentRevsList(this.sourceDb.getRevisions(documentId,
                 openRevisions,
                 attsSince,

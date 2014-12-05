@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.common.Log;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.util.CouchUtils;
@@ -28,12 +27,13 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Created by tomblench on 14/03/2014.
@@ -43,6 +43,7 @@ class AttachmentManager {
     private static final String LOG_TAG = "AttachmentManager";
 
     private static final String EXTENSION_NAME = "com.cloudant.attachments";
+    private static final Logger logger = Logger.getLogger(AttachmentManager.class.getCanonicalName());
 
     private static final String SQL_ATTACHMENTS_SELECT = "SELECT sequence, " +
             "filename, " +
@@ -302,15 +303,18 @@ class AttachmentManager {
                     try {
                         boolean deleted = f.delete();
                         if (!deleted) {
-                            Log.w(LOG_TAG, "Could not delete file from BLOB store: " + f.getAbsolutePath());
+
+                            logger.warning("Could not delete file from BLOB store: " +
+                                    f.getAbsolutePath());
                         }
                     } catch (SecurityException e) {
-                        Log.w(LOG_TAG, "SecurityException when trying to delete file from BLOB store: " + f.getAbsolutePath() + ", "+e);
+                        logger.log(Level.WARNING, "SecurityException when trying to delete file " +
+                                "from BLOB store: " + f.getAbsolutePath(), e);
                     }
                 }
             }
         } catch (SQLException e) {
-            Log.e(LOG_TAG, "Problem in purgeAttachments, executing SQL to fetch all attachment keys "+e);
+            logger.log(Level.SEVERE, "Problem in purgeAttachments, executing SQL to fetch all attachment keys ", e);
         }finally {
            DatabaseUtils.closeCursorQuietly(c);
         }

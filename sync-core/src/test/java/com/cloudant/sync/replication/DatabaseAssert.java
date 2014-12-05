@@ -25,7 +25,6 @@ import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
-import com.cloudant.common.Log;
 
 import org.junit.Assert;
 
@@ -36,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.collection.IsIn.isIn;
@@ -49,6 +49,7 @@ public class DatabaseAssert {
 
     static final String LOG_TAG = "DatabaseAssert";
     static final int BATCH_LIMIT = 1000;
+    private static final Logger logger = Logger.getLogger(DatabaseAssert.class.getCanonicalName());
 
     /**
      * Provide a standard interface to either DocumentRevision or ChangesResult.Row to
@@ -96,7 +97,7 @@ public class DatabaseAssert {
      * @param client
      */
     public static void assertPushed(DatastoreExtended datastore, CouchClient client) {
-        Log.i(LOG_TAG, "Asserting CouchDB against local datastore.");
+        logger.entering("DatabaseAssert","assertPushed",new Object[]{datastore,client});
         Long start = System.currentTimeMillis();
 
         Set<String> alreadyChecked = new HashSet<String>();
@@ -116,7 +117,7 @@ public class DatabaseAssert {
         }
 
         Long end = System.currentTimeMillis();
-        Log.i(LOG_TAG, "Done: check took " + (end - start)/1000.0 + "s");
+        logger.finest(String.format("Done check took %1 seconds",(end - start)/1000.0));
     }
 
     /**
@@ -129,7 +130,7 @@ public class DatabaseAssert {
      * @param datastore
      */
     public static void assertPulled(CouchClient client, DatastoreExtended datastore) {
-        Log.i(LOG_TAG, "Asserting CouchDB against local datastore.");
+        logger.entering("DatabaseAssert","assertPulled", new Object[]{client,datastore});
         Long start = System.currentTimeMillis();
 
         Set<String> alreadyChecked = new HashSet<String>();
@@ -149,7 +150,7 @@ public class DatabaseAssert {
         }
 
         Long end = System.currentTimeMillis();
-        Log.i(LOG_TAG, "Done: check took " + (end - start)/1000.0 + "s");
+        logger.finest(String.format("Done check took %1 seconds",(end - start)/1000.0));
     }
 
     /**
@@ -164,7 +165,7 @@ public class DatabaseAssert {
                                        CouchClient client, DatastoreExtended datastore) {
         String id = document.id;
 
-        Log.i(LOG_TAG, "Checking document: " + id);
+        logger.info("Checking document: "+id);
 
         String[] openRevisions = document.openRevisions(datastore);
 

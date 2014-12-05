@@ -18,7 +18,6 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64InputStreamFactory;
-import com.cloudant.common.Log;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
@@ -53,10 +52,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class BasicDatastore implements Datastore, DatastoreExtended {
 
     private static final String LOG_TAG = "BasicDatastore";
+    private static final Logger logger = Logger.getLogger(BasicDatastore.class.getCanonicalName());
 
     private static final String FULL_DOCUMENT_COLS = "docs.docid, docs.doc_id, revid, sequence, json, current, deleted, parent";
 
@@ -130,7 +132,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 }
             }
         } catch (SQLException e) {
-            Log.e(LOG_TAG, "Error getting last sequence", e);
+            logger.log(Level.SEVERE, "Error getting last sequence", e);
         } finally {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
@@ -149,7 +151,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 result = cursor.getInt(0);
             }
         } catch (SQLException e) {
-            Log.e(LOG_TAG, "Error getting document count", e);
+            logger.log(Level.SEVERE, "Error getting document count", e);
         } finally {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
@@ -232,12 +234,12 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 long sequence = cursor.getLong(3);
                 List<? extends Attachment> atts = attachmentManager.attachmentsForRevision(sequence);
                 BasicDocumentRevision rev = getFullRevisionFromCurrentCursor(cursor, atts);
-                Log.v(LOG_TAG, "Rev: " + rev);
+                logger.finer("Rev: " + rev);
                 tree.add(rev);
             }
             return tree;
         } catch (SQLException e) {
-            Log.e(LOG_TAG, "Error getting all revisions of document", e);
+            logger.log(Level.SEVERE, "Error getting all revisions of document", e);
             return null;
         } finally {
             DatabaseUtils.closeCursorQuietly(cursor);
@@ -256,7 +258,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 return cursor.getLong(0);
             }
         } catch (SQLException e) {
-            Log.e(LOG_TAG, "Error getting doc numeric id", e);
+            logger.log(Level.SEVERE, "Error getting doc numeric id", e);
         } finally {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
@@ -412,7 +414,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             if (idToDocs.containsKey(id)) {
                 results.add(idToDocs.remove(id));
             } else {
-                Log.d(LOG_TAG, "No document found for id: " + id);
+                logger.fine("No document found for id: " + id);
             }
         }
         assert idToDocs.size() == 0;
@@ -499,7 +501,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             BasicDocumentRevision doc = getDocument(docId, options.revId);
             documentCreated = new DocumentCreated(doc);
             
-            Log.d(LOG_TAG, "New document created: " + doc.toString());
+            logger.finer("New document created: " + doc.toString());
 
             this.sqlDb.setTransactionSuccessful();
             return doc;
@@ -544,7 +546,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 throw new IllegalArgumentException("Can not insert new local doc, likely the docId exists already: "
                         + docId);
             } else {
-                Log.d(LOG_TAG, "New local doc inserted: " + lineId + ", " + docId);
+               logger.finer("New local doc inserted: " + lineId + ", " + docId);
             }
 
             this.sqlDb.setTransactionSuccessful();
@@ -751,7 +753,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             args.put("deleted", options.deleted);
             args.put("available", options.available);
             args.put("json", options.data);
-            Log.d(LOG_TAG, "New revision inserted: " + options.docNumericId + ", " + options.revId);
+            logger.fine("New revision inserted: " + options.docNumericId + ", " + options.revId);
             newSequence = this.getSQLDatabase().insert("revs", args);
             if (newSequence < 0) {
                 throw new IllegalStateException("Unknown error inserting new updated doc, please checking log");
@@ -883,7 +885,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         CouchUtils.validateDocumentId(rev.getId());
         CouchUtils.validateRevisionId(rev.getRevision());
 
-        Log.v(LOG_TAG, "forceInsert(): " + rev.toString() + ",\n" + JSONUtils.toPrettyJson(revisionHistory));
+        logger.finer("forceInsert(): " + rev.toString() + ",\n" + JSONUtils.toPrettyJson
+                (revisionHistory));
 
         DocumentCreated documentCreated = null;
         DocumentUpdated documentUpdated = null;
@@ -923,8 +926,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                             PreparedAttachment pa = prepareAttachment(usa, rev);
                             addAttachment(pa, rev);
                         } catch (Exception e) {
-                            Log.e(LOG_TAG, "There was a problem adding the attachment "+usa+" to the datastore for document "+rev);
-                            Log.e(LOG_TAG, "Exception was: "+e);
+                            logger.log(Level.SEVERE, "There was a problem adding the attachment "
+                                            + usa + "to the datastore for document " + rev,
+                                    e);
                             ok = false;
                         }
                     }
@@ -974,7 +978,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
      *                    as well) sorted in ascending order.
      */
     private long doForceInsertExistingDocumentWithHistory(BasicDocumentRevision newRevision, List<String> revisions, Map<String, Object> attachments) {
-        Log.v(LOG_TAG, "doForceInsertExistingDocumentWithHistory(): Revisions: " + revisions);
+        logger.entering("BasicDatastore",
+                "doForceInsertExistingDocumentWithHistory",
+                new Object[]{newRevision, revisions, attachments});
         Preconditions.checkNotNull(newRevision, "New document revision must not be null.");
         Preconditions.checkArgument(this.containsDocument(newRevision.getId()), "DocumentRevisionTree must exist.");
         Preconditions.checkNotNull(revisions, "Revision history should not be null.");
@@ -1018,13 +1024,13 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
 
         if (i >= revisions.size()) {
-            Log.v(LOG_TAG, "All revision are in local sqlDatabase already, no new revision inserted.");
+            logger.finer("All revision are in local sqlDatabase already, no new revision inserted.");
             return -1;
         }
 
         // Insert the new stub revisions
         for (; i < revisions.size() - 1; i++) {
-            Log.v(LOG_TAG, "Inserting new stub revision, id: " + docNumericID + ", rev: " + revisions.get(i));
+            logger.finer("Inserting new stub revision, id: " + docNumericID + ", rev: " + revisions.get(i));
             this.changeDocumentToBeNotCurrent(parent.getSequence());
             insertStubRevision(docNumericID, revisions.get(i), parent.getSequence());
             parent = getDocument(newRevision.getId(), revisions.get(i));
@@ -1032,7 +1038,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
 
         // Insert the new leaf revision
-        Log.v(LOG_TAG, "Inserting new revision, id: " + docNumericID + ", rev: " + revisions.get(i));
+        logger.finer("Inserting new revision, id: " + docNumericID + ", rev: " + revisions.get(i));
         String newRevisionId = revisions.get(revisions.size() - 1);
         this.changeDocumentToBeNotCurrent(parent.getSequence());
         // don't copy over attachments
@@ -1065,7 +1071,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                     try {
                         this.attachmentManager.copyAttachment(previousLeaf.getSequence(), sequence, att);
                     } catch (SQLException sqe) {
-                        Log.e(LOG_TAG, "Error copying stubbed attachments: "+sqe);
+                        logger.log(Level.SEVERE, "Error copying stubbed attachments", sqe);
                     }
                 }
             }
@@ -1082,7 +1088,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         BasicDocumentRevision previousWinner = (BasicDocumentRevision) localRevs.getCurrentRevision();
 
         // Adding a brand new tree
-        Log.v(LOG_TAG, "Inserting a brand new tree for an existing document.");
+        logger.finer("Inserting a brand new tree for an existing document.");
         long parentSequence = 0L;
         for(int i = 0 ; i < revisions.size() - 1 ; i ++) {
             parentSequence = insertStubRevision(docNumericID, revisions.get(i), parentSequence);
@@ -1146,7 +1152,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
      *                   as well) sorted in ascending order.
      */
     private long doForceInsertNewDocumentWithHistory(BasicDocumentRevision rev, List<String> revHistory) {
-        Log.v(LOG_TAG, "doForceInsertNewDocumentWithHistory()");
+        logger.entering("BasicDocumentRevision",
+                "doForceInsertNewDocumentWithHistory()",
+                new Object[]{rev, revHistory});
         assert !this.containsDocument(rev.getId());
 
         long docNumericID = insertDocumentID(rev.getId());
@@ -1178,15 +1186,15 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     @Override
     public void compact() {
-        Log.v(LOG_TAG, "Deleting JSON of old revisions...");
+        logger.finer("Deleting JSON of old revisions...");
         ContentValues args = new ContentValues();
         args.put("json", (String) null);
         int i = this.sqlDb.update("revs", args, "current=0", null);
 
-        Log.v(LOG_TAG, "Deleting old attachments...");
+        logger.finer("Deleting old attachments...");
         this.attachmentManager.purgeAttachments();
 
-        Log.v(LOG_TAG, "Vacuuming SQLite database...");
+        logger.finer("Vacuuming SQLite database...");
         this.sqlDb.compactDatabase();
     }
 
@@ -1311,7 +1319,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 conflicts.add(docId);
             }
         }  catch (SQLException e) {
-            Log.e(LOG_TAG, "Error getting conflicted document: ", e);
+            logger.log(Level.SEVERE, "Error getting conflicted document: ", e);
         } finally {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
@@ -1332,7 +1340,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         try {
             newWinner = resolver.resolve(docId, docTree.leafRevisions(true));
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception when calling ConflictResolver", e);
+            logger.log(Level.SEVERE, "Exception when calling ConflictResolver", e);
         }
         if(newWinner == null) {
             // resolve() threw an exception or returned null, exit early

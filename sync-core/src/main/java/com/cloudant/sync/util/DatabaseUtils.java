@@ -14,12 +14,15 @@
 
 package com.cloudant.sync.util;
 
-import com.cloudant.common.Log;
 import com.cloudant.sync.sqlite.Cursor;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public  class DatabaseUtils {
 
     private final static String LOG_TAG = "DatabaseUtils";
+    private final static Logger logger = Logger.getLogger(DatabaseUtils.class.getCanonicalName());
 
     public static void closeCursorQuietly(Cursor cursor) {
         try {
@@ -27,7 +30,7 @@ public  class DatabaseUtils {
                 cursor.close();
             }
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error closing cursor", e);
+            logger.log(Level.SEVERE,"Error closing cursor",e);
         }
     }
 

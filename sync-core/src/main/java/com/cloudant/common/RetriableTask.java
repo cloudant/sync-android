@@ -10,10 +10,13 @@ package com.cloudant.common;
 import com.google.common.base.Preconditions;
 
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class RetriableTask<T> implements Callable<T> {
 
     private final static String LOG_TAG = "RetriableTask";
+    private final static Logger logger = Logger.getLogger(RetriableTask.class.getCanonicalName());
 
     private final Callable<T> task;
     public static final int DEFAULT_NUMBER_OF_RETRIES = 3;
@@ -47,10 +50,10 @@ public class RetriableTask<T> implements Callable<T> {
     public T call() throws Exception {
         while (true) {
             try {
-                Log.d(LOG_TAG, "Retry #: " + triesRemaining + "," + task.toString());
+                logger.fine("Retry #: " + triesRemaining + "," + task.toString());
                 T t = task.call();
                 if(triesRemaining < 3) {
-                    Log.d(LOG_TAG, "Success after retry: " + triesRemaining + ", " + task.toString());
+                    logger.fine("Success after retry: " + triesRemaining + ", " + task.toString());
                 }
                 return t;
             } catch (InterruptedException e) {
@@ -62,7 +65,7 @@ public class RetriableTask<T> implements Callable<T> {
                             " attempts to retry failed at " + timeToWait +
                             "ms interval", e);
                 }
-                Log.d(LOG_TAG, "Retry later: " + triesRemaining + ", " + task.toString(), e);
+                logger.log(Level.FINE,"Retry later: " + triesRemaining + ", " + task.toString(), e);
                 Thread.sleep(timeToWait);
             }
         }

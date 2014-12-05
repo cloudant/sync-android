@@ -17,7 +17,6 @@ package com.cloudant.sync.replication;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
-import com.cloudant.common.Log;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -30,11 +29,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.logging.Logger;
 
 @Category(RequireRunningCouchDB.class)
 public class BasicPullStrategyTest2 extends ReplicationTestBase {
 
     public static final String LOG_TAG = "ReplicationSystemTest";
+    private static final Logger logger = Logger.getLogger(BasicPullStrategyTest2.class.getCanonicalName());
 
     DocumentCache cache ;
 
@@ -87,9 +88,9 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
 
     private void assertDataDeleted() {
         for(String id : cache.getAllDeletedIds()) {
-            Log.i(LOG_TAG, "Deleted id: " + id);
+            logger.info("Deleted id: " + id);
             BasicDocumentRevision obj = datastore.getDocument(id);
-            Log.i(LOG_TAG, "Deleted: " + obj.isDeleted());
+            logger.info("Deleted: " + obj.isDeleted());
             Assert.assertTrue(obj.isDeleted());
         }
     }
@@ -97,7 +98,7 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
     private void assertDataSynced() {
         for(String id : cache.getAllDocumentIds()) {
             Bar bar = cache.getData(id);
-            Log.i(LOG_TAG, "Id: " + bar);
+            logger.info("Id: " + bar);
             BasicDocumentRevision obj = datastore.getDocument(bar.getId(), bar.getRevision());
             Assert.assertNotNull(obj);
         }

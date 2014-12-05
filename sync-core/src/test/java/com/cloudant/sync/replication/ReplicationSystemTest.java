@@ -20,7 +20,6 @@ import com.cloudant.mazha.CloudantConfig;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.common.Log;
 import com.cloudant.sync.util.TestUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -30,10 +29,12 @@ import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.logging.Logger;
 
 public class ReplicationSystemTest {
 
     public static final String LOG_TAG = "ReplicationSystemTest";
+    private static final Logger logger = Logger.getLogger(ReplicationSystemTest.class.getCanonicalName());
 
     public static String datastoreManagerPath = null;
     public DatastoreManager manager = null;
@@ -58,10 +59,10 @@ public class ReplicationSystemTest {
         while(true) {
             ChangesResult changeFeeds = remoteDatabase.changes(lastSequence, 10000);
 
-            Log.i(LOG_TAG, " = = = ");
-            Log.i(LOG_TAG, "Last seq: " + changeFeeds.getLastSeq());
-            Log.i(LOG_TAG, "Change feed size: " + changeFeeds.size());
-            Log.i(LOG_TAG, " = = = ");
+            logger.info(" = = = ");
+            logger.info("Last seq: " + changeFeeds.getLastSeq());
+            logger.info("Change feed size: " + changeFeeds.size());
+            logger.info(" = = = ");
 
             lastSequence = changeFeeds.getLastSeq();
             if(changeFeeds.size() == 0) {
@@ -73,7 +74,7 @@ public class ReplicationSystemTest {
     @Category(SystemTest.class)
     @Test
     public void pull_npm_from_cloudant() throws Exception {
-        Log.i(LOG_TAG, "Pull npm from cloudant");
+        logger.info("Pull npm from cloudant");
         pull("npm", "cloudant_npm", CloudantConfig.defaultConfig());
         assert_pulled("npm", "cloudant_npm", CloudantConfig.defaultConfig());
     }
@@ -81,7 +82,7 @@ public class ReplicationSystemTest {
     @Category(SystemTest.class)
     @Test
     public void assert_pull_npm_from_cloudant() throws Exception {
-        Log.i(LOG_TAG, "Assert pull npm from cloudant");
+        logger.info("Assert pull npm from cloudant");
         assert_pulled("npm", "cloudant_npm", CloudantConfig.defaultConfig());
     }
 
@@ -89,7 +90,7 @@ public class ReplicationSystemTest {
     @Category(SystemTest.class)
     @Test
     public void push_npm_to_cloudant() throws Exception {
-        Log.i(LOG_TAG, "Push npm to cloudant");
+        logger.info("Push npm to cloudant");
         push("cloudant_npm", "npm_pushed", CloudantConfig.defaultConfig());
         assert_pushed("cloudant_npm", "npm_pushed", CloudantConfig.defaultConfig());
     }
@@ -97,14 +98,14 @@ public class ReplicationSystemTest {
     @Category(SystemTest.class)
     @Test
     public void assert_push_npm_to_cloudant() throws Exception {
-        Log.i(LOG_TAG, "Assert push npm to cloudant");
+        logger.info("Assert push npm to cloudant");
         assert_pushed("cloudant_npm", "npm_pushed", CloudantConfig.defaultConfig());
     }
 
     @Category(SystemTest.class)
     @Test
     public void pull_npm_from_localCouchdb() throws Exception {
-        Log.i(LOG_TAG, "Pull npm from local");
+        logger.info("Pull npm from local");
         pull("npm", "local_npm", CouchConfig.defaultConfig());
         assert_pulled("npm", "local_npm", CouchConfig.defaultConfig());
     }
@@ -112,7 +113,7 @@ public class ReplicationSystemTest {
     @Category(SystemTest.class)
     @Test
     public void push_npm_to_localCouchDB() throws Exception {
-        Log.i(LOG_TAG, "Push npm to local");
+        logger.info("Push npm to local");
         push("local_npm", "npm_pushed", CouchConfig.defaultConfig());
         assert_pushed("local_npm", "npm_pushed", CouchConfig.defaultConfig());
     }
@@ -120,21 +121,21 @@ public class ReplicationSystemTest {
     @Category(SystemTest.class)
     @Test
     public void assert_npm_pulled_correctly() throws Exception {
-        Log.i(LOG_TAG, "Assert npm pulled to local correctly");
+        logger.info("Assert npm pulled to local correctly");
         assert_pulled("npm", "local_npm", CouchConfig.defaultConfig());
     }
 
     @Category(SystemTest.class)
     @Test
     public void assert_npm_pushed_correctly() throws Exception {
-        Log.i(LOG_TAG, "Assert npm pushed to local correctly");
+        logger.info("Assert npm pushed to local correctly");
         assert_pushed("local_npm", "npm_pushed", CouchConfig.defaultConfig());
     }
 
     @Category(SystemTest.class)
     @Test
     public void pullReallyBigDatabase() throws Exception {
-        Log.d(LOG_TAG, "pullReallyBigDatabase");
+        logger.info("pullReallyBigDatabase");
         String remoteDatabaseName = "mbta_stops";
         manager = new DatastoreManager(datastoreManagerPath);
         DatastoreExtended datastoreExtended = (DatastoreExtended) manager.openDatastore("mbta_trips");
@@ -147,32 +148,32 @@ public class ReplicationSystemTest {
         URI uri = dbConfig.getURI(pullSource);
         DatastoreExtended datastoreExtended = (DatastoreExtended) manager.openDatastore(pullTarget);
 
-        Log.i(LOG_TAG, "Pulling ...");
+        logger.info("Pulling ...");
         pull(uri, datastoreExtended);
-        Log.i(LOG_TAG, "Pull done!");
+        logger.info("Pull done!");
     }
 
     public void assert_pulled(String pullSource, String pullTarget, CouchConfig dbConfig) throws Exception {
         CouchClientWrapper remoteDatabase = new CouchClientWrapper(pullSource, dbConfig);
         DatastoreExtended datastoreExtended = (DatastoreExtended) manager.openDatastore(pullTarget);
         DatabaseAssert.assertPulled(remoteDatabase.getCouchClient(), datastoreExtended);
-        Log.i(LOG_TAG, "Assert done!");
+        logger.info("Assert done!");
     }
 
     public void push(String pushSource, String pushTarget, CouchConfig dbConfig) throws Exception {
         DatastoreExtended datastoreExtended = (DatastoreExtended) manager.openDatastore(pushSource);
         URI uri = dbConfig.getURI(pushTarget);
 
-        Log.i(LOG_TAG, "Pushing ...");
+        logger.info("Pushing ...");
         push(datastoreExtended, uri);
-        Log.i(LOG_TAG, "Push done!");
+        logger.info("Push done!");
     }
 
     public void assert_pushed(String pushSource, String pushTarget, CouchConfig dbConfig) throws Exception {
         DatastoreExtended datastoreExtended = (DatastoreExtended) manager.openDatastore(pushSource);
         CouchClientWrapper remoteDatabase = new CouchClientWrapper(pushTarget, dbConfig);
         DatabaseAssert.assertPushed(datastoreExtended, remoteDatabase.getCouchClient());
-        Log.i(LOG_TAG, "Assert done!");
+        logger.info("Assert done!");
     }
 
     private void pull(URI uri, DatastoreExtended datastoreExtended) throws

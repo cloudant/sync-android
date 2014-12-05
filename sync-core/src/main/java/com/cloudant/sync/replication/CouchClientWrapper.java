@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.common.Log;
 import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.CouchConfig;
@@ -37,10 +36,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class CouchClientWrapper implements CouchDB {
 
     private final static String LOG_TAG = "CouchClientWrapper";
+    private static final Logger logger = Logger.getLogger(CouchClientWrapper.class.getCanonicalName());
     public static final int SOCKET_TIMEOUT_DEFAULT = 30000;
     public static final int CONNECTION_TIMEOUT_DEFAULT = 30000;
 
@@ -181,7 +182,7 @@ public class CouchClientWrapper implements CouchDB {
         RemoteCheckpointDoc checkpointDoc = new RemoteCheckpointDoc(sequence);
         checkpointDoc.setId(checkpointDocId);
         Response response = couchClient.create(checkpointDoc);
-        Log.d(LOG_TAG, "Response: " + response);
+        logger.fine(String.format("Response: %s",response));
     }
 
     private void updateCheckpoint(String checkpointDocId, String sequence) {
@@ -189,7 +190,7 @@ public class CouchClientWrapper implements CouchDB {
                 checkpointDocId, RemoteCheckpointDoc.class);
         checkpointDoc.setLastSequence(sequence);
         Response response = couchClient.update(checkpointDocId, checkpointDoc);
-        Log.d(LOG_TAG, "Response: " + response);
+        logger.fine(String.format("Response: %s",response));
     }
 
     public void createDatabase() {
@@ -203,37 +204,37 @@ public class CouchClientWrapper implements CouchDB {
 
     @Override
     public void bulk(List<BasicDocumentRevision> revisions) {
-        Log.i(LOG_TAG, "bulk()");
+        logger.entering("com.cloudant.sync.replication.CouchClientWrapper","bulk",revisions);
 
         List<Map> allObjs = new ArrayList<Map>();
         for (BasicDocumentRevision obj : revisions) {
-            Log.d(LOG_TAG, "Object body: " + obj.getBody().toString());
+            logger.finer(String.format("Document body: %s",obj.getBody()));
             allObjs.add(obj.asMap());
         }
 
         List<Response> responses = couchClient.bulk(allObjs);
         for (Response r : responses) {
-            Log.i(LOG_TAG, r.toString());
+            logger.info(String.format("Response: %s",r));
         }
     }
 
     @Override
     public void bulkSerializedDocs(List<String> serializedDocs) {
-        Log.v(LOG_TAG, "bulk(), docs: " + serializedDocs);
+        logger.entering("com.cloudant.sync.replication.CouchClientWrapper","bulkSerializedDocs",serializedDocs);
         if(serializedDocs.size() <= 0) {
             return;
         }
 
         List<Response> responses = couchClient.bulkSerializedDocs(serializedDocs);
         if(responses != null && responses.size() > 0) {
-            Log.e(LOG_TAG, "Unknown bulk api error: " + responses + ", for input: " + serializedDocs);
+            logger.severe(String.format("Unknown bulk API error: %s for input: %s",responses,serializedDocs));
             throw new RuntimeException("Unknown bulk api error");
         }
     }
 
     @Override
     public List<Response> putMultiparts(List<MultipartAttachmentWriter> multiparts) {
-        Log.v(LOG_TAG, "putMultiparts(), parts: " + multiparts);
+        logger.entering("com.cloudant.sync.replication.CouchClientWrapper","putMultiparts",multiparts);
         ArrayList<Response> responses = new ArrayList<Response>();
         for (MultipartAttachmentWriter mpw : multiparts) {
             Response r = couchClient.putMultipart(mpw);

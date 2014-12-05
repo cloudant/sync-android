@@ -16,17 +16,19 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.util.CouchUtils;
-import com.cloudant.common.Log;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DocumentRevsUtils {
 
     private static final String LOG_TAG = "DocumentRevsUtils";
+    private static final Logger logger = Logger.getLogger(DocumentRevsUtils.class.getCanonicalName());
 
     /**
      * Create the list of the revisionId in ascending order.
@@ -46,7 +48,7 @@ public class DocumentRevsUtils {
             generation--;
         }
         Collections.reverse(revisionHistory);
-        Log.d(LOG_TAG, "Revisions history:" + revisionHistory);
+        logger.log(Level.FINER,"Revisions history: "+revisionHistory);
         return revisionHistory;
     }
 

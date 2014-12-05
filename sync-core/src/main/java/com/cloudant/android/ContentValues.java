@@ -19,16 +19,17 @@
 
 package com.cloudant.android;
 
-import com.cloudant.common.Log;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ContentValues {
 
     public static final String TAG = "ContentValues";
+    private static final Logger logger = Logger.getLogger(ContentValues.class.getCanonicalName());
+
 
     /** Holds the actual values */
     private HashMap<String, Object> mValues;
@@ -275,11 +276,11 @@ public class ContentValues {
                 try {
                     return Long.valueOf(value.toString());
                 } catch (NumberFormatException e2) {
-                    Log.e(TAG, "Cannot parse Long value for " + value + " at key " + key);
+                    logger.log(Level.SEVERE,"Cannot parse Long value for " + value + " at key "+ key);
                     return null;
                 }
             } else {
-                Log.e(TAG, "Cannot cast value for " + key + " to a Long: " + value, e);
+                logger.log(Level.SEVERE,"Cannot case value for "+ key + "to a Long "+ value,e);
                 return null;
             }
         }
@@ -300,11 +301,11 @@ public class ContentValues {
                 try {
                     return Integer.valueOf(value.toString());
                 } catch (NumberFormatException e2) {
-                    Log.e(TAG, "Cannot parse Integer value for " + value + " at key " + key);
+                    logger.severe("Cannot parse Integer value for "+value+" at key"+ key);
                     return null;
                 }
             } else {
-                Log.e(TAG, "Cannot cast value for " + key + " to a Integer: " + value, e);
+                logger.log(Level.SEVERE,"Cannot cast value for "+ key + " to a Integer "+ value,e);
                 return null;
             }
         }
@@ -325,11 +326,11 @@ public class ContentValues {
                 try {
                     return Short.valueOf(value.toString());
                 } catch (NumberFormatException e2) {
-                    Log.e(TAG, "Cannot parse Short value for " + value + " at key " + key);
+                    logger.severe("Cannot parse Short value for " + value + " at key " + key);
                     return null;
                 }
             } else {
-                Log.e(TAG, "Cannot cast value for " + key + " to a Short: " + value, e);
+                logger.log(Level.SEVERE,"Cannot cast value for " + key + " to a Short: " + value, e);
                 return null;
             }
         }
@@ -350,11 +351,11 @@ public class ContentValues {
                 try {
                     return Byte.valueOf(value.toString());
                 } catch (NumberFormatException e2) {
-                    Log.e(TAG, "Cannot parse Byte value for " + value + " at key " + key);
+                    logger.severe("Cannot parse Byte value for " + value + " at key " + key);
                     return null;
                 }
             } else {
-                Log.e(TAG, "Cannot cast value for " + key + " to a Byte: " + value, e);
+                logger.log(Level.SEVERE, "Cannot cast value for " + key + " to a Byte: " + value, e);
                 return null;
             }
         }
@@ -375,11 +376,11 @@ public class ContentValues {
                 try {
                     return Double.valueOf(value.toString());
                 } catch (NumberFormatException e2) {
-                    Log.e(TAG, "Cannot parse Double value for " + value + " at key " + key);
+                    logger.severe("Cannot parse Double value for " + value + " at key " + key);
                     return null;
                 }
             } else {
-                Log.e(TAG, "Cannot cast value for " + key + " to a Double: " + value, e);
+                logger.log(Level.SEVERE, "Cannot cast value for " + key + " to a Double: " + value, e);
                 return null;
             }
         }
@@ -400,11 +401,11 @@ public class ContentValues {
                 try {
                     return Float.valueOf(value.toString());
                 } catch (NumberFormatException e2) {
-                    Log.e(TAG, "Cannot parse Float value for " + value + " at key " + key);
+                    logger.severe( "Cannot parse Float value for " + value + " at key " + key);
                     return null;
                 }
             } else {
-                Log.e(TAG, "Cannot cast value for " + key + " to a Float: " + value, e);
+                logger.log(Level.SEVERE, "Cannot cast value for " + key + " to a Float: " + value, e);
                 return null;
             }
         }
@@ -426,7 +427,7 @@ public class ContentValues {
             } else if (value instanceof Number) {
                 return ((Number) value).intValue() != 0;
             } else {
-                Log.e(TAG, "Cannot cast value for " + key + " to a Boolean: " + value, e);
+                logger.log(Level.SEVERE, "Cannot cast value for " + key + " to a Boolean: " + value, e);
                 return null;
             }
         }

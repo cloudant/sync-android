@@ -18,15 +18,16 @@ import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteConstants;
 import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
-import com.cloudant.common.Log;
 import com.cloudant.sync.sqlite.Cursor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class SQLiteWrapperUtils {
 
     private static final String LOG_TAG = "SQLiteWrapperUtils";
+    private static final Logger logger = Logger.getLogger(SQLiteWrapperUtils.class.getCanonicalName());
 
     public static Long longForQuery(SQLiteConnection conn, String query)
             throws SQLiteException {
@@ -145,7 +146,7 @@ public class SQLiteWrapperUtils {
                 }
 
                 Tuple t = getDataRow(stmt);
-                Log.v(LOG_TAG, "Tuple: " + t.toString());
+                logger.finest("Tuple: "+ t.toString());
                 resultSet.add(t);
             }
             return new SQLiteCursor(columnNames, resultSet);
@@ -155,7 +156,7 @@ public class SQLiteWrapperUtils {
     }
 
     static Tuple getDataRow(SQLiteStatement stmt) throws SQLiteException {
-        Log.d(LOG_TAG, "getDataRow()");
+        logger.entering("com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapperUtils","getDataRow",stmt);
         Tuple result = new Tuple(getColumnTypes(stmt));
         for (int i = 0; i < stmt.columnCount(); i++) {
             Integer type = stmt.columnType(i);

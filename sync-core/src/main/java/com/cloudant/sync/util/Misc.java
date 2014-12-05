@@ -14,13 +14,11 @@
 
 package com.cloudant.sync.util;
 
-import com.cloudant.common.Log;
-
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Internal utility class
@@ -28,6 +26,7 @@ import java.util.UUID;
 public class Misc {
 
     public static final String ANDROID_RUNTIME = "android runtime";
+    private static final Logger logger = Logger.getLogger(Misc.class.getCanonicalName());
 
     public static String createUUID() {
         return UUID.randomUUID().toString().replace("-", "");
@@ -49,7 +48,7 @@ public class Misc {
                 sha1.update(buf, 0, bytesRead);
             }
         } catch (Exception e) {
-            Log.w("getSha1", "Problem calculating SHA1 for stream: "+e);
+            logger.log(Level.WARNING,"Problem calacualting SHA1 for stream",e);
             return null;
         }
         return sha1.digest();
