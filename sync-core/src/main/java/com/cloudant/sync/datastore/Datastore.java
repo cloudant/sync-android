@@ -330,5 +330,10 @@ public interface Datastore {
      */
     public List<BasicDocumentRevision> deleteDocument(String id) throws ConflictException;
 
+    /**
+     * Compacts the sqlDatabase storage by removing the bodies and attachments of obsolete revisions.
+     */
+    public void compact();
+
 }
 
