@@ -13,12 +13,11 @@ public class MutableDocumentRevision implements DocumentRevision
 
     // ctor with no source revision id: this revision hasn't been saved yet
     public MutableDocumentRevision() {
-        this.attachments = new HashMap<String, Attachment>();
-        this.sourceRevisionId = null;
+        this(null);
     }
 
     // ctor with revision id: this revision has been saved (eg mutable copy)
-    protected MutableDocumentRevision(String sourceRevisionId) {
+    public MutableDocumentRevision(String sourceRevisionId) {
         this.attachments = new HashMap<String, Attachment>();
         this.sourceRevisionId = sourceRevisionId;
     }
@@ -50,5 +49,15 @@ public class MutableDocumentRevision implements DocumentRevision
     public DocumentBody getBody() {
         return body;
     }
+
+    /**
+     * Get the previous revision id of this document
+     *
+     * @return The previous revision id of this document
+     */
+    public String getSourceRevisionId() {
+        return this.sourceRevisionId;
+    }
+
 
 }
