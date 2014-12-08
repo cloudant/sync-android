@@ -107,6 +107,40 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
     }
 
     @Test
+    public void resolveConflictThenResolveSecondConflict() throws Exception {
+        String docId = this.createConflictedDocument();
+        long expectedSequence = this.datastore.getLastSequence();
+        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+            @Override
+            public DocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts) {
+                MutableDocumentRevision newRev = conflicts.get(0).mutableCopy();
+                Map<String,Object>body = newRev.body.asMap();
+                for(int i=1;i<conflicts.size();i++){
+                    body.putAll(conflicts.get(i).getBody().asMap());
+                }
+                newRev.body = DocumentBodyFactory.create(body);
+                return newRev;
+            }
+
+        });
+        BasicDocumentRevision newRev = this.createDetachedDocumentRevision(docId, "4-a", "Jerry");
+        this.datastore.forceInsert(newRev, "3-a", "4-a");
+
+        final List<BasicDocumentRevision> conflictsList = new ArrayList<BasicDocumentRevision>();
+        ConflictResolver resolver = new ConflictResolver() {
+            @Override
+            public DocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts) {
+                conflictsList.addAll(conflicts);
+                return null;
+            }
+        };
+
+        this.datastore.resolveConflictsForDocument(docId, resolver);
+        Assert.assertEquals(2,conflictsList.size());
+
+    }
+
+    @Test
     public void resolveConflictsForDocument_twoConflictAndReturnNull_nothing()
             throws ConflictException, IOException {
         String docId = this.createConflictedDocument();
@@ -323,8 +357,10 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void resolveConflictsForDocument_threeConflictAndNewWinnerAsDeleted_documentDeleted()
+    public void resolveConflictsForDocument_ensureNoDeletedRevsAreMarkedConflicted()
             throws ConflictException, IOException {
+        //this test ensures that the documents given to the document resolver are not deleted
+        // since deleted docs are not in conflict
         String docId = this.createConflictedDocumentWithThreeLeafsOneDeleted();
         DocumentRevisionTree oldTree = this.datastore.getAllRevisionsOfDocument(docId);
         Assert.assertTrue(oldTree.hasConflicts());
@@ -334,23 +370,13 @@ public class BasicDatastoreConflictsTest extends BasicDatastoreTestBase {
         this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
             @Override
             public BasicDocumentRevision resolve(String docId, List<BasicDocumentRevision> conflicts) {
-                Assert.assertEquals(3, conflicts.size());
+                Assert.assertEquals(2, conflicts.size());
                 for(BasicDocumentRevision rev : conflicts) {
-                    if (rev.getSequence() == 2) { // this was "name: Tom" but was deleted
-                        return rev;
-                    }
+                    Assert.assertFalse(rev.isDeleted());
                 }
-                return null;
+                return null; //make it in conflict still
             }
         });
-        long actualSequence = this.datastore.getLastSequence();
-        Assert.assertEquals(expectedSequence, actualSequence);
-
-        DocumentRevisionTree newTree = this.datastore.getAllRevisionsOfDocument(docId);
-        Assert.assertFalse(newTree.hasConflicts());
-
-        BasicDocumentRevision newWinner = newTree.getCurrentRevision();
-        Assert.assertTrue(newWinner.isDeleted());
     }
 
     @Test

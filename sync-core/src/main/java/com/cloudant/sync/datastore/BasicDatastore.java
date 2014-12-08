@@ -1330,7 +1330,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
         DocumentRevision newWinner = null;
         try {
-            newWinner = resolver.resolve(docId, docTree.leafRevisions());
+            newWinner = resolver.resolve(docId, docTree.leafRevisions(true));
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception when calling ConflictResolver", e);
         }
