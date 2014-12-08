@@ -17,7 +17,7 @@ public class MutableDocumentRevision implements DocumentRevision
     }
 
     // ctor with revision id: this revision has been saved (eg mutable copy)
-    public MutableDocumentRevision(String sourceRevisionId) {
+    protected MutableDocumentRevision(String sourceRevisionId) {
         this.attachments = new HashMap<String, Attachment>();
         this.sourceRevisionId = sourceRevisionId;
     }

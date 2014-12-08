@@ -200,6 +200,17 @@ public class DocumentRevisionBuilder {
     }
 
     /**
+     * Builds and returns the {@link com.cloudant.sync.datastore.MutableDocumentRevision} for this builder.
+     * @return {@link com.cloudant.sync.datastore.MutableDocumentRevision} for this builder.
+     */
+    public MutableDocumentRevision buildMutable() {
+        MutableDocumentRevision revision = new MutableDocumentRevision(this.revId);
+        revision.body = this.body;
+        revision.docId = this.docId;
+        return revision;
+    }
+
+    /**
      * Builds a BasicDocumentRevision from a Map of values from a CouchDB instance
      * @param documentURI The URI of the document
      * @param map The map of key value pairs fom the CouchDB server
