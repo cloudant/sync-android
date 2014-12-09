@@ -78,6 +78,11 @@ subprojects {
 // see http://issues.gradle.org/browse/GRADLE-1876
 // run javadoc over union of all projects
 task docs(type: Javadoc) {
+
+    options.encoding = "UTF-8"
+    options.docEncoding = "UTF-8"
+    options.charSet = "UTF-8"
+
     options.showFromPublic()
     title = "sync-android ${version} API"
     source subprojects.collect {project -> project.sourceSets.main.allJava.matching{exclude "**/*sql*/**", "**/common/**", "**/android/**", "**/mazha/**" }}

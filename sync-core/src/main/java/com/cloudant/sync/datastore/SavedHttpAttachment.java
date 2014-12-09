@@ -40,15 +40,15 @@ public class SavedHttpAttachment extends Attachment {
 
 
     /**
-     * Creates a SavedHttpAttachment with the provided properties
+     * Creates a SavedHttpAttachment (a fully initialised attachment)
+     * with the provided properties
      * @param name The name of the attachment eg bonsai-boston.jpg
      * @param attachmentData The json attachment data from a couchDB instance
      * @param attachmentURI The URI at which the attachment can be downloaded
-     * @return a Fully initialsed Attachment with data if provided
      * @throws IOException if there is an error decoding the attachment data
      */
-    public  SavedHttpAttachment(String name, Map<String,Object> attachmentData, URI attachmentURI)
-            throws IOException {
+    public SavedHttpAttachment(String name, Map<String,Object> attachmentData, URI attachmentURI)
+           throws IOException {
          super(name, (String)attachmentData.get("content_type"), Encoding.Plain);
          Boolean stub = (Boolean) attachmentData.get("stub");
          Number length = (Number)attachmentData.get("length");
