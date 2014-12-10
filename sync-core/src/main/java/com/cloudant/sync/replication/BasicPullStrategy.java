@@ -25,11 +25,15 @@ import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.util.JSONUtils;
+import com.cloudant.sync.util.Misc;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.EventBus;
 
+import org.apache.commons.codec.binary.Hex;
+
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -377,12 +381,18 @@ class BasicPullStrategy implements ReplicationStrategy {
         return changesProcessed;
     }
 
-    private String getReplicationId() {
-        if(filter == null) {
-            return this.sourceDb.getIdentifier() ;
-        } else {
-            return this.sourceDb.getIdentifier() + "?" + filter.toQueryString();
+    public String getReplicationId() {
+        HashMap<String, String> dict = new HashMap<String, String>();
+        dict.put("source", this.sourceDb.getIdentifier());
+        dict.put("target", this.targetDb.getIdentifier());
+        if(filter != null) {
+            dict.put("filter", this.filter.toQueryString());
         }
+        // get raw SHA-1 of dictionary
+        byte[] sha1Bytes = Misc.getSha1(new ByteArrayInputStream(JSONUtils.serializeAsBytes(dict)));
+        // return SHA-1 as a hex string
+        byte[] sha1Hex = new Hex().encode(sha1Bytes);
+        return new String(sha1Hex);
     }
 
     private ChangesResultWrapper nextBatch() {

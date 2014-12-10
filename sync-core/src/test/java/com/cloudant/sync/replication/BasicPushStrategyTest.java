@@ -74,7 +74,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     private void assertPushReplicationStatus(int documentCounter, int batchCounter, String lastSequence) {
         Assert.assertEquals("DocumentRevisionTree counter", documentCounter, replicator.getDocumentCounter());
         Assert.assertEquals("Batch counter", batchCounter, replicator.getBatchCounter());
-        Assert.assertEquals("Last sequence", lastSequence, remoteDb.getCheckpoint(datastoreWrapper.getIdentifier()));
+        Assert.assertEquals("Last sequence", lastSequence, remoteDb.getCheckpoint(this.replicator.getReplicationId()));
     }
 
     @Test
@@ -299,9 +299,9 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         assertPushReplicationStatus(1, 2, "1");
 
         CouchClientWrapper wrapper = new CouchClientWrapper(this.couchClient);
-        System.out.println("Checkpoint: " + wrapper.getCheckpoint(this.datastoreWrapper.getIdentifier()));
-        wrapper.putCheckpoint(this.datastore.getPublicIdentifier(), "0");
-        System.out.println("Checkpoint: " + wrapper.getCheckpoint(this.datastoreWrapper.getIdentifier()));
+        System.out.println("Checkpoint: " + wrapper.getCheckpoint(this.replicator.getReplicationId()));
+        wrapper.putCheckpoint(this.replicator.getReplicationId(), "0");
+        System.out.println("Checkpoint: " + wrapper.getCheckpoint(this.replicator.getReplicationId()));
 
         this.push();
         assertPushReplicationStatus(0, 2, "1");
