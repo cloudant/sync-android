@@ -1,3 +1,9 @@
+# 0.9.3 (2014-12-10)
+
+- [FIX] Fixed issue where slashes were disallowed for replication
+- [FIX] Fixed issue where deleted documents were returned for conflicts.
+- [NEW] Added compact API
+
 # 0.9.2 (2014-11-26)
 
 - [FIX] Fixed a build issue with 0.9.1. The jars for 0.9.1 were built
