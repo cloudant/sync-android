@@ -31,21 +31,21 @@ import java.util.List;
  *
  * <pre>
  * Case 1: they are from same three.
- *   1 -> 2 -> 3
+ *   1 → 2 → 3
  *     \
- *     -> 2 -> 3*
+ *     → 2 → 3*
  *
  * Case 2: they are from different trees
- *   1 -> 2  -> 3
+ *   1  → 2  → 3
  *
- *   1* -> 2* -> 3*
+ *   1* → 2* → 3*
  * </pre>
  *
  * The list can be iterated in the order of minimum generation id (min-generation). Each
  * <code>DocumentRevs</code> has a list of revisions ids (aka revision history), and "start".
  * The "start" number is largest generation. So the min-generation is:
  * <pre>
- *   DocumentRevs.getRevisions().getStart() -> DocumentRevs.getRevisions().getIds().size() + 1.
+ *   DocumentRevs.getRevisions().getStart() → DocumentRevs.getRevisions().getIds().size() + 1.
  * </pre>
  * This is very important since it decides which <code>DocumentRevs</code> is inserted to db first.
  * <p>

@@ -35,7 +35,7 @@ import java.util.*;
  * revision IDs to their generation numbers:</p>
  *
  * <pre>
- *     1 -> 2 -> 3
+ *     1 → 2 → 3
  * </pre>
  *
  * <p>A full revision ID looks like {@code 1-aedlfksenef}, that is the
@@ -59,8 +59,8 @@ import java.util.*;
  * a branched tree containing the edits from both A and B:</p>
  *
  * <pre>
- *     1 ->  2  -> 3 -> 4
- *       \-> 2^ -> 3^
+ *     1 → 2  → 3 → 4
+ *      \→ 2^ → 3^
  * </pre>
  *
  * <p>At this point we have a conflicted document: two or more branches
@@ -83,8 +83,8 @@ import java.util.*;
  * conflicted:</p>
  *
  * <pre>
- *     1 ->  2  -> 3  -> 4 -> 5
- *       \-> 2^ -> 3^ -> (4^ deleted)
+ *     1 →  2  → 3  → 4 → 5
+ *      \→  2^ → 3^ → (4^ deleted)
  * </pre>
  *
  * <p>Finally, a document may have multiple document trees. This can happen if
@@ -92,9 +92,9 @@ import java.util.*;
  * these two datastores are replicated:</p>
  *
  * <pre>
- *     1  -> 2  -> 3
- *     1* -> 2* -> 3* -> 4*
- *       \-> 2^ -> 3^
+ *     1  → 2  → 3
+ *     1* → 2* → 3* → 4*
+ *       \→ 2^ → 3^
  * </pre>
  *
  * <p>As an aside, this document has three conflicting revisions, which should
@@ -151,7 +151,7 @@ public class DocumentRevisionTree {
     private List<DocumentRevisionNode> leafs = new ArrayList<DocumentRevisionNode>();
 
     // All the DocumentRevisionTree revisions from all the trees.
-    // Map: sequence number -> DocumentRevisionNode
+    // Map: sequence number → DocumentRevisionNode
     private Map<Long, DocumentRevisionNode> sequenceMap = new TreeMap<Long, DocumentRevisionNode>();
 
     /**

@@ -53,7 +53,7 @@ public abstract class Replication {
      * constructor:</p>
      *
      * <pre>
-     * Map<String, String> params = new HashMap();
+     * Map&lt;String, String&gt; params = new HashMap();
      * map.put("max_age", "10");
      * map.put("name", "john");
      * Filter filter = new Filter("doc/filterName", map);

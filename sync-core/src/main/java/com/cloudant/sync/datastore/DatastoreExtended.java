@@ -91,7 +91,7 @@ public interface DatastoreExtended extends Datastore {
      * @param prevRevisionId revision id of the document's current winning
      *                       revision
      * @param body body of the new revision
-     * @return @{code DocumentRevision} for the updated revision
+     * @return {@code DocumentRevision} for the updated revision
      */
     public BasicDocumentRevision updateLocalDocument(String documentId, String prevRevisionId, DocumentBody body);
 
@@ -255,7 +255,6 @@ public interface DatastoreExtended extends Datastore {
      * @param rev The revision this attachment is associated with
      * @return A prepared attachment, ready to be added to the datastore
      * @throws IOException
-     * @throws SQLException
      */
     public PreparedAttachment prepareAttachment(Attachment att, BasicDocumentRevision rev) throws IOException;
 
