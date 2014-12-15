@@ -125,15 +125,10 @@ import java.util.*;
  * conflicted revisions for the document) and what is the current winning
  * revision of the document.</p>
  *
- * <p><strong>WARNING:</strong> conflict resolution is coming in the next
- * release, where we'll be adding methods to {@code Datastore} to help
- * resolving conflicts:</p>
+ *  <p><strong>Note: This class is not thread safe.</strong></p>
  *
- * <ul>
- *     <li>Get the IDs of all conflicted documents within the datastore.</li>
- *     <li>Get a list of all current revisions for a given document, so they
- *     can be merged to resolve the conflict.</li>
- * </ul>
+ * @see com.cloudant.sync.datastore.Datastore#resolveConflictsForDocument(String, ConflictResolver)
+ * @see com.cloudant.sync.datastore.ConflictResolver
  */
 @SuppressWarnings("serial")
 public class DocumentRevisionTree {
@@ -154,6 +149,10 @@ public class DocumentRevisionTree {
     // Map: sequence number → DocumentRevisionNode
     private Map<Long, DocumentRevisionNode> sequenceMap = new TreeMap<Long, DocumentRevisionNode>();
 
+    private long documentNumericId = -1l;
+
+    private String docId = null;
+
     /**
      * <p>Construct an empty tree.</p>
      */
@@ -166,6 +165,8 @@ public class DocumentRevisionTree {
      */
     public DocumentRevisionTree(BasicDocumentRevision documentRevision) {
         addRootDBObject(documentRevision);
+        documentNumericId = documentRevision.getInternalNumericId();
+        docId = documentRevision.getId();
     }
 
     /**
@@ -179,6 +180,16 @@ public class DocumentRevisionTree {
     public DocumentRevisionTree add(BasicDocumentRevision documentRevision) {
         Preconditions.checkArgument(!sequenceMap.containsKey(documentRevision.getSequence()),
                 "The revision must not be added to the tree before.");
+
+        if(documentNumericId == -1l && docId == null){
+            documentNumericId = documentRevision.getInternalNumericId();
+            docId = documentRevision.getId();
+        } else if (!(documentRevision.getInternalNumericId() == documentNumericId ||
+                documentRevision.getId().equals(docId))) {
+            //document is not part of the same three though exception
+            throw new IllegalArgumentException("Document revision is not part of the same tree");
+
+        }
 
         if(documentRevision.getParent() <= 0) {
             addRootDBObject(documentRevision);
@@ -431,6 +442,24 @@ public class DocumentRevisionTree {
             res.add(object.getRevision());
         }
         return res;
+    }
+
+
+    /**
+     * <p>Returns the internal numeric ID of this document.</p>
+     *
+     * @return  the internal numeric ID of this document.
+     */
+    protected long getDocumentNumericId() {
+        return documentNumericId;
+    }
+
+    /**
+     * Returns the document ID
+     * @return the document ID
+     */
+    public String getDocId() {
+        return docId;
     }
 
     /**

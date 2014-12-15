@@ -412,28 +412,6 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void getDocNumericId() throws IOException {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
-        MutableDocumentRevision rev_2Mut = new MutableDocumentRevision();
-        rev_2Mut.body = bodyTwo;
-        BasicDocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
-        Assert.assertTrue(datastore.getDocNumericId(rev_1.getId()) == 1L);
-        Assert.assertTrue(datastore.getDocNumericId(rev_2.getId()) == 2L);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void getDocNumericId_null_exception() {
-        datastore.getDocNumericId(null);
-    }
-
-    @Test
-    public void getDocNumericId_idNotExist_minusOne() {
-        Assert.assertEquals(-1, datastore.getDocNumericId("invalidDocId"));
-    }
-
-    @Test
     public void getDocumentsWithIds_NA_allSpecifiedDocumentsShouldBeReturnedInCorrectOrder() throws ConflictException, IOException {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;

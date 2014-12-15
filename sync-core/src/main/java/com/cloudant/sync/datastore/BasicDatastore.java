@@ -207,24 +207,11 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
-    @Override
     public DocumentRevisionTree getAllRevisionsOfDocument(String docId) {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
-                "Input document id can not be empty");
-        long docNumericId = getDocNumericId(docId);
-        if (docNumericId < 0) {
-            throw new DocumentNotFoundException("DocumentRevisionTree not found with id: " + docId);
-        } else {
-            return getAllRevisionsOfDocument(docNumericId);
-        }
-    }
-
-    private DocumentRevisionTree getAllRevisionsOfDocument(long docNumericID) {
         String sql = "SELECT " + FULL_DOCUMENT_COLS + " FROM revs, docs " +
-                "WHERE revs.doc_id=? AND revs.doc_id = docs.doc_id ORDER BY sequence ASC";
+                "WHERE docs.docid=? AND revs.doc_id = docs.doc_id ORDER BY sequence ASC";
 
-        String[] args = {Long.toString(docNumericID)};
+        String[] args = {docId};
         Cursor cursor = null;
 
         try {
@@ -240,29 +227,10 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             return tree;
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Error getting all revisions of document", e);
-            return null;
+            throw new DocumentNotFoundException("DocumentRevisionTree not found with id: " + docId,e);
         } finally {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
-    }
-
-    @Override
-    public long getDocNumericId(String docId) {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
-                "Input document id can not be empty");
-        Cursor cursor = null;
-        try {
-            cursor = this.sqlDb.rawQuery("SELECT doc_id FROM docs WHERE docid = ?", new String[]{docId});
-            if (cursor.moveToFirst()) {
-                return cursor.getLong(0);
-            }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error getting doc numeric id", e);
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
-        return -1;
     }
 
     @Override
@@ -987,8 +955,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         Preconditions.checkArgument(revisions.size() > 0, "Revision history should have at least one revision." );
 
         // First look up all locally-known revisions of this document:
-        long docNumericID = this.getDocNumericId(newRevision.getId());
-        DocumentRevisionTree localRevs = getAllRevisionsOfDocument(docNumericID);
+        DocumentRevisionTree localRevs = getAllRevisionsOfDocument(newRevision.getId());
 
         assert localRevs != null;
 
@@ -996,9 +963,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
         BasicDocumentRevision parent = localRevs.lookup(newRevision.getId(), revisions.get(0));
         if(parent == null) {
-            sequence = insertDocumentHistoryToNewTree(newRevision, revisions, docNumericID, localRevs);
+            sequence = insertDocumentHistoryToNewTree(newRevision, revisions, localRevs.getDocumentNumericId(), localRevs);
         } else {
-            sequence = insertDocumentHistoryIntoExistingTree(newRevision, revisions, docNumericID, localRevs, attachments);
+            sequence = insertDocumentHistoryIntoExistingTree(newRevision, revisions, localRevs.getDocumentNumericId(), localRevs, attachments);
         }
         return sequence;
     }

@@ -161,7 +161,7 @@ public class BasicDocumentRevision implements DocumentRevision, Comparable<Basic
      *
      * @return  the internal numeric ID of this document revision.
      */
-    public long getInternalNumericId(){
+    long getInternalNumericId(){
         return internalNumericId;
     }
 
