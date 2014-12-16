@@ -31,8 +31,11 @@ import org.apache.commons.io.FilenameUtils;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -98,6 +101,25 @@ public class DatastoreManager {
             throw new IllegalArgumentException("Datastore directory is not writable");
         }
         this.path = directoryPath.getAbsolutePath();
+    }
+
+    /**
+     * Lists all the names of {@link com.cloudant.sync.datastore.Datastore Datastores} managed by this DatastoreManager
+     *
+     * @return List of {@link com.cloudant.sync.datastore.Datastore Datastores} names.
+     */
+    public List<String> listAllDatastores() {
+        List<String> datastores = new ArrayList<String>();
+        File dsManagerDir = new File(this.path);
+        for(File file:dsManagerDir.listFiles()){
+            boolean isStore = file.isDirectory() && new File(file, "db.sync").isFile();
+            if (isStore) {
+                //replace . with a slash, on disk / are replaced with dots
+                datastores.add(file.getName().replace(".", "/"));
+            }
+        }
+
+        return datastores;
     }
 
     /**

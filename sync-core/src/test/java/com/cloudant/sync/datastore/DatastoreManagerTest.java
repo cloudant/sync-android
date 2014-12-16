@@ -82,7 +82,7 @@ public class DatastoreManagerTest {
             Assert.assertTrue(new File(dbFile).isFile());
             assertsFailed = false;
         } finally {
-            if(assertsFailed)
+            if (assertsFailed)
                 ds.close();
         }
         return ds;
@@ -139,4 +139,38 @@ public class DatastoreManagerTest {
 
 
     }
+
+    @Test
+    public void list5Datastores() throws Exception {
+
+        for (int i = 0; i < 5; i++) {
+            manager.openDatastore("datastore" + i);
+        }
+
+        List<String> datastores = manager.listAllDatastores();
+
+        Assert.assertEquals(5, datastores.size());
+        for (int i = 0; i < 5; i++) {
+            Assert.assertTrue(datastores.contains("datastore" + i));
+        }
+
+    }
+
+    @Test
+    public void listDatastoresWithSlashes() throws Exception {
+        manager.openDatastore("datastore/mynewdatastore");
+
+        List<String> datastores = manager.listAllDatastores();
+
+        Assert.assertEquals(1, datastores.size());
+        Assert.assertEquals("datastore/mynewdatastore", datastores.get(0));
+
+    }
+
+    @Test
+    public void listEmptyDatastore() throws Exception {
+        List<String> datastores = manager.listAllDatastores();
+        Assert.assertEquals(0, datastores.size());
+    }
+
 }
