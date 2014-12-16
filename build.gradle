@@ -48,9 +48,6 @@ subprojects {
         mavenLocal()
         mavenCentral()
         maven { url "http://cloudant.github.io/cloudant-sync-eap/repository/" }
-
-        // Spock snapshots are available from the Sonatype OSS snapshot repository
-        maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
     }
 
     // local.gradle defines ghpages, so we want to publish somewhere specific for release
