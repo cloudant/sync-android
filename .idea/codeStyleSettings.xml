@@ -10,6 +10,8 @@
         </option>
         <option name="IMPORT_LAYOUT_TABLE">
           <value>
+            <package name="" withSubpackages="true" static="true" />
+            <emptyLine />
             <package name="android" withSubpackages="true" static="false" />
             <emptyLine />
             <package name="com" withSubpackages="true" static="false" />
@@ -20,13 +22,11 @@
             <emptyLine />
             <package name="org" withSubpackages="true" static="false" />
             <emptyLine />
+            <package name="" withSubpackages="true" static="false" />
+            <emptyLine />
             <package name="java" withSubpackages="true" static="false" />
             <emptyLine />
             <package name="javax" withSubpackages="true" static="false" />
-            <emptyLine />
-            <package name="" withSubpackages="true" static="false" />
-            <emptyLine />
-            <package name="" withSubpackages="true" static="true" />
             <emptyLine />
           </value>
         </option>
@@ -37,6 +37,12 @@
         <XML>
           <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
         </XML>
+        <codeStyleSettings language="JAVA">
+          <option name="IF_BRACE_FORCE" value="3" />
+          <option name="WHILE_BRACE_FORCE" value="3" />
+          <option name="FOR_BRACE_FORCE" value="3" />
+          <option name="WRAP_LONG_LINES" value="true" />
+        </codeStyleSettings>
         <codeStyleSettings language="XML">
           <option name="FORCE_REARRANGE_MODE" value="1" />
           <indentOptions>
@@ -168,6 +174,7 @@
         </codeStyleSettings>
       </value>
     </option>
+    <option name="USE_PER_PROJECT_SETTINGS" value="true" />
     <option name="PREFERRED_PROJECT_CODE_STYLE" value="Java" />
   </component>
 </project>
