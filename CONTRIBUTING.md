@@ -175,7 +175,20 @@ An alternative is to use gradle itself, which is also able to generate an idea p
 $ gradle idea
 ```
 
-See http://www.gradle.org/docs/current/userguide/idea_plugin.html.
+See [Gradle's IDEA plugin docs](http://www.gradle.org/docs/current/userguide/idea_plugin.html).
+
+### Code Style
+
+An IDEA code style matching the guidelines above is included in the project,
+in the `.idea` folder.
+
+If you already have the project, enable the code style follow these steps:
+
+1. Go to _Preferences_ -> _Editor_ -> _Code Style_.
+2. In the _Scheme_ dropdown, select _Project_.
+
+IDEA will then use the style when reformatting, refactoring and so on.
+
 
 ### Running JUnit tests in the IDE
 
