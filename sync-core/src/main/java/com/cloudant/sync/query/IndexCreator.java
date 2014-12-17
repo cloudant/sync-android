@@ -13,7 +13,6 @@ package com.cloudant.sync.query;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.SQLDatabase;
-import com.sun.deploy.util.StringUtils;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -247,15 +246,31 @@ class IndexCreator {
 
     private String createIndexTableStatementForIndexName(String indexName, List<String> columns) {
         String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
-        String cols = StringUtils.join(columns, ",");
+        String cols = join(columns, ",");
         return String.format("CREATE TABLE %s ( %s )", tableName, cols);
     }
 
     private String createIndexIndexStatementForIndexName(String indexName, List<String> columns) {
         String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
         String sqlIndexName = tableName.concat("_index");
-        String cols = StringUtils.join(columns, ",");
+        String cols = join(columns, ",");
         return String.format("CREATE INDEX %s ON %s ( %s )", sqlIndexName, tableName, cols);
+    }
+
+    private String join(List<String> items, String separator) {
+        String joined = "";
+
+        int size = items.size();
+        for (int i = 0; i < size; i++) {
+            String item = items.get(i);
+            if (i < size - 1) {
+                joined += item + separator;
+            } else {
+                joined += item;
+            }
+        }
+
+        return joined;
     }
 
 }
