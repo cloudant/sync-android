@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.common.Log;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.datastore.Attachment;
@@ -35,10 +34,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class BasicPushStrategy implements ReplicationStrategy {
 
     private static final String LOG_TAG = "BasicPushStrategy";
+    private static final Logger logger = Logger.getLogger(BasicPushStrategy.class.getCanonicalName());
 
     CouchDB targetDb;
     DatastoreWrapper sourceDb;
@@ -119,12 +121,7 @@ class BasicPushStrategy implements ReplicationStrategy {
             replicate();
 
         } catch (Throwable e) {
-            Log.e(
-                    this.name,
-                    String.format("Batch %s ended with error:", this.batchCounter),
-                    e
-            );
-
+            logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.batchCounter),e);
             errorInfo = new ErrorInfo(e);
         }
 
@@ -134,7 +131,7 @@ class BasicPushStrategy implements ReplicationStrategy {
         msg += this.cancel? "cancel." : "completion.";
 
         // notify complete/errored on eventbus
-        Log.i(this.name, msg + " Posting on EventBus.");
+        logger.info(msg + " Posting on EventBus.");
         if (errorInfo == null) {  // successful replication
             eventBus.post(new ReplicationStrategyCompleted(this));
         } else {
@@ -144,7 +141,7 @@ class BasicPushStrategy implements ReplicationStrategy {
 
     private void replicate()
             throws DatabaseNotFoundException, InterruptedException, ExecutionException {
-        Log.i(this.name, "Push replication started");
+        logger.info("Push replication started");
         long startTime = System.currentTimeMillis();
 
         // We were cancelled before we started
@@ -165,7 +162,7 @@ class BasicPushStrategy implements ReplicationStrategy {
                 this.batchCounter,
                 this.documentCounter
             );
-            Log.i(this.name, msg);
+            logger.info(msg);
             long batchStartTime = System.currentTimeMillis();
 
             Changes changes = getNextBatch();
@@ -178,7 +175,7 @@ class BasicPushStrategy implements ReplicationStrategy {
                     this.batchCounter,
                     changes.size()
             );
-            Log.i(this.name, msg);
+            logger.info(msg);
 
             if (changes.size() > 0) {
                 changesProcessed = processOneChangesBatch(changes);
@@ -192,7 +189,7 @@ class BasicPushStrategy implements ReplicationStrategy {
                     batchEndTime-batchStartTime,
                     changesProcessed
             );
-            Log.i(this.name, msg);
+            logger.info(msg);
 
             // This logic depends on the changes in the feed rather than the
             // changes we actually processed.
@@ -208,12 +205,12 @@ class BasicPushStrategy implements ReplicationStrategy {
             deltaTime,
             this.documentCounter
         );
-        Log.i(this.name, msg);
+        logger.info(msg);
     }
 
     private Changes getNextBatch() throws ExecutionException, InterruptedException {
         long lastPushSequence = getLastCheckpointSequence();
-        Log.d(this.name, "Last push sequence from remote database: " + lastPushSequence);
+        logger.fine("Last push sequence from remote database: " + lastPushSequence);
         return this.sourceDb.getDbCore().changes(lastPushSequence,
                 config.changeLimitPerBatch);
     }

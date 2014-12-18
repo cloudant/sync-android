@@ -17,19 +17,16 @@ package com.cloudant.sync.sqlite.sqlite4java;
 import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
-import com.cloudant.common.Log;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Stack;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -44,6 +41,7 @@ import java.util.Stack;
 public class SQLiteWrapper extends SQLDatabase {
 
     private final static String LOG_TAG = "SQLiteWrapper";
+    private static final Logger logger = Logger.getLogger(SQLiteWrapper.class.getCanonicalName());
 
     private static final String[] CONFLICT_VALUES = new String[]
             {"", " OR ROLLBACK ", " OR ABORT ", " OR FAIL ", " OR IGNORE ", " OR REPLACE "};
@@ -76,14 +74,14 @@ public class SQLiteWrapper extends SQLDatabase {
         }
     };
 
+    public SQLiteWrapper(String databaseFilePath) {
+        this.databaseFilePath = databaseFilePath;
+    }
+
     public static SQLiteWrapper openSQLiteWrapper(String databaseFilePath) {
         SQLiteWrapper db = new SQLiteWrapper(databaseFilePath);
         db.open();
         return db;
-    }
-
-    public SQLiteWrapper(String databaseFilePath) {
-        this.databaseFilePath = databaseFilePath;
     }
 
     public String getDatabaseFile() {
@@ -263,7 +261,8 @@ public class SQLiteWrapper extends SQLDatabase {
             this.executeSQLStatement(updateQuery, bindArgs);
             return getConnection().getChanges();
         } catch (SQLiteException e) {
-            Log.e(LOG_TAG, "Error updating: " + table + ", " + values + ", " + whereClause + ", " + whereArgs, e);
+            logger.log(Level.SEVERE, String.format("Error updating: %1, %2, %3, %4", table,
+                    values, whereClause, whereArgs), e);
             return -1;
         }
     }
@@ -327,8 +326,8 @@ public class SQLiteWrapper extends SQLDatabase {
             this.executeSQLStatement(sql.toString(), bindArgs);
             return getConnection().getLastInsertId();
         } catch (SQLiteException e) {
-            Log.d(LOG_TAG, "Error inserting to : " + table + ", " + initialValues + ", "
-                    + CONFLICT_VALUES[conflictAlgorithm], e);
+            logger.log(Level.SEVERE, String.format("Error inserting to: %s, %s, %s", table,
+                    initialValues, CONFLICT_VALUES[conflictAlgorithm]), e);
             return -1;
         }
     }

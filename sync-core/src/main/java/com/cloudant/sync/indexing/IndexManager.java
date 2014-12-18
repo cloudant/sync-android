@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.indexing;
 
-import com.cloudant.android.Log;
 import com.cloudant.sync.datastore.*;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.sqlite.ContentValues;
@@ -34,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -48,6 +48,7 @@ import java.util.regex.Pattern;
 public class IndexManager {
 
     private static final String LOG_TAG = "IndexManager";
+    private static final Logger logger = Logger.getLogger(IndexManager.class.getCanonicalName());
     private final SQLDatabase sqlDb;
     private final Datastore datastore;
 
@@ -322,7 +323,7 @@ public class IndexManager {
                 indexType.putIntoContentValues(v, "value", value);
                 this.sqlDb.insert(indexTable, v);
             } else {
-                Log.e(LOG_TAG, "Index value ignored, docId: " + docId + ", value: " + value);
+                logger.severe("Index value ignored, docId: " + docId + ", value: " + value);
             }
         }
     }

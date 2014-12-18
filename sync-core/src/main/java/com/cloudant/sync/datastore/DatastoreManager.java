@@ -17,7 +17,6 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.common.Log;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DatabaseCreated;
 import com.cloudant.sync.notifications.DatabaseOpened;
@@ -34,6 +33,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * <p>Manages a set of {@link Datastore} objects, with their underlying disk
@@ -51,6 +51,7 @@ import java.util.Map;
 public class DatastoreManager {
 
     private final static String LOG_TAG = "DatastoreManager";
+    private final static Logger logger = Logger.getLogger(DatastoreManager.class.getCanonicalName());
 
     private final String path;
 
@@ -91,7 +92,7 @@ public class DatastoreManager {
      *          directory or isn't writable.
      */
     public DatastoreManager(File directoryPath) {
-        Log.d(LOG_TAG, "Datastore path: " + directoryPath);
+        logger.fine("Datastore path: " + directoryPath);
         if(!directoryPath.isDirectory() ) {
             throw new IllegalArgumentException("Input path is not a valid directory");
         } else if(!directoryPath.canWrite()) {
@@ -188,9 +189,9 @@ public class DatastoreManager {
         try {
             String dbDirectory = this.getDatastoreDirectory(dbName);
             boolean dbDirectoryExist = new File(dbDirectory).exists();
-            Log.i(LOG_TAG, "path: " + this.path);
-            Log.i(LOG_TAG, "dbDirectory: " + dbDirectory);
-            Log.i(LOG_TAG, "dbDirectoryExist: " + dbDirectoryExist);
+            logger.info("path: " + this.path);
+            logger.info("dbDirectory: " + dbDirectory);
+            logger.info("dbDirectoryExist: " + dbDirectoryExist);
             // dbDirectory will created in BasicDatastore constructor
             // if it does not exist
             BasicDatastore ds = new BasicDatastore(dbDirectory, dbName);

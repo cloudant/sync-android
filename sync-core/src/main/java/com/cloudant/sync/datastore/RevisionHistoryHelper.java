@@ -16,7 +16,6 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64OutputStreamFactory;
 import com.cloudant.common.CouchConstants;
-import com.cloudant.common.Log;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.replication.PushAttachmentsInline;
 import com.cloudant.sync.util.CouchUtils;
@@ -31,6 +30,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * <p>Methods to help managing document revision histories.</p>
@@ -40,7 +41,8 @@ import java.util.Map;
  */
 public class RevisionHistoryHelper {
 
-    private final static String LOG_TAG = "RevisionHistoryHelper";
+    private final static Logger logger = Logger.getLogger(RevisionHistoryHelper.class
+            .getCanonicalName());
 
     // we are using json helper from mazha to it does not filter out
     // couchdb special fields
@@ -189,7 +191,7 @@ public class RevisionHistoryHelper {
                     }
                 }
             } catch (IOException ioe) {
-                Log.w(LOG_TAG, "IOException caught when adding multiparts: "+ioe);
+                logger.log(Level.WARNING,"IOException caught when adding multiparts",ioe);
             }
         }
         if (mpw != null) {
@@ -251,7 +253,7 @@ public class RevisionHistoryHelper {
                 // if we can't read the file containing the attachment then skip it
                 // (this should only occur if someone tampered with the attachments directory
                 // or something went seriously wrong)
-                Log.w(LOG_TAG, "Caught IOException in addAttachments whilst reading attachment " + att + ", skipping it: " + ioe);
+                logger.log(Level.WARNING,String.format("Error reading attachment %s",att),ioe);
                 continue;
             }
             // now we are done, add the attachment to the map

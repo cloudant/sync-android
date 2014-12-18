@@ -147,4 +147,9 @@ public class DocumentRevs {
         }
 
     }
+
+    @Override
+    public String toString(){
+        return String.format("ID: %s rev: %s revisionIds: %s",id,rev,revisions.ids);
+    }
 }

@@ -24,17 +24,19 @@ import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.DocumentRevsUtils;
 import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.util.JSONUtils;
-import com.cloudant.common.Log;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class DatastoreWrapper {
 
     private final static String LOG_TAG = "DatastoreWrapper";
+    private final static Logger logger = Logger.getLogger(DatastoreWrapper.class.getCanonicalName());
 
     private DatastoreExtended dbCore;
 
@@ -51,7 +53,7 @@ class DatastoreWrapper {
     }
 
     public String getCheckpoint(String replicatorIdentifier) {
-        Log.i(LOG_TAG, "getCheckpoint(): " + replicatorIdentifier);
+        logger.entering("DatastoreWrapper","getCheckpoint" + replicatorIdentifier);
         BasicDocumentRevision doc = dbCore.getLocalDocument(getCheckpointDocumentId(replicatorIdentifier));
         if(doc == null) {
             return null;
@@ -66,7 +68,7 @@ class DatastoreWrapper {
     }
 
     public void putCheckpoint(String replicatorIdentifier, String sequence) {
-        Log.i(LOG_TAG, "putCheckpoint(): " + replicatorIdentifier);
+        logger.entering("DatastoreWrapper","putCheckpoint",new Object[]{replicatorIdentifier,sequence});
         String checkpointDocumentId = getCheckpointDocumentId(replicatorIdentifier);
         BasicDocumentRevision doc = dbCore.getLocalDocument(checkpointDocumentId);
         Map<String, String> checkpointDoc = new HashMap<String, String>();
@@ -85,8 +87,8 @@ class DatastoreWrapper {
 
     public void bulkInsert(DocumentRevsList documentRevsList, boolean pullAttachmentsInline) {
         for(DocumentRevs documentRevs: documentRevsList) {
-            Log.v(LOG_TAG, "Bulk Inserting DocumentRevs: [ " + documentRevs.getId() + ", "
-                    + documentRevs.getRev() + "," + documentRevs.getRevisions().getIds() + " ]");
+            logger.log(Level.FINEST,"Bulk inserting document revs: %s",documentRevs);
+
             BasicDocumentRevision doc = DocumentRevsUtils.createDocument(documentRevs);
 
             List<String> revisions = DocumentRevsUtils.createRevisionIdHistory(documentRevs);

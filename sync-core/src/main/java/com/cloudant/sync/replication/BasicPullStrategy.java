@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.common.Log;
 import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.DocumentRevs;
@@ -43,9 +42,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class BasicPullStrategy implements ReplicationStrategy {
 
+    private static final Logger logger = Logger.getLogger(BasicPullStrategy.class.getCanonicalName());
     private static final String LOG_TAG = "BasicPullStrategy";
     CouchDB sourceDb;
     Replication.Filter filter;
@@ -136,20 +138,10 @@ class BasicPullStrategy implements ReplicationStrategy {
             replicate();
 
         } catch (ExecutionException ex) {
-            Log.e(
-                    this.name,
-                    String.format("Batch %s ended with error:", this.batchCounter),
-                    ex.getCause()
-            );
-
+            logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.batchCounter),ex);
             errorInfo = new ErrorInfo(ex.getCause());
         } catch (Throwable e) {
-            Log.e(
-                    this.name,
-                    String.format("Batch %s ended with error:", this.batchCounter),
-                    e
-            );
-
+            logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.batchCounter),e);
             errorInfo = new ErrorInfo(e);
         } finally {
             this.executor.shutdownNow();
@@ -170,7 +162,7 @@ class BasicPullStrategy implements ReplicationStrategy {
         msg += this.cancel? "cancel." : "completion.";
 
         // notify complete/errored on eventbus
-        Log.i(this.name, msg + " Posting on EventBus.");
+        logger.info(msg + " Posting on EventBus.");
         if (errorInfo == null) {  // successful replication
             eventBus.post(new ReplicationStrategyCompleted(this));
         } else {
@@ -181,7 +173,7 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     private void replicate()
         throws DatabaseNotFoundException, ExecutionException, InterruptedException {
-        Log.i(this.name, "Pull replication started");
+        logger.info("Pull replication started");
         long startTime = System.currentTimeMillis();
 
         // We were cancelled before we started
@@ -202,7 +194,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                     this.batchCounter,
                     this.documentCounter
             );
-            Log.i(this.name, msg);
+            logger.info(msg);
             long batchStartTime = System.currentTimeMillis();
 
             ChangesResultWrapper changeFeeds = this.nextBatch();
@@ -215,7 +207,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                     this.batchCounter,
                     changeFeeds.size()
             );
-            Log.i(this.name, msg);
+            logger.info(msg);
 
             if (changeFeeds.size() > 0) {
                 batchChangesProcessed = processOneChangesBatch(changeFeeds);
@@ -229,7 +221,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                     batchEndTime-batchStartTime,
                     batchChangesProcessed
             );
-            Log.i(this.name, msg);
+            logger.info(msg);
 
             // This logic depends on the changes in the feed rather than the
             // changes we actually processed.
@@ -245,7 +237,7 @@ class BasicPullStrategy implements ReplicationStrategy {
             deltaTime,
             this.documentCounter
         );
-        Log.i(this.name, msg);
+        logger.info(msg);
     }
 
     private int processOneChangesBatch(ChangesResultWrapper changeFeeds)
@@ -255,7 +247,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                 changeFeeds.getLastSeq(),
                 changeFeeds.getResults().size()
         );
-        Log.d(this.name, feed);
+        logger.info(feed);
 
         Multimap<String, String> openRevs = changeFeeds.openRevisions(0, changeFeeds.size());
         Map<String, Collection<String>> missingRevisions = this.targetDb.getDbCore().revsDiff(openRevs);
@@ -320,8 +312,10 @@ class BasicPullStrategy implements ReplicationStrategy {
                                 }
                             }
                         } catch (Exception e) {
-                            Log.e(LOG_TAG, "There was a problem downloading an attachment to the datastore, terminating replication");
-                            Log.e(LOG_TAG, "Exception was: " + e);
+                            logger.log(Level.SEVERE,
+                                    "There was a problem downloading an attachment to the" +
+                                            " datastore, terminating replication",
+                                    e);
                             this.cancel = true;
                         }
                     }
@@ -345,8 +339,8 @@ class BasicPullStrategy implements ReplicationStrategy {
                             }
                         }
                     } catch (Exception e) {
-                        Log.e(LOG_TAG, "There was a problem adding an attachment to the datastore, terminating replication");
-                        Log.e(LOG_TAG, "Exception was: " + e);
+                        logger.log(Level.SEVERE, "There was a problem adding an attachment to " +
+                                "the datastore, terminating replication",e);
                         this.cancel = true;
                         ok = false;
                     }
@@ -387,12 +381,12 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     private ChangesResultWrapper nextBatch() {
         final String lastCheckpoint = this.targetDb.getCheckpoint(this.getReplicationId());
-        Log.d(this.name, "lastCheckpoint: " + lastCheckpoint);
+        logger.fine("last checkpoint "+lastCheckpoint);
         ChangesResult changeFeeds = this.sourceDb.changes(
                 filter,
                 lastCheckpoint,
                 this.config.changeLimitPerBatch);
-        Log.v(this.name, "changes feed: " + JSONUtils.toPrettyJson(changeFeeds));
+        logger.finer("changes feed: "+JSONUtils.toPrettyJson(changeFeeds));
         return new ChangesResultWrapper(changeFeeds);
     }
 
