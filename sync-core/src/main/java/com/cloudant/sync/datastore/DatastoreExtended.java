@@ -211,18 +211,6 @@ public interface DatastoreExtended extends Datastore {
     public int getDocumentCount();
 
     /**
-     * <p>Returns the SQLite primary key of a document.</p>
-     *
-     * <p>Internally, each document has a row in a SQLite database table.
-     * This method gets the primary key of that row. It's meaningless
-     * outside of the local datastore, and dependent on the insertion
-     * order of documents.</p>
-     *
-     * @param documentId id of the specified document
-     * @return internal id of the given document
-     */
-    public long getDocNumericId(String documentId);
-    /**
      * Returns the subset of given the documentId/revisions that are not stored in the database.
      *
      * The input revisions is a map, whose key is document id, and value is a list of revisions.
