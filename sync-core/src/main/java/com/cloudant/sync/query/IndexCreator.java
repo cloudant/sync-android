@@ -42,11 +42,11 @@ class IndexCreator {
         this.queue = queue;
     }
 
-    public static String ensureIndexed(ArrayList<Object> fieldNames, String indexName
-                                                                   , String indexType
-                                                                   , SQLDatabase database
-                                                                   , Datastore datastore
-                                                                   , ExecutorService queue) {
+    protected static String ensureIndexed(ArrayList<Object> fieldNames, String indexName
+                                                                      , String indexType
+                                                                      , SQLDatabase database
+                                                                      , Datastore datastore
+                                                                      , ExecutorService queue) {
         IndexCreator executor = new IndexCreator(database, datastore, queue);
         return executor.ensureIndexed(fieldNames, indexName, indexType);
     }
@@ -137,8 +137,8 @@ class IndexCreator {
                     parameters.put("index_type", indexType);
                     parameters.put("field_name", fieldName);
                     parameters.put("last_sequence", 0);
-                    long rowId = database.insert(IndexManager.INDEX_METADATA_TABLE_NAME
-                                               , parameters);
+                    long rowId = database.insert(IndexManager.INDEX_METADATA_TABLE_NAME,
+                                                 parameters);
                     if (rowId < 0) {
                         transactionSuccess = false;
                         break;
@@ -147,13 +147,13 @@ class IndexCreator {
 
                 try {
                     // Create the table for the index
-                    String indexTblSQL = createIndexTableStatementForIndexName(indexName
-                                                                             , fieldNamesList);
+                    String indexTblSQL = createIndexTableStatementForIndexName(indexName,
+                                                                               fieldNamesList);
                     database.execSQL(indexTblSQL);
 
                     // Create the SQLite index on the index table
-                    String indexTblIndexSQL = createIndexIndexStatementForIndexName(indexName
-                                                                                  , fieldNamesList);
+                    String indexTblIndexSQL = createIndexIndexStatementForIndexName(indexName,
+                                                                                    fieldNamesList);
                     database.execSQL(indexTblIndexSQL);
                 } catch (SQLException e) {
                     logger.log(Level.SEVERE, "Index creation error occurred:", e);

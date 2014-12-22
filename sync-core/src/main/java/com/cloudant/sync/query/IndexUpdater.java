@@ -279,7 +279,7 @@ class IndexUpdater {
             @Override
             public Long call() {
                 long result = 0;
-                String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = %s"
+                String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = \"%s\""
                                           , IndexManager.INDEX_METADATA_TABLE_NAME
                                           , indexName);
                 Cursor cursor = null;
@@ -323,7 +323,7 @@ class IndexUpdater {
                                         , v
                                         , " index_name = ? "
                                         , new String[]{ indexName });
-                if (row != 1) {
+                if (row <= 0) {
                     updateSuccess = false;
                 }
                 return updateSuccess;

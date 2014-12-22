@@ -82,8 +82,7 @@ public class IndexManager {
         try {
             sqlDatabase = SQLDatabaseFactory.openSqlDatabase(filename);
         } catch (IOException e) {
-            // TODO - handle error/logging - "Problem opening or creating database."
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Problem opening or creating database.", e);
         }
         database = sqlDatabase;
         try {
@@ -94,8 +93,7 @@ public class IndexManager {
                                                      + "        last_sequence INTEGER NOT NULL);" };
             SQLDatabaseFactory.updateSchema(database, schemaIndex, VERSION);
         } catch (SQLException e) {
-            // TODO - handle error/logging - "Failed to update schema."
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Failed to update schema.", e);
         }
     }
 
@@ -144,7 +142,7 @@ public class IndexManager {
             return null;
         }
 
-        if (!indexType.equalsIgnoreCase("json")) {
+        if (indexType == null || !indexType.equalsIgnoreCase("json")) {
             return null;
         }
 
@@ -152,7 +150,11 @@ public class IndexManager {
                                                                                     , queue);
     }
 
-    public static Map<String, Object> listIndexesInDatabase(SQLDatabase db) {
+    public Map<String, Object> listIndexes() {
+        return IndexManager.listIndexesInDatabase(database);
+    }
+
+    protected static Map<String, Object> listIndexesInDatabase(SQLDatabase db) {
         // Accumulate indexes and definitions into a map
         String sql = String.format("SELECT index_name, index_type, field_name FROM %s"
                                   , INDEX_METADATA_TABLE_NAME);
@@ -164,9 +166,9 @@ public class IndexManager {
             cursor = db.rawQuery(sql, new String[]{});
             indexes = new HashMap<String, Object>();
             while (cursor.moveToNext()) {
-                String rowIndex = cursor.getString(cursor.getColumnIndex("index_name"));
-                String rowType = cursor.getString(cursor.getColumnIndex("index_type"));
-                String rowField = cursor.getString(cursor.getColumnIndex("field_name"));
+                String rowIndex = cursor.getString(0);
+                String rowType = cursor.getString(1);
+                String rowField = cursor.getString(2);
                 if (!indexes.containsKey(rowIndex)) {
                     index = new HashMap<String, Object>();
                     fields = new ArrayList<String>();
@@ -180,8 +182,7 @@ public class IndexManager {
                 }
             }
         } catch (SQLException e) {
-            // TODO - handle error/logging
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Failed to get a list of indexes in the database.", e);
         } finally {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
@@ -189,11 +190,19 @@ public class IndexManager {
         return indexes;
     }
 
-    public ExecutorService getQueue() {
+    protected Datastore getDatastore() {
+        return datastore;
+    }
+
+    protected ExecutorService getQueue() {
         return queue;
     }
 
-    public void terminate() {
+    protected SQLDatabase getDatabase() {
+        return database;
+    }
+
+    public void close() {
         queue.shutdown();
     }
 }
