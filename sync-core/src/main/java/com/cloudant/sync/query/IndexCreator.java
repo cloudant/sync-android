@@ -101,7 +101,7 @@ class IndexCreator {
         // Does the index already exist; return success if it does and is same, else fail
         try {
             Map<String, Object> existingIndexes = listIndexesInDatabaseQueue();
-            if (existingIndexes != null && !existingIndexes.isEmpty()) {
+            if (existingIndexes != null && existingIndexes.get(indexName) != null) {
                 Map<String, Object> index = (Map<String, Object>) existingIndexes.get(indexName);
                 String existingType = (String) index.get("type");
                 List<String> existingFieldsList = (List<String>) index.get("fields");
@@ -145,18 +145,22 @@ class IndexCreator {
                     }
                 }
 
+                String statement = null;
                 try {
+                    List<String> columnList = new ArrayList<String>();
+                    for (String field: fieldNamesList) {
+                        columnList.add("\"" + field + "\"");
+                    }
                     // Create the table for the index
-                    String indexTblSQL = createIndexTableStatementForIndexName(indexName,
-                                                                               fieldNamesList);
-                    database.execSQL(indexTblSQL);
+                    statement = createIndexTableStatementForIndexName(indexName, columnList);
+                    database.execSQL(statement);
 
                     // Create the SQLite index on the index table
-                    String indexTblIndexSQL = createIndexIndexStatementForIndexName(indexName,
-                                                                                    fieldNamesList);
-                    database.execSQL(indexTblIndexSQL);
+                    statement = createIndexIndexStatementForIndexName(indexName, columnList);
+                    database.execSQL(statement);
                 } catch (SQLException e) {
-                    logger.log(Level.SEVERE, "Index creation error occurred:", e);
+                    String msg = String.format("Index creation error occurred (%s):",statement);
+                    logger.log(Level.SEVERE, msg, e);
                     transactionSuccess = false;
                 }
 
@@ -220,8 +224,7 @@ class IndexCreator {
                 if (specifier.size() == 1) {
                     for (Object key: specifier.keySet()) {
                         // This will iterate only once
-                        String fieldName = (String) specifier.get(key);
-                        result.add(fieldName);
+                        result.add((String) key);
                     }
                 }
             } else if (field instanceof String) {
