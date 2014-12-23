@@ -78,7 +78,7 @@ public class IndexCreatorTest {
     }
 
     @Test
-    public void failuresCreatingIndexes() {
+    public void preconditionsToCreatingIndexes() {
         // doesn't create an index on null fields
         ArrayList<Object> fieldNames = null;
         String name = im.ensureIndexed(fieldNames, "basic");
@@ -100,10 +100,6 @@ public class IndexCreatorTest {
 
         // doesn't create an index on null index type
         name = im.ensureIndexed(fieldNames, "basic", null);
-        Assert.assertNull(name);
-
-        // doesn't create an index on index type != json
-        name = im.ensureIndexed(fieldNames, "basic", "text");
         Assert.assertNull(name);
 
         // doesn't create an index if duplicate fields
@@ -240,7 +236,177 @@ public class IndexCreatorTest {
         Assert.assertTrue(fields.contains("_rev"));
         Assert.assertTrue(fields.contains("name"));
         Assert.assertTrue(fields.contains("age"));
+    }
 
+    @Test
+    public void createIndexWhenIndexNameExistsIdxDefinitionSame() {
+        ArrayList<Object> fieldNames = new ArrayList<Object>();
+        HashMap<String, String> nameField = new HashMap<String, String>();
+        nameField.put("name", "asc");
+        HashMap<String, String> ageField = new HashMap<String, String>();
+        ageField.put("age", "desc");
+        fieldNames.add(nameField);
+        fieldNames.add(ageField);
+        String name = im.ensureIndexed(fieldNames, "basic");
+        Assert.assertTrue(name.equals("basic"));
+
+        // succeeds when the index definition is the same
+        name = im.ensureIndexed(fieldNames, "basic");
+        Assert.assertTrue(name.equals("basic"));
+    }
+
+    @Test
+    public void createIndexWhenIndexNameExistsIdxDefinitionDifferent() {
+        ArrayList<Object> fieldNames = new ArrayList<Object>();
+        HashMap<String, String> nameField = new HashMap<String, String>();
+        nameField.put("name", "asc");
+        HashMap<String, String> ageField = new HashMap<String, String>();
+        ageField.put("age", "desc");
+        fieldNames.add(nameField);
+        fieldNames.add(ageField);
+        String name = im.ensureIndexed(fieldNames, "basic");
+        Assert.assertTrue(name.equals("basic"));
+
+        // fails when the index definition is different
+        fieldNames.remove(1);
+        HashMap<String, String> petField = new HashMap<String, String>();
+        petField.put("pet", "desc");
+        fieldNames.add(petField);
+        name = im.ensureIndexed(fieldNames, "basic");
+        Assert.assertNull(name);
+    }
+
+    @Test
+    public void createIndexWithJsonType() {
+        ArrayList<Object> fieldNames = new ArrayList<Object>();
+        HashMap<String, String> nameField = new HashMap<String, String>();
+        nameField.put("name", "asc");
+        HashMap<String, String> ageField = new HashMap<String, String>();
+        ageField.put("age", "desc");
+        fieldNames.add(nameField);
+        fieldNames.add(ageField);
+
+        // supports using the json type
+        String name = im.ensureIndexed(fieldNames, "basic", "json");
+        Assert.assertTrue(name.equals("basic"));
+    }
+
+    @Test
+    public void createIndexWithTextType() {
+        ArrayList<Object> fieldNames = new ArrayList<Object>();
+        HashMap<String, String> nameField = new HashMap<String, String>();
+        nameField.put("name", "asc");
+        HashMap<String, String> ageField = new HashMap<String, String>();
+        ageField.put("age", "desc");
+        fieldNames.add(nameField);
+        fieldNames.add(ageField);
+
+        // doesn't support using the text type
+        String name = im.ensureIndexed(fieldNames, "basic", "text");
+        Assert.assertNull(name);
+    }
+
+    @Test
+    public void createIndexWithGeoType() {
+        ArrayList<Object> fieldNames = new ArrayList<Object>();
+        HashMap<String, String> nameField = new HashMap<String, String>();
+        nameField.put("name", "asc");
+        HashMap<String, String> ageField = new HashMap<String, String>();
+        ageField.put("age", "desc");
+        fieldNames.add(nameField);
+        fieldNames.add(ageField);
+
+        // doesn't support using the geo type
+        String name = im.ensureIndexed(fieldNames, "basic", "geo");
+        Assert.assertNull(name);
+    }
+
+    @Test
+    public void createIndexWithUnplannedType() {
+        ArrayList<Object> fieldNames = new ArrayList<Object>();
+        HashMap<String, String> nameField = new HashMap<String, String>();
+        nameField.put("name", "asc");
+        HashMap<String, String> ageField = new HashMap<String, String>();
+        ageField.put("age", "desc");
+        fieldNames.add(nameField);
+        fieldNames.add(ageField);
+
+        // doesn't support using the unplanned type
+        String name = im.ensureIndexed(fieldNames, "basic", "frog");
+        Assert.assertNull(name);
+    }
+
+    @Test
+    public void createIndexUsingNonAsciiText() {
+        ArrayList<Object> fieldNames = new ArrayList<Object>();
+        fieldNames.add("اسم");
+        fieldNames.add("datatype");
+        fieldNames.add("ages");
+
+        // can create indexes successfully
+        String name = im.ensureIndexed(fieldNames, "nonascii");
+        Assert.assertTrue(name.equals("nonascii"));
+    }
+
+    @Test
+    public void normalizeIndexFields() {
+        ArrayList<Object> fieldNames = new ArrayList<Object>();
+        HashMap<String, String> nameField = new HashMap<String, String>();
+        nameField.put("name", "asc");
+        HashMap<String, String> petField = new HashMap<String, String>();
+        petField.put("pet", "desc");
+        fieldNames.add(nameField);
+        fieldNames.add(petField);
+        fieldNames.add("age");
+
+        // removes directions from the field specifiers
+        ArrayList<String> fields = IndexCreator.removeDirectionsFromFields(fieldNames);
+        Assert.assertEquals(3, fields.size());
+        Assert.assertTrue(fields.contains("name"));
+        Assert.assertTrue(fields.contains("pet"));
+        Assert.assertTrue(fields.contains("age"));
+    }
+
+    @Test
+    public void createIndexWhereFieldNameContainsDollarSign() {
+        ArrayList<Object> fieldNames = new ArrayList<Object>();
+        fieldNames.add("$name");
+        fieldNames.add("datatype");
+
+        // rejects indexes with $ at start
+        String name = im.ensureIndexed(fieldNames, "basic");
+        Assert.assertNull(name);
+
+        fieldNames.clear();
+        fieldNames.add("na$me");
+        fieldNames.add("datatype$");
+
+        // creates indexes with $ not at start
+        name = im.ensureIndexed(fieldNames, "basic");
+        Assert.assertTrue(name.equals("basic"));
+    }
+
+    @Test
+    public void validateFieldNames() {
+        // allows single fields
+        Assert.assertTrue(IndexCreator.validFieldName("name"));
+
+        // allows dotted notation fields
+        Assert.assertTrue(IndexCreator.validFieldName("name.first"));
+        Assert.assertTrue(IndexCreator.validFieldName("name.first.prefix"));
+
+        // allows dollars in positions other than first letter of a part
+        Assert.assertTrue(IndexCreator.validFieldName("na$me"));
+        Assert.assertTrue(IndexCreator.validFieldName("name.fir$t"));
+        Assert.assertTrue(IndexCreator.validFieldName("name.fir$t.pref$x"));
+
+        // rejects dollars in first letter of a part
+        Assert.assertFalse(IndexCreator.validFieldName("$name"));
+        Assert.assertFalse(IndexCreator.validFieldName("name.$first"));
+        Assert.assertFalse(IndexCreator.validFieldName("name.$first.$prefix"));
+        Assert.assertFalse(IndexCreator.validFieldName("name.first.$prefix"));
+        Assert.assertFalse(IndexCreator.validFieldName("name.first.$pr$efix"));
+        Assert.assertFalse(IndexCreator.validFieldName("name.$$$$.prefix"));
     }
 
 }

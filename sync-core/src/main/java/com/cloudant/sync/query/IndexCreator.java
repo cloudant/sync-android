@@ -199,8 +199,8 @@ class IndexCreator {
      *  The only restriction so far is that the parts don't start with
      *  a $ sign, as this makes the query language ambiguous.
      */
-    private boolean validFieldName(String fieldName) {
-        String[] parts = fieldName.split(".");
+    protected static boolean validFieldName(String fieldName) {
+        String[] parts = fieldName.contains(".") ? fieldName.split("\\.") : new String[]{ fieldName };
         for (String part: parts) {
             if (part.startsWith("$")) {
                 String msg = String.format("Field names cannot start with a $ in field %s", part);
@@ -215,7 +215,7 @@ class IndexCreator {
      *  We don't support directions on field names, but they are an optimisation so
      *  we can discard them safely.
      */
-    private ArrayList<String> removeDirectionsFromFields(ArrayList<Object> fieldNames) {
+    protected static ArrayList<String> removeDirectionsFromFields(ArrayList<Object> fieldNames) {
         ArrayList<String> result = new ArrayList<String>();
 
         for (Object field: fieldNames) {
@@ -249,8 +249,8 @@ class IndexCreator {
 
     private String createIndexTableStatementForIndexName(String indexName, List<String> columns) {
         String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
-        String cols = join(columns, ",");
-        return String.format("CREATE TABLE %s ( %s )", tableName, cols);
+        String cols = join(columns, " NONE,");
+        return String.format("CREATE TABLE %s ( %s NONE )", tableName, cols);
     }
 
     private String createIndexIndexStatementForIndexName(String indexName, List<String> columns) {
