@@ -11,7 +11,9 @@
 package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.DocumentBody;
+import com.cloudant.sync.datastore.DocumentRevision;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +24,20 @@ class ValueExtractor {
 
     private static final Logger logger = Logger.getLogger(ValueExtractor.class.getName());
 
-    public static Object extractValueForFieldName(String possiblyDottedField
-                                                , DocumentBody body) {
+    public static Object extractValueForFieldName(String possiblyDottedField,
+                                                  DocumentRevision rev) {
+        // _id and _rev are special fields which come from attributes
+        // of the revision and not its body.
+        if (possiblyDottedField.equals("_id")) {
+            return rev.getId();
+        } else if (possiblyDottedField.equals("_rev")) {
+            return rev.getRevision();
+        } else {
+            return extractValueForFieldName(possiblyDottedField, rev.getBody());
+        }
+    }
+
+    public static Object extractValueForFieldName(String possiblyDottedField, DocumentBody body) {
         // The algorithm here is to split the fields into a "path" and a "lastSegment".
         // The path leads us to the final sub-document. We know that if we have either
         // nil or a non-dictionary object while traversing path that the body doesn't
@@ -31,7 +45,11 @@ class ValueExtractor {
         // that each level of the `path` results in a document rather than a value,
         // because if it's a value, we can't continue the selection process.
 
-        List<String> path = Arrays.asList(possiblyDottedField.split("."));
+        String[] fields = possiblyDottedField.contains(".") ?
+                          possiblyDottedField.split("\\.") :
+                          new String[]{possiblyDottedField};
+
+        List<String> path = new ArrayList<String>(Arrays.asList(fields));
         String lastSegment = path.remove(path.size() - 1);
 
         Map<String, Object> currentLevel = body.asMap();
@@ -40,8 +58,8 @@ class ValueExtractor {
             if (map != null && map instanceof Map) {
                 currentLevel = (Map<String, Object>) map;
             } else {
-                String msg = String.format("Could not extract field %s from document."
-                                          , possiblyDottedField);
+                String msg = String.format("Could not extract field %s from document.",
+                                           possiblyDottedField);
                 logger.log(Level.FINE, msg);
                 return null;
             }

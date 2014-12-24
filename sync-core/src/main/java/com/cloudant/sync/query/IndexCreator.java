@@ -42,11 +42,12 @@ class IndexCreator {
         this.queue = queue;
     }
 
-    protected static String ensureIndexed(ArrayList<Object> fieldNames, String indexName
-                                                                      , String indexType
-                                                                      , SQLDatabase database
-                                                                      , Datastore datastore
-                                                                      , ExecutorService queue) {
+    protected static String ensureIndexed(ArrayList<Object> fieldNames,
+                                          String indexName,
+                                          String indexType,
+                                          SQLDatabase database,
+                                          Datastore datastore,
+                                          ExecutorService queue) {
         IndexCreator executor = new IndexCreator(database, datastore, queue);
         return executor.ensureIndexed(fieldNames, indexName, indexType);
     }
@@ -61,7 +62,9 @@ class IndexCreator {
      *  @param indexType "json" is the only supported type for now
      *  @return name of created index
      */
-    private String ensureIndexed(ArrayList<Object> fieldNames, final String indexName, final String indexType) {
+    private String ensureIndexed(ArrayList<Object> fieldNames,
+                                 final String indexName,
+                                 final String indexType) {
 
         if (fieldNames == null || fieldNames.isEmpty()) {
             logger.log(Level.SEVERE, "No field names were passed to ensureIndexed");
@@ -109,10 +112,11 @@ class IndexCreator {
                 Set<String> newFields = new HashSet<String>(fieldNamesList);
 
                 if (existingType.equalsIgnoreCase(indexType) && existingFields.equals(newFields)) {
-                    boolean success = IndexUpdater.updateIndex(indexName, fieldNamesList
-                                                                        , database
-                                                                        , datastore
-                                                                        , queue);
+                    boolean success = IndexUpdater.updateIndex(indexName,
+                                                               fieldNamesList,
+                                                               database,
+                                                               datastore,
+                                                               queue);
                     return success ? indexName : null;
                 }
             }
@@ -186,8 +190,11 @@ class IndexCreator {
         }
 
         if (success) {
-            success = IndexUpdater.updateIndex(indexName, fieldNamesList, database, datastore
-                                                                                  , queue);
+            success = IndexUpdater.updateIndex(indexName,
+                                               fieldNamesList,
+                                               database,
+                                               datastore,
+                                               queue);
         }
 
         return success ? indexName : null;
@@ -200,7 +207,7 @@ class IndexCreator {
      *  a $ sign, as this makes the query language ambiguous.
      */
     protected static boolean validFieldName(String fieldName) {
-        String[] parts = fieldName.contains(".") ? fieldName.split("\\.") : new String[]{ fieldName };
+        String[] parts = fieldName.contains(".") ? fieldName.split("\\.") : new String[]{fieldName};
         for (String part: parts) {
             if (part.startsWith("$")) {
                 String msg = String.format("Field names cannot start with a $ in field %s", part);

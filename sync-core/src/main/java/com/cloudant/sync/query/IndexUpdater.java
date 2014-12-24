@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -46,12 +47,23 @@ class IndexUpdater {
         this.queue = queue;
     }
 
-    public static boolean updateIndex(String indexName, ArrayList<String> fieldNames
-                                                      , SQLDatabase database
-                                                      , Datastore datastore
-                                                      , ExecutorService queue) {
+    /**
+     *  Update all indexes in a set.
+     *
+     *  This indexes are assumed to already exist.
+     *
+     *  @param indexes Map of indexes and their definitions.
+     *  @param database The local database
+     *  @param datastore The local datastore
+     *  @param queue The executor service queue
+     *  @return index update success status (true/false)
+     */
+    public static boolean updateAllIndexes(Map<String, Object> indexes,
+                                           SQLDatabase database,
+                                           Datastore datastore,
+                                           ExecutorService queue) {
         IndexUpdater updater = new IndexUpdater(database, datastore, queue);
-        return updater.updateIndex(indexName, fieldNames);
+        return updater.updateAllIndexes(indexes);
     }
 
     /**
@@ -59,10 +71,38 @@ class IndexUpdater {
      *
      *  This index is assumed to already exist.
      *
-     *  @param fieldNames List of field names in the sort format
      *  @param indexName Name of index to update
+     *  @param fieldNames List of field names in the sort format
+     *  @param database The local database
+     *  @param datastore The local datastore
+     *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
+    public static boolean updateIndex(String indexName,
+                                      ArrayList<String> fieldNames,
+                                      SQLDatabase database,
+                                      Datastore datastore,
+                                      ExecutorService queue) {
+        IndexUpdater updater = new IndexUpdater(database, datastore, queue);
+        return updater.updateIndex(indexName, fieldNames);
+    }
+
+    private boolean updateAllIndexes(Map<String, Object> indexes) {
+
+        boolean success = true;
+
+        for (String indexName: indexes.keySet()) {
+            Map<String, Object> index = (Map<String, Object>) indexes.get(indexName);
+            ArrayList<String> fields = (ArrayList<String>) index.get("fields");
+            success = updateIndex(indexName, fields);
+            if (!success) {
+                break;
+            }
+        }
+
+        return success;
+    }
+
     private boolean updateIndex(String indexName, ArrayList<String> fieldNames) {
 
         boolean success;
@@ -83,9 +123,10 @@ class IndexUpdater {
         return success;
     }
 
-    private boolean updateIndex(final String indexName, final ArrayList<String> fieldNames
-                                                      , final Changes changes
-                                                      , long lastSequence) {
+    private boolean updateIndex(final String indexName,
+                                final ArrayList<String> fieldNames,
+                                final Changes changes,
+                                long lastSequence) {
 
         boolean success;
 
@@ -113,9 +154,9 @@ class IndexUpdater {
 
                         // If we are indexing a document where one field is an array, we
                         // have multiple rows to insert into the index.
-                        List<DBParameter> parmList = parmsIndexRevision(revision
-                                                                      , indexName
-                                                                      , fieldNames);
+                        List<DBParameter> parmList = parmsIndexRevision(revision,
+                                                                        indexName,
+                                                                        fieldNames);
                         for (DBParameter parm: parmList) {
                             if (parm != null) {
                                 long rowId = database.insert(parm.tableName, parm.contentValues);
@@ -168,9 +209,9 @@ class IndexUpdater {
      *  For most revisions, a single entry will be returned. If a field
      *  is an array, however, multiple entries are required.
      */
-    private List<DBParameter> parmsIndexRevision (BasicDocumentRevision rev
-                                                , String indexName
-                                                , ArrayList<String> fieldNames) {
+    private List<DBParameter> parmsIndexRevision (BasicDocumentRevision rev,
+                                                  String indexName,
+                                                  ArrayList<String> fieldNames) {
         if (rev == null) {
             return null;
         }
@@ -194,9 +235,9 @@ class IndexUpdater {
         }
 
         if (arrayCount > 1) {
-            String msg = String.format("Indexing %s in index %s includes >1 array field;"
-                                     , rev.getId()
-                                     , indexName);
+            String msg = String.format("Indexing %s in index %s includes >1 array field;",
+                                       rev.getId(),
+                                       indexName);
             msg = String.format("%s only array field per index allowed", msg);
             logger.log(Level.SEVERE, msg);
             return null;
@@ -217,27 +258,30 @@ class IndexUpdater {
         } else if (arrayFieldName != null) {
             // We know the value is an array, we found this out in the check above
             String[] arrayFieldValues =
-                    (String[]) ValueExtractor.extractValueForFieldName(arrayFieldName
-                                                                     , rev.getBody());
+                    (String[]) ValueExtractor.extractValueForFieldName(arrayFieldName,
+                                                                       rev.getBody());
             for (String value: arrayFieldValues) {
-                DBParameter parm = populateDBParameter(fieldNames
-                        , new String[]{ "_id", "_rev", arrayFieldName }
-                        , new String[]{ rev.getId(), rev.getRevision(), value }
-                        , indexName
-                        , rev);
+                DBParameter parm;
+                parm = populateDBParameter(fieldNames,
+                                           new String[]{ "_id", "_rev", arrayFieldName },
+                                           new String[]{ rev.getId(), rev.getRevision(), value },
+                                           indexName,
+                                           rev);
                 parmList.add(parm);
             }
         }
         return parmList;
     }
 
-    private DBParameter populateDBParameter(ArrayList<String> fieldNames
-                                     , String[] initialIncludedFields
-                                     , String[] initialArgs
-                                     , String indexName
-                                     , BasicDocumentRevision rev) {
-        List<String> includeFieldNames = Arrays.asList(initialIncludedFields);
-        List<String> args = Arrays.asList(initialArgs);
+    private DBParameter populateDBParameter(ArrayList<String> fieldNames,
+                                            String[] initialIncludedFields,
+                                            String[] initialArgs,
+                                            String indexName,
+                                            BasicDocumentRevision rev) {
+        List<String> includeFieldNames;
+        includeFieldNames = new ArrayList<String>(Arrays.asList(initialIncludedFields));
+        List<String> args;
+        args = new ArrayList<String>(Arrays.asList(initialArgs));
 
         for (String fieldName: fieldNames) {
             // Fields in initialIncludedFields already have values in the other initial* array,
@@ -279,9 +323,9 @@ class IndexUpdater {
             @Override
             public Long call() {
                 long result = 0;
-                String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = \"%s\""
-                                          , IndexManager.INDEX_METADATA_TABLE_NAME
-                                          , indexName);
+                String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = \"%s\"",
+                                           IndexManager.INDEX_METADATA_TABLE_NAME,
+                                           indexName);
                 Cursor cursor = null;
                 try {
                     cursor = database.rawQuery(sql, new String[]{});
@@ -319,10 +363,10 @@ class IndexUpdater {
                 boolean updateSuccess = true;
                 ContentValues v = new ContentValues();
                 v.put("last_sequence", lastSequence);
-                int row = database.update(IndexManager.INDEX_METADATA_TABLE_NAME
-                                        , v
-                                        , " index_name = ? "
-                                        , new String[]{ indexName });
+                int row = database.update(IndexManager.INDEX_METADATA_TABLE_NAME,
+                                          v,
+                                          " index_name = ? ",
+                                          new String[]{ indexName });
                 if (row <= 0) {
                     updateSuccess = false;
                 }

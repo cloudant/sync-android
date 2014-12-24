@@ -64,7 +64,7 @@ public class IndexManager {
 
     public static final int VERSION = 1;
 
-    private static final Logger logger = Logger.getLogger(IndexCreator.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(IndexManager.class.getName());
 
     private final Datastore datastore;
     private final SQLDatabase database;
@@ -97,10 +97,60 @@ public class IndexManager {
         }
     }
 
+    public void close() {
+        queue.shutdown();
+        database.close();
+    }
+
+    /**
+     *  Get a list of indexes and their definitions as a Map.
+     *
+     *  @return Map of indexes in the database.
+     */
+    public Map<String, Object> listIndexes() {
+        return IndexManager.listIndexesInDatabase(database);
+    }
+
+    protected static Map<String, Object> listIndexesInDatabase(SQLDatabase db) {
+        // Accumulate indexes and definitions into a map
+        String sql = String.format("SELECT index_name, index_type, field_name FROM %s",
+                                   INDEX_METADATA_TABLE_NAME);
+        Map<String, Object> indexes = null;
+        Map<String, Object> index;
+        List<String> fields = null;
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(sql, new String[]{});
+            indexes = new HashMap<String, Object>();
+            while (cursor.moveToNext()) {
+                String rowIndex = cursor.getString(0);
+                String rowType = cursor.getString(1);
+                String rowField = cursor.getString(2);
+                if (!indexes.containsKey(rowIndex)) {
+                    index = new HashMap<String, Object>();
+                    fields = new ArrayList<String>();
+                    index.put("type", rowType);
+                    index.put("name", rowIndex);
+                    index.put("fields", fields);
+                    indexes.put(rowIndex, index);
+                }
+                if (fields != null) {
+                    fields.add(rowField);
+                }
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Failed to get a list of indexes in the database.", e);
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
+        }
+
+        return indexes;
+    }
+
     /**
      *  Add a single, possibly compound, index for the given field names.
      *
-     *  This function generates a name for the new index.
+     *  This method generates a name for the new index.
      *
      *  @param fieldNames List of field names in the sort format
      *  @return name of created index
@@ -150,44 +200,39 @@ public class IndexManager {
                                                                                     , queue);
     }
 
-    public Map<String, Object> listIndexes() {
-        return IndexManager.listIndexesInDatabase(database);
+    /**
+     *  Delete an index.
+     *
+     *  @param indexName Name of index to delete
+     *  @return deletion status as true/false
+     */
+    public boolean deleteIndexNamed(String indexName) {
+        boolean success = true;
+
+        // TODO - implement method
+        // Drop the index table
+        // Delete the metadata entries
+
+        return success;
     }
 
-    protected static Map<String, Object> listIndexesInDatabase(SQLDatabase db) {
-        // Accumulate indexes and definitions into a map
-        String sql = String.format("SELECT index_name, index_type, field_name FROM %s"
-                                  , INDEX_METADATA_TABLE_NAME);
-        Map<String, Object> indexes = null;
-        Map<String, Object> index;
-        List<String> fields = null;
-        Cursor cursor = null;
-        try {
-            cursor = db.rawQuery(sql, new String[]{});
-            indexes = new HashMap<String, Object>();
-            while (cursor.moveToNext()) {
-                String rowIndex = cursor.getString(0);
-                String rowType = cursor.getString(1);
-                String rowField = cursor.getString(2);
-                if (!indexes.containsKey(rowIndex)) {
-                    index = new HashMap<String, Object>();
-                    fields = new ArrayList<String>();
-                    index.put("type", rowType);
-                    index.put("name", rowIndex);
-                    index.put("fields", fields);
-                    indexes.put(rowIndex, index);
-                }
-                if (fields != null) {
-                    fields.add(rowField);
-                }
-            }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Failed to get a list of indexes in the database.", e);
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+    /**
+     *  Update all indexes.
+     *
+     *  @return update status as true/false
+     */
+    public boolean updateAllIndexes() {
+        boolean success = true;
 
-        return indexes;
+        // TODO - implement method
+
+        return success;
+    }
+
+    public QueryResultSet find(Map<String, Object> query) {
+
+        // TODO - implement method
+        return null;
     }
 
     protected Datastore getDatastore() {
@@ -200,9 +245,5 @@ public class IndexManager {
 
     protected SQLDatabase getDatabase() {
         return database;
-    }
-
-    public void close() {
-        queue.shutdown();
     }
 }
