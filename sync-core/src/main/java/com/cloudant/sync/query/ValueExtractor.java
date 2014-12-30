@@ -37,6 +37,7 @@ class ValueExtractor {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static Object extractValueForFieldName(String possiblyDottedField, DocumentBody body) {
         // The algorithm here is to split the fields into a "path" and a "lastSegment".
         // The path leads us to the final sub-document. We know that if we have either
@@ -44,7 +45,6 @@ class ValueExtractor {
         // have the right fields for this field selector -- it allows us to make sure
         // that each level of the `path` results in a document rather than a value,
         // because if it's a value, we can't continue the selection process.
-
         String[] fields = possiblyDottedField.contains(".") ?
                           possiblyDottedField.split("\\.") :
                           new String[]{possiblyDottedField};

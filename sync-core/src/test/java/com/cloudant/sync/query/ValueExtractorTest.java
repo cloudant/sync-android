@@ -92,21 +92,20 @@ public class ValueExtractorTest {
     @Test
     public void extractSingleFieldWhenFieldNamePrefix() {
         // copes when a prefix of the field name exists
-        Object v = (String) ValueExtractor.extractValueForFieldName("name.first", body);
+        Object v = ValueExtractor.extractValueForFieldName("name.first", body);
         Assert.assertNull(v);
 
-        v = (String) ValueExtractor.extractValueForFieldName("name.first.mike",
-                                                             getThreeLevelBody());
+        v = ValueExtractor.extractValueForFieldName("name.first.mike", getThreeLevelBody());
         Assert.assertNull(v);
     }
 
     @Test
     public void extractSubDocument() {
         // returns the sub-document if the path doesn't terminate with a value
+        @SuppressWarnings("unchecked")
         Map<String, String> v = (Map) ValueExtractor.extractValueForFieldName("aaa.bbb",
                                                                               getThreeLevelBody());
         Assert.assertNotNull(v);
-        Assert.assertTrue(v instanceof Map);
         Assert.assertEquals(v.size(), 1);
         Assert.assertTrue(v.containsKey("ccc"));
         Assert.assertTrue(v.get("ccc").equals("mike"));

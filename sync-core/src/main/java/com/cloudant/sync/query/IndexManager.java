@@ -157,6 +157,7 @@ public class IndexManager {
      */
     public String ensureIndexed(ArrayList<Object> fieldNames) {
         logger.log(Level.SEVERE, "ensureIndexed(fieldNames) not implemented.");
+
         return null;
     }
 
@@ -196,8 +197,12 @@ public class IndexManager {
             return null;
         }
 
-        return IndexCreator.ensureIndexed(fieldNames, indexName, indexType, database, datastore
-                                                                                    , queue);
+        return IndexCreator.ensureIndexed(fieldNames,
+                                          indexName,
+                                          indexType,
+                                          database,
+                                          datastore,
+                                          queue);
     }
 
     /**
@@ -213,7 +218,9 @@ public class IndexManager {
         // Drop the index table
         // Delete the metadata entries
 
-        return success;
+        logger.log(Level.SEVERE, "deleteIndexNamed(indexName) not implemented.");
+
+        return false;
     }
 
     /**
@@ -222,16 +229,21 @@ public class IndexManager {
      *  @return update status as true/false
      */
     public boolean updateAllIndexes() {
-        boolean success = true;
 
-        // TODO - implement method
+        // TODO
+        // To start with, assume top-level fields only
 
-        return success;
+        Map<String, Object> indexes = listIndexes();
+
+        return IndexUpdater.updateAllIndexes(indexes, database, datastore, queue);
     }
 
     public QueryResultSet find(Map<String, Object> query) {
 
         // TODO - implement method
+
+        logger.log(Level.SEVERE, "find(query) not implemented.");
+
         return null;
     }
 

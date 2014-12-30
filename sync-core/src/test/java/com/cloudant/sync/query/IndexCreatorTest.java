@@ -30,12 +30,11 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     @Test
     public void preconditionsToCreatingIndexes() {
         // doesn't create an index on null fields
-        ArrayList<Object> fieldNames = null;
-        String name = im.ensureIndexed(fieldNames, "basic");
+        String name = im.ensureIndexed(null, "basic");
         Assert.assertNull(name);
 
         // doesn't create an index on no fields
-        fieldNames = new ArrayList<Object>();
+        ArrayList<Object> fieldNames = new ArrayList<Object>();
         name = im.ensureIndexed(fieldNames, "basic");
         Assert.assertNull(name);
 
@@ -72,8 +71,10 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         Assert.assertEquals(1, indexes.size());
         Assert.assertTrue(indexes.containsKey("basic"));
 
-        Map<String, Object> index = (Map) indexes.get("basic");
-        List<String> fields = (List) index.get("fields");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
+        @SuppressWarnings("unchecked")
+        List<String> fields = (List<String>) index.get("fields");
         Assert.assertEquals(3, fields.size());
         Assert.assertTrue(fields.contains("_id"));
         Assert.assertTrue(fields.contains("_rev"));
@@ -92,8 +93,10 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         Assert.assertEquals(1, indexes.size());
         Assert.assertTrue(indexes.containsKey("basic"));
 
-        Map<String, Object> index = (Map) indexes.get("basic");
-        List<String> fields = (List) index.get("fields");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
+        @SuppressWarnings("unchecked")
+        List<String> fields = (List<String>) index.get("fields");
         Assert.assertEquals(4, fields.size());
         Assert.assertTrue(fields.contains("_id"));
         Assert.assertTrue(fields.contains("_rev"));
@@ -113,8 +116,10 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         Assert.assertEquals(1, indexes.size());
         Assert.assertTrue(indexes.containsKey("basic"));
 
-        Map<String, Object> index = (Map) indexes.get("basic");
-        List<String> fields = (List) index.get("fields");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
+        @SuppressWarnings("unchecked")
+        List<String> fields = (List<String>) index.get("fields");
         Assert.assertEquals(4, fields.size());
         Assert.assertTrue(fields.contains("_id"));
         Assert.assertTrue(fields.contains("_rev"));
@@ -139,24 +144,30 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         Assert.assertTrue(indexes.containsKey("another"));
         Assert.assertTrue(indexes.containsKey("petname"));
 
-        Map<String, Object> basicIndex = (Map) indexes.get("basic");
-        List<String> basicIndexFields = (List) basicIndex.get("fields");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> basicIndex = (Map<String, Object>) indexes.get("basic");
+        @SuppressWarnings("unchecked")
+        List<String> basicIndexFields = (List<String>) basicIndex.get("fields");
         Assert.assertEquals(4, basicIndexFields.size());
         Assert.assertTrue(basicIndexFields.contains("_id"));
         Assert.assertTrue(basicIndexFields.contains("_rev"));
         Assert.assertTrue(basicIndexFields.contains("name"));
         Assert.assertTrue(basicIndexFields.contains("age"));
 
-        Map<String, Object> anotherIndex = (Map) indexes.get("another");
-        List<String> anotherIndexFields = (List) anotherIndex.get("fields");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> anotherIndex = (Map<String, Object>) indexes.get("another");
+        @SuppressWarnings("unchecked")
+        List<String> anotherIndexFields = (List<String>) anotherIndex.get("fields");
         Assert.assertEquals(4, anotherIndexFields.size());
         Assert.assertTrue(anotherIndexFields.contains("_id"));
         Assert.assertTrue(anotherIndexFields.contains("_rev"));
         Assert.assertTrue(anotherIndexFields.contains("name"));
         Assert.assertTrue(anotherIndexFields.contains("age"));
 
-        Map<String, Object> petnameIndex = (Map) indexes.get("petname");
-        List<String> petnameIndexFields = (List) petnameIndex.get("fields");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> petnameIndex = (Map<String, Object>) indexes.get("petname");
+        @SuppressWarnings("unchecked")
+        List<String> petnameIndexFields = (List<String>) petnameIndex.get("fields");
         Assert.assertEquals(3, petnameIndexFields.size());
         Assert.assertTrue(petnameIndexFields.contains("_id"));
         Assert.assertTrue(petnameIndexFields.contains("_rev"));
@@ -179,8 +190,10 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         Assert.assertEquals(1, indexes.size());
         Assert.assertTrue(indexes.containsKey("basic"));
 
-        Map<String, Object> index = (Map) indexes.get("basic");
-        List<String> fields = (List) index.get("fields");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
+        @SuppressWarnings("unchecked")
+        List<String> fields = (List<String>) index.get("fields");
         Assert.assertEquals(4, fields.size());
         Assert.assertTrue(fields.contains("_id"));
         Assert.assertTrue(fields.contains("_rev"));

@@ -11,6 +11,30 @@
 
 package com.cloudant.sync.query;
 
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 public class IndexManagerTest extends AbstractIndexTestBase {
-    // TODO - implement index manager tests
+
+    @Test
+    public void unimplementedEnsureIndexed() {
+        ArrayList<Object> fieldNames = new ArrayList<Object>();
+        fieldNames.add("name");
+        Assert.assertNull(im.ensureIndexed(fieldNames));
+    }
+
+    @Test
+    public void unimplementedFind() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        Assert.assertNull(im.find(query));
+    }
+
+    @Test
+    public void unimplementedDeleteIndexNamed() {
+        Assert.assertFalse(im.deleteIndexNamed("basic"));
+    }
 }

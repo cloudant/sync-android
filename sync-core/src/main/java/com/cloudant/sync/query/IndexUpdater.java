@@ -19,10 +19,8 @@ import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.DatabaseUtils;
 
-import java.sql.Array;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -63,6 +61,7 @@ class IndexUpdater {
                                            Datastore datastore,
                                            ExecutorService queue) {
         IndexUpdater updater = new IndexUpdater(database, datastore, queue);
+
         return updater.updateAllIndexes(indexes);
     }
 
@@ -84,11 +83,12 @@ class IndexUpdater {
                                       Datastore datastore,
                                       ExecutorService queue) {
         IndexUpdater updater = new IndexUpdater(database, datastore, queue);
+
         return updater.updateIndex(indexName, fieldNames);
     }
 
+    @SuppressWarnings("unchecked")
     private boolean updateAllIndexes(Map<String, Object> indexes) {
-
         boolean success = true;
 
         for (String indexName: indexes.keySet()) {
@@ -104,7 +104,6 @@ class IndexUpdater {
     }
 
     private boolean updateIndex(String indexName, ArrayList<String> fieldNames) {
-
         boolean success;
         Changes changes;
         long lastSequence = sequenceNumberForIndex(indexName);
@@ -127,6 +126,9 @@ class IndexUpdater {
                                 final ArrayList<String> fieldNames,
                                 final Changes changes,
                                 long lastSequence) {
+        if (indexName == null || indexName.isEmpty()) {
+            return false;
+        }
 
         boolean success;
 
@@ -157,6 +159,9 @@ class IndexUpdater {
                         List<DBParameter> parmList = parmsIndexRevision(revision,
                                                                         indexName,
                                                                         fieldNames);
+                        if (parmList == null) {
+                            continue;
+                        }
                         for (DBParameter parm: parmList) {
                             if (parm != null) {
                                 long rowId = database.insert(parm.tableName, parm.contentValues);
@@ -209,6 +214,7 @@ class IndexUpdater {
      *  For most revisions, a single entry will be returned. If a field
      *  is an array, however, multiple entries are required.
      */
+    @SuppressWarnings("unchecked")
     private List<DBParameter> parmsIndexRevision (BasicDocumentRevision rev,
                                                   String indexName,
                                                   ArrayList<String> fieldNames) {
@@ -228,7 +234,7 @@ class IndexUpdater {
         String arrayFieldName = null; // only record the last, as error if more than one
         for (String fieldName: fieldNames) {
             Object value = ValueExtractor.extractValueForFieldName(fieldName, rev.getBody());
-            if (value != null && value instanceof Array) {
+            if (value != null && value instanceof ArrayList) {
                 arrayCount = arrayCount + 1;
                 arrayFieldName = fieldName;
             }
@@ -249,39 +255,60 @@ class IndexUpdater {
             // in the index. _id and _rev are special fields in that they don't appear in the
             // body, so they need special-casing to get the values.
 
-            DBParameter parm = populateDBParameter(fieldNames
-                    , new String[]{ "_id", "_rev" }
-                    , new String[]{ rev.getId(), rev.getRevision() }
-                    , indexName
-                    , rev);
+            ArrayList<String> initialIncludedFields = new ArrayList<String>();
+            initialIncludedFields.add("_id");
+            initialIncludedFields.add("_rev");
+            ArrayList<Object> initialArgs = new ArrayList<Object>();
+            initialArgs.add(rev.getId());
+            initialArgs.add(rev.getRevision());
+            DBParameter parm = populateDBParameter(fieldNames,
+                                                   initialIncludedFields,
+                                                   initialArgs,
+                                                   indexName,
+                                                   rev);
+            if (parm == null) {
+                return null;
+            }
             parmList.add(parm);
         } else if (arrayFieldName != null) {
             // We know the value is an array, we found this out in the check above
-            String[] arrayFieldValues =
-                    (String[]) ValueExtractor.extractValueForFieldName(arrayFieldName,
-                                                                       rev.getBody());
-            for (String value: arrayFieldValues) {
+            ArrayList<Object> arrayFieldValues;
+            arrayFieldValues = (ArrayList) ValueExtractor.extractValueForFieldName(arrayFieldName,
+                                                                                   rev.getBody());
+            for (Object value: arrayFieldValues) {
+                ArrayList<String> initialIncludedFields = new ArrayList<String>();
+                initialIncludedFields.add("_id");
+                initialIncludedFields.add("_rev");
+                initialIncludedFields.add(arrayFieldName);
+                ArrayList<Object> initialArgs = new ArrayList<Object>();
+                initialArgs.add(rev.getId());
+                initialArgs.add(rev.getRevision());
+                initialArgs.add(value);
                 DBParameter parm;
                 parm = populateDBParameter(fieldNames,
-                                           new String[]{ "_id", "_rev", arrayFieldName },
-                                           new String[]{ rev.getId(), rev.getRevision(), value },
+                                           initialIncludedFields,
+                                           initialArgs,
                                            indexName,
                                            rev);
+                if (parm == null) {
+                    return null;
+                }
                 parmList.add(parm);
             }
         }
+
         return parmList;
     }
 
     private DBParameter populateDBParameter(ArrayList<String> fieldNames,
-                                            String[] initialIncludedFields,
-                                            String[] initialArgs,
+                                            ArrayList<String> initialIncludedFields,
+                                            ArrayList<Object> initialArgs,
                                             String indexName,
                                             BasicDocumentRevision rev) {
-        List<String> includeFieldNames;
-        includeFieldNames = new ArrayList<String>(Arrays.asList(initialIncludedFields));
-        List<String> args;
-        args = new ArrayList<String>(Arrays.asList(initialArgs));
+        List<String> includeFieldNames = new ArrayList<String>();
+        includeFieldNames.addAll(initialIncludedFields);
+        List<Object> args = new ArrayList<Object>();
+        args.addAll(initialArgs);
 
         for (String fieldName: fieldNames) {
             // Fields in initialIncludedFields already have values in the other initial* array,
@@ -301,7 +328,7 @@ class IndexUpdater {
 
             if (value != null) {
                 includeFieldNames.add(fieldName);
-                args.add((String) value);
+                args.add(value);
             }
         }
 
@@ -309,7 +336,30 @@ class IndexUpdater {
         ContentValues contentValues = new ContentValues();
         int argIndex = 0;
         for (String fieldName: includeFieldNames) {
-            contentValues.put(fieldName, args.get(argIndex));
+            fieldName = String.format("\"%s\"", fieldName);
+            Object argument = args.get(argIndex);
+            if (argument instanceof Boolean) {
+                contentValues.put(fieldName, (Boolean) argument);
+            } else if (argument instanceof Byte) {
+                contentValues.put(fieldName, (Byte) argument);
+            } else if (argument instanceof byte[]) {
+                contentValues.put(fieldName, (byte[]) argument);
+            } else if (argument instanceof Double) {
+                contentValues.put(fieldName, (Double) argument);
+            } else if (argument instanceof Float) {
+                contentValues.put(fieldName, (Float) argument);
+            } else if (argument instanceof Integer) {
+                contentValues.put(fieldName, (Integer) argument);
+            } else if (argument instanceof Long) {
+                contentValues.put(fieldName, (Long) argument);
+            } else if (argument instanceof Short) {
+                contentValues.put(fieldName, (Short) argument);
+            } else if (argument instanceof String) {
+                contentValues.put(fieldName, (String) argument);
+            } else {
+                logger.log(Level.SEVERE, "Invalid argument type.");
+                return null;
+            }
             argIndex = argIndex + 1;
         }
 
@@ -317,7 +367,6 @@ class IndexUpdater {
     }
 
     private long sequenceNumberForIndex(final String indexName) {
-
         long lastSequenceNumber = 0;
         Future<Long> sequenceNumber = queue.submit( new Callable<Long>() {
             @Override
@@ -329,10 +378,10 @@ class IndexUpdater {
                 Cursor cursor = null;
                 try {
                     cursor = database.rawQuery(sql, new String[]{});
-                    while (cursor.moveToNext()) {
+                    if (cursor.getCount() > 0) {
+                        // All rows for a given index will have the same last_sequence
+                        cursor.moveToNext();
                         result = cursor.getLong(0);
-                        // All rows for a given index will have the same last_sequence, so break
-                        break;
                     }
                 } catch (SQLException e) {
                     logger.log(Level.SEVERE, "Error getting last sequence number. ", e);

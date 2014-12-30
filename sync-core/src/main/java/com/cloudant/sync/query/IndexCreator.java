@@ -49,6 +49,7 @@ class IndexCreator {
                                           Datastore datastore,
                                           ExecutorService queue) {
         IndexCreator executor = new IndexCreator(database, datastore, queue);
+
         return executor.ensureIndexed(fieldNames, indexName, indexType);
     }
 
@@ -65,7 +66,6 @@ class IndexCreator {
     private String ensureIndexed(ArrayList<Object> fieldNames,
                                  final String indexName,
                                  final String indexType) {
-
         if (fieldNames == null || fieldNames.isEmpty()) {
             logger.log(Level.SEVERE, "No field names were passed to ensureIndexed");
             return null;
@@ -105,8 +105,10 @@ class IndexCreator {
         try {
             Map<String, Object> existingIndexes = listIndexesInDatabaseQueue();
             if (existingIndexes != null && existingIndexes.get(indexName) != null) {
+                @SuppressWarnings("unchecked")
                 Map<String, Object> index = (Map<String, Object>) existingIndexes.get(indexName);
                 String existingType = (String) index.get("type");
+                @SuppressWarnings("unchecked")
                 List<String> existingFieldsList = (List<String>) index.get("fields");
                 Set<String> existingFields = new HashSet<String>(existingFieldsList);
                 Set<String> newFields = new HashSet<String>(fieldNamesList);
@@ -215,6 +217,7 @@ class IndexCreator {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -238,12 +241,12 @@ class IndexCreator {
                 result.add((String) field);
             }
         }
+
         return result;
     }
 
     private Map<String, Object> listIndexesInDatabaseQueue() throws ExecutionException,
                                                                     InterruptedException {
-
         Future<Map<String, Object>> indexes = queue.submit(new Callable<Map<String, Object>>() {
             @Override
             public Map<String, Object> call() {
@@ -257,6 +260,7 @@ class IndexCreator {
     private String createIndexTableStatementForIndexName(String indexName, List<String> columns) {
         String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
         String cols = join(columns, " NONE,");
+
         return String.format("CREATE TABLE %s ( %s NONE )", tableName, cols);
     }
 
@@ -264,6 +268,7 @@ class IndexCreator {
         String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
         String sqlIndexName = tableName.concat("_index");
         String cols = join(columns, ",");
+
         return String.format("CREATE INDEX %s ON %s ( %s )", sqlIndexName, tableName, cols);
     }
 
