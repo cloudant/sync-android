@@ -11,3 +11,4 @@ build
 *.iws
 out
 local.gradle
+sync-core/fixture
