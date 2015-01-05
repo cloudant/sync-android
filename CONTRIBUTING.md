@@ -154,20 +154,35 @@ $ gradle coberturaReport systemTest
 
 Code coverage metrics end up in `build/reports`.
 
-## Using Android Studio / IDEA IDE
+## Using IntelliJ IDEA / Android Studio
 
-The best way to get everything set up correctly is to use IDEA's JetGradle plugin
-to automatically generate and configure an IDEA project. IDEA will then keep the 
-project in sync with the `.gradle` file.
+For IDEA, the best way to get everything set up correctly is to use
+IDEA's JetGradle plugin to automatically generate and configure an
+IDEA project. IDEA will then keep the project in sync with the
+`build.gradle` file.
 
 Install this via Preferences -> Plugins (under IDE Settings) -> Gradle.
 
 For Android Studio, this plugin is already installed.
 
-You can then use File -> Import Project to create the IDEA project, which will allow
-you to run gradle tasks from IDEA in addition to setting up dependencies correctly. Just
-select the `build.gradle` file in the Import dialog box and select the default
+You can then use File -> Import Project (Import Project or Import
+Non-Android Studio project from the Welcome dialog) to create the IDEA
+/ Android Studio project, which will allow you to run gradle tasks
+from IDEA / Android Studio in addition to setting up dependencies
+correctly. Just select the `build.gradle` file from the root of the
+project directory in the Import dialog box and select the default
 settings.
+
+In Android Studio, a message may appear showing 'Frameworks detected:
+Android framework is detected in the project'. This can be safely
+dismissed as the library should *not* be built against the Android
+framework - it is a standard Java SE project.
+
+After importing the gradle project you may need to configure the
+correct SDK. This can be set from the File -> Project Structure
+dialog. In the Project Settings -> Project tab. If the selected entry
+in the Project SDK dropdown is `<No SDK>`, then change it to an
+appropriate Java SDK such as 1.6 or 1.7.
 
 An alternative is to use gradle itself, which is also able to generate an idea project.
 
