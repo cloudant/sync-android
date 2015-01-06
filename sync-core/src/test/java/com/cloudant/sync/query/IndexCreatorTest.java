@@ -2,7 +2,9 @@
 //
 //  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 //  except in compliance with the License. You may obtain a copy of the License at
+//
 //    http://www.apache.org/licenses/LICENSE-2.0
+//
 //  Unless required by applicable law or agreed to in writing, software distributed under the
 //  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 //  either express or implied. See the License for the specific language governing permissions
@@ -58,6 +60,27 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         fieldNames.add("age");
         name = im.ensureIndexed(fieldNames, "basic");
         Assert.assertNull(name);
+    }
+
+    @Test
+    public void createIndexOverOneFieldContainingQuote() {
+        ArrayList<Object> fieldNames = new ArrayList<Object>();
+        fieldNames.add("na\"me");
+        String name = im.ensureIndexed(fieldNames, "basic");
+        Assert.assertTrue(name.equals("basic"));
+
+        Map<String, Object> indexes = im.listIndexes();
+        Assert.assertEquals(1, indexes.size());
+        Assert.assertTrue(indexes.containsKey("basic"));
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
+        @SuppressWarnings("unchecked")
+        List<String> fields = (List<String>) index.get("fields");
+        Assert.assertEquals(3, fields.size());
+        Assert.assertTrue(fields.contains("_id"));
+        Assert.assertTrue(fields.contains("_rev"));
+        Assert.assertTrue(fields.contains("na\"me"));
     }
 
     @Test

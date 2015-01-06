@@ -2,7 +2,9 @@
 //
 //  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 //  except in compliance with the License. You may obtain a copy of the License at
+//
 //    http://www.apache.org/licenses/LICENSE-2.0
+//
 //  Unless required by applicable law or agreed to in writing, software distributed under the
 //  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 //  either express or implied. See the License for the specific language governing permissions
@@ -13,7 +15,6 @@ package com.cloudant.sync.query;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DocumentRevisionBuilder;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -30,6 +31,9 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ *  Handles updating indexes for a given datastore.
+ */
 class IndexUpdater {
 
     private final SQLDatabase database;
@@ -39,6 +43,10 @@ class IndexUpdater {
 
     private static final Logger logger = Logger.getLogger(IndexUpdater.class.getName());
 
+    /**
+     *  Constructs a new CDTQQueryExecutor using the indexes in 'database' to index documents from
+     *  'datastore'.
+     */
     public IndexUpdater(SQLDatabase database, Datastore datastore, ExecutorService queue) {
         this.datastore = datastore;
         this.database = database;
@@ -130,41 +138,30 @@ class IndexUpdater {
             return false;
         }
 
-        boolean success;
-
         Future<Boolean> result = queue.submit( new Callable<Boolean>() {
             @Override
             public Boolean call() {
-                Boolean transactionSuccess = true;
+                boolean transactionSuccess = true;
                 database.beginTransaction();
                 for (BasicDocumentRevision rev: changes.getResults()) {
                     // Delete existing values
-                    String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
+                    String tableName = IndexManager.tableNameForIndex(indexName);
                     database.delete(tableName, " _id = ? ", new String[]{rev.getId()});
 
                     // Insert new values if the rev isn't deleted
                     if (!rev.isDeleted()) {
-                        // Ignoring the attachments seems reasonable right now
-                        // as we don't index them.
-                        DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
-                        builder.setDocId(rev.getId());
-                        builder.setRevId(rev.getRevision());
-                        builder.setBody(rev.getBody());
-                        builder.setDeleted(rev.isDeleted());
-                        builder.setSequence(rev.getSequence());
-                        BasicDocumentRevision revision = builder.build();
-
                         // If we are indexing a document where one field is an array, we
                         // have multiple rows to insert into the index.
-                        List<DBParameter> parmList = parmsIndexRevision(revision,
-                                                                        indexName,
-                                                                        fieldNames);
-                        if (parmList == null) {
+                        List<DBParameter> parameters = parametersToIndexRevision(rev,
+                                                                                 indexName,
+                                                                                 fieldNames);
+                        if (parameters == null) {
                             continue;
                         }
-                        for (DBParameter parm: parmList) {
-                            if (parm != null) {
-                                long rowId = database.insert(parm.tableName, parm.contentValues);
+                        for (DBParameter parameter: parameters) {
+                            if (parameter != null) {
+                                long rowId = database.insert(parameter.tableName,
+                                                             parameter.contentValues);
                                 if (rowId < 0) {
                                     transactionSuccess = false;
                                 }
@@ -189,6 +186,7 @@ class IndexUpdater {
             }
         });
 
+        boolean success;
         try {
             success = result.get();
         } catch (ExecutionException e) {
@@ -215,9 +213,9 @@ class IndexUpdater {
      *  is an array, however, multiple entries are required.
      */
     @SuppressWarnings("unchecked")
-    private List<DBParameter> parmsIndexRevision (BasicDocumentRevision rev,
-                                                  String indexName,
-                                                  ArrayList<String> fieldNames) {
+    private List<DBParameter> parametersToIndexRevision (BasicDocumentRevision rev,
+                                                         String indexName,
+                                                         ArrayList<String> fieldNames) {
         if (rev == null) {
             return null;
         }
@@ -249,7 +247,7 @@ class IndexUpdater {
             return null;
         }
 
-        List<DBParameter> parmList = new ArrayList<DBParameter>();
+        List<DBParameter> parameters = new ArrayList<DBParameter>();
         if (arrayCount == 0) {
             // The are no arrays in the values we are indexing. We just need to index the fields
             // in the index. _id and _rev are special fields in that they don't appear in the
@@ -261,15 +259,15 @@ class IndexUpdater {
             ArrayList<Object> initialArgs = new ArrayList<Object>();
             initialArgs.add(rev.getId());
             initialArgs.add(rev.getRevision());
-            DBParameter parm = populateDBParameter(fieldNames,
-                                                   initialIncludedFields,
-                                                   initialArgs,
-                                                   indexName,
-                                                   rev);
-            if (parm == null) {
+            DBParameter parameter = populateDBParameter(fieldNames,
+                                                        initialIncludedFields,
+                                                        initialArgs,
+                                                        indexName,
+                                                        rev);
+            if (parameter == null) {
                 return null;
             }
-            parmList.add(parm);
+            parameters.add(parameter);
         } else if (arrayFieldName != null) {
             // We know the value is an array, we found this out in the check above
             ArrayList<Object> arrayFieldValues;
@@ -284,20 +282,20 @@ class IndexUpdater {
                 initialArgs.add(rev.getId());
                 initialArgs.add(rev.getRevision());
                 initialArgs.add(value);
-                DBParameter parm;
-                parm = populateDBParameter(fieldNames,
-                                           initialIncludedFields,
-                                           initialArgs,
-                                           indexName,
-                                           rev);
-                if (parm == null) {
+                DBParameter parameter;
+                parameter = populateDBParameter(fieldNames,
+                                                initialIncludedFields,
+                                                initialArgs,
+                                                indexName,
+                                                rev);
+                if (parameter == null) {
                     return null;
                 }
-                parmList.add(parm);
+                parameters.add(parameter);
             }
         }
 
-        return parmList;
+        return parameters;
     }
 
     private DBParameter populateDBParameter(ArrayList<String> fieldNames,
@@ -332,7 +330,6 @@ class IndexUpdater {
             }
         }
 
-        String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
         ContentValues contentValues = new ContentValues();
         int argIndex = 0;
         for (String fieldName: includeFieldNames) {
@@ -362,22 +359,21 @@ class IndexUpdater {
             }
             argIndex = argIndex + 1;
         }
+        String tableName = IndexManager.tableNameForIndex(indexName);
 
         return new DBParameter(tableName, contentValues);
     }
 
     private long sequenceNumberForIndex(final String indexName) {
-        long lastSequenceNumber = 0;
         Future<Long> sequenceNumber = queue.submit( new Callable<Long>() {
             @Override
             public Long call() {
                 long result = 0;
-                String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = \"%s\"",
-                                           IndexManager.INDEX_METADATA_TABLE_NAME,
-                                           indexName);
+                String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = ?",
+                                           IndexManager.INDEX_METADATA_TABLE_NAME);
                 Cursor cursor = null;
                 try {
-                    cursor = database.rawQuery(sql, new String[]{});
+                    cursor = database.rawQuery(sql, new String[]{ indexName });
                     if (cursor.getCount() > 0) {
                         // All rows for a given index will have the same last_sequence
                         cursor.moveToNext();
@@ -392,6 +388,7 @@ class IndexUpdater {
             }
         });
 
+        long lastSequenceNumber = 0;
         try {
             lastSequenceNumber = sequenceNumber.get();
         } catch (ExecutionException e) {
@@ -404,8 +401,6 @@ class IndexUpdater {
     }
 
     private boolean updateMetadataForIndex(final String indexName, final long lastSequence) {
-        boolean success;
-
         Future<Boolean> result = queue.submit(new Callable<Boolean>() {
             @Override
             public Boolean call() {
@@ -423,6 +418,7 @@ class IndexUpdater {
             }
         });
 
+        boolean success;
         try {
             success = result.get();
         } catch (ExecutionException e) {

@@ -2,7 +2,9 @@
 //
 //  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 //  except in compliance with the License. You may obtain a copy of the License at
+//
 //    http://www.apache.org/licenses/LICENSE-2.0
+//
 //  Unless required by applicable law or agreed to in writing, software distributed under the
 //  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 //  either express or implied. See the License for the specific language governing permissions
@@ -13,6 +15,7 @@ package com.cloudant.sync.query;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.google.common.base.Joiner;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -80,6 +83,7 @@ class IndexCreator {
 
         for (String fieldName: fieldNamesList) {
             if (!validFieldName(fieldName)) {
+                // Logging handled in validFieldName
                 return null;
             }
         }
@@ -155,6 +159,10 @@ class IndexCreator {
                 try {
                     List<String> columnList = new ArrayList<String>();
                     for (String field: fieldNamesList) {
+                        // Replace any instance of a quote in the field with two quotes.  This tells
+                        // Sqlite that any instance of a quote in the field should be included as
+                        // part of the field name.
+                        field = field.replace("\"", "\"\"");
                         columnList.add("\"" + field + "\"");
                     }
                     // Create the table for the index
@@ -209,7 +217,7 @@ class IndexCreator {
      *  a $ sign, as this makes the query language ambiguous.
      */
     protected static boolean validFieldName(String fieldName) {
-        String[] parts = fieldName.contains(".") ? fieldName.split("\\.") : new String[]{fieldName};
+        String[] parts = fieldName.split("\\.");
         for (String part: parts) {
             if (part.startsWith("$")) {
                 String msg = String.format("Field names cannot start with a $ in field %s", part);
@@ -259,7 +267,8 @@ class IndexCreator {
 
     private String createIndexTableStatementForIndexName(String indexName, List<String> columns) {
         String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
-        String cols = join(columns, " NONE,");
+        Joiner joiner = Joiner.on(" NONE,").skipNulls();
+        String cols = joiner.join(columns);
 
         return String.format("CREATE TABLE %s ( %s NONE )", tableName, cols);
     }
@@ -267,25 +276,10 @@ class IndexCreator {
     private String createIndexIndexStatementForIndexName(String indexName, List<String> columns) {
         String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
         String sqlIndexName = tableName.concat("_index");
-        String cols = join(columns, ",");
+        Joiner joiner = Joiner.on(",").skipNulls();
+        String cols = joiner.join(columns);
 
         return String.format("CREATE INDEX %s ON %s ( %s )", sqlIndexName, tableName, cols);
-    }
-
-    private String join(List<String> items, String separator) {
-        String joined = "";
-
-        int size = items.size();
-        for (int i = 0; i < size; i++) {
-            String item = items.get(i);
-            if (i < size - 1) {
-                joined += item + separator;
-            } else {
-                joined += item;
-            }
-        }
-
-        return joined;
     }
 
 }

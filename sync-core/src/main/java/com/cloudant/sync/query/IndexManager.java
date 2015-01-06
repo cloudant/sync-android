@@ -2,7 +2,9 @@
 //
 //  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 //  except in compliance with the License. You may obtain a copy of the License at
+//
 //    http://www.apache.org/licenses/LICENSE-2.0
+//
 //  Unless required by applicable law or agreed to in writing, software distributed under the
 //  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 //  either express or implied. See the License for the specific language governing permissions
@@ -30,8 +32,7 @@
 // There is a single SQLite index created on all columns of this table.
 //
 // N.b.: _id and _rev are automatically added to all indexes to allow them to be used to
-// project CDTDocumentRevisions without the need to load a document from the datastore.
-//
+// project DocumentRevisions without the need to load a document from the datastore.
 
 package com.cloudant.sync.query;
 
@@ -54,6 +55,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+/**
+ *  Main interface to Cloudant query.
+ *
+ *  Use the manager to:
+ *
+ *  - create indexes
+ *  - delete indexes
+ *  - execute queries
+ *  - update indexes (usually done automatically)
+ */
 public class IndexManager {
 
     public static final String INDEX_TABLE_PREFIX = "_t_cloudant_sync_query_index_";
@@ -71,6 +82,9 @@ public class IndexManager {
     private final Pattern validFieldName;
     private final ExecutorService queue;
 
+    /**
+     *  Constructs a new IndexManager which indexes documents in 'datastore'
+     */
     public IndexManager(Datastore datastore) {
         this.datastore = datastore;
         validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
@@ -229,10 +243,6 @@ public class IndexManager {
      *  @return update status as true/false
      */
     public boolean updateAllIndexes() {
-
-        // TODO
-        // To start with, assume top-level fields only
-
         Map<String, Object> indexes = listIndexes();
 
         return IndexUpdater.updateAllIndexes(indexes, database, datastore, queue);
@@ -247,6 +257,10 @@ public class IndexManager {
         return null;
     }
 
+    protected static String tableNameForIndex(String indexName) {
+        return INDEX_TABLE_PREFIX.concat(indexName);
+    }
+
     protected Datastore getDatastore() {
         return datastore;
     }
@@ -258,4 +272,5 @@ public class IndexManager {
     protected SQLDatabase getDatabase() {
         return database;
     }
+
 }
