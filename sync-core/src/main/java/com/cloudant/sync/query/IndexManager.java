@@ -248,13 +248,28 @@ public class IndexManager {
         return IndexUpdater.updateAllIndexes(indexes, database, datastore, queue);
     }
 
-    public QueryResultSet find(Map<String, Object> query) {
+    public QueryResult find(Map<String, Object> query) {
+        return find(query, 0, 0, null, null);
+    }
 
-        // TODO - implement method
+    public QueryResult find(Map<String, Object> query,
+                            long skip,
+                            long limit,
+                            List<String> fields,
+                            List<Map<String, String>> sortDocument) {
+        if (query == null) {
+            logger.log(Level.SEVERE, "-find called with null selector; bailing.");
+            return null;
+        }
 
-        logger.log(Level.SEVERE, "find(query) not implemented.");
+        if (!updateAllIndexes()) {
+            return null;
+        }
 
-        return null;
+        QueryExecutor queryExecutor = new QueryExecutor(database, datastore, queue);
+        Map<String, Object> indexes = listIndexes();
+
+        return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
     }
 
     protected static String tableNameForIndex(String indexName) {

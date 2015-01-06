@@ -266,7 +266,7 @@ class IndexCreator {
     }
 
     private String createIndexTableStatementForIndexName(String indexName, List<String> columns) {
-        String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
+        String tableName = IndexManager.tableNameForIndex(indexName);
         Joiner joiner = Joiner.on(" NONE,").skipNulls();
         String cols = joiner.join(columns);
 
@@ -274,7 +274,7 @@ class IndexCreator {
     }
 
     private String createIndexIndexStatementForIndexName(String indexName, List<String> columns) {
-        String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
+        String tableName = IndexManager.tableNameForIndex(indexName);
         String sqlIndexName = tableName.concat("_index");
         Joiner joiner = Joiner.on(",").skipNulls();
         String cols = joiner.join(columns);
