@@ -30,6 +30,9 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ *  Handles creating indexes for a given datastore.
+ */
 class IndexCreator {
 
     private final SQLDatabase database;
@@ -45,7 +48,7 @@ class IndexCreator {
         this.queue = queue;
     }
 
-    protected static String ensureIndexed(ArrayList<Object> fieldNames,
+    protected static String ensureIndexed(List<Object> fieldNames,
                                           String indexName,
                                           String indexType,
                                           SQLDatabase database,
@@ -66,7 +69,7 @@ class IndexCreator {
      *  @param indexType "json" is the only supported type for now
      *  @return name of created index
      */
-    private String ensureIndexed(ArrayList<Object> fieldNames,
+    private String ensureIndexed(List<Object> fieldNames,
                                  final String indexName,
                                  final String indexType) {
         if (fieldNames == null || fieldNames.isEmpty()) {
@@ -79,7 +82,7 @@ class IndexCreator {
             return null;
         }
 
-        final ArrayList<String> fieldNamesList = removeDirectionsFromFields(fieldNames);
+        final List<String> fieldNamesList = removeDirectionsFromFields(fieldNames);
 
         for (String fieldName: fieldNamesList) {
             if (!validFieldName(fieldName)) {
@@ -229,8 +232,8 @@ class IndexCreator {
      *  We don't support directions on field names, but they are an optimisation so
      *  we can discard them safely.
      */
-    protected static ArrayList<String> removeDirectionsFromFields(ArrayList<Object> fieldNames) {
-        ArrayList<String> result = new ArrayList<String>();
+    protected static List<String> removeDirectionsFromFields(List<Object> fieldNames) {
+        List<String> result = new ArrayList<String>();
 
         for (Object field: fieldNames) {
             if (field instanceof Map) {
@@ -262,7 +265,7 @@ class IndexCreator {
     }
 
     private String createIndexTableStatementForIndexName(String indexName, List<String> columns) {
-        String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
+        String tableName = IndexManager.tableNameForIndex(indexName);
         Joiner joiner = Joiner.on(" NONE,").skipNulls();
         String cols = joiner.join(columns);
 
@@ -270,7 +273,7 @@ class IndexCreator {
     }
 
     private String createIndexIndexStatementForIndexName(String indexName, List<String> columns) {
-        String tableName = IndexManager.INDEX_TABLE_PREFIX.concat(indexName);
+        String tableName = IndexManager.tableNameForIndex(indexName);
         String sqlIndexName = tableName.concat("_index");
         Joiner joiner = Joiner.on(",").skipNulls();
         String cols = joiner.join(columns);

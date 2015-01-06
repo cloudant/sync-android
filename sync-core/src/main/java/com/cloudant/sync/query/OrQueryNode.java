@@ -12,23 +12,10 @@
 
 package com.cloudant.sync.query;
 
-import org.junit.Assert;
-import org.junit.Test;
+/**
+ *  An OrQueryNode object is used to specify that document IDs passed up the tree from child
+ *  nodes need to be unioned before being passed to the parent node.
+ */
+class OrQueryNode extends ChildrenQueryNode {
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-public class IndexManagerTest extends AbstractIndexTestBase {
-
-    @Test
-    public void unimplementedEnsureIndexed() {
-        List<Object> fieldNames = Arrays.<Object>asList("name");
-        Assert.assertNull(im.ensureIndexed(fieldNames));
-    }
-
-    @Test
-    public void unimplementedDeleteIndexNamed() {
-        Assert.assertFalse(im.deleteIndexNamed("basic"));
-    }
 }

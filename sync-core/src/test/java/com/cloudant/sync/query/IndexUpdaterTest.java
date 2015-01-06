@@ -24,13 +24,14 @@ import org.junit.Test;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class IndexUpdaterTest extends AbstractIndexTestBase {
 
-    ArrayList<String> fields;
+    List<String> fields;
 
     @Override
     public void tearDown() {
@@ -40,8 +41,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateIndexNoIndexName() {
-        ArrayList<Object> fieldNames = new ArrayList<Object>();
-        fieldNames.add("name");
+        List<Object> fieldNames = Arrays.<Object>asList("name");
         createIndex("basic", fieldNames);
 
         Assert.assertFalse(IndexUpdater.updateIndex(null, fields, db, ds, im.getQueue()));
@@ -49,13 +49,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateOneFieldIndex() {
-        ArrayList<Object> fieldNames = new ArrayList<Object>();
-        fieldNames.add("name");
+        List<Object> fieldNames = Arrays.<Object>asList("name");
         createIndex("basic", fieldNames);
 
         Assert.assertEquals(0, getIndexSequenceNumber("basic"));
 
-        String table = IndexManager.INDEX_TABLE_PREFIX.concat("basic");
+        String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
@@ -105,14 +104,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateTwoFieldIndex() {
-        ArrayList<Object> fieldNames = new ArrayList<Object>();
-        fieldNames.add("name");
-        fieldNames.add("age");
+        List<Object> fieldNames = Arrays.<Object>asList("name", "age");
         createIndex("basic", fieldNames);
 
         Assert.assertEquals(0, getIndexSequenceNumber("basic"));
 
-        String table = IndexManager.INDEX_TABLE_PREFIX.concat("basic");
+        String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
@@ -165,16 +162,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateMultiFieldIndex() {
-        ArrayList<Object> fieldNames = new ArrayList<Object>();
-        fieldNames.add("name");
-        fieldNames.add("age");
-        fieldNames.add("pet");
-        fieldNames.add("car");
+        List<Object> fieldNames = Arrays.<Object>asList("name", "age", "pet", "car");
         createIndex("basic", fieldNames);
 
         Assert.assertEquals(0, getIndexSequenceNumber("basic"));
 
-        String table = IndexManager.INDEX_TABLE_PREFIX.concat("basic");
+        String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
@@ -238,16 +231,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateMultiFieldIndexMissingFields() {
-        ArrayList<Object> fieldNames = new ArrayList<Object>();
-        fieldNames.add("name");
-        fieldNames.add("age");
-        fieldNames.add("pet");
-        fieldNames.add("car");
+        List<Object> fieldNames = Arrays.<Object>asList("name", "age", "pet", "car");
         createIndex("basic", fieldNames);
 
         Assert.assertEquals(0, getIndexSequenceNumber("basic"));
 
-        String table = IndexManager.INDEX_TABLE_PREFIX.concat("basic");
+        String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
@@ -306,14 +295,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateMultiFieldIndexWithBlankRow() {
-        ArrayList<Object> fieldNames = new ArrayList<Object>();
-        fieldNames.add("car");
-        fieldNames.add("van");
+        List<Object> fieldNames = Arrays.<Object>asList("car", "van");
         createIndex("basic", fieldNames);
 
         Assert.assertEquals(0, getIndexSequenceNumber("basic"));
 
-        String table = IndexManager.INDEX_TABLE_PREFIX.concat("basic");
+        String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
@@ -368,14 +355,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void indexSingleArrayFieldWhenIndexingArrays() {
-        ArrayList<Object> fieldNames = new ArrayList<Object>();
-        fieldNames.add("name");
-        fieldNames.add("pet");
+        List<Object> fieldNames = Arrays.<Object>asList("name", "pet");
         createIndex("basic", fieldNames);
 
         Assert.assertEquals(0, getIndexSequenceNumber("basic"));
 
-        String table = IndexManager.INDEX_TABLE_PREFIX.concat("basic");
+        String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
@@ -392,10 +377,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         // body content: { "name" : "mike",  "pet" : [ "cat", "dog", "parrot" ] }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
-        ArrayList<String> pets = new ArrayList<String>();
-        pets.add("cat");
-        pets.add("dog");
-        pets.add("parrot");
+        List<String> pets = Arrays.asList("cat", "dog", "parrot");
         bodyMap.put("pet", pets);
         rev.body = DocumentBodyFactory.create(bodyMap);
         BasicDocumentRevision saved = null;
@@ -437,14 +419,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void indexSingleArrayFieldWhenIndexingArraysInSubDoc() {
-        ArrayList<Object> fieldNames = new ArrayList<Object>();
-        fieldNames.add("name");
-        fieldNames.add("pet.species");
+        List<Object> fieldNames = Arrays.<Object>asList("name", "pet.species");
         createIndex("basic", fieldNames);
 
         Assert.assertEquals(0, getIndexSequenceNumber("basic"));
 
-        String table = IndexManager.INDEX_TABLE_PREFIX.concat("basic");
+        String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
@@ -461,9 +441,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         // body content: { "name" : "mike",  "pet" : { "species" : [ "cat", "dog" ] } }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
-        ArrayList<String> species = new ArrayList<String>();
-        species.add("cat");
-        species.add("dog");
+        List<String> species = Arrays.asList("cat", "dog");
         Map<String, Object> pets = new HashMap<String, Object>();
         pets.put("species", species);
         bodyMap.put("pet", pets);
@@ -506,15 +484,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void rejectsDocsWithMultipleArrays() {
-        ArrayList<Object> fieldNames = new ArrayList<Object>();
-        fieldNames.add("name");
-        fieldNames.add("pet");
-        fieldNames.add("pet2");
+        List<Object> fieldNames = Arrays.<Object>asList("name", "pet", "pet2");
         createIndex("basic", fieldNames);
 
         Assert.assertEquals(0, getIndexSequenceNumber("basic"));
 
-        String table = IndexManager.INDEX_TABLE_PREFIX.concat("basic");
+        String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
@@ -531,10 +506,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         // body content: { "name" : "mike", "pet" : [ "cat", "dog", "parrot" ] }
         Map<String, Object> goodBodyMap = new HashMap<String, Object>();
         goodBodyMap.put("name", "mike");
-        ArrayList<String> pets = new ArrayList<String>();
-        pets.add("cat");
-        pets.add("dog");
-        pets.add("parrot");
+        List<String> pets = Arrays.asList("cat", "dog", "parrot");
         goodBodyMap.put("pet", pets);
         goodRev.body = DocumentBodyFactory.create(goodBodyMap);
         BasicDocumentRevision saved = null;
@@ -674,14 +646,10 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             Assert.fail(String.format("IOException occurred creating document revision: %s", e));
         }
 
-        ArrayList<Object> fieldNames = new ArrayList<Object>();
-        fieldNames.add("age");
-        fieldNames.add("pet");
-        fieldNames.add("name");
+        List<Object> fieldNames = Arrays.<Object>asList("age", "pet", "name");
         createIndex("basic", fieldNames);
 
-        fieldNames.remove("age");
-        fieldNames.remove("pet");
+        fieldNames = Arrays.<Object>asList("name");
         createIndex("basicName", fieldNames);
 
         im.updateAllIndexes();
@@ -689,8 +657,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         Assert.assertEquals(6, getIndexSequenceNumber("basic"));
         Assert.assertEquals(6, getIndexSequenceNumber("basicName"));
 
-        String basicTable = IndexManager.INDEX_TABLE_PREFIX.concat("basic");
-        String basicNameTable = IndexManager.INDEX_TABLE_PREFIX.concat("basicName");
+        String basicTable = IndexManager.tableNameForIndex("basic");
+        String basicNameTable = IndexManager.tableNameForIndex("basicName");
         String sqlBasic = String.format("SELECT * FROM %s", basicTable);
         String sqlBasicName = String.format("SELECT * FROM %s", basicNameTable);
         Cursor cursor = null;
@@ -793,7 +761,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @SuppressWarnings("unchecked")
-    private void createIndex(String indexName, ArrayList<Object> fieldNames) {
+    private void createIndex(String indexName, List<Object> fieldNames) {
         String name = im.ensureIndexed(fieldNames, indexName);
         Assert.assertTrue(name.equals(indexName));
 
@@ -801,7 +769,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         Assert.assertTrue(indexes.containsKey(indexName));
 
         Map<String, Object> index = (Map<String, Object>) indexes.get(indexName);
-        fields = (ArrayList<String>) index.get("fields");
+        fields = (List<String>) index.get("fields");
         Assert.assertEquals(fieldNames.size() + 2, fields.size());
         for (Object fieldName: fieldNames) {
             String field = (String) fieldName;

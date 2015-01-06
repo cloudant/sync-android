@@ -67,7 +67,7 @@ import java.util.regex.Pattern;
  */
 public class IndexManager {
 
-    public static final String INDEX_TABLE_PREFIX = "_t_cloudant_sync_query_index_";
+    private static final String INDEX_TABLE_PREFIX = "_t_cloudant_sync_query_index_";
     public static final String INDEX_METADATA_TABLE_NAME = "_t_cloudant_sync_query_metadata";
 
     private static final String EXTENSION_NAME = "com.cloudant.sync.query";
@@ -169,7 +169,7 @@ public class IndexManager {
      *  @param fieldNames List of field names in the sort format
      *  @return name of created index
      */
-    public String ensureIndexed(ArrayList<Object> fieldNames) {
+    public String ensureIndexed(List<Object> fieldNames) {
         logger.log(Level.SEVERE, "ensureIndexed(fieldNames) not implemented.");
 
         return null;
@@ -184,7 +184,7 @@ public class IndexManager {
      *  @param indexName Name of index to create
      *  @return name of created index
      */
-    public String ensureIndexed(ArrayList<Object> fieldNames, String indexName) {
+    public String ensureIndexed(List<Object> fieldNames, String indexName) {
         return ensureIndexed(fieldNames, indexName, "json");
     }
 
@@ -198,7 +198,7 @@ public class IndexManager {
      *  @param indexType "json" is the only supported type for now
      *  @return name of created index
      */
-    public String ensureIndexed(ArrayList<Object> fieldNames, String indexName, String indexType) {
+    public String ensureIndexed(List<Object> fieldNames, String indexName, String indexType) {
         if (fieldNames == null || fieldNames.isEmpty()) {
             return null;
         }
@@ -248,13 +248,28 @@ public class IndexManager {
         return IndexUpdater.updateAllIndexes(indexes, database, datastore, queue);
     }
 
-    public QueryResultSet find(Map<String, Object> query) {
+    public QueryResult find(Map<String, Object> query) {
+        return find(query, 0, 0, null, null);
+    }
 
-        // TODO - implement method
+    public QueryResult find(Map<String, Object> query,
+                            long skip,
+                            long limit,
+                            List<String> fields,
+                            List<Map<String, String>> sortDocument) {
+        if (query == null) {
+            logger.log(Level.SEVERE, "-find called with null selector; bailing.");
+            return null;
+        }
 
-        logger.log(Level.SEVERE, "find(query) not implemented.");
+        if (!updateAllIndexes()) {
+            return null;
+        }
 
-        return null;
+        QueryExecutor queryExecutor = new QueryExecutor(database, datastore, queue);
+        Map<String, Object> indexes = listIndexes();
+
+        return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
     }
 
     protected static String tableNameForIndex(String indexName) {

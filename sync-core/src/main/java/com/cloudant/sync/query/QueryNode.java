@@ -12,23 +12,10 @@
 
 package com.cloudant.sync.query;
 
-import org.junit.Assert;
-import org.junit.Test;
+/**
+ *  The QueryNode interface provides a general categorization in the trees generated.  When parsing
+ *  selectors into trees we can easily walk to process a query.
+ */
+interface QueryNode {
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-public class IndexManagerTest extends AbstractIndexTestBase {
-
-    @Test
-    public void unimplementedEnsureIndexed() {
-        List<Object> fieldNames = Arrays.<Object>asList("name");
-        Assert.assertNull(im.ensureIndexed(fieldNames));
-    }
-
-    @Test
-    public void unimplementedDeleteIndexNamed() {
-        Assert.assertFalse(im.deleteIndexNamed("basic"));
-    }
 }
