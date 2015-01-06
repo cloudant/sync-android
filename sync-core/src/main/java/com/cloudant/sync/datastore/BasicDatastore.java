@@ -903,6 +903,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 }
             }
             if (ok) {
+                logger.log(Level.FINER, "Inserted revision: %s", rev);
                 this.sqlDb.setTransactionSuccessful();
             }
         } finally {

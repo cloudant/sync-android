@@ -28,7 +28,7 @@ import com.google.common.io.Resources;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpHost;
+import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
@@ -42,7 +42,6 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.params.HttpClientParams;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.conn.params.ConnPerRoute;
@@ -56,8 +55,6 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.BasicHttpContext;
@@ -70,10 +67,13 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class HttpRequests {
 
     public static final int CONN_PER_ROUT = 4;
+    private static Logger logger = Logger.getLogger(HttpRequests.class.getCanonicalName());
     private HttpClient httpClient;
     private JSONHelper jsonHelper;
 
@@ -226,10 +226,19 @@ public class HttpRequests {
             if (authHeaderValue != null) {
                 request.addHeader("Authorization", authHeaderValue);
             }
+            //log the request
+            logger.info(request.toString());
             HttpResponse response = httpClient.execute(request, context);
             validate(request, response);
+            logger.info(response.getStatusLine().toString());
+            if(logger.isLoggable(Level.FINER)) {
+                for (Header h : response.getAllHeaders()) {
+                    logger.finer(h.toString());
+                }
+            }
             return response;
         } catch (IOException e) {
+            logger.log(Level.SEVERE, "Aborting request", e);
             request.abort();
             throw new ServerException(e);
         }
