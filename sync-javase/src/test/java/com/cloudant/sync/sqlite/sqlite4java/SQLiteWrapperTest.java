@@ -87,8 +87,8 @@ public class SQLiteWrapperTest {
 
     @Test
     public void beginTransaction_transactionFailed_rollback() throws Exception {
+        database.beginTransaction();
         try {
-            database.beginTransaction();
             database.execSQL(create_doc_table);
         } finally {
             database.endTransaction();
@@ -99,8 +99,8 @@ public class SQLiteWrapperTest {
 
     @Test
     public void beginTransaction_transactionSuccess_commit() throws Exception {
+        database.beginTransaction();
         try {
-            database.beginTransaction();
             database.execSQL(create_doc_table);
             database.setTransactionSuccessful();
         } finally {
@@ -177,8 +177,8 @@ public class SQLiteWrapperTest {
     public void nestedTransaction_threeChainedTransactionAndAllTransactionSuccess_commit() throws SQLException {
         this.database.beginTransaction();
         try {
+            this.database.beginTransaction();
             try {
-                this.database.beginTransaction();
                 this.database.execSQL(create_doc_table);
                 this.nestedSuccessfulTransaction(create_rev_table);
                 this.database.setTransactionSuccessful();
@@ -205,8 +205,8 @@ public class SQLiteWrapperTest {
     public void nestedTransaction_threeChainedTransactionAndChildThreeFailed_rollback() throws SQLException {
         this.database.beginTransaction();
         try {
+            this.database.beginTransaction();
             try {
-                this.database.beginTransaction();
                 this.database.execSQL(create_doc_table);
                 this.nestedFailTransaction(create_rev_table);
                 this.database.setTransactionSuccessful();
@@ -236,8 +236,8 @@ public class SQLiteWrapperTest {
     public void nestedTransaction_threeChainedTransactionAndChildTwoFailed_rollback() throws SQLException {
         this.database.beginTransaction();
         try {
+            this.database.beginTransaction();
             try {
-                this.database.beginTransaction();
                 this.database.execSQL(create_doc_table);
                 this.nestedSuccessfulTransaction(create_rev_table);
             } finally {

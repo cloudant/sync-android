@@ -1461,8 +1461,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 this.attachmentManager.prepareAttachments(rev.attachments != null ? rev.attachments.values() : null);
 
         // set body and attachments in one tx
+        this.getSQLDatabase().beginTransaction();
         try {
-            this.getSQLDatabase().beginTransaction();
             // save document with body
             BasicDocumentRevision saved = createDocument(rev.docId, rev.body);
             // set attachments
@@ -1489,8 +1489,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
 
         // update body and attachments in one tx
+        this.getSQLDatabase().beginTransaction();
         try {
-            this.getSQLDatabase().beginTransaction();
             // update document with new body
             BasicDocumentRevision updated = updateDocument(rev.docId, rev.sourceRevisionId, rev.body, true, false);
             // set attachments
@@ -1518,8 +1518,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         ArrayList<BasicDocumentRevision> deleted = new ArrayList<BasicDocumentRevision>();
         Cursor cursor = null;
         // delete all in one tx
+        this.getSQLDatabase().beginTransaction();
         try {
-            this.getSQLDatabase().beginTransaction();
             // get revid for each leaf
             final String sql = "SELECT revs.revid FROM docs,revs " +
                     "WHERE revs.doc_id = docs.doc_id " +
