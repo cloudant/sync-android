@@ -99,8 +99,8 @@ public class SQLDatabaseFactory {
 
     private static int executeStatements(SQLDatabase database, String[] statements, int version)
             throws SQLException {
+        database.beginTransaction();
         try {
-            database.beginTransaction();
             for (String statement : statements) {
                 database.execSQL(statement);
             }

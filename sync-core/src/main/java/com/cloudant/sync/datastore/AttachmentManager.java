@@ -169,8 +169,8 @@ class AttachmentManager {
             return;
         }
 
+        this.datastore.getSQLDatabase().beginTransaction();
         try {
-            this.datastore.getSQLDatabase().beginTransaction();
             for (PreparedAttachment a : preparedAndSavedAttachments.preparedAttachments) {
                 // go thru prepared attachments and add them
                 this.addAttachment(a, rev);
