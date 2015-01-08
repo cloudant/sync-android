@@ -37,6 +37,8 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     protected CouchClientWrapper remoteDb = null;
     protected CouchClient couchClient = null;
 
+    private long dbSuffix = System.currentTimeMillis();
+
     @Before
     public void setUp() throws Exception {
         this.createDatastore();
@@ -72,7 +74,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     }
 
     String getDbName() {
-        String dbName = getClass().getSimpleName();
+        String dbName = getClass().getSimpleName()+ dbSuffix;
         String regex = "([a-z])([A-Z])";
         String replacement = "$1_$2";
         return dbName.replaceAll(regex, replacement).toLowerCase();

@@ -81,7 +81,7 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
         CouchDbInfo info = couchClient.getDbInfo(getDbName());
 
         while(info.isCompactRunning()) {
-            Thread.sleep(10);
+            Thread.sleep(1000);
             info = couchClient.getDbInfo(getDbName());
         };
 

@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId "cloudant.com.androidtest"
-        minSdkVersion 15
+        minSdkVersion 14
         targetSdkVersion 20
         versionCode 1
         versionName "1.0"
@@ -88,6 +88,8 @@ dependencies {
         // the current version of objenesis which mockito depends on is buggy on android, so force a newer version
         force true
     }
+
+    compile 'com.google.code.findbugs:jsr305:3.0.0' //this is needed for some versions of android
 
 }
 

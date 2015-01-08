@@ -23,7 +23,7 @@ import org.junit.Before;
 
 public abstract class CouchClientTestBase {
 
-    static final String TEST_DB = "mazha-test";
+    String TEST_DB = "mazha-test"+System.currentTimeMillis();
 
     public static final Boolean TEST_WITH_CLOUDANT = Boolean.valueOf(
             System.getProperty("test.with.cloudant",Boolean.FALSE.toString()));
