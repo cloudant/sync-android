@@ -74,7 +74,7 @@ public class SavedHttpAttachment extends Attachment {
     @Override
     public InputStream getInputStream() throws IOException {
         if( data == null) {
-            HttpRequests requests = new HttpRequests(new BasicHttpParams(), null, null);
+            HttpRequests requests = new HttpRequests(new BasicHttpParams(), null, null, null);
             if(encoding == Encoding.Gzip) {
                 return new GZIPInputStream(requests.getCompressed(attachmentURI));
             } else {
