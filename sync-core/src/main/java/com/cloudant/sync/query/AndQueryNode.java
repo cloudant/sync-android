@@ -12,23 +12,12 @@
 
 package com.cloudant.sync.query;
 
-import org.junit.Assert;
-import org.junit.Test;
+/**
+ *  An AndQueryNode object is used to specify that document IDs passed up the tree from child
+ *  nodes need to be intersected before being passed to the parent node.
+ */
+class AndQueryNode extends ChildrenQueryNode {
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+    // This class is used to define a ChildrenQueryNode as a specific type of QueryNode
 
-public class IndexManagerTest extends AbstractIndexTestBase {
-
-    @Test
-    public void unimplementedEnsureIndexed() {
-        List<Object> fieldNames = Arrays.<Object>asList("name");
-        Assert.assertNull(im.ensureIndexed(fieldNames));
-    }
-
-    @Test
-    public void unimplementedDeleteIndexNamed() {
-        Assert.assertFalse(im.deleteIndexNamed("basic"));
-    }
 }

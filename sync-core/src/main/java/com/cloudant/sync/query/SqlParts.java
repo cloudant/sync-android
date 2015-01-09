@@ -12,23 +12,17 @@
 
 package com.cloudant.sync.query;
 
-import org.junit.Assert;
-import org.junit.Test;
+class SqlParts {
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+    public String sqlWithPlaceHolders;
+    public String[] placeHolderValues;
 
-public class IndexManagerTest extends AbstractIndexTestBase {
+    public static SqlParts partsForSql(String sql, String[] parameters) {
+        SqlParts parts = new SqlParts();
+        parts.sqlWithPlaceHolders = sql;
+        parts.placeHolderValues = parameters;
 
-    @Test
-    public void unimplementedEnsureIndexed() {
-        List<Object> fieldNames = Arrays.<Object>asList("name");
-        Assert.assertNull(im.ensureIndexed(fieldNames));
+        return parts;
     }
 
-    @Test
-    public void unimplementedDeleteIndexNamed() {
-        Assert.assertFalse(im.deleteIndexNamed("basic"));
-    }
 }

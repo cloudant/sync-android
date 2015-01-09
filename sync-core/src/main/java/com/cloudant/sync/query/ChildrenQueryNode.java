@@ -12,23 +12,19 @@
 
 package com.cloudant.sync.query;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class IndexManagerTest extends AbstractIndexTestBase {
+/**
+ *  A ChildrenQueryNode object represents a tree node that is not a leaf,
+ *  specialized further in subclasses.
+ */
+class ChildrenQueryNode implements QueryNode {
 
-    @Test
-    public void unimplementedEnsureIndexed() {
-        List<Object> fieldNames = Arrays.<Object>asList("name");
-        Assert.assertNull(im.ensureIndexed(fieldNames));
+    public List<QueryNode> children;
+
+    ChildrenQueryNode() {
+        children = new ArrayList<QueryNode>();
     }
 
-    @Test
-    public void unimplementedDeleteIndexNamed() {
-        Assert.assertFalse(im.deleteIndexNamed("basic"));
-    }
 }

@@ -86,7 +86,7 @@ class IndexUpdater {
      *  @return index update success status (true/false)
      */
     public static boolean updateIndex(String indexName,
-                                      ArrayList<String> fieldNames,
+                                      List<String> fieldNames,
                                       SQLDatabase database,
                                       Datastore datastore,
                                       ExecutorService queue) {
@@ -101,7 +101,7 @@ class IndexUpdater {
 
         for (String indexName: indexes.keySet()) {
             Map<String, Object> index = (Map<String, Object>) indexes.get(indexName);
-            ArrayList<String> fields = (ArrayList<String>) index.get("fields");
+            List<String> fields = (ArrayList<String>) index.get("fields");
             success = updateIndex(indexName, fields);
             if (!success) {
                 break;
@@ -111,7 +111,7 @@ class IndexUpdater {
         return success;
     }
 
-    private boolean updateIndex(String indexName, ArrayList<String> fieldNames) {
+    private boolean updateIndex(String indexName, List<String> fieldNames) {
         boolean success;
         Changes changes;
         long lastSequence = sequenceNumberForIndex(indexName);
@@ -131,7 +131,7 @@ class IndexUpdater {
     }
 
     private boolean updateIndex(final String indexName,
-                                final ArrayList<String> fieldNames,
+                                final List<String> fieldNames,
                                 final Changes changes,
                                 long lastSequence) {
         if (indexName == null || indexName.isEmpty()) {
@@ -215,7 +215,7 @@ class IndexUpdater {
     @SuppressWarnings("unchecked")
     private List<DBParameter> parametersToIndexRevision (BasicDocumentRevision rev,
                                                          String indexName,
-                                                         ArrayList<String> fieldNames) {
+                                                         List<String> fieldNames) {
         if (rev == null) {
             return null;
         }
@@ -253,10 +253,10 @@ class IndexUpdater {
             // in the index. _id and _rev are special fields in that they don't appear in the
             // body, so they need special-casing to get the values.
 
-            ArrayList<String> initialIncludedFields = new ArrayList<String>();
+            List<String> initialIncludedFields = new ArrayList<String>();
             initialIncludedFields.add("_id");
             initialIncludedFields.add("_rev");
-            ArrayList<Object> initialArgs = new ArrayList<Object>();
+            List<Object> initialArgs = new ArrayList<Object>();
             initialArgs.add(rev.getId());
             initialArgs.add(rev.getRevision());
             DBParameter parameter = populateDBParameter(fieldNames,
@@ -270,15 +270,15 @@ class IndexUpdater {
             parameters.add(parameter);
         } else if (arrayFieldName != null) {
             // We know the value is an array, we found this out in the check above
-            ArrayList<Object> arrayFieldValues;
+            List<Object> arrayFieldValues;
             arrayFieldValues = (ArrayList) ValueExtractor.extractValueForFieldName(arrayFieldName,
                                                                                    rev.getBody());
             for (Object value: arrayFieldValues) {
-                ArrayList<String> initialIncludedFields = new ArrayList<String>();
+                List<String> initialIncludedFields = new ArrayList<String>();
                 initialIncludedFields.add("_id");
                 initialIncludedFields.add("_rev");
                 initialIncludedFields.add(arrayFieldName);
-                ArrayList<Object> initialArgs = new ArrayList<Object>();
+                List<Object> initialArgs = new ArrayList<Object>();
                 initialArgs.add(rev.getId());
                 initialArgs.add(rev.getRevision());
                 initialArgs.add(value);
@@ -298,9 +298,9 @@ class IndexUpdater {
         return parameters;
     }
 
-    private DBParameter populateDBParameter(ArrayList<String> fieldNames,
-                                            ArrayList<String> initialIncludedFields,
-                                            ArrayList<Object> initialArgs,
+    private DBParameter populateDBParameter(List<String> fieldNames,
+                                            List<String> initialIncludedFields,
+                                            List<Object> initialArgs,
                                             String indexName,
                                             BasicDocumentRevision rev) {
         List<String> includeFieldNames = new ArrayList<String>();
