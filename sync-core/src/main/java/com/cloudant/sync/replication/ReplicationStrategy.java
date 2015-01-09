@@ -24,4 +24,6 @@ interface ReplicationStrategy extends Runnable {
     
     EventBus getEventBus();
 
+    String getReplicationId();
+
 }

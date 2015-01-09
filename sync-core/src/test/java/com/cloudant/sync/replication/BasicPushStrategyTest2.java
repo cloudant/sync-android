@@ -82,17 +82,20 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
     @Test
     public void replicate_fullTest() throws Exception {
 
+        BasicPushStrategy push = push();
+        BasicPullStrategy pull = pull();
+        
         populateSomeDataInLocalDatastore();
-        push();
-        Assert.assertEquals("8", remoteDb.getCheckpoint(datastore.getPublicIdentifier()));
+        waitForPushToFinish(push);
+        Assert.assertEquals("8", remoteDb.getCheckpoint(push.getReplicationId()));
 
         updateDataInLocalDatastore();
         updateDataInRemoteDatabase();
 
-        push();
-        Assert.assertEquals("12", remoteDb.getCheckpoint(datastore.getPublicIdentifier()));
+        waitForPushToFinish(push);
+        Assert.assertEquals("12", remoteDb.getCheckpoint(push.getReplicationId()));
 
-        pull();
+        waitForPullToFinish(pull);
 
         // After sync, all doc should be following:
 
@@ -189,27 +192,34 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         Assert.assertNotNull(response);
     }
 
-    private void push() throws Exception {
-        TestStrategyListener listener = new TestStrategyListener();
-        BasicPushStrategy push = new BasicPushStrategy(this.createPushReplication());
-        push.eventBus.register(listener);
+    private BasicPushStrategy push() throws Exception {
+        return new BasicPushStrategy(this.createPushReplication());
+    }
 
+    private void waitForPushToFinish(BasicPushStrategy push) throws Exception{
+        TestStrategyListener listener = new TestStrategyListener();
+        push.eventBus.register(listener);
         Thread t = new Thread(push);
         t.start();
         t.join();
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
+        push.eventBus.unregister(listener);
     }
 
-    private void pull() throws Exception {
-        TestStrategyListener listener = new TestStrategyListener();
-        BasicPullStrategy pull = new BasicPullStrategy(this.createPullReplication());
-        pull.getEventBus().register(listener);
+    private BasicPullStrategy pull() throws Exception {
+        return new BasicPullStrategy(this.createPullReplication());
+    }
 
+    private void waitForPullToFinish(BasicPullStrategy pull) throws Exception {
+        TestStrategyListener listener = new TestStrategyListener();
+        pull.getEventBus().register(listener);
         Thread t = new Thread(pull);
         t.start();
         t.join();
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
+        pull.getEventBus().unregister(listener);
     }
-}
+
+    }
