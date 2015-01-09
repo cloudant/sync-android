@@ -8,7 +8,6 @@ Cloudant Sync - Android is written in Java and uses
 The main requirements are:
 
 * Java 1.6
-* Gradle 1.8+
 * Android SDK
 
 Optionally, and recommended:
@@ -38,15 +37,6 @@ with the following changes:
 
 Follow the instructions for your platform.
 
-### Gradle
-
-In OS X, use [homebrew](http://brew.sh/):
-
-```bash
-$ brew install gradle
-```
-
-Other platforms TDB.
 
 ### CouchDB
 
@@ -65,8 +55,10 @@ Follow the instructions provided on the android developer site.
 The project should build out of the box with:
 
 ```bash
-$ gradle build
+$ ./gradlew build
 ```
+
+Note: for windows machines the script to run is `gradlew.bat`.
 
 This will download the dependencies, build the library and run the unit
 tests.
@@ -75,7 +67,7 @@ If you want to use the library in other projects, install it to your local
 maven repository:
 
 ```bash
-$ gradle install
+$ gradlew install
 ```
 
 ### Running integration tests
@@ -92,7 +84,7 @@ Apache CouchDB has started. Time to relax.
 And in another terminal:
 
 ```bash
-$ gradle integrationTest
+$ ./gradlew integrationTest
 ```
 
 #### Running integration tests on Android
@@ -109,11 +101,11 @@ The minimum requirements for an android emulator:
 * Minimum API Level 15 (Target API Level is 20)
 * An SD card
 
-This test app can be run via gradle
+This test app can be run via gradle (in the AndroidTest directory of your checkout)
 
 
 ```bash
-$ gradle clean installStandardTestDebug waitForTestAppToFinishTests
+$ ../gradlew clean installStandardTestDebug waitForTestAppToFinishTests
 ```
 The app will run all tests on specified by the build variant on first start up, to rerun tests
 you must rerun the gradle build.
@@ -147,9 +139,9 @@ cloudant credentials.
 To get code coverage, you need the `coberturaReport` task before the tests you want to run:
 
 ```bash
-$ gradle coberturaReport test
-$ gradle coberturaReport integrationTest
-$ gradle coberturaReport systemTest
+$ ./gradlew coberturaReport test
+$ ./gradlew coberturaReport integrationTest
+$ ./gradlew coberturaReport systemTest
 ```
 
 Code coverage metrics end up in `build/reports`.
@@ -187,7 +179,7 @@ appropriate Java SDK such as 1.6 or 1.7.
 An alternative is to use gradle itself, which is also able to generate an idea project.
 
 ```bash
-$ gradle idea
+$ ./gradlew idea
 ```
 
 See [Gradle's IDEA plugin docs](http://www.gradle.org/docs/current/userguide/idea_plugin.html).
