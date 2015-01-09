@@ -26,6 +26,10 @@ subprojects {
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
 
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+
     //
     // Build plugins
     //
