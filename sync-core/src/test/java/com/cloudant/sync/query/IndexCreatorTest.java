@@ -12,7 +12,13 @@
 
 package com.cloudant.sync.query;
 
-import org.junit.Assert;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -26,144 +32,107 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     @Test
     public void emptyIndexList() {
         Map<String, Object> indexes = im.listIndexes();
-        Assert.assertNotNull(indexes);
-        Assert.assertTrue(indexes.isEmpty());
+        assertThat(indexes, is(notNullValue()));
+        assertThat(indexes.isEmpty(), is(true));
     }
 
     @Test
     public void preconditionsToCreatingIndexes() {
         // doesn't create an index on null fields
         String name = im.ensureIndexed(null, "basic");
-        Assert.assertNull(name);
+        assertThat(name, is(nullValue()));
 
         // doesn't create an index on no fields
         List<Object> fieldNames = new ArrayList<Object>();
         name = im.ensureIndexed(fieldNames, "basic");
-        Assert.assertNull(name);
+        assertThat(name, is(nullValue()));
 
         // doesn't create an index on null name
         fieldNames = Arrays.<Object>asList("name");
         name = im.ensureIndexed(fieldNames, null);
-        Assert.assertNull(name);
+        assertThat(name, is(nullValue()));
 
         // doesn't create an index without a name
         name = im.ensureIndexed(fieldNames, "");
-        Assert.assertNull(name);
+        assertThat(name, is(nullValue()));
 
         // doesn't create an index on null index type
         name = im.ensureIndexed(fieldNames, "basic", null);
-        Assert.assertNull(name);
+        assertThat(name, is(nullValue()));
 
         // doesn't create an index if duplicate fields
         fieldNames = Arrays.<Object>asList("age", "pet", "age");
         name = im.ensureIndexed(fieldNames, "basic");
-        Assert.assertNull(name);
+        assertThat(name, is(nullValue()));
     }
 
     @Test
     public void createIndexOverOneField() {
-        List<Object> fieldNames = Arrays.<Object>asList("name");
-        String name = im.ensureIndexed(fieldNames, "basic");
-        Assert.assertTrue(name.equals("basic"));
+        String indexName = im.ensureIndexed(Arrays.<Object>asList("name"), "basic");
+        assertThat(indexName, is("basic"));
 
         Map<String, Object> indexes = im.listIndexes();
-        Assert.assertEquals(1, indexes.size());
-        Assert.assertTrue(indexes.containsKey("basic"));
+        assertThat(indexes, hasKey("basic"));
 
         @SuppressWarnings("unchecked")
         Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
         @SuppressWarnings("unchecked")
         List<String> fields = (List<String>) index.get("fields");
-        Assert.assertEquals(3, fields.size());
-        Assert.assertTrue(fields.contains("_id"));
-        Assert.assertTrue(fields.contains("_rev"));
-        Assert.assertTrue(fields.contains("name"));
+        assertThat(fields, containsInAnyOrder("_id", "_rev", "name"));
     }
 
     @Test
     public void createIndexOverTwoFields() {
-        List<Object> fieldNames = Arrays.<Object>asList("name", "age");
-        String name = im.ensureIndexed(fieldNames, "basic");
-        Assert.assertTrue(name.equals("basic"));
+        String indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic");
+        assertThat(indexName, is("basic"));
 
         Map<String, Object> indexes = im.listIndexes();
-        Assert.assertEquals(1, indexes.size());
-        Assert.assertTrue(indexes.containsKey("basic"));
+        assertThat(indexes, hasKey("basic"));
 
         @SuppressWarnings("unchecked")
         Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
         @SuppressWarnings("unchecked")
         List<String> fields = (List<String>) index.get("fields");
-        Assert.assertEquals(4, fields.size());
-        Assert.assertTrue(fields.contains("_id"));
-        Assert.assertTrue(fields.contains("_rev"));
-        Assert.assertTrue(fields.contains("name"));
-        Assert.assertTrue(fields.contains("age"));
+        assertThat(fields, containsInAnyOrder("_id", "_rev", "name", "age"));
     }
 
     @Test
     public void createIndexUsingDottedNotation() {
-        List<Object> fieldNames = Arrays.<Object>asList("name.first", "age.years");
-        String name = im.ensureIndexed(fieldNames, "basic");
-        Assert.assertTrue(name.equals("basic"));
+        String indexName = im.ensureIndexed(Arrays.<Object>asList("name.first", "age.years"),
+                                            "basic");
+        assertThat(indexName, is("basic"));
 
         Map<String, Object> indexes = im.listIndexes();
-        Assert.assertEquals(1, indexes.size());
-        Assert.assertTrue(indexes.containsKey("basic"));
+        assertThat(indexes, hasKey("basic"));
 
         @SuppressWarnings("unchecked")
         Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
         @SuppressWarnings("unchecked")
         List<String> fields = (List<String>) index.get("fields");
-        Assert.assertEquals(4, fields.size());
-        Assert.assertTrue(fields.contains("_id"));
-        Assert.assertTrue(fields.contains("_rev"));
-        Assert.assertTrue(fields.contains("name.first"));
-        Assert.assertTrue(fields.contains("age.years"));
+        assertThat(fields, containsInAnyOrder("_id", "_rev", "name.first", "age.years"));
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void createMultipleIndexes() {
-        List<Object> fieldNames = Arrays.<Object>asList("name", "age");
-        im.ensureIndexed(fieldNames, "basic");
-        im.ensureIndexed(fieldNames, "another");
-        fieldNames = Arrays.<Object>asList("cat");
-        im.ensureIndexed(fieldNames, "petname");
+        im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic");
+        im.ensureIndexed(Arrays.<Object>asList("name", "age"), "another");
+        im.ensureIndexed(Arrays.<Object>asList("cat"), "petname");
 
         Map<String, Object> indexes = im.listIndexes();
-        Assert.assertEquals(3, indexes.size());
-        Assert.assertTrue(indexes.containsKey("basic"));
-        Assert.assertTrue(indexes.containsKey("another"));
-        Assert.assertTrue(indexes.containsKey("petname"));
+        assertThat(indexes.keySet(), containsInAnyOrder("basic", "another", "petname"));
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> basicIndex = (Map<String, Object>) indexes.get("basic");
-        @SuppressWarnings("unchecked")
-        List<String> basicIndexFields = (List<String>) basicIndex.get("fields");
-        Assert.assertEquals(4, basicIndexFields.size());
-        Assert.assertTrue(basicIndexFields.contains("_id"));
-        Assert.assertTrue(basicIndexFields.contains("_rev"));
-        Assert.assertTrue(basicIndexFields.contains("name"));
-        Assert.assertTrue(basicIndexFields.contains("age"));
+        Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
+        List<String> fields = (List<String>) index.get("fields");
+        assertThat(fields, containsInAnyOrder("_id", "_rev", "name", "age"));
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> anotherIndex = (Map<String, Object>) indexes.get("another");
-        @SuppressWarnings("unchecked")
-        List<String> anotherIndexFields = (List<String>) anotherIndex.get("fields");
-        Assert.assertEquals(4, anotherIndexFields.size());
-        Assert.assertTrue(anotherIndexFields.contains("_id"));
-        Assert.assertTrue(anotherIndexFields.contains("_rev"));
-        Assert.assertTrue(anotherIndexFields.contains("name"));
-        Assert.assertTrue(anotherIndexFields.contains("age"));
+        index = (Map<String, Object>) indexes.get("another");
+        fields = (List<String>) index.get("fields");
+        assertThat(fields, containsInAnyOrder("_id", "_rev", "name", "age"));
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> petnameIndex = (Map<String, Object>) indexes.get("petname");
-        @SuppressWarnings("unchecked")
-        List<String> petnameIndexFields = (List<String>) petnameIndex.get("fields");
-        Assert.assertEquals(3, petnameIndexFields.size());
-        Assert.assertTrue(petnameIndexFields.contains("_id"));
-        Assert.assertTrue(petnameIndexFields.contains("_rev"));
-        Assert.assertTrue(petnameIndexFields.contains("cat"));
+        index = (Map<String, Object>) indexes.get("petname");
+        fields = (List<String>) index.get("fields");
+        assertThat(fields, containsInAnyOrder("_id", "_rev", "cat"));
     }
 
     @Test
@@ -172,23 +141,17 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         nameField.put("name", "asc");
         HashMap<String, String> ageField = new HashMap<String, String>();
         ageField.put("age", "desc");
-        List<Object> fieldNames = Arrays.<Object>asList(nameField, ageField);
-        String name = im.ensureIndexed(fieldNames, "basic");
-        Assert.assertTrue(name.equals("basic"));
+        String indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField), "basic");
+        assertThat(indexName, is("basic"));
 
         Map<String, Object> indexes = im.listIndexes();
-        Assert.assertEquals(1, indexes.size());
-        Assert.assertTrue(indexes.containsKey("basic"));
+        assertThat(indexes, hasKey("basic"));
 
         @SuppressWarnings("unchecked")
         Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
         @SuppressWarnings("unchecked")
         List<String> fields = (List<String>) index.get("fields");
-        Assert.assertEquals(4, fields.size());
-        Assert.assertTrue(fields.contains("_id"));
-        Assert.assertTrue(fields.contains("_rev"));
-        Assert.assertTrue(fields.contains("name"));
-        Assert.assertTrue(fields.contains("age"));
+        assertThat(fields, containsInAnyOrder("_id", "_rev", "name", "age"));
     }
 
     @Test
@@ -197,13 +160,12 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         nameField.put("name", "asc");
         HashMap<String, String> ageField = new HashMap<String, String>();
         ageField.put("age", "desc");
-        List<Object> fieldNames = Arrays.<Object>asList(nameField, ageField);
-        String name = im.ensureIndexed(fieldNames, "basic");
-        Assert.assertTrue(name.equals("basic"));
+        String indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField), "basic");
+        assertThat(indexName, is("basic"));
 
         // succeeds when the index definition is the same
-        name = im.ensureIndexed(fieldNames, "basic");
-        Assert.assertTrue(name.equals("basic"));
+        indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField), "basic");
+        assertThat(indexName, is("basic"));
     }
 
     @Test
@@ -212,17 +174,14 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         nameField.put("name", "asc");
         HashMap<String, String> ageField = new HashMap<String, String>();
         ageField.put("age", "desc");
-        List<Object> fieldNames = Arrays.<Object>asList(nameField, ageField);
-        String name = im.ensureIndexed(fieldNames, "basic");
-        Assert.assertTrue(name.equals("basic"));
+        String indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField), "basic");
+        assertThat(indexName, is("basic"));
 
         // fails when the index definition is different
-        fieldNames = Arrays.<Object>asList(nameField);
         HashMap<String, String> petField = new HashMap<String, String>();
         petField.put("pet", "desc");
-        Arrays.<Object>asList(nameField, petField);
-        name = im.ensureIndexed(fieldNames, "basic");
-        Assert.assertNull(name);
+        indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, petField), "basic");
+        assertThat(indexName, is(nullValue()));
     }
 
     @Test
@@ -231,11 +190,12 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         nameField.put("name", "asc");
         HashMap<String, String> ageField = new HashMap<String, String>();
         ageField.put("age", "desc");
-        List<Object> fieldNames = Arrays.<Object>asList(nameField, ageField);
 
         // supports using the json type
-        String name = im.ensureIndexed(fieldNames, "basic", "json");
-        Assert.assertTrue(name.equals("basic"));
+        String indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField),
+                                            "basic",
+                                            "json");
+        assertThat(indexName, is("basic"));
     }
 
     @Test
@@ -244,11 +204,12 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         nameField.put("name", "asc");
         HashMap<String, String> ageField = new HashMap<String, String>();
         ageField.put("age", "desc");
-        List<Object> fieldNames = Arrays.<Object>asList(nameField, ageField);
 
         // doesn't support using the text type
-        String name = im.ensureIndexed(fieldNames, "basic", "text");
-        Assert.assertNull(name);
+        String indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField),
+                                            "basic",
+                                            "text");
+        assertThat(indexName, is(nullValue()));
     }
 
     @Test
@@ -257,11 +218,12 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         nameField.put("name", "asc");
         HashMap<String, String> ageField = new HashMap<String, String>();
         ageField.put("age", "desc");
-        List<Object> fieldNames = Arrays.<Object>asList(nameField, ageField);
 
         // doesn't support using the geo type
-        String name = im.ensureIndexed(fieldNames, "basic", "geo");
-        Assert.assertNull(name);
+        String indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField),
+                                            "basic",
+                                            "geo");
+        assertThat(indexName, is(nullValue()));
     }
 
     @Test
@@ -270,20 +232,20 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         nameField.put("name", "asc");
         HashMap<String, String> ageField = new HashMap<String, String>();
         ageField.put("age", "desc");
-        List<Object> fieldNames = Arrays.<Object>asList(nameField, ageField);
 
         // doesn't support using the unplanned type
-        String name = im.ensureIndexed(fieldNames, "basic", "frog");
-        Assert.assertNull(name);
+        String indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField),
+                                            "basic",
+                                            "frog");
+        assertThat(indexName, is(nullValue()));
     }
 
     @Test
     public void createIndexUsingNonAsciiText() {
-        List<Object> fieldNames = Arrays.<Object>asList("اسم", "datatype", "ages");
-
         // can create indexes successfully
-        String name = im.ensureIndexed(fieldNames, "nonascii");
-        Assert.assertTrue(name.equals("nonascii"));
+        String indexName = im.ensureIndexed(Arrays.<Object>asList("اسم", "datatype", "ages"),
+                                            "basic");
+        assertThat(indexName, is("basic"));
     }
 
     @Test
@@ -292,52 +254,47 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         nameField.put("name", "asc");
         HashMap<String, String> petField = new HashMap<String, String>();
         petField.put("pet", "desc");
-        List<Object> fieldNames = Arrays.<Object>asList(nameField, petField, "age");
 
         // removes directions from the field specifiers
-        List<String> fields = IndexCreator.removeDirectionsFromFields(fieldNames);
-        Assert.assertEquals(3, fields.size());
-        Assert.assertTrue(fields.contains("name"));
-        Assert.assertTrue(fields.contains("pet"));
-        Assert.assertTrue(fields.contains("age"));
+        List<String> fields;
+        fields = IndexCreator.removeDirectionsFromFields(Arrays.<Object>asList(nameField,
+                                                                               petField,
+                                                                               "age"));
+        assertThat(fields, containsInAnyOrder("name", "pet", "age"));
     }
 
     @Test
     public void createIndexWhereFieldNameContainsDollarSign() {
-        List<Object> fieldNames = Arrays.<Object>asList("$name", "datatype");
-
         // rejects indexes with $ at start
-        String name = im.ensureIndexed(fieldNames, "basic");
-        Assert.assertNull(name);
-
-        fieldNames = Arrays.<Object>asList("na$me", "datatype$");
+        String indexName = im.ensureIndexed(Arrays.<Object>asList("$name", "datatype"), "basic");
+        assertThat(indexName, is(nullValue()));
 
         // creates indexes with $ not at start
-        name = im.ensureIndexed(fieldNames, "basic");
-        Assert.assertTrue(name.equals("basic"));
+        indexName = im.ensureIndexed(Arrays.<Object>asList("na$me", "datatype$"), "basic");
+        assertThat(indexName, is("basic"));
     }
 
     @Test
     public void validateFieldNames() {
         // allows single fields
-        Assert.assertTrue(IndexCreator.validFieldName("name"));
+        assertThat(IndexCreator.validFieldName("name"), is(true));
 
         // allows dotted notation fields
-        Assert.assertTrue(IndexCreator.validFieldName("name.first"));
-        Assert.assertTrue(IndexCreator.validFieldName("name.first.prefix"));
+        assertThat(IndexCreator.validFieldName("name.first"), is(true));
+        assertThat(IndexCreator.validFieldName("name.first.prefix"), is(true));
 
         // allows dollars in positions other than first letter of a part
-        Assert.assertTrue(IndexCreator.validFieldName("na$me"));
-        Assert.assertTrue(IndexCreator.validFieldName("name.fir$t"));
-        Assert.assertTrue(IndexCreator.validFieldName("name.fir$t.pref$x"));
+        assertThat(IndexCreator.validFieldName("na$me"), is(true));
+        assertThat(IndexCreator.validFieldName("name.fir$t"), is(true));
+        assertThat(IndexCreator.validFieldName("name.fir$t.pref$x"), is(true));
 
         // rejects dollars in first letter of a part
-        Assert.assertFalse(IndexCreator.validFieldName("$name"));
-        Assert.assertFalse(IndexCreator.validFieldName("name.$first"));
-        Assert.assertFalse(IndexCreator.validFieldName("name.$first.$prefix"));
-        Assert.assertFalse(IndexCreator.validFieldName("name.first.$prefix"));
-        Assert.assertFalse(IndexCreator.validFieldName("name.first.$pr$efix"));
-        Assert.assertFalse(IndexCreator.validFieldName("name.$$$$.prefix"));
+        assertThat(IndexCreator.validFieldName("$name"), is(false));
+        assertThat(IndexCreator.validFieldName("name.$first"), is(false));
+        assertThat(IndexCreator.validFieldName("name.$first.$prefix"), is(false));
+        assertThat(IndexCreator.validFieldName("name.first.$prefix"), is(false));
+        assertThat(IndexCreator.validFieldName("name.first.$pr$efix"), is(false));
+        assertThat(IndexCreator.validFieldName("name.$$$$.prefix"), is(false));
     }
 
 }

@@ -12,6 +12,14 @@
 
 package com.cloudant.sync.query;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
@@ -41,25 +49,22 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateIndexNoIndexName() {
-        List<Object> fieldNames = Arrays.<Object>asList("name");
-        createIndex("basic", fieldNames);
-
-        Assert.assertFalse(IndexUpdater.updateIndex(null, fields, db, ds, im.getQueue()));
+        createIndex("basic", Arrays.<Object>asList("name"));
+        assertThat(IndexUpdater.updateIndex(null, fields, db, ds, im.getQueue()), is(false));
     }
 
     @Test
     public void updateOneFieldIndex() {
-        List<Object> fieldNames = Arrays.<Object>asList("name");
-        createIndex("basic", fieldNames);
+        createIndex("basic", Arrays.<Object>asList("name"));
 
-        Assert.assertEquals(0, getIndexSequenceNumber("basic"));
+        assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(0, cursor.getCount());
+            assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
@@ -79,21 +84,21 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             Assert.fail(String.format("IOException occurred creating document revision: %s", e));
         }
 
-        Assert.assertTrue(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()));
-        Assert.assertEquals(1, getIndexSequenceNumber("basic"));
+        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(1, cursor.getCount());
-            Assert.assertEquals(3, cursor.getColumnCount());
+            assertThat(cursor.getCount(), is(1));
+            assertThat(cursor.getColumnCount(), is(3));
             while (cursor.moveToNext()) {
-                Assert.assertTrue(cursor.columnName(0).equals("_id"));
-                Assert.assertTrue(cursor.getString(0).equals("id123"));
-                Assert.assertTrue(cursor.columnName(1).equals("_rev"));
-                Assert.assertTrue(cursor.getString(1).equals(saved.getRevision()));
-                Assert.assertTrue(cursor.columnName(2).equals("name"));
-                Assert.assertTrue(cursor.getString(2).equals("mike"));
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.getString(0), is("id123"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.getString(1), is(saved.getRevision()));
+                assertThat(cursor.columnName(2), is("name"));
+                assertThat(cursor.getString(2), is("mike"));
             }
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
@@ -104,17 +109,16 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateTwoFieldIndex() {
-        List<Object> fieldNames = Arrays.<Object>asList("name", "age");
-        createIndex("basic", fieldNames);
+        createIndex("basic", Arrays.<Object>asList("name", "age"));
 
-        Assert.assertEquals(0, getIndexSequenceNumber("basic"));
+        assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(0, cursor.getCount());
+            assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
@@ -135,23 +139,23 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             Assert.fail(String.format("IOException occurred creating document revision: %s", e));
         }
 
-        Assert.assertTrue(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()));
-        Assert.assertEquals(1, getIndexSequenceNumber("basic"));
+        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(1, cursor.getCount());
-            Assert.assertEquals(4, cursor.getColumnCount());
+            assertThat(cursor.getCount(), is(1));
+            assertThat(cursor.getColumnCount(), is(4));
             while (cursor.moveToNext()) {
-                Assert.assertTrue(cursor.columnName(0).equals("_id"));
-                Assert.assertTrue(cursor.getString(0).equals("id123"));
-                Assert.assertTrue(cursor.columnName(1).equals("_rev"));
-                Assert.assertTrue(cursor.getString(1).equals(saved.getRevision()));
-                Assert.assertTrue(cursor.columnName(2).equals("name"));
-                Assert.assertTrue(cursor.getString(2).equals("mike"));
-                Assert.assertTrue(cursor.columnName(3).equals("age"));
-                Assert.assertEquals(12, cursor.getInt(3));
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.getString(0), is("id123"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.getString(1), is(saved.getRevision()));
+                assertThat(cursor.columnName(2), is("name"));
+                assertThat(cursor.getString(2), is("mike"));
+                assertThat(cursor.columnName(3), is("age"));
+                assertThat(cursor.getInt(3), is(12));
             }
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
@@ -162,17 +166,16 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateMultiFieldIndex() {
-        List<Object> fieldNames = Arrays.<Object>asList("name", "age", "pet", "car");
-        createIndex("basic", fieldNames);
+        createIndex("basic", Arrays.<Object>asList("name", "age", "pet", "car"));
 
-        Assert.assertEquals(0, getIndexSequenceNumber("basic"));
+        assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(0, cursor.getCount());
+            assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
@@ -200,27 +203,27 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             Assert.fail(String.format("IOException occurred creating document revision: %s", e));
         }
 
-        Assert.assertTrue(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()));
-        Assert.assertEquals(1, getIndexSequenceNumber("basic"));
+        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(1, cursor.getCount());
-            Assert.assertEquals(6, cursor.getColumnCount());
+            assertThat(cursor.getCount(), is(1));
+            assertThat(cursor.getColumnCount(), is(6));
             while (cursor.moveToNext()) {
-                Assert.assertTrue(cursor.columnName(0).equals("_id"));
-                Assert.assertTrue(cursor.getString(0).equals("id123"));
-                Assert.assertTrue(cursor.columnName(1).equals("_rev"));
-                Assert.assertTrue(cursor.getString(1).equals(saved.getRevision()));
-                Assert.assertTrue(cursor.columnName(2).equals("name"));
-                Assert.assertTrue(cursor.getString(2).equals("mike"));
-                Assert.assertTrue(cursor.columnName(3).equals("age"));
-                Assert.assertEquals(12, cursor.getInt(3));
-                Assert.assertTrue(cursor.columnName(4).equals("pet"));
-                Assert.assertTrue(cursor.getString(4).equals("cat"));
-                Assert.assertTrue(cursor.columnName(5).equals("car"));
-                Assert.assertTrue(cursor.getString(5).equals("mini"));
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.getString(0), is("id123"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.getString(1), is(saved.getRevision()));
+                assertThat(cursor.columnName(2), is("name"));
+                assertThat(cursor.getString(2), is("mike"));
+                assertThat(cursor.columnName(3), is("age"));
+                assertThat(cursor.getInt(3), is(12));
+                assertThat(cursor.columnName(4), is("pet"));
+                assertThat(cursor.getString(4), is("cat"));
+                assertThat(cursor.columnName(5), is("car"));
+                assertThat(cursor.getString(5), is("mini"));
             }
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
@@ -231,17 +234,16 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateMultiFieldIndexMissingFields() {
-        List<Object> fieldNames = Arrays.<Object>asList("name", "age", "pet", "car");
-        createIndex("basic", fieldNames);
+        createIndex("basic", Arrays.<Object>asList("name", "age", "pet", "car"));
 
-        Assert.assertEquals(0, getIndexSequenceNumber("basic"));
+        assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(0, cursor.getCount());
+            assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
@@ -264,8 +266,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             Assert.fail(String.format("IOException occurred creating document revision: %s", e));
         }
 
-        Assert.assertTrue(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()));
-        Assert.assertEquals(1, getIndexSequenceNumber("basic"));
+        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         cursor = null;
         try {
@@ -273,18 +275,18 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             Assert.assertEquals(1, cursor.getCount());
             Assert.assertEquals(6, cursor.getColumnCount());
             while (cursor.moveToNext()) {
-                Assert.assertTrue(cursor.columnName(0).equals("_id"));
-                Assert.assertTrue(cursor.getString(0).equals("id123"));
-                Assert.assertTrue(cursor.columnName(1).equals("_rev"));
-                Assert.assertTrue(cursor.getString(1).equals(saved.getRevision()));
-                Assert.assertTrue(cursor.columnName(2).equals("name"));
-                Assert.assertTrue(cursor.getString(2).equals("mike"));
-                Assert.assertTrue(cursor.columnName(3).equals("age"));
-                Assert.assertEquals(12, cursor.getLong(3));
-                Assert.assertTrue(cursor.columnName(4).equals("pet"));
-                Assert.assertTrue(cursor.getString(4).equals("cat"));
-                Assert.assertTrue(cursor.columnName(5).equals("car"));
-                Assert.assertNull(cursor.getString(5));
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.getString(0), is("id123"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.getString(1), is(saved.getRevision()));
+                assertThat(cursor.columnName(2), is("name"));
+                assertThat(cursor.getString(2), is("mike"));
+                assertThat(cursor.columnName(3), is("age"));
+                assertThat(cursor.getInt(3), is(12));
+                assertThat(cursor.columnName(4), is("pet"));
+                assertThat(cursor.getString(4), is("cat"));
+                assertThat(cursor.columnName(5), is("car"));
+                assertThat(cursor.getString(5), is(nullValue()));
             }
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
@@ -295,17 +297,16 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateMultiFieldIndexWithBlankRow() {
-        List<Object> fieldNames = Arrays.<Object>asList("car", "van");
-        createIndex("basic", fieldNames);
+        createIndex("basic", Arrays.<Object>asList("car", "van"));
 
-        Assert.assertEquals(0, getIndexSequenceNumber("basic"));
+        assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(0, cursor.getCount());
+            assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
@@ -328,23 +329,23 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             Assert.fail(String.format("IOException occurred creating document revision: %s", e));
         }
 
-        Assert.assertTrue(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()));
-        Assert.assertEquals(1, getIndexSequenceNumber("basic"));
+        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(1, cursor.getCount());
-            Assert.assertEquals(4, cursor.getColumnCount());
+            assertThat(cursor.getCount(), is(1));
+            assertThat(cursor.getColumnCount(), is(4));
             while (cursor.moveToNext()) {
-                Assert.assertTrue(cursor.columnName(0).equals("_id"));
-                Assert.assertTrue(cursor.getString(0).equals("id123"));
-                Assert.assertTrue(cursor.columnName(1).equals("_rev"));
-                Assert.assertTrue(cursor.getString(1).equals(saved.getRevision()));
-                Assert.assertTrue(cursor.columnName(2).equals("car"));
-                Assert.assertNull(cursor.getString(2));
-                Assert.assertTrue(cursor.columnName(3).equals("van"));
-                Assert.assertNull(cursor.getString(3));
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.getString(0), is("id123"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.getString(1), is(saved.getRevision()));
+                assertThat(cursor.columnName(2), is("car"));
+                assertThat(cursor.getString(2), is(nullValue()));
+                assertThat(cursor.columnName(3), is("van"));
+                assertThat(cursor.getString(3), is(nullValue()));
             }
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
@@ -355,8 +356,9 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void indexSingleArrayFieldWhenIndexingArrays() {
-        List<Object> fieldNames = Arrays.<Object>asList("name", "pet");
-        createIndex("basic", fieldNames);
+        createIndex("basic", Arrays.<Object>asList("name", "pet"));
+
+        assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         Assert.assertEquals(0, getIndexSequenceNumber("basic"));
 
@@ -365,7 +367,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(0, cursor.getCount());
+            assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
@@ -387,29 +389,27 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             Assert.fail(String.format("IOException occurred creating document revision: %s", e));
         }
 
-        Assert.assertTrue(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()));
-        Assert.assertEquals(1, getIndexSequenceNumber("basic"));
+        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(3, cursor.getCount());
-            Assert.assertEquals(4, cursor.getColumnCount());
+            assertThat(cursor.getCount(), is(3));
+            assertThat(cursor.getColumnCount(), is(4));
             List<String> petList = new ArrayList<String>();
             while (cursor.moveToNext()) {
-                Assert.assertTrue(cursor.columnName(0).equals("_id"));
-                Assert.assertTrue(cursor.getString(0).equals("id123"));
-                Assert.assertTrue(cursor.columnName(1).equals("_rev"));
-                Assert.assertTrue(cursor.getString(1).equals(saved.getRevision()));
-                Assert.assertTrue(cursor.columnName(2).equals("name"));
-                Assert.assertTrue(cursor.getString(2).equals("mike"));
-                Assert.assertTrue(cursor.columnName(3).equals("pet"));
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.getString(0), is("id123"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.getString(1), is(saved.getRevision()));
+                assertThat(cursor.columnName(2), is("name"));
+                assertThat(cursor.getString(2), is("mike"));
+                assertThat(cursor.columnName(3), is("pet"));
+                assertThat(cursor.getString(3), is(notNullValue()));
                 petList.add(cursor.getString(3));
             }
-            Assert.assertEquals(3, petList.size());
-            Assert.assertTrue(petList.contains("cat"));
-            Assert.assertTrue(petList.contains("dog"));
-            Assert.assertTrue(petList.contains("parrot"));
+            assertThat(petList, containsInAnyOrder("cat", "dog", "parrot"));
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
@@ -419,17 +419,16 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void indexSingleArrayFieldWhenIndexingArraysInSubDoc() {
-        List<Object> fieldNames = Arrays.<Object>asList("name", "pet.species");
-        createIndex("basic", fieldNames);
+        createIndex("basic", Arrays.<Object>asList("name", "pet.species"));
 
-        Assert.assertEquals(0, getIndexSequenceNumber("basic"));
+        assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(0, cursor.getCount());
+            assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
@@ -453,28 +452,27 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             Assert.fail(String.format("IOException occurred creating document revision: %s", e));
         }
 
-        Assert.assertTrue(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()));
-        Assert.assertEquals(1, getIndexSequenceNumber("basic"));
+        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(2, cursor.getCount());
-            Assert.assertEquals(4, cursor.getColumnCount());
+            assertThat(cursor.getCount(), is(2));
+            assertThat(cursor.getColumnCount(), is(4));
             List<String> petList = new ArrayList<String>();
             while (cursor.moveToNext()) {
-                Assert.assertTrue(cursor.columnName(0).equals("_id"));
-                Assert.assertTrue(cursor.getString(0).equals("id123"));
-                Assert.assertTrue(cursor.columnName(1).equals("_rev"));
-                Assert.assertTrue(cursor.getString(1).equals(saved.getRevision()));
-                Assert.assertTrue(cursor.columnName(2).equals("name"));
-                Assert.assertTrue(cursor.getString(2).equals("mike"));
-                Assert.assertTrue(cursor.columnName(3).equals("pet.species"));
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.getString(0), is("id123"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.getString(1), is(saved.getRevision()));
+                assertThat(cursor.columnName(2), is("name"));
+                assertThat(cursor.getString(2), is("mike"));
+                assertThat(cursor.columnName(3), is("pet.species"));
+                assertThat(cursor.getString(3), is(notNullValue()));
                 petList.add(cursor.getString(3));
             }
-            Assert.assertEquals(2, petList.size());
-            Assert.assertTrue(petList.contains("cat"));
-            Assert.assertTrue(petList.contains("dog"));
+            assertThat(petList, containsInAnyOrder("cat", "dog"));
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
@@ -484,17 +482,16 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void rejectsDocsWithMultipleArrays() {
-        List<Object> fieldNames = Arrays.<Object>asList("name", "pet", "pet2");
-        createIndex("basic", fieldNames);
+        createIndex("basic", Arrays.<Object>asList("name", "pet", "pet2"));
 
-        Assert.assertEquals(0, getIndexSequenceNumber("basic"));
+        assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(0, cursor.getCount());
+            assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
@@ -528,37 +525,31 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             Assert.fail(String.format("IOException occurred creating document revision: %s", e));
         }
 
-        Assert.assertTrue(IndexUpdater.updateIndex("basic",
-                                                    fields,
-                                                    db,
-                                                    ds,
-                                                    im.getQueue()));
-        Assert.assertEquals(2, getIndexSequenceNumber("basic"));
+        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(getIndexSequenceNumber("basic"), is(2l));
 
         // Document id123 is successfully indexed. 
         // Document id456 is rejected due to multiple arrays.
         cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(3, cursor.getCount());
-            Assert.assertEquals(5, cursor.getColumnCount());
+            assertThat(cursor.getCount(), is(3));
+            assertThat(cursor.getColumnCount(), is(5));
             List<String> petList = new ArrayList<String>();
             while (cursor.moveToNext()) {
-                Assert.assertTrue(cursor.columnName(0).equals("_id"));
-                Assert.assertTrue(cursor.getString(0).equals("id123"));
-                Assert.assertTrue(cursor.columnName(1).equals("_rev"));
-                Assert.assertTrue(cursor.getString(1).equals(saved.getRevision()));
-                Assert.assertTrue(cursor.columnName(2).equals("name"));
-                Assert.assertTrue(cursor.getString(2).equals("mike"));
-                Assert.assertTrue(cursor.columnName(3).equals("pet"));
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.getString(0), is("id123"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.getString(1), is(saved.getRevision()));
+                assertThat(cursor.columnName(2), is("name"));
+                assertThat(cursor.getString(2), is("mike"));
+                assertThat(cursor.columnName(3), is("pet"));
+                assertThat(cursor.getString(3), is(notNullValue()));
                 petList.add(cursor.getString(3));
-                Assert.assertTrue(cursor.columnName(4).equals("pet2"));
-                Assert.assertNull(cursor.getString(4));
+                assertThat(cursor.columnName(4), is("pet2"));
+                assertThat(cursor.getString(4), is(nullValue()));
             }
-            Assert.assertEquals(3, petList.size());
-            Assert.assertTrue(petList.contains("cat"));
-            Assert.assertTrue(petList.contains("dog"));
-            Assert.assertTrue(petList.contains("parrot"));
+            assertThat(petList, containsInAnyOrder("cat", "dog", "parrot"));
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
@@ -646,16 +637,13 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             Assert.fail(String.format("IOException occurred creating document revision: %s", e));
         }
 
-        List<Object> fieldNames = Arrays.<Object>asList("age", "pet", "name");
-        createIndex("basic", fieldNames);
-
-        fieldNames = Arrays.<Object>asList("name");
-        createIndex("basicName", fieldNames);
+        createIndex("basic", Arrays.<Object>asList("age", "pet", "name"));
+        createIndex("basicName", Arrays.<Object>asList("name"));
 
         im.updateAllIndexes();
 
-        Assert.assertEquals(6, getIndexSequenceNumber("basic"));
-        Assert.assertEquals(6, getIndexSequenceNumber("basicName"));
+        assertThat(getIndexSequenceNumber("basic"), is(6l));
+        assertThat(getIndexSequenceNumber("basicName"), is(6l));
 
         String basicTable = IndexManager.tableNameForIndex("basic");
         String basicNameTable = IndexManager.tableNameForIndex("basicName");
@@ -664,14 +652,14 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sqlBasic, new String[]{});
-            Assert.assertEquals(6, cursor.getCount());
-            Assert.assertEquals(5, cursor.getColumnCount());
+            assertThat(cursor.getCount(), is(6));
+            assertThat(cursor.getColumnCount(), is(5));
             while (cursor.moveToNext()) {
-                Assert.assertTrue(cursor.columnName(0).equals("_id"));
-                Assert.assertTrue(cursor.columnName(1).equals("_rev"));
-                Assert.assertTrue(cursor.columnName(2).equals("age"));
-                Assert.assertTrue(cursor.columnName(3).equals("pet"));
-                Assert.assertTrue(cursor.columnName(4).equals("name"));
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.columnName(2), is("age"));
+                assertThat(cursor.columnName(3), is("pet"));
+                assertThat(cursor.columnName(4), is("name"));
             }
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sqlBasic, e));
@@ -681,12 +669,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         try {
             cursor = db.rawQuery(sqlBasicName, new String[]{});
-            Assert.assertEquals(6, cursor.getCount());
-            Assert.assertEquals(3, cursor.getColumnCount());
+            assertThat(cursor.getCount(), is(6));
+            assertThat(cursor.getColumnCount(), is(3));
             while (cursor.moveToNext()) {
-                Assert.assertTrue(cursor.columnName(0).equals("_id"));
-                Assert.assertTrue(cursor.columnName(1).equals("_rev"));
-                Assert.assertTrue(cursor.columnName(2).equals("name"));
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.columnName(2), is("name"));
             }
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sqlBasicName, e));
@@ -703,19 +691,19 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         im.updateAllIndexes();
 
-        Assert.assertEquals(7, getIndexSequenceNumber("basic"));
-        Assert.assertEquals(7, getIndexSequenceNumber("basicName"));
+        assertThat(getIndexSequenceNumber("basic"), is(7l));
+        assertThat(getIndexSequenceNumber("basicName"), is(7l));
 
         try {
             cursor = db.rawQuery(sqlBasic, new String[]{});
-            Assert.assertEquals(7, cursor.getCount());
-            Assert.assertEquals(5, cursor.getColumnCount());
+            assertThat(cursor.getCount(), is(7));
+            assertThat(cursor.getColumnCount(), is(5));
             while (cursor.moveToNext()) {
-                Assert.assertTrue(cursor.columnName(0).equals("_id"));
-                Assert.assertTrue(cursor.columnName(1).equals("_rev"));
-                Assert.assertTrue(cursor.columnName(2).equals("age"));
-                Assert.assertTrue(cursor.columnName(3).equals("pet"));
-                Assert.assertTrue(cursor.columnName(4).equals("name"));
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.columnName(2), is("age"));
+                assertThat(cursor.columnName(3), is("pet"));
+                assertThat(cursor.columnName(4), is("name"));
             }
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sqlBasic, e));
@@ -725,12 +713,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         try {
             cursor = db.rawQuery(sqlBasicName, new String[]{});
-            Assert.assertEquals(7, cursor.getCount());
-            Assert.assertEquals(3, cursor.getColumnCount());
+            assertThat(cursor.getCount(), is(7));
+            assertThat(cursor.getColumnCount(), is(3));
             while (cursor.moveToNext()) {
-                Assert.assertTrue(cursor.columnName(0).equals("_id"));
-                Assert.assertTrue(cursor.columnName(1).equals("_rev"));
-                Assert.assertTrue(cursor.columnName(2).equals("name"));
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.columnName(2), is("name"));
             }
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sqlBasicName, e));
@@ -748,7 +736,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         Long lastSequence = 0l;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(1, cursor.getCount());
+            assertThat(cursor.getCount(), is(1));
             while (cursor.moveToNext()) {
                 lastSequence = cursor.getLong(0);
             }
@@ -762,19 +750,18 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @SuppressWarnings("unchecked")
     private void createIndex(String indexName, List<Object> fieldNames) {
-        String name = im.ensureIndexed(fieldNames, indexName);
-        Assert.assertTrue(name.equals(indexName));
+        assertThat(im.ensureIndexed(fieldNames, indexName), is(indexName));
 
         Map<String, Object> indexes = im.listIndexes();
-        Assert.assertTrue(indexes.containsKey(indexName));
+        assertThat(indexes, hasKey(indexName));
 
         Map<String, Object> index = (Map<String, Object>) indexes.get(indexName);
         fields = (List<String>) index.get("fields");
-        Assert.assertEquals(fieldNames.size() + 2, fields.size());
-        for (Object fieldName: fieldNames) {
-            String field = (String) fieldName;
-            Assert.assertTrue(fields.contains(field));
-        }
+        assertThat(fields.size(), is(fieldNames.size() +2));
+        assertThat(fields, hasItems(Arrays.copyOf(fieldNames.toArray(),
+                                                  fieldNames.size(),
+                                                  String[].class)));
+        assertThat(fields, hasItems("_id", "_rev"));
     }
 
 }

@@ -12,7 +12,15 @@
 
 package com.cloudant.sync.query;
 
-import org.junit.Assert;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
+import static org.hamcrest.Matchers.either;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+
 import org.junit.Test;
 
 import java.sql.SQLException;
@@ -31,10 +39,10 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     @Override
     public void setUp() throws SQLException {
         super.setUp();
-        List<Object> fieldNames = Arrays.<Object>asList("name", "age", "pet");
-        Assert.assertEquals("basic", im.ensureIndexed(fieldNames, "basic"));
+        String indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet"), "basic");
+        assertThat(indexName, is("basic"));
         indexes = im.listIndexes();
-        Assert.assertNotNull(indexes);
+        assertThat(indexes, is(notNullValue()));
         indexesCoverQuery = new Boolean[]{ false };
     }
 
@@ -47,19 +55,18 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         query.put("name", "mike");
         query = QueryValidator.normaliseAndValidateQuery(query);
         QueryNode node = QuerySqlTranslator.translateQuery(query, indexes, indexesCoverQuery);
-        Assert.assertNotNull(node);
-        Assert.assertTrue(node instanceof AndQueryNode);
-        Assert.assertTrue(indexesCoverQuery[0]);
+        assertThat(node, is(instanceOf(AndQueryNode.class)));
         AndQueryNode andNode = (AndQueryNode) node;
-        Assert.assertEquals(1, andNode.children.size());
-        Assert.assertTrue(andNode.children.get(0) instanceof SqlQueryNode);
+        assertThat(indexesCoverQuery[0], is(true));
+        assertThat(andNode.children.size(), is(1));
+        assertThat(andNode.children.get(0), is(instanceOf(SqlQueryNode.class)));
         SqlQueryNode sqlNode = (SqlQueryNode) andNode.children.get(0);
         String sql = sqlNode.sql.sqlWithPlaceHolders;
-        String[] valuesArray = sqlNode.sql.placeHolderValues;
-        Assert.assertTrue(sql.equals("SELECT _id FROM _t_cloudant_sync_query_index_basic " +
-                                     "WHERE \"name\" = ?"));
-        List<String> placeHolderValues = Arrays.asList("mike");
-        Assert.assertTrue(placeHolderValues.containsAll(Arrays.asList(valuesArray)));
+        String[] placeHolderValues = sqlNode.sql.placeHolderValues;
+        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String where = " WHERE \"name\" = ?";
+        assertThat(sql, is(String.format("%s%s", select, where)));
+        assertThat(placeHolderValues, is(arrayContaining("mike")));
     }
 
     @Test
@@ -70,19 +77,18 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         query.put("pet", "cat");
         query = QueryValidator.normaliseAndValidateQuery(query);
         QueryNode node = QuerySqlTranslator.translateQuery(query, indexes, indexesCoverQuery);
-        Assert.assertNotNull(node);
-        Assert.assertTrue(node instanceof AndQueryNode);
-        Assert.assertTrue(indexesCoverQuery[0]);
+        assertThat(node, is(instanceOf(AndQueryNode.class)));
         AndQueryNode andNode = (AndQueryNode) node;
-        Assert.assertEquals(1, andNode.children.size());
-        Assert.assertTrue(andNode.children.get(0) instanceof SqlQueryNode);
+        assertThat(indexesCoverQuery[0], is(true));
+        assertThat(andNode.children.size(), is(1));
+        assertThat(andNode.children.get(0), is(instanceOf(SqlQueryNode.class)));
         SqlQueryNode sqlNode = (SqlQueryNode) andNode.children.get(0);
         String sql = sqlNode.sql.sqlWithPlaceHolders;
-        String[] valuesArray = sqlNode.sql.placeHolderValues;
-        Assert.assertTrue(sql.equals("SELECT _id FROM _t_cloudant_sync_query_index_basic " +
-                                     "WHERE \"name\" = ? AND \"pet\" = ?"));
-        List<String> placeHolderValues = Arrays.asList("mike", "cat");
-        Assert.assertTrue(placeHolderValues.containsAll(Arrays.asList(valuesArray)));
+        String[] placeHolderValues = sqlNode.sql.placeHolderValues;
+        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String where = " WHERE \"name\" = ? AND \"pet\" = ?";
+        assertThat(sql, is(String.format("%s%s", select, where)));
+        assertThat(placeHolderValues, is(arrayContainingInAnyOrder("mike", "cat")));
     }
 
     @Test
@@ -97,19 +103,18 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         query.put("$and", fields);
         query = QueryValidator.normaliseAndValidateQuery(query);
         QueryNode node = QuerySqlTranslator.translateQuery(query, indexes, indexesCoverQuery);
-        Assert.assertNotNull(node);
-        Assert.assertTrue(node instanceof AndQueryNode);
-        Assert.assertTrue(indexesCoverQuery[0]);
+        assertThat(node, is(instanceOf(AndQueryNode.class)));
         AndQueryNode andNode = (AndQueryNode) node;
-        Assert.assertEquals(1, andNode.children.size());
-        Assert.assertTrue(andNode.children.get(0) instanceof SqlQueryNode);
+        assertThat(indexesCoverQuery[0], is(true));
+        assertThat(andNode.children.size(), is(1));
+        assertThat(andNode.children.get(0), is(instanceOf(SqlQueryNode.class)));
         SqlQueryNode sqlNode = (SqlQueryNode) andNode.children.get(0);
         String sql = sqlNode.sql.sqlWithPlaceHolders;
-        String[] valuesArray = sqlNode.sql.placeHolderValues;
-        Assert.assertTrue(sql.equals("SELECT _id FROM _t_cloudant_sync_query_index_basic " +
-                                     "WHERE \"name\" = ? AND \"pet\" = ?"));
-        List<String> placeHolderValues = Arrays.asList("mike", "cat");
-        Assert.assertTrue(placeHolderValues.containsAll(Arrays.asList(valuesArray)));
+        String[] placeHolderValues = sqlNode.sql.placeHolderValues;
+        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String where = " WHERE \"name\" = ? AND \"pet\" = ?";
+        assertThat(sql, is(String.format("%s%s", select, where)));
+        assertThat(placeHolderValues, is(arrayContainingInAnyOrder("mike", "cat")));
     }
 
     // When selecting an index to use
@@ -120,18 +125,17 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         eq.put("$eq", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", eq);
-        List<Object> clause = Arrays.<Object>asList(name);
-        Assert.assertNull(QuerySqlTranslator.chooseIndexForAndClause(clause, null));
+        assertThat(QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(name), null),
+                   is(nullValue()));
     }
 
     @Test
     public void indexSelectionFailsWhenNoQueryKeys() {
         Map<String, Object> indexes = new HashMap<String, Object>();
-        List<Object> fields = Arrays.<Object>asList("name", "age", "pet");
-        indexes.put("named", fields);
-        Assert.assertNull(QuerySqlTranslator.chooseIndexForAndClause(null, indexes));
-        Assert.assertNull(QuerySqlTranslator.chooseIndexForAndClause(new ArrayList<Object>(),
-                                                                     indexes));
+        indexes.put("named", Arrays.<Object>asList("name", "age", "pet"));
+        assertThat(QuerySqlTranslator.chooseIndexForAndClause(null, indexes), is(nullValue()));
+        assertThat(QuerySqlTranslator.chooseIndexForAndClause(new ArrayList<Object>(), null),
+                   is(nullValue()));
     }
 
     @Test
@@ -140,18 +144,17 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> index = new HashMap<String, Object>();
         index.put("name", "named");
         index.put("type", "json");
-        List<Object> fields = Arrays.<Object>asList("name");
-        index.put("fields", fields);
+        index.put("fields", Arrays.<Object>asList("name"));
         indexes.put("named", index);
 
         Map<String, Object> eq = new HashMap<String, Object>();
         eq.put("$eq", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", eq);
-        List<Object> clause = Arrays.<Object>asList(name);
 
-        String idx = QuerySqlTranslator.chooseIndexForAndClause(clause, indexes);
-        Assert.assertTrue(idx.equals("named"));
+        String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(name),
+                                                                indexes);
+        assertThat(idx, is("named"));
     }
 
     @Test
@@ -160,18 +163,17 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> index = new HashMap<String, Object>();
         index.put("name", "named");
         index.put("type", "json");
-        List<Object> fields = Arrays.<Object>asList("name", "age", "pet");
-        index.put("fields", fields);
+        index.put("fields", Arrays.<Object>asList("name", "age", "pet"));
         indexes.put("named", index);
 
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", "mike");
         Map<String, Object> pet = new HashMap<String, Object>();
         pet.put("pet", "cat");
-        List<Object> clause = Arrays.<Object>asList(name, pet);
 
-        String idx = QuerySqlTranslator.chooseIndexForAndClause(clause, indexes);
-        Assert.assertTrue(idx.equals("named"));
+        String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(name, pet),
+                                                                indexes);
+        assertThat(idx, is("named"));
     }
 
     @Test
@@ -181,20 +183,17 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> named = new HashMap<String, Object>();
         named.put("name", "named");
         named.put("type", "json");
-        List<Object> namedFields = Arrays.<Object>asList("name", "age", "pet");
-        named.put("fields", namedFields);
+        named.put("fields", Arrays.<Object>asList("name", "age", "pet"));
 
         Map<String, Object> bopped = new HashMap<String, Object>();
         bopped.put("name", "bopped");
         bopped.put("type", "json");
-        List<Object> boppedFields = Arrays.<Object>asList("house_number", "pet");
-        bopped.put("fields", boppedFields);
+        bopped.put("fields", Arrays.<Object>asList("house_number", "pet"));
 
         Map<String, Object> unsuitable = new HashMap<String, Object>();
         unsuitable.put("name", "unsuitable");
         unsuitable.put("type", "json");
-        List<Object> unsuitableFields = Arrays.<Object>asList("name");
-        unsuitable.put("fields", unsuitableFields);
+        unsuitable.put("fields", Arrays.<Object>asList("name"));
 
         indexes.put("named", named);
         indexes.put("bopped", bopped);
@@ -204,10 +203,10 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         name.put("name", "mike");
         Map<String, Object> pet = new HashMap<String, Object>();
         pet.put("pet", "cat");
-        List<Object> clause = Arrays.<Object>asList(name, pet);
 
-        String idx = QuerySqlTranslator.chooseIndexForAndClause(clause, indexes);
-        Assert.assertTrue(idx.equals("named"));
+        String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(name, pet),
+                                                                indexes);
+        assertThat(idx, is("named"));
     }
 
     @Test
@@ -217,26 +216,22 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> named = new HashMap<String, Object>();
         named.put("name", "named");
         named.put("type", "json");
-        List<Object> namedFields = Arrays.<Object>asList("name", "age", "pet");
-        named.put("fields", namedFields);
+        named.put("fields", Arrays.<Object>asList("name", "age", "pet"));
 
         Map<String, Object> bopped = new HashMap<String, Object>();
         bopped.put("name", "bopped");
         bopped.put("type", "json");
-        List<Object> boppedFields = Arrays.<Object>asList("name", "age", "pet");
-        bopped.put("fields", boppedFields);
+        bopped.put("fields", Arrays.<Object>asList("name", "age", "pet"));
 
         Map<String, Object> manyField = new HashMap<String, Object>();
         manyField.put("name", "manyField");
         manyField.put("type", "json");
-        List<Object> manyFieldFields = Arrays.<Object>asList("name", "age", "pet");
-        manyField.put("fields", manyFieldFields);
+        manyField.put("fields", Arrays.<Object>asList("name", "age", "pet"));
 
         Map<String, Object> unsuitable = new HashMap<String, Object>();
         unsuitable.put("name", "unsuitable");
         unsuitable.put("type", "json");
-        List<Object> unsuitableFields = Arrays.<Object>asList("name");
-        unsuitable.put("fields", unsuitableFields);
+        unsuitable.put("fields", Arrays.<Object>asList("name"));
 
         indexes.put("named", named);
         indexes.put("bopped", bopped);
@@ -247,10 +242,10 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         name.put("name", "mike");
         Map<String, Object> pet = new HashMap<String, Object>();
         pet.put("pet", "cat");
-        List<Object> clause = Arrays.<Object>asList(name, pet);
 
-        String idx = QuerySqlTranslator.chooseIndexForAndClause(clause, indexes);
-        Assert.assertTrue(idx.equals("named") || idx.equals("bopped"));
+        String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(name, pet),
+                                                                indexes);
+        assertThat(idx, either(is("named")).or(is("bopped")));
     }
 
     @Test
@@ -260,31 +255,30 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> named = new HashMap<String, Object>();
         named.put("name", "named");
         named.put("type", "json");
-        List<Object> namedFields = Arrays.<Object>asList("name", "age");
-        named.put("fields", namedFields);
+        named.put("fields", Arrays.<Object>asList("name", "age"));
 
         Map<String, Object> unsuitable = new HashMap<String, Object>();
         unsuitable.put("name", "unsuitable");
         unsuitable.put("type", "json");
-        List<Object> unsuitableFields = Arrays.<Object>asList("name");
-        unsuitable.put("fields", unsuitableFields);
+        unsuitable.put("fields", Arrays.<Object>asList("name"));
 
         indexes.put("named", named);
         indexes.put("unsuitable", unsuitable);
 
         Map<String, Object> pet = new HashMap<String, Object>();
         pet.put("pet", "cat");
-        List<Object> clause = Arrays.<Object>asList(pet);
 
-        Assert.assertNull(QuerySqlTranslator.chooseIndexForAndClause(clause, indexes));
+        assertThat(QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(pet), indexes),
+                   is(nullValue()));
     }
 
     // When generating query WHERE clauses
 
     @Test
     public void nullWhereClauseWhenQueryEmpty() {
-        Assert.assertNull(QuerySqlTranslator.whereSqlForAndClause(null));
-        Assert.assertNull(QuerySqlTranslator.whereSqlForAndClause(new ArrayList<Object>()));
+        assertThat(QuerySqlTranslator.whereSqlForAndClause(null), is(nullValue()));
+        assertThat(QuerySqlTranslator.whereSqlForAndClause(new ArrayList<Object>()),
+                   is(nullValue()));
     }
 
     @Test
@@ -293,12 +287,9 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         eq.put("$eq", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", eq);
-        List<Object> clause = Arrays.<Object>asList(name);
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(clause);
-        Assert.assertNotNull(where);
-        Assert.assertTrue(where.sqlWithPlaceHolders.equals("\"name\" = ?"));
-        List<String> placeHolderValues = Arrays.asList("mike");
-        Assert.assertTrue(placeHolderValues.containsAll(Arrays.asList(where.placeHolderValues)));
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
+        assertThat(where.sqlWithPlaceHolders, is("\"name\" = ?"));
+        assertThat(where.placeHolderValues, is(arrayContaining("mike")));
     }
 
     @Test
@@ -318,13 +309,12 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> pet = new HashMap<String, Object>();
         pet.put("pet", petEq);
 
-        List<Object> clause = Arrays.<Object>asList(name, age, pet);
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(clause);
-        Assert.assertNotNull(where);
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name,
+                                                                                       age,
+                                                                                       pet));
         String expected = "\"name\" = ? AND \"age\" = ? AND \"pet\" = ?";
-        Assert.assertTrue(where.sqlWithPlaceHolders.equals(expected));
-        List<String> placeHolderValues = Arrays.asList("mike", "12", "cat");
-        Assert.assertTrue(placeHolderValues.containsAll(Arrays.asList(where.placeHolderValues)));
+        assertThat(where.sqlWithPlaceHolders, is(expected));
+        assertThat(where.placeHolderValues, is(arrayContainingInAnyOrder("mike", "12", "cat")));
     }
 
     @Test
@@ -333,17 +323,17 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         eq.put("$blah", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", eq);
-        List<Object> clause = Arrays.<Object>asList(name);
-        Assert.assertNull(QuerySqlTranslator.whereSqlForAndClause(clause));
+        assertThat(QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name)),
+                   is(nullValue()));
     }
 
     // When generating query SELECT clauses
 
     @Test
     public void nullSelectClauseWhenQueryEmpty() {
-        Assert.assertNull(QuerySqlTranslator.selectStatementForAndClause(null, "named"));
-        Assert.assertNull(QuerySqlTranslator.selectStatementForAndClause(new ArrayList<Object>(),
-                                                                         "named"));
+        assertThat(QuerySqlTranslator.selectStatementForAndClause(null, "named"), is(nullValue()));
+        assertThat(QuerySqlTranslator.selectStatementForAndClause(new ArrayList<Object>(), "named"),
+                   is(nullValue()));
     }
 
     @Test
@@ -353,8 +343,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", eq);
         List<Object> clause = Arrays.<Object>asList(name);
-        Assert.assertNull(QuerySqlTranslator.selectStatementForAndClause(clause, null));
-        Assert.assertNull(QuerySqlTranslator.selectStatementForAndClause(clause, ""));
+        assertThat(QuerySqlTranslator.selectStatementForAndClause(clause, null), is(nullValue()));
+        assertThat(QuerySqlTranslator.selectStatementForAndClause(clause, ""), is(nullValue()));
     }
 
     @Test
@@ -365,11 +355,9 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         name.put("name", eq);
         List<Object> clause = Arrays.<Object>asList(name);
         SqlParts sql = QuerySqlTranslator.selectStatementForAndClause(clause, "anIndex");
-        Assert.assertNotNull(sql);
         String expected = "SELECT _id FROM _t_cloudant_sync_query_index_anIndex WHERE \"name\" = ?";
-        Assert.assertTrue(sql.sqlWithPlaceHolders.equals(expected));
-        List<String> placeHolderValues = Arrays.asList("mike");
-        Assert.assertTrue(placeHolderValues.containsAll(Arrays.asList(sql.placeHolderValues)));
+        assertThat(sql.sqlWithPlaceHolders, is(expected));
+        assertThat(sql.placeHolderValues, is(arrayContaining("mike")));
     }
 
     @Test
@@ -391,12 +379,11 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         List<Object> clause = Arrays.<Object>asList(name, age, pet);
         SqlParts sql = QuerySqlTranslator.selectStatementForAndClause(clause, "anIndex");
-        Assert.assertNotNull(sql);
-        String expected = "SELECT _id FROM _t_cloudant_sync_query_index_anIndex WHERE \"name\" = " +
-                          "? AND \"age\" = ? AND \"pet\" = ?";
-        Assert.assertTrue(sql.sqlWithPlaceHolders.equals(expected));
-        List<String> placeHolderValues = Arrays.asList("mike", "12", "cat");
-        Assert.assertTrue(placeHolderValues.containsAll(Arrays.asList(sql.placeHolderValues)));
+        String select = "SELECT _id FROM _t_cloudant_sync_query_index_anIndex";
+        String where = " WHERE \"name\" = ? AND \"age\" = ? AND \"pet\" = ?";
+        String expected = String.format("%s%s", select, where);
+        assertThat(sql.sqlWithPlaceHolders, is(expected));
+        assertThat(sql.placeHolderValues, is(arrayContainingInAnyOrder("mike", "12", "cat")));
     }
 
 }

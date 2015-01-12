@@ -12,7 +12,11 @@
 
 package com.cloudant.sync.query;
 
-import org.junit.Assert;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -32,20 +36,17 @@ public class QueryValidatorTest {
         Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
 
         // normalized query - { "$and" : [ { "name" : { "$eq" : "mike" } } ]
-        Assert.assertNotNull(normalizedQuery);
-        Assert.assertEquals(1, normalizedQuery.size());
-        Assert.assertTrue(normalizedQuery.keySet().toArray()[0].equals("$and"));
-        Assert.assertTrue(normalizedQuery.get("$and") instanceof List);
+        assertThat(normalizedQuery.size(), is(1));
+        assertThat(normalizedQuery, hasKey("$and"));
         List<Object> fields = (ArrayList) normalizedQuery.get("$and");
-        Assert.assertEquals(1, fields.size());
-        Assert.assertTrue(fields.get(0) instanceof Map);
+        assertThat(fields.size(), is(1));
         Map<String, Object> fieldMap = (Map) fields.get(0);
-        Assert.assertEquals(1, fieldMap.size());
-        Assert.assertTrue(fieldMap.keySet().toArray()[0].equals("name"));
+        assertThat(fieldMap.size(), is(1));
+        assertThat(fieldMap, hasKey("name"));
         Map<String, Object> predicate = (Map) fieldMap.get("name");
-        Assert.assertEquals(1, predicate.size());
-        Assert.assertTrue(predicate.keySet().toArray()[0].equals("$eq"));
-        Assert.assertTrue(predicate.get("$eq").equals("mike"));
+        assertThat(predicate.size(), is(1));
+        assertThat(predicate, hasKey("$eq"));
+        assertThat((String) predicate.get("$eq"), is("mike"));
     }
 
     @Test
@@ -59,32 +60,28 @@ public class QueryValidatorTest {
 
         // normalized query - { "$and" : [ { "name" : { "$eq" : "mike" } },
         //                                 { "age" : { "$eq" : "12" } } ]
-        Assert.assertNotNull(normalizedQuery);
-        Assert.assertEquals(1, normalizedQuery.size());
-        Assert.assertTrue(normalizedQuery.keySet().toArray()[0].equals("$and"));
-        Assert.assertTrue(normalizedQuery.get("$and") instanceof List);
+        assertThat(normalizedQuery.size(), is(1));
+        assertThat(normalizedQuery, hasKey("$and"));
+
         List<Object> fields = (ArrayList) normalizedQuery.get("$and");
-        Assert.assertEquals(2, fields.size());
-        for (Object field: fields) {
-            Assert.assertTrue(field instanceof Map);
-        }
+        assertThat(fields.size(), is(2));
         Map<String, Object> fieldMap = (Map) fields.get(0);
-        Assert.assertEquals(1, fieldMap.size());
-        Assert.assertTrue(fieldMap.keySet().toArray()[0].equals("name"));
+        assertThat(fieldMap.size(), is(1));
+        assertThat(fieldMap, hasKey("name"));
         Map<String, Object> predicate = (Map) fieldMap.get("name");
-        Assert.assertEquals(1, predicate.size());
-        Assert.assertTrue(predicate.keySet().toArray()[0].equals("$eq"));
-        Assert.assertTrue(predicate.get("$eq").equals("mike"));
+        assertThat(predicate.size(), is(1));
+        assertThat(predicate, hasKey("$eq"));
+        assertThat((String) predicate.get("$eq"), is("mike"));
 
         fieldMap.clear();
         fieldMap = (Map) fields.get(1);
-        Assert.assertEquals(1, fieldMap.size());
-        Assert.assertTrue(fieldMap.keySet().toArray()[0].equals("age"));
+        assertThat(fieldMap.size(), is(1));
+        assertThat(fieldMap, hasKey("age"));
         predicate.clear();
         predicate = (Map) fieldMap.get("age");
-        Assert.assertEquals(1, predicate.size());
-        Assert.assertTrue(predicate.keySet().toArray()[0].equals("$eq"));
-        Assert.assertEquals(12, predicate.get("$eq"));
+        assertThat(predicate.size(), is(1));
+        assertThat(predicate, hasKey("$eq"));
+        assertThat((Integer) predicate.get("$eq"), is(12));
     }
 
 }
