@@ -12,12 +12,16 @@
 
 package com.cloudant.sync.query;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionBuilder;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,33 +49,33 @@ public class ValueExtractorTest {
     @Test
     public void getDocIdFromRevision() {
         String value = (String) ValueExtractor.extractValueForFieldName("_id", revision);
-        Assert.assertTrue(value.equals("dsfsdfdfs"));
+        assertThat(value, is("dsfsdfdfs"));
     }
 
     @Test
     public void getRevIdFromRevision() {
         String value = (String) ValueExtractor.extractValueForFieldName("_rev", revision);
-        Assert.assertTrue(value.equals("1-qweqeqwewqe"));
+        assertThat(value, is("1-qweqeqwewqe"));
     }
 
     @Test
     public void getNameFromRevision() {
         String value = (String) ValueExtractor.extractValueForFieldName("name", revision);
-        Assert.assertTrue(value.equals("mike"));
+        assertThat(value, is("mike"));
     }
 
     @Test
     public void extractSingleFieldWhenEmptyFieldName() {
         // returns null for empty field name
         Object v = ValueExtractor.extractValueForFieldName("", body);
-        Assert.assertNull(v);
+        assertThat(v, is(nullValue()));
     }
 
     @Test
     public void extractSingleFieldForSingleDepth() {
         // returns value for single field depth
         String v = (String) ValueExtractor.extractValueForFieldName("name", body);
-        Assert.assertTrue(v.equals("mike"));
+        assertThat(v, is("mike"));
     }
 
     @Test
@@ -79,7 +83,7 @@ public class ValueExtractorTest {
         // returns value for two field depth
         String v = (String) ValueExtractor.extractValueForFieldName("name.first",
                                                                     getTwoLevelBody());
-        Assert.assertTrue(v.equals("mike"));
+        assertThat(v, is("mike"));
     }
 
     @Test
@@ -88,17 +92,17 @@ public class ValueExtractorTest {
         // returns value for three field depth
         String v = (String) ValueExtractor.extractValueForFieldName("aaa.bbb.ccc",
                                                                     getThreeLevelBody());
-        Assert.assertTrue(v.equals("mike"));
+        assertThat(v, is("mike"));
     }
 
     @Test
     public void extractSingleFieldWhenFieldNamePrefix() {
         // copes when a prefix of the field name exists
         Object v = ValueExtractor.extractValueForFieldName("name.first", body);
-        Assert.assertNull(v);
+        assertThat(v, is(nullValue()));
 
         v = ValueExtractor.extractValueForFieldName("name.first.mike", getThreeLevelBody());
-        Assert.assertNull(v);
+        assertThat(v, is(nullValue()));
     }
 
     @Test
@@ -107,10 +111,8 @@ public class ValueExtractorTest {
         @SuppressWarnings("unchecked")
         Map<String, String> v = (Map) ValueExtractor.extractValueForFieldName("aaa.bbb",
                                                                               getThreeLevelBody());
-        Assert.assertNotNull(v);
-        Assert.assertEquals(v.size(), 1);
-        Assert.assertTrue(v.containsKey("ccc"));
-        Assert.assertTrue(v.get("ccc").equals("mike"));
+        assertThat(v.size(), is(1));
+        assertThat(v, hasEntry("ccc", "mike"));
     }
 
     private DocumentBody getTwoLevelBody() {

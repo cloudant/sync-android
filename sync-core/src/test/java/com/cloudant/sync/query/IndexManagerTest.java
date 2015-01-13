@@ -12,23 +12,23 @@
 
 package com.cloudant.sync.query;
 
-import org.junit.Assert;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class IndexManagerTest extends AbstractIndexTestBase {
 
     @Test
     public void unimplementedEnsureIndexed() {
-        List<Object> fieldNames = Arrays.<Object>asList("name");
-        Assert.assertNull(im.ensureIndexed(fieldNames));
+        assertThat(im.ensureIndexed(Arrays.<Object>asList("name")), is(nullValue()));
     }
 
     @Test
     public void unimplementedDeleteIndexNamed() {
-        Assert.assertFalse(im.deleteIndexNamed("basic"));
+        assertThat(im.deleteIndexNamed("basic"), is(false));
     }
 }

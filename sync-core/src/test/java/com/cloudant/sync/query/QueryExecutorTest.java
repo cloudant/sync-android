@@ -12,6 +12,12 @@
 
 package com.cloudant.sync.query;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
@@ -45,6 +51,7 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         } catch (IOException e) {
             e.printStackTrace();
             Assert.fail("Failed to create document revision");
+
         }
 
         rev.docId = "mike34";
@@ -98,11 +105,8 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
             Assert.fail("Failed to create document revision");
         }
 
-        List<Object> fieldNames = Arrays.<Object>asList("name", "age");
-        Assert.assertEquals("basic", im.ensureIndexed(fieldNames, "basic"));
-
-        fieldNames = Arrays.<Object>asList("name", "pet");
-        Assert.assertEquals("pet", im.ensureIndexed(fieldNames, "pet"));
+        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
+        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
     }
 
     @Test
@@ -116,11 +120,8 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
         QueryResult queryResult = im.find(query);
-        Assert.assertNotNull(queryResult);
-        Assert.assertEquals(3, queryResult.size());
-        List<String> checkList = Arrays.asList("mike12", "mike34", "mike72");
-        Assert.assertEquals(3, queryResult.documentIds().size());
-        Assert.assertTrue(queryResult.documentIds().containsAll(checkList));
+        assertThat(queryResult.size(), is(3l));
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "mike34", "mike72"));
     }
 
     @Test
@@ -131,11 +132,8 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", operator);
         QueryResult queryResult = im.find(query);
-        Assert.assertNotNull(queryResult);
-        Assert.assertEquals(3, queryResult.size());
-        List<String> checkList = Arrays.asList("mike12", "mike34", "mike72");
-        Assert.assertEquals(3, queryResult.documentIds().size());
-        Assert.assertTrue(queryResult.documentIds().containsAll(checkList));
+        assertThat(queryResult.size(), is(3l));
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "mike34", "mike72"));
     }
 
     @Test
@@ -144,11 +142,8 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("age", 12);
         QueryResult queryResult = im.find(query);
-        Assert.assertNotNull(queryResult);
-        Assert.assertEquals(2, queryResult.size());
-        List<String> checkList = Arrays.asList("mike12", "fred12");
-        Assert.assertEquals(2, queryResult.documentIds().size());
-        Assert.assertTrue(queryResult.documentIds().containsAll(checkList));
+        assertThat(queryResult.size(), is(2l));
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "fred12"));
     }
 
     @Test
@@ -159,11 +154,8 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("age", operator);
         QueryResult queryResult = im.find(query);
-        Assert.assertNotNull(queryResult);
-        Assert.assertEquals(2, queryResult.size());
-        List<String> checkList = Arrays.asList("mike12", "fred12");
-        Assert.assertEquals(2, queryResult.documentIds().size());
-        Assert.assertTrue(queryResult.documentIds().containsAll(checkList));
+        assertThat(queryResult.size(), is(2l));
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "fred12"));
     }
 
     @Test
@@ -173,11 +165,8 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         query.put("name", "mike");
         query.put("pet", "cat");
         QueryResult queryResult = im.find(query);
-        Assert.assertNotNull(queryResult);
-        Assert.assertEquals(2, queryResult.size());
-        List<String> checkList = Arrays.asList("mike12", "mike72");
-        Assert.assertEquals(2, queryResult.documentIds().size());
-        Assert.assertTrue(queryResult.documentIds().containsAll(checkList));
+        assertThat(queryResult.size(), is(2l));
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "mike72"));
     }
 
     @Test
@@ -191,11 +180,8 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         petOperator.put("$eq", "cat");
         query.put("pet", petOperator);
         QueryResult queryResult = im.find(query);
-        Assert.assertNotNull(queryResult);
-        Assert.assertEquals(2, queryResult.size());
-        List<String> checkList = Arrays.asList("mike12", "mike72");
-        Assert.assertEquals(2, queryResult.documentIds().size());
-        Assert.assertTrue(queryResult.documentIds().containsAll(checkList));
+        assertThat(queryResult.size(), is(2l));
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "mike72"));
     }
 
     @Test
@@ -205,11 +191,8 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         query.put("name", "mike");
         query.put("age", 12);
         QueryResult queryResult = im.find(query);
-        Assert.assertNotNull(queryResult);
-        Assert.assertEquals(1, queryResult.size());
-        List<String> checkList = Arrays.asList("mike12");
-        Assert.assertEquals(1, queryResult.documentIds().size());
-        Assert.assertTrue(queryResult.documentIds().containsAll(checkList));
+        assertThat(queryResult.size(), is(1l));
+        assertThat(queryResult.documentIds(), contains("mike12"));
     }
 
     @Test
@@ -223,11 +206,8 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         ageOperator.put("$eq", 12);
         query.put("age", ageOperator);
         QueryResult queryResult = im.find(query);
-        Assert.assertNotNull(queryResult);
-        Assert.assertEquals(1, queryResult.size());
-        List<String> checkList = Arrays.asList("mike12");
-        Assert.assertEquals(1, queryResult.documentIds().size());
-        Assert.assertTrue(queryResult.documentIds().containsAll(checkList));
+        assertThat(queryResult.size(), is(1l));
+        assertThat(queryResult.documentIds(), contains("mike12"));
     }
 
     @Test
@@ -236,8 +216,7 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "bill");
         QueryResult queryResult = im.find(query);
-        Assert.assertNotNull(queryResult);
-        Assert.assertEquals(0, queryResult.size());
+        assertThat(queryResult.size(), is(0l));
     }
 
     @Test
@@ -247,8 +226,7 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         query.put("name", "bill");
         query.put("age", 12);
         QueryResult queryResult = im.find(query);
-        Assert.assertNotNull(queryResult);
-        Assert.assertEquals(0, queryResult.size());
+        assertThat(queryResult.size(), is(0l));
     }
 
     @Test
@@ -258,8 +236,7 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         query.put("name", "bill");
         query.put("age", 17);
         QueryResult queryResult = im.find(query);
-        Assert.assertNotNull(queryResult);
-        Assert.assertEquals(0, queryResult.size());
+        assertThat(queryResult.size(), is(0l));
     }
 
     @Test
@@ -268,16 +245,15 @@ public class QueryExecutorTest extends AbstractIndexTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
         QueryResult queryResult = im.find(query);
-        Assert.assertNotNull(queryResult);
-        Assert.assertTrue(queryResult.size() == queryResult.documentIds().size());
+        assertThat(queryResult.size(), is((long) queryResult.documentIds().size()));
         List<String> docCheckList = new ArrayList<String>();
         for (DocumentRevision rev: queryResult) {
-            Assert.assertNotNull(rev.getId());
-            Assert.assertNotNull(rev.getBody());
+            assertThat(rev.getId(), is(notNullValue()));
+            assertThat(rev.getBody(), is(notNullValue()));
             docCheckList.add(rev.getId());
         }
-        Assert.assertTrue(queryResult.size() == docCheckList.size());
-        Assert.assertTrue(docCheckList.containsAll(queryResult.documentIds()));
+        assertThat(queryResult.size(), is((long) docCheckList.size()));
+        assertThat(queryResult.documentIds(), containsInAnyOrder(docCheckList.toArray()));
     }
 
 }

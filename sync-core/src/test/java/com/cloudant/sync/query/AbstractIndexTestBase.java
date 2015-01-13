@@ -12,6 +12,10 @@
 
 package com.cloudant.sync.query;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -19,7 +23,6 @@ import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 
 import java.sql.SQLException;
@@ -35,16 +38,16 @@ public class AbstractIndexTestBase {
     @Before
     public void setUp() throws SQLException {
         factoryPath = TestUtils.createTempTestingDir(AbstractIndexTestBase.class.getName());
-        Assert.assertNotNull(factoryPath);
+        assertThat(factoryPath, is(notNullValue()));
         factory = new DatastoreManager(factoryPath);
-        Assert.assertNotNull(factory);
+        assertThat(factory, is(notNullValue()));
         ds = (DatastoreExtended) factory.openDatastore(AbstractIndexTestBase.class.getSimpleName());
-        Assert.assertNotNull(ds);
+        assertThat(ds, is(notNullValue()));
         im = new IndexManager(ds);
-        Assert.assertNotNull(im);
+        assertThat(im, is(notNullValue()));
         db = im.getDatabase();
-        Assert.assertNotNull(db);
-        Assert.assertNotNull(im.getQueue());
+        assertThat(db, is(notNullValue()));
+        assertThat(im.getQueue(), is(notNullValue()));
         String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
     }
@@ -52,7 +55,7 @@ public class AbstractIndexTestBase {
     @After
     public void tearDown() {
         im.close();
-        Assert.assertTrue(im.getQueue().isShutdown());
+        assertThat(im.getQueue().isShutdown(), is(true));
         ds.close();
         TestUtils.deleteDatabaseQuietly(db);
         TestUtils.deleteTempTestingDir(factoryPath);
