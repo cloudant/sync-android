@@ -43,7 +43,7 @@ class QueryExecutor {
     private static final Logger logger = Logger.getLogger(QueryExecutor.class.getName());
 
     /**
-     *  Constructs a new CDTQQueryExecutor using the indexes in 'database' to find documents from
+     *  Constructs a new QueryExecutor using the indexes in 'database' to find documents from
      *  'datastore'.
      */
     QueryExecutor(SQLDatabase database, Datastore datastore, ExecutorService queue) {
@@ -195,7 +195,7 @@ class QueryExecutor {
         return fields;
     }
 
-    private Set<String> executeQueryTree(QueryNode node, SQLDatabase db) {
+    protected Set<String> executeQueryTree(QueryNode node, SQLDatabase db) {
         if (node instanceof AndQueryNode) {
             Set<String> accumulator = null;
 

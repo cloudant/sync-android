@@ -14,37 +14,37 @@ package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
- *  Iterable result of a query executed with {@link com.cloudant.sync.query.IndexManager}.
+ *  Iterable result of a query executed with {@link IndexManager}.
  *
- *  @see com.cloudant.sync.query.IndexManager
+ *  @see IndexManager
  */
-public class QueryResult implements Iterable<BasicDocumentRevision> {
+public class QueryResult implements Iterable<DocumentRevision> {
 
     private final static int DEFAULT_BATCH_SIZE = 50;
 
-    private final List<String> docIds;
+    private final List<String> originalDocIds;
     private final Datastore datastore;
     private final List<String> fields;
     private final long skip;
     private final long limit;
     private final UnindexedMatcher matcher;
 
-    public QueryResult(List<String> docIds,
+    public QueryResult(List<String> originalDocIds,
                        Datastore datastore,
                        List<String> fields,
                        long skip,
                        long limit,
                        UnindexedMatcher matcher) {
-        this.docIds = docIds;
+        this.originalDocIds = originalDocIds;
         this.datastore = datastore;
         this.fields = fields;
         this.skip = skip;
@@ -55,109 +55,129 @@ public class QueryResult implements Iterable<BasicDocumentRevision> {
     /**
      *  Returns the number of documents in this query result.
      *
-     *  @return the number of the {@code DocumentRevision} in this query result
+     *  @return the number of documents {@code DocumentRevision} in this query result.
      */
     public long size() {
-        // TODO - skip, limit w.r.t. size
-
-        return docIds.size();
+        return documentIds().size();
     }
 
     /**
      *  Returns a list of the document ids in this query result.
      *
+     *  This method is implemented this way to ensure that the list of document ids is
+     *  consistent with the iterator results.
+     *
      *  @return list of the document ids
      */
     public List<String> documentIds() {
-        // TODO - skip, limit w.r.t. document id list
-
-        return docIds;
+        List<String> documentIds = new ArrayList<String>();
+        List<DocumentRevision> docs = Lists.newArrayList(iterator());
+        for (DocumentRevision doc : docs) {
+            documentIds.add(doc.getId());
+        }
+        return documentIds;
     }
 
     @Override
-    public Iterator<BasicDocumentRevision> iterator() {
+    public Iterator<DocumentRevision> iterator() {
+        return new QueryResultIterator();
+    }
 
-        /**
-         * Partitions a set of document IDs into batches of DocumentRevision
-         * objects, and provides an iterator over the whole, un-partitioned set
-         * of revision objects (as if they were not batched).
-         */
-        return new Iterator<BasicDocumentRevision>() {
+    private class QueryResultIterator implements Iterator<DocumentRevision> {
 
-            // TODO - skip, limit, field projection, apply post-hoc matcher
+        private Range range;
+        private int nSkipped;
+        private int nReturned;
+        private boolean limitReached;
+        private Iterator<DocumentRevision> documentBlock;
 
-            /** List containing lists of partitions document IDs */
-            private final List<List<String>> subLists = this.partition(docIds, DEFAULT_BATCH_SIZE);
-            /** The current partition's iterator of document objects */
-            private Iterator<BasicDocumentRevision> subIterator = null;
+        private QueryResultIterator() {
+            range = new Range(0, DEFAULT_BATCH_SIZE);
+            nSkipped = 0;
+            nReturned = 0;
+            limitReached = false;
+            documentBlock = populateDocumentBlock();
+        }
 
-            @Override
-            public boolean hasNext() {
-                if(subIterator == null) {
-                    return subLists.size() > 0;
-                } else {
-                    return this.subIterator.hasNext() || subLists.size() > 0;
-                }
+        @Override
+        public boolean hasNext() {
+            return documentBlock.hasNext() ||
+                   (!limitReached && range.location < originalDocIds.size());
+        }
+
+        @Override
+        public DocumentRevision next() {
+            if (!this.hasNext()) {
+                throw new NoSuchElementException();
             }
-
-            @Override
-            public BasicDocumentRevision next() {
-                if(subIterator == null || !subIterator.hasNext()) {
-                    List<String> ids = subLists.remove(0);
-                    subIterator = this.nextSubIterator(ids);
-                }
-                
-                return subIterator.next();
+            if (!documentBlock.hasNext()) {
+                documentBlock = populateDocumentBlock();
             }
+            return documentBlock.next();
+        }
 
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
 
-            /**
-             * Partition a list of document IDs into batches of batchSize.
-             *
-             * Return a mutable list of consecutive sublists.
-             * Same as Guava's "Lists.partition" except the result list is mutable.
-             * It is needed because this iterator removes sublist from the partitions
-             * as it goes.
-             *
-             * @see <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/
-             * common/collect/Lists.html#partition(java.util.List, int)">Lists.partition</a>
-             */
-            private List<List<String>> partition(List<String> documentIds, int batchSize) {
-                List<List<String>> partitions = Lists.partition(documentIds, batchSize);
-                List<List<String>> res = new LinkedList<List<String>>();
-                for(List<String> p : partitions) {
-                    res.add(p);
-                }
-                return res;
-            }
+        private Iterator<DocumentRevision> populateDocumentBlock() {
+            List<DocumentRevision> docList = new ArrayList<DocumentRevision>();
+            while (range.location < originalDocIds.size()) {
+                range.length = Math.min(DEFAULT_BATCH_SIZE, originalDocIds.size() - range.location);
+                List<String> batch = originalDocIds.subList(range.location,
+                                                            range.location + range.length);
+                List<BasicDocumentRevision> docs = datastore.getDocumentsWithIds(batch);
+                for (DocumentRevision rev : docs) {
+                    DocumentRevision innerRev;
+                    innerRev = rev;  // Allows us to replace later if projecting
 
-            /**
-             * Load the next partition of DocumentRevision objects for the
-             * iterator.
-             *
-             * @param ids the IDs of the revisions to load.
-             * @return an iterator over the DocumentRevision objects for `ids`.
-             */
-            private Iterator<BasicDocumentRevision> nextSubIterator(List<String> ids) {
-                HashMap<String, BasicDocumentRevision> map = new HashMap<String, BasicDocumentRevision>();
-                for(BasicDocumentRevision revision : datastore.getDocumentsWithIds(ids)) {
-                    map.put(revision.getId(), revision);
-                }
-                List<BasicDocumentRevision> revisions = new ArrayList<BasicDocumentRevision>(ids.size());
-                // return list of DocumentRevision that in the same order as input "ids"
-                for(String id : ids) {
-                    BasicDocumentRevision revision = map.get(id);
-                    if(revision != null ) {
-                        revisions.add(revision);
+                    // Apply post-hoc matcher
+                    if (matcher != null && !matcher.matches(innerRev)) {
+                        continue;
                     }
+
+                    // Apply skip (skip == 0 means disable)
+                    if (skip > 0 && nSkipped < skip) {
+                        nSkipped = nSkipped + 1;
+                        continue;
+                    }
+
+                    // TODO - Add projection logic
+
+                    docList.add(innerRev);
+
+                    // Apply limit (limit == 0 means disable)
+                    nReturned = nReturned + 1;
+                    if (limit > 0 && nReturned >= limit) {
+                        limitReached = true;
+                        break;
+                    }
+
                 }
-                return revisions.iterator();
+
+                range.location = range.location + range.length;
+
+                if (limitReached) {
+                    break;
+                }
+
+                if (!docList.isEmpty()) {
+                    break;
+                }
             }
-        };
+            return docList.iterator();
+        }
+    }
+
+    private class Range {
+        public int location;
+        public int length;
+
+        private Range(int location, int length) {
+            this.location = location;
+            this.length = length;
+        }
     }
 
 }

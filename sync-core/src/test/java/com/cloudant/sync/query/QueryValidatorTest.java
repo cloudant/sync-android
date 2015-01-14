@@ -16,10 +16,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -82,6 +84,39 @@ public class QueryValidatorTest {
         assertThat(predicate.size(), is(1));
         assertThat(predicate, hasKey("$eq"));
         assertThat((Integer) predicate.get("$eq"), is(12));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void checkForInvalidValues() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "$and" : [ { "name" : { "$eq" : "mike" } },
+        //                      { "age" : { "$eq" : 12 } } ] - (VALID)
+        Map<String, Object> eqMike = new HashMap<String, Object>();
+        eqMike.put("$eq", "mike");
+        Map<String, Object> name = new HashMap<String, Object>();
+        name.put("name", eqMike);
+        Map<String, Object> eq12 = new HashMap<String, Object>();
+        eq12.put("$eq", 12);
+        Map<String, Object> age = new HashMap<String, Object>();
+        age.put("age", eq12);
+        query.put("$and", Arrays.<Object>asList(name, age));
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(notNullValue()));
+        // query - { "$and" : [ { "name" : { "$eq" : "mike" } },
+        //                      { "age" : { "$eq" : 12.0f } } ] - (INVALID)
+        eq12.remove("$eq");
+        eq12.put("$eq", 12.0f);
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+        // query - { "$and" : [ { "name" : { "$eq" : "mike" } },
+        //                      { "age" : { "$eq" : 12.345 } } ] - (VALID)
+        eq12.remove("$eq");
+        eq12.put("$eq", 12.345);
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(notNullValue()));
+        // query - { "$and" : [ { "name" : { "$eq" : "mike" } },
+        //                      { "age" : { "$eq" : 12l } } ] - (VALID)
+        eq12.remove("$eq");
+        eq12.put("$eq", 12l);
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(notNullValue()));
     }
 
 }

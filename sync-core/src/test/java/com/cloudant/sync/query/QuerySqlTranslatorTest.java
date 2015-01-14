@@ -16,6 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.either;
+import static org.hamcrest.Matchers.emptyArray;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -47,6 +48,27 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     // When creating a tree
+
+    @Test
+    public void copesWhenNoMatchingIndex() {
+        // query - { "firstname" : "mike" }
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("firstname", "mike");
+        query = QueryValidator.normaliseAndValidateQuery(query);
+        QueryNode node = QuerySqlTranslator.translateQuery(query, indexes, indexesCoverQuery);
+        assertThat(node, is(instanceOf(AndQueryNode.class)));
+        AndQueryNode andNode = (AndQueryNode) node;
+        assertThat(andNode, is(notNullValue()));
+        assertThat(indexesCoverQuery[0], is(false));
+        assertThat(andNode.children.size(), is(1));
+        assertThat(andNode.children.get(0), is(instanceOf(SqlQueryNode.class)));
+        SqlQueryNode sqlNode = (SqlQueryNode) andNode.children.get(0);
+        String sql = sqlNode.sql.sqlWithPlaceHolders;
+        String[] placeHolderValues = sqlNode.sql.placeHolderValues;
+        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        assertThat(sql, is(select));
+        assertThat(placeHolderValues, is(emptyArray()));
+    }
 
     @Test
     public void copesWithSingleFieldQuery() {
@@ -102,6 +124,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> query = new LinkedHashMap<String, Object>();
         query.put("$and", fields);
         query = QueryValidator.normaliseAndValidateQuery(query);
+
         QueryNode node = QuerySqlTranslator.translateQuery(query, indexes, indexesCoverQuery);
         assertThat(node, is(instanceOf(AndQueryNode.class)));
         AndQueryNode andNode = (AndQueryNode) node;
@@ -152,8 +175,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", eq);
 
-        String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(name),
-                                                                indexes);
+        String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(name), indexes);
         assertThat(idx, is("named"));
     }
 
@@ -310,8 +332,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         pet.put("pet", petEq);
 
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name,
-                                                                                       age,
-                                                                                       pet));
+                                                                                  age,
+                                                                                  pet));
         String expected = "\"name\" = ? AND \"age\" = ? AND \"pet\" = ?";
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContainingInAnyOrder("mike", "12", "cat")));

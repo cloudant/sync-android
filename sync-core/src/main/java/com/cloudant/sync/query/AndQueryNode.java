@@ -18,6 +18,4 @@ package com.cloudant.sync.query;
  */
 class AndQueryNode extends ChildrenQueryNode {
 
-    // This class is used to define a ChildrenQueryNode as a specific type of QueryNode
-
 }
