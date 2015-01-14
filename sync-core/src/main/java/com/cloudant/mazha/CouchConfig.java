@@ -22,6 +22,10 @@ import com.google.common.base.Strings;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CouchConfig {
 
@@ -52,6 +56,9 @@ public class CouchConfig {
     private boolean staleConnectionCheckingEnabled = Boolean.FALSE;
 
     private boolean handleRedirectEnabled = Boolean.FALSE;
+
+    // Optional custom headers
+    private Map<String, String> customHeaders;
 
     public boolean isStaleConnectionCheckingEnabled() {
         return staleConnectionCheckingEnabled;
@@ -143,6 +150,21 @@ public class CouchConfig {
 	public void setMaxConnections(int maxConnections) {
 		this.maxConnections = maxConnections;
 	}
+
+    public Map<String, String> getCustomHeaders() {
+        return customHeaders;
+    }
+
+    public void setCustomHeaders(Map<String, String> customHeaders) {
+        List<String> prohibitedHeaders = Arrays.asList("www-authenticate", "host", "connection",
+                "content-type", "accept", "content-length");
+        for (Map.Entry<String, String> header : customHeaders.entrySet()) {
+            if (prohibitedHeaders.contains(header.getKey().toLowerCase())) {
+                throw new IllegalArgumentException("Bad optional HTTP header: " + header);
+            }
+        }
+        this.customHeaders = customHeaders;
+    }
 
     public URI getURI(String db) throws URISyntaxException {
         if(Strings.isNullOrEmpty(this.getUsername())) {

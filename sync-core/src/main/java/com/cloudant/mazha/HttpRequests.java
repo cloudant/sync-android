@@ -66,6 +66,8 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -80,7 +82,7 @@ public class HttpRequests {
     private BasicHttpContext context;
     private boolean debugging;
 
-    private String authHeaderValue;
+    private Map<String, String> requestHeaders;
 
     /**
      * Create a HttpRequests object with requests constants, such as username, password and other
@@ -90,7 +92,7 @@ public class HttpRequests {
      * @param username Username for Basic Auth
      * @param password Password for Basic Auth
      */
-    public HttpRequests(HttpParams params, String username, String password){
+    public HttpRequests(HttpParams params, String username, String password, Map<String, String> customHeaders){
         this.jsonHelper = new JSONHelper();
         this.context = new BasicHttpContext();
 
@@ -110,10 +112,30 @@ public class HttpRequests {
         addDebuggingInterceptor(httpClient);
         this.httpClient = httpClient;
 
-        if (!Strings.isNullOrEmpty(username)  &&  !Strings.isNullOrEmpty(password)) {
+        String authHeaderValue = null;
+        if (!Strings.isNullOrEmpty(username) && !Strings.isNullOrEmpty(password)) {
             String authString = username + ":" + password;
             Base64 base64 = new Base64();
             authHeaderValue = "Basic " + new String(base64.encode(authString.getBytes()));
+        }
+
+        this.requestHeaders = new HashMap<String, String>();
+        // copy custom headers and fold case to lowercase
+        if (customHeaders != null) {
+            for (Map.Entry<String, String> header : customHeaders.entrySet()) {
+                this.requestHeaders.put(header.getKey().toLowerCase(), header.getValue());
+            }
+        }
+
+        // Insert authHeaderValue if there isn't already an Authorization header
+        if (authHeaderValue != null) {
+            if (this.requestHeaders.containsKey("authorization")) {
+                logger.warning(
+                        "custom header \"authorization\" and username/password are both set; will use the value from custom header"
+                );
+            } else {
+                this.requestHeaders.put("authorization", authHeaderValue);
+            }
         }
     }
 
@@ -223,8 +245,10 @@ public class HttpRequests {
      */
     private HttpResponse executeRequest(HttpRequestBase request) {
         try {
-            if (authHeaderValue != null) {
-                request.addHeader("Authorization", authHeaderValue);
+            if (requestHeaders != null) {
+                for (Map.Entry<String, String> header : requestHeaders.entrySet()) {
+                    request.setHeader(header.getKey(), header.getValue());
+                }
             }
             //log the request
             logger.info(request.toString());

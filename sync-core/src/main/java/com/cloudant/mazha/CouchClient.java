@@ -57,7 +57,8 @@ public class CouchClient  {
     public CouchClient(CouchConfig config, String dbName) {
         this.httpClient = new HttpRequests(this.getHttpConnectionParams(config),
                 config.getUsername(),
-                config.getPassword());
+                config.getPassword(),
+                config.getCustomHeaders());
         this.defaultDb = dbName;
         this.json = new JSONHelper();
         this.uriHelper = new CouchURIHelper(
