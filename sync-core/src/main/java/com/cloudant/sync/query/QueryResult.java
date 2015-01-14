@@ -27,7 +27,7 @@ import java.util.List;
  *
  *  @see com.cloudant.sync.query.IndexManager
  */
-class QueryResult implements Iterable<BasicDocumentRevision> {
+public class QueryResult implements Iterable<BasicDocumentRevision> {
 
     private final static int DEFAULT_BATCH_SIZE = 50;
 
