@@ -13,12 +13,21 @@
 package com.cloudant.sync.query;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
+import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
+
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class IndexManagerTest extends AbstractIndexTestBase {
 
@@ -28,7 +37,101 @@ public class IndexManagerTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void unimplementedDeleteIndexNamed() {
-        assertThat(im.deleteIndexNamed("basic"), is(false));
+    public void deleteFailOnNoIndexName() {
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");
+        assertThat(im.listIndexes(), hasKey("basic"));
+
+        assertThat(im.deleteIndexNamed(null), is(false));
+        assertThat(im.listIndexes(), hasKey("basic"));
+
+        assertThat(im.deleteIndexNamed(""), is(false));
+        assertThat(im.listIndexes(), hasKey("basic"));
+    }
+
+    @Test
+    public void deleteFailOnInvalidIndexName() {
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");
+        assertThat(im.listIndexes(), hasKey("basic"));
+
+        assertThat(im.deleteIndexNamed("invalid"), is(false));
+        assertThat(im.listIndexes(), hasKey("basic"));
+
+        assertThat(im.deleteIndexNamed(""), is(false));
+        assertThat(im.listIndexes(), hasKey("basic"));
+    }
+
+    @Test
+     public void deleteEmptyIndex() {
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");
+        assertThat(im.listIndexes(), hasKey("basic"));
+
+        assertThat(im.deleteIndexNamed("basic"), is(true));
+        assertThat(im.listIndexes().isEmpty(), is(true));
+    }
+
+    @Test
+    public void deleteTheCorrectEmptyIndex() {
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");
+        im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic2");
+        im.ensureIndexed(Arrays.<Object>asList("name"), "basic3");
+        assertThat(im.listIndexes().keySet(), containsInAnyOrder("basic", "basic2", "basic3"));
+
+        assertThat(im.deleteIndexNamed("basic2"), is(true));
+        assertThat(im.listIndexes().keySet(), containsInAnyOrder("basic", "basic3"));
+    }
+
+    @Test
+    public void deleteNonEmptyIndex() {
+        try {
+            for (int i = 0; i < 4; i++) {
+                MutableDocumentRevision rev = new MutableDocumentRevision();
+                Map<String, Object> bodyMap = new HashMap<String, Object>();
+                bodyMap.put("name", "mike");
+                bodyMap.put("age", 12);
+                Map<String, Object> petMap = new HashMap<String, Object>();
+                petMap.put("species", "cat");
+                petMap.put("name", "mike");
+                bodyMap.put("pet", petMap);
+                rev.body = DocumentBodyFactory.create(bodyMap);
+                ds.createDocumentFromRevision(rev);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Assert.fail("Failed to create document revision");
+        }
+
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");
+        assertThat(im.listIndexes(), hasKey("basic"));
+        im.deleteIndexNamed("basic");
+        assertThat(im.listIndexes().isEmpty(), is(true));
+    }
+
+    @Test
+    public void deleteTheCorrectNonEmptyIndex() {
+        try {
+            for (int i = 0; i < 4; i++) {
+                MutableDocumentRevision rev = new MutableDocumentRevision();
+                Map<String, Object> bodyMap = new HashMap<String, Object>();
+                bodyMap.put("name", "mike");
+                bodyMap.put("age", 12);
+                Map<String, Object> petMap = new HashMap<String, Object>();
+                petMap.put("species", "cat");
+                petMap.put("name", "mike");
+                bodyMap.put("pet", petMap);
+                rev.body = DocumentBodyFactory.create(bodyMap);
+                ds.createDocumentFromRevision(rev);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Assert.fail("Failed to create document revision");
+        }
+
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");
+        im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic2");
+        im.ensureIndexed(Arrays.<Object>asList("name"), "basic3");
+        assertThat(im.listIndexes().keySet(), containsInAnyOrder("basic", "basic2", "basic3"));
+
+        assertThat(im.deleteIndexNamed("basic2"), is(true));
+        assertThat(im.listIndexes().keySet(), containsInAnyOrder("basic", "basic3"));
     }
 }

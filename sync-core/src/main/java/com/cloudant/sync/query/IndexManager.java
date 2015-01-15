@@ -49,8 +49,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -118,6 +121,13 @@ public class IndexManager {
 
     /**
      *  Get a list of indexes and their definitions as a Map.
+     *
+     *  Returns:
+     *
+     *  { indexName: { type: json,
+     *                 name: indexName,
+     *                 fields: [field1, field2]
+     *  }
      *
      *  @return Map of indexes in the database.
      */
@@ -225,16 +235,54 @@ public class IndexManager {
      *  @param indexName Name of index to delete
      *  @return deletion status as true/false
      */
-    public boolean deleteIndexNamed(String indexName) {
-        boolean success = true;
+    public boolean deleteIndexNamed(final String indexName) {
+        if (indexName == null || indexName.isEmpty()) {
+            logger.log(Level.WARNING, "TO delete an index, index name should be provided.");
+            return false;
+        }
 
-        // TODO - implement method
-        // Drop the index table
-        // Delete the metadata entries
+        Future<Boolean> result = queue.submit(new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+                Boolean transactionSuccess = true;
+                database.beginTransaction();
 
-        logger.log(Level.SEVERE, "deleteIndexNamed(indexName) not implemented.");
+                try {
+                    // Drop the index table
+                    String tableName = tableNameForIndex(indexName);
+                    String sql = String.format("DROP TABLE \"%s\"", tableName);
+                    database.execSQL(sql);
 
-        return false;
+                    // Delete the metadata entries
+                    String where = " index_name = ? ";
+                    database.delete(INDEX_METADATA_TABLE_NAME, where, new String[]{ indexName });
+                } catch (SQLException e) {
+                    String msg = String.format("Failed to delete index: %s",indexName);
+                    logger.log(Level.SEVERE, msg, e);
+                    transactionSuccess = false;
+                }
+
+                if (transactionSuccess) {
+                    database.setTransactionSuccessful();
+                }
+                database.endTransaction();
+
+                return transactionSuccess;
+            }
+        });
+
+        boolean success;
+        try {
+            success = result.get();
+        } catch (ExecutionException e) {
+            logger.log(Level.SEVERE, "Execution error during index deletion:", e);
+            return false;
+        } catch (InterruptedException e) {
+            logger.log(Level.SEVERE, "Execution interrupted error during index deletion:", e);
+            return false;
+        }
+
+        return success;
     }
 
     /**
