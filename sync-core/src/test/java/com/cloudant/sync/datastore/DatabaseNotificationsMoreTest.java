@@ -76,10 +76,7 @@ public class DatabaseNotificationsMoreTest {
             Assert.assertThat(databaseOpened, hasSize(1));
             Assert.assertNotNull(ds1);
         } finally {
-            ds.close();
-            if(ds1 != null){
-                ds1.close();
-            }
+            ds.close(); //only need to close ds since underlying object for ds and ds1 is the same
         }
     }
 

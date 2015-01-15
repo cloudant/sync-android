@@ -36,16 +36,12 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
     }
 
     // Update revision with updated body set to null
-    @Test
+    @Test(expected = NullPointerException.class)
     public void updateBodyNull() throws ConflictException, IOException {
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = null;
-        try {
-            BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
-            Assert.fail("Expected NullPointerException");
-        } catch (NullPointerException npe) {
-            ;
-        }
+        BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        Assert.fail("Expected NullPointerException");
     }
 
     // Update revision with updated body and new attachment

@@ -49,7 +49,6 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     @After
     public void tearDown() throws Exception {
         datastore.close();
-        datastoreWrapper.getDbCore().close();
         TestUtils.deleteDatabaseQuietly(database);
         cleanUpTempFiles();
     }
@@ -59,7 +58,6 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         datastoreManagerPath = TestUtils.createTempTestingDir(this.getClass().getName());
         datastoreManager = new DatastoreManager(this.datastoreManagerPath);
         datastore = (DatastoreExtended) datastoreManager.openDatastore(getClass().getSimpleName());
-        database = datastore.getSQLDatabase();
         datastoreWrapper = new DatastoreWrapper(datastore);
     }
 

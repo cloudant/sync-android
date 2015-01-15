@@ -20,6 +20,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.cloudant.sync.notifications.DocumentModified;
@@ -58,7 +59,6 @@ public class BasicDBCoreObservableTest {
     public void createDocument_bodyOnly_success() throws ConflictException, IOException, SQLException {
 
         this.core = new BasicDatastore(database_dir, "test");
-        this.database = this.core.getSQLDatabase();
 
         this.jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         this.bodyOne = new BasicDocumentBody(jsonData);

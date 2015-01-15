@@ -17,6 +17,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
+import com.cloudant.sync.util.TestUtils;
 
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -35,7 +36,7 @@ public class QueryExecutorStandardTest extends AbstractQueryTestBase {
         super.setUp();
         im = new IndexManager(ds);
         assertThat(im, is(notNullValue()));
-        db = im.getDatabase();
+        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
         assertThat(db, is(notNullValue()));
         assertThat(im.getQueue(), is(notNullValue()));
         String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };

@@ -53,13 +53,13 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         revisionHistory.add(doc1_rev1.getRevision());
         
         // now do a force insert - we should get an updated event as it's already there
-        datastore.forceInsert(doc1_rev1, revisionHistory, null, false);
+        datastore.forceInsert(doc1_rev1, revisionHistory,null, null, false);
         boolean ok1 = NotificationTestUtils.waitForSignal(documentUpdated);
         Assert.assertTrue("Didn't receive document updated event", ok1);
 
         // now do a force insert but with a different id - we should get a (2nd) created event
         doc1_rev1.setId("new-id-12345");
-        datastore.forceInsert(doc1_rev1, revisionHistory, null, false);
+        datastore.forceInsert(doc1_rev1, revisionHistory,null, null, false);
         boolean ok2 = NotificationTestUtils.waitForSignal(documentCreated);
         Assert.assertTrue("Didn't receive document created event", ok2);
     }
@@ -85,7 +85,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         revisionHistory.add(doc1_rev1.getRevision());
 
         // now do a force insert and then see if we get the attachment back
-        datastore.forceInsert(doc1_rev1, revisionHistory, atts, pullAttachmentsInline);
+        datastore.forceInsert(doc1_rev1, revisionHistory, atts,null, pullAttachmentsInline);
 
         Attachment storedAtt = datastore.getAttachment(doc1_rev1, "att1");
         Assert.assertNotNull(storedAtt);
@@ -122,7 +122,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         doc1_rev1.setRevision("2-blah");
         revisionHistory.add(doc1_rev1.getRevision());
         // now do a force insert
-        datastore.forceInsert(doc1_rev1, revisionHistory, atts, pullAttachmentsInline);
+        datastore.forceInsert(doc1_rev1, revisionHistory, atts,null, pullAttachmentsInline);
 
         // adding the attachment should have failed transactionally, so the rev should not exist as well
         BasicDocumentRevision dr = datastore.getDocument(doc1_rev1.getId(), doc1_rev1.getRevision());

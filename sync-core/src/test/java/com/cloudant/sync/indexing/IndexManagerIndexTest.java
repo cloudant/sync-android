@@ -722,8 +722,6 @@ public class IndexManagerIndexTest {
                         System.out.println("IOException "+ioe);
                     }
                 }
-                // we're not on the main thread, so we must close our own connection
-                datastore.close();
             }
         }
         List<Thread> threads = new ArrayList<Thread>();

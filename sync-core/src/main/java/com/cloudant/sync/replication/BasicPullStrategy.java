@@ -33,6 +33,8 @@ import com.google.common.eventbus.EventBus;
 import org.apache.commons.codec.binary.Hex;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -326,34 +328,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                     if (this.cancel)
                         break;
 
-                    boolean ok = true;
-                    // start tx
-                    this.targetDb.getDbCore().getSQLDatabase().beginTransaction();
-                    this.targetDb.bulkInsert(result, config.pullAttachmentsInline);
-
-                    // now add the attachments we have just downloaded
-                    try {
-                        for (String[] key : atts.keySet()) {
-                            String id = key[0];
-                            String rev = key[1];
-                            BasicDocumentRevision doc = this.targetDb.getDbCore().getDocument(id, rev);
-                            for (PreparedAttachment att : atts.get(key)) {
-                                this.targetDb.addAttachment(att, doc);
-                            }
-                        }
-                    } catch (Exception e) {
-                        logger.log(Level.SEVERE, "There was a problem adding an attachment to " +
-                                "the datastore, terminating replication",e);
-                        this.cancel = true;
-                        ok = false;
-                    }
-
-                    if (ok) {
-                        this.targetDb.getDbCore().getSQLDatabase().setTransactionSuccessful();
-                    }
-                    // end tx
-                    this.targetDb.getDbCore().getSQLDatabase().endTransaction();
-
+                    this.targetDb.bulkInsert(result, atts, config.pullAttachmentsInline);
                     changesProcessed++;
                 }
             } catch (InterruptedException ex) {

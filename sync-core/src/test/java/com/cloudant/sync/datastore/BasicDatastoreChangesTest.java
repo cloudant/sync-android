@@ -24,11 +24,6 @@ import static org.hamcrest.CoreMatchers.hasItems;
 public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
 
     @Test
-    public void getSQLiteDatabase_NA_NA() {
-        Assert.assertTrue(database == datastore.getSQLDatabase());
-    }
-
-    @Test
     public void changes_noChanges_nothing() {
         Changes changes = datastore.changes(0, 100);
         Assert.assertEquals(0, changes.size());

@@ -85,7 +85,7 @@ class DatastoreWrapper {
         return "_local/" + replicatorIdentifier;
     }
 
-    public void bulkInsert(DocumentRevsList documentRevsList, boolean pullAttachmentsInline) {
+    public void bulkInsert(DocumentRevsList documentRevsList, Map<String[],List<PreparedAttachment>> preparedAttachments, boolean pullAttachmentsInline) {
         for(DocumentRevs documentRevs: documentRevsList) {
             logger.log(Level.FINEST,"Bulk inserting document revs: %s",documentRevs);
 
@@ -93,7 +93,7 @@ class DatastoreWrapper {
 
             List<String> revisions = DocumentRevsUtils.createRevisionIdHistory(documentRevs);
             Map<String, Object> attachments = documentRevs.getAttachments();
-            dbCore.forceInsert(doc, revisions, attachments, pullAttachmentsInline);
+            dbCore.forceInsert(doc, revisions, attachments,preparedAttachments, pullAttachmentsInline);
         }
     }
 
