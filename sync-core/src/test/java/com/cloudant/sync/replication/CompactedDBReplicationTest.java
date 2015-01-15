@@ -14,7 +14,9 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.ClientTestUtils;
+import com.cloudant.mazha.CouchClientTestBase;
 import com.cloudant.mazha.CouchDbInfo;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
@@ -22,8 +24,10 @@ import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.util.AbstractTreeNode;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -32,28 +36,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
+@Category(RequireRunningCouchDB.class)
 public class CompactedDBReplicationTest extends ReplicationTestBase {
 
     BasicReplicator replicator;
-    boolean testWithCloudant = false;
 
     @Before
     public void setUp() throws Exception {
        super.setUp();
-
-       String cloudantTest = System.getProperty("test.with.cloudant");
-       testWithCloudant = Boolean.parseBoolean(cloudantTest);
     }
-
-
 
     @Test
     public void replicationFromCompactedDB() throws Exception{
         // if the test case is running against Cloudant, this test should not execute since
         // Cloudant returns 403 - Forbidden when attempting to call _compact
-        if(testWithCloudant){
-            return;
-        }
+        Assume.assumeTrue(!CouchClientTestBase.TEST_WITH_CLOUDANT);
 
         String documentName;
         Bar bar = BarUtils.createBar(remoteDb, "Bob", 12);

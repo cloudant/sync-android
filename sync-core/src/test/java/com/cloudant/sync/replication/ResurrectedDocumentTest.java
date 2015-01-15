@@ -1,6 +1,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.CouchUtils;
+import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
@@ -8,6 +9,7 @@ import com.cloudant.sync.datastore.MutableDocumentRevision;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +17,7 @@ import java.util.Map;
 /**
  * Created by tomblench on 11/10/2014.
  */
+@Category(RequireRunningCouchDB.class)
 public class ResurrectedDocumentTest extends ReplicationTestBase {
     @Test
     public void resurrectedDocumentTest() throws Exception {

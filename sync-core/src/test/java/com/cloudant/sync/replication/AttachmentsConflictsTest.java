@@ -1,5 +1,6 @@
 package com.cloudant.sync.replication;
 
+import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.ConflictResolver;
@@ -12,6 +13,7 @@ import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
@@ -21,6 +23,8 @@ import java.util.Map;
 /**
  * Created by tomblench on 14/11/2014.
  */
+
+@Category(RequireRunningCouchDB.class)
 public class AttachmentsConflictsTest extends ReplicationTestBase {
 
     // test that we can correctly pull attachments for a conflicted remote db

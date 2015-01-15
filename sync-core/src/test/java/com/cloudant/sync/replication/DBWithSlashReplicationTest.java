@@ -1,5 +1,6 @@
 package com.cloudant.sync.replication;
 
+import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.ClientTestUtils;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
@@ -11,6 +12,7 @@ import com.cloudant.sync.util.AbstractTreeNode;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -22,6 +24,8 @@ import java.util.Set;
 /**
  * Created by rhys on 28/11/14.
  */
+
+@Category(RequireRunningCouchDB.class)
 public class DBWithSlashReplicationTest extends ReplicationTestBase {
 
     // NB although the user has to encode the / themselves as %2F, this is still a valuable test
