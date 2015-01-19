@@ -2,8 +2,53 @@
 
 _This functionality is available in versions 0.3.3 and up._
 
-This document discusses setting up replication with the library, along
-with synchronising data by using two-way (bi-direction) replication.
+Replication is used to synchronise data between the local datastore and a
+remote database, either a CouchDB instance or a Cloudant database. Many
+datastores can replicate with the same remote database, meaning that
+cross-device syncronisation is acheived by setting up replications from each
+device to the remote database.
+
+## Replication Scenarios
+
+Replication is a flexible system for copying data between local and remote
+databases. Each replication is in a single direction, copying differences either
+from a local database to a remote database or a remote database to a local
+database.
+
+![Push and pull replications](images/replication-push-pull.png)
+
+Often, a single local and remote database will be kept synchronised with each
+other. For example, all a user's notes synchronised between a web application
+and a device-based application. To fully synchronise data between two databases,
+run a push *and* a pull replication. These can be run concurrently.
+
+![Synchronising two databases](images/replication-sync.png)
+
+Replication is not limited to a single pair of databases. If a user has several
+devices, it's simple to set up replications between each device and a central
+remote database to synchronise data between devices.
+
+![Synchronising local database with two remote databases](images/replication-multi-local.png)
+
+Less commonly but just as tenable, data can be sent from a single local
+database to several remote databases:
+
+![Synchronising local database with two remote databases](images/replication-multi-remote.png)
+
+A final diagram shows how to replicate databases on the local
+device with several different remote databases, even if they are on different
+servers.
+
+![Replicating local databases with several remotes](images/replication-many.png)
+
+Overall, replication is very flexible and can be set up in many topologies.
+In particular, many scenarios might only require a push or a pull replication:
+
+* A data collection application might only need to use a push replication to
+  replicate data from the device to a remote database -- there's no need for
+  synchronisation and therefore no corresponding pull replication.
+* If only a local data cache is required, using only a pull replication will
+  keep local data up to date with remote data.
 
 ### Setting Up For Sync
 
@@ -25,6 +70,12 @@ devices. This web service needs to:
 From the device side, replication is straightforward. You can replicate from a
 local datastore to a remote database, from a remote database to a local
 datastore, or both ways to implement synchronisation.
+
+Replications are set up in code on a device. Use `PullReplication` and
+`PushReplication` objects to create pre-configured `Replicator` objects
+using a `ReplicatorFactory`. Then call `start()` on the `Replicator` object
+to start a replication. Each `Replicator` object can be assigned a `Listener`
+to receive messages when replication completes or encounters an error.
 
 First we create a simple listener that just sets a CountDownLatch when the
 replication finishes so we can wait for a replication to finish without
@@ -219,9 +270,9 @@ indexManager.updateAllIndexes();
 
 ### Filtered pull replication
 
-[Filtered replication][1] is only supported for pull replication. It requies a 
-"Filter" object is added to "PullReplication" to describe the 
-_Filter Function_ that is used and its query parameters. 
+[Filtered replication][1] is only supported for pull replication. It requies a
+"Filter" object is added to "PullReplication" to describe the
+_Filter Function_ that is used and its query parameters.
 
 ```java
 import com.cloudant.sync.replication.ReplicationFactory;
@@ -246,7 +297,7 @@ Replicator replicator = ReplicatorFactory.oneway(pullReplication);
 
 ### Deprecated APIs
 
-The following APIs are still supported but deprecated. They will be soon removed from the library. 
+The following APIs are still supported but deprecated. They will be soon removed from the library.
 
 ```java
 ReplicatorFactory {
