@@ -25,19 +25,19 @@ public class DesignDocsReplicateTest extends ReplicationTestBase {
     public void designDocsReplicateTest() throws Exception {
         AnimalDb.populate(couchClient);
         // assert all docs including design doc present
-        Assert.assertEquals(11, couchClient.getDbInfo(getDbName()).getDocCount());
+        Assert.assertEquals(11, couchClient.getDbInfo().getDocCount());
         // pull back docs including design doc
         pull();
         // trash db
-        couchClient.deleteDb(getDbName());
-        couchClient.createDb(getDbName());
+        couchClient.deleteDb();
+        couchClient.createDb();
         // assert DB empty
-        Assert.assertEquals(0, couchClient.getDbInfo(getDbName()).getDocCount());
+        Assert.assertEquals(0, couchClient.getDbInfo().getDocCount());
         // and push to it
         push();
-        CouchDbInfo ci2 = couchClient.getDbInfo(getDbName());
+        CouchDbInfo ci2 = couchClient.getDbInfo();
         // assert all docs including design doc present
-        Assert.assertEquals(11, couchClient.getDbInfo(getDbName()).getDocCount());
+        Assert.assertEquals(11, couchClient.getDbInfo().getDocCount());
     }
 
     private void pull() throws Exception {

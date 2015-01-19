@@ -31,11 +31,6 @@ interface CouchDB {
     public String getIdentifier();
 
     /**
-     * Returns the name of the db
-     */
-    public String getDbName();
-
-    /**
      * Returns true if database exists, otherwise false
      */
     public boolean exists();

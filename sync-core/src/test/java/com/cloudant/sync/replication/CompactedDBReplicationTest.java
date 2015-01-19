@@ -34,15 +34,12 @@ import java.util.Set;
 
 public class CompactedDBReplicationTest extends ReplicationTestBase {
 
-
-    URI source;
     BasicReplicator replicator;
     boolean testWithCloudant = false;
 
     @Before
     public void setUp() throws Exception {
        super.setUp();
-       source = getURI();
 
        String cloudantTest = System.getProperty("test.with.cloudant");
        testWithCloudant = Boolean.parseBoolean(cloudantTest);
@@ -75,14 +72,14 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
 
         // compact database
 
-        URI postURI = new URI(source.toString() + "/_compact");
+        URI postURI = new URI(couchClient.getRootUri().toString() + "/_compact");
 
         Assert.assertEquals(ClientTestUtils.executeHttpPostRequest(couchClient, postURI, ""), 202);
-        CouchDbInfo info = couchClient.getDbInfo(getDbName());
+        CouchDbInfo info = couchClient.getDbInfo();
 
         while(info.isCompactRunning()) {
             Thread.sleep(1000);
-            info = couchClient.getDbInfo(getDbName());
+            info = couchClient.getDbInfo();
         };
 
         // replicate with compacted database
@@ -108,7 +105,7 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
 
         // compare remote revisions with local revisions
 
-        URI getURI = new URI(source.toString() + "/" + documentName + "?revs_info=true");
+        URI getURI = new URI(couchClient.getRootUri().toString() + "/" + documentName + "?revs_info=true");
 
         List<String> remoteRevs = ClientTestUtils.getRemoteRevisionIDs(couchClient, getURI);
         List<String> localRevs = new ArrayList<String>();
@@ -145,26 +142,4 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
         }
 
     }
-
-    @Test
-    public void testExtractDbNameSlashes() throws Exception {
-        PullReplication pull = createPullReplication();
-        URI uri = new URI("http://my.api.server.url/complexed/path/to/database_name");
-        String dbName = pull.extractDatabaseName(uri);
-        Assert.assertEquals(dbName,"complexed/path/to/database_name");
-
-    }
-
-    @Test
-    public void testExtractDBNameNoSlashes() throws Exception {
-        PullReplication pull = createPullReplication();
-        URI uri = new URI("http://your.server.url/database_name");
-        String dbName = pull.extractDatabaseName(uri);
-        Assert.assertEquals(dbName,"database_name");
-
-    }
-
-
-
-
 }

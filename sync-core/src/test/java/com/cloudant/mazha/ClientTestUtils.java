@@ -195,9 +195,9 @@ public class ClientTestUtils {
         return revisionHashes;
     }
 
-    public static void deleteQuietly(CouchClient client, String db) {
+    public static void deleteQuietly(CouchClient client) {
         try {
-            client.deleteDb(db);
+            client.deleteDb();
         } catch (Exception e) {}
     }
 

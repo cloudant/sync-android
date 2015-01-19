@@ -41,8 +41,6 @@ public class CouchClientWrapperMockTest {
     @Before
     public void setup() throws IOException {
         mockedClient = mock(CouchClient.class);
-        when(mockedClient.getDefaultDb()).thenReturn(DB_NAME);
-
         wrapper = new CouchClientWrapper(mockedClient);
     }
 
@@ -82,14 +80,14 @@ public class CouchClientWrapperMockTest {
     public void createDb_dbName() {
         wrapper.createDatabase();
 
-        verify(mockedClient).createDb(DB_NAME);
+        verify(mockedClient).createDb();
     }
 
     @Test
     public void deleteDb_dbName() {
         wrapper.deleteDatabase();
 
-        verify(mockedClient).deleteDb(DB_NAME);
+        verify(mockedClient).deleteDb();
     }
 
     @Test

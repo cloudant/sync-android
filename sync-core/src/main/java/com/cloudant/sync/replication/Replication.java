@@ -6,6 +6,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,18 +25,6 @@ import java.util.Map;
  * @see ReplicatorFactory#oneway(Replication)
  */
 public abstract class Replication {
-
-    /**
-     * Username to use for authentication with the remote Cloudant/CouchDB
-     * database.
-     */
-    public String username;
-
-    /**
-     * Password to use for authentication with the remote Cloudant/CouchDB
-     * database.
-     */
-    public String password;
 
     /**
      * <p>Provides the name and parameters for a filter function to be used
@@ -174,23 +163,8 @@ public abstract class Replication {
      */
     abstract ReplicationStrategy createReplicationStrategy();
 
-    CouchConfig createCouchConfig(URI uri, String username, String password) {
-        int port = uri.getPort() < 0 ? getDefaultPort(uri.getScheme()) : uri.getPort();
-        return new CouchConfig(uri.getScheme(), uri.getHost(),  port, username, password);
-    }
-
-    int getDefaultPort(String protocol) {
-        if(protocol.equalsIgnoreCase("http")) {
-            return 80;
-        } else if(protocol.equalsIgnoreCase("https")) {
-            return 443;
-        } else {
-            throw new IllegalArgumentException("Unsupported protocol: " + protocol);
-        }
-    }
-
-    String extractDatabaseName(URI uri) {
-        return uri.getPath().substring(1);
+    CouchConfig createCouchConfig(URI uri) {
+        return new CouchConfig(uri);
     }
 
     void checkURI(URI uri) {

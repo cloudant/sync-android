@@ -45,17 +45,15 @@ public class HttpRequestsTest extends CouchClientTestBase {
     public void setup() {
         super.setUp();
         this.uriHelper = new CouchURIHelper(
-                couchConfig.getProtocol(),
-                couchConfig.getHost(),
-                couchConfig.getPort()
+                couchConfig.getRootUri()
         );
         this.client = super.client.getHttpClient();
     }
 
     @Test
     public void get_resourceExist_success() throws Exception {
-        URI allDbUri = this.uriHelper.allDbsUri();
-        InputStream is = client.get(allDbUri);
+        URI thisDbUri = couchConfig.getRootUri();
+        InputStream is = client.get(thisDbUri);
         Assert.assertNotNull(is);
         String s = IOUtils.toString(is);
         Assert.assertTrue(s.contains(TEST_DB));
@@ -68,13 +66,13 @@ public class HttpRequestsTest extends CouchClientTestBase {
                 "Accept", "Content-Length"};
         for (String h : prohibitedHeaders) {
             try {
-                CouchConfig customCouchConfig = getCouchConfig();
+                CouchConfig customCouchConfig = getCouchConfig(TEST_DB);
                 Map<String, String> customHeaders = new HashMap<String, String>();
                 customHeaders.put(h, "test");
                 customCouchConfig.setCustomHeaders(customHeaders);
-                HttpRequests client = new CouchClient(customCouchConfig, TEST_DB).getHttpClient();
-                URI allDbUri = this.uriHelper.allDbsUri();
-                client.get(allDbUri);
+                HttpRequests client = new CouchClient(customCouchConfig).getHttpClient();
+                URI thisDbUri = couchConfig.getRootUri();
+                client.get(thisDbUri);
                 Assert.fail("Expected IllegalArgumentException");
             } catch (IllegalArgumentException iae) {
                 ;
@@ -86,14 +84,14 @@ public class HttpRequestsTest extends CouchClientTestBase {
     // (we don't check the header is received at the server!)
     @Test
     public void customHeader() throws Exception {
-        CouchConfig customCouchConfig = getCouchConfig();
+        CouchConfig customCouchConfig = getCouchConfig(TEST_DB);
         Map<String, String> customHeaders = new HashMap<String, String>();
         customHeaders.put("x-good-header", "test");
         customCouchConfig.setCustomHeaders(customHeaders);
         Assert.assertEquals("test", customCouchConfig.getCustomHeaders().get("x-good-header"));
-        HttpRequests client = new CouchClient(customCouchConfig, TEST_DB).getHttpClient();
-        URI allDbUri = this.uriHelper.allDbsUri();
-        InputStream is = client.get(allDbUri);
+        HttpRequests client = new CouchClient(customCouchConfig).getHttpClient();
+        URI thisDbUri = couchConfig.getRootUri();
+        InputStream is = client.get(thisDbUri);
         Assert.assertNotNull(is);
         String s = IOUtils.toString(is);
         Assert.assertTrue(s.contains(TEST_DB));
@@ -107,17 +105,23 @@ public class HttpRequestsTest extends CouchClientTestBase {
         // skip if not running against local CouchDB
         org.junit.Assume.assumeTrue(!TEST_WITH_CLOUDANT);
 
-        CouchConfig customCouchConfig = new CouchConfig(couchConfig.getProtocol(),
-                couchConfig.getHost(),
-                couchConfig.getPort(),
-                "foo", "bar");
+        URI root = couchConfig.getRootUri();
+
+        // copy the basic test url but add user:foo, pass:bar as credentials
+        URI rootWithUserCreds = new URI(root.getScheme(),
+                "foo:bar",
+                root.getHost(),
+                root.getPort(),
+                root.getPath(),
+                null,
+                null);
+        CouchConfig customCouchConfig = new CouchConfig(rootWithUserCreds);
         Map<String, String> customHeaders = new HashMap<String, String>();
-        URI allDbUri = this.uriHelper.allDbsUri();
 
         // first we check that foo/bar is unauthorized
         try {
-            HttpRequests clientNoAuthHeader = new CouchClient(customCouchConfig, TEST_DB).getHttpClient();
-            clientNoAuthHeader.get(allDbUri);
+            HttpRequests clientNoAuthHeader = new CouchClient(customCouchConfig).getHttpClient();
+            clientNoAuthHeader.get(rootWithUserCreds);
             Assert.fail("Expected CouchException to be thrown");
         } catch (CouchException ce) {
             Assert.assertEquals("unauthorized", ce.getError());
@@ -127,8 +131,8 @@ public class HttpRequestsTest extends CouchClientTestBase {
         customHeaders.put("Authorization", "test");
         customCouchConfig.setCustomHeaders(customHeaders);
         Assert.assertEquals("test", customCouchConfig.getCustomHeaders().get("Authorization"));
-        HttpRequests clientAuthHeader = new CouchClient(customCouchConfig, TEST_DB).getHttpClient();
-        InputStream is = clientAuthHeader.get(allDbUri);
+        HttpRequests clientAuthHeader = new CouchClient(customCouchConfig).getHttpClient();
+        InputStream is = clientAuthHeader.get(rootWithUserCreds);
         Assert.assertNotNull(is);
         String s = IOUtils.toString(is);
         Assert.assertTrue(s.contains(TEST_DB));
@@ -141,13 +145,12 @@ public class HttpRequestsTest extends CouchClientTestBase {
         // skip if not running against local CouchDB
         org.junit.Assume.assumeTrue(!TEST_WITH_CLOUDANT);
 
-        CouchConfig customCouchConfig = getCouchConfig();
+        CouchConfig customCouchConfig = getCouchConfig(TEST_DB);
         // we're not testing on Cloudant, so we can be sure user/pass is not set - double check:
-        Assert.assertTrue(Strings.isNullOrEmpty(customCouchConfig.getUsername()));
-        Assert.assertTrue(Strings.isNullOrEmpty(customCouchConfig.getPassword()));
+        Assert.assertTrue(Strings.isNullOrEmpty(customCouchConfig.getRootUri().getUserInfo()));
 
         Map<String, String> customHeaders = new HashMap<String, String>();
-        URI allDbUri = this.uriHelper.allDbsUri();
+        URI thisDbUri = couchConfig.getRootUri();
 
         try {
             String authString = "foo:bar";
@@ -155,8 +158,8 @@ public class HttpRequestsTest extends CouchClientTestBase {
             String authHeaderValue = "Basic " + new String(base64.encode(authString.getBytes()));
             customHeaders.put("Authorization", authHeaderValue);
             customCouchConfig.setCustomHeaders(customHeaders);
-            HttpRequests clientAuthHeader = new CouchClient(customCouchConfig, TEST_DB).getHttpClient();
-            clientAuthHeader.get(allDbUri);
+            HttpRequests clientAuthHeader = new CouchClient(customCouchConfig).getHttpClient();
+            clientAuthHeader.get(thisDbUri);
             Assert.fail("Expected CouchException to be thrown");
         } catch (CouchException ce) {
             Assert.assertEquals("unauthorized", ce.getError());

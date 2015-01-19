@@ -22,7 +22,7 @@ import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 import com.google.common.base.Strings;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;

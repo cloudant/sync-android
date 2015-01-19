@@ -41,6 +41,9 @@ import static org.hamcrest.CoreMatchers.startsWith;
 @Category(RequireRunningCouchDB.class)
 public class CouchClientBasicTest extends CouchClientTestBase {
 
+    // Some of these tests over-write the 'client' object because the default database name isn't
+    // sufficient.
+
     @Test
     public void getHttpClient() {
         Assert.assertNotNull(client.getHttpClient());
@@ -48,25 +51,19 @@ public class CouchClientBasicTest extends CouchClientTestBase {
 
     @Test
     public void getJsonHelper_mustNotBeNull() {
-        Assert.assertNotNull(client.getJson());
-    }
-
-    @Test
-    public void allDbs_mustHaveTestDb() throws Exception {
-        List<String> allDbs = client.allDbs();
-        Assert.assertTrue(allDbs.size() > 0);
-        Assert.assertTrue(allDbs.contains(TEST_DB));
+        Assert.assertNotNull(client.jsonHelper);
     }
 
     @Test
     public void createDb_validDbName_dbMustBeCreated() {
         String dbName = "mazha_test_createdb";
-        ClientTestUtils.deleteQuietly(client, dbName);
+        client = new CouchClient(getCouchConfig(dbName));
+        ClientTestUtils.deleteQuietly(client);
 
-        client.createDb(dbName);
+        client.createDb();
         Assert.assertTrue("DB must exist.", isDbExist(dbName));
 
-        client.deleteDb(dbName);
+        client.deleteDb();
         Assert.assertFalse("DB must not exist.", isDbExist(dbName));
     }
 
@@ -74,56 +71,57 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     public void createDb_invalidDBNmae_exception() {
         // Couch does not like capital character in db name
         String dbName = "mazha_test_INVALID_DB_NAME";
-        client.createDb(dbName);
+        client = new CouchClient(getCouchConfig(dbName));
+        client.createDb();
     }
+
 
     @Test(expected = CouchException.class)
     public void createDb_dbExistAlready_exception() throws IOException {
         Assert.assertTrue("DB must exist.", isDbExist(TEST_DB));
-        client.createDb(TEST_DB);
-    }
-
-    private boolean isDbExist(String dbName) {
-        List<String> allDbs = client.allDbs();
-        return allDbs.contains(dbName);
+        client.createDb();
     }
 
     @Test
     public void deleteDb_dbMustBeDeleted() {
         String dbName = "mazha_test_deletedb";
-        ClientTestUtils.deleteQuietly(client, dbName);
+        client = new CouchClient(getCouchConfig(dbName));
+        ClientTestUtils.deleteQuietly(client);
 
-        client.createDb(dbName);
+        client.createDb();
         Assert.assertTrue("DB must exist.", isDbExist(dbName));
 
-        client.deleteDb(dbName);
+        client.deleteDb();
         Assert.assertFalse("DB must not exist.", isDbExist(dbName));
     }
 
     @Test(expected = NoResourceException.class)
     public void deleteDb_dbNotExist_exception() {
         String dbName = "mazha_test_deletedb_not_exist";
+        client = new CouchClient(getCouchConfig(dbName));
         Preconditions.checkArgument(!isDbExist(dbName), "%s must not exist", dbName);
-        client.deleteDb(dbName);
+        client.deleteDb();
     }
 
     @Test
     public void getDbInfo_dbInfoMustSuccessfullyReturned() {
-        CouchDbInfo dbInfo = client.getDbInfo(TEST_DB);
+        CouchDbInfo dbInfo = client.getDbInfo();
         Assert.assertEquals(TEST_DB, dbInfo.getDbName());
     }
 
     @Test(expected = CouchException.class)
     public void getDbInfo_invalidDbName_exception() {
         String dbName = "mazha_test_A";
-        client.getDbInfo(dbName);
+        client = new CouchClient(getCouchConfig(dbName));
+        client.getDbInfo();
     }
 
     @Test(expected = NoResourceException.class)
     public void getDbInfo_dbNotExist_exception() {
         String dbName = "mazha_test_getdbinfo_dbnotexist";
+        client = new CouchClient(getCouchConfig(dbName));
         Preconditions.checkArgument(!isDbExist(dbName), "%s must not exist", dbName);
-        client.getDbInfo(dbName);
+        client.getDbInfo();
     }
 
     @Test
@@ -179,7 +177,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
         InputStream is = client.getDocumentStream(res.getId());
         try {
-            Map<String, Object> doc = client.getJson().fromJson(new InputStreamReader(is));
+            Map<String, Object> doc = client.jsonHelper.fromJson(new InputStreamReader(is));
             assertHelloWorldMapObject(res, doc);
         } finally {
             IOUtils.closeQuietly(is);
@@ -256,7 +254,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
         InputStream is = client.getDocumentStream(res.getId(), res.getRev());
         try {
-            Map<String, Object> doc = client.getJson().fromJson(new InputStreamReader(is));
+            Map<String, Object> doc = client.jsonHelper.fromJson(new InputStreamReader(is));
             assertHelloWorldMapObject(res, doc);
         } finally {
             IOUtils.closeQuietly(is);
@@ -449,5 +447,15 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     @Test
     public void shutdown() {
         client.shutdown();
+    }
+
+    private boolean isDbExist(String dbName) {
+        try {
+            CouchClient c = new CouchClient(getCouchConfig(dbName));
+            c.getDbInfo();
+            return true;
+        } catch (CouchException ce) {
+            return false;
+        }
     }
 }

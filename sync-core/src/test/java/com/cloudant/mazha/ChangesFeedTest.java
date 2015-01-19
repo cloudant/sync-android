@@ -82,7 +82,7 @@ public class ChangesFeedTest extends CouchClientTestBase {
 
     @Test(expected = NoResourceException.class)
     public void changes_dbNotExist_exception() {
-        client.deleteDb(client.getDefaultDb());
+        client.deleteDb();
         client.changes("1");
     }
 

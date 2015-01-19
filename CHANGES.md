@@ -1,3 +1,12 @@
+# Unreleased (2015-01-23)
+
+- [FIX] Fixed issue where URLs for remote databases were incorrectly
+  encoded.
+- [REMOVED] Removed username and password from PullReplication and
+  PushReplication. Users should set their password in the source or
+  destnation URL.
+- [REMOVED] Removed allDbs() from Mazha CouchClient.
+
 # 0.9.3 (2014-12-10)
 
 - [FIX] Fixed issue where slashes were disallowed for replication

@@ -15,7 +15,7 @@
 package com.cloudant.sync.util;
 
 import com.cloudant.sync.replication.Foo;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 

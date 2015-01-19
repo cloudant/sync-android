@@ -28,14 +28,12 @@ import java.net.URI;
 @Category(RequireRunningCouchDB.class)
 public class PushReplicatorTest extends ReplicationTestBase {
 
-    URI source;
     BasicReplicator replicator;
 
     @Before
     public void setUp() throws Exception {
 
         super.setUp();
-        source = getURI();
 
         PushReplication push = this.createPushReplication();
         replicator = (BasicReplicator) ReplicatorFactory.oneway(push);

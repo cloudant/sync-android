@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.common.CouchTestBase;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.*;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
@@ -36,6 +37,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.hamcrest.CoreMatchers.*;
 
@@ -57,7 +59,7 @@ public class CouchClientWrapperTest extends CouchTestBase {
 
     @Before
     public void setup() throws IOException {
-        remoteDb = new CouchClientWrapper(CLOUDANT_TEST_DB_NAME, super.getCouchConfig());
+        remoteDb = new CouchClientWrapper(super.getCouchConfig(CLOUDANT_TEST_DB_NAME));
         bodyOne = DocumentBodyFactory.create(FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile)));
         bodyTwo = DocumentBodyFactory.create(FileUtils.readFileToByteArray(TestUtils.loadFixture(documentTwoFile)));
 
@@ -71,19 +73,14 @@ public class CouchClientWrapperTest extends CouchTestBase {
     }
 
     @Test
-    public void getDbName() {
-        Assert.assertEquals(CLOUDANT_TEST_DB_NAME, remoteDb.getDbName());
-    }
-
-    @Test
     public void exists_dbExists_true() {
         Assert.assertTrue(remoteDb.exists());
     }
 
     @Test
     public void exists_dbExists_false() {
-        CouchClientWrapper couchClientWrapper = new CouchClientWrapper("db_not_exists",
-                super.getCouchConfig());
+        CouchClientWrapper couchClientWrapper = new CouchClientWrapper(
+                super.getCouchConfig("db_not_exists"));
         Assert.assertFalse(couchClientWrapper.exists());
     }
 
@@ -94,20 +91,9 @@ public class CouchClientWrapperTest extends CouchTestBase {
 
     @Test
     public void getIdentifier() {
-        String hostConfig = getCouchConfig().getHost();
         String identifier = remoteDb.getIdentifier();
-        String couchDbId = String.format("http://%s:5984/couch_client_wrapper_test",hostConfig);
-        String cloudantId = String.format(
-                "https://%s.cloudant.com:443/couch_client_wrapper_test",
-                CloudantConfig.defaultConfig().getUsername());
-
-
-
-        if(InetAddressValidator.getInstance().isValid(hostConfig)) {
-            Assert.assertEquals(couchDbId, identifier);
-        } else {
-            Assert.assertEquals(cloudantId, identifier);
-        }
+        Pattern couchDbId = Pattern.compile("http(s)?://.+/couch_client_wrapper_test");
+        Assert.assertTrue(couchDbId.matcher(identifier).matches());
     }
 
     @Test
@@ -320,7 +306,7 @@ public class CouchClientWrapperTest extends CouchTestBase {
     @Test
     public void accessAndUpdateRemoteDbWithSlashInName() throws Exception {
         //do a little set up for this specific test
-        remoteDb = new CouchClientWrapper("myslash/encoded_db", super.getCouchConfig());
+        remoteDb = new CouchClientWrapper(super.getCouchConfig("myslash%2Fencoded_db"));
         CouchClientWrapperDbUtils.deleteDbQuietly(remoteDb);
         remoteDb.createDatabase();
         Bar bar1 = new Bar();

@@ -20,7 +20,6 @@ package com.cloudant.mazha;
 
 import com.cloudant.common.CouchConstants;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,48 +34,31 @@ public class CouchURIHelper {
     private final static Joiner queryJoiner = Joiner.on('&').skipNulls();
 
     // CouchDB/Cloudant server instance URL. Does not end in /
-    private final String base;
-
+    private final URI rootUri;
+    private final String rootUriString;
     /**
      * Returns a {@code CouchURIHelper} for a given Cloudant or CouchDB instance.
      */
-    public CouchURIHelper(String protocol, String hostname, int port) {
-        Preconditions.checkNotNull(protocol, "protocol must not be null");
-        Preconditions.checkNotNull(hostname, "hostname must not be null");
-        Preconditions.checkArgument((port > 0 && port < 65535), "Invalid port");
-
-        base = String.format("%s://%s:%s", protocol, hostname, port);
+    public CouchURIHelper(URI rootUri) {
+        this.rootUri = rootUri;
+        this.rootUriString = rootUri.toASCIIString();
     }
 
     /**
-     * Returns URI for {@code _all_dbs} endpoint.
+     * Returns the Root URI for this instance.
      */
-    public URI allDbsUri() {
-        String allDbs = String.format("%s/%s", this.base, "_all_dbs");
-        return uriFor(allDbs);
+    public URI getRootUri() {
+        return this.rootUri;
     }
 
     /**
-     * Returns URI for {@code db}.
-     */
-    public URI dbUri(String db) {
-        Preconditions.checkNotNull(db, "db must not be null");
-
-        String dbUri = String.format("%s/%s", this.base, this.encodePathComponent(db));
-        return uriFor(dbUri);
-    }
-
-    /**
-     * Returns URI for {@code _changes} endpoint for {@code db} using passed
+     * Returns URI for {@code _changes} endpoint using passed
      * {@code query}.
      */
-    public URI changesUri(String db, Map<String, Object> query) {
-        Preconditions.checkNotNull(db, "db must not be null");
-
+    public URI changesUri(Map<String, Object> query) {
         String base_uri = String.format(
-                "%s/%s/%s",
-                this.base,
-                this.encodePathComponent(db),
+                "%s/%s",
+                this.rootUriString,
                 "_changes"
         );
         String uri = appendQueryString(base_uri, query);
@@ -84,88 +66,75 @@ public class CouchURIHelper {
     }
 
     /**
-     * Returns URI for {@code _bulk_docs} endpoint of {@code db}.
+     * Returns URI for {@code _bulk_docs} endpoint.
      */
-    public URI bulkDocsUri(String db) {
-        Preconditions.checkNotNull(db, "db must not be null");
-
+    public URI bulkDocsUri() {
         String uri = String.format(
-                "%s/%s/%s",
-                this.base,
-                this.encodePathComponent(db),
-                "_bulk_docs"
+                "%s/%s",
+                this.rootUriString,
+               "_bulk_docs"
         );
         return uriFor(uri);
     }
 
     /**
-     * Returns URI for {@code _revs_diff} endpoint of {@code db}.
+     * Returns URI for {@code _revs_diff} endpoint.
      */
-    public URI revsDiffUri(String db) {
-        Preconditions.checkNotNull(db, "db must not be null");
-
+    public URI revsDiffUri() {
         String uri = String.format(
-                "%s/%s/%s",
-                this.base,
-                this.encodePathComponent(db),
+                "%s/%s",
+                this.rootUriString,
                 "_revs_diff"
         );
         return uriFor(uri);
     }
 
     /**
-     * Returns URI for {@code documentId} in {@code db}.
+     * Returns URI for {@code documentId}.
      */
-    public URI documentUri(String db, String documentId) {
-        return documentUri(db, documentId, null);
+    public URI documentUri(String documentId) {
+        return documentUri(documentId, null);
     }
 
     /**
-     * Returns URI for {@code documentId} in {@code db} with {@code query}.
+     * Returns URI for {@code documentId} with {@code query}.
      */
-    public URI documentUri(String db, String documentId, Map<String, Object> query)  {
-        Preconditions.checkNotNull(db, "db must not be null");
-        Preconditions.checkNotNull(documentId, "documentId must not be null");
-
+    public URI documentUri(String documentId, Map<String, Object> query)  {
         String base_uri = String.format(
-                "%s/%s/%s",
-                this.base,
-                this.encodePathComponent(db),
-                this.encodePathComponent(documentId)
+                "%s/%s",
+                this.rootUriString,
+                this.encodeId(documentId)
         );
         String uri = appendQueryString(base_uri, query);
         return uriFor(uri);
     }
 
-    public URI attachmentUri(String db, String documentId, String attachmentId) {
-        Preconditions.checkNotNull(db, "db must not be null");
-        Preconditions.checkNotNull(documentId, "documentId must not be null");
-
+    /**
+     * Returns URI for Attachment having {@code attachmentId} for {@code documentId}.
+     */
+    public URI attachmentUri(String documentId, String attachmentId) {
         String base_uri = String.format(
-                "%s/%s/%s/%s",
-                this.base,
-                this.encodePathComponent(db),
-                this.encodePathComponent(documentId),
-                this.encodePathComponent(attachmentId)
+                "%s/%s/%s",
+                this.rootUriString,
+                this.encodeId(documentId),
+                this.encodeId(attachmentId)
         );
         return uriFor(base_uri);
     }
 
-    public URI attachmentUri(String db, String documentId, Map<String, Object> query, String attachmentId) {
-        Preconditions.checkNotNull(db, "db must not be null");
-        Preconditions.checkNotNull(documentId, "documentId must not be null");
-
+    /**
+     * Returns URI for Attachment having {@code attachmentId} for {@code documentId} with {@code query}.
+     */
+    public URI attachmentUri(String documentId, Map<String, Object> query, String attachmentId) {
         String base_uri = String.format(
-                "%s/%s/%s/%s",
-                this.base,
-                this.encodePathComponent(db),
-                this.encodePathComponent(documentId),
-                this.encodePathComponent(attachmentId)
+                "%s/%s/%s",
+                this.rootUriString,
+                this.encodeId(documentId),
+                this.encodeId(attachmentId)
         );
         String uri = appendQueryString(base_uri, query);
         return uriFor(uri);
     }
-
 
     private String appendQueryString(String url, Map<String, Object> query) {
         if(query != null && query.size() > 0) {
@@ -201,7 +170,12 @@ public class CouchURIHelper {
         }
     }
 
-    String encodePathComponent(String in) {
+    /**
+     * Encode a CouchDb Document or Attachment ID in a manner suitable for a GET request
+     * @param in The Document or Attachment ID to encode, eg "a/document"
+     * @return The encoded Document or Attachment ID, eg "a%2Fdocument"
+     */
+    String encodeId(String in) {
         // The only way to URL-encode in the Java library is to call the URI
         // constructor passing in the parts of the URL to encode. This makes
         // sense as the different parts of the URL require different encoding

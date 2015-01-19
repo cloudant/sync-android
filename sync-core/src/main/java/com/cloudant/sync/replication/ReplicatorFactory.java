@@ -70,11 +70,7 @@ public final class ReplicatorFactory {
     @Deprecated
     public static Replicator oneway(Datastore source, URI target) {
         try {
-            String user = getUsername(target.getUserInfo());
-            String password = getPassword(target.getUserInfo());
             PushReplication pushReplication = new PushReplication();
-            pushReplication.username = user;
-            pushReplication.password = password;
             pushReplication.source = source;
             pushReplication.target = removeUsernamePassword(target);
 
@@ -108,11 +104,7 @@ public final class ReplicatorFactory {
     @Deprecated
     public static Replicator oneway(URI source, Datastore target) {
         try {
-            String user = getUsername(source.getUserInfo());
-            String password = getPassword(source.getUserInfo());
             PullReplication pullReplication = new PullReplication();
-            pullReplication.username = user;
-            pullReplication.password = password;
             pullReplication.source = removeUsernamePassword(source);
             pullReplication.target = target;
 
@@ -126,21 +118,5 @@ public final class ReplicatorFactory {
         return new URI(u.getScheme(),
                 null, u.getHost(), u.getPort(),
                 u.getPath(), u.getQuery(), u.getFragment());
-    }
-
-    static String getUsername(String userInfo) {
-        if(userInfo == null || userInfo.indexOf(':') < 0) {
-            return "";
-        } else {
-            return userInfo.substring(0, userInfo.indexOf(':'));
-        }
-    }
-
-    static String getPassword(String userInfo) {
-        if(userInfo == null || userInfo.indexOf(':') < 0) {
-            return "";
-        } else {
-            return userInfo.substring(userInfo.indexOf(':') + 1);
-        }
     }
 }

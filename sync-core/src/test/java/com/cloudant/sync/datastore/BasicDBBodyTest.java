@@ -17,7 +17,7 @@ package com.cloudant.sync.datastore;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;

@@ -17,7 +17,7 @@ package com.cloudant.sync.indexing;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import java.sql.SQLException;
 import java.util.Map;
