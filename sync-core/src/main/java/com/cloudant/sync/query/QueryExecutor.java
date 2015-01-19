@@ -207,15 +207,23 @@ class QueryExecutor {
                 } else {
                     accumulator = Sets.intersection(accumulator, childIds);
                 }
-
-                // TODO optimisation is to bail here if accumulator is empty
             }
 
             return accumulator;
         }
         if (node instanceof OrQueryNode) {
             Set<String> accumulator = null;
-            // TODO - OR execute query tree logic...
+
+            OrQueryNode orNode = (OrQueryNode) node;
+            for (QueryNode qNode: orNode.children) {
+                Set<String> childIds = executeQueryTree(qNode, db);
+                if (accumulator == null) {
+                    accumulator = new HashSet<String>(childIds);
+                } else {
+                    accumulator = Sets.union(accumulator, childIds);
+                }
+            }
+
             return accumulator;
         } else if (node instanceof SqlQueryNode) {
             SqlQueryNode sqlNode = (SqlQueryNode) node;

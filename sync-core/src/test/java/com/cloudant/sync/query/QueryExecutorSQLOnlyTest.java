@@ -19,13 +19,12 @@ import static org.hamcrest.Matchers.notNullValue;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 
 import java.sql.SQLException;
-import java.util.Arrays;
 
 /**
  * This class uses the {@link com.cloudant.sync.query.MockSQLOnlyIndexManager}, a mocked up,
  * sub class of the {@link com.cloudant.sync.query.IndexManager} to force all tests defined in
- * {@link com.cloudant.sync.query.AbstractQueryTestBase} to exclusively exercise the post hoc
- * matcher logic.
+ * {@link com.cloudant.sync.query.AbstractQueryTestBase} to exclusively exercise the
+ * SQL Engine logic.
  *
  * @see com.cloudant.sync.query.MockSQLOnlyIndexManager
  * @see com.cloudant.sync.query.IndexManager
@@ -42,8 +41,5 @@ public class QueryExecutorSQLOnlyTest extends AbstractQueryTestBase {
         assertThat(im.getQueue(), is(notNullValue()));
         String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
-
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
     }
 }

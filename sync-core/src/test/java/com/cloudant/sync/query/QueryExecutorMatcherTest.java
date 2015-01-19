@@ -19,19 +19,18 @@ import static org.hamcrest.Matchers.notNullValue;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 
 import java.sql.SQLException;
-import java.util.Arrays;
 
 /**
  * This class uses the {@link com.cloudant.sync.query.MockMatcherIndexManager}, a mocked up,
  * sub class of the {@link com.cloudant.sync.query.IndexManager} to force all tests defined in
- * {@link com.cloudant.sync.query.AbstractQueryTestBase} to exclusively exercise the post hoc
- * matcher logic.
+ * {@link com.cloudant.sync.query.AbstractQueryExtendedTestBase} to exclusively exercise the
+ * post hoc matcher logic.
  *
  * @see com.cloudant.sync.query.MockMatcherIndexManager
  * @see com.cloudant.sync.query.IndexManager
- * @see com.cloudant.sync.query.AbstractQueryTestBase
+ * @see com.cloudant.sync.query.AbstractQueryExtendedTestBase
  */
-public class QueryExecutorMatcherTest extends AbstractQueryTestBase {
+public class QueryExecutorMatcherTest extends AbstractQueryExtendedTestBase {
     @Override
     public void setUp() throws SQLException {
         super.setUp();
@@ -42,8 +41,5 @@ public class QueryExecutorMatcherTest extends AbstractQueryTestBase {
         assertThat(im.getQueue(), is(notNullValue()));
         String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
-
-        // Index needs to exist but definition is irrelevant.  All tests here use post hoc matcher.
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("noField"), "bogus"), is("bogus"));
     }
 }

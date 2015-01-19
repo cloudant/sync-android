@@ -154,10 +154,28 @@ class UnindexedMatcher {
         //
 
         // Add subclauses that are OR
-        // TODO - Handle OR subclauses
+        for (Object rawClause: clauses) {
+            Map<String, Object> clause = (Map<String, Object>) rawClause;
+            String field = (String) clause.keySet().toArray()[0];
+            if (field.startsWith("$or")) {
+                QueryNode orNode = buildExecutionTreeForSelector(clause);
+                if (root != null) {
+                    root.children.add(orNode);
+                }
+            }
+        }
 
         // Add subclauses that are AND
-        // TODO - Handle AND subclauses
+        for (Object rawClause: clauses) {
+            Map<String, Object> clause = (Map<String, Object>) rawClause;
+            String field = (String) clause.keySet().toArray()[0];
+            if (field.startsWith("$and")) {
+                QueryNode andNode = buildExecutionTreeForSelector(clause);
+                if (root != null) {
+                    root.children.add(andNode);
+                }
+            }
+        }
 
         return root;
     }
@@ -283,18 +301,29 @@ class UnindexedMatcher {
     protected static boolean compareEq(Object l, Object r) {
         if (l instanceof String && r instanceof String) {
             return l.equals(r);
-        }
-        if (l instanceof Boolean && r instanceof Boolean) {
+        } else if (l instanceof Boolean && r instanceof Boolean) {
             return l == r;
+        } else if (l instanceof Float || r instanceof Float) {
+            String msg = String.format("Value in comparison is a Float: %s, %s", l, r);
+            logger.log(Level.WARNING, msg);
+            return false;
+        } else {
+            return l instanceof Number && r instanceof Number &&
+                    ((Number) l).doubleValue() == ((Number) r).doubleValue();
         }
-        return l instanceof Number &&
-               r instanceof Number &&
-               !(l instanceof Float || r instanceof Float) &&
-               ((Number) l).doubleValue() == ((Number) r).doubleValue();
     }
 
     protected static boolean compareNE(Object l, Object r) {
-        return !(compareEq(l, r));
+        if (l == null && r == null) {
+            logger.log(Level.WARNING, "Both values in comparison are nulls.");
+            return false;
+        } else if (l instanceof Float || r instanceof Float) {
+            String msg = String.format("Value in comparison is a Float: %s, %s", l, r);
+            logger.log(Level.WARNING, msg);
+            return false;
+        } else {
+            return !(compareEq(l, r));
+        }
     }
 
     //
@@ -304,23 +333,91 @@ class UnindexedMatcher {
     //  3. TEXT
     //  4. BLOB
     protected static boolean compareLT(Object l, Object r) {
-        // TODO: 275 - 309 CDTQUnindexedMatcher.m
-        return false;
+        if (l == null || r == null) {
+            return false;  // null fails all lt/gt/lte/gte tests
+        } else if (!(l instanceof String || l instanceof Number)) {
+            String msg = String.format("Value in document not a Number or String: %s", l);
+            logger.log(Level.WARNING, msg);
+            return false;  // Not sure how to compare values that are not numbers or strings
+        } else if (l instanceof String) {
+            if (r instanceof Number) {
+                return false;  // INT < STRING
+            }
+
+            String lStr = (String) l;
+            String rStr = (String) r;
+
+            return lStr.compareTo(rStr) < 0;
+        } else if (r instanceof String) {
+            // At this point in the logic l can only be a number
+            return true;  // INT < STRING
+        } else {
+            // At this point in the logic both l and r can only be numbers
+            Number lNum = (Number) l;
+            Number rNum = (Number) r;
+
+            if (l instanceof Float || r instanceof Float) {
+                String msg = String.format("Value in comparison is a Float: %s, %s", l, r);
+                logger.log(Level.WARNING, msg);
+                return false;
+            } else {
+                return lNum.doubleValue() < rNum.doubleValue();
+            }
+        }
     }
 
     protected static boolean compareLTE(Object l, Object r) {
-        // TODO: 311 - 323 CDTQUnindexedMatcher.m
-        return false;
+        if (l == null || r == null) {
+            return false;  // null fails all lt/gt/lte/gte tests
+        } else if (!(l instanceof String || l instanceof Number)) {
+            String msg = String.format("Value in document not a Number or String: %s", l);
+            logger.log(Level.WARNING, msg);
+            return false;  // Not sure how to compare values that are not numbers or strings
+        } else {
+            if (l instanceof Float || r instanceof Float) {
+                String msg = String.format("Value in comparison is a Float: %s, %s", l, r);
+                logger.log(Level.WARNING, msg);
+                return false;
+            } else {
+                return compareLT(l, r) || compareEq(l, r);
+            }
+        }
     }
 
     protected static boolean compareGT(Object l, Object r) {
-        // TODO: 325 - 337 CDTQUnindexedMatcher.m
-        return false;
+        if (l == null || r == null) {
+            return false;  // null fails all lt/gt/lte/gte tests
+        } else if (!(l instanceof String || l instanceof Number)) {
+            String msg = String.format("Value in document not a Number or String: %s", l);
+            logger.log(Level.WARNING, msg);
+            return false;  // Not sure how to compare values that are not numbers or strings
+        } else {
+            if (l instanceof Float || r instanceof Float) {
+                String msg = String.format("Value in comparison is a Float: %s, %s", l, r);
+                logger.log(Level.WARNING, msg);
+                return false;
+            } else {
+                return !compareLTE(l, r);
+            }
+        }
     }
 
     protected static boolean compareGTE(Object l, Object r) {
-        // TODO: 339 - 351 CDTQUnindexedMatcher.m
-        return false;
+        if (l == null || r == null) {
+            return false;  // null fails all lt/gt/lte/gte tests
+        } else if (!(l instanceof String || l instanceof Number)) {
+            String msg = String.format("Value in document not a Number or String: %s", l);
+            logger.log(Level.WARNING, msg);
+            return false;  // Not sure how to compare values that are not numbers or strings
+        } else {
+            if (l instanceof Float || r instanceof Float) {
+                String msg = String.format("Value in comparison is a Float: %s, %s", l, r);
+                logger.log(Level.WARNING, msg);
+                return false;
+            } else {
+                return !compareLT(l, r);
+            }
+        }
     }
 
 }

@@ -96,7 +96,6 @@ class QuerySqlTranslator {
 
     private static final String AND = "$and";
     private static final String OR = "$or";
-    private static final String EQ = "$eq";
     private static final String NOT = "$not";
     private static final String EXISTS = "$exists";
 
@@ -217,7 +216,35 @@ class QuerySqlTranslator {
             // We could optimise for OR parts where we have an appropriate compound index,
             // but we don't for now.
 
-            // TODO - implement OR logic...
+            for (Object basicClause : basicClauses) {
+                List<Object> wrappedClause = Arrays.asList(basicClause);
+                String chosenIndex = chooseIndexForAndClause(wrappedClause, indexes);
+                if (chosenIndex == null || chosenIndex.isEmpty()) {
+                    state.atLeastOneIndexMissing = true;
+                    String msg = String.format("No single index contains all of %s; %s",
+                                               basicClauses.toString(),
+                                               "add index for these fields to query efficiently.");
+                    logger.log(Level.WARNING, msg);
+                } else {
+                    state.atLeastOneIndexUsed = true;
+
+                    // Execute SQL on that index with appropriate values
+                    SqlParts select = selectStatementForAndClause(wrappedClause, chosenIndex);
+                    if (select == null) {
+                        String msg = String.format("Error generating SELECT clause for %s",
+                                                   basicClauses);
+                        logger.log(Level.SEVERE, msg);
+                        return null;
+                    }
+
+                    SqlQueryNode sqlNode = new SqlQueryNode();
+                    sqlNode.sql = select;
+
+                    if (root != null) {
+                        root.children.add(sqlNode);
+                    }
+                }
+            }
         }
 
         //
@@ -227,10 +254,28 @@ class QuerySqlTranslator {
         //
 
         // Add subclauses that are OR
-        // TODO
+        for (Object rawClause: clauses) {
+            Map<String, Object> clause = (Map<String, Object>) rawClause;
+            String field = (String) clause.keySet().toArray()[0];
+            if (field.startsWith("$or")) {
+                QueryNode orNode = translateQuery(clause, indexes, state);
+                if (root != null) {
+                    root.children.add(orNode);
+                }
+            }
+        }
 
         // Add subclauses that are AND
-        // TODO
+        for (Object rawClause: clauses) {
+            Map<String, Object> clause = (Map<String, Object>) rawClause;
+            String field = (String) clause.keySet().toArray()[0];
+            if (field.startsWith("$and")) {
+                QueryNode andNode = translateQuery(clause, indexes, state);
+                if (root != null) {
+                    root.children.add(andNode);
+                }
+            }
+        }
 
         return root;
     }
@@ -365,10 +410,48 @@ class QuerySqlTranslator {
 
             // $not specifies the opposite operator OR NULL documents be returned
             if (operator.equals(NOT)) {
-                // TODO - implement NOT logic...
+                Map<String, Object> negatedPredicate = (Map<String, Object>) predicate.get(NOT);
+
+                if (negatedPredicate.size() != 1) {
+                    String msg = String.format("Expected single operator per predicate map, got %s",
+                                               predicate.toString());
+                    logger.log(Level.SEVERE, msg);
+                    return null;
+                }
+
+                operator = (String) negatedPredicate.keySet().toArray()[0];
+                Object predicateValue;
+
+                if (operator.equals(EXISTS)) {
+                    // what we do here depends on what the value of the exists are
+                    predicateValue = negatedPredicate.get(operator);
+
+                    boolean exists = !((Boolean) predicateValue);
+                    // since this clause is negated we need to negate the bool value
+                    whereClauses.add(convertExistsToSqlClauseForFieldName(fieldName, exists));
+                } else {
+                    String sqlOperator = notOperatorMap.get(operator);
+
+                    if (sqlOperator == null || sqlOperator.isEmpty()) {
+                        String msg = String.format("Unsupported comparison operator %s", operator);
+                        logger.log(Level.SEVERE, msg);
+                        return null;
+                    }
+
+                    String whereClause = String.format("(\"%s\" %s ? OR \"%s\" IS NULL)",
+                                                       fieldName,
+                                                       sqlOperator,
+                                                       fieldName);
+                    predicateValue = negatedPredicate.get(operator);
+
+                    sqlParameters.add(predicateValue);
+                    whereClauses.add(whereClause);
+                }
+
             } else {
                 if (operator.equals(EXISTS)) {
-                    // TODO - implement EXISTS logic...
+                    boolean exists = (Boolean) predicate.get(operator);
+                    whereClauses.add(convertExistsToSqlClauseForFieldName(fieldName, exists));
                 } else {
                     String sqlOperator = operatorMap.get(operator);
                     if (sqlOperator == null || sqlOperator.isEmpty()) {
@@ -399,6 +482,19 @@ class QuerySqlTranslator {
         }
 
         return SqlParts.partsForSql(where, parameterArray);
+    }
+
+    private static String convertExistsToSqlClauseForFieldName(String fieldName, boolean exists) {
+        String sqlClause;
+        if (exists) {
+            // so this field needs to exist
+            sqlClause = String.format("(\"%s\" IS NOT NULL)", fieldName);
+        } else {
+            // must not exist
+            sqlClause = String.format("(\"%s\" IS NULL)", fieldName);
+        }
+
+        return sqlClause;
     }
 
     private static boolean validatePredicateValue(Object predicateValue) {

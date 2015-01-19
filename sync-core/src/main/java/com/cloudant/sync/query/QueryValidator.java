@@ -13,6 +13,7 @@
 package com.cloudant.sync.query;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,6 +146,16 @@ class QueryValidator {
         return accumulator;
     }
 
+    private static boolean validateCompoundOperatorOperand(Object operand) {
+        if (!(operand instanceof List)) {
+            String msg = String.format("Argument to compound operator is not an NSArray: %s",
+                                       operand.toString());
+            logger.log(Level.SEVERE, msg);
+            return false;
+        }
+        return true;
+    }
+
     /**
      *  we are going to need to walk the query tree to validate it before executing it
      */
@@ -164,9 +175,98 @@ class QueryValidator {
         return false;
     }
 
+    @SuppressWarnings("unchecked")
     private static boolean validateCompoundOperatorClauses(List<Object> clauses) {
-        // TODO - implement logic...
-        return true;
+        boolean valid = false;
+
+        for (Object obj : clauses) {
+            valid = false;
+            if (!(obj instanceof Map)) {
+                String msg = String.format("Operator argument must be a Map %s",
+                                           clauses.toString());
+                logger.log(Level.SEVERE, msg);
+                break;
+            }
+            Map<String, Object> clause = (Map<String, Object>) obj;
+            if (clause.size() != 1) {
+                String msg;
+                msg = String.format("Operator argument clause should have one key value pair: %s",
+                                    clauses.toString());
+                logger.log(Level.SEVERE, msg);
+                break;
+            }
+
+            String key = (String) clause.keySet().toArray()[0];
+            if (Arrays.asList("$or", "$not", "$and").contains(key)) {
+                // this should have a list as top level type
+                Object compoundClauses = clause.get(key);
+                if (validateCompoundOperatorOperand(compoundClauses)) {
+                    // validate list
+                    valid = validateCompoundOperatorClauses((List) compoundClauses);
+                }
+            } else if (!(key.startsWith("$"))) {
+                // this should have a map
+                // send this for validation
+                valid = validateClause((Map<String, Object>) clause.get(key));
+            } else {
+                String msg = String.format("%s operator cannot be a top level operator", key);
+                logger.log(Level.SEVERE, msg);
+                break;
+            }
+
+            if (!valid) {
+                break;  // if we have gotten here with valid being no, we should abort
+            }
+        }
+
+        return valid;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean validateClause(Map<String, Object> clause) {
+        List<String> validOperators = Arrays.asList("$eq",
+                                                    "$lt",
+                                                    "$gt",
+                                                    "$exists",
+                                                    "$not",
+                                                    "$ne",
+                                                    "$gte",
+                                                    "$lte");
+        if (clause.size() == 1) {
+            String operator = (String) clause.keySet().toArray()[0];
+            if (validOperators.contains(operator)) {
+                // contains correct operator
+                Object clauseOperand = clause.get(operator);
+                // handle special case, $not is the only op that expects a dict
+                if (operator.equals("$not") && clauseOperand instanceof Map) {
+                    return validateClause((Map) clauseOperand);
+                } else if (validatePredicateValue(clauseOperand, operator)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean validatePredicateValue(Object predicateValue, String operator) {
+        if (operator.equals("$exists")) {
+            return validateExistsArgument(predicateValue);
+        } else {
+            return (predicateValue instanceof String ||
+                    predicateValue instanceof Number && !(predicateValue instanceof Float));
+        }
+    }
+
+    private static boolean validateExistsArgument(Object exists) {
+        boolean valid = true;
+
+        if (!(exists instanceof Boolean)) {
+            valid = false;
+            logger.log(Level.SEVERE, "$exists operator expects true or false");
+        }
+
+        return valid;
     }
 
     private static boolean validateQueryValue(Object value) {

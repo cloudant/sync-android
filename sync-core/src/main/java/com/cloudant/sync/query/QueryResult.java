@@ -57,7 +57,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
      *
      *  @return the number of documents {@code DocumentRevision} in this query result.
      */
-    public long size() {
+    public int size() {
         return documentIds().size();
     }
 

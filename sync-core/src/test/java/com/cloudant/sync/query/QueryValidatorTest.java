@@ -13,77 +13,90 @@
 package com.cloudant.sync.query;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 public class QueryValidatorTest {
 
     @Test
-    @SuppressWarnings("unchecked")
     public void normalizeSingleFieldQuery() {
-        Map<String, Object> query = new HashMap<String, Object>();
+        Map<String, Object> query = new LinkedHashMap<String, Object>();
         // query - { "name" : "mike" }
         query.put("name", "mike");
         Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
 
-        // normalized query - { "$and" : [ { "name" : { "$eq" : "mike" } } ]
-        assertThat(normalizedQuery.size(), is(1));
-        assertThat(normalizedQuery, hasKey("$and"));
-        List<Object> fields = (ArrayList) normalizedQuery.get("$and");
-        assertThat(fields.size(), is(1));
-        Map<String, Object> fieldMap = (Map) fields.get(0);
-        assertThat(fieldMap.size(), is(1));
-        assertThat(fieldMap, hasKey("name"));
-        Map<String, Object> predicate = (Map) fieldMap.get("name");
-        assertThat(predicate.size(), is(1));
-        assertThat(predicate, hasKey("$eq"));
-        assertThat((String) predicate.get("$eq"), is("mike"));
+        // normalized query - { "$and" : [ { "name" : { "$eq" : "mike" } } ] }
+        Map<String, Object> c1op = new HashMap<String, Object>();
+        c1op.put("$eq", "mike");
+        Map<String, Object> c1 = new HashMap<String, Object>();
+        c1.put("name", c1op);
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        expected.put("$and", Arrays.<Object>asList(c1));
+        assertThat(normalizedQuery, is(expected));
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void normalizeMultiFieldQuery() {
         Map<String, Object> query = new LinkedHashMap<String, Object>();
-        // query - { "name" : "mike", "age", 12 }
+        // query - { "name" : "mike", "pet" : "cat", "age", 12 }
         query.put("name", "mike");
+        query.put("pet", "cat");
         query.put("age", 12);
         Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
 
         // normalized query - { "$and" : [ { "name" : { "$eq" : "mike" } },
-        //                                 { "age" : { "$eq" : "12" } } ]
-        assertThat(normalizedQuery.size(), is(1));
-        assertThat(normalizedQuery, hasKey("$and"));
+        //                                 { "pet" : { "$eq" : "cat" } },
+        //                                 { "age" : { "$eq" : "12" } } ] }
+        Map<String, Object> c1op = new HashMap<String, Object>();
+        c1op.put("$eq", "mike");
+        Map<String, Object> c1 = new HashMap<String, Object>();
+        c1.put("name", c1op);
+        Map<String, Object> c2op = new HashMap<String, Object>();
+        c2op.put("$eq", "cat");
+        Map<String, Object> c2 = new HashMap<String, Object>();
+        c2.put("pet", c2op);
+        Map<String, Object> c3op = new HashMap<String, Object>();
+        c3op.put("$eq", 12);
+        Map<String, Object> c3 = new HashMap<String, Object>();
+        c3.put("age", c3op);
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        expected.put("$and", Arrays.<Object>asList(c1, c2, c3));
+        assertThat(normalizedQuery, is(expected));
+    }
 
-        List<Object> fields = (ArrayList) normalizedQuery.get("$and");
-        assertThat(fields.size(), is(2));
-        Map<String, Object> fieldMap = (Map) fields.get(0);
-        assertThat(fieldMap.size(), is(1));
-        assertThat(fieldMap, hasKey("name"));
-        Map<String, Object> predicate = (Map) fieldMap.get("name");
-        assertThat(predicate.size(), is(1));
-        assertThat(predicate, hasKey("$eq"));
-        assertThat((String) predicate.get("$eq"), is("mike"));
+    @Test
+    public void doesNotChangeAlreadyNormalizedQuery() {
+        // query - { "$and" : [ { "name" : { "$eq" : "mike" } },
+        //                      { "pet" : { "$eq" : "cat" } },
+        //                      { "age" : { "$eq" : "12" } } ] }
+        Map<String, Object> c1op = new HashMap<String, Object>();
+        c1op.put("$eq", "mike");
+        Map<String, Object> c1 = new HashMap<String, Object>();
+        c1.put("name", c1op);
+        Map<String, Object> c2op = new HashMap<String, Object>();
+        c2op.put("$eq", "cat");
+        Map<String, Object> c2 = new HashMap<String, Object>();
+        c2.put("pet", c2op);
+        Map<String, Object> c3op = new HashMap<String, Object>();
+        c3op.put("$eq", 12);
+        Map<String, Object> c3 = new HashMap<String, Object>();
+        c3.put("age", c3op);
+        Map<String, Object> query = new LinkedHashMap<String, Object>();
+        query.put("$and", Arrays.<Object>asList(c1, c2, c3));
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
 
-        fieldMap.clear();
-        fieldMap = (Map) fields.get(1);
-        assertThat(fieldMap.size(), is(1));
-        assertThat(fieldMap, hasKey("age"));
-        predicate.clear();
-        predicate = (Map) fieldMap.get("age");
-        assertThat(predicate.size(), is(1));
-        assertThat(predicate, hasKey("$eq"));
-        assertThat((Integer) predicate.get("$eq"), is(12));
+        // normalized query - { "$and" : [ { "name" : { "$eq" : "mike" } },
+        //                                 { "pet" : { "$eq" : "cat" } },
+        //                                 { "age" : { "$eq" : "12" } } ] }
+        assertThat(normalizedQuery, is(query));
     }
 
     @Test
