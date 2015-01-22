@@ -47,7 +47,7 @@ public class PushReplication extends Replication {
         return this.extractDatabaseName(this.target);
     }
 
-    CouchConfig getCouchConfig() {
+    public CouchConfig getCouchConfig() {
         return this.createCouchConfig(this.target, this.username, this.password);
     }
 

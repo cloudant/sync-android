@@ -57,7 +57,7 @@ public class PullReplication extends Replication {
         return this.extractDatabaseName(this.source);
     }
 
-    CouchConfig getCouchConfig() {
+    public CouchConfig getCouchConfig() {
         return this.createCouchConfig(this.source, this.username, this.password);
     }
 
