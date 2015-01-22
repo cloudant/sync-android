@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *  This class contains common validation options for the
@@ -27,6 +29,8 @@ class QueryValidator {
     public static final String OR = "$or";
     public static final String EQ = "$eq";
 
+    private static final Logger logger = Logger.getLogger(QueryValidator.class.getName());
+
     /**
      *  Expand implicit operators in a query, and validate
      */
@@ -35,6 +39,12 @@ class QueryValidator {
         boolean isWildCard = false;
         if (query.isEmpty()) {
             isWildCard = true;
+        }
+
+        if (!validateQueryValue(query)) {
+            String msg = String.format("Invalid value encountered in query: %s", query.toString());
+            logger.log(Level.SEVERE, msg);
+            return null;
         }
 
         // First expand the query to include a leading compound predicate
@@ -157,6 +167,23 @@ class QueryValidator {
     private static boolean validateCompoundOperatorClauses(List<Object> clauses) {
         // TODO - implement logic...
         return true;
+    }
+
+    private static boolean validateQueryValue(Object value) {
+        boolean valid = true;
+        if (value instanceof Map) {
+            for (Object key: ((Map) value).keySet()) {
+                valid = valid && validateQueryValue(((Map) value).get(key));
+            }
+        } else if (value instanceof List) {
+            for (Object element : (List) value) {
+                valid = valid && validateQueryValue(element);
+            }
+        } else if (value instanceof Float) {
+            valid = false;
+        }
+
+        return valid;
     }
 
 }

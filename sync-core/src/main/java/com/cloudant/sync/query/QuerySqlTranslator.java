@@ -15,6 +15,7 @@ package com.cloudant.sync.query;
 import com.google.common.base.Joiner;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -111,8 +112,28 @@ class QuerySqlTranslator {
         // which returns every document, so the posthoc matcher can
         // run over every document to manually carry out the query.
         if (!state.atLeastOneIndexUsed) {
-            // TODO
-            return null;
+            Set<String> neededFields = new HashSet<String>(Arrays.asList("_id"));
+            String allDocsIndex = chooseIndexForFields(neededFields, indexes);
+
+            if (allDocsIndex == null || allDocsIndex.isEmpty()) {
+                String msg = "No indexes defined, cannot execute query for all documents";
+                logger.log(Level.SEVERE, msg);
+                return null;
+            }
+
+            String tableName = IndexManager.tableNameForIndex(allDocsIndex);
+
+            String sql = String.format("SELECT _id FROM %s", tableName);
+            SqlParts parts = SqlParts.partsForSql(sql, new String[]{});
+
+            SqlQueryNode sqlNode = new SqlQueryNode();
+            sqlNode.sql = parts;
+
+            AndQueryNode root = new AndQueryNode();
+            root.children.add(sqlNode);
+
+            indexesCoverQuery[0] = false;
+            return root;
         } else {
             indexesCoverQuery[0] = !state.atLeastOneIndexMissing;
             return node;
@@ -253,8 +274,8 @@ class QuerySqlTranslator {
     }
 
     @SuppressWarnings("unchecked")
-    private static String chooseIndexForFields(Set<String> neededFields,
-                                               Map<String, Object> indexes) {
+    protected static String chooseIndexForFields(Set<String> neededFields,
+                                                 Map<String, Object> indexes) {
         String chosenIndex = null;
         for (String indexName: indexes.keySet()) {
             Map<String, Object> indexDefinition = (Map<String, Object>) indexes.get(indexName);
@@ -381,13 +402,10 @@ class QuerySqlTranslator {
     }
 
     private static boolean validatePredicateValue(Object predicateValue) {
-        return (predicateValue instanceof String ||
-                predicateValue instanceof Byte ||
-                predicateValue instanceof Integer ||
-                predicateValue instanceof Long ||
-                predicateValue instanceof Short ||
-                predicateValue instanceof Double ||
-                predicateValue instanceof Float);
+        // String, Boolean or Number other than Float is valid
+        return ((predicateValue instanceof String ||
+                 predicateValue instanceof Number ||
+                 predicateValue instanceof Boolean) && !(predicateValue instanceof Float));
     }
 
 }
