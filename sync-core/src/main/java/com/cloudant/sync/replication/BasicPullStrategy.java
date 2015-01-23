@@ -99,9 +99,8 @@ class BasicPullStrategy implements ReplicationStrategy {
         this.config = config;
         this.filter = pullReplication.filter;
 
-        String dbName = pullReplication.getSourceDbName();
         CouchConfig couchConfig = pullReplication.getCouchConfig();
-        this.sourceDb = new CouchClientWrapper(dbName, couchConfig);
+        this.sourceDb = new CouchClientWrapper(couchConfig);
         this.targetDb = new DatastoreWrapper((DatastoreExtended) pullReplication.target);
         this.name = String.format("%s [%s]", LOG_TAG, pullReplication.getReplicatorName());
     }
@@ -185,7 +184,7 @@ class BasicPullStrategy implements ReplicationStrategy {
 
         if(!this.sourceDb.exists()) {
             throw new DatabaseNotFoundException(
-                    "Database not found: " + this.sourceDb.getDbName());
+                    "Database not found " + this.sourceDb.getIdentifier());
         }
 
         this.documentCounter = 0;

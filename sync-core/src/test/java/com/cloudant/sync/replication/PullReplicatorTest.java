@@ -32,7 +32,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        source = getURI();
+        source = getCouchConfig(getDbName()).getRootUri();
 
         PullReplication pull = createPullReplication();
         replicator = (BasicReplicator)ReplicatorFactory.oneway(pull);

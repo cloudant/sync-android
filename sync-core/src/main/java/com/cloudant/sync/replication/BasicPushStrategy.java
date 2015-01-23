@@ -82,10 +82,9 @@ class BasicPushStrategy implements ReplicationStrategy {
             config = new PushConfiguration();
         }
 
-        String dbName = pushReplication.getTargetDbName();
         CouchConfig couchConfig = pushReplication.getCouchConfig();
 
-        this.targetDb = new CouchClientWrapper(dbName, couchConfig);
+        this.targetDb = new CouchClientWrapper(couchConfig);
         this.sourceDb = new DatastoreWrapper((DatastoreExtended) pushReplication.source);
         // Push config is immutable
         this.config = config;
@@ -154,7 +153,7 @@ class BasicPushStrategy implements ReplicationStrategy {
 
         if(!this.targetDb.exists()) {
             throw new DatabaseNotFoundException(
-                    "Database not found: " + this.targetDb.getDbName());
+                    "Database not found: " + this.targetDb.getIdentifier());
         }
 
         this.documentCounter = 0;

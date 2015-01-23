@@ -1,12 +1,9 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.mazha.ClientTestUtils;
-import com.cloudant.mazha.CouchDbInfo;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
-import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.util.AbstractTreeNode;
@@ -27,13 +24,14 @@ import java.util.Set;
  */
 public class DBWithSlashReplicationTest extends ReplicationTestBase {
 
-    URI source;
+    // NB although the user has to encode the / themselves as %2F, this is still a valuable test
+    // as it shows we don't double-encode eg encode %2F as %252F
+
     BasicReplicator replicator;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        source = getURI();
     }
 
     @Test
@@ -75,13 +73,7 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
         Assert.assertFalse(listener.errorCalled);
 
         // compare remote revisions with local revisions
-
-
-        String dbname =  source.getPath().substring(1);
-        String dbnameEncoded = dbname.replace("/", "%2F");
-        String dbURI = source.toString().replace(dbname,dbnameEncoded);
-
-
+        String dbURI =  couchClient.getRootUri().toASCIIString();
         URI getURI = new URI( dbURI + "/" + documentName + "?revs_info=true");
 
         List<String> remoteRevs = ClientTestUtils.getRemoteRevisionIDs(couchClient, getURI);
@@ -170,6 +162,6 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
 
     @Override
     String getDbName() {
-        return "dbwith/aslash";
+        return "dbwith%2Faslash";
     }
 }

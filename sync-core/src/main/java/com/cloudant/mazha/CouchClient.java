@@ -26,13 +26,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import org.apache.http.client.params.HttpClientParams;
-import org.apache.http.conn.params.ConnManagerParams;
-import org.apache.http.conn.params.ConnPerRoute;
-import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
-import org.apache.http.params.HttpProtocolParams;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -50,61 +46,40 @@ public class CouchClient  {
     public static final String COUCH_ERROR_CONFLICT = "conflict";
 
     private final HttpRequests httpClient;
-    private final JSONHelper json;
-    private final String defaultDb;
+    protected final JSONHelper jsonHelper;
     private CouchURIHelper uriHelper;
 
-    public CouchClient(CouchConfig config, String dbName) {
+    public CouchClient(CouchConfig config) {
         this.httpClient = new HttpRequests(this.getHttpConnectionParams(config),
-                config.getUsername(),
-                config.getPassword(),
+                config.getRootUri().getUserInfo(),
                 config.getCustomHeaders());
-        this.defaultDb = dbName;
-        this.json = new JSONHelper();
-        this.uriHelper = new CouchURIHelper(
-                config.getProtocol(),
-                config.getHost(),
-                config.getPort()
-        );
+        this.jsonHelper = new JSONHelper();
+        this.uriHelper = new CouchURIHelper(config.getRootUri());
     }
 
-    public URI getDefaultDBUri() {
-        return this.uriHelper.dbUri(this.defaultDb);
-    }
-
-    public String getDefaultDb() {
-        return this.defaultDb;
+    public URI getRootUri() {
+        return this.uriHelper.getRootUri();
     }
 
     HttpRequests getHttpClient() {
         return httpClient;
     }
 
-    protected JSONHelper getJson() {
-        return json;
-    }
-
-    public List<String> allDbs() {
-        URI allDBUri = uriHelper.allDbsUri();
-        return getList(allDBUri);
-    }
-
     public List<String> getList(URI uri) {
         InputStream is = null;
         try {
             is = httpClient.get(uri);
-            return getJson().fromJsonToList(new InputStreamReader(is), JSONHelper.STRING_LIST_TYPE_DEF);
+            return jsonHelper.fromJsonToList(new InputStreamReader(is), JSONHelper.STRING_LIST_TYPE_DEF);
         } finally {
             closeQuietly(is);
         }
     }
 
-    public void createDb(String db) throws CouchException {
-        Preconditions.checkNotNull(db, "db name must not be null");
+    public void createDb() throws CouchException {
         InputStream is = null;
         try {
-            is = httpClient.put(this.uriHelper.dbUri(db));
-            DBOperationResponse res = getJson().fromJson(new InputStreamReader(is), DBOperationResponse.class);
+            is = httpClient.put(this.uriHelper.getRootUri());
+            DBOperationResponse res = jsonHelper.fromJson(new InputStreamReader(is), DBOperationResponse.class);
             if (!res.getOk()) {
                 throw new ServerException("Response from couch db server: " + res.toString());
             }
@@ -113,12 +88,11 @@ public class CouchClient  {
         }
     }
 
-    public void deleteDb(String db) {
-        Preconditions.checkNotNull(db, "db name must not be null");
+    public void deleteDb() {
         InputStream is = null;
         try {
-            is = httpClient.delete(this.uriHelper.dbUri(db));
-            DBOperationResponse res = getJson().fromJson(new InputStreamReader(is), DBOperationResponse.class);
+            is = httpClient.delete(this.uriHelper.getRootUri());
+            DBOperationResponse res = jsonHelper.fromJson(new InputStreamReader(is), DBOperationResponse.class);
             if (!res.getOk()) {
                 throw new ServerException("Response from couch db server: " + res.toString());
             }
@@ -127,12 +101,11 @@ public class CouchClient  {
         }
     }
 
-    public CouchDbInfo getDbInfo(String db) {
-        Preconditions.checkNotNull(db, "db name must not be null");
+    public CouchDbInfo getDbInfo() {
         InputStream is = null;
         try {
-            is = httpClient.get(this.uriHelper.dbUri(db));
-            return getJson().fromJson(new InputStreamReader(is), CouchDbInfo.class);
+            is = httpClient.get(this.uriHelper.getRootUri());
+            return jsonHelper.fromJson(new InputStreamReader(is), CouchDbInfo.class);
         } finally {
             closeQuietly(is);
         }
@@ -174,9 +147,9 @@ public class CouchClient  {
         Preconditions.checkNotNull(options, "options must not be null");
         InputStream is = null;
         try {
-            URI changesFeedUri = this.uriHelper.changesUri(this.defaultDb, options);
+            URI changesFeedUri = this.uriHelper.changesUri(options);
             is = httpClient.get(changesFeedUri);
-            return getJson().fromJson(new InputStreamReader(is), ChangesResult.class);
+            return jsonHelper.fromJson(new InputStreamReader(is), ChangesResult.class);
         } finally {
             closeQuietly(is);
         }
@@ -184,7 +157,7 @@ public class CouchClient  {
 
     public boolean contains(String id) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        URI doc = this.uriHelper.documentUri(this.defaultDb, id);
+        URI doc = this.uriHelper.documentUri(id);
         try {
             httpClient.head(doc);
             return true;
@@ -194,11 +167,11 @@ public class CouchClient  {
     }
 
     public Response create(Object document) {
-        String json = getJson().toJson(document);
+        String json = jsonHelper.toJson(document);
         InputStream is = null;
         try {
-            is = httpClient.post(this.uriHelper.dbUri(this.defaultDb), json);
-            Response res = getJson().fromJson(new InputStreamReader(is), Response.class);
+            is = httpClient.post(this.uriHelper.getRootUri(), json);
+            Response res = jsonHelper.fromJson(new InputStreamReader(is), Response.class);
             if (!res.getOk()) {
                 throw new ServerException(res.toString());
             } else {
@@ -216,7 +189,7 @@ public class CouchClient  {
 
     public InputStream getDocumentStream(String id) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        URI doc = this.uriHelper.documentUri(this.defaultDb, id);
+        URI doc = this.uriHelper.documentUri(id);
         return httpClient.get(doc);
     }
 
@@ -225,19 +198,19 @@ public class CouchClient  {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
-        URI doc = this.uriHelper.documentUri(this.defaultDb, id, queries);
+        URI doc = this.uriHelper.documentUri(id, queries);
         return httpClient.get(doc);
     }
 
     public InputStream getAttachmentStream(String id, String attachmentName) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        URI doc = this.uriHelper.attachmentUri(this.defaultDb, id, attachmentName);
+        URI doc = this.uriHelper.attachmentUri(id, attachmentName);
         return httpClient.getCompressed(doc);
     }
 
     public InputStream getAttachmentStreamUncompressed(String id, String attachmentName) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        URI doc = this.uriHelper.attachmentUri(this.defaultDb, id, attachmentName);
+        URI doc = this.uriHelper.attachmentUri(id, attachmentName);
         return httpClient.get(doc);
     }
 
@@ -246,7 +219,7 @@ public class CouchClient  {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
-        URI doc = this.uriHelper.attachmentUri(this.defaultDb, id, queries, attachmentName);
+        URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
         return httpClient.getCompressed(doc);
     }
 
@@ -255,7 +228,7 @@ public class CouchClient  {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
-        URI doc = this.uriHelper.attachmentUri(this.defaultDb, id, queries, attachmentName);
+        URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
         return httpClient.get(doc);
     }
 
@@ -264,7 +237,7 @@ public class CouchClient  {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
-        URI doc = this.uriHelper.attachmentUri(this.defaultDb, id, queries, attachmentName);
+        URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
         httpClient.put(doc, attachmentString);
     }
 
@@ -273,13 +246,13 @@ public class CouchClient  {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
-        URI doc = this.uriHelper.attachmentUri(this.defaultDb, id, queries, attachmentName);
+        URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
         httpClient.put(doc, contentType, attachmentData);
     }
 
     /**
      * Convenience method to get document with all the conflicts revisions. It does that by adding
-     * "conflicts=true" option to the GET request. An example response json is following:
+     * "conflicts=true" option to the GET request. An example response JSON is the following:
      * {
      * "_id" : "c3fe5bfdee767fa3d51717bb8b51d55b",
      * "_rev" : "3-176c3c8b3f284d4fa6e8c075d58b7b86",
@@ -316,13 +289,13 @@ public class CouchClient  {
         if (pullAttachmentsInline) {
             options.put("attachments", true);
             if (attsSince != null) {
-                options.put("atts_since", getJson().toJson(attsSince));
+                options.put("atts_since", jsonHelper.toJson(attsSince));
             }
         } else {
             options.put("attachments", false);
             options.put("att_encoding_info", true);
         }
-        options.put("open_revs", getJson().toJson(revisions));
+        options.put("open_revs", jsonHelper.toJson(revisions));
         return this.getDocument(id, options, new TypeReference<List<OpenRevision>>() {
         });
     }
@@ -344,11 +317,11 @@ public class CouchClient  {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
         Preconditions.checkNotNull(type, "type must not be null");
 
-        URI doc = this.uriHelper.documentUri(this.defaultDb, id, options);
+        URI doc = this.uriHelper.documentUri(id, options);
         InputStream is = null;
         try {
             is = this.httpClient.get(doc);
-            return getJson().fromJson(new InputStreamReader(is), type);
+            return jsonHelper.fromJson(new InputStreamReader(is), type);
         } finally {
             closeQuietly(is);
         }
@@ -366,7 +339,7 @@ public class CouchClient  {
         InputStream is = null;
         try {
             is = this.getDocumentStream(id, rev);
-            return getJson().fromJson(new InputStreamReader(is), type);
+            return jsonHelper.fromJson(new InputStreamReader(is), type);
         } finally {
             closeQuietly(is);
         }
@@ -397,12 +370,12 @@ public class CouchClient  {
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("revs", "true");
         queries.put("rev", rev);
-        URI findRevs = this.uriHelper.documentUri(this.defaultDb, id, queries);
+        URI findRevs = this.uriHelper.documentUri(id, queries);
 
         InputStream is = null;
         try {
             is = httpClient.get(findRevs);
-            return getJson().fromJson(new InputStreamReader(is), type);
+            return jsonHelper.fromJson(new InputStreamReader(is), type);
         } finally {
             closeQuietly(is);
         }
@@ -416,12 +389,12 @@ public class CouchClient  {
             throw new NoResourceException("No document for given id: " + id);
         }
 
-        String json = getJson().toJson(document);
-        URI doc = this.uriHelper.documentUri(this.defaultDb, id);
+        String json = jsonHelper.toJson(document);
+        URI doc = this.uriHelper.documentUri(id);
         InputStream is = null;
         try {
             is = httpClient.put(doc, json);
-            return getJson().fromJson(new InputStreamReader(is), Response.class);
+            return jsonHelper.fromJson(new InputStreamReader(is), Response.class);
         } catch (CouchException e) {
             if (COUCH_ERROR_CONFLICT.equals(e.getError())) {
                 throw new DocumentConflictException(e.toString());
@@ -438,11 +411,11 @@ public class CouchClient  {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
-        URI doc = this.uriHelper.documentUri(this.defaultDb, id, queries);
+        URI doc = this.uriHelper.documentUri(id, queries);
         InputStream is = null;
         try {
             is = httpClient.delete(doc);
-            return getJson().fromJson(new InputStreamReader(is), Response.class);
+            return jsonHelper.fromJson(new InputStreamReader(is), Response.class);
         } catch (CouchException e) {
             if (COUCH_ERROR_CONFLICT.equals(e.getError())) {
                 throw new DocumentConflictException(e.toString());
@@ -467,9 +440,9 @@ public class CouchClient  {
     InputStream bulkInputStream(List<?> objects) {
         Preconditions.checkNotNull(objects, "Object list must not be null.");
         String newEditsVal = "\"new_edits\": false, ";
-        URI uri = this.uriHelper.bulkDocsUri(this.defaultDb);
+        URI uri = this.uriHelper.bulkDocsUri();
         String payload = String.format("{%s%s%s}", newEditsVal, "\"docs\": ",
-                getJson().toJson(objects));
+                jsonHelper.toJson(objects));
         return httpClient.post(uri, payload);
     }
 
@@ -481,17 +454,17 @@ public class CouchClient  {
         InputStream is = null;
         try {
             is = bulkInputStream(objects);
-            return getJson().fromJsonToList(new InputStreamReader(is), new TypeReference<List<Response>>() {});
+            return jsonHelper.fromJsonToList(new InputStreamReader(is), new TypeReference<List<Response>>() {});
         } finally {
             closeQuietly(is);
         }
     }
 
     /**
-     * Bulk insert a list of document that are serialized to Json data already. For performance reason,
-     * the json doc is not validated.
+     * Bulk insert a list of document that are serialized to JSON data already. For performance reasons,
+     * the JSON doc is not validated.
      *
-     * @param serializedDocs array of json documents
+     * @param serializedDocs array of JSON documents
      * @return list of Response
      */
     public List<Response> bulkSerializedDocs(String... serializedDocs) {
@@ -499,20 +472,20 @@ public class CouchClient  {
     }
 
     /**
-     * Bulk insert a list of document that are serialized to Json data already. For performance reason,
-     * the json doc is not validated.
+     * Bulk insert a list of document that are serialized to JSON data already. For performance reasons,
+     * the JSON doc is not validated.
      *
-     * @param serializedDocs list of json documents
+     * @param serializedDocs list of JSON documents
      * @return list of Response
      */
     public List<Response> bulkSerializedDocs(List<String> serializedDocs) {
         Preconditions.checkNotNull(serializedDocs, "Serialized doc list must not be null.");
         String payload = createBulkSerializedDocsPayload(serializedDocs);
-        URI uri = this.uriHelper.bulkDocsUri(this.defaultDb);
+        URI uri = this.uriHelper.bulkDocsUri();
         InputStream is = null;
         try {
             is = httpClient.post(uri, payload);
-            return getJson().fromJsonToList(new InputStreamReader(is), new TypeReference<List<Response>>() {});
+            return jsonHelper.fromJsonToList(new InputStreamReader(is), new TypeReference<List<Response>>() {});
         } finally {
             closeQuietly(is);
         }
@@ -535,7 +508,7 @@ public class CouchClient  {
      * Returns the subset of given the documentId/revisions that are not stored in the database.
      *
      * The input revisions is a map, whose key is document id, and value is a list of revisions.
-     * An example input could be (in json format):
+     * An example input could be (in JSON format):
      *
      * { "03ee06461a12f3c288bb865b22000170":
      *     [
@@ -557,12 +530,12 @@ public class CouchClient  {
      */
     public Map<String, Set<String>> revsDiff(Map<String, Set<String>> revisions) {
         Preconditions.checkNotNull(revisions, "Input revisions must not be null");
-        URI uri = this.uriHelper.revsDiffUri(this.defaultDb);
-        String payload = this.json.toJson(revisions);
+        URI uri = this.uriHelper.revsDiffUri();
+        String payload = this.jsonHelper.toJson(revisions);
         InputStream is = null;
         try {
             is = this.httpClient.post(uri, payload);
-            Map<String, MissingRevisions> diff = getJson().fromJson(new InputStreamReader(is),
+            Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is),
                     new TypeReference<Map<String, MissingRevisions>>() { });
             Map<String, Set<String>> res = new HashMap<String, Set<String>>();
             for(Map.Entry<String, MissingRevisions> e : diff.entrySet()) {
@@ -577,11 +550,11 @@ public class CouchClient  {
     public Response putMultipart(MultipartAttachmentWriter mpw) {
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("new_edits", "false");
-        URI uri = this.uriHelper.documentUri(this.defaultDb, mpw.getId(), options);
+        URI uri = this.uriHelper.documentUri(mpw.getId(), options);
         HashMap<String, String> headers = new HashMap<String, String>();
         String contentType = "multipart/related;boundary=" + mpw.getBoundary();
         InputStream is = this.httpClient.putStream(uri, contentType, mpw, mpw.getContentLength());
-        return getJson().fromJson(new InputStreamReader(is), Response.class);
+        return jsonHelper.fromJson(new InputStreamReader(is), Response.class);
     }
 
     public static class MissingRevisions {

@@ -46,16 +46,14 @@ public class CouchClientWrapper implements CouchDB {
     public static final int CONNECTION_TIMEOUT_DEFAULT = 30000;
 
     final CouchClient couchClient;
-    final String dbName;
 
     public CouchClientWrapper(CouchClient client) {
         Preconditions.checkNotNull(client, "Couch client must not be null");
         this.couchClient = client;
-        this.dbName = client.getDefaultDb();
     }
 
-    public CouchClientWrapper(String dbName, CouchConfig config) {
-        this(new CouchClient(config, dbName));
+    public CouchClientWrapper(CouchConfig config) {
+        this(new CouchClient(config));
     }
 
     public CouchClient getCouchClient() {
@@ -64,18 +62,13 @@ public class CouchClientWrapper implements CouchDB {
 
     @Override
     public String getIdentifier() {
-        return couchClient.getDefaultDBUri().toString();
-    }
-
-    @Override
-    public String getDbName() {
-        return this.dbName;
+        return couchClient.getRootUri().toString();
     }
 
     @Override
     public boolean exists() {
         try {
-            this.couchClient.getDbInfo(this.dbName);
+            this.couchClient.getDbInfo();
             return true;
         } catch (CouchException e) {
             if (e.getStatusCode() == 404) {
@@ -194,12 +187,12 @@ public class CouchClientWrapper implements CouchDB {
     }
 
     public void createDatabase() {
-        couchClient.createDb(dbName);
+        couchClient.createDb();
     }
 
     // Very dangerous call, be careful
     void deleteDatabase() {
-        couchClient.deleteDb(dbName);
+        couchClient.deleteDb();
     }
 
     @Override

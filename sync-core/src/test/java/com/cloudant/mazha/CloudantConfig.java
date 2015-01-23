@@ -14,6 +14,9 @@
 
 package com.cloudant.mazha;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 public class CloudantConfig {
 
     public static String CLOUDANT_HOST ;
@@ -31,13 +34,13 @@ public class CloudantConfig {
 
     private CloudantConfig() {}
 
-    public static CouchConfig defaultConfig() {
-        CouchConfig config = new CouchConfig(
-                "https",
-                CLOUDANT_HOST,
-                443,
-                CLOUDANT_USERNAME,
-                CLOUDANT_PASSWORD);
-        return config;
+    public static CouchConfig defaultConfig(String dbName) {
+        try {
+            String uriString = String.format("https://%s:%s@%s:443/%s", CLOUDANT_USERNAME, CLOUDANT_PASSWORD, CLOUDANT_HOST, dbName);
+            CouchConfig config = new CouchConfig(new URI(uriString));
+            return config;
+        } catch (URISyntaxException use) {
+            throw new IllegalArgumentException(use);
+        }
     }
 }

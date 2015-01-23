@@ -14,7 +14,9 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.common.CouchTestBase;
 import com.cloudant.mazha.CouchClient;
+import com.cloudant.mazha.CouchConfig;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -22,7 +24,6 @@ import com.cloudant.sync.util.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 
 public abstract class ReplicationTestBase extends CouchTestBase {
@@ -63,7 +64,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     }
 
     private void createRemoteDB() {
-        remoteDb = new CouchClientWrapper(getDbName(), super.getCouchConfig());
+        remoteDb = new CouchClientWrapper(super.getCouchConfig(getDbName()));
         remoteDb.createDatabase();
         couchClient = remoteDb.getCouchClient();
     }
@@ -80,25 +81,21 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         return dbName.replaceAll(regex, replacement).toLowerCase();
     }
 
-    public URI getURI() throws URISyntaxException {
-        return this.getCouchConfig().getURI(getDbName());
-    }
-
     PullReplication createPullReplication() throws URISyntaxException {
         PullReplication pullReplication = new PullReplication();
-        pullReplication.username = this.getCouchConfig().getUsername();
-        pullReplication.password = this.getCouchConfig().getPassword();
-        pullReplication.source = this.getURI();
+        CouchConfig couchConfig = this.getCouchConfig(this.getDbName());
+        pullReplication.source = couchConfig.getRootUri();
         pullReplication.target = this.datastore;
         return pullReplication;
     }
 
     PushReplication createPushReplication() throws URISyntaxException {
         PushReplication pushReplication = new PushReplication();
-        pushReplication.username = this.getCouchConfig().getUsername();
-        pushReplication.password = this.getCouchConfig().getPassword();
-        pushReplication.target = this.getURI();
+        CouchConfig couchConfig = this.getCouchConfig(this.getDbName());
+        pushReplication.target = couchConfig.getRootUri();
         pushReplication.source = this.datastore;
         return pushReplication;
     }
+
+
 }

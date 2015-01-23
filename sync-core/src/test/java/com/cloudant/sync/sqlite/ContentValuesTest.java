@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.sqlite;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class ContentValuesTest {

@@ -16,6 +16,9 @@ public class PullReplication extends Replication {
 
     /**
      * URI for this replication's remote database.
+     *
+     * Include username and password in the URL, or supply an Authorization header using
+     * setCustomHeaders() in CouchConfig.
      */
     public URI source;
     /**
@@ -53,12 +56,8 @@ public class PullReplication extends Replication {
         }
     }
 
-    String getSourceDbName() {
-        return this.extractDatabaseName(this.source);
-    }
-
-    public CouchConfig getCouchConfig() {
-        return this.createCouchConfig(this.source, this.username, this.password);
+    CouchConfig getCouchConfig() {
+        return this.createCouchConfig(this.source);
     }
 
     @Override

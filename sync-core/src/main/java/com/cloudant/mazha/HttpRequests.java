@@ -89,10 +89,9 @@ public class HttpRequests {
      * HttpParameters. The user agent parameter will be set internally so it is constant
      *
      * @param params Parameters for the HttpConnection
-     * @param username Username for Basic Auth
-     * @param password Password for Basic Auth
+     * @param userInfo Username:Password string for Basic Auth
      */
-    public HttpRequests(HttpParams params, String username, String password, Map<String, String> customHeaders){
+    public HttpRequests(HttpParams params, String userInfo, Map<String, String> customHeaders){
         this.jsonHelper = new JSONHelper();
         this.context = new BasicHttpContext();
 
@@ -113,10 +112,9 @@ public class HttpRequests {
         this.httpClient = httpClient;
 
         String authHeaderValue = null;
-        if (!Strings.isNullOrEmpty(username) && !Strings.isNullOrEmpty(password)) {
-            String authString = username + ":" + password;
+        if (!Strings.isNullOrEmpty(userInfo)) {
             Base64 base64 = new Base64();
-            authHeaderValue = "Basic " + new String(base64.encode(authString.getBytes()));
+            authHeaderValue = "Basic " + new String(base64.encode(userInfo.getBytes()));
         }
 
         this.requestHeaders = new HashMap<String, String>();

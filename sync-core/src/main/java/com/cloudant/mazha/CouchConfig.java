@@ -29,18 +29,12 @@ import java.util.Map;
 
 public class CouchConfig {
 
-    private static final String couchdb_protocol = "http";
-    private static  String couchdb_host= "127.0.0.1";
-    private static final int couchdb_port = 5984;
-    private static final String couchdb_username= "";
-    private static final String couchdb_password= "";
-
-    // required
-	private final String protocol;
-	private final String host;
-	private final int port;
-	private final String username;
-	private final String password;
+    // The root URI for the database
+    // This could be in the form http://host/database-name
+    // but is treated as an opaque URI to correctly handle
+    // situations where the request is forwarded eg through
+    // a reverse proxy
+    private URI rootUri;
 
     // Timeout to wait for a response, in milliseconds. Defaults to 0 (no timeout).
 	private int socketTimeout = 30000;
@@ -84,48 +78,9 @@ public class CouchConfig {
         this.bufferSize = bufferSize;
     }
 
-    public static CouchConfig defaultConfig() {
-        CouchConfig config = new CouchConfig(
-                couchdb_protocol,
-                couchdb_host,
-                couchdb_port,
-                couchdb_username,
-                couchdb_password
-        );
-        return config;
+    public CouchConfig(URI rootUri) {
+        this.rootUri = rootUri;
     }
-
-	public CouchConfig(String protocol,
-                       String host,
-                       int port,
-                       String username,
-                       String password) {
-		this.protocol = protocol;
-		this.host = host;
-		this.port = port;
-		this.username = username;
-		this.password = password;
-	}
-
-    public String getProtocol() {
-		return protocol;
-	}
-
-	public String getHost() {
-		return host;
-	}
-
-	public int getPort() {
-		return port;
-	}
-
-	public String getUsername() {
-		return username;
-	}
-
-	public String getPassword() {
-		return password;
-	}
 
 	public int getSocketTimeout() {
 		return socketTimeout;
@@ -166,14 +121,7 @@ public class CouchConfig {
         this.customHeaders = customHeaders;
     }
 
-    public URI getURI(String db) throws URISyntaxException {
-        if(Strings.isNullOrEmpty(this.getUsername())) {
-            return new URI(this.getProtocol(), null, this.getHost(), this.getPort(), "/" + db,
-                    null,
-                    null);
-        } else {
-            return new URI(this.getProtocol(), this.getUsername() + ":" + this.getPassword(),
-                    this.getHost(), this.getPort(), "/" + db, null, null);
-        }
+    public URI getRootUri() {
+        return rootUri;
     }
 }

@@ -15,7 +15,7 @@
 package com.cloudant.sync.sqlite.sqlite4java;
 
 import com.cloudant.sync.sqlite.Cursor;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;

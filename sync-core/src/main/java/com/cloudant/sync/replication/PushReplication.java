@@ -16,6 +16,9 @@ public class PushReplication extends Replication {
 
     /**
      * URI for this replication's remote database.
+     *
+     * Include username and password in the URL, or supply an Authorization header using
+     * setCustomHeaders() in CouchConfig.
      */
     public URI target;
     /**
@@ -43,12 +46,8 @@ public class PushReplication extends Replication {
         return String.format("%s <-- %s ", target, source.getDatastoreName());
     }
 
-    String getTargetDbName() {
-        return this.extractDatabaseName(this.target);
-    }
-
-    public CouchConfig getCouchConfig() {
-        return this.createCouchConfig(this.target, this.username, this.password);
+    CouchConfig getCouchConfig() {
+        return this.createCouchConfig(this.target);
     }
 
     @Override

@@ -5,7 +5,6 @@ def scriptLocation = project.projectDir.getAbsolutePath(); //this is the locatio
 def testSrcDir = "../../sync-core/src/test/java/" // this is the location of your test code, relative to this file
 
 android {
-    def hostName = "10.0.2.2"
     def classes = findAllTestClasses(new File("$scriptLocation/$testSrcDir")).toString().replace("[","{").replace("]","}");
 
     compileSdkVersion 20
@@ -17,7 +16,6 @@ android {
         targetSdkVersion 20
         versionCode 1
         versionName "1.0"
-        buildConfigField "String", "ip", "\"$hostName\""
         buildConfigField "Class[]", "classToTests", "$classes"
         buildConfigField "String", "testOutputFile", "\"$testResultsFile\""
         buildConfigField "Class[]", "testExcludes", "{com.cloudant.common.SystemTest.class, com.cloudant.common.RequireRunningCouchDB.class, com.cloudant.common.PerformanceTest.class}"
