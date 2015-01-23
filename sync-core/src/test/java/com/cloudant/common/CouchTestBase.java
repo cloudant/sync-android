@@ -19,7 +19,12 @@ public abstract class CouchTestBase {
 
     public CouchConfig getCouchConfig(String db) {
         if(TEST_WITH_CLOUDANT) {
-            return CloudantConfig.defaultConfig(db);
+            CouchConfig config = CloudantConfig.defaultConfig(db);
+            if(Strings.isNullOrEmpty(config.getRootUri().getUserInfo())) {
+                throw new IllegalStateException("Cloudant account info" +
+                        " is required to run tests with Cloudant.");
+            }
+            return config;
         } else {
             String host;
              // If we're running on the Android emulator, 127.0.0.1 is the emulated device, rather

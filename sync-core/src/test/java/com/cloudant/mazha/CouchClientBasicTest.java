@@ -30,7 +30,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,8 +40,8 @@ import static org.hamcrest.CoreMatchers.startsWith;
 @Category(RequireRunningCouchDB.class)
 public class CouchClientBasicTest extends CouchClientTestBase {
 
-    // Some of these tests over-write the 'client' object because the default database name isn't
-    // sufficient.
+    // Some of these tests don't use 'client' from the base class and should probably be moved
+    // to another class
 
     @Test
     public void getHttpClient() {
@@ -57,13 +56,13 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     @Test
     public void createDb_validDbName_dbMustBeCreated() {
         String dbName = "mazha_test_createdb";
-        client = new CouchClient(getCouchConfig(dbName));
-        ClientTestUtils.deleteQuietly(client);
+        CouchClient customClient = new CouchClient(getCouchConfig(dbName));
+        ClientTestUtils.deleteQuietly(customClient);
 
-        client.createDb();
+        customClient.createDb();
         Assert.assertTrue("DB must exist.", isDbExist(dbName));
 
-        client.deleteDb();
+        customClient.deleteDb();
         Assert.assertFalse("DB must not exist.", isDbExist(dbName));
     }
 
@@ -71,57 +70,57 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     public void createDb_invalidDBNmae_exception() {
         // Couch does not like capital character in db name
         String dbName = "mazha_test_INVALID_DB_NAME";
-        client = new CouchClient(getCouchConfig(dbName));
-        client.createDb();
+        CouchClient customClient = new CouchClient(getCouchConfig(dbName));
+        customClient.createDb();
     }
 
 
     @Test(expected = CouchException.class)
     public void createDb_dbExistAlready_exception() throws IOException {
-        Assert.assertTrue("DB must exist.", isDbExist(TEST_DB));
+        Assert.assertTrue("DB must exist.", isDbExist(testDb));
         client.createDb();
     }
 
     @Test
     public void deleteDb_dbMustBeDeleted() {
         String dbName = "mazha_test_deletedb";
-        client = new CouchClient(getCouchConfig(dbName));
+        CouchClient customClient = new CouchClient(getCouchConfig(dbName));
         ClientTestUtils.deleteQuietly(client);
 
-        client.createDb();
+        customClient.createDb();
         Assert.assertTrue("DB must exist.", isDbExist(dbName));
 
-        client.deleteDb();
+        customClient.deleteDb();
         Assert.assertFalse("DB must not exist.", isDbExist(dbName));
     }
 
     @Test(expected = NoResourceException.class)
     public void deleteDb_dbNotExist_exception() {
         String dbName = "mazha_test_deletedb_not_exist";
-        client = new CouchClient(getCouchConfig(dbName));
+        CouchClient customClient = new CouchClient(getCouchConfig(dbName));
         Preconditions.checkArgument(!isDbExist(dbName), "%s must not exist", dbName);
-        client.deleteDb();
+        customClient.deleteDb();
     }
 
     @Test
     public void getDbInfo_dbInfoMustSuccessfullyReturned() {
         CouchDbInfo dbInfo = client.getDbInfo();
-        Assert.assertEquals(TEST_DB, dbInfo.getDbName());
+        Assert.assertEquals(testDb, dbInfo.getDbName());
     }
 
     @Test(expected = CouchException.class)
     public void getDbInfo_invalidDbName_exception() {
         String dbName = "mazha_test_A";
-        client = new CouchClient(getCouchConfig(dbName));
-        client.getDbInfo();
+        CouchClient customClient = new CouchClient(getCouchConfig(dbName));
+        customClient.getDbInfo();
     }
 
     @Test(expected = NoResourceException.class)
     public void getDbInfo_dbNotExist_exception() {
         String dbName = "mazha_test_getdbinfo_dbnotexist";
-        client = new CouchClient(getCouchConfig(dbName));
+        CouchClient customClient = new CouchClient(getCouchConfig(dbName));
         Preconditions.checkArgument(!isDbExist(dbName), "%s must not exist", dbName);
-        client.getDbInfo();
+        customClient.getDbInfo();
     }
 
     @Test
@@ -328,7 +327,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         doc.put(CouchConstants._id, "some_id_not_exist");
         Response res2 = client.update(res.getId(), doc);
         Map<String, Object> updatedDoc = client.getDocument(res2.getId());
-        Assert.assertThat((String)updatedDoc.get(CouchConstants._rev), startsWith("2-"));
+        Assert.assertThat((String) updatedDoc.get(CouchConstants._rev), startsWith("2-"));
     }
 
     @Test(expected = DocumentConflictException.class)
@@ -442,11 +441,6 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         Assert.assertEquals(1, diffs.size());
         Assert.assertEquals(1, diffs.get(res.getId()).size());
         Assert.assertThat(diffs.get(res.getId()), hasItem("2-a"));
-    }
-
-    @Test
-    public void shutdown() {
-        client.shutdown();
     }
 
     private boolean isDbExist(String dbName) {

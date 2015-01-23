@@ -14,34 +14,22 @@
 
 package com.cloudant.mazha;
 
-import java.lang.reflect.Field;
-
 import com.cloudant.common.CouchTestBase;
 import com.cloudant.mazha.json.JSONHelper;
-import com.cloudant.sync.util.Misc;
-import com.google.common.base.Strings;
+
+import org.junit.After;
 import org.junit.Before;
 
 public abstract class CouchClientTestBase extends CouchTestBase {
 
-    String TEST_DB = "mazha-test"+System.currentTimeMillis();
-
-    static {
-        if(TEST_WITH_CLOUDANT) {
-            CouchConfig config = CloudantConfig.defaultConfig(TEST_DB);
-            if(Strings.isNullOrEmpty(config.getRootUri().getUserInfo())) {
-                throw new IllegalStateException("Cloudant account info" +
-                        " is required to run tests with Cloudant.");
-            }
-        }
-    }
-
+    String testDb;
     CouchConfig couchConfig;
     CouchClient client;
     JSONHelper jsonHelper;
 
     public CouchClientTestBase() {
-        couchConfig = getCouchConfig(TEST_DB);
+        testDb = "mazha-test"+System.currentTimeMillis();
+        couchConfig = getCouchConfig(testDb);
         client = new CouchClient(couchConfig);
         jsonHelper = new JSONHelper();
     }
@@ -49,6 +37,11 @@ public abstract class CouchClientTestBase extends CouchTestBase {
     @Before
     public void setUp() {
         makeSureTestDbExistOnServer();
+    }
+
+    @After
+    public void tearDown() {
+        ClientTestUtils.deleteQuietly(client);
     }
 
     private void makeSureTestDbExistOnServer() {

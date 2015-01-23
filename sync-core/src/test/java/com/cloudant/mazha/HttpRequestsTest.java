@@ -17,10 +17,6 @@ package com.cloudant.mazha;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.params.HttpClientParams;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,7 +52,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
         InputStream is = client.get(thisDbUri);
         Assert.assertNotNull(is);
         String s = IOUtils.toString(is);
-        Assert.assertTrue(s.contains(TEST_DB));
+        Assert.assertTrue(s.contains(testDb));
     }
 
     @Test
@@ -66,7 +62,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
                 "Accept", "Content-Length"};
         for (String h : prohibitedHeaders) {
             try {
-                CouchConfig customCouchConfig = getCouchConfig(TEST_DB);
+                CouchConfig customCouchConfig = getCouchConfig(testDb);
                 Map<String, String> customHeaders = new HashMap<String, String>();
                 customHeaders.put(h, "test");
                 customCouchConfig.setCustomHeaders(customHeaders);
@@ -84,7 +80,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
     // (we don't check the header is received at the server!)
     @Test
     public void customHeader() throws Exception {
-        CouchConfig customCouchConfig = getCouchConfig(TEST_DB);
+        CouchConfig customCouchConfig = getCouchConfig(testDb);
         Map<String, String> customHeaders = new HashMap<String, String>();
         customHeaders.put("x-good-header", "test");
         customCouchConfig.setCustomHeaders(customHeaders);
@@ -94,7 +90,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
         InputStream is = client.get(thisDbUri);
         Assert.assertNotNull(is);
         String s = IOUtils.toString(is);
-        Assert.assertTrue(s.contains(TEST_DB));
+        Assert.assertTrue(s.contains(testDb));
     }
 
     // test we can override the auth header if it is already set from user/pass
@@ -135,7 +131,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
         InputStream is = clientAuthHeader.get(rootWithUserCreds);
         Assert.assertNotNull(is);
         String s = IOUtils.toString(is);
-        Assert.assertTrue(s.contains(TEST_DB));
+        Assert.assertTrue(s.contains(testDb));
     }
 
     // test we can set the auth header when user and pass weren't set
@@ -145,7 +141,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
         // skip if not running against local CouchDB
         org.junit.Assume.assumeTrue(!TEST_WITH_CLOUDANT);
 
-        CouchConfig customCouchConfig = getCouchConfig(TEST_DB);
+        CouchConfig customCouchConfig = getCouchConfig(testDb);
         // we're not testing on Cloudant, so we can be sure user/pass is not set - double check:
         Assert.assertTrue(Strings.isNullOrEmpty(customCouchConfig.getRootUri().getUserInfo()));
 
@@ -164,11 +160,6 @@ public class HttpRequestsTest extends CouchClientTestBase {
         } catch (CouchException ce) {
             Assert.assertEquals("unauthorized", ce.getError());
         }
-    }
-
-    @Test
-    public void shutdown() {
-        client.shutdown();
     }
 
 }
