@@ -14,9 +14,20 @@
 
 package com.cloudant.sync.replication;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import com.cloudant.sync.datastore.BasicDatastoreTestBase;
+import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.DatastoreExtended;
+import com.cloudant.sync.datastore.DatastoreManager;
+import com.cloudant.sync.datastore.DatastoreTestBase;
+import com.cloudant.sync.util.TestUtils;
 import com.google.common.collect.ImmutableMap;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URI;
@@ -25,7 +36,7 @@ import java.net.URISyntaxException;
 /**
  * Created by tomblench on 10/12/14.
  */
-public class ReplicatorIdTest extends ReplicationTestBase {
+public class ReplicatorIdTest {
 
     // source/target switched, so ids should be different
     @Test
@@ -104,5 +115,23 @@ public class ReplicatorIdTest extends ReplicationTestBase {
 
         Assert.assertNotEquals(pull1.createReplicationStrategy().getReplicationId(),
                 pull2.createReplicationStrategy().getReplicationId());
+    }
+
+    PullReplication createPullReplication() throws URISyntaxException {
+        PullReplication pullReplication = new PullReplication();
+        pullReplication.source = new URI("http://default-host/default-database");
+        DatastoreExtended datastore = mock(DatastoreExtended.class);
+        when(datastore.getPublicIdentifier()).thenReturn("this would be a database GUID");
+        pullReplication.target = datastore;
+        return pullReplication;
+    }
+
+    PushReplication createPushReplication() throws URISyntaxException {
+        PushReplication pushReplication = new PushReplication();
+        pushReplication.target = new URI("http://default-host/default-database");
+        DatastoreExtended datastore = mock(DatastoreExtended.class);
+        when(datastore.getPublicIdentifier()).thenReturn("this would be a database GUID");
+        pushReplication.source = datastore;
+        return pushReplication;
     }
 }
