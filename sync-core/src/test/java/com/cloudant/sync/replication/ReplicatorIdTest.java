@@ -119,8 +119,6 @@ public class ReplicatorIdTest {
 
     PullReplication createPullReplication() throws URISyntaxException {
         PullReplication pullReplication = new PullReplication();
-        pullReplication.username = "default-user";
-        pullReplication.password = "default-password";
         pullReplication.source = new URI("http://default-host/default-database");
         DatastoreExtended datastore = mock(DatastoreExtended.class);
         when(datastore.getPublicIdentifier()).thenReturn("this would be a database GUID");
@@ -130,8 +128,6 @@ public class ReplicatorIdTest {
 
     PushReplication createPushReplication() throws URISyntaxException {
         PushReplication pushReplication = new PushReplication();
-        pushReplication.username = "default-user";
-        pushReplication.password = "default-password";
         pushReplication.target = new URI("http://default-host/default-database");
         DatastoreExtended datastore = mock(DatastoreExtended.class);
         when(datastore.getPublicIdentifier()).thenReturn("this would be a database GUID");

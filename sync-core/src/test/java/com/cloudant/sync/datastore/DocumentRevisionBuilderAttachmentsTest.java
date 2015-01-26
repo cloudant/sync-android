@@ -48,7 +48,7 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
         body.put("aKey","aValue");
         body.put("hello","world");
 
-        documentURI =  new URI(remoteDb.getCouchClient().getDefaultDBUri().toString()+"/someIdHere");
+        documentURI =  new URI(remoteDb.getCouchClient().getRootUri().toString()+"/someIdHere");
     }
 
     @Test
@@ -117,7 +117,7 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
         attachments.put("bonsai-boston.jpg",bonsai);
         documentRev.put("_attachments",attachments);
 
-        URI uri =  new URI(remoteDb.getCouchClient().getDefaultDBUri().toString()+"/"+"someIdHere");
+        URI uri =  new URI(remoteDb.getCouchClient().getRootUri().toString()+"/"+"someIdHere");
 
         //create the document revision and test
 
@@ -172,7 +172,7 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
         attachments.put("bonsai-boston.jpg",bonsai);
         documentRev.put("_attachments",attachments);
 
-        URI uri =  new URI(remoteDb.getCouchClient().getDefaultDBUri().toString()+"/"+"someIdHere"+"?rev="+response.getRev());
+        URI uri =  new URI(remoteDb.getCouchClient().getRootUri().toString()+"/"+"someIdHere"+"?rev="+response.getRev());
 
         //create the document revision and test
 
@@ -211,7 +211,7 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
         remoteDoc.put("_attachments",remoteAttachments);
 
         remoteDb.create(remoteDoc);
-        documentURI = new URI(remoteDb.getCouchClient().getDefaultDBUri().toString()+"/"+"someIdHere");
+        documentURI = new URI(remoteDb.getCouchClient().getRootUri().toString()+"/"+"someIdHere");
 
         Map<String,Map<String,Object>> attachments = new HashMap<String,Map<String,Object>>();
         Map<String,Object> bonsai = createAttachmentMap(encodedAttachment,"text/plain",true);//new HashMap<String,Object>();
