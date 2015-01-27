@@ -46,7 +46,7 @@ public class PushReplication extends Replication {
         return String.format("%s <-- %s ", target, source.getDatastoreName());
     }
 
-    CouchConfig getCouchConfig() {
+    public CouchConfig getCouchConfig() {
         return this.createCouchConfig(this.target);
     }
 

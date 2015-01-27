@@ -56,7 +56,7 @@ public class PullReplication extends Replication {
         }
     }
 
-    CouchConfig getCouchConfig() {
+    public CouchConfig getCouchConfig() {
         return this.createCouchConfig(this.source);
     }
 
