@@ -19,17 +19,16 @@ import static org.hamcrest.Matchers.notNullValue;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 
 import java.sql.SQLException;
-import java.util.Arrays;
 
 /**
  * This class uses the {@link IndexManager}, to allow all tests defined in
- * {@link AbstractQueryTestBase} to run in the standard manner that queries
+ * {@link AbstractQueryExtendedTestBase} to run in the standard manner that queries
  * would normally execute in a production setting.
  *
  * @see IndexManager
- * @see AbstractQueryTestBase
+ * @see AbstractQueryExtendedTestBase
  */
-public class QueryExecutorStandardTest extends AbstractQueryTestBase {
+public class QueryExecutorStandardTest extends AbstractQueryExtendedTestBase {
     @Override
     public void setUp() throws SQLException {
         super.setUp();
@@ -40,8 +39,5 @@ public class QueryExecutorStandardTest extends AbstractQueryTestBase {
         assertThat(im.getQueue(), is(notNullValue()));
         String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
-
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
     }
 }

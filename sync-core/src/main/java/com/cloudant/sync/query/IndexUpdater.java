@@ -311,14 +311,7 @@ class IndexUpdater {
         for (String fieldName: fieldNames) {
             // Fields in initialIncludedFields already have values in the other initial* array,
             // so it need not be included again.
-            boolean skip = false;
-            for (String initField: initialIncludedFields) {
-                if (initField.equalsIgnoreCase(fieldName)) {
-                    skip = true;
-                    break;
-                }
-            }
-            if (skip) {
+            if (initialIncludedFields.contains(fieldName)) {
                 continue;
             }
 
@@ -354,8 +347,7 @@ class IndexUpdater {
             } else if (argument instanceof String) {
                 contentValues.put(fieldName, (String) argument);
             } else {
-                logger.log(Level.SEVERE, "Invalid argument type.");
-                return null;
+                contentValues.put(fieldName, (String) null);
             }
             argIndex = argIndex + 1;
         }
