@@ -1,4 +1,4 @@
-//  Copyright (c) 2014 Cloudant. All rights reserved.
+//  Copyright (c) 2015 Cloudant. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 //  except in compliance with the License. You may obtain a copy of the License at
@@ -478,6 +478,56 @@ public abstract class AbstractQueryTestSetUp {
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
+    }
+
+    // Used to setup document data testing for sorting:
+    // - When sorting
+    public void setUpSortingQueryData() {
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.docId = "mike12";
+        Map<String, Object> bodyMap = new HashMap<String, Object>();
+        bodyMap.put("name", "mike");
+        bodyMap.put("age", 12);
+        bodyMap.put("age", Arrays.<Object>asList("cat", "dog"));
+        bodyMap.put("same", "all");
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        try {
+            ds.createDocumentFromRevision(rev);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Assert.fail("Failed to create document revision");
+        }
+
+        rev.docId = "fred34";
+        bodyMap.clear();
+        bodyMap.put("name", "fred");
+        bodyMap.put("age", 34);
+        bodyMap.put("pet", "parrot");
+        bodyMap.put("same", "all");
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        try {
+            ds.createDocumentFromRevision(rev);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Assert.fail("Failed to create document revision");
+        }
+
+        rev.docId = "fred11";
+        bodyMap.clear();
+        bodyMap.put("name", "fred");
+        bodyMap.put("age", 11);
+        bodyMap.put("pet", "fish");
+        bodyMap.put("same", "all");
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        try {
+            ds.createDocumentFromRevision(rev);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Assert.fail("Failed to create document revision");
+        }
+
+        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age", "same"), "pet"),
+                is("pet"));
     }
 
     private void setUpSharedDocs() {

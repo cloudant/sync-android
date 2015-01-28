@@ -1246,14 +1246,16 @@ public abstract class AbstractQueryTestBase extends AbstractQueryTestSetUp {
         setUpLargeResultSetQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("large_field", "cat");
-        QueryResult queryResult = im.find(query, 90, 20, null, null);
-        assertThat(queryResult.size(), is(20));
-        // Uncomment remainder of test after query sorting is implemented
-        //List<String> expected = new ArrayList<String>();
-        //for (int i = 90; i < 110; i++) {
-        //    expected.add(String.format("d%d", i));
-        //}
-        //assertThat(queryResult, containsInAnyOrder(expected.toArray()));
+        Map<String, String> sort = new HashMap<String, String>();
+        sort.put("idx", "asc");
+        List<Map<String, String>> sortDoc = new ArrayList<Map<String, String>>();
+        sortDoc.add(sort);
+        QueryResult queryResult = im.find(query, 90, 20, null, sortDoc);
+        List<String> expected = new ArrayList<String>();
+        for (int i = 90; i < 110; i++) {
+            expected.add(String.format("d%d", i));
+        }
+        assertThat(queryResult.documentIds(), contains(expected.toArray()));
     }
 
 }
