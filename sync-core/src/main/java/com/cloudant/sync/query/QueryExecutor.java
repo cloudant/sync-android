@@ -230,7 +230,9 @@ class QueryExecutor {
                 if (accumulator == null) {
                     accumulator = new HashSet<String>(childIds);
                 } else {
-                    accumulator = Sets.intersection(accumulator, childIds);
+                    if (childIds != null) {
+                        accumulator = Sets.intersection(accumulator, childIds);
+                    }
                 }
             }
 
@@ -248,7 +250,9 @@ class QueryExecutor {
                 if (accumulator == null) {
                     accumulator = new HashSet<String>(childIds);
                 } else {
-                    accumulator = Sets.union(accumulator, childIds);
+                    if (childIds != null) {
+                        accumulator = Sets.union(accumulator, childIds);
+                    }
                 }
             }
 
