@@ -13,8 +13,8 @@
 package com.cloudant.sync.query;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -39,31 +39,28 @@ public class IndexManagerTest extends AbstractIndexTestBase {
     @Test
     public void deleteFailOnNoIndexName() {
         im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");
-        assertThat(im.listIndexes(), hasKey("basic"));
+        assertThat(im.listIndexes().keySet(), contains("basic"));
 
         assertThat(im.deleteIndexNamed(null), is(false));
-        assertThat(im.listIndexes(), hasKey("basic"));
+        assertThat(im.listIndexes().keySet(), contains("basic"));
 
         assertThat(im.deleteIndexNamed(""), is(false));
-        assertThat(im.listIndexes(), hasKey("basic"));
+        assertThat(im.listIndexes().keySet(), contains("basic"));
     }
 
     @Test
     public void deleteFailOnInvalidIndexName() {
         im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");
-        assertThat(im.listIndexes(), hasKey("basic"));
+        assertThat(im.listIndexes().keySet(), contains("basic"));
 
         assertThat(im.deleteIndexNamed("invalid"), is(false));
-        assertThat(im.listIndexes(), hasKey("basic"));
-
-        assertThat(im.deleteIndexNamed(""), is(false));
-        assertThat(im.listIndexes(), hasKey("basic"));
+        assertThat(im.listIndexes().keySet(), contains("basic"));
     }
 
     @Test
      public void deleteEmptyIndex() {
         im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");
-        assertThat(im.listIndexes(), hasKey("basic"));
+        assertThat(im.listIndexes().keySet(), contains("basic"));
 
         assertThat(im.deleteIndexNamed("basic"), is(true));
         assertThat(im.listIndexes().isEmpty(), is(true));
@@ -101,7 +98,7 @@ public class IndexManagerTest extends AbstractIndexTestBase {
         }
 
         im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");
-        assertThat(im.listIndexes(), hasKey("basic"));
+        assertThat(im.listIndexes().keySet(), contains("basic"));
         im.deleteIndexNamed("basic");
         assertThat(im.listIndexes().isEmpty(), is(true));
     }

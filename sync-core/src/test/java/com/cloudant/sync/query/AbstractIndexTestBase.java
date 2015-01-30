@@ -45,21 +45,23 @@ public abstract class AbstractIndexTestBase {
         assertThat(ds, is(notNullValue()));
         im = new IndexManager(ds);
         assertThat(im, is(notNullValue()));
-        db = im.getDatabase();
+        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
         assertThat(db, is(notNullValue()));
         assertThat(im.getQueue(), is(notNullValue()));
         String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
-        SQLDatabaseTestUtils.assertTablesExist(TestUtils.getDatabaseConnectionToExistingDb(db), metadataTableList);
+        SQLDatabaseTestUtils.assertTablesExist(TestUtils.getDatabaseConnectionToExistingDb(db),
+                                               metadataTableList);
     }
 
     @After
     public void tearDown() {
         im.close();
         assertThat(im.getQueue().isShutdown(), is(true));
-        ds.close();
         TestUtils.deleteDatabaseQuietly(db);
+        ds.close();
         TestUtils.deleteTempTestingDir(factoryPath);
 
+        db = null;
         im = null;
         ds = null;
         factory = null;

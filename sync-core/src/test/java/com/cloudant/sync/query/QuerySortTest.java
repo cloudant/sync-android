@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class QuerySortTest extends AbstractQueryTestSetUp {
+public class QuerySortTest extends AbstractQueryTestBase {
 
     Map<String, Object> indexes;
     Set<String> smallDocIdSet;
