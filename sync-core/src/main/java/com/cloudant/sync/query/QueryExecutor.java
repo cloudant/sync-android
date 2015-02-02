@@ -16,6 +16,7 @@ import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.DatabaseUtils;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 
 import java.sql.SQLException;
@@ -41,6 +42,8 @@ class QueryExecutor {
     private final ExecutorService queue;
 
     private static final Logger logger = Logger.getLogger(QueryExecutor.class.getName());
+
+    private static final int SMALL_RESULT_SET_SIZE_THRESHOLD = 500;
 
     /**
      *  Constructs a new QueryExecutor using the indexes in 'database' to find documents from
@@ -175,8 +178,27 @@ class QueryExecutor {
             String fieldName = (String) clause.keySet().toArray()[0];
             String direction = clause.get(fieldName);
             if (!direction.equalsIgnoreCase("ASC") && !direction.equalsIgnoreCase("DESC")) {
-                String msg = String.format("Order direction %s not valid, use `asc` or `desc`",
+                String msg = String.format("Order direction %s not valid, use 'asc' or 'desc'",
                                            direction);
+                logger.log(Level.SEVERE, msg);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     *  Checks if the fields are valid.
+     */
+    private boolean validateFields(List<String> fields) {
+        if (fields == null) {
+            return true;
+        }
+        for (String field: fields) {
+            if (field.contains("\\.")) {
+                String msg = String.format("Projection field cannot use dotted notation: %s",
+                        field);
                 logger.log(Level.SEVERE, msg);
                 return false;
             }
@@ -202,10 +224,15 @@ class QueryExecutor {
             AndQueryNode andNode = (AndQueryNode) node;
             for (QueryNode qNode: andNode.children) {
                 Set<String> childIds = executeQueryTree(qNode, db);
+                if (childIds == null) {
+                    continue;
+                }
                 if (accumulator == null) {
                     accumulator = new HashSet<String>(childIds);
                 } else {
-                    accumulator = Sets.intersection(accumulator, childIds);
+                    if (childIds != null) {
+                        accumulator = Sets.intersection(accumulator, childIds);
+                    }
                 }
             }
 
@@ -217,10 +244,15 @@ class QueryExecutor {
             OrQueryNode orNode = (OrQueryNode) node;
             for (QueryNode qNode: orNode.children) {
                 Set<String> childIds = executeQueryTree(qNode, db);
+                if (childIds == null) {
+                    continue;
+                }
                 if (accumulator == null) {
                     accumulator = new HashSet<String>(childIds);
                 } else {
-                    accumulator = Sets.union(accumulator, childIds);
+                    if (childIds != null) {
+                        accumulator = Sets.union(accumulator, childIds);
+                    }
                 }
             }
 
@@ -266,27 +298,135 @@ class QueryExecutor {
                                  List<Map<String, String>> sortDocument,
                                  Map<String, Object> indexes,
                                  SQLDatabase db) {
-        // TODO - sort logic...
-        return null;
+        boolean smallResultSet = (docIdSet.size() < SMALL_RESULT_SET_SIZE_THRESHOLD);
+        SqlParts orderBy = sqlToSortIds(docIdSet, sortDocument, indexes);
+        List<String> sortedIds = null;
+        if (orderBy != null) {
+            // The query will iterate through a sorted list of docIds.
+            // This means that if we create a new array and add entries
+            // to that array as we iterate through the result set which
+            // are part of the query's results, we'll end up with an
+            // ordered set of results.
+            Cursor cursor = null;
+            try {
+                cursor = db.rawQuery(orderBy.sqlWithPlaceHolders, orderBy.placeHolderValues);
+                while (cursor.moveToNext()) {
+                    if (sortedIds == null) {
+                        sortedIds = new ArrayList<String>();
+                    }
+
+                    String candidateId = cursor.getString(0);
+
+                    if (smallResultSet) {
+                        sortedIds.add(candidateId);
+                    } else {
+                        if (docIdSet.contains(candidateId)) {
+                            sortedIds.add(candidateId);
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                logger.log(Level.SEVERE, "Failed to sort doc ids.", e);
+                return null;
+            } finally {
+                DatabaseUtils.closeCursorQuietly(cursor);
+            }
+        } else {
+            sortedIds = null;  // error doing the ordering
+        }
+
+        return sortedIds;
     }
 
     /**
-     *  Checks if the fields are valid.
+     *  Return SQL to get ordered list of docIds.
+     *
+     *  Method assumes `sortDocument` is valid.
+     *
+     *  @param docIdSet The original set of document ids
+     *  @param sortDocument Array of ordering definitions
+     *                      [ { "fieldName" : "asc" }, { "fieldName2", "desc" } ]
+     *  @param indexes dictionary of indexes
+     *  @return the SQL containing the order by clause
      */
-    private boolean validateFields(List<String> fields) {
-        if (fields == null) {
-            return true;
+    protected static SqlParts sqlToSortIds(Set<String> docIdSet,
+                                  List<Map<String, String>> sortDocument,
+                                  Map<String, Object> indexes) {
+        String chosenIndex = chooseIndexForSort(sortDocument, indexes);
+        if (chosenIndex == null) {
+            String msg = String.format("No single index can satisfy order %s", sortDocument);
+            logger.log(Level.SEVERE, msg);
+            return null;
         }
-        for (String field: fields) {
-            if (field.contains("\\.")) {
-                String msg = String.format("Projection field cannot use dotted notation: %s",
-                                           field);
-                logger.log(Level.SEVERE, msg);
-                return false;
+
+        String indexTable = IndexManager.tableNameForIndex(chosenIndex);
+
+        // for small result sets:
+        // SELECT _id FROM idx WHERE _id IN (?, ?) ORDER BY fieldName ASC, fieldName2 DESC
+        // for large result sets:
+        // SELECT _id FROM idx ORDER BY fieldName ASC, fieldName2 DESC
+
+        List<String> orderClauses = new ArrayList<String>();
+        for (Map<String, String> clause : sortDocument) {
+            String fieldName = (String) clause.keySet().toArray()[0];
+            String direction = clause.get(fieldName);
+
+            String orderClause = String.format("\"%s\" %s", fieldName, direction.toUpperCase());
+            orderClauses.add(orderClause);
+        }
+
+        // If we have few results, it's more efficient to reduce the search space
+        // for SQLite. 500 placeholders should be a safe value.
+        List<String> parameterList = new ArrayList<String>();
+
+        String whereClause = "";
+        Joiner joiner = Joiner.on(", ").skipNulls();
+        if (docIdSet.size() < SMALL_RESULT_SET_SIZE_THRESHOLD) {
+            List<String> placeholders = new ArrayList<String>();
+            for (String docId : docIdSet) {
+                placeholders.add("?");
+                parameterList.add(docId);
+            }
+
+            whereClause = String.format("WHERE _id IN (%s)", joiner.join(placeholders));
+        }
+
+        String orderBy = joiner.join(orderClauses);
+        String sql = String.format("SELECT DISTINCT _id FROM %s %s ORDER BY %s", indexTable,
+                                                                                 whereClause,
+                                                                                 orderBy);
+        String[] parameters = new String[parameterList.size()];
+        return SqlParts.partsForSql(sql, parameterList.toArray(parameters));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static String chooseIndexForSort(List<Map<String, String>> sortDocument,
+                                      Map<String, Object> indexes) {
+        if (indexes == null || indexes.isEmpty()) {
+            return null;  // Can't choose an index if one does not exist.
+        }
+        Set<String> neededFields = new HashSet<String>();
+        // Each orderSpecifier in the sortDocument is validated and normalised
+        // already to be a Map with one key.
+        for (Map<String, String> orderSpecifier : sortDocument) {
+            neededFields.add((String) orderSpecifier.keySet().toArray()[0]);
+        }
+
+        if (neededFields.isEmpty()) {
+            return null;  // no point in querying empty set of fields
+        }
+
+        String chosenIndex = null;
+        for (String indexName : indexes.keySet()) {
+            Map<String, Object> index = (Map<String, Object>) indexes.get(indexName);
+            Set<String> providedFields = new HashSet<String>((List<String>) index.get("fields"));
+            if (providedFields.containsAll(neededFields)) {
+                chosenIndex = indexName;
+                break;
             }
         }
 
-        return true;
+        return chosenIndex;
     }
 
 }
