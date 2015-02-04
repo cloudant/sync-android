@@ -16,6 +16,7 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
 
@@ -79,7 +80,7 @@ class AttachmentManager {
         this.attachmentsDir = datastore.extensionDataFolder(EXTENSION_NAME);
     }
 
-    public void addAttachment(PreparedAttachment a, BasicDocumentRevision rev) throws IOException, SQLException {
+    public void addAttachment(SQLDatabase db,PreparedAttachment a, BasicDocumentRevision rev) throws IOException, SQLException {
 
         // do it this way to only go thru inputstream once
         // * write to temp location using copyinputstreamtofile
@@ -106,8 +107,8 @@ class AttachmentManager {
         values.put("revpos", revpos);
 
         // delete and insert in case there is already an attachment at this seq (eg copied over from a previous rev)
-        datastore.getSQLDatabase().delete("attachments", " filename = ? and sequence = ? ", new String[]{filename, String.valueOf(sequence)});
-        long result = datastore.getSQLDatabase().insert("attachments", values);
+        db.delete("attachments", " filename = ? and sequence = ? ", new String[]{filename, String.valueOf(sequence)});
+        long result = db.insert("attachments", values);
         if (result == -1) {
             // if we can't insert into DB then don't copy the attachment
             a.tempFile.delete();
@@ -158,7 +159,7 @@ class AttachmentManager {
         return preparedAndSavedAttachments;
     }
 
-    protected void setAttachments(BasicDocumentRevision rev, PreparedAndSavedAttachments preparedAndSavedAttachments) throws IOException {
+    protected void setAttachments(SQLDatabase db,BasicDocumentRevision rev, PreparedAndSavedAttachments preparedAndSavedAttachments) throws IOException {
 
         // set attachments for revision:
         // * prepared attachments are added
@@ -169,31 +170,27 @@ class AttachmentManager {
             return;
         }
 
-        this.datastore.getSQLDatabase().beginTransaction();
         try {
             for (PreparedAttachment a : preparedAndSavedAttachments.preparedAttachments) {
                 // go thru prepared attachments and add them
-                this.addAttachment(a, rev);
+                this.addAttachment(db,a, rev);
             }
             for (SavedAttachment a : preparedAndSavedAttachments.savedAttachments) {
                 // go thru existing (from previous rev) and new (from another document) saved attachments
                 // and add them (the effect on existing attachments is to copy them forward to this revision)
                 long parentSequence = ((SavedAttachment) a).seq;
                 long newSequence = rev.getSequence();
-                this.copyAttachment(parentSequence, newSequence, a.name);
+                this.copyAttachment(db,parentSequence, newSequence, a.name);
             }
-            this.datastore.getSQLDatabase().setTransactionSuccessful();
         } catch (SQLException sqe) {
             throw new SQLRuntimeException("SQLException setting attachment for rev"+rev, sqe);
-        } finally {
-            this.datastore.getSQLDatabase().endTransaction();
         }
     }
 
-    protected Attachment getAttachment(BasicDocumentRevision rev, String attachmentName) {
+    protected Attachment getAttachment(SQLDatabase db, BasicDocumentRevision rev, String attachmentName) {
         Cursor c = null;
         try {
-             c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT,
+             c = db.rawQuery(SQL_ATTACHMENTS_SELECT,
                     new String[]{attachmentName, String.valueOf(rev.getSequence())});
             if (c.moveToFirst()) {
                 int sequence = c.getInt(0);
@@ -213,11 +210,11 @@ class AttachmentManager {
         }
     }
 
-    protected List<? extends Attachment> attachmentsForRevision(long sequence) {
+    protected List<? extends Attachment> attachmentsForRevision(SQLDatabase db, long sequence) {
         Cursor c = null;
         try {
             LinkedList<SavedAttachment> atts = new LinkedList<SavedAttachment>();
-            c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
+            c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
                     new String[]{String.valueOf(sequence)});
             while (c.moveToNext()) {
                 String name = c.getString(1);
@@ -230,13 +227,14 @@ class AttachmentManager {
             }
             return atts;
         } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Failed to get attachments", e);
             return null;
         } finally {
             DatabaseUtils.closeCursorQuietly(c);
         }
     }
 
-    private void copyCursorValuesToNewSequence(Cursor c, long newSequence) {
+    private void copyCursorValuesToNewSequence(SQLDatabase db, Cursor c, long newSequence) {
         while (c.moveToNext()) {
             String filename = c.getString(1);
             byte[] key = c.getBlob(2);
@@ -255,7 +253,7 @@ class AttachmentManager {
             values.put("length", length);
             values.put("encoded_length", encoded_length);
             values.put("revpos", revpos);
-            datastore.getSQLDatabase().insert("attachments", values);
+            db.insert("attachments", values);
         }
     }
 
@@ -263,10 +261,10 @@ class AttachmentManager {
      * Called by BasicDatastore to copy one attachment to a new revision
      * @param parentSequence
      */
-    protected void copyAttachment(long parentSequence, long newSequence, String filename) throws SQLException {
-        Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT,
+    protected void copyAttachment(SQLDatabase db, long parentSequence, long newSequence, String filename) throws SQLException {
+        Cursor c = db.rawQuery(SQL_ATTACHMENTS_SELECT,
                 new String[]{filename, String.valueOf(parentSequence)});
-        copyCursorValuesToNewSequence(c, newSequence);
+        copyCursorValuesToNewSequence(db,c, newSequence);
         DatabaseUtils.closeCursorQuietly(c);
     }
 
@@ -274,23 +272,27 @@ class AttachmentManager {
      * Called by BasicDatastore to copy attachments to a new revision
      * @param parentSequence
      */
-    protected void copyAttachments(long parentSequence, long newSequence) throws SQLException {
-        Cursor c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
+    protected void copyAttachments(SQLDatabase db, long parentSequence, long newSequence) throws SQLException {
+        Cursor c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
                 new String[]{String.valueOf(parentSequence)});
-        copyCursorValuesToNewSequence(c, newSequence);
+        copyCursorValuesToNewSequence(db,c, newSequence);
         DatabaseUtils.closeCursorQuietly(c);
     }
 
-    protected void purgeAttachments() {
+    /**
+     * Called by BasicDatastore on the execution queue, this needs have the db passed ot it
+     * @param db database to perge attachments from
+     */
+    protected void purgeAttachments(SQLDatabase db) {
         // it's easier to deal with Strings since java doesn't know how to compare byte[]s
         Set<String> currentKeys = new HashSet<String>();
         Cursor c = null;
         try {
             // delete attachment table entries for revs which have been purged
-            datastore.getSQLDatabase().delete("attachments", "sequence IN " +
+            db.delete("attachments", "sequence IN " +
                 "(SELECT sequence from revs WHERE json IS null)", null);
             // get all keys from attachments table
-             c = datastore.getSQLDatabase().rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
+             c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
             while (c.moveToNext()) {
                 byte[] key = c.getBlob(0);
                 currentKeys.add(keyToString(key));

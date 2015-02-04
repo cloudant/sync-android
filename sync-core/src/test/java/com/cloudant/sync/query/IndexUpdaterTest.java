@@ -24,7 +24,9 @@ import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.DatabaseUtils;
+import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -63,6 +65,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
@@ -89,6 +92,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(1));
             assertThat(cursor.getColumnCount(), is(3));
@@ -117,6 +121,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
@@ -144,6 +149,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(1));
             assertThat(cursor.getColumnCount(), is(4));
@@ -174,6 +180,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
@@ -208,6 +215,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(1));
             assertThat(cursor.getColumnCount(), is(6));
@@ -242,6 +250,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
@@ -271,6 +280,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             Assert.assertEquals(1, cursor.getCount());
             Assert.assertEquals(6, cursor.getColumnCount());
@@ -305,6 +315,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
@@ -334,6 +345,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(1));
             assertThat(cursor.getColumnCount(), is(4));
@@ -366,6 +378,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
@@ -394,6 +407,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(3));
             assertThat(cursor.getColumnCount(), is(4));
@@ -427,6 +441,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
@@ -457,6 +472,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(2));
             assertThat(cursor.getColumnCount(), is(4));
@@ -490,6 +506,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String sql = String.format("SELECT * FROM %s", table);
         Cursor cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(0));
         } catch (SQLException e) {
@@ -532,6 +549,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         // Document id456 is rejected due to multiple arrays.
         cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(3));
             assertThat(cursor.getColumnCount(), is(5));
@@ -651,6 +669,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String sqlBasicName = String.format("SELECT * FROM %s", basicNameTable);
         Cursor cursor = null;
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sqlBasic, new String[]{});
             assertThat(cursor.getCount(), is(6));
             assertThat(cursor.getColumnCount(), is(5));
@@ -668,6 +687,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }
 
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sqlBasicName, new String[]{});
             assertThat(cursor.getCount(), is(6));
             assertThat(cursor.getColumnCount(), is(3));
@@ -695,6 +715,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basicName"), is(7l));
 
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sqlBasic, new String[]{});
             assertThat(cursor.getCount(), is(7));
             assertThat(cursor.getColumnCount(), is(5));
@@ -712,6 +733,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }
 
         try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
             cursor = db.rawQuery(sqlBasicName, new String[]{});
             assertThat(cursor.getCount(), is(7));
             assertThat(cursor.getColumnCount(), is(3));
@@ -734,6 +756,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                                    where);
         Cursor cursor = null;
         Long lastSequence = 0l;
+        SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
         try {
             cursor = db.rawQuery(sql, new String[]{});
             assertThat(cursor.getCount(), is(1));

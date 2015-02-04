@@ -15,10 +15,13 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -66,16 +69,16 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test
-    public void close_na_theSQLDatabaseIsClosed() {
-        Assert.assertTrue(this.database.isOpen());
-        this.datastore.close();
-        Assert.assertFalse(this.database.isOpen());
-    }
-
     @Test(expected = IllegalStateException.class)
-    public void close_getDocumentCount_exception() {
-        Assert.assertTrue(this.database.isOpen());
+    public void close_getDocumentCount_exception() throws Exception {
+        datastore.runOnDbQueue(new SQLQueueCallable<Object>()  {
+            @Override
+            public Object call(SQLDatabase db) throws Exception {
+                Assert.assertTrue(db.isOpen());
+                return null;
+            }
+        }).get();
+
         this.datastore.close();
         this.datastore.getDocumentCount();
     }
@@ -395,20 +398,27 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void getPublicUUID_correctUUIDShouldBeReturned() throws SQLException {
+    public void getPublicUUID_correctUUIDShouldBeReturned() throws Exception {
         String publicUUID = datastore.getPublicIdentifier();
         Assert.assertNotNull(publicUUID);
 
-        Cursor cursor = null;
-        try {
-            String[] args = new String[]{ "publicUUID" };
-            cursor = database.rawQuery( " SELECT count(*) FROM info WHERE key = ? ", args);
-            cursor.moveToFirst();
-            Long count = cursor.getLong(0);
-            Assert.assertEquals(Long.valueOf(1L), count);
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+            datastore.runOnDbQueue(new SQLQueueCallable<Object>() {
+                @Override
+                public Object call(SQLDatabase db) throws Exception {
+                    Cursor cursor = null;
+                    try {
+                        String[] args = new String[]{"publicUUID"};
+                        cursor = db.rawQuery(" SELECT count(*) FROM info WHERE key = ? ", args);
+                        cursor.moveToFirst();
+                        Long count = cursor.getLong(0);
+                        Assert.assertEquals(Long.valueOf(1L), count);
+                        return null;
+                    } finally {
+                        DatabaseUtils.closeCursorQuietly(cursor);
+                    }
+                }
+            }).get();
+
     }
 
     @Test

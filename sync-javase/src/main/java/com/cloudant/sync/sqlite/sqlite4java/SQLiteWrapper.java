@@ -48,18 +48,13 @@ public class SQLiteWrapper extends SQLDatabase {
 
     private final String databaseFilePath;
 
-    private ThreadLocal<SQLiteConnection> localConnection = new ThreadLocal<SQLiteConnection>();
+    private SQLiteConnection localConnection;
 
     /**
      * Tracks whether the current nested set of transactions has had any
      * failed transactions so far.
      */
-    private ThreadLocal<Boolean> transactionNestedSetSuccess = new ThreadLocal<Boolean>() {
-        @Override
-        public Boolean initialValue() {
-            return false;
-        }
-    };
+    private Boolean transactionNestedSetSuccess = Boolean.FALSE;
 
     /**
      * Stack to track whether the current transaction is successful.
@@ -67,12 +62,7 @@ public class SQLiteWrapper extends SQLDatabase {
      * When complete, the status is popped and used to update
      * {@see SQLiteWrapper#transactionNestedSetSuccess}
      */
-    private ThreadLocal<Stack<Boolean>> transactionStack = new ThreadLocal<Stack<Boolean>>() {
-        @Override
-        public Stack<Boolean> initialValue() {
-            return new Stack<Boolean>();
-        }
-    };
+    private Stack<Boolean> transactionStack = new Stack<Boolean>();
 
     public SQLiteWrapper(String databaseFilePath) {
         this.databaseFilePath = databaseFilePath;
@@ -89,12 +79,11 @@ public class SQLiteWrapper extends SQLDatabase {
     }
 
     SQLiteConnection getConnection() {
-        if (localConnection.get() == null) {
-            SQLiteConnection conn = createNewConnection();
-            localConnection.set(conn);
+        if (localConnection == null) {
+            localConnection = createNewConnection();
         }
 
-        return localConnection.get();
+        return localConnection;
     }
 
     SQLiteConnection createNewConnection() {
@@ -144,7 +133,7 @@ public class SQLiteWrapper extends SQLDatabase {
         // so we don't have to lock.
 
         // Start new set of nested transactions
-        if(this.transactionStack.get().size() == 0) {
+        if(this.transactionStack.size() == 0) {
             try {
                 this.execSQL("BEGIN EXCLUSIVE;");
             } catch (SQLException e) {
@@ -155,35 +144,35 @@ public class SQLiteWrapper extends SQLDatabase {
             // We assume the set as a whole is successful. If any of the
             // transactions in the set fail, this will be set to false
             // before we commit or rollback.
-            transactionNestedSetSuccess.set(true);
+            transactionNestedSetSuccess = true;
         }
 
         // This is set to true by setTransactionSuccessful(), if that method
         // is called. If it's still false at the end of this transaction,
         // transactionNestedSetSuccess is set to false.
-        transactionStack.get().push(false);
+        transactionStack.push(false);
     }
 
     @Override
     public void endTransaction() {
         Preconditions.checkState(this.isOpen(), "db must be open");
-        Preconditions.checkState(this.transactionStack.get().size() >= 1,
+        Preconditions.checkState(this.transactionStack.size() >= 1,
                 "TransactionStatus stack must not be empty");
 
         // All transaction state variables are thread-local,
         // so we don't have to lock.
 
-        Boolean success = this.transactionStack.get().pop();
+        Boolean success = this.transactionStack.pop();
         if (!success) {
-            transactionNestedSetSuccess.set(false);
+            transactionNestedSetSuccess =false;
         }
 
-        if(this.transactionStack.get().size() == 0) {
+        if(this.transactionStack.size() == 0) {
             // We've reached the top of the stack, and need to commit or
             // rollback. At this point transactionNestedSetSuccess will be true
             // iff no transactions in the set failed.
             try {
-                if (transactionNestedSetSuccess.get()) {
+                if (transactionNestedSetSuccess) {
                     this.execSQL("COMMIT;");
                 } else {
                     this.execSQL("ROLLBACK;");
@@ -206,8 +195,8 @@ public class SQLiteWrapper extends SQLDatabase {
         // Pop the false value off and replace it with true.
         // As the stack is thread-local, this is thread-safe
         // and we need not lock.
-        this.transactionStack.get().pop();
-        this.transactionStack.get().push(true);
+        this.transactionStack.pop();
+        this.transactionStack.push(true);
     }
 
     @Override
@@ -215,7 +204,7 @@ public class SQLiteWrapper extends SQLDatabase {
         // it's not possible to call dispose from other threads
         // so the best we can do is call dispose on the connection
         // for the same thread as us
-        SQLiteConnection conn = localConnection.get();
+        SQLiteConnection conn = localConnection;
         if (conn != null && !conn.isDisposed()) {
             conn.dispose();
         }

@@ -22,13 +22,47 @@ import com.google.common.base.Preconditions;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.sql.SQLData;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Factory class to create @{link SQLDatabase}, and update schema
  */
 public class SQLDatabaseFactory {
+
+    private final static Logger logger = Logger.getLogger(SQLDatabaseFactory.class.getCanonicalName());
+
+    public static SQLDatabase createSQLDatabase(String dbFilename) throws IOException {
+
+        makeSureFileExists(dbFilename);
+        if(Misc.isRunningOnAndroid()) {
+            try {
+                Class c = Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLite");
+
+                Method m = c.getMethod("createAndroidSQLite",String.class);
+                return (SQLDatabase)m.invoke(null,dbFilename);
+
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Failed to load database module", e);
+                return null;
+            }
+        } else {
+            try {
+                Class c = Class.forName("com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper");
+                Method m = c.getMethod("openSQLiteWrapper", String.class);
+                return (SQLDatabase)m.invoke(null, dbFilename);
+
+            } catch (Exception e) {
+                logger.log(Level.SEVERE,"Failed to load database module",e);
+                return null;
+            }
+        }
+
+    }
 
     /**
      * Return {@code SQLDatabase} for the given dbFilename
@@ -46,7 +80,7 @@ public class SQLDatabaseFactory {
                 Method m = c.getMethod("createAndroidSQLite", String.class);
                 return (SQLDatabase)m.invoke(null, dbFilename);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.log(Level.SEVERE, "Failed to load database module", e);
                 return null;
             }
         } else {
@@ -55,7 +89,7 @@ public class SQLDatabaseFactory {
                 Method m = c.getMethod("openSQLiteWrapper", String.class);
                 return (SQLDatabase)m.invoke(null, dbFilename);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.log(Level.SEVERE, "Failed to load database module", e);
                 return null;
             }
         }

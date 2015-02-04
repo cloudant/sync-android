@@ -18,7 +18,6 @@
 package com.cloudant.sync.datastore;
 
 
-import com.cloudant.sync.sqlite.SQLDatabase;
 import com.google.common.collect.Multimap;
 
 import java.io.IOException;
@@ -157,12 +156,15 @@ public interface DatastoreExtended extends Datastore {
      * @param revisionHistory The history of the revision being inserted,
      *                        including the rev ID of {@code rev}. This list
      *                        needs to be sorted in ascending order.
+     * @param preparedAttachments Attachments that have already been prepared, this is a
+     *                            Map of String[docId,revId], list of attachments
      *
      * @see Datastore#getEventBus()
      */
     public void forceInsert(BasicDocumentRevision rev,
                             List<String> revisionHistory,
                             Map<String, Object> attachments,
+                            Map<String[],List<PreparedAttachment>> preparedAttachments,
                             boolean pullAttachmentsInline);
 
     /**
@@ -177,20 +179,9 @@ public interface DatastoreExtended extends Datastore {
      * @param rev
      * @param revisionHistory
      *
-     * @see DatastoreExtended#forceInsert(BasicDocumentRevision, java.util.List, java.util.Map, boolean)
+     * @see DatastoreExtended#forceInsert(BasicDocumentRevision, java.util.List,java.util.Map, java.util.Map, boolean)
      */
     public void forceInsert(BasicDocumentRevision rev, String... revisionHistory);
-
-    /**
-     * <p>Returns a handle to the SQLite database used for low-level
-     * storage.</p>
-     *
-     * <p>This should rarely be called by developers.</p>
-     *
-     * @return Handle the {@code Datastore} is using to access the underlying
-     *          SQLite database file.
-     */
-    public SQLDatabase getSQLDatabase();
 
     /**
      * <p>Returns the datastore's unique identifier.</p>
@@ -273,6 +264,5 @@ public interface DatastoreExtended extends Datastore {
      * @return List of <code>Attachment</code>
      */
     public List<? extends Attachment> attachmentsForRevision(BasicDocumentRevision rev);
-
 
 }

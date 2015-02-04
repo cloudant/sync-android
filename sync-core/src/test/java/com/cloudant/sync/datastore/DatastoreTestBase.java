@@ -27,7 +27,6 @@ public abstract class DatastoreTestBase {
 
     String datastore_manager_dir;
     DatastoreManager datastoreManager;
-    SQLDatabase database = null;
     BasicDatastore datastore = null;
 
     @Before
@@ -35,12 +34,10 @@ public abstract class DatastoreTestBase {
         datastore_manager_dir = TestUtils.createTempTestingDir(this.getClass().getName());
         datastoreManager = new DatastoreManager(this.datastore_manager_dir);
         datastore = (BasicDatastore)(this.datastoreManager.openDatastore(getClass().getSimpleName()));
-        database = this.datastore.getSQLDatabase();
     }
 
     @After
     public void testDown() {
-        TestUtils.deleteDatabaseQuietly(database);
         TestUtils.deleteTempTestingDir(datastore_manager_dir);
     }
 }

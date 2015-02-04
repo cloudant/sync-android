@@ -50,7 +50,6 @@ public class BasicDatastoreForceInsertTest {
     public void setUp() throws Exception {
         database_dir = TestUtils.createTempTestingDir(BasicDatastoreForceInsertTest.class.getName());
         datastore = new BasicDatastore(database_dir, "test");
-        database = datastore.getSQLDatabase();
 
         jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         bodyOne = new BasicDocumentBody(jsonData);

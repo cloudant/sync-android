@@ -15,6 +15,8 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.Misc;
 import com.cloudant.sync.util.TestUtils;
 
@@ -27,7 +29,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -67,7 +68,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
 
     // check that the transaction gets rolled back if one file is dodgy
     @Test
-    public void setBadAttachmentsTest() throws IOException, ConflictException, SQLException {
+    public void setBadAttachmentsTest() throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
@@ -84,10 +85,18 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             Assert.fail("FileNotFoundException not thrown");
         } catch (FileNotFoundException fnfe) {
             // now check that things got rolled back
-            Cursor c1 = datastore.getSQLDatabase().rawQuery("select sequence from attachments;", null);
-            Assert.assertEquals("Attachments table not empty", c1.getCount(), 0);
-            Cursor c2 = datastore.getSQLDatabase().rawQuery("select sequence from revs;", null);
-            Assert.assertEquals("Revs table not empty", c2.getCount(), 1);
+            //TODO This needs to happen on the queue inside of the datastore
+            datastore.runOnDbQueue(new SQLQueueCallable<Object>() {
+                @Override
+                public Object call(SQLDatabase db) throws Exception {
+                    Cursor c1 = db.rawQuery("select sequence from attachments;", null);
+                    Assert.assertEquals("Attachments table not empty", c1.getCount(), 0);
+                    Cursor c2 = db.rawQuery("select sequence from revs;", null);
+                    Assert.assertEquals("Revs table not empty", c2.getCount(), 1);
+                    return null;
+                }
+            }).get();
+
         }
     }
 

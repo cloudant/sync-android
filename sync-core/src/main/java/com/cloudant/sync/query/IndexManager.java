@@ -93,30 +93,47 @@ public class IndexManager {
         validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
         queue = Executors.newSingleThreadExecutor();
 
-        String filename = datastore.extensionDataFolder(EXTENSION_NAME) + File.separator
+        final String filename = datastore.extensionDataFolder(EXTENSION_NAME) + File.separator
                                                                         + "indexes.sqlite";
         SQLDatabase sqlDatabase = null;
         try {
-            sqlDatabase = SQLDatabaseFactory.openSqlDatabase(filename);
-        } catch (IOException e) {
+            sqlDatabase = queue.submit(new Callable<SQLDatabase>() {
+                @Override
+                public SQLDatabase call() throws Exception {
+                    SQLDatabase db = SQLDatabaseFactory.openSqlDatabase(filename);
+                    String[] schemaIndex = { "CREATE TABLE " + INDEX_METADATA_TABLE_NAME + " ( "
+                            + "        index_name TEXT NOT NULL, "
+                            + "        index_type TEXT NOT NULL, "
+                            + "        field_name TEXT NOT NULL, "
+                            + "        last_sequence INTEGER NOT NULL);" };
+                    SQLDatabaseFactory.updateSchema(db, schemaIndex, VERSION);
+                    return db;
+                }
+            }).get();
+        } catch (InterruptedException e) {
+            logger.log(Level.SEVERE, "Problem opening or creating database.", e);
+        } catch (ExecutionException e) {
             logger.log(Level.SEVERE, "Problem opening or creating database.", e);
         }
         database = sqlDatabase;
-        try {
-            String[] schemaIndex = { "CREATE TABLE " + INDEX_METADATA_TABLE_NAME + " ( "
-                                                     + "        index_name TEXT NOT NULL, "
-                                                     + "        index_type TEXT NOT NULL, "
-                                                     + "        field_name TEXT NOT NULL, "
-                                                     + "        last_sequence INTEGER NOT NULL);" };
-            SQLDatabaseFactory.updateSchema(database, schemaIndex, VERSION);
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Failed to update schema.", e);
-        }
     }
 
     public void close() {
+        try {
+            queue.submit(new Runnable() {
+                @Override
+                public void run() {
+                    database.close();
+
+                }
+            }).get();
+        } catch (InterruptedException e) {
+            logger.log(Level.SEVERE,"Failed to close db",e);
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            logger.log(Level.SEVERE, "Failed to close db", e);
+        }
         queue.shutdown();
-        database.close();
     }
 
     /**
@@ -132,7 +149,21 @@ public class IndexManager {
      *  @return Map of indexes in the database.
      */
     public Map<String, Object> listIndexes() {
-        return IndexManager.listIndexesInDatabase(database);
+        try {
+            return queue.submit(new Callable<Map<String, Object>>() {
+                @Override
+                public Map<String, Object> call() throws Exception {
+                     return IndexManager.listIndexesInDatabase(database);
+                }
+            }).get();
+        } catch (InterruptedException e) {
+            logger.log(Level.SEVERE,"Failed to list indexes",e);
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            logger.log(Level.SEVERE,"Failed to list indexes",e);
+            throw new RuntimeException(e);
+        }
+
     }
 
     protected static Map<String, Object> listIndexesInDatabase(SQLDatabase db) {

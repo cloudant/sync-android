@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.util;
 
+import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -27,6 +28,7 @@ import java.lang.reflect.Method;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLData;
 import java.sql.SQLException;
 import java.util.UUID;
 
@@ -48,13 +50,6 @@ public class TestUtils {
     }
 
     public static void deleteDatabaseQuietly(SQLDatabase database) {
-        try {
-            if (database != null) {
-                database.close();
-            }
-        } catch (Exception e) {
-        }
-
         try {
             if (database != null) {
                 FileUtils.deleteQuietly(new File(database.filename));
@@ -151,6 +146,28 @@ public class TestUtils {
            return new File(fileName);
 
        }
+   }
+
+   public static SQLDatabase getDatabaseConnectionToExistingDb(SQLDatabase db){
+       if(Misc.isRunningOnAndroid())
+           return db;
+
+       try {
+           String filePath = (String) db.getClass()
+                   .getMethod("getDatabaseFile")
+                   .invoke(db);
+           return SQLDatabaseFactory.openSqlDatabase(filePath);
+       } catch (IllegalAccessException e) {
+           e.printStackTrace();
+       } catch (InvocationTargetException e) {
+           e.printStackTrace();
+       } catch (NoSuchMethodException e) {
+           e.printStackTrace();
+       } catch (IOException e) {
+           e.printStackTrace();
+       }
+
+       return null;
    }
 
 
