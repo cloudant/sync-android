@@ -99,8 +99,12 @@ public class QueryFilterFieldsTest extends AbstractQueryTestSetUp {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
-        assertThat(im.find(query, 0, Long.MAX_VALUE, Arrays.asList("name.blah"), null),
-                is(nullValue()));
+        QueryResult queryResult = im.find(query,
+                                          0,
+                                          Long.MAX_VALUE,
+                                          Arrays.asList("name.blah"),
+                                          null);
+        assertThat(queryResult, is(nullValue()));
     }
 
     @Test
@@ -190,8 +194,9 @@ public class QueryFilterFieldsTest extends AbstractQueryTestSetUp {
             assertThat((String) revBody.get("name"), is("mike"));
 
             try {
-                assertThat(ds.deleteDocumentFromRevision((ProjectedDocumentRevision) rev),
-                        is(notNullValue()));
+                DocumentRevision deleted = null;
+                deleted = ds.deleteDocumentFromRevision((ProjectedDocumentRevision) rev);
+                assertThat(deleted, is(notNullValue()));
             } catch (ConflictException e) {
                 Assert.fail("Failed to delete document revision");
                 e.printStackTrace();
