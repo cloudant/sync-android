@@ -41,7 +41,7 @@ class ChangesResultWrapper {
         return this.changes.size();
     }
 
-    public String getLastSeq() {
+    public Object getLastSeq() {
         return this.changes.getLastSeq();
     }
 

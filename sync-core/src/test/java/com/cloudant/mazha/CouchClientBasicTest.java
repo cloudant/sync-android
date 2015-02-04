@@ -55,7 +55,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
 
     @Test
     public void createDb_validDbName_dbMustBeCreated() {
-        String dbName = "mazha_test_createdb";
+        String dbName = "mazha_test_createdb"+System.currentTimeMillis();
         CouchClient customClient = new CouchClient(getCouchConfig(dbName));
         ClientTestUtils.deleteQuietly(customClient);
 
@@ -83,7 +83,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
 
     @Test
     public void deleteDb_dbMustBeDeleted() {
-        String dbName = "mazha_test_deletedb";
+        String dbName = "mazha_test_deletedb"+System.currentTimeMillis();
         CouchClient customClient = new CouchClient(getCouchConfig(dbName));
         ClientTestUtils.deleteQuietly(client);
 

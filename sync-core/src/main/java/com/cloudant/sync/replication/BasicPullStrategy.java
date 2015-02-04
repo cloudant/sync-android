@@ -364,7 +364,7 @@ class BasicPullStrategy implements ReplicationStrategy {
     }
 
     private ChangesResultWrapper nextBatch() {
-        final String lastCheckpoint = this.targetDb.getCheckpoint(this.getReplicationId());
+        final Object lastCheckpoint = this.targetDb.getCheckpoint(this.getReplicationId());
         logger.fine("last checkpoint "+lastCheckpoint);
         ChangesResult changeFeeds = this.sourceDb.changes(
                 filter,

@@ -144,7 +144,7 @@ public class CouchClientWrapperTest extends CouchTestBase {
         ChangesResult changes0 = remoteDb.changes(null, 1000);
         Assert.assertEquals(0, changes0.size());
 
-        String lastSequence0 = changes0.getLastSeq();
+        Object lastSequence0 = changes0.getLastSeq();
 
         Response[] responses = createTwoDocumentsInRemoteDb(remoteDb);
 

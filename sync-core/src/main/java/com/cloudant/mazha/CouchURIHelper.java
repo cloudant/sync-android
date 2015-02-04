@@ -19,11 +19,13 @@
 package com.cloudant.mazha;
 
 import com.cloudant.common.CouchConstants;
+import com.cloudant.mazha.json.JSONHelper;
 import com.google.common.base.Joiner;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -61,6 +63,17 @@ public class CouchURIHelper {
                 this.rootUriString,
                 "_changes"
         );
+
+        //lets find the since parameter
+        if(query.containsKey("since")){
+            Object since = query.get("since");
+            if(!(since instanceof String)){
+                //json encode the seq number since it isn't a string
+                JSONHelper helper = new JSONHelper();
+                query.put("since",helper.toJson(since));
+            }
+        }
+
         String uri = appendQueryString(base_uri, query);
         return uriFor(uri);
     }
