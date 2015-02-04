@@ -99,7 +99,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
     @Test
     public void customHeaderAuthOverride() throws Exception {
         // skip if not running against local CouchDB
-        org.junit.Assume.assumeTrue(!TEST_WITH_CLOUDANT);
+        org.junit.Assume.assumeTrue(!IGNORE_AUTH_HEADERS);
 
         URI root = couchConfig.getRootUri();
 
@@ -139,7 +139,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
     @Test
     public void customHeaderAuth() throws Exception {
         // skip if not running against local CouchDB
-        org.junit.Assume.assumeTrue(!TEST_WITH_CLOUDANT);
+        org.junit.Assume.assumeTrue(!IGNORE_AUTH_HEADERS);
 
         CouchConfig customCouchConfig = getCouchConfig(testDb);
         // we're not testing on Cloudant, so we can be sure user/pass is not set - double check:

@@ -1,11 +1,10 @@
 package com.cloudant.common;
 
-import com.cloudant.mazha.CloudantConfig;
 import com.cloudant.mazha.CouchConfig;
+import com.cloudant.mazha.SpecifiedCouch;
 import com.cloudant.sync.util.Misc;
 import com.google.common.base.Strings;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -14,18 +13,21 @@ import java.net.URISyntaxException;
  */
 public abstract class CouchTestBase {
 
-    public static final Boolean TEST_WITH_CLOUDANT = Boolean.valueOf(
-            System.getProperty("test.with.cloudant",Boolean.FALSE.toString()));
+    private static final Boolean SPECIFIED_COUCH = Boolean.valueOf(
+            System.getProperty("test.with.specified.couch",Boolean.FALSE.toString()));
+
+    public static final Boolean IGNORE_COMPACTION = Boolean.valueOf(
+            System.getProperty("test.couch.ignore.compaction",Boolean.FALSE.toString()));
+
+    public static final Boolean IGNORE_AUTH_HEADERS = Boolean.valueOf(
+            System.getProperty("test.couch.ignore.auth.headers",Boolean.FALSE.toString()));
 
     public CouchConfig getCouchConfig(String db) {
-        if(TEST_WITH_CLOUDANT) {
-            CouchConfig config = CloudantConfig.defaultConfig(db);
-            if(Strings.isNullOrEmpty(config.getRootUri().getUserInfo())) {
-                throw new IllegalStateException("Cloudant account info" +
-                        " is required to run tests with Cloudant.");
-            }
-            return config;
-        } else {
+
+        if (SPECIFIED_COUCH) {
+            return SpecifiedCouch.defaultConfig(db);
+        }
+        else {
             String host;
              // If we're running on the Android emulator, 127.0.0.1 is the emulated device, rather
              // than the host machine. Instead we connect to 10.0.2.2.
