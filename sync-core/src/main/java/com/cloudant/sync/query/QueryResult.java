@@ -152,9 +152,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
                         innerRev = projectFields(fields, rev, datastore);
                     }
 
-                    if (innerRev != null) {
-                        docList.add(innerRev);
-                    }
+                    docList.add(innerRev);
 
                     // Apply limit (limit == 0 means disable)
                     nReturned = nReturned + 1;
@@ -189,10 +187,6 @@ public class QueryResult implements Iterable<DocumentRevision> {
             if (fields.contains(key)) {
                 body.put(key, originalBody.get(key));
             }
-        }
-
-        if (body.isEmpty()) {
-            return null;
         }
 
         DocumentRevisionBuilder revBuilder = new DocumentRevisionBuilder();
