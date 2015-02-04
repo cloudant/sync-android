@@ -196,7 +196,7 @@ class QueryExecutor {
             return true;
         }
         for (String field: fields) {
-            if (field.contains("\\.")) {
+            if (field.contains(".")) {
                 String msg = String.format("Projection field cannot use dotted notation: %s",
                         field);
                 logger.log(Level.SEVERE, msg);
