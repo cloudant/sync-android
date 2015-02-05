@@ -12,14 +12,19 @@
 
 package com.cloudant.sync.query;
 
+import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevisionBuilder;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
@@ -128,7 +133,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
                 List<String> batch = originalDocIds.subList(range.location,
                                                             range.location + range.length);
                 List<BasicDocumentRevision> docs = datastore.getDocumentsWithIds(batch);
-                for (DocumentRevision rev : docs) {
+                for (BasicDocumentRevision rev : docs) {
                     DocumentRevision innerRev;
                     innerRev = rev;  // Allows us to replace later if projecting
 
@@ -143,7 +148,9 @@ public class QueryResult implements Iterable<DocumentRevision> {
                         continue;
                     }
 
-                    // TODO - Add projection logic
+                    if (fields != null && !fields.isEmpty()) {
+                        innerRev = projectFields(fields, rev, datastore);
+                    }
 
                     docList.add(innerRev);
 
@@ -168,6 +175,30 @@ public class QueryResult implements Iterable<DocumentRevision> {
             }
             return docList.iterator();
         }
+    }
+
+    private DocumentRevision projectFields(List<String> fields,
+                                           BasicDocumentRevision rev,
+                                           Datastore datastore) {
+        // grab the map filter fields and rebuild object
+        Map<String, Object> originalBody = rev.getBody().asMap();
+        Map<String, Object> body = new HashMap<String, Object>();
+        for (String key : originalBody.keySet()) {
+            if (fields.contains(key)) {
+                body.put(key, originalBody.get(key));
+            }
+        }
+
+        DocumentRevisionBuilder revBuilder = new DocumentRevisionBuilder();
+        revBuilder.setDocId(rev.getId());
+        revBuilder.setRevId(rev.getRevision());
+        revBuilder.setBody(DocumentBodyFactory.create(body));
+        revBuilder.setDeleted(rev.isDeleted());
+        revBuilder.setAttachments(new ArrayList<Attachment>(rev.getAttachments().values()));
+        revBuilder.setSequence(rev.getSequence());
+        revBuilder.setDatastore(datastore);
+
+        return revBuilder.buildProjected();
     }
 
     private class Range {

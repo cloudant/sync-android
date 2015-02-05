@@ -82,6 +82,7 @@ public abstract class AbstractQueryTestSetUp {
     // - When querying using _rev
     // - When querying using $not operator
     // - When querying using $exists operator
+    // - When filtering fields on find
     public void setUpBasicQueryData() {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "mike12";
