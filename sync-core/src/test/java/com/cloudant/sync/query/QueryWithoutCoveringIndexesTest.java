@@ -91,6 +91,15 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
     public void canQueryWithoutIndexSingleClause() {
         setUpWithoutCoveringIndexesQueryData();
         // query - { "town" : "bristol" }
+        // indexes - { "basic" : { "name" : "basic", "type" : "json", "fields" : [ "_id",
+        //                                                                         "_rev",
+        //                                                                         "name",
+        //                                                                         "age" ] } }
+        //
+        //         - { "pet" : { "name" : "pet", "type" : "json", "fields" : [ "_id",
+        //                                                                     "_rev",
+        //                                                                     "name",
+        //                                                                     "pet" ] } }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("town", "bristol");
         QueryResult queryResult = im.find(query);
@@ -101,6 +110,15 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
     public void canQueryWithoutIndexMultiClause() {
         setUpWithoutCoveringIndexesQueryData();
         // query - { "pet" : { "$eq" : "cat" }, { "age" : { "$eq" : 12 } }
+        // indexes - { "basic" : { "name" : "basic", "type" : "json", "fields" : [ "_id",
+        //                                                                         "_rev",
+        //                                                                         "name",
+        //                                                                         "age" ] } }
+        //
+        //         - { "pet" : { "name" : "pet", "type" : "json", "fields" : [ "_id",
+        //                                                                     "_rev",
+        //                                                                     "name",
+        //                                                                     "pet" ] } }
         Map<String, Object> op1 = new HashMap<String, Object>();
         op1.put("$eq", "cat");
         Map<String, Object> op2 = new HashMap<String, Object>();
@@ -110,6 +128,65 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
         query.put("age", op2);
         QueryResult queryResult = im.find(query);
         assertThat(queryResult.documentIds(), contains("mike12"));
+    }
+
+    // When executing OR queries
+
+    @Test
+    public void canQueryORWithAMissingIndex() {
+        setUpWithoutCoveringIndexesQueryData();
+        // query - { "$or" : [ { "pet" : { "$eq" : "cat" } }, { "town" : { "$eq" : "bristol" } } ] }
+        // indexes - { "basic" : { "name" : "basic", "type" : "json", "fields" : [ "_id",
+        //                                                                         "_rev",
+        //                                                                         "name",
+        //                                                                         "age" ] } }
+        //
+        //         - { "pet" : { "name" : "pet", "type" : "json", "fields" : [ "_id",
+        //                                                                     "_rev",
+        //                                                                     "name",
+        //                                                                     "pet" ] } }
+        Map<String, Object> op1 = new HashMap<String, Object>();
+        op1.put("$eq", "cat");
+        Map<String, Object> op2 = new HashMap<String, Object>();
+        op2.put("$eq", "bristol");
+        Map<String, Object> petEq = new HashMap<String, Object>();
+        petEq.put("pet", op1);
+        Map<String, Object> townEq = new HashMap<String, Object>();
+        townEq.put("town", op2);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("$or", Arrays.<Object>asList(petEq, townEq));
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12",
+                                                                 "mike72",
+                                                                 "fred34",
+                                                                 "fred12"));
+    }
+
+    @Test
+    public void canQueryORWithoutAnyIndexes() {
+        setUpWithoutCoveringIndexesQueryData();
+        im.deleteIndexNamed("pet");
+        assertThat(im.listIndexes().keySet(), contains("basic"));
+        // query - { "$or" : [ { "pet" : { "$eq" : "cat" } }, { "town" : { "$eq" : "bristol" } } ] }
+        // indexes - { "basic" : { "name" : "basic", "type" : "json", "fields" : [ "_id",
+        //                                                                         "_rev",
+        //                                                                         "name",
+        //                                                                         "age" ] } }
+        Map<String, Object> op1 = new HashMap<String, Object>();
+        op1.put("$eq", "cat");
+        Map<String, Object> op2 = new HashMap<String, Object>();
+        op2.put("$eq", "bristol");
+        Map<String, Object> petEq = new HashMap<String, Object>();
+        petEq.put("pet", op1);
+        Map<String, Object> townEq = new HashMap<String, Object>();
+        townEq.put("town", op2);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("$or", Arrays.<Object>asList(petEq, townEq));
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12",
+                                                                 "mike72",
+                                                                 "fred34",
+                                                                 "fred12"));
     }
 
 }

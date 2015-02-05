@@ -408,7 +408,8 @@ public abstract class AbstractQueryTestBase {
     }
 
     // Used to setup document data testing for queries without covering indexes:
-    // - When executing queries
+    // - When executing AND queries
+    // - When executing OR queries
     public void setUpWithoutCoveringIndexesQueryData() {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "mike12";

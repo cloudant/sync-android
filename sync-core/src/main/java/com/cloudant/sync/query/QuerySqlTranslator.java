@@ -107,10 +107,10 @@ class QuerySqlTranslator {
         TranslatorState state = new TranslatorState();
         QueryNode node = translateQuery(query, indexes, state);
 
-        // If we haven't used a single index, we need to return a query
-        // which returns every document, so the posthoc matcher can
-        // run over every document to manually carry out the query.
-        if (!state.atLeastOneIndexUsed) {
+        // If we haven't used a single index or an OR clause is missing an index,
+        // we need to return a query which returns every document, so the posthoc
+        // matcher can run over every document to manually carry out the query.
+        if (!state.atLeastOneIndexUsed || state.atLeastOneORIndexMissing) {
             Set<String> neededFields = new HashSet<String>(Arrays.asList("_id"));
             String allDocsIndex = chooseIndexForFields(neededFields, indexes);
 
@@ -221,6 +221,7 @@ class QuerySqlTranslator {
                 String chosenIndex = chooseIndexForAndClause(wrappedClause, indexes);
                 if (chosenIndex == null || chosenIndex.isEmpty()) {
                     state.atLeastOneIndexMissing = true;
+                    state.atLeastOneORIndexMissing = true;
                     String msg = String.format("No single index contains all of %s; %s",
                                                basicClauses.toString(),
                                                "add index for these fields to query efficiently.");
