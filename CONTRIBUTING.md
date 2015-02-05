@@ -118,21 +118,25 @@ Jenkins and other systems.  The reports are located under the ``` build/test-res
 by the build scripts, the base file name is ```testResults_``` it is suffixed with a UUID for that build.
 
 
-#### Testing using Cloudant
+#### Testing using remote CouchDB Instance
 
 Certain tests need a running CouchDB instance, by default they use the local
-CouchDB. To run tests with Cloudant, you need to set your Cloudant account
-credentials: add the following to `gradle.properties` in the same folder as
+CouchDB. To run tests with a remote CouchDB, you need set the details of this CouchDB server, including access credentials: add the following to `gradle.properties` in the same folder as
 `build.gradle`:
 
 ```
-systemProp.test.with.cloudant=[true|false]
-systemProp.test.cloudant.username=yourCloudantUserName
-systemProp.test.cloudant.password=yourCloudantPassword
+systemProp.test.with.specified.couch=[true|false] # default false
+systemProp.test.couch.username=yourUsername 
+systemProp.test.couch.password=yourPassword
+systemProp.test.couch.host=couchdbHost # default localhost
+systemProptest.couch.port=couchdbPort # default 5984
+systemProp.test.couch.http=[http|https] # default 5984
+systemProp.test.couch.ignore.compaction=[true|false] # default false
+systemProp.test.couch.auth.headers=[true|false] # default false
 ```
+Note: some tests need to be ignored based on the configuration of the CouchDB instance you are using or if you are running against Cloudant. For example if the compaction endpoint is unavailable eg returns a 403 response, these tests should be disabled. 
 
-Your gradle.properties should NEVER be checked into git repo as it contains your
-cloudant credentials.
+Your gradle.properties should NEVER be checked into git repo as it contains your CouchDB credentials.
 
 ### Code coverage
 

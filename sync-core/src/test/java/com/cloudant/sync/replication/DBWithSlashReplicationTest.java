@@ -66,7 +66,7 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
         replicator.start();
         Assert.assertEquals(Replicator.State.STARTED, replicator.getState());
 
-        while(replicator.getState() != Replicator.State.COMPLETE) {
+        while(replicator.getState() != Replicator.State.COMPLETE || replicator.getState() == Replicator.State.ERROR) {
             Thread.sleep(1000);
         }
 

@@ -110,12 +110,12 @@ public class CouchClientWrapper implements CouchDB {
     }
 
     @Override
-    public ChangesResult changes(String lastSequence, int limit) {
+    public ChangesResult changes(Object lastSequence, int limit) {
         return couchClient.changes(lastSequence, limit);
     }
 
     @Override
-    public ChangesResult changes(Replication.Filter filter, String lastSequence, int limit) {
+    public ChangesResult changes(Replication.Filter filter, Object lastSequence, int limit) {
         if(filter == null) {
             return couchClient.changes(lastSequence, limit);
         } else {

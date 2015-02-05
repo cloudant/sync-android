@@ -52,7 +52,7 @@ class DatastoreWrapper {
         return dbCore.getPublicIdentifier();
     }
 
-    public String getCheckpoint(String replicatorIdentifier) {
+    public Object getCheckpoint(String replicatorIdentifier) {
         logger.entering("DatastoreWrapper","getCheckpoint" + replicatorIdentifier);
         BasicDocumentRevision doc = dbCore.getLocalDocument(getCheckpointDocumentId(replicatorIdentifier));
         if(doc == null) {
@@ -63,15 +63,15 @@ class DatastoreWrapper {
         if(checkpointDoc == null) {
             return null;
         } else {
-            return (String)checkpointDoc.get("lastSequence");
+            return checkpointDoc.get("lastSequence");
         }
     }
 
-    public void putCheckpoint(String replicatorIdentifier, String sequence) {
+    public void putCheckpoint(String replicatorIdentifier, Object sequence) {
         logger.entering("DatastoreWrapper","putCheckpoint",new Object[]{replicatorIdentifier,sequence});
         String checkpointDocumentId = getCheckpointDocumentId(replicatorIdentifier);
         BasicDocumentRevision doc = dbCore.getLocalDocument(checkpointDocumentId);
-        Map<String, String> checkpointDoc = new HashMap<String, String>();
+        Map<String, Object> checkpointDoc = new HashMap<String, Object>();
         checkpointDoc.put("lastSequence", sequence);
         byte[] json = JSONUtils.serializeAsBytes(checkpointDoc);
         if(doc == null) {

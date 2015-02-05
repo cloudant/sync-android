@@ -50,7 +50,7 @@ public class ChangesResult {
 	private List<Row> results;
 
 	@JsonProperty("last_seq")
-	private String lastSeq;
+	private Object lastSeq;
 
 	public List<Row> getResults() {
 		return results;
@@ -60,11 +60,11 @@ public class ChangesResult {
 		this.results = results;
 	}
 
-	public String getLastSeq() {
+	public Object getLastSeq() {
 		return lastSeq;
 	}
 
-	public void setLastSeq(String lastSeq) {
+	public void setLastSeq(Object lastSeq) {
 		this.lastSeq = lastSeq;
 	}
 
@@ -79,17 +79,17 @@ public class ChangesResult {
 	 * Represent a row in Changes result.
 	 */
 	public static class Row {
-		private String seq;
+		private Object seq;
 		private String id;
 		private List<Rev> changes;
 		private boolean deleted;
 		private Map doc;
 
-		public String getSeq() {
+		public Object getSeq() {
 			return seq;
 		}
 
-		public void setSeq(String seq) {
+		public void setSeq(Object seq) {
 			this.seq = seq;
 		}
 

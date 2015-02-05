@@ -35,7 +35,7 @@ public class CouchDbInfo {
 	private String docDelCount;
 
 	@JsonProperty("update_seq")
-	private String updateSeq;
+	private Object updateSeq;
 
 	@JsonProperty("purge_seq")
 	private long purgeSeq;
@@ -67,7 +67,7 @@ public class CouchDbInfo {
 		return docDelCount;
 	}
 
-	public String getUpdateSeq() {
+	public Object getUpdateSeq() {
 		return updateSeq;
 	}
 

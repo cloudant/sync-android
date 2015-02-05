@@ -43,8 +43,8 @@ interface CouchDB {
     public String getCheckpoint(String checkpointId);
     public void putCheckpoint(String checkpointId, String sequence);
 
-    public ChangesResult changes(String lastSequence, int limit);
-    public ChangesResult changes(Replication.Filter filter,String lastSequence, int limit);
+    public ChangesResult changes(Object lastSequence, int limit);
+    public ChangesResult changes(Replication.Filter filter,Object lastSequence, int limit);
     public List<DocumentRevs> getRevisions(String documentId,
                                            Collection<String> revisionIds,
                                            Collection<String> attsSince,

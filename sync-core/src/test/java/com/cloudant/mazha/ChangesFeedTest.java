@@ -35,7 +35,7 @@ public class ChangesFeedTest extends CouchClientTestBase {
     public void changes_dbChangesMustSuccessfullyReturn() {
         Response res1 = ClientTestUtils.createHelloWorldDoc(client);
         Response res2 = ClientTestUtils.createHelloWorldDoc(client);
-        String lastSeq = "0";
+        Object lastSeq = "0";
 
         { // Two docs changed
             ChangesResult changes = client.changes(lastSeq);
@@ -94,7 +94,7 @@ public class ChangesFeedTest extends CouchClientTestBase {
     @Test
     public void changes_dbWithConflicts_changesMustSuccessfullyReturn() {
         ClientTestUtils.createHelloWorldDoc(client);
-        String lastSeq = "0";
+        Object lastSeq = "0";
 
         {
             ChangesResult changes = client.changes(lastSeq);
