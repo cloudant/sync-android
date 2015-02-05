@@ -1,7 +1,10 @@
-# Unreleased (2015-01-23)
+# Unreleased (2015-02-5)
 
+- [NEW] Added listAllDatastores API
+- [FIX] Fixed replication with CouchDB and CloudantLocal
 - [FIX] Fixed issue where URLs for remote databases were incorrectly
   encoded.
+- [IMRPOVED] Improved how sqlite connections are handled.
 - [REMOVED] Removed username and password from PullReplication and
   PushReplication. Users should set their password in the source or
   destnation URL.
