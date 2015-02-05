@@ -40,7 +40,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class QueryFilterFieldsTest extends AbstractQueryTestSetUp {
+public class QueryFilterFieldsTest extends AbstractQueryTestBase {
 
     @Override
     public void setUp() throws SQLException {
@@ -194,7 +194,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestSetUp {
             assertThat((String) revBody.get("name"), is("mike"));
 
             try {
-                DocumentRevision deleted = null;
+                DocumentRevision deleted;
                 deleted = ds.deleteDocumentFromRevision((ProjectedDocumentRevision) rev);
                 assertThat(deleted, is(notNullValue()));
             } catch (ConflictException e) {
