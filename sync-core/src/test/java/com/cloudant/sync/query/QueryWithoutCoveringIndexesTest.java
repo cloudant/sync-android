@@ -130,6 +130,25 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
         assertThat(queryResult.documentIds(), contains("mike12"));
     }
 
+    @Test
+    public void postHocMatchesProjectingOverNonQueriedFields() {
+        setUpWithoutCoveringIndexesQueryData();
+        // query - { "town" : "bristol" }
+        // indexes - { "basic" : { "name" : "basic", "type" : "json", "fields" : [ "_id",
+        //                                                                         "_rev",
+        //                                                                         "name",
+        //                                                                         "age" ] } }
+        //
+        //         - { "pet" : { "name" : "pet", "type" : "json", "fields" : [ "_id",
+        //                                                                     "_rev",
+        //                                                                     "name",
+        //                                                                     "pet" ] } }
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("town", "bristol");
+        QueryResult queryResult = im.find(query, 0, 0, Arrays.asList("name"), null);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike72", "fred12"));
+    }
+
     // When executing OR queries
 
     @Test
