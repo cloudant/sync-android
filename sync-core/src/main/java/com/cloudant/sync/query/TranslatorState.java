@@ -26,10 +26,12 @@ class TranslatorState {
 
     public boolean atLeastOneIndexUsed;
     public boolean atLeastOneIndexMissing;
+    public boolean atLeastOneORIndexMissing;
 
     TranslatorState() {
         atLeastOneIndexUsed = false;
         atLeastOneIndexMissing = false;
+        atLeastOneORIndexMissing = false;
     }
 
 }
