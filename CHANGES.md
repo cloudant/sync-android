@@ -1,20 +1,26 @@
 # Unreleased (2015-02-5)
 
-- [NEW] Added listAllDatastores API
-- [FIX] Fixed replication with CouchDB and CloudantLocal
-- [FIX] Fixed issue where URLs for remote databases were incorrectly
-  encoded.
-- [IMRPOVED] Improved how sqlite connections are handled.
-- [REMOVED] Removed username and password from PullReplication and
-  PushReplication. Users should set their password in the source or
+- [NEW] Added `listAllDatastores` method to `DatastoreManager`.
+- [FIX] Support CouchDB 2.0/Cloudant Local's array-based 
+  sequence number format to fix replication between the local
+  database and these remote servers.
+- [FIX] Fixed issue where the path portion for remote database
+  URLs were incorrectly encoded if there was more than one
+  path segment.
+- [IMPROVED] SQLite connections are now reused across threads by
+  using a serial queue to enforce isolation. This should be more
+  robust and allows us to properly implement the `close()` method
+  on a datastore.
+- [REMOVED] Removed username and password from `PullReplication` and
+  `PushReplication`. Users should set their password in the source or
   destnation URL.
 - [REMOVED] Removed allDbs() from Mazha CouchClient.
 
 # 0.9.3 (2014-12-10)
 
-- [FIX] Fixed issue where slashes were disallowed for replication
+- [FIX] Fixed issue where slashes were disallowed for replication.
 - [FIX] Fixed issue where deleted documents were returned for conflicts.
-- [NEW] Added compact API
+- [NEW] Added compact API.
 
 # 0.9.2 (2014-11-26)
 
