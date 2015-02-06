@@ -63,12 +63,12 @@ public class DatastoreManagerTest {
     }
 
     @Test
-    public void openDatastore_name_dbShouldBeCreated() {
+    public void openDatastore_name_dbShouldBeCreated() throws Exception {
         Datastore ds = createAndAssertDatastore();
         ds.close();
     }
 
-    private Datastore createAndAssertDatastore() {
+    private Datastore createAndAssertDatastore() throws Exception {
         Datastore ds = manager.openDatastore("mydatastore");
         Assert.assertNotNull(ds);
         boolean assertsFailed = true;

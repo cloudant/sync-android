@@ -71,7 +71,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         assertPushReplicationStatus(0, 1, "1");
     }
 
-    private void assertPushReplicationStatus(int documentCounter, int batchCounter, String lastSequence) {
+    private void assertPushReplicationStatus(int documentCounter, int batchCounter, String lastSequence) throws Exception {
         Assert.assertEquals("DocumentRevisionTree counter", documentCounter, replicator.getDocumentCounter());
         Assert.assertEquals("Batch counter", batchCounter, replicator.getBatchCounter());
         Assert.assertEquals("Last sequence", lastSequence, remoteDb.getCheckpoint(this.replicator.getReplicationId()));

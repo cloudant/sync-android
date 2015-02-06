@@ -47,7 +47,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     PullConfiguration config = null;
     BasicPullStrategy replicator = null;
 
-    private Bar getDocument(String id) {
+    private Bar getDocument(String id) throws Exception {
         BasicDocumentRevision rev = this.datastore.getDocument(id);
         Bar bar = new Bar();
         Map<String, Object> m = rev.getBody().asMap();
@@ -256,7 +256,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         Assert.assertEquals(1, replicator.getBatchCounter());
     }
 
-    private void resetCheckpoint() {
+    private void resetCheckpoint() throws Exception {
         DatastoreWrapper wrapper = new DatastoreWrapper(this.datastore);
         wrapper.putCheckpoint(this.remoteDb.getIdentifier(), "0");
     }

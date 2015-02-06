@@ -86,7 +86,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
     }
 
     @Test
-    public void push_noMissingRevisions_noDataShouldBePushed() throws URISyntaxException, IOException {
+    public void push_noMissingRevisions_noDataShouldBePushed() throws Exception {
         //Prepare
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);

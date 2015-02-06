@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.sync.datastore.DatastoreException;
 import com.google.common.eventbus.EventBus;
 
 interface ReplicationStrategy extends Runnable {
@@ -24,6 +25,6 @@ interface ReplicationStrategy extends Runnable {
     
     EventBus getEventBus();
 
-    String getReplicationId();
+    String getReplicationId() throws DatastoreException;
 
 }

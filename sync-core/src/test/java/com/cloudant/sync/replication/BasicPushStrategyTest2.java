@@ -28,7 +28,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,7 +45,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
      * Doc 2: 1 -> 2
      * Doc 3: 1 -> 2 -> 3
      */
-    private void populateSomeDataInLocalDatastore() throws ConflictException, IOException {
+    private void populateSomeDataInLocalDatastore() throws Exception{
 
         id1 = createDocInDatastore("Doc 1");
         Assert.assertNotNull(id1);
@@ -63,7 +62,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         updateDocInDatastore(id3, "Doc 3");
     }
 
-    public String createDocInDatastore(String d) throws IOException {
+    public String createDocInDatastore(String d) throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         Map<String, String> m = new HashMap<String, String>();
         m.put("data", d);
@@ -71,7 +70,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         return datastore.createDocumentFromRevision(rev).getId();
     }
 
-    public String updateDocInDatastore(String id, String data) throws ConflictException, IOException {
+    public String updateDocInDatastore(String id, String data) throws Exception {
         MutableDocumentRevision rev = datastore.getDocument(id).mutableCopy();
         Map<String, String> m = new HashMap<String, String>();
         m.put("data", data);
@@ -132,13 +131,13 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         }
     }
 
-    private void checkAllDocumentAreSynced() {
+    private void checkAllDocumentAreSynced() throws Exception {
         checkDocumentIsSynced(id1);
         checkDocumentIsSynced(id2);
         checkDocumentIsSynced(id3);
     }
 
-    public void checkDocumentIsSynced(String id) {
+    public void checkDocumentIsSynced(String id) throws Exception{
         BasicDocumentRevision fooLocal = this.datastore.getDocument(id);
         Map fooRemote = remoteDb.get(Map.class, id);
         Assert.assertEquals(fooLocal.getId(), fooRemote.get("_id"));
@@ -154,7 +153,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
      *
      * where "L" means local version.
      */
-    private void updateDataInLocalDatastore() throws ConflictException, IOException {
+    private void updateDataInLocalDatastore() throws Exception {
         // Doc 1: 1 -> 2 -> 3 -> 4L -> 5L
         updateDocInDatastore(id1, "Doc 1");
         updateDocInDatastore(id1, "Doc 1");

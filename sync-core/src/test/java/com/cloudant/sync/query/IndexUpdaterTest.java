@@ -50,13 +50,13 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void updateIndexNoIndexName() {
+    public void updateIndexNoIndexName() throws Exception {
         createIndex("basic", Arrays.<Object>asList("name"));
         assertThat(IndexUpdater.updateIndex(null, fields, db, ds, im.getQueue()), is(false));
     }
 
     @Test
-    public void updateOneFieldIndex() {
+    public void updateOneFieldIndex() throws Exception {
         createIndex("basic", Arrays.<Object>asList("name"));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
@@ -81,11 +81,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("name", "mike");
         rev.body = DocumentBodyFactory.create(bodyMap);
         BasicDocumentRevision saved = null;
-        try {
-            saved = ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        saved = ds.createDocumentFromRevision(rev);
+
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -112,7 +109,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void updateTwoFieldIndex() {
+    public void updateTwoFieldIndex() throws Exception {
         createIndex("basic", Arrays.<Object>asList("name", "age"));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
@@ -138,11 +135,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("age", 12);
         rev.body = DocumentBodyFactory.create(bodyMap);
         BasicDocumentRevision saved = null;
-        try {
-            saved = ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -171,7 +164,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void updateMultiFieldIndex() {
+    public void updateMultiFieldIndex() throws Exception {
         createIndex("basic", Arrays.<Object>asList("name", "age", "pet", "car"));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
@@ -204,11 +197,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("ignored", "something");
         rev.body = DocumentBodyFactory.create(bodyMap);
         BasicDocumentRevision saved = null;
-        try {
-            saved = ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -241,7 +230,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void updateMultiFieldIndexMissingFields() {
+    public void updateMultiFieldIndexMissingFields() throws Exception {
         createIndex("basic", Arrays.<Object>asList("name", "age", "pet", "car"));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
@@ -269,11 +258,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("ignored", "something");
         rev.body = DocumentBodyFactory.create(bodyMap);
         BasicDocumentRevision saved = null;
-        try {
-            saved = ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -306,7 +291,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void updateMultiFieldIndexWithBlankRow() {
+    public void updateMultiFieldIndexWithBlankRow() throws Exception {
         createIndex("basic", Arrays.<Object>asList("car", "van"));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
@@ -334,11 +319,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("ignored", "something");
         rev.body = DocumentBodyFactory.create(bodyMap);
         BasicDocumentRevision saved = null;
-        try {
-            saved = ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -367,7 +348,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void indexSingleArrayFieldWhenIndexingArrays() {
+    public void indexSingleArrayFieldWhenIndexingArrays() throws Exception {
         createIndex("basic", Arrays.<Object>asList("name", "pet"));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
@@ -396,11 +377,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("pet", pets);
         rev.body = DocumentBodyFactory.create(bodyMap);
         BasicDocumentRevision saved = null;
-        try {
-            saved = ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -432,7 +409,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void indexSingleArrayFieldWhenIndexingArraysInSubDoc() {
+    public void indexSingleArrayFieldWhenIndexingArraysInSubDoc() throws Exception {
         createIndex("basic", Arrays.<Object>asList("name", "pet.species"));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
@@ -461,11 +438,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("pet", pets);
         rev.body = DocumentBodyFactory.create(bodyMap);
         BasicDocumentRevision saved = null;
-        try {
-            saved = ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -497,7 +470,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void rejectsDocsWithMultipleArrays() {
+    public void rejectsDocsWithMultipleArrays() throws Exception {
         createIndex("basic", Arrays.<Object>asList("name", "pet", "pet2"));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
@@ -535,12 +508,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         badBodyMap.put("pet", pets);
         badBodyMap.put("pet2", pets);
         badRev.body = DocumentBodyFactory.create(badBodyMap);
-        try {
-            saved = ds.createDocumentFromRevision(goodRev);
-            ds.createDocumentFromRevision(badRev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        saved = ds.createDocumentFromRevision(goodRev);
+        ds.createDocumentFromRevision(badRev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(2l));
@@ -576,7 +545,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void updateAllIndexes() {
+    public void updateAllIndexes() throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "mike12";
         // body content: { "name" : "mike",  "age" : 12, "pet" : "cat" }
@@ -585,11 +554,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "mike23";
         // body content: { "name" : "mike",  "age" : 23, "pet" : "parrot" }
@@ -598,11 +563,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("age", 23);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "mike34";
         // body content: { "name" : "mike",  "age" : 34, "pet" : "dog" }
@@ -611,11 +572,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "john72";
         // body content: { "name" : "john",  "age" : 72, "pet" : "fish" }
@@ -624,11 +581,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("age", 72);
         bodyMap.put("pet", "fish");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "fred34";
         // body content: { "name" : "fred",  "age" : 34, "pet" : "snake" }
@@ -637,11 +590,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "snake");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "fred12";
         // body content: { "name" : "fred",  "age" : 12 }
@@ -649,11 +598,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        ds.createDocumentFromRevision(rev);
+
 
         createIndex("basic", Arrays.<Object>asList("age", "pet", "name"));
         createIndex("basicName", Arrays.<Object>asList("name"));
@@ -703,11 +649,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }
 
         rev.docId = "newdoc";
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            Assert.fail(String.format("IOException occurred creating document revision: %s", e));
-        }
+        ds.createDocumentFromRevision(rev);
 
         im.updateAllIndexes();
 

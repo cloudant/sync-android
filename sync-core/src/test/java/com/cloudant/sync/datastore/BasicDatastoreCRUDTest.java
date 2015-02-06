@@ -84,7 +84,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void createDocument_bodyOnly_success() throws IOException {
+    public void createDocument_bodyOnly_success() throws Exception {
         MutableDocumentRevision rev_mut = new MutableDocumentRevision();
         rev_mut.body = bodyOne;
         BasicDocumentRevision rev = datastore.createDocumentFromRevision(rev_mut);
@@ -92,7 +92,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void createDocument_docIdAndBody_success() throws IOException {
+    public void createDocument_docIdAndBody_success() throws Exception {
         String docId = CouchUtils.generateDocumentId();
         MutableDocumentRevision newDoc = new MutableDocumentRevision();
         newDoc.docId = docId;
@@ -103,7 +103,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void createDocument_idInChinese_success() throws IOException {
+    public void createDocument_idInChinese_success() throws Exception {
         String id = "\u738b\u4e1c\u5347";
         MutableDocumentRevision newDoc = new MutableDocumentRevision();
         newDoc.docId = id;
@@ -114,8 +114,8 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         Assert.assertEquals(id, rev.getId());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void createDocument_existDocId_fail() throws IOException {
+    @Test(expected = DocumentException.class)
+    public void createDocument_existDocId_fail() throws Exception {
         String docId = CouchUtils.generateDocumentId();
         MutableDocumentRevision newDoc = new MutableDocumentRevision();
         newDoc.docId = docId;
@@ -125,8 +125,8 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         datastore.createDocumentFromRevision(newDoc);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void createDocument_specialField_fail() throws IOException {
+    @Test(expected = DocumentException.class)
+    public void createDocument_specialField_fail() throws Exception {
         Map m = createMapWithSpecialField();
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.body = BasicDocumentBody.bodyWith(m);
@@ -140,21 +140,21 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void createLocalDocument_bodyOnly_success() {
+    public void createLocalDocument_bodyOnly_success() throws Exception {
         BasicDocumentRevision rev = datastore.createLocalDocument(bodyOne);
         validateNewlyCreateLocalDocument(rev);
     }
 
     @Test
-    public void createLocalDocument_docIdAndBody_success() {
+    public void createLocalDocument_docIdAndBody_success() throws Exception {
         String docId = CouchUtils.generateDocumentId();
         BasicDocumentRevision rev = datastore.createLocalDocument(docId, bodyOne);
         validateNewlyCreateLocalDocument(rev);
         Assert.assertEquals(docId, rev.getId());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void createLocalDocument_existDocId_exception() {
+    @Test(expected = DocumentException.class)
+    public void createLocalDocument_existDocId_exception() throws Exception {
         String docId = CouchUtils.generateDocumentId();
         BasicDocumentRevision rev = datastore.createLocalDocument(docId, bodyOne);
         validateNewlyCreateLocalDocument(rev);
@@ -162,7 +162,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void updateDocument_existingDocument_success() throws ConflictException, IOException {
+    public void updateDocument_existingDocument_success() throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
@@ -189,8 +189,8 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         Assert.assertEquals(4, CouchUtils.generationFromRevId(rev_4.getRevision()));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void updateDocument_specialField_exception() throws ConflictException, IOException {
+    @Test(expected = DocumentException.class)
+    public void updateDocument_specialField_exception() throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
@@ -202,12 +202,12 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         datastore.updateDocumentFromRevision(rev_2Mut);
     }
 
-    @Test(expected = ConflictException.class)
-    public void updateDocument_targetDocumentNotCurrentRevision_exception()
-            throws ConflictException, IOException {
+    @Test(expected = DocumentException.class)
+    public void updateDocument_targetDocumentNotCurrentRevision_exception() throws Exception{
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        validateNewlyCreatedDocument(rev_1);
         validateNewlyCreatedDocument(rev_1);
 
         MutableDocumentRevision rev_2Mut = rev_1.mutableCopy();
@@ -224,7 +224,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test(expected = ConflictException.class)
-    public void deleteDocument_previousRevisionNotLeafNode_exception() throws ConflictException, IOException {
+    public void deleteDocument_previousRevisionNotLeafNode_exception() throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(rev_1Mut);
@@ -237,7 +237,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void deleteDocument_previousRevisionWasWinner_newRevisionInsertedAsWinner()
-            throws ConflictException, IOException {
+            throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(rev_1Mut);
@@ -257,7 +257,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void deleteDocument_previousRevisionWasDeleted_noNewRevisionInserted()
-            throws ConflictException, IOException {
+            throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(rev_1Mut);
@@ -274,7 +274,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void deleteDocument_previousRevisionWasNotWinner_newRevisionIsNotWinner()
-            throws ConflictException, IOException {
+            throws Exception {
 
         MutableDocumentRevision rev1aMut = new MutableDocumentRevision();
         rev1aMut.body = bodyOne;
@@ -319,19 +319,19 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void getLastSequence() throws IOException {
+    public void getLastSequence() throws Exception {
         createTwoDocuments();
         Assert.assertEquals(2l, datastore.getLastSequence());
     }
 
     @Test
-    public void getDocumentCount() throws IOException {
+    public void getDocumentCount() throws Exception {
         createTwoDocuments();
         Assert.assertEquals(2, datastore.getDocumentCount());
     }
 
     @Test
-    public void getDocument_twoDoc() throws ConflictException, IOException {
+    public void getDocument_twoDoc() throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
@@ -357,7 +357,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void getLocalDocument_twoDoc() {
+    public void getLocalDocument_twoDoc() throws Exception {
         BasicDocumentRevision rev_1 = datastore.createLocalDocument(bodyOne);
         validateNewlyCreateLocalDocument(rev_1);
 
@@ -366,7 +366,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void updateLocalDocument_existingDocument_success() {
+    public void updateLocalDocument_existingDocument_success() throws Exception {
         BasicDocumentRevision rev_1 = datastore.createLocalDocument(bodyOne);
         validateNewlyCreateLocalDocument(rev_1);
 
@@ -382,7 +382,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void existsDocument_goodOneAndBadOne() throws IOException {
+    public void existsDocument_goodOneAndBadOne() throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
@@ -422,7 +422,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void getDocumentsWithIds_NA_allSpecifiedDocumentsShouldBeReturnedInCorrectOrder() throws ConflictException, IOException {
+    public void getDocumentsWithIds_NA_allSpecifiedDocumentsShouldBeReturnedInCorrectOrder() throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
@@ -454,7 +454,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         }
     }
 
-    private BasicDocumentRevision[] createTwoDocumentsForGetDocumentsWithInternalIdsTest() throws ConflictException, IOException {
+    private BasicDocumentRevision[] createTwoDocumentsForGetDocumentsWithInternalIdsTest() throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
@@ -469,7 +469,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void getDocumentsWithInternalIds_emptyIdList_emptyListShouldReturn() throws
-            ConflictException, IOException {
+            Exception {
         createTwoDocumentsForGetDocumentsWithInternalIdsTest();
 
         List<Long> ids = new ArrayList<Long>();
@@ -482,7 +482,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void getDocumentsWithInternalIds_twoIds_allSpecifiedDocumentsShouldBeReturnedInCorrectOrder() throws
-            ConflictException, IOException {
+            Exception {
         BasicDocumentRevision[] dbObjects = createTwoDocumentsForGetDocumentsWithInternalIdsTest();
 
         List<Long> ids = new ArrayList<Long>();
@@ -500,8 +500,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
 
     @Test
-    public void getDocumentsWithInternalIds_moreIdsThanSQLiteParameterLimit() throws
-        ConflictException, IOException {
+    public void getDocumentsWithInternalIds_moreIdsThanSQLiteParameterLimit() throws Exception {
 
         // Fill a datastore with a large number of docs
         int n_docs = 1200;
@@ -539,7 +538,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void getDocumentsWithInternalIds_invalidId_emptyListReturned() throws
-            ConflictException, IOException {
+            Exception {
         createTwoDocumentsForGetDocumentsWithInternalIdsTest();
 
         List<Long> ids = new ArrayList<Long>();
@@ -565,7 +564,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void getAllDocuments() throws ConflictException, IOException {
+    public void getAllDocuments() throws Exception {
 
         int objectCount = 100;
         List<DocumentBody> bodies = this.generateDocuments(objectCount);
@@ -585,7 +584,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void createDbWithSlashAndCreateDocument() throws IOException {
+    public void createDbWithSlashAndCreateDocument() throws Exception {
             Datastore datastore = datastoreManager.openDatastore("dbwith/aslash");
             MutableDocumentRevision rev = new MutableDocumentRevision();
             rev.body = bodyOne;

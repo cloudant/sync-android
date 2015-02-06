@@ -32,7 +32,7 @@ public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void changes_sinceZero_twoDocumentsShouldBeReturned() throws IOException {
+    public void changes_sinceZero_twoDocumentsShouldBeReturned() throws Exception {
         createTwoDocuments();
 
         Changes changes = datastore.changes(0, 100);
@@ -40,7 +40,7 @@ public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void changes_sinceZeroThenSinceTwo_lastSequenceOfEmptyChangeSetMightNotBeZero() throws IOException {
+    public void changes_sinceZeroThenSinceTwo_lastSequenceOfEmptyChangeSetMightNotBeZero() throws Exception {
         createTwoDocuments();
 
         Changes changes = datastore.changes(0, 100);
@@ -54,7 +54,7 @@ public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void changes_sinceMinusOno_twoDocumentsShouldBeReturned() throws IOException {
+    public void changes_sinceMinusOno_twoDocumentsShouldBeReturned() throws Exception {
         createTwoDocuments();
         Changes changes = datastore.changes(-1, 100);
         Assert.assertEquals(2, changes.size());
@@ -62,13 +62,13 @@ public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void changes_limitMinusOne_exception() throws IOException {
+    public void changes_limitMinusOne_exception() throws Exception {
         createTwoDocuments();
         datastore.changes(0, -1);
     }
 
     @Test
-    public void changes_sinceOne_oneDocumentsShouldBeReturned() throws ConflictException, IOException{
+    public void changes_sinceOne_oneDocumentsShouldBeReturned() throws Exception{
         createThreeDocuments();
 
         Changes changes = datastore.changes(2, 100);

@@ -62,7 +62,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     public boolean pullAttachmentsInline;
 
     @Test
-    public void pullRevisionsWithAttachments() {
+    public void pullRevisionsWithAttachments() throws Exception{
         createRevisionAndAttachment();
         try {
             pull();
@@ -102,7 +102,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     // compressible_types = text/*, application/javascript, application/json, application/xml
 
     @Test
-    public void pullRevisionsWithBigAttachments() {
+    public void pullRevisionsWithBigAttachments() throws Exception {
         try {
             createRevisionAndBigAttachment();
             pull();
@@ -121,7 +121,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     }
 
     @Test
-    public void pullRevisionsWithBigTextAttachments() {
+    public void pullRevisionsWithBigTextAttachments() throws Exception {
         try {
             createRevisionAndBigTextAttachment();
             pull();
@@ -155,6 +155,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
             Assert.assertNull(a2);
 
         } catch (Exception e) {
+            e.printStackTrace();
             Assert.fail("Create/pull error " + e);
         }
     }

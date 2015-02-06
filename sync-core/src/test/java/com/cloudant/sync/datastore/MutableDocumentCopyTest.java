@@ -54,7 +54,7 @@ public class MutableDocumentCopyTest extends BasicDatastoreTestBase{
 
     // Add a document from a mutableCopy, with attachments
     @Test
-    public void createFromCopy() throws ConflictException, IOException {
+    public void createFromCopy() throws Exception {
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
         update.docId = "copy";
@@ -83,7 +83,7 @@ public class MutableDocumentCopyTest extends BasicDatastoreTestBase{
 
     // Add a document from a mutableCopy, remove the attachments first
     @Test
-    public void createFromCopyRemoveAttachments() throws ConflictException, IOException {
+    public void createFromCopyRemoveAttachments() throws Exception {
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
         update.docId = "copy";
@@ -99,15 +99,10 @@ public class MutableDocumentCopyTest extends BasicDatastoreTestBase{
     }
 
     // Add a document from a mutableCopy, check that re-using ID fails
-    @Test
-    public void createFromCopyFailDuplicateId() throws ConflictException, IOException {
+    @Test(expected = DocumentException.class)
+    public void createFromCopyFailDuplicateId() throws Exception{
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
-        try {
-            BasicDocumentRevision updated = datastore.createDocumentFromRevision(update);
-            Assert.fail("Expected IllegalArgumentException, not thrown");
-        } catch (IllegalArgumentException e) {
-            ;
-        }
+        datastore.createDocumentFromRevision(update);
     }
 }

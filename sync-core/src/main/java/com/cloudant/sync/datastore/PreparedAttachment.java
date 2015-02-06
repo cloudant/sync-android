@@ -39,11 +39,15 @@ public class PreparedAttachment {
      * @throws IOException
      */
     public PreparedAttachment(Attachment attachment,
-                              String attachmentsDir) throws IOException {
+                              String attachmentsDir) throws AttachmentException {
         this.attachment = attachment;
         this.tempFile = new File(attachmentsDir, "temp" + UUID.randomUUID());
-        FileUtils.copyInputStreamToFile(attachment.getInputStream(), tempFile);
-        this.sha1 = Misc.getSha1(new FileInputStream(tempFile));
+        try {
+            FileUtils.copyInputStreamToFile(attachment.getInputStream(), tempFile);
+            this.sha1 = Misc.getSha1(new FileInputStream(tempFile));
+        } catch (IOException e){
+            throw new AttachmentNotSavedException(e);
+        }
     }
 
     public final Attachment attachment;

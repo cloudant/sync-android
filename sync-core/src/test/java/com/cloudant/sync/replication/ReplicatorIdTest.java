@@ -40,7 +40,7 @@ public class ReplicatorIdTest {
 
     // source/target switched, so ids should be different
     @Test
-    public void pullNotEqualToPush() throws URISyntaxException {
+    public void pullNotEqualToPush() throws Exception {
         PullReplication pull = this.createPullReplication();
         PushReplication push = this.createPushReplication();
 
@@ -50,7 +50,7 @@ public class ReplicatorIdTest {
 
     // two pull reps identical
     @Test
-    public void pullsEqual() throws URISyntaxException {
+    public void pullsEqual() throws Exception {
         PullReplication pull1 = this.createPullReplication();
         PullReplication pull2 = this.createPullReplication();
 
@@ -60,7 +60,7 @@ public class ReplicatorIdTest {
 
     // two push reps identical
     @Test
-    public void pushesEqual() throws URISyntaxException {
+    public void pushesEqual() throws Exception {
         PushReplication push1 = this.createPushReplication();
         PushReplication push2 = this.createPushReplication();
         Assert.assertEquals(push1.createReplicationStrategy().getReplicationId(),
@@ -69,7 +69,7 @@ public class ReplicatorIdTest {
 
     // two push reps with differing target not equal
     @Test
-    public void pushesDifferingTargetNotEqual() throws URISyntaxException {
+    public void pushesDifferingTargetNotEqual() throws Exception {
         PushReplication push1 = this.createPushReplication();
         PushReplication push2 = this.createPushReplication();
         push1.target = new URI("http://a-host/a-database");
@@ -81,7 +81,7 @@ public class ReplicatorIdTest {
 
     // two pull reps with differing source not equal
     @Test
-    public void pullsDifferingSourceNotEqual() throws URISyntaxException {
+    public void pullsDifferingSourceNotEqual() throws Exception {
         PullReplication pull1 = this.createPullReplication();
         PullReplication pull2 = this.createPullReplication();
         pull1.source = new URI("http://a-host/a-database");
@@ -93,7 +93,7 @@ public class ReplicatorIdTest {
 
     // two pull reps, one with filter, one without, not equal
     @Test
-    public void pullWithFilterNotEqual() throws URISyntaxException {
+    public void pullWithFilterNotEqual() throws Exception {
         PullReplication pull1 = this.createPullReplication();
         PullReplication pull2 = this.createPullReplication();
         pull2.filter = new Replication.Filter("animal/by_class",
@@ -105,7 +105,7 @@ public class ReplicatorIdTest {
 
     // two pull reps, both with different filters, not equal
     @Test
-    public void pullWithDifferentFiltersNotEqual() throws URISyntaxException {
+    public void pullWithDifferentFiltersNotEqual() throws Exception {
         PullReplication pull1 = this.createPullReplication();
         PullReplication pull2 = this.createPullReplication();
         pull1.filter = new Replication.Filter("animal/by_class",
@@ -117,7 +117,7 @@ public class ReplicatorIdTest {
                 pull2.createReplicationStrategy().getReplicationId());
     }
 
-    PullReplication createPullReplication() throws URISyntaxException {
+    PullReplication createPullReplication() throws Exception {
         PullReplication pullReplication = new PullReplication();
         pullReplication.source = new URI("http://default-host/default-database");
         DatastoreExtended datastore = mock(DatastoreExtended.class);
@@ -126,7 +126,7 @@ public class ReplicatorIdTest {
         return pullReplication;
     }
 
-    PushReplication createPushReplication() throws URISyntaxException {
+    PushReplication createPushReplication() throws Exception {
         PushReplication pushReplication = new PushReplication();
         pushReplication.target = new URI("http://default-host/default-database");
         DatastoreExtended datastore = mock(DatastoreExtended.class);

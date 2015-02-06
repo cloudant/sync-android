@@ -37,7 +37,7 @@ import java.util.List;
 public class AttachmentTest extends BasicDatastoreTestBase {
 
     @Test
-    public void setAndGetAttachmentsTest() throws IOException {
+    public void setAndGetAttachmentsTest() throws Exception {
         String attachmentName = "attachment_1.txt";
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
@@ -83,9 +83,8 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             rev1_mut.attachments.put(att3.name, att3);
             newRevision = datastore.updateDocumentFromRevision(rev1_mut);
             Assert.fail("FileNotFoundException not thrown");
-        } catch (FileNotFoundException fnfe) {
+        } catch (AttachmentException ae) {
             // now check that things got rolled back
-            //TODO This needs to happen on the queue inside of the datastore
             datastore.runOnDbQueue(new SQLQueueCallable<Object>() {
                 @Override
                 public Object call(SQLDatabase db) throws Exception {
@@ -101,8 +100,8 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     }
 
     // this test should throw a conflictexception when we try to add attachments to an old revision
-    @Test(expected = ConflictException.class)
-    public void setAttachmentsConflictTest() throws ConflictException, IOException{
+    @Test(expected = DocumentException.class)
+    public void setAttachmentsConflictTest() throws Exception {
         String attachmentName = "attachment_1.txt";
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
@@ -205,7 +204,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
 
 
     @Test
-    public void attachmentsForRevisionTest() throws IOException {
+    public void attachmentsForRevisionTest() throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);

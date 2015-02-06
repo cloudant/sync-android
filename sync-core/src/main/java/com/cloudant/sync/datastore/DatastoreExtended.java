@@ -47,7 +47,7 @@ public interface DatastoreExtended extends Datastore {
      * @param body       JSON body for the document
      * @return {@code DocumentRevision} of the newly created document
      */
-    public BasicDocumentRevision createLocalDocument(String documentId, DocumentBody body);
+    public BasicDocumentRevision createLocalDocument(String documentId, DocumentBody body) throws DocumentException;
 
     /**
      * <p>Adds a new local document with an auto-generated ID.</p>
@@ -60,7 +60,7 @@ public interface DatastoreExtended extends Datastore {
      *
      * @see DatastoreExtended#createLocalDocument(String, DocumentBody)
      */
-    public BasicDocumentRevision createLocalDocument(DocumentBody body);
+    public BasicDocumentRevision createLocalDocument(DocumentBody body) throws DocumentException;
 
     /**
      * <p>Returns the current winning revision of a local document.</p>
@@ -92,7 +92,7 @@ public interface DatastoreExtended extends Datastore {
      * @param body body of the new revision
      * @return {@code DocumentRevision} for the updated revision
      */
-    public BasicDocumentRevision updateLocalDocument(String documentId, String prevRevisionId, DocumentBody body);
+    public BasicDocumentRevision updateLocalDocument(String documentId, String prevRevisionId, DocumentBody body) throws DocumentException;
 
     /**
      * <p>Deletes a local document.</p>
@@ -101,7 +101,7 @@ public interface DatastoreExtended extends Datastore {
      *
      * @throws DocumentNotFoundException if the document ID doesn't exist
      */
-    public void deleteLocalDocument(String documentId);
+    public void deleteLocalDocument(String documentId) throws DocumentNotFoundException;
 
     /**
      * <p>Returns {@code DocumentRevisionTree} of a document.</p>
@@ -165,7 +165,7 @@ public interface DatastoreExtended extends Datastore {
                             List<String> revisionHistory,
                             Map<String, Object> attachments,
                             Map<String[],List<PreparedAttachment>> preparedAttachments,
-                            boolean pullAttachmentsInline);
+                            boolean pullAttachmentsInline) throws DocumentException;
 
     /**
      * <p>Inserts a revision of a document with an existing revision ID</p>
@@ -181,7 +181,8 @@ public interface DatastoreExtended extends Datastore {
      *
      * @see DatastoreExtended#forceInsert(BasicDocumentRevision, java.util.List,java.util.Map, java.util.Map, boolean)
      */
-    public void forceInsert(BasicDocumentRevision rev, String... revisionHistory);
+    public void forceInsert(BasicDocumentRevision rev, String... revisionHistory) throws
+            DocumentException;
 
     /**
      * <p>Returns the datastore's unique identifier.</p>
@@ -191,7 +192,7 @@ public interface DatastoreExtended extends Datastore {
      *
      * @return a unique identifier for the datastore.
      */
-    public String getPublicIdentifier();
+    public String getPublicIdentifier() throws DatastoreException;
 
     /**
      * <p>Returns the number of documents in the database, including deleted
@@ -231,11 +232,10 @@ public interface DatastoreExtended extends Datastore {
      * Used by replicator when receiving new/updated attachments
      *
      * @param att Attachment to be prepared, providing data either from a file or a stream
-     * @param rev The revision this attachment is associated with
      * @return A prepared attachment, ready to be added to the datastore
      * @throws IOException
      */
-    public PreparedAttachment prepareAttachment(Attachment att, BasicDocumentRevision rev) throws IOException;
+    public PreparedAttachment prepareAttachment(Attachment att) throws AttachmentException;
 
     /**
      * Add attachment to document revision without incrementing revision.
@@ -245,7 +245,7 @@ public interface DatastoreExtended extends Datastore {
      * @param att The attachment to add
      * @param rev The DocumentRevision to add the attachment to
      */
-    public void addAttachment(PreparedAttachment att, BasicDocumentRevision rev) throws IOException, SQLException;
+    public void addAttachment(PreparedAttachment att, BasicDocumentRevision rev) throws  AttachmentException;
 
     /**
      * <p>Returns attachment <code>attachmentName</code> for the revision.</p>
@@ -263,6 +263,7 @@ public interface DatastoreExtended extends Datastore {
      *
      * @return List of <code>Attachment</code>
      */
-    public List<? extends Attachment> attachmentsForRevision(BasicDocumentRevision rev);
+    public List<? extends Attachment> attachmentsForRevision(BasicDocumentRevision rev) throws
+            AttachmentException;
 
 }

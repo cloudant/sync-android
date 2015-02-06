@@ -19,7 +19,6 @@ import com.google.common.collect.Multimap;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -33,7 +32,7 @@ public class BasicDatastoreRevsDiffTest extends BasicDatastoreTestBase{
     }
 
     @Test
-    public void revsDiff_oneDocOneRev_returnNothing() throws IOException {
+    public void revsDiff_oneDocOneRev_returnNothing() throws Exception {
         MutableDocumentRevision revMut = new MutableDocumentRevision();
         revMut.body = bodyOne;
         BasicDocumentRevision rev = datastore.createDocumentFromRevision(revMut);
@@ -44,7 +43,7 @@ public class BasicDatastoreRevsDiffTest extends BasicDatastoreTestBase{
     }
 
     @Test
-    public void revsDiff_oneDocOneRev_returnOne() throws IOException {
+    public void revsDiff_oneDocOneRev_returnOne() throws Exception {
         MutableDocumentRevision revMut = new MutableDocumentRevision();
         revMut.body = bodyOne;
         BasicDocumentRevision rev = datastore.createDocumentFromRevision(revMut);
@@ -56,7 +55,7 @@ public class BasicDatastoreRevsDiffTest extends BasicDatastoreTestBase{
     }
 
     @Test
-    public void revsDiff_oneDocTwoRevs_returnNothing() throws ConflictException, IOException {
+    public void revsDiff_oneDocTwoRevs_returnNothing() throws Exception {
         MutableDocumentRevision revMut1 = new MutableDocumentRevision();
         revMut1.body = bodyOne;
         BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(revMut1);
@@ -71,7 +70,7 @@ public class BasicDatastoreRevsDiffTest extends BasicDatastoreTestBase{
     }
 
     @Test
-    public void revsDiff_twoDoc_returnOneDoc() throws IOException {
+    public void revsDiff_twoDoc_returnOneDoc() throws Exception {
         MutableDocumentRevision revMut1 = new MutableDocumentRevision();
         revMut1.body = bodyOne;
         BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(revMut1);
@@ -89,7 +88,7 @@ public class BasicDatastoreRevsDiffTest extends BasicDatastoreTestBase{
     }
 
     @Test
-    public void revsDiff_twoDoc_returnTwoDocs() throws IOException {
+    public void revsDiff_twoDoc_returnTwoDocs() throws Exception {
         MutableDocumentRevision revMut1 = new MutableDocumentRevision();
         revMut1.body = bodyOne;
         BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(revMut1);
@@ -110,7 +109,7 @@ public class BasicDatastoreRevsDiffTest extends BasicDatastoreTestBase{
     }
 
     @Test
-    public void revsDiff_oneDocWithManyRevisions_onlyNonExistingRevisionsReturned() throws IOException {
+    public void revsDiff_oneDocWithManyRevisions_onlyNonExistingRevisionsReturned() throws Exception {
         MutableDocumentRevision revMut1 = new MutableDocumentRevision();
         revMut1.body = bodyOne;
         BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(revMut1);

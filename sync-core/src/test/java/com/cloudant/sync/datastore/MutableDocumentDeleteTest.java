@@ -60,7 +60,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
 
     // Try to delete based on a stale copy
     @Test
-    public void deleteConflictRevision() throws ConflictException, IOException {
+    public void deleteConflictRevision() throws Exception {
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
         BasicDocumentRevision updatedStale = datastore.updateDocumentFromRevision(update);
@@ -79,7 +79,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
 
     // Delete all leaf revisions based on id
     @Test
-    public void deleteAllFromRevision() throws ConflictException {
+    public void deleteAllFromRevision() throws Exception {
         // create 10 child docs
         for (int i=0;i<10;i++) {
             Map m = new HashMap<String, Object>();
@@ -114,7 +114,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void deleteAllNullRevision() throws ConflictException {
+    public void deleteAllNullRevision() throws Exception {
         try {
             List<BasicDocumentRevision> deleted = datastore.deleteDocument(null);
             Assert.fail("NullPointerException expected");
@@ -124,7 +124,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void deleteAllNonExistentRevision() throws ConflictException {
+    public void deleteAllNonExistentRevision() throws Exception {
         List<BasicDocumentRevision> deleted = datastore.deleteDocument("abc123");
         Assert.assertEquals("Deleted list should be empty", true, deleted.isEmpty());
 

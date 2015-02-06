@@ -18,8 +18,11 @@ import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.Attachment;
+import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentException;
+import com.cloudant.sync.datastore.DocumentNotFoundException;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
@@ -33,8 +36,6 @@ import com.google.common.eventbus.EventBus;
 import org.apache.commons.codec.binary.Hex;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -177,7 +178,7 @@ class BasicPullStrategy implements ReplicationStrategy {
     }
 
     private void replicate()
-        throws DatabaseNotFoundException, ExecutionException, InterruptedException {
+            throws DatabaseNotFoundException, ExecutionException, InterruptedException, DocumentException, DatastoreException {
         logger.info("Pull replication started");
         long startTime = System.currentTimeMillis();
 
@@ -246,7 +247,7 @@ class BasicPullStrategy implements ReplicationStrategy {
     }
 
     private int processOneChangesBatch(ChangesResultWrapper changeFeeds)
-        throws ExecutionException, InterruptedException {
+            throws ExecutionException, InterruptedException, DocumentException {
         String feed = String.format(
                 "Change feed: { last_seq: %s, change size: %s}",
                 changeFeeds.getLastSeq(),
@@ -298,22 +299,24 @@ class BasicPullStrategy implements ReplicationStrategy {
                                     int offset = revs.getStart() - revpos;
                                     if (offset >= 0 && offset < revs.getIds().size()) {
                                         String revId = String.valueOf(revpos) + "-" + revs.getIds().get(offset);
-                                        BasicDocumentRevision dr = this.targetDb.getDbCore().getDocument(documentRevs.getId(), revId);
-                                        if (dr != null) {
-                                            Attachment a = this.targetDb.getDbCore().getAttachment(dr, attachmentName);
-                                            if (a != null) {
-                                                // skip attachment, already got it
-                                                continue;
-                                            }
+                                        try {
+                                            BasicDocumentRevision dr = this.targetDb.getDbCore().getDocument(documentRevs.getId(), revId);
+                                                Attachment a = this.targetDb.getDbCore()
+                                                        .getAttachment(dr, attachmentName);
+                                                if (a != null) {
+                                                    // skip attachment, already got it
+                                                    continue;
+                                                }
+                                        } catch (DocumentNotFoundException e){
+                                            //do nothing, we may not have the document yet
                                         }
                                     }
                                     String contentType = ((Map<String, String>) attachments.get(attachmentName)).get("content_type");
                                     String encoding = (String) ((Map<String, Object>) attachments.get(attachmentName)).get("encoding");
                                     UnsavedStreamAttachment usa = this.sourceDb.getAttachmentStream(documentRevs.getId(), documentRevs.getRev(), attachmentName, contentType, encoding);
-                                    BasicDocumentRevision doc = this.targetDb.getDbCore().getDocument(documentRevs.getId());
 
                                     // by preparing the attachment here, it is downloaded outside of the database transaction
-                                    preparedAtts.add(this.targetDb.prepareAttachment(usa, doc));
+                                    preparedAtts.add(this.targetDb.prepareAttachment(usa));
                                 }
                             }
                         } catch (Exception e) {
@@ -343,13 +346,17 @@ class BasicPullStrategy implements ReplicationStrategy {
         }
 
         if (!this.cancel) {
-            this.targetDb.putCheckpoint(this.getReplicationId(), changeFeeds.getLastSeq());
+            try {
+                this.targetDb.putCheckpoint(this.getReplicationId(), changeFeeds.getLastSeq());
+            } catch (DatastoreException e){
+                logger.log(Level.WARNING,"Failed to put checkpoint doc, next replication will start from previous checkpoint",e);
+            }
         }
 
         return changesProcessed;
     }
 
-    public String getReplicationId() {
+    public String getReplicationId() throws DatastoreException {
         HashMap<String, String> dict = new HashMap<String, String>();
         dict.put("source", this.sourceDb.getIdentifier());
         dict.put("target", this.targetDb.getIdentifier());
@@ -363,7 +370,7 @@ class BasicPullStrategy implements ReplicationStrategy {
         return new String(sha1Hex);
     }
 
-    private ChangesResultWrapper nextBatch() {
+    private ChangesResultWrapper nextBatch() throws DatastoreException {
         final Object lastCheckpoint = this.targetDb.getCheckpoint(this.getReplicationId());
         logger.fine("last checkpoint "+lastCheckpoint);
         ChangesResult changeFeeds = this.sourceDb.changes(

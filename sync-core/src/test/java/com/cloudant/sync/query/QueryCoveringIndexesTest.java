@@ -64,7 +64,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     private String testType = null;
 
     @Parameters(name = "{0}")
-    public static Iterable<Object[]> data() {
+    public static Iterable<Object[]> data() throws Exception {
         return Arrays.asList(new Object[][]{ { SQL_ONLY_EXECUTION },
                                              { MATCHER_EXECUTION },
                                              { STANDARD_EXECUTION } });
@@ -75,7 +75,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Override
-    public void setUp() throws SQLException {
+    public void setUp() throws Exception{
         super.setUp();
         if (testType.equals(SQL_ONLY_EXECUTION)) {
             im = new MockSQLOnlyIndexManager(ds);
@@ -95,14 +95,14 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When executing AND queries
 
     @Test
-    public void returnsNullForNoQuery() {
+    public void returnsNullForNoQuery() throws Exception {
         setUpBasicQueryData();
         assertThat(im.find(null), is(nullValue()));
     }
 
     @Test
     // Since Floats are not allowed, the query is rejected when a Float is encountered as a value.
-    public void returnsNullWhenQueryContainsInvalidValue() {
+    public void returnsNullWhenQueryContainsInvalidValue() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "eq" : "mike" }, "age" : { "$eq" : 12.0f } }
         Map<String, Object> nameOperator = new HashMap<String, Object>();
@@ -116,7 +116,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void validateIteratorContentWithDocumentIdsList() {
+    public void validateIteratorContentWithDocumentIdsList() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
@@ -133,7 +133,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
 	}
 
     @Test
-    public void returnsAllDocsForEmptyQuery() {
+    public void returnsAllDocsForEmptyQuery() throws Exception {
         setUpBasicQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         QueryResult queryResult = im.find(query);
@@ -145,7 +145,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryOverOneStringField() {
+    public void canQueryOverOneStringField() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
@@ -155,7 +155,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryOverOneStringFieldNormalized() {
+    public void canQueryOverOneStringFieldNormalized() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -167,7 +167,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryOverOneNumberField() {
+    public void canQueryOverOneNumberField() throws Exception {
         setUpBasicQueryData();
         // query - { "age" : 12 }
         Map<String, Object> query = new HashMap<String, Object>();
@@ -177,7 +177,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryOverOneNumberFieldNormalized() {
+    public void canQueryOverOneNumberFieldNormalized() throws Exception {
         setUpBasicQueryData();
         // query - { "age" : { "$eq" : 12 } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -189,7 +189,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryOverTwoStringFields() {
+    public void canQueryOverTwoStringFields() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : "mike", "pet" : "cat" }
         Map<String, Object> query = new HashMap<String, Object>();
@@ -200,7 +200,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryOverTwoStringFieldsNormalized() {
+    public void canQueryOverTwoStringFieldsNormalized() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" }, "pet" : { "$eq" : "cat" } }
         Map<String, Object> nameOperator = new HashMap<String, Object>();
@@ -215,7 +215,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryOverTwoMixedFields() {
+    public void canQueryOverTwoMixedFields() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : "mike", "age" : "12" }
         Map<String, Object> query = new HashMap<String, Object>();
@@ -226,7 +226,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryOverTwoMixedFieldsNormalized() {
+    public void canQueryOverTwoMixedFieldsNormalized() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" }, "age" : { "$eq" : 12 } }
         Map<String, Object> nameOperator = new HashMap<String, Object>();
@@ -241,7 +241,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void noResultsWhenQueryOverOneFieldIsMismatched() {
+    public void noResultsWhenQueryOverOneFieldIsMismatched() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : "bill" }
         Map<String, Object> query = new HashMap<String, Object>();
@@ -251,7 +251,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void noResultsWhenQueryOverTwoFieldsOneIsMismatched() {
+    public void noResultsWhenQueryOverTwoFieldsOneIsMismatched() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : "bill", "age" : 12 }
         Map<String, Object> query = new HashMap<String, Object>();
@@ -262,7 +262,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void noResultsWhenQueryOverTwoFieldsBothAreMismatched() {
+    public void noResultsWhenQueryOverTwoFieldsBothAreMismatched() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : "bill", "age" : 17 }
         Map<String, Object> query = new HashMap<String, Object>();
@@ -273,7 +273,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void failsWhenUsingUnsupportedOperator() {
+    public void failsWhenUsingUnsupportedOperator() throws Exception {
         setUpBasicQueryData();
         // query - { "age" : { "$blah" : 12 } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -285,7 +285,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void worksWhenUsingGTOperatorAlone() {
+    public void worksWhenUsingGTOperatorAlone() throws Exception {
         setUpBasicQueryData();
         // query - { "age" : { "$gt" : 12 } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -297,7 +297,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void worksWhenUsingGTOperatorWithOthers() {
+    public void worksWhenUsingGTOperatorWithOthers() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" }, "age" : { "$gt" : 12 } }
         Map<String, Object> eqOp = new HashMap<String, Object>();
@@ -312,7 +312,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canCompareStringsWhenUsingGTOperator() {
+    public void canCompareStringsWhenUsingGTOperator() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$gt" : "fred" } }
         Map<String, Object> op = new HashMap<String, Object>();
@@ -324,7 +324,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canCompareStringsAsPartOfANDQueryWhenUsingGTOperator() {
+    public void canCompareStringsAsPartOfANDQueryWhenUsingGTOperator() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$gt" : "fred" }, "age" : 34 }
         Map<String, Object> op = new HashMap<String, Object>();
@@ -337,7 +337,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void worksWhenUsingGTEOperatorAlone() {
+    public void worksWhenUsingGTEOperatorAlone() throws Exception {
         setUpBasicQueryData();
         // query - { "age" : { "$gte" : 12 } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -353,7 +353,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void worksWhenUsingGTEOperatorWithOthers() {
+    public void worksWhenUsingGTEOperatorWithOthers() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" }, "age" : { "$gte" : 12 } }
         Map<String, Object> eqOp = new HashMap<String, Object>();
@@ -368,7 +368,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void worksWhenUsingLTOperatorAlone() {
+    public void worksWhenUsingLTOperatorAlone() throws Exception {
         setUpBasicQueryData();
         // query - { "age" : { "$lt" : 12 } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -380,7 +380,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void worksWhenUsingLTOperatorWithOthers() {
+    public void worksWhenUsingLTOperatorWithOthers() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" }, "age" : { "$lt" : 12 } }
         Map<String, Object> eqOp = new HashMap<String, Object>();
@@ -395,7 +395,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canCompareStringsWhenUsingLTOperator() {
+    public void canCompareStringsWhenUsingLTOperator() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$lt" : "mike" } }
         Map<String, Object> op = new HashMap<String, Object>();
@@ -407,7 +407,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canCompareStringsAsPartOfANDQueryWhenUsingLTOperator() {
+    public void canCompareStringsAsPartOfANDQueryWhenUsingLTOperator() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$lt" : "mike" }, "age" : 34 }
         Map<String, Object> op = new HashMap<String, Object>();
@@ -420,7 +420,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void worksWhenUsingLTEOperatorAlone() {
+    public void worksWhenUsingLTEOperatorAlone() throws Exception {
         setUpBasicQueryData();
         // query - { "age" : { "$lte" : 12 } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -432,7 +432,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void worksWhenUsingLTEOperatorWithOthers() {
+    public void worksWhenUsingLTEOperatorWithOthers() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" }, "age" : { "$lte" : 12 } }
         Map<String, Object> eqOp = new HashMap<String, Object>();
@@ -449,7 +449,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When limiting and offsetting results
 
     @Test
-    public void returnsAllForSkip0Limit0() {
+    public void returnsAllForSkip0Limit0() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -461,7 +461,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void limitsQueryResults() {
+    public void limitsQueryResults() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -473,7 +473,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void limitsQueryAndOffsetsStartingPoint() {
+    public void limitsQueryAndOffsetsStartingPoint() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -487,7 +487,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void disablesLimitFor0() {
+    public void disablesLimitFor0() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -499,7 +499,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsAllWhenLimitOverResultBounds() {
+    public void returnsAllWhenLimitOverResultBounds() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -511,7 +511,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsAllWhenLimitVeryLarge() {
+    public void returnsAllWhenLimitVeryLarge() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -523,7 +523,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsEmptyResultSetWhenRangeOutOfBounds() {
+    public void returnsEmptyResultSetWhenRangeOutOfBounds() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -535,7 +535,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsAppropriateResultsSkipAndLargeLimitUsed() {
+    public void returnsAppropriateResultsSkipAndLargeLimitUsed() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$eq" : "mike" } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -549,7 +549,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When using dotted notation
 
     @Test
-    public void noResultsTwoLevelDottedQuery() {
+    public void noResultsTwoLevelDottedQuery() throws Exception {
         setUpDottedQueryData();
         // query - { "pet.name" : { "$eq" : "fred" }, "age" : { "$eq" : 12 } }
         Map<String, Object> op1 = new HashMap<String, Object>();
@@ -565,7 +565,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void oneResultTwoLevelDottedQuery() {
+    public void oneResultTwoLevelDottedQuery() throws Exception {
         setUpDottedQueryData();
         // query - { "pet.name" : { "$eq" : "mike" }, "age" : { "$eq" : 12 } }
         Map<String, Object> op1 = new HashMap<String, Object>();
@@ -580,7 +580,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void multiResultTwoLevelDottedQuery() {
+    public void multiResultTwoLevelDottedQuery() throws Exception {
         setUpDottedQueryData();
         // query - { "pet.species" : { "$eq" : "cat" } }
         Map<String, Object> op = new HashMap<String, Object>();
@@ -592,7 +592,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void resultThreeLevelDottedQuery() {
+    public void resultThreeLevelDottedQuery() throws Exception {
         setUpDottedQueryData();
         // query - { "pet.name.first" : { "$eq" : "mike" } }
         Map<String, Object> op = new HashMap<String, Object>();
@@ -606,7 +606,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When using non-ascii text
 
     @Test
-    public void canQueryForNonAsciiValues() {
+    public void canQueryForNonAsciiValues() throws Exception {
         setUpNonAsciiQueryData();
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name"), "nonascii"), is("nonascii"));
         // query - { "name" : { "$eq" : "اسم" } }
@@ -619,7 +619,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryUsingFieldsWithOddNames() {
+    public void canQueryUsingFieldsWithOddNames() throws Exception {
         setUpNonAsciiQueryData();
         assertThat(im.ensureIndexed(Arrays.<Object>asList("اسم", "datatype", "age"), "nonascii"),
                 is("nonascii"));
@@ -645,7 +645,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When using OR queries
 
     @Test
-    public void supportsUsingOR() {
+    public void supportsUsingOR() throws Exception {
         setUpOrQueryData();
         // query - { "$or" : [ { "name" : "mike" }, { "pet" : "cat" } ] }
         Map<String, Object> op1 = new HashMap<String, Object>();
@@ -663,7 +663,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void supportsUsingORWithSpecifiedOperator() {
+    public void supportsUsingORWithSpecifiedOperator() throws Exception {
         setUpOrQueryData();
         // query - { "$or" : [ { "name" : "mike" }, { "age" : { "$gt" : 30 } } ] }
         Map<String, Object> op1 = new HashMap<String, Object>();
@@ -683,7 +683,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void supportsUsingORInSubTrees() {
+    public void supportsUsingORInSubTrees() throws Exception {
         setUpOrQueryData();
         // query - { "$or" : [ { "name" : "fred" },
         //                     { "$or" : [ { "age" : 12 },
@@ -710,7 +710,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void supportsUsingORWithSingleOperand() {
+    public void supportsUsingORWithSingleOperand() throws Exception {
         setUpOrQueryData();
         // query - { "$or" : [ { "name" : "mike" } ] }
         Map<String, Object> op = new HashMap<String, Object>();
@@ -727,7 +727,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When using nested queries
 
     @Test
-    public void queryWithTwoLevels() {
+    public void queryWithTwoLevels() throws Exception {
         setUpNestedQueryData();
         // query - { "$or" : [ { "name" : "mike" },
         //                     { "age" : 34 },
@@ -758,7 +758,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void queryORWithSubOR() {
+    public void queryORWithSubOR() throws Exception {
         setUpNestedQueryData();
         // query - { "$or" : [ { "name" : "mike" },
         //                     { "age" : 34 },
@@ -790,7 +790,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void queryANDWithSubAND() {
+    public void queryANDWithSubAND() throws Exception {
         setUpNestedQueryData();
         // No docs match all of these
         //
@@ -819,7 +819,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void queryORWithSubAND() {
+    public void queryORWithSubAND() throws Exception {
         setUpNestedQueryData();
         // No docs match all of these
         //
@@ -851,7 +851,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void queryANDWithSubOR() {
+    public void queryANDWithSubOR() throws Exception {
         setUpNestedQueryData();
         // No docs match all of these
         //
@@ -880,7 +880,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void queryMatchANDWithSubANDWithSubAND() {
+    public void queryMatchANDWithSubANDWithSubAND() throws Exception {
         setUpNestedQueryData();
         // query - { "$and" : [ { "name" : "mike" },
         //                      { "age" : { "$gt" : 10} },
@@ -920,7 +920,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void queryNoMatchANDWithSubANDWithSubAND() {
+    public void queryNoMatchANDWithSubANDWithSubAND() throws Exception {
         setUpNestedQueryData();
         // query - { "$and" : [ { "name" : "mike" },
         //                      { "age" : { "$gt" : 10} },
@@ -960,7 +960,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void queryORWithSubORAndSubAND() {
+    public void queryORWithSubORAndSubAND() throws Exception {
         setUpNestedQueryData();
         // query - { "$or" : [ { "name" : "mike" },
         //                     { "pet" : "cat" },
@@ -1002,7 +1002,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When querying using _id
 
     @Test
-    public void queryUsing_idWorksAsASingleClause() {
+    public void queryUsing_idWorksAsASingleClause() throws Exception {
         setUpBasicQueryData();
         // query - { "_id" : "mike12" }
         Map<String, Object> query = new HashMap<String, Object>();
@@ -1012,7 +1012,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void queryUsing_idWorksWithOtherClauses() {
+    public void queryUsing_idWorksWithOtherClauses() throws Exception {
         setUpBasicQueryData();
         // query - { "_id" : "mike12", "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
@@ -1025,7 +1025,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When querying using _rev
 
     @Test
-    public void queryUsing_revWorksAsASingleClause() {
+    public void queryUsing_revWorksAsASingleClause() throws Exception {
         setUpBasicQueryData();
         String docRev = ds.getDocument("mike12").getRevision();
         // query - { "_rev" : <docRev> }
@@ -1036,7 +1036,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void queryUsing_revWorksWithOtherClauses() {
+    public void queryUsing_revWorksWithOtherClauses() throws Exception {
         setUpBasicQueryData();
         String docRev = ds.getDocument("mike12").getRevision();
         // query - { "_rev" : <docRev>, "name" : "mike" }
@@ -1050,7 +1050,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When querying using $not operator
 
     @Test
-    public void canQueryOverOneStringFieldUsingNOT() {
+    public void canQueryOverOneStringFieldUsingNOT() throws Exception {
         setUpBasicQueryData();
         // query - { "name" : { "$not" : { "$eq" : "mike" } } }
         Map<String, Object> eqOp = new HashMap<String, Object>();
@@ -1064,7 +1064,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryOverOneIntegerFieldUsingNOT() {
+    public void canQueryOverOneIntegerFieldUsingNOT() throws Exception {
         setUpBasicQueryData();
         // query - { "age" : { "$not" : { "$gt" : 34 } } }
         Map<String, Object> gtOp = new HashMap<String, Object>();
@@ -1081,7 +1081,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void includesDocumentsWithoutFieldIndexedUsingNOT() {
+    public void includesDocumentsWithoutFieldIndexedUsingNOT() throws Exception {
         setUpBasicQueryData();
         // query - { "pet" : { "$not" : { "$eq" : "cat" } } }
         Map<String, Object> eqOp = new HashMap<String, Object>();
@@ -1095,7 +1095,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void queryMatchWithANDCompoundOperatorUsingNOT() {
+    public void queryMatchWithANDCompoundOperatorUsingNOT() throws Exception {
         setUpBasicQueryData();
         // query - { "$and: [ { "pet" : { "$not" : { "$eq" : "cat" } } },
         //                    { "pet" : { "$not" : { "$eq" : "dog" } } }
@@ -1120,7 +1120,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void queryNoMatchWithANDCompoundOperatorUsingNOT() {
+    public void queryNoMatchWithANDCompoundOperatorUsingNOT() throws Exception {
         setUpBasicQueryData();
         // query - { "$and: [ { "pet" : { "$not" : { "$eq" : "cat" } } },
         //                    { "pet" : { "$eq" : "cat" } }
@@ -1143,7 +1143,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void queryMatchWithORCompoundOperatorUsingNOT() {
+    public void queryMatchWithORCompoundOperatorUsingNOT() throws Exception {
         setUpBasicQueryData();
         // query - { "$or: [ { "pet" : { "$not" : { "$eq" : "cat" } } },
         //                   { "pet" : { "$not" : { "$eq" : "dog" } } }
@@ -1174,7 +1174,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When indexing array fields
 
     @Test
-    public void canFindDocumentWithArray() {
+    public void canFindDocumentWithArray() throws Exception {
         setUpArrayIndexingData();
         // query - { "pet" : { "$eq" : "dog" } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -1186,7 +1186,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canFindDocumentWithoutArray() {
+    public void canFindDocumentWithoutArray() throws Exception {
         setUpArrayIndexingData();
         // query - { "pet" : { "$eq" : "parrot" } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -1198,7 +1198,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canFindDocumentsWithAndWithoutArraysUsingNOT() {
+    public void canFindDocumentsWithAndWithoutArraysUsingNOT() throws Exception {
         setUpArrayIndexingData();
         // query - { "pet" : { "$not" : { "$eq" : "dog" } } }
         Map<String, Object> eqOp = new HashMap<String, Object>();
@@ -1214,7 +1214,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When querying using $exists operator
 
     @Test
-    public void canFindDocumentWhereFieldDoesNotExist() {
+    public void canFindDocumentWhereFieldDoesNotExist() throws Exception {
         setUpBasicQueryData();
         // query - { "pet" : { "$exists" : false } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -1227,7 +1227,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canFindDocumentWhereFieldDoesExist() {
+    public void canFindDocumentWhereFieldDoesExist() throws Exception {
         setUpBasicQueryData();
         // query - { "pet" : { "$exists" : true } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -1243,7 +1243,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canFindDocumentWhereFieldDoesExistUsingNOT() {
+    public void canFindDocumentWhereFieldDoesExistUsingNOT() throws Exception {
         setUpBasicQueryData();
         // query - { "pet" : { "$not" : { "$exists" : false } } }
         Map<String, Object> existsOp = new HashMap<String, Object>();
@@ -1260,7 +1260,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canFindDocumentWhereFieldDoesNotExistUsingNOT() {
+    public void canFindDocumentWhereFieldDoesNotExistUsingNOT() throws Exception {
         setUpBasicQueryData();
         // query - { "pet" : { "$not" : { "$exists" : true } } }
         Map<String, Object> existsOp = new HashMap<String, Object>();
@@ -1276,7 +1276,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When there is a large result set
 
     @Test
-     public void limitsCorrectlyWithLargeResultSet() {
+     public void limitsCorrectlyWithLargeResultSet() throws Exception {
         setUpLargeResultSetQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("large_field", "cat");
@@ -1285,7 +1285,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void skipsAndLimitsAcrossBatchBorder() {
+    public void skipsAndLimitsAcrossBatchBorder() throws Exception {
         setUpLargeResultSetQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("large_field", "cat");

@@ -50,7 +50,7 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
         super.testDown();
     }
 
-    void createTwoDocuments() throws IOException {
+    void createTwoDocuments() throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
@@ -61,7 +61,7 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
         validateNewlyCreatedDocument(rev_2);
     }
 
-    BasicDocumentRevision[] createThreeDocuments() throws ConflictException, IOException {
+    BasicDocumentRevision[] createThreeDocuments() throws Exception {
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
         BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);

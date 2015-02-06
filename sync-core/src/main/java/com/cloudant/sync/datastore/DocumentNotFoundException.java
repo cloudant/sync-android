@@ -14,18 +14,46 @@
 
 package com.cloudant.sync.datastore;
 
-import java.sql.SQLException;
-
 /**
  * Thrown when a document cannot be found.
  */
-public class DocumentNotFoundException extends RuntimeException {
+public class DocumentNotFoundException extends DocumentException {
+
+    private static String createMessage(String docId, String revId){
+        if(revId != null){
+            return String.format("Could not find document with id %s at revision %s",docId,revId);
+        }else {
+            return String.format("Could not find document with id %s",docId);
+        }
+    }
+
+    public DocumentNotFoundException() {
+
+    }
+
+    /**
+     * Creates a document not found exception with the default message
+     * @param docId The document id of the document that could not be found
+     * @param revId The rev id of the document that could not be found
+     */
+    public DocumentNotFoundException(String docId, String revId){
+        super(createMessage(docId, revId));
+    }
+
 
     public DocumentNotFoundException(String s) {
         super(s);
     }
 
-    public DocumentNotFoundException(String s, SQLException e) {
+    public DocumentNotFoundException(String s, Exception e) {
         super(s, e);
+    }
+
+    public DocumentNotFoundException(String docId,String revId, Exception e){
+        super(createMessage(docId, revId),e);
+    }
+
+    public DocumentNotFoundException(Exception casuedBy) {
+        super(casuedBy);
     }
 }

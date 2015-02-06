@@ -17,9 +17,12 @@ package com.cloudant.sync.replication;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.datastore.Attachment;
+import com.cloudant.sync.datastore.AttachmentException;
 import com.cloudant.sync.datastore.Changes;
+import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
@@ -144,7 +147,7 @@ class BasicPushStrategy implements ReplicationStrategy {
     }
 
     private void replicate()
-            throws DatabaseNotFoundException, InterruptedException, ExecutionException {
+            throws DatabaseNotFoundException, InterruptedException, ExecutionException, AttachmentException, DatastoreException {
         logger.info("Push replication started");
         long startTime = System.currentTimeMillis();
 
@@ -212,7 +215,7 @@ class BasicPushStrategy implements ReplicationStrategy {
         logger.info(msg);
     }
 
-    private Changes getNextBatch() throws ExecutionException, InterruptedException {
+    private Changes getNextBatch() throws ExecutionException, InterruptedException , DatastoreException{
         long lastPushSequence = getLastCheckpointSequence();
         logger.fine("Last push sequence from remote database: " + lastPushSequence);
         return this.sourceDb.getDbCore().changes(lastPushSequence,
@@ -234,7 +237,7 @@ class BasicPushStrategy implements ReplicationStrategy {
         List<MultipartAttachmentWriter> multiparts;
     }
 
-    private int processOneChangesBatch(Changes changes) {
+    private int processOneChangesBatch(Changes changes) throws AttachmentException, DatastoreException {
 
         int changesProcessed = 0;
 
@@ -264,7 +267,12 @@ class BasicPushStrategy implements ReplicationStrategy {
         }
 
         if (!this.cancel) {
-            this.putCheckpoint(String.valueOf(changes.getLastSequence()));
+            try {
+                this.putCheckpoint(String.valueOf(changes.getLastSequence()));
+            } catch (DatastoreException e){
+                logger.log(Level.WARNING,"Failed to put checkpoint doc, next replication will " +
+                        "start from previous checkpoint",e);
+            }
         }
 
         return changesProcessed;
@@ -272,7 +280,7 @@ class BasicPushStrategy implements ReplicationStrategy {
 
     private ItemsToPush missingRevisionsToJsonDocs(
             Map<String, DocumentRevisionTree> allTrees,
-            Map<String, Set<String>> revisions)  {
+            Map<String, Set<String>> revisions) throws AttachmentException {
 
         ItemsToPush itemsToPush = new ItemsToPush();
 
@@ -313,7 +321,7 @@ class BasicPushStrategy implements ReplicationStrategy {
         return allOpenRevisions;
     }
 
-    public String getReplicationId() {
+    public String getReplicationId() throws DatastoreException {
         HashMap<String, String> dict = new HashMap<String, String>();
         dict.put("source", this.sourceDb.getIdentifier());
         dict.put("target", this.targetDb.getIdentifier());
@@ -324,13 +332,13 @@ class BasicPushStrategy implements ReplicationStrategy {
         return new String(sha1Hex);
     }
 
-    private long getLastCheckpointSequence() {
+    private long getLastCheckpointSequence() throws DatastoreException {
         String lastSequence =  targetDb.getCheckpoint(this.getReplicationId());
         // As we are pretty sure the checkpoint is a number
         return Strings.isNullOrEmpty(lastSequence) ? 0 : Long.valueOf(lastSequence);
     }
 
-    private void putCheckpoint(String checkpoint) {
+    private void putCheckpoint(String checkpoint) throws DatastoreException {
         targetDb.putCheckpoint(this.getReplicationId(), checkpoint);
     }
     

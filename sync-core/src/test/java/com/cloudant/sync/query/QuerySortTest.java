@@ -40,7 +40,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     Set<String> largeDocIdSet;
 
     @Override
-    public void setUp() throws SQLException {
+    public void setUp() throws Exception {
         super.setUp();
         im = new IndexManager(ds);
         assertThat(im, is(notNullValue()));
@@ -71,7 +71,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     // When sorting
 
     @Test
-    public void sortsOnName() {
+    public void sortsOnName() throws Exception {
         setUpSortingQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("same", "all");
@@ -84,7 +84,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void sortsOnNameAge() {
+    public void sortsOnNameAge() throws Exception {
         setUpSortingQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("same", "all");
@@ -100,7 +100,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void sortsOnArrayField() {
+    public void sortsOnArrayField() throws Exception {
         setUpSortingQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("same", "all");
@@ -113,7 +113,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsNullWhenNotUsingAscOrDesc() {
+    public void returnsNullWhenNotUsingAscOrDesc() throws Exception {
         setUpSortingQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("same", "all");
@@ -129,7 +129,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsNullWhenTooManyClauses() {
+    public void returnsNullWhenTooManyClauses() throws Exception{
         setUpSortingQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("same", "all");

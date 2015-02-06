@@ -37,7 +37,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     Boolean[] indexesCoverQuery;
 
     @Override
-    public void setUp() throws SQLException {
+    public void setUp() throws Exception {
         super.setUp();
         String indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet"), "basic");
         assertThat(indexName, is("basic"));
