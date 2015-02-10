@@ -190,17 +190,17 @@ efficient ways of finding them. We've added an easy-to-use querying API. Once
 the appropriate indexes are set up, querying is as follows:
 
 ```java
-QueryBuilder query = new QueryBuilder();
-query.index("name").equalTo("John");
-query.index("age").greaterThan(25);
+Map<String, Object> query = new HashMap<String, Object>();
+query.put("name", "mike");
+query.put("pet", "cat");
+QueryResult result = indexManager.find(query);
 
-QueryResult result = indexManager.query(query.build());
 for (DocumentRevision revision : result) {
     // do something
 }
 ```
 
-See [Index and Querying Data](https://github.com/cloudant/sync-android/blob/master/doc/index-querying.md).
+See [Index and Querying Data](https://github.com/cloudant/sync-android/blob/master/doc/query.md).
 
 ### Conflicts
 
