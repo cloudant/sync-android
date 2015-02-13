@@ -1,5 +1,9 @@
 ## Finding documents within Cloudant Sync
 
+**_The functionality detailed below is being replaced by the new Cloudant Query - Android code base.  Please consult the Cloudant Query - Android [documentation][1] as it now supersedes this document._**
+
+[1]: https://github.com/cloudant/sync-android/blob/master/doc/query.md
+
 _This functionality is available in versions 0.3.0 and up._
 
 Cloudant Sync provides simple and powerful ways to index and query

@@ -131,4 +131,5 @@ public class IndexManagerTest extends AbstractIndexTestBase {
         assertThat(im.deleteIndexNamed("basic2"), is(true));
         assertThat(im.listIndexes().keySet(), containsInAnyOrder("basic", "basic3"));
     }
+
 }
