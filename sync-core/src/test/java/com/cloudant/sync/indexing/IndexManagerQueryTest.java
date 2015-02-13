@@ -43,7 +43,7 @@ public class IndexManagerQueryTest {
     private String datastoreManagerPath;
 
     @Before
-    public void setUp() throws IOException, SQLException, IndexExistsException {
+    public void setUp() throws Exception {
         datastoreManagerPath = TestUtils.createTempTestingDir(this.getClass().getName());
         DatastoreManager datastoreManager = new DatastoreManager(this.datastoreManagerPath);
         datastore = (DatastoreExtended) datastoreManager.openDatastore(getClass().getSimpleName());
@@ -86,7 +86,7 @@ public class IndexManagerQueryTest {
     }
 
     @Test
-    public void query_specialCharacter() throws IOException {
+    public void query_specialCharacter() throws Exception {
         DocumentBody body = TestUtils.createBDBody("fixture/index_special_character.json");
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.body = body;
@@ -191,7 +191,7 @@ public class IndexManagerQueryTest {
         Assert.assertEquals(2, result.size());
     }
 
-    private void prepareDataForQueryTest() throws IndexExistsException, IOException {
+    private void prepareDataForQueryTest() throws Exception {
         indexManager.ensureIndexed("Album", "album");
         indexManager.ensureIndexed("Artist", "artist");
         indexManager.ensureIndexed("Year", "year", IndexType.INTEGER);

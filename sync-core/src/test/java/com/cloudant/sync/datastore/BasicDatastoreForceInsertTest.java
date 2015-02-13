@@ -65,19 +65,19 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void forceInsert_revHistoryNotInRightOrder_exception() {
+    public void forceInsert_revHistoryNotInRightOrder_exception() throws Exception {
         BasicDocumentRevision rev = createDbObject();
         datastore.forceInsert(rev, "1-rev", "3-rev", "2-rev", "4-rev");
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void forceInsert_currentRevisionNotInTheHistory_exception() {
+    public void forceInsert_currentRevisionNotInTheHistory_exception() throws Exception {
         BasicDocumentRevision rev = createDbObject();
         datastore.forceInsert(rev, "1-rev", "2-rev", "3-rev");
     }
 
     @Test
-    public void forceInsert_documentNotInLocalDB_documentShouldBeInserted() {
+    public void forceInsert_documentNotInLocalDB_documentShouldBeInserted() throws Exception {
         BasicDocumentRevision rev = createDbObject();
         datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
         assertDBObjectIsCorrect(OBJECT_ID, 4, bodyOne);
@@ -98,7 +98,7 @@ public class BasicDatastoreForceInsertTest {
 
 
     @Test
-    public void forceInsert_newRevisionsFromRemoteDB_newRevisionShouldBeInserted() {
+    public void forceInsert_newRevisionsFromRemoteDB_newRevisionShouldBeInserted() throws Exception {
         {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
@@ -121,7 +121,7 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_longerPathFromRemoteDB_remoteDBWins() throws ConflictException, IOException {
+    public void forceInsert_longerPathFromRemoteDB_remoteDBWins() throws Exception {
 
         {
             BasicDocumentRevision rev = createDbObject();
@@ -152,7 +152,7 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_longerPathFromLocalDB_localDBWins() throws ConflictException, IOException {
+    public void forceInsert_longerPathFromLocalDB_localDBWins() throws Exception {
         {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
@@ -188,7 +188,7 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_sameLengthOfPath_remoteRevisionWins() throws ConflictException, IOException {
+    public void forceInsert_sameLengthOfPath_remoteRevisionWins() throws Exception {
         {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "3-rev", "4-rev");
@@ -240,7 +240,7 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_sameLengthOfPath_localRevisionWins() throws ConflictException, IOException {
+    public void forceInsert_sameLengthOfPath_localRevisionWins() throws Exception {
         {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "3-rev", "4-rev");
@@ -292,7 +292,7 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_conflictsWithDocDeletedInLocalDB_nonDeletionWins() throws ConflictException, IOException {
+    public void forceInsert_conflictsWithDocDeletedInLocalDB_nonDeletionWins() throws Exception {
         List<String> revs = new ArrayList<String>();
         revs.add("1-rev");
         revs.add("2-rev");
@@ -330,7 +330,7 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_conflictsWithDocDeletedInRemoteDB_nonDeletionWins() throws ConflictException, IOException {
+    public void forceInsert_conflictsWithDocDeletedInRemoteDB_nonDeletionWins() throws Exception {
         {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
@@ -358,7 +358,7 @@ public class BasicDatastoreForceInsertTest {
         assertDBObjectIsCorrect(OBJECT_ID, 6, bodyTwo);
     }
 
-    private void assertDBObjectIsCorrect(String docId, int revGeneration, DocumentBody body) {
+    private void assertDBObjectIsCorrect(String docId, int revGeneration, DocumentBody body) throws Exception {
         BasicDocumentRevision obj = datastore.getDocument(docId);
         Assert.assertNotNull(obj);
         Assert.assertEquals(revGeneration, CouchUtils.generationFromRevId(obj.getRevision()));
@@ -406,7 +406,7 @@ public class BasicDatastoreForceInsertTest {
     }
 
     @Test
-    public void forceInsert_newTreeLengthOfTwoFromRemoteDb_newTreeShouldBeInserted() {
+    public void forceInsert_newTreeLengthOfTwoFromRemoteDb_newTreeShouldBeInserted() throws Exception{
         {
             BasicDocumentRevision rev = createDbObject("1-x", bodyOne);
             datastore.forceInsert(rev, "1-x");
@@ -429,7 +429,7 @@ public class BasicDatastoreForceInsertTest {
         assertDocumentHasRevAndBody(OBJECT_ID, "2-c", bodyTwo);
     }
 
-    private void assertDocumentHasRevAndBody(String id, String rev, DocumentBody body) {
+    private void assertDocumentHasRevAndBody(String id, String rev, DocumentBody body) throws Exception {
         BasicDocumentRevision obj = datastore.getDocument(id);
         Assert.assertEquals(rev, obj.getRevision());
         Assert.assertTrue(Arrays.equals(obj.getBody().asBytes(), body.asBytes()));

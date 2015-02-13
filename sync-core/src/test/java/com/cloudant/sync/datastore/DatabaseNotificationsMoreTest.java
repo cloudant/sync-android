@@ -62,7 +62,7 @@ public class DatabaseNotificationsMoreTest {
     }
 
     @Test
-    public void notification_database_opened() {
+    public void notification_database_opened() throws Exception{
         Datastore ds = datastoreManager.openDatastore("test123");
         try {
             Assert.assertThat(databaseCreated, hasSize(1));
@@ -75,7 +75,7 @@ public class DatabaseNotificationsMoreTest {
     }
 
     @Test
-    public void notification_database_openedTwice() {
+    public void notification_database_openedTwice() throws Exception {
         Datastore ds = datastoreManager.openDatastore("test123");
         Datastore ds1 = null ;
         try {
@@ -95,7 +95,7 @@ public class DatabaseNotificationsMoreTest {
     }
 
     @Test
-    public void notification_databaseOpenCloseAndThenOpenedAgain_databaseCreatedEventShouldBeOnlyFireOnce() {
+    public void notification_databaseOpenCloseAndThenOpenedAgain_databaseCreatedEventShouldBeOnlyFireOnce() throws Exception {
         Datastore ds = datastoreManager.openDatastore("test123");
         Assert.assertThat(databaseCreated, hasSize(1));
         Assert.assertThat(databaseOpened, hasSize(1));

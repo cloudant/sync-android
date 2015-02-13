@@ -43,7 +43,7 @@ import java.util.Map;
 public class QueryFilterFieldsTest extends AbstractQueryTestBase {
 
     @Override
-    public void setUp() throws SQLException {
+    public void setUp() throws Exception {
         super.setUp();
         im = new IndexManager(ds);
         assertThat(im, is(notNullValue()));
@@ -147,7 +147,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsNullMutableCopyWhenDocUpdated() {
+    public void returnsNullMutableCopyWhenDocUpdated() throws Exception {
         // query - { "name" : "mike", "age" : 12 }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
@@ -165,16 +165,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
             Map<String, Object> updateBody = original.getBody().asMap();
             updateBody.put("name", "charles");
             update.body = DocumentBodyFactory.create(updateBody);
-            try {
-                assertThat(ds.updateDocumentFromRevision(update), is(notNullValue()));
-            } catch (ConflictException e) {
-                Assert.fail("Failed to update document revision");
-                e.printStackTrace();
-            } catch (IOException e) {
-                Assert.fail("Failed to update document revision");
-                e.printStackTrace();
-            }
-
+            assertThat(ds.updateDocumentFromRevision(update), is(notNullValue()));
             assertThat(((ProjectedDocumentRevision) rev).mutableCopy(), is(nullValue()));
         }
     }

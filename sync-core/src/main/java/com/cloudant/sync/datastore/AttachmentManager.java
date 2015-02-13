@@ -25,6 +25,7 @@ import org.apache.commons.io.FileExistsException;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ class AttachmentManager {
         this.attachmentsDir = datastore.extensionDataFolder(EXTENSION_NAME);
     }
 
-    public void addAttachment(SQLDatabase db,PreparedAttachment a, BasicDocumentRevision rev) throws IOException, SQLException {
+    public void addAttachment(SQLDatabase db,PreparedAttachment a, BasicDocumentRevision rev) throws  AttachmentNotSavedException {
 
         // do it this way to only go thru inputstream once
         // * write to temp location using copyinputstreamtofile
@@ -107,22 +108,41 @@ class AttachmentManager {
         values.put("revpos", revpos);
 
         // delete and insert in case there is already an attachment at this seq (eg copied over from a previous rev)
-        db.delete("attachments", " filename = ? and sequence = ? ", new String[]{filename, String.valueOf(sequence)});
+        db.delete("attachments", " filename = ? and sequence = ? ", new String[]{filename,
+                String.valueOf(sequence)});
         long result = db.insert("attachments", values);
         if (result == -1) {
             // if we can't insert into DB then don't copy the attachment
             a.tempFile.delete();
-            throw new SQLException("Could not insert attachment " + a + " into database with values " + values + "; not copying to attachments directory");
+            throw new AttachmentNotSavedException("Could not insert attachment " + a + " into database with values " + values + "; not copying to attachments directory");
         }
         // move file to blob store, with file name based on sha1
         File newFile = fileFromKey(sha1);
-        try{
+        try {
             FileUtils.moveFile(a.tempFile, newFile);
         } catch (FileExistsException fee) {
             // File with same SHA1 hash in the store, we assume it's the same content so can discard
             // the duplicate data we have just downloaded
             a.tempFile.delete();
+        } catch (FileNotFoundException e) {
+            //If we had an error moving the file, but we already have a copy of the attachment in
+            // the datastore, we can ignore the problem as a copy of the data is already in the
+            // datastore. Otherwise, we must throw an exception.
+            if(!newFile.exists()){
+                throw new AttachmentNotSavedException(e);
+            }
+        } catch (IOException e) {
+            //We have errored while moving the file, we should clean up after ourselves before
+            //throwing an attachment exception
+            if(newFile.exists()){
+                newFile.delete();
+            }
+            if (a.tempFile.exists()){
+                a.tempFile.delete();
+            }
+            throw new AttachmentNotSavedException(e);
         }
+
     }
 
     class PreparedAndSavedAttachments
@@ -139,7 +159,7 @@ class AttachmentManager {
     // * if attachment is saved, add it to the saved list
     // * if attachment is not saved, prepare it, and add it to the prepared list
     // this way, the attachments are sifted through ready to be added in the database for a given revision
-    protected PreparedAndSavedAttachments prepareAttachments(Collection<? extends Attachment> attachments) throws IOException {
+    protected PreparedAndSavedAttachments prepareAttachments(Collection<? extends Attachment> attachments) throws AttachmentException {
         // actually a list of prepared or saved attachments
         PreparedAndSavedAttachments preparedAndSavedAttachments = new PreparedAndSavedAttachments();
 
@@ -159,7 +179,7 @@ class AttachmentManager {
         return preparedAndSavedAttachments;
     }
 
-    protected void setAttachments(SQLDatabase db,BasicDocumentRevision rev, PreparedAndSavedAttachments preparedAndSavedAttachments) throws IOException {
+    protected void setAttachments(SQLDatabase db,BasicDocumentRevision rev, PreparedAndSavedAttachments preparedAndSavedAttachments) throws AttachmentNotSavedException, DatastoreException {
 
         // set attachments for revision:
         // * prepared attachments are added
@@ -183,7 +203,7 @@ class AttachmentManager {
                 this.copyAttachment(db,parentSequence, newSequence, a.name);
             }
         } catch (SQLException sqe) {
-            throw new SQLRuntimeException("SQLException setting attachment for rev"+rev, sqe);
+            throw new DatastoreException("SQLException setting attachment for rev"+rev, sqe);
         }
     }
 
@@ -191,7 +211,7 @@ class AttachmentManager {
         Cursor c = null;
         try {
              c = db.rawQuery(SQL_ATTACHMENTS_SELECT,
-                    new String[]{attachmentName, String.valueOf(rev.getSequence())});
+                     new String[]{attachmentName, String.valueOf(rev.getSequence())});
             if (c.moveToFirst()) {
                 int sequence = c.getInt(0);
                 byte[] key = c.getBlob(2);
@@ -210,7 +230,7 @@ class AttachmentManager {
         }
     }
 
-    protected List<? extends Attachment> attachmentsForRevision(SQLDatabase db, long sequence) {
+    protected List<? extends Attachment> attachmentsForRevision(SQLDatabase db, long sequence) throws AttachmentException {
         Cursor c = null;
         try {
             LinkedList<SavedAttachment> atts = new LinkedList<SavedAttachment>();
@@ -228,7 +248,7 @@ class AttachmentManager {
             return atts;
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Failed to get attachments", e);
-            return null;
+            throw new AttachmentException(e);
         } finally {
             DatabaseUtils.closeCursorQuietly(c);
         }
@@ -272,11 +292,17 @@ class AttachmentManager {
      * Called by BasicDatastore to copy attachments to a new revision
      * @param parentSequence
      */
-    protected void copyAttachments(SQLDatabase db, long parentSequence, long newSequence) throws SQLException {
-        Cursor c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
-                new String[]{String.valueOf(parentSequence)});
-        copyCursorValuesToNewSequence(db,c, newSequence);
-        DatabaseUtils.closeCursorQuietly(c);
+    protected void copyAttachments(SQLDatabase db, long parentSequence, long newSequence) throws DatastoreException {
+        Cursor c = null;
+        try {
+             c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
+                    new String[]{String.valueOf(parentSequence)});
+            copyCursorValuesToNewSequence(db, c, newSequence);
+        } catch (SQLException e){
+            throw new DatastoreException("Failed to copy attachments", e);
+        }finally {
+            DatabaseUtils.closeCursorQuietly(c);
+        }
     }
 
     /**
@@ -290,7 +316,7 @@ class AttachmentManager {
         try {
             // delete attachment table entries for revs which have been purged
             db.delete("attachments", "sequence IN " +
-                "(SELECT sequence from revs WHERE json IS null)", null);
+                    "(SELECT sequence from revs WHERE json IS null)", null);
             // get all keys from attachments table
              c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
             while (c.moveToNext()) {

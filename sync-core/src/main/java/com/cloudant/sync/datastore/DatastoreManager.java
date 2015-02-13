@@ -145,9 +145,12 @@ public class DatastoreManager {
      * @param dbName name of datastore to open
      * @return {@code Datastore} with the given name
      *
+     * @throws com.cloudant.sync.datastore.DatastoreNotCreatedException Thrown when
+     * the datastore could not be created or opened.
+     *
      * @see DatastoreManager#getEventBus() 
      */
-    public Datastore openDatastore(String dbName) {
+    public Datastore openDatastore(String dbName) throws DatastoreNotCreatedException {
         Preconditions.checkArgument(dbName.matches(LEGAL_CHARACTERS),
                 "A database must be named with all lowercase letters (a-z), digits (0-9),"
                   + " or any of the _$()+-/ characters. The name has to start with a"
@@ -207,7 +210,7 @@ public class DatastoreManager {
         }
     }
 
-    private Datastore createDatastore(String dbName) {
+    private Datastore createDatastore(String dbName) throws DatastoreNotCreatedException {
         try {
             String dbDirectory = this.getDatastoreDirectory(dbName);
             boolean dbDirectoryExist = new File(dbDirectory).exists();
@@ -223,9 +226,9 @@ public class DatastoreManager {
             eventBus.post(new DatabaseOpened(dbName));
             return ds;
         } catch (IOException e) {
-            throw new DatabaseNotCreatedException("Database not found: " + dbName, e);
+            throw new DatastoreNotCreatedException("Database not found: " + dbName, e);
         } catch (SQLException e) {
-            throw new SQLRuntimeException("Database not initialized correctly: " + dbName, e);
+            throw new DatastoreNotCreatedException("Database not initialized correctly: " + dbName, e);
         }
     }
 

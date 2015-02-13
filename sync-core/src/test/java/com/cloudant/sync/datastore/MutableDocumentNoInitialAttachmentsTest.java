@@ -42,7 +42,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
 
     // Update revision with updated body
     @Test
-    public void updateBody() throws ConflictException, IOException {
+    public void updateBody() throws Exception {
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
         BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
@@ -50,8 +50,8 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
     }
 
     // Update revision with updated body set to null
-    @Test(expected = NullPointerException.class)
-    public void updateBodyNull() throws ConflictException, IOException {
+    @Test(expected = DocumentException.class)
+    public void updateBodyNull() throws Exception {
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = null;
         BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
@@ -60,7 +60,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
 
     // Update revision with updated body and new attachment
     @Test
-    public void updateBodyAndAttachments() throws ConflictException, IOException {
+    public void updateBodyAndAttachments() throws Exception {
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
         String attachmentName = "attachment_1.txt";
@@ -78,7 +78,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
 
     // Update revision with updated body, explicitly set attachments to null
     @Test
-    public void updateBodySetNullAttachments() throws ConflictException, IOException {
+    public void updateBodySetNullAttachments() throws Exception {
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
         update.attachments = null;
@@ -90,7 +90,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
 
     // Update revision, don't change body, add new attachment
     @Test
-    public void updateAttachments() throws ConflictException, IOException {
+    public void updateAttachments() throws Exception {
         MutableDocumentRevision update = saved.mutableCopy();
         String attachmentName = "attachment_1.txt";
         File f = TestUtils.loadFixture("fixture/"+attachmentName);
@@ -108,7 +108,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
     // Test transactionality - update body and try to set non-existent attachment
     // check that this fails correctly and that no new revision is created
     @Test
-    public void updateBodySetInvalidAttachments() throws ConflictException {
+    public void updateBodySetInvalidAttachments() throws Exception {
         MutableDocumentRevision update = saved.mutableCopy();
         update.body = bodyTwo;
         String attachmentName = "doesnt_exist_attachment";
@@ -118,8 +118,8 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         BasicDocumentRevision updated = null;
         try {
             updated = datastore.updateDocumentFromRevision(update);
-            Assert.fail("Expected IOException; not thrown");
-        } catch (IOException ioe) {
+            Assert.fail("Expected AttachmentException; not thrown");
+        } catch (AttachmentException e) {
             ;
         }
         // document should not be updated

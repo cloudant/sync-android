@@ -51,7 +51,7 @@ public abstract class AbstractQueryTestBase {
     SQLDatabase db = null;
 
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws Exception {
         factoryPath = TestUtils.createTempTestingDir(AbstractQueryTestBase.class.getName());
         assertThat(factoryPath, is(notNullValue()));
         factory = new DatastoreManager(factoryPath);
@@ -83,7 +83,7 @@ public abstract class AbstractQueryTestBase {
     // - When querying using _rev
     // - When querying using $not operator
     // - When querying using $exists operator
-    public void setUpBasicQueryData() {
+    public void setUpBasicQueryData() throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "mike12";
         Map<String, Object> bodyMap = new HashMap<String, Object>();
@@ -91,12 +91,8 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
+
 
         rev.docId = "mike34";
         bodyMap.clear();
@@ -104,12 +100,8 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
+
 
         rev.docId = "mike72";
         bodyMap.clear();
@@ -117,12 +109,8 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 72);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
+
 
         rev.docId = "fred34";
         bodyMap.clear();
@@ -130,24 +118,16 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
+
 
         rev.docId = "fred12";
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
-        rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        rev.body = DocumentBodyFactory.create(bodyMap); 
+        ds.createDocumentFromRevision(rev);
+
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
@@ -155,7 +135,7 @@ public abstract class AbstractQueryTestBase {
 
     // Used to setup document data testing:
     // - When using dotted notation
-    public void setUpDottedQueryData() {
+    public void setUpDottedQueryData() throws Exception {
         setUpSharedDocs();
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet.name", "pet.species"), "pet"),
@@ -166,7 +146,7 @@ public abstract class AbstractQueryTestBase {
 
     // Used to setup document data testing:
     // - When using non-ascii text
-    public void setUpNonAsciiQueryData() {
+    public void setUpNonAsciiQueryData() throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "mike12";
         Map<String, Object> bodyMap = new HashMap<String, Object>();
@@ -174,12 +154,9 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+
+        ds.createDocumentFromRevision(rev);
+
 
         rev.docId = "mike34";
         bodyMap.clear();
@@ -187,12 +164,8 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
+
 
         rev.docId = "mike72";
         bodyMap.clear();
@@ -200,12 +173,8 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 72);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
+
 
         rev.docId = "اسم34";
         bodyMap.clear();
@@ -213,53 +182,35 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "fred12";
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "fredarabic";
         bodyMap.clear();
         bodyMap.put("اسم", "fred");
         bodyMap.put("age", 12);
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
+
 
         rev.docId = "freddatatype";
         bodyMap.clear();
         bodyMap.put("datatype", "fred");
         bodyMap.put("age", 12);
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
+
     }
 
     // Used to setup document data testing:
     // - When using OR queries
-    public void setUpOrQueryData() {
+    public void setUpOrQueryData() throws Exception {
         setUpSharedDocs();
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet", "name"), "basic"),
@@ -272,7 +223,7 @@ public abstract class AbstractQueryTestBase {
 
     // Used to setup document data testing:
     // - When using nested queries
-    public void setUpNestedQueryData() {
+    public void setUpNestedQueryData() throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "mike12";
         Map<String, Object> bodyMap = new HashMap<String, Object>();
@@ -280,24 +231,14 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
         rev.docId = "mike23";
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 23);
         bodyMap.put("pet", "parrot");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "mike34";
         bodyMap.clear();
@@ -305,24 +246,14 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
         rev.docId = "john34";
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "fish");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "fred43";
         bodyMap.clear();
@@ -330,24 +261,14 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 43);
         bodyMap.put("pet", "snake");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "fred12";
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet", "name"), "basic"),
                 is("basic"));
@@ -355,7 +276,7 @@ public abstract class AbstractQueryTestBase {
 
     // Used to setup document data testing:
     // - When indexing array fields
-    public void setUpArrayIndexingData() {
+    public void setUpArrayIndexingData() throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "mike12";
         Map<String, Object> bodyMap = new HashMap<String, Object>();
@@ -363,24 +284,14 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", Arrays.<Object>asList("cat", "dog"));
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
         rev.docId = "fred34";
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "parrot");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age"), "pet"),
                 is("pet"));
@@ -388,7 +299,7 @@ public abstract class AbstractQueryTestBase {
 
     // Used to setup document data testing:
     // - When there is a large result set
-    public void setUpLargeResultSetQueryData() {
+    public void setUpLargeResultSetQueryData() throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         for (int i = 0; i < 150; i++) {
             rev.docId = String.format("d%d", i);
@@ -396,12 +307,7 @@ public abstract class AbstractQueryTestBase {
             bodyMap.put("large_field", "cat");
             bodyMap.put("idx", i);
             rev.body = DocumentBodyFactory.create(bodyMap);
-            try {
-                ds.createDocumentFromRevision(rev);
-            } catch (IOException e) {
-                e.printStackTrace();
-                Assert.fail("Failed to create document revision");
-            }
+            ds.createDocumentFromRevision(rev);
         }
         assertThat(im.ensureIndexed(Arrays.<Object>asList("large_field", "idx"), "large"),
                 is("large"));
@@ -410,7 +316,7 @@ public abstract class AbstractQueryTestBase {
     // Used to setup document data testing for queries without covering indexes:
     // - When executing AND queries
     // - When executing OR queries
-    public void setUpWithoutCoveringIndexesQueryData() {
+    public void setUpWithoutCoveringIndexesQueryData() throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "mike12";
         Map<String, Object> bodyMap = new HashMap<String, Object>();
@@ -418,12 +324,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "mike34";
         bodyMap.clear();
@@ -431,12 +332,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "mike72";
         bodyMap.clear();
@@ -445,12 +341,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("pet", "cat");
         bodyMap.put("town", "bristol");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "fred34";
         bodyMap.clear();
@@ -458,12 +349,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "fred12";
         bodyMap.clear();
@@ -471,12 +357,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("town", "bristol");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
@@ -484,7 +365,7 @@ public abstract class AbstractQueryTestBase {
 
     // Used to setup document data testing for sorting:
     // - When sorting
-    public void setUpSortingQueryData() {
+    public void setUpSortingQueryData() throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "mike12";
         Map<String, Object> bodyMap = new HashMap<String, Object>();
@@ -493,12 +374,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", Arrays.<Object>asList("cat", "dog"));
         bodyMap.put("same", "all");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "fred34";
         bodyMap.clear();
@@ -507,12 +383,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("pet", "parrot");
         bodyMap.put("same", "all");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "fred11";
         bodyMap.clear();
@@ -521,18 +392,13 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("pet", "fish");
         bodyMap.put("same", "all");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age", "same"), "pet"),
                 is("pet"));
     }
 
-    private void setUpSharedDocs() {
+    private void setUpSharedDocs() throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "mike12";
         Map<String, Object> bodyMap = new HashMap<String, Object>();
@@ -543,12 +409,7 @@ public abstract class AbstractQueryTestBase {
         petMap.put("name", "mike");
         bodyMap.put("pet", petMap);
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "mike23";
         bodyMap.clear();
@@ -561,12 +422,7 @@ public abstract class AbstractQueryTestBase {
         petMap.put("name", petNameMap);
         bodyMap.put("pet", petMap);
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "mike34";
         bodyMap.clear();
@@ -577,12 +433,7 @@ public abstract class AbstractQueryTestBase {
         petMap.put("name", "mike");
         bodyMap.put("pet", petMap);
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "mike72";
         bodyMap.clear();
@@ -590,12 +441,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 72);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "fred34";
         bodyMap.clear();
@@ -603,24 +449,14 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
 
         rev.docId = "fred12";
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
         rev.body = DocumentBodyFactory.create(bodyMap);
-        try {
-            ds.createDocumentFromRevision(rev);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
-        }
+        ds.createDocumentFromRevision(rev);
     }
 
 }

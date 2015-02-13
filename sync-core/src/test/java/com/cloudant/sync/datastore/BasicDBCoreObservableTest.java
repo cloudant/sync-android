@@ -56,7 +56,7 @@ public class BasicDBCoreObservableTest {
     }
 
     @Test
-    public void createDocument_bodyOnly_success() throws ConflictException, IOException, SQLException {
+    public void createDocument_bodyOnly_success() throws Exception {
 
         this.core = new BasicDatastore(database_dir, "test");
 

@@ -77,8 +77,9 @@ public interface Datastore {
      *
      * @param documentId ID of document to retrieve.
      * @return {@code DocumentRevision} of the document or null if it doesn't exist.
+     * @throws com.cloudant.sync.datastore.DocumentNotFoundException When the document specified was not found
      */
-    public BasicDocumentRevision getDocument(String documentId);
+    public BasicDocumentRevision getDocument(String documentId) throws DocumentNotFoundException;
 
     /**
      * <p>Retrieves a given revision of a document.</p>
@@ -94,8 +95,10 @@ public interface Datastore {
      * @param documentId ID of the document
      * @param revisionId Revision of the document
      * @return {@code DocumentRevision} of the document or null if it doesn't exist.
+     * @throws com.cloudant.sync.datastore.DocumentNotFoundException if the document at the specified revision was not found
      */
-    public BasicDocumentRevision getDocument(String documentId, String revisionId);
+    public BasicDocumentRevision getDocument(String documentId, String revisionId) throws
+            DocumentNotFoundException;
 
     /**
      * <p>Returns whether this datastore contains a particular revision of
@@ -264,10 +267,11 @@ public interface Datastore {
      *
      * @param rev the <code>MutableDocumentRevision</code> to be created
      * @return a <code>DocumentRevision</code> - the newly created document
-     * @throws IOException if there is a problem saving any new attachments
+     * @throws com.cloudant.sync.datastore.AttachmentException if there is a problem saving any new attachments
+     * @throws com.cloudant.sync.datastore.DocumentException if there is a problem creating the document
      * @see Datastore#getEventBus()
      */
-    public BasicDocumentRevision createDocumentFromRevision(MutableDocumentRevision rev) throws IOException;
+    public BasicDocumentRevision createDocumentFromRevision(MutableDocumentRevision rev) throws DocumentException, AttachmentException;
 
     /**
      * <p>Updates a document that exists in the datastore with with body and attachments
@@ -283,10 +287,12 @@ public interface Datastore {
      * @param rev the <code>MutableDocumentRevision</code> to be updated
      * @return a <code>DocumentRevision</code> - the updated document
      * @throws ConflictException <code>rev</code> is not a current revision for this document
-     * @throws IOException if there is a problem saving any new attachments
+     * @throws com.cloudant.sync.datastore.AttachmentException if there is a problem saving any new attachments
+     * @throws com.cloudant.sync.datastore.DocumentNotFoundException if the document to be updated was not found
+     * @throws com.cloudant.sync.datastore.AttachmentException if there was an error saving the attachments
      * @see Datastore#getEventBus()
      */
-    public BasicDocumentRevision updateDocumentFromRevision(MutableDocumentRevision rev) throws ConflictException, IOException;
+    public BasicDocumentRevision updateDocumentFromRevision(MutableDocumentRevision rev) throws ConflictException, DocumentNotFoundException, AttachmentException, DocumentException;
 
     /**
      * <p>Deletes a document from the datastore.</p>
@@ -325,10 +331,12 @@ public interface Datastore {
      * @param id the ID of the document to delete leaf nodes for
      * @return a List of a <code>DocumentRevision</code>s - the deleted or "tombstone" documents
      * @throws ConflictException
+     * @throws com.cloudant.sync.datastore.DocumentException if there was an error deleting the document
      * @see Datastore#getEventBus()
      * @see com.cloudant.sync.datastore.Datastore#deleteDocumentFromRevision(BasicDocumentRevision)
      */
-    public List<BasicDocumentRevision> deleteDocument(String id) throws ConflictException;
+    public List<BasicDocumentRevision> deleteDocument(String id) throws ConflictException,
+            DocumentException;
 
     /**
      * Compacts the sqlDatabase storage by removing the bodies and attachments of obsolete revisions.

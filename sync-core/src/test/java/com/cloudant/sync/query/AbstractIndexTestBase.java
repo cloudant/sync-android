@@ -36,7 +36,7 @@ public abstract class AbstractIndexTestBase {
     SQLDatabase db = null;
 
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws Exception {
         factoryPath = TestUtils.createTempTestingDir(AbstractIndexTestBase.class.getName());
         assertThat(factoryPath, is(notNullValue()));
         factory = new DatastoreManager(factoryPath);

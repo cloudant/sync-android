@@ -77,7 +77,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
      * Doc 2: 1 -> 2
      * Doc 3: 1 -> 2 -> 3
      */
-    private void populateSomeDataInLocalDatastore() throws ConflictException, IOException {
+    private void populateSomeDataInLocalDatastore() throws Exception {
 
         id1 = createDocInDatastore("Doc 1");
         Assert.assertNotNull(id1);
@@ -94,7 +94,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         updateDocInDatastore(id3, "Doc 3");
     }
 
-    public String createDocInDatastore(String d) throws IOException {
+    public String createDocInDatastore(String d) throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         Map<String, String> m = new HashMap<String, String>();
         m.put("data", d);
@@ -103,7 +103,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
     }
 
 
-    public String updateDocInDatastore(String id, String data) throws ConflictException, IOException {
+    public String updateDocInDatastore(String id, String data) throws Exception {
         MutableDocumentRevision rev = datastore.getDocument(id).mutableCopy();
         Map<String, String> m = new HashMap<String, String>();
         m.put("data", data);
@@ -120,14 +120,11 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         BasicDocumentRevision oldRevision = datastore.getDocument(id1);
         BasicDocumentRevision newRevision = null;
-        try {
-            // set attachment
-            MutableDocumentRevision oldRevision_mut = oldRevision.mutableCopy();
-            oldRevision_mut.attachments.put(attachmentName, att);
-            newRevision = datastore.updateDocumentFromRevision(oldRevision_mut);
-        } catch (IOException ioe) {
-            Assert.fail("IOException thrown: " + ioe);
-        }
+        // set attachment
+        MutableDocumentRevision oldRevision_mut = oldRevision.mutableCopy();
+        oldRevision_mut.attachments.put(attachmentName, att);
+        newRevision = datastore.updateDocumentFromRevision(oldRevision_mut);
+
 
         // push replication
         push();
@@ -147,14 +144,11 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         Attachment att = new UnsavedFileAttachment(f, "image/jpeg");
         BasicDocumentRevision oldRevision = datastore.getDocument(id1);
         BasicDocumentRevision newRevision = null;
-        try {
-            // set attachment
-            MutableDocumentRevision oldRevision_mut = oldRevision.mutableCopy();
-            oldRevision_mut.attachments.put(attachmentName, att);
-            newRevision = datastore.updateDocumentFromRevision(oldRevision_mut);
-        } catch (IOException ioe) {
-            Assert.fail("IOException thrown: " + ioe);
-        }
+        // set attachment
+        MutableDocumentRevision oldRevision_mut = oldRevision.mutableCopy();
+        oldRevision_mut.attachments.put(attachmentName, att);
+        newRevision = datastore.updateDocumentFromRevision(oldRevision_mut);
+
 
         // push replication
         push();
@@ -177,14 +171,10 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         Attachment att2 = new UnsavedFileAttachment(f2, "text/plain");
         BasicDocumentRevision rev1 = datastore.getDocument(id1);
         BasicDocumentRevision rev2 = null;
-        try {
-            // set attachment
-            MutableDocumentRevision rev1_mut = rev1.mutableCopy();
-            rev1_mut.attachments.put(attachmentName1, att1);
-            rev2 = datastore.updateDocumentFromRevision(rev1_mut);
-        } catch (IOException ioe) {
-            Assert.fail("IOException thrown: "+ioe);
-        }
+        // set attachment
+        MutableDocumentRevision rev1_mut = rev1.mutableCopy();
+        rev1_mut.attachments.put(attachmentName1, att1);
+        rev2 = datastore.updateDocumentFromRevision(rev1_mut);
 
         // push replication - att1 should be uploaded
         push();
@@ -196,15 +186,11 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         push();
 
         BasicDocumentRevision rev4 = null;
-        try {
-            // set attachment
-            MutableDocumentRevision rev3_mut = rev3.mutableCopy();
-            rev3_mut.attachments.put(attachmentName2, att2);
-            rev4 = datastore.updateDocumentFromRevision(rev3_mut);
+        // set attachment
+        MutableDocumentRevision rev3_mut = rev3.mutableCopy();
+        rev3_mut.attachments.put(attachmentName2, att2);
+        rev4 = datastore.updateDocumentFromRevision(rev3_mut);
 
-        } catch (IOException ioe) {
-            Assert.fail("IOException thrown: "+ioe);
-        }
         // push replication - att2 should be uploaded
         push();
 

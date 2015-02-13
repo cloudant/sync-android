@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+/*
+ * Copyright (c) 2015 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -11,26 +11,31 @@
  * either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
+
 package com.cloudant.sync.datastore;
 
+
 /**
- * Thrown when there is a conflict updating a datastore, for example trying
- * to update a document but passing in an incorrect revision ID.
+ * Created by Rhys Short on 05/02/15.
  */
-public class ConflictException extends DocumentException {
-    public ConflictException(String s) {
-        super(s);
-    }
+public class DocumentException extends Exception {
 
-    public ConflictException(Exception e){
-        super(e);
-    }
 
-    public ConflictException(String message, Exception e){
-        super(message,e);
-    }
-
-    public ConflictException(){
+    public DocumentException(){
 
     }
+
+    public DocumentException(String message){
+        super(message);
+    }
+
+    public DocumentException(Exception causedBy){
+        super(causedBy);
+    }
+
+    public DocumentException(String message,Exception causedBy){
+        super(message,causedBy);
+    }
+
+
 }

@@ -16,17 +16,18 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.Attachment;
+import com.cloudant.sync.datastore.AttachmentException;
+import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.DocumentRevsUtils;
 import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.util.JSONUtils;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ class DatastoreWrapper {
         return dbCore;
     }
 
-    public String getIdentifier() {
+    public String getIdentifier() throws DatastoreException {
         return dbCore.getPublicIdentifier();
     }
 
@@ -67,7 +68,8 @@ class DatastoreWrapper {
         }
     }
 
-    public void putCheckpoint(String replicatorIdentifier, Object sequence) {
+    public void putCheckpoint(String replicatorIdentifier, Object sequence) throws DocumentException {
+
         logger.entering("DatastoreWrapper","putCheckpoint",new Object[]{replicatorIdentifier,sequence});
         String checkpointDocumentId = getCheckpointDocumentId(replicatorIdentifier);
         BasicDocumentRevision doc = dbCore.getLocalDocument(checkpointDocumentId);
@@ -85,7 +87,7 @@ class DatastoreWrapper {
         return "_local/" + replicatorIdentifier;
     }
 
-    public void bulkInsert(DocumentRevsList documentRevsList, Map<String[],List<PreparedAttachment>> preparedAttachments, boolean pullAttachmentsInline) {
+    public void bulkInsert(DocumentRevsList documentRevsList, Map<String[],List<PreparedAttachment>> preparedAttachments, boolean pullAttachmentsInline) throws DocumentException  {
         for(DocumentRevs documentRevs: documentRevsList) {
             logger.log(Level.FINEST,"Bulk inserting document revs: %s",documentRevs);
 
@@ -108,11 +110,11 @@ class DatastoreWrapper {
         return allDocumentTrees;
     }
 
-    protected PreparedAttachment prepareAttachment(Attachment att, BasicDocumentRevision rev) throws IOException, SQLException {
-        return this.dbCore.prepareAttachment(att, rev);
+    protected PreparedAttachment prepareAttachment(Attachment att) throws AttachmentException {
+        return this.dbCore.prepareAttachment(att);
     }
 
-    protected void addAttachment(PreparedAttachment att, BasicDocumentRevision rev) throws IOException, SQLException {
+    protected void addAttachment(PreparedAttachment att, BasicDocumentRevision rev) throws AttachmentException {
         this.dbCore.addAttachment(att, rev);
     }
 

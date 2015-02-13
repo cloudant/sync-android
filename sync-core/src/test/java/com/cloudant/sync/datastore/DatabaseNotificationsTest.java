@@ -55,7 +55,7 @@ public class DatabaseNotificationsTest {
     }
 
     @Test
-    public void notification_database_opened() {
+    public void notification_database_opened() throws Exception{
         databaseOpened = new CountDownLatch(1);
         Datastore ds = datastoreManager.openDatastore("test123");
         try {
@@ -67,7 +67,7 @@ public class DatabaseNotificationsTest {
     }
 
     @Test
-    public void notification_database_created() {
+    public void notification_database_created() throws Exception {
         databaseCreated = new CountDownLatch(1);
         Datastore ds = datastoreManager.openDatastore("test123");
         try {
@@ -79,7 +79,7 @@ public class DatabaseNotificationsTest {
     }
 
     @Test
-    public void notification_database_deleted() {
+    public void notification_database_deleted() throws Exception {
         databaseDeleted = new CountDownLatch(1);
         datastoreManager.openDatastore("test1234");
         try {
@@ -92,7 +92,7 @@ public class DatabaseNotificationsTest {
     }
 
     @Test
-    public void notification_database_closed() {
+    public void notification_database_closed() throws Exception{
         databaseClosed = new CountDownLatch((1));
         Datastore ds = datastoreManager.openDatastore("testDatabaseClosed");
         ds.getEventBus().register(this);
@@ -102,7 +102,7 @@ public class DatabaseNotificationsTest {
     }
 
     @Test
-    public void notification_databaseClosed_databaseManagerShouldPostDatabaseClosedEvent() {
+    public void notification_databaseClosed_databaseManagerShouldPostDatabaseClosedEvent() throws Exception{
         databaseClosed = new CountDownLatch((1));
         Datastore ds = datastoreManager.openDatastore("testDatabaseClosed");
         datastoreManager.getEventBus().register(this);

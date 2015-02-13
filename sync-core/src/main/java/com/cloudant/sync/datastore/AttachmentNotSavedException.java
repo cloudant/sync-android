@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+/*
+ * Copyright (c) 2015 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -14,10 +14,22 @@
 
 package com.cloudant.sync.datastore;
 
-class SQLRuntimeException extends RuntimeException{
+/**
+ * Created by Rhys Short on 05/02/15.
+ */
+public class AttachmentNotSavedException extends AttachmentException {
 
-    public SQLRuntimeException(String theReason, Throwable e) {
-        super(theReason, e);
+    public AttachmentNotSavedException(){}
+
+    public AttachmentNotSavedException(String message){
+        super(message);
     }
 
+    public AttachmentNotSavedException(Exception causedBy){
+        super(causedBy);
+    }
+
+    public AttachmentNotSavedException(String message, Exception casuedBy){
+        super(message,casuedBy);
+    }
 }

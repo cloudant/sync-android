@@ -46,7 +46,7 @@ public class QueryPerformanceTest {
     List<BasicDocumentRevision> revs = new ArrayList<BasicDocumentRevision>();
 
     @Before
-    public void setUp() throws IOException, SQLException, IndexExistsException {
+    public void setUp() throws Exception {
         datastoreManagerPath = TestUtils.createTempTestingDir(this.getClass().getName());
         DatastoreManager datastoreManager = new DatastoreManager(this.datastoreManagerPath);
         datastore = (DatastoreExtended) datastoreManager.openDatastore(getClass().getSimpleName());
@@ -58,7 +58,7 @@ public class QueryPerformanceTest {
         prepareDataForQueryTest();
     }
 
-    private void prepareDataForQueryTest() throws IOException {
+    private void prepareDataForQueryTest() throws Exception {
         List<Map> data = new ArrayList<Map>();
         addMap(data, 10, "tom");
         addMap(data, 100, "jerry");

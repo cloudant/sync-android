@@ -38,7 +38,7 @@ public class DocumentNotificationsTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void notification_document_created() throws IOException {
+    public void notification_document_created() throws Exception {
         documentCreated = new CountDownLatch(1);
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.body = bodyOne;
@@ -48,7 +48,7 @@ public class DocumentNotificationsTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void notification_document_updated() throws IOException {
+    public void notification_document_updated() throws Exception {
         documentUpdated = new CountDownLatch(1);
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;
@@ -66,7 +66,7 @@ public class DocumentNotificationsTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void notification_document_deleted() throws IOException {
+    public void notification_document_deleted() throws Exception {
         documentDeleted = new CountDownLatch(1);
         MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
         rev_1Mut.body = bodyOne;

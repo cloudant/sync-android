@@ -41,7 +41,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void notification_forceinsert() throws IOException {
+    public void notification_forceinsert() throws Exception {
         documentUpdated = new CountDownLatch(1);
         documentCreated = new CountDownLatch(2); // 2 because the call to createDocument will also fire
         // create a document and insert the first revision
@@ -65,7 +65,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void notification_forceinsertWithAttachments() throws IOException {
+    public void notification_forceinsertWithAttachments() throws Exception {
 
         // this test only makes sense if the data is inline base64 (there's no remote server to pull the attachment from)
         boolean pullAttachmentsInline = true;
@@ -95,7 +95,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void notification_forceinsertWithAttachmentsError() throws IOException {
+    public void notification_forceinsertWithAttachmentsError() throws Exception{
 
         // this test only makes sense if the data is inline base64 (there's no remote server to pull the attachment from)
         boolean pullAttachmentsInline = true;
@@ -122,11 +122,15 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         doc1_rev1.setRevision("2-blah");
         revisionHistory.add(doc1_rev1.getRevision());
         // now do a force insert
-        datastore.forceInsert(doc1_rev1, revisionHistory, atts,null, pullAttachmentsInline);
+        //catch the exception thrown se we can look into the database
+        try {
+            datastore.forceInsert(doc1_rev1, revisionHistory, atts, null, pullAttachmentsInline);
+        } catch (DocumentException e){
+            //do nothing.
+        }
 
         // adding the attachment should have failed transactionally, so the rev should not exist as well
-        BasicDocumentRevision dr = datastore.getDocument(doc1_rev1.getId(), doc1_rev1.getRevision());
-        Assert.assertNull("Document should not exist at this revision", dr);
+        Assert.assertFalse(datastore.containsDocument(doc1_rev1.getId(), doc1_rev1.getRevision()));
 
         Attachment storedAtt = datastore.getAttachment(doc1_rev1, "att1");
         Assert.assertNull(storedAtt);

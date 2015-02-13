@@ -39,7 +39,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
         replicator = (BasicReplicator) ReplicatorFactory.oneway(push);
     }
 
-    private void prepareTwoDocumentsInLocalDB() throws IOException {
+    private void prepareTwoDocumentsInLocalDB() throws Exception {
         Bar bar1 = BarUtils.createBar(datastore, "Tom", 31);
         Bar bar2 = BarUtils.createBar(datastore, "Jerry", 52);
     }
@@ -50,7 +50,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
     }
 
     @Test
-    public void start_StartedThenComplete() throws InterruptedException, IOException {
+    public void start_StartedThenComplete() throws Exception {
         prepareTwoDocumentsInLocalDB();
 
         TestReplicationListener listener = new TestReplicationListener();
@@ -71,7 +71,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
     }
 
     @Test
-    public void start_StartedThenStopped() throws InterruptedException, IOException {
+    public void start_StartedThenStopped() throws Exception {
 
         int count = 5000;
         for (int i = 0; i < count; i++) {

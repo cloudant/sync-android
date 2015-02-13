@@ -78,23 +78,18 @@ public class IndexManagerTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void deleteNonEmptyIndex() {
-        try {
-            for (int i = 0; i < 4; i++) {
-                MutableDocumentRevision rev = new MutableDocumentRevision();
-                Map<String, Object> bodyMap = new HashMap<String, Object>();
-                bodyMap.put("name", "mike");
-                bodyMap.put("age", 12);
-                Map<String, Object> petMap = new HashMap<String, Object>();
-                petMap.put("species", "cat");
-                petMap.put("name", "mike");
-                bodyMap.put("pet", petMap);
-                rev.body = DocumentBodyFactory.create(bodyMap);
-                ds.createDocumentFromRevision(rev);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
+    public void deleteNonEmptyIndex() throws Exception {
+        for (int i = 0; i < 4; i++) {
+            MutableDocumentRevision rev = new MutableDocumentRevision();
+            Map<String, Object> bodyMap = new HashMap<String, Object>();
+            bodyMap.put("name", "mike");
+            bodyMap.put("age", 12);
+            Map<String, Object> petMap = new HashMap<String, Object>();
+            petMap.put("species", "cat");
+            petMap.put("name", "mike");
+            bodyMap.put("pet", petMap);
+            rev.body = DocumentBodyFactory.create(bodyMap);
+            ds.createDocumentFromRevision(rev);
         }
 
         im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");
@@ -104,23 +99,18 @@ public class IndexManagerTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void deleteTheCorrectNonEmptyIndex() {
-        try {
-            for (int i = 0; i < 4; i++) {
-                MutableDocumentRevision rev = new MutableDocumentRevision();
-                Map<String, Object> bodyMap = new HashMap<String, Object>();
-                bodyMap.put("name", "mike");
-                bodyMap.put("age", 12);
-                Map<String, Object> petMap = new HashMap<String, Object>();
-                petMap.put("species", "cat");
-                petMap.put("name", "mike");
-                bodyMap.put("pet", petMap);
-                rev.body = DocumentBodyFactory.create(bodyMap);
-                ds.createDocumentFromRevision(rev);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("Failed to create document revision");
+    public void deleteTheCorrectNonEmptyIndex() throws Exception {
+        for (int i = 0; i < 4; i++) {
+            MutableDocumentRevision rev = new MutableDocumentRevision();
+            Map<String, Object> bodyMap = new HashMap<String, Object>();
+            bodyMap.put("name", "mike");
+            bodyMap.put("age", 12);
+            Map<String, Object> petMap = new HashMap<String, Object>();
+            petMap.put("species", "cat");
+            petMap.put("name", "mike");
+            bodyMap.put("pet", petMap);
+            rev.body = DocumentBodyFactory.create(bodyMap);
+            ds.createDocumentFromRevision(rev);
         }
 
         im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");

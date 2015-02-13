@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -33,6 +34,7 @@ class SavedAttachment extends Attachment {
 
     // how many bytes should an attachment be to be considered large?
     static final int largeSizeBytes = 65536;
+    private static final Logger logger = Logger.getLogger(SavedAttachment.class.getCanonicalName());
 
     protected SavedAttachment(String name, long revpos, long seq, byte[] key, String type, File file, Encoding encoding) {
         super(name, type, encoding);
@@ -58,10 +60,10 @@ class SavedAttachment extends Attachment {
     public boolean shouldInline(PushAttachmentsInline inlinePreference) {
         // push_attachments_inline: false = always push multipart; small = push small attachments inline; true = always push inline
         if (inlinePreference == PushAttachmentsInline.False || inlinePreference == PushAttachmentsInline.Small && this.isLarge()) {
-            System.out.println("inline false");
+            logger.finer("inline false");
             return false;
         } else {
-            System.out.println("inline true");
+            logger.finer("inline true");
             return true;
         }
     }

@@ -96,7 +96,7 @@ public class DatabaseAssert {
      * @param datastore
      * @param client
      */
-    public static void assertPushed(DatastoreExtended datastore, CouchClient client) {
+    public static void assertPushed(DatastoreExtended datastore, CouchClient client) throws Exception {
         logger.entering("DatabaseAssert","assertPushed",new Object[]{datastore,client});
         Long start = System.currentTimeMillis();
 
@@ -129,7 +129,7 @@ public class DatabaseAssert {
      * @param client
      * @param datastore
      */
-    public static void assertPulled(CouchClient client, DatastoreExtended datastore) {
+    public static void assertPulled(CouchClient client, DatastoreExtended datastore) throws Exception {
         logger.entering("DatabaseAssert","assertPulled", new Object[]{client,datastore});
         Long start = System.currentTimeMillis();
 
@@ -162,7 +162,7 @@ public class DatabaseAssert {
      * @param datastore
      */
     private static void checkChangeRow(ChangeRowAdaptor document,
-                                       CouchClient client, DatastoreExtended datastore) {
+                                       CouchClient client, DatastoreExtended datastore) throws Exception{
         String id = document.id;
 
         logger.info("Checking document: "+id);
@@ -184,7 +184,7 @@ public class DatabaseAssert {
     /**
      * Assert the specified document is deleted in both remote CouchDb and local datastore.
      */
-    static void checkBothDeleted(String id, DatastoreExtended datastore, CouchClient client) {
+    static void checkBothDeleted(String id, DatastoreExtended datastore, CouchClient client) throws Exception {
         BasicDocumentRevision documentRevision = datastore.getDocument(id);
         Assert.assertTrue(documentRevision.isDeleted());
 
@@ -239,7 +239,7 @@ public class DatabaseAssert {
      * Assert the current document are the same in both remote CouchDB and local datastore.
      */
     static void checkWinningRevisionSame(String documentId, DatastoreExtended datastore,
-                                         CouchClient client) {
+                                         CouchClient client) throws Exception{
         Map<String, Object> doc1 = datastore.getDocument(documentId).asMap();
         Map<String, Object> doc2 = client.getDocument(documentId);
         doc2.remove(CouchConstants._attachments);

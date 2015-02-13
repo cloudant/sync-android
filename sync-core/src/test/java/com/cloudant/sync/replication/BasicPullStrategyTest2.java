@@ -86,7 +86,7 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
         createBatchOneTestData();
     }
 
-    private void assertDataDeleted() {
+    private void assertDataDeleted() throws Exception {
         for(String id : cache.getAllDeletedIds()) {
             logger.info("Deleted id: " + id);
             BasicDocumentRevision obj = datastore.getDocument(id);
@@ -95,7 +95,7 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
         }
     }
 
-    private void assertDataSynced() {
+    private void assertDataSynced() throws Exception {
         for(String id : cache.getAllDocumentIds()) {
             Bar bar = cache.getData(id);
             logger.info("Id: " + bar);

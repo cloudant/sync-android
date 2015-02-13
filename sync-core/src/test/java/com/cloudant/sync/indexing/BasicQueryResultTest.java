@@ -42,7 +42,7 @@ public class BasicQueryResultTest {
     private String datastoreManagerPath;
 
     @Before
-    public void setUp() throws IOException, SQLException {
+    public void setUp() throws Exception {
         datastoreManagerPath = TestUtils.createTempTestingDir(this.getClass().getName());
         DatastoreManager datastoreManager = new DatastoreManager(this.datastoreManagerPath);
         datastore = (DatastoreExtended) datastoreManager.openDatastore(getClass().getSimpleName());
@@ -81,7 +81,7 @@ public class BasicQueryResultTest {
     }
 
     @Test
-    public void documentIds() {
+    public void documentIds() throws Exception {
         List<String> ids = getAllDBObjectIds();
         QueryResult res = new BasicQueryResult(ids, datastore);
         List<String> documentIds = res.documentIds();
@@ -138,16 +138,16 @@ public class BasicQueryResultTest {
     }
 
     @Test
-    public void iterable_queryResultHas51DocumentsAndUseDefaultBatchSize50_iterationWorks() throws IOException {
+    public void iterable_queryResultHas51DocumentsAndUseDefaultBatchSize50_iterationWorks() throws Exception {
         testQueryResultBatchWithSize(51);
     }
 
     @Test
-    public void iterable_queryResultHas1KDocumentsAndUseDefaultBatchSize50_iterationWorks() throws IOException {
+    public void iterable_queryResultHas1KDocumentsAndUseDefaultBatchSize50_iterationWorks() throws Exception {
         testQueryResultBatchWithSize(1000);
     }
 
-    private void testQueryResultBatchWithSize(int queryResultSize) throws IOException {
+    private void testQueryResultBatchWithSize(int queryResultSize) throws Exception {
         List<String> ids = new ArrayList<String>(queryResultSize);
         for(int i = 0 ; i < queryResultSize ; i ++) {
             Map m = new HashMap<String, String>();

@@ -70,7 +70,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Override
-    public void setUp() throws SQLException {
+    public void setUp() throws Exception {
         super.setUp();
         if (testType.equals(MATCHER_EXECUTION)) {
             im = new MockMatcherIndexManager(ds);
@@ -88,7 +88,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
     // When executing AND queries
 
     @Test
-    public void canQueryWithoutIndexSingleClause() {
+    public void canQueryWithoutIndexSingleClause() throws Exception {
         setUpWithoutCoveringIndexesQueryData();
         // query - { "town" : "bristol" }
         // indexes - { "basic" : { "name" : "basic", "type" : "json", "fields" : [ "_id",
@@ -107,7 +107,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryWithoutIndexMultiClause() {
+    public void canQueryWithoutIndexMultiClause() throws Exception {
         setUpWithoutCoveringIndexesQueryData();
         // query - { "pet" : { "$eq" : "cat" }, { "age" : { "$eq" : 12 } }
         // indexes - { "basic" : { "name" : "basic", "type" : "json", "fields" : [ "_id",
@@ -131,7 +131,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void postHocMatchesProjectingOverNonQueriedFields() {
+    public void postHocMatchesProjectingOverNonQueriedFields() throws Exception {
         setUpWithoutCoveringIndexesQueryData();
         // query - { "town" : "bristol" }
         // indexes - { "basic" : { "name" : "basic", "type" : "json", "fields" : [ "_id",
@@ -152,7 +152,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
     // When executing OR queries
 
     @Test
-    public void canQueryORWithAMissingIndex() {
+    public void canQueryORWithAMissingIndex() throws Exception {
         setUpWithoutCoveringIndexesQueryData();
         // query - { "$or" : [ { "pet" : { "$eq" : "cat" } }, { "town" : { "$eq" : "bristol" } } ] }
         // indexes - { "basic" : { "name" : "basic", "type" : "json", "fields" : [ "_id",
@@ -182,7 +182,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryORWithoutAnyIndexes() {
+    public void canQueryORWithoutAnyIndexes() throws Exception {
         setUpWithoutCoveringIndexesQueryData();
         im.deleteIndexNamed("pet");
         assertThat(im.listIndexes().keySet(), contains("basic"));

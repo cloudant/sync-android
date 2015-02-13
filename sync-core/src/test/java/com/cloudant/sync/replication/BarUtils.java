@@ -84,7 +84,7 @@ public class BarUtils {
         return null;
     }
 
-    public static Bar createBar(Datastore db, String name, int age) throws IOException {
+    public static Bar createBar(Datastore db, String name, int age) throws Exception {
         Bar bar = new Bar();
         bar.setName(name);
         bar.setAge(age);
@@ -116,7 +116,7 @@ public class BarUtils {
         return updatedBar;
     }
 
-    public static Bar updateBar(Datastore db, String id, String name, int age) throws ConflictException, IOException {
+    public static Bar updateBar(Datastore db, String id, String name, int age) throws Exception {
         Bar bar = new Bar();
         bar.setName(name);
         bar.setAge(age);
@@ -148,7 +148,7 @@ public class BarUtils {
         return res;
     }
 
-    public static void deleteBar(Datastore db, String id) throws ConflictException {
+    public static void deleteBar(Datastore db, String id) throws Exception {
         db.deleteDocument(id);
     }
 

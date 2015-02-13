@@ -12,6 +12,9 @@
 
 package com.cloudant.sync.datastore;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *  A document revision that has been projected.
  *
@@ -20,6 +23,8 @@ package com.cloudant.sync.datastore;
  *  from saving a projected document.
  */
 public class ProjectedDocumentRevision extends BasicDocumentRevision {
+
+    private static final Logger logger = Logger.getLogger(ProjectedDocumentRevision.class.getCanonicalName());
 
     Datastore datastore;
 
@@ -34,16 +39,18 @@ public class ProjectedDocumentRevision extends BasicDocumentRevision {
 
     @Override
     public MutableDocumentRevision mutableCopy() {
-        BasicDocumentRevision rev = datastore.getDocument(this.getId());
-        if (rev == null) {
+        try {
+            BasicDocumentRevision rev = datastore.getDocument(this.getId());
+
+            // Don't want to return an updated version, breaks contract of mutableCopy
+            if (!rev.getRevision().equals(this.getRevision())) {
+                return null;
+            }
+
+            return rev.mutableCopy();
+        } catch (DocumentNotFoundException e){
+            logger.log(Level.SEVERE,String.format("Failed to load document %s from datastore",this.toString()),e);
             return null;
         }
-
-        // Don't want to return an updated version, breaks contract of mutableCopy
-        if (!rev.getRevision().equals(this.getRevision())) {
-            return null;
-        }
-
-        return rev.mutableCopy();
     }
 }
