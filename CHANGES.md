@@ -1,6 +1,7 @@
-# Unreleased (2015-02-5)
+# Unreleased (2015-02-13)
 
 - [NEW] Added `listAllDatastores` method to `DatastoreManager`.
+- [BREAKING CHANGE] Introduce Checked exceptions for recoverable error conditions, these new checked exceptions are on the Datastore interface and its implementing classes. See the [commit](https://github.com/cloudant/sync-android/commit/e6d4f685cefe9c06a9c9372723d9cc06dbc7e978) for more infomation.
 - [FIX] Support CouchDB 2.0/Cloudant Local's array-based 
   sequence number format to fix replication between the local
   database and these remote servers.
