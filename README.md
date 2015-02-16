@@ -57,11 +57,11 @@ repositories {
 
 dependencies {
     // Other dependencies
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-core', version:'0.9.3'
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-core', version:'0.10.0'
     // include this if you're targeting Android
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.9.3'
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.10.0'
     // include this if you're targeting Java SE
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-javase', version:'0.9.3'
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-javase', version:'0.10.0'
 }
 ```
 
@@ -91,21 +91,21 @@ It's a similar story in maven, add the repo and the dependency:
     <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-core</artifactId>
-      <version>0.9.3</version>
+      <version>0.10.0</version>
       <scope>compile</scope>
     </dependency>
     <!-- include this if you're targeting Android -->
     <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-android</artifactId>
-      <version>0.9.3</version>
+      <version>0.10.0</version>
       <scope>compile</scope>
     </dependency>
     <!-- include this if you're targeting Java SE -->
     <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-javase</artifactId>
-      <version>0.9.3</version>
+      <version>0.10.0</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
