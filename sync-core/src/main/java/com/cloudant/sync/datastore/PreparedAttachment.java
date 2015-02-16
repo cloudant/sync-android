@@ -36,7 +36,7 @@ public class PreparedAttachment {
      *
      * @param attachment The attachment to prepare
      * @param attachmentsDir The 'BLOB store' or location where attachments are stored for this database
-     * @throws IOException
+     * @throws AttachmentNotSavedException
      */
     public PreparedAttachment(Attachment attachment,
                               String attachmentsDir) throws AttachmentException {
