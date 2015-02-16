@@ -17,7 +17,9 @@ package com.cloudant.todo;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreManager;
+import com.cloudant.sync.datastore.DatastoreNotCreatedException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.notifications.ReplicationCompleted;
@@ -52,7 +54,7 @@ class TasksModel {
     private static final String DATASTORE_MANGER_DIR = "data";
     private static final String TASKS_DATASTORE_NAME = "tasks";
 
-    private final Datastore mDatastore;
+    private Datastore mDatastore;
 
     private Replicator mPushReplicator;
     private Replicator mPullReplicator;
@@ -72,7 +74,11 @@ class TasksModel {
                 Context.MODE_PRIVATE
         );
         DatastoreManager manager = new DatastoreManager(path.getAbsolutePath());
-        this.mDatastore = manager.openDatastore(TASKS_DATASTORE_NAME);
+        try {
+            this.mDatastore = manager.openDatastore(TASKS_DATASTORE_NAME);
+        } catch (DatastoreNotCreatedException dnce) {
+            Log.e(LOG_TAG, "Unable to open Datastore", dnce);
+        }
 
         Log.d(LOG_TAG, "Set up database at " + path.getAbsolutePath());
 
@@ -117,8 +123,7 @@ class TasksModel {
         try {
             BasicDocumentRevision created = this.mDatastore.createDocumentFromRevision(rev);
             return Task.fromRevision(created);
-        } catch (IOException ioe) {
-            // we're not dealing with attachments, so we can safely ignore this exception
+        } catch (DocumentException de) {
             return null;
         }
     }
@@ -136,8 +141,7 @@ class TasksModel {
         try {
             BasicDocumentRevision updated = this.mDatastore.updateDocumentFromRevision(rev);
             return Task.fromRevision(updated);
-        } catch (IOException ioe) {
-            // we're not dealing with attachments, so we can safely ignore this exception
+        } catch (DocumentException de) {
             return null;
         }
     }
