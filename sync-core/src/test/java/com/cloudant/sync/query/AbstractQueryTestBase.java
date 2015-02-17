@@ -24,11 +24,8 @@ import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -285,11 +282,43 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("pet", Arrays.<Object>asList("cat", "dog"));
         rev.body = DocumentBodyFactory.create(bodyMap);
         ds.createDocumentFromRevision(rev);
+
         rev.docId = "fred34";
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "parrot");
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "mike34";
+        bodyMap.clear();
+        bodyMap.put("name", "mike");
+        bodyMap.put("age", 34);
+        bodyMap.put("pet", Arrays.<Object>asList("cat", "dog", "fish"));
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "fred12";
+        bodyMap.clear();
+        bodyMap.put("name", "fred");
+        bodyMap.put("age", 12);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "john44";
+        bodyMap.clear();
+        bodyMap.put("name", "john");
+        bodyMap.put("age", 44);
+        bodyMap.put("pet", Arrays.<Object>asList("hamster", "snake"));
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "john22";
+        bodyMap.clear();
+        bodyMap.put("name", "john");
+        bodyMap.put("age", 22);
+        bodyMap.put("pet", "cat");
         rev.body = DocumentBodyFactory.create(bodyMap);
         ds.createDocumentFromRevision(rev);
 
