@@ -15,6 +15,7 @@ package com.cloudant.sync.query;
 import com.cloudant.sync.datastore.DocumentRevision;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -86,6 +87,8 @@ class UnindexedMatcher {
     private static final String AND = "$and";
     private static final String OR = "$or";
     private static final String NOT = "$not";
+    private static final String NE = "$ne";
+    private static final String EQ = "$eq";
 
     /**
      *  Return a new initialised matcher.
@@ -134,7 +137,13 @@ class UnindexedMatcher {
             Map<String, Object> clause = (Map<String, Object>) rawClause;
             String field = (String) clause.keySet().toArray()[0];
             if (!field.startsWith("$")) {
-                basicClauses.add(rawClause);
+                Object converted = convertNeClauseToNotEq(field,
+                                                          (Map<String, Object>) clause.get(field));
+                if (converted == null) {
+                    basicClauses.add(rawClause);
+                } else {
+                    basicClauses.add(converted);
+                }
             }
         }
 
@@ -178,6 +187,36 @@ class UnindexedMatcher {
         }
 
         return root;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> convertNeClauseToNotEq(String field,
+                                                              Map<String, Object> clause) {
+        // We either have { "$not" : { "$operator" : "value" } }
+        //     or         { "$operator" : "value" }
+        Map<String, Object> converted = null;
+        String operator = (String) clause.keySet().toArray()[0];
+        if (operator.equals(NE)) {
+            // Convert { "$ne" : "value" } to { "$not" : { "$eq" : "value" } }
+            Map<String, Object> eqClause = new HashMap<String, Object>();
+            eqClause.put(EQ, clause.get(operator));
+            Map<String, Object> notClause = new HashMap<String, Object>();
+            notClause.put(NOT, eqClause);
+            converted = new HashMap<String, Object>();
+            converted.put(field, notClause);
+        } else if (operator.equals(NOT)) {
+            Map<String, Object> subClause = (Map<String, Object>) clause.get(operator);
+            String subOperator = (String) subClause.keySet().toArray()[0];
+            if (subOperator.equals(NE)) {
+                // Convert { "$not" : { "$ne" : "value" } } to { "$eq" : "value" }
+                Map<String, Object> eqClause = new HashMap<String, Object>();
+                eqClause.put(EQ, subClause.get(subOperator));
+                converted = new HashMap<String, Object>();
+                converted.put(field, eqClause);
+            }
+        }
+
+        return converted;
     }
 
     /**
@@ -239,29 +278,16 @@ class UnindexedMatcher {
             Object actual = ValueExtractor.extractValueForFieldName(fieldName, rev);
 
             boolean passed = false;
-            // For array actual values, the operator expression is matched
-            // if any of the array values match it. We need to be careful
-            // to invert the match status of every candidate, rather than
-            // just flipping the result at the end.
-            //
-            // This is because { "$not": { "$eq": "white_cat" } } needs
-            // to be taken as an atomic check, meaning:
-            //   "there's an item in the array that matches `!= "white_cat"`"
-            // rather than:
-            //   "not (there's an item that matches white_cat)"
-            // The latter is satisfied using the $nin operator.
             if (actual instanceof List) {
                 for (Object item: (List<Object>) actual) {
                     // OR as any value in the array can match
-                    boolean currentItemPassed = valueCompare(item, operator, expected);
-                    passed = passed || (invertResult ? !currentItemPassed : currentItemPassed);
+                    passed = passed || valueCompare(item, operator, expected);
                 }
             } else {
                 passed = valueCompare(actual, operator, expected);
-                passed = invertResult ? !passed : passed;
             }
 
-            return passed;
+            return invertResult ? !passed : passed;
         } else {
             // We constructed the tree, so shouldn't end up here; error if we do.
             String msg = String.format("Found unexpected selector execution tree: %s", node);
@@ -275,8 +301,6 @@ class UnindexedMatcher {
 
         if (operator.equals("$eq")) {
             passed = compareEq(actual, expected);
-        } else if (operator.equals("$ne")) {
-            passed = compareNE(actual, expected);
         } else if (operator.equals("$lt")) {
             passed = compareLT(actual, expected);
         } else if (operator.equals("$lte")) {
@@ -310,19 +334,6 @@ class UnindexedMatcher {
         } else {
             return l instanceof Number && r instanceof Number &&
                     ((Number) l).doubleValue() == ((Number) r).doubleValue();
-        }
-    }
-
-    protected static boolean compareNE(Object l, Object r) {
-        if (l == null && r == null) {
-            logger.log(Level.WARNING, "Both values in comparison are nulls.");
-            return false;
-        } else if (l instanceof Float || r instanceof Float) {
-            String msg = String.format("Value in comparison is a Float: %s, %s", l, r);
-            logger.log(Level.WARNING, msg);
-            return false;
-        } else {
-            return !(compareEq(l, r));
         }
     }
 

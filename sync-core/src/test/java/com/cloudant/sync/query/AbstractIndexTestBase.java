@@ -25,8 +25,6 @@ import com.cloudant.sync.util.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 
-import java.sql.SQLException;
-
 public abstract class AbstractIndexTestBase {
 
     String factoryPath = null;

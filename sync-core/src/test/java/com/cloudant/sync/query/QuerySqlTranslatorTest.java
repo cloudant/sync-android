@@ -23,7 +23,6 @@ import static org.hamcrest.Matchers.nullValue;
 
 import org.junit.Test;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,11 +34,12 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
     Map<String, Object> indexes;
     Boolean[] indexesCoverQuery;
+    String indexName;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        String indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet"), "basic");
+        indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet"), "basic");
         assertThat(indexName, is("basic"));
         indexes = im.listIndexes();
         assertThat(indexes, is(notNullValue()));
@@ -610,17 +610,19 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> pet = new HashMap<String, Object>();
         pet.put("pet", "cat");
 
-        assertThat(QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(pet), indexes),
-                   is(nullValue()));
+        String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(pet), indexes);
+
+        assertThat(idx, is(nullValue()));
     }
 
     // When generating query WHERE clauses
 
     @Test
     public void nullWhereClauseWhenQueryEmpty() {
-        assertThat(QuerySqlTranslator.whereSqlForAndClause(null), is(nullValue()));
-        assertThat(QuerySqlTranslator.whereSqlForAndClause(new ArrayList<Object>()),
-                   is(nullValue()));
+        assertThat(QuerySqlTranslator.whereSqlForAndClause(null, indexName), is(nullValue()));
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(new ArrayList<Object>(),
+                                                                 indexName);
+                assertThat(where, is(nullValue()));
     }
 
     @Test
@@ -629,7 +631,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         eq.put("$eq", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", eq);
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
         assertThat(where.sqlWithPlaceHolders, is("\"name\" = ?"));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
     }
@@ -651,22 +654,11 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> pet = new HashMap<String, Object>();
         pet.put("pet", petEq);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name,
-                                                                                  age,
-                                                                                  pet));
+        List<Object> clauses = Arrays.<Object>asList(name, age, pet);
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(clauses, indexName);
         String expected = "\"name\" = ? AND \"age\" = ? AND \"pet\" = ?";
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContainingInAnyOrder("mike", "12", "cat")));
-    }
-
-    @Test
-     public void nullWhereClauseForUnsupportedOperator() {
-        Map<String, Object> eq = new HashMap<String, Object>();
-        eq.put("$blah", "mike");
-        Map<String, Object> name = new HashMap<String, Object>();
-        name.put("name", eq);
-        assertThat(QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name)),
-                is(nullValue()));
     }
 
     @Test
@@ -676,7 +668,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", op);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
         String expected = "\"name\" > ?";
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
@@ -689,7 +682,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", op);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
         String expected = "\"name\" >= ?";
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
@@ -702,7 +696,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", op);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
         String expected = "\"name\" < ?";
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
@@ -715,21 +710,24 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", op);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
         String expected = "\"name\" <= ?";
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
     }
 
     @Test
-     public void usesCorrectSQLOperatorWhenUsingNE() {
+     public void correctlyTranslatesNeSQLOperatorToNotIn() {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$ne", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", op);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
-        String expected = "\"name\" != ?";
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
+        String expected = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" = ?)",
+                                        IndexManager.tableNameForIndex(indexName));
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
     }
@@ -741,7 +739,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", op);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
         String expected = "(\"name\" IS NOT NULL)";
         assertThat(where.sqlWithPlaceHolders, is(expected));
     }
@@ -753,7 +752,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", op);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
         String expected = "(\"name\" IS NULL)";
         assertThat(where.sqlWithPlaceHolders, is(expected));
     }
@@ -767,7 +767,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", notOp);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
         String expected = "(\"name\" IS NOT NULL)";
         assertThat(where.sqlWithPlaceHolders, is(expected));
     }
@@ -781,7 +782,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", notOp);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
         String expected = "(\"name\" IS NULL)";
         assertThat(where.sqlWithPlaceHolders, is(expected));
     }
@@ -796,8 +798,11 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         not.put("$not", eq);
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", not);
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
-        assertThat(where.sqlWithPlaceHolders, is("(\"name\" != ? OR \"name\" IS NULL)"));
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
+        String expected = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" = ?)",
+                                        IndexManager.tableNameForIndex(indexName));
+        assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
     }
 
@@ -822,25 +827,18 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> pet = new HashMap<String, Object>();
         pet.put("pet", notPet);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name,
-                                                                                       age,
-                                                                                       pet));
-        String expected = "(\"name\" != ? OR \"name\" IS NULL) AND \"age\" = ?";
-        expected += " AND (\"pet\" != ? OR \"pet\" IS NULL)";
+        List<Object> clauses = Arrays.<Object>asList(name, age, pet);
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(clauses, indexName);
+
+        String expectedName = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" = ?)",
+                                            IndexManager.tableNameForIndex(indexName));
+        String expectedAge = "\"age\" = ?";
+        String expectedPet = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"pet\" = ?)",
+                                           IndexManager.tableNameForIndex(indexName));
+        String expected = String.format("%s AND %s AND %s", expectedName, expectedAge, expectedPet);
+
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContainingInAnyOrder("mike", "12", "cat")));
-    }
-
-    @Test
-    public void nullWhereNOTClauseForUnsupportedOperator() {
-        Map<String, Object> eq = new HashMap<String, Object>();
-        eq.put("$blah", "mike");
-        Map<String, Object> not = new HashMap<String, Object>();
-        not.put("$not", eq);
-        Map<String, Object> name = new HashMap<String, Object>();
-        name.put("name", not);
-        assertThat(QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name)),
-                is(nullValue()));
     }
 
     @Test
@@ -852,8 +850,10 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", not);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
-        String expected = "(\"name\" <= ? OR \"name\" IS NULL)";
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
+        String expected = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" > ?)",
+                                        IndexManager.tableNameForIndex(indexName));
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
     }
@@ -867,8 +867,10 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", not);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
-        String expected = "(\"name\" < ? OR \"name\" IS NULL)";
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
+        String expected = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" >= ?)",
+                                        IndexManager.tableNameForIndex(indexName));
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
     }
@@ -882,8 +884,10 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", not);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
-        String expected = "(\"name\" >= ? OR \"name\" IS NULL)";
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
+        String expected = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" < ?)",
+                                        IndexManager.tableNameForIndex(indexName));
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
     }
@@ -897,8 +901,10 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", not);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
-        String expected = "(\"name\" > ? OR \"name\" IS NULL)";
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
+        String expected = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" <= ?)",
+                                        IndexManager.tableNameForIndex(indexName));
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
     }
@@ -912,8 +918,9 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", not);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name));
-        String expected = "(\"name\" = ? OR \"name\" IS NULL)";
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
+                                                                 indexName);
+        String expected = "\"name\" = ?";
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
     }
@@ -931,8 +938,12 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> c2 = new HashMap<String, Object>();
         c2.put("name", c2op);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(c1, c2));
-        String expected = "(\"name\" != ? OR \"name\" IS NULL) AND \"name\" = ?";
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(c1, c2),
+                                                                 indexName);
+        String notEqName = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" = ?)",
+                                         IndexManager.tableNameForIndex(indexName));
+        String eqName = "\"name\" = ?";
+        String expected = String.format("%s AND %s", notEqName, eqName);
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike", "john")));
     }
@@ -960,13 +971,20 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> c5 = new HashMap<String, Object>();
         c5.put("age", c5op);
 
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(c1,
-                                                                                       c2,
-                                                                                       c3,
-                                                                                       c4,
-                                                                                       c5));
-        String expected = "\"age\" > ? AND \"age\" <= ? AND \"name\" = ? AND \"age\" != ? AND ";
-        expected += "\"age\" = ?";
+        List<Object> clauses = Arrays.<Object>asList(c1, c2, c3, c4, c5);
+        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(clauses, indexName);
+        String ageGt = "\"age\" > ?";
+        String ageLte = "\"age\" <= ?";
+        String nameEq = "\"name\" = ?";
+        String ageNe = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"age\" = ?)",
+                                     IndexManager.tableNameForIndex(indexName));
+        String ageEq = "\"age\" = ?";
+        String expected = String.format("%s AND %s AND %s AND %s AND %s",
+                                        ageGt,
+                                        ageLte,
+                                        nameEq,
+                                        ageNe,
+                                        ageEq);
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("12", "54", "mike", "30", "42")));
     }
@@ -976,8 +994,9 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     @Test
     public void nullSelectClauseWhenQueryEmpty() {
         assertThat(QuerySqlTranslator.selectStatementForAndClause(null, "named"), is(nullValue()));
-        assertThat(QuerySqlTranslator.selectStatementForAndClause(new ArrayList<Object>(), "named"),
-                   is(nullValue()));
+        SqlParts sql = QuerySqlTranslator.selectStatementForAndClause(new ArrayList<Object>(),
+                                                                      "named");
+        assertThat(sql, is(nullValue()));
     }
 
     @Test

@@ -315,14 +315,13 @@ Each value of the array is treated as a separate entry in the index. This means 
 { pet: { $eq: cat } }
 ```
 
-Will return the document `mike32`. Negation may be slightly confusing:
+Will return the document `mike32`. Negation such as:
 
 ```
 { pet: { $not: { $eq: cat } } }
 ```
 
-Will also return `mike32` because there are values in the array that are not `cat`. That is,
-this operator is matching for "any values that do not equal 'cat'".
+Will not return `mike32` because negation returns the set of documents that are not in the set of documents returned by the non-negated query.  In other words the negated query above will return all of the documents that are not in the set of documents returned by `{ pet: { $eq: cat } }`.
 
 #### Restrictions
 

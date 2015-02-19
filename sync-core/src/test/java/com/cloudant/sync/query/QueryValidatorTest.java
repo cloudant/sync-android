@@ -132,4 +132,26 @@ public class QueryValidatorTest {
         assertThat(QueryValidator.normaliseAndValidateQuery(query), is(notNullValue()));
     }
 
+    @Test
+    public void returnsNullForInvalidOperator() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "name" : { "$blah" : "mike" } }
+        Map<String, Object> blah = new HashMap<String, Object>();
+        blah.put("$blah", "mike");
+        query.put("name", blah);
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullForInvalidOperatorWithNOT() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "name" : { "$blah" : "mike" } }
+        Map<String, Object> blah = new HashMap<String, Object>();
+        blah.put("$blah", "mike");
+        Map<String, Object> notBlah = new HashMap<String, Object>();
+        notBlah.put("$not", blah);
+        query.put("name", notBlah);
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+    }
+
 }

@@ -17,7 +17,6 @@ import static com.cloudant.sync.query.UnindexedMatcher.compareGT;
 import static com.cloudant.sync.query.UnindexedMatcher.compareGTE;
 import static com.cloudant.sync.query.UnindexedMatcher.compareLT;
 import static com.cloudant.sync.query.UnindexedMatcher.compareLTE;
-import static com.cloudant.sync.query.UnindexedMatcher.compareNE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -69,12 +68,6 @@ public class UnindexedMatcherTest {
         assertThat(compareEq(null, 1), is(false));
         assertThat(compareEq(1, null), is(false));
 
-        assertThat(compareNE(null, null), is(false));
-        assertThat(compareNE(null, "mike"), is(true));
-        assertThat(compareNE("mike", null), is(true));
-        assertThat(compareNE(null, 1), is(true));
-        assertThat(compareNE(1, null), is(true));
-
         assertThat(compareLT(null, null), is(false));
         assertThat(compareLT(null, "mike"), is(false));
         assertThat(compareLT("mike", null), is(false));
@@ -109,11 +102,6 @@ public class UnindexedMatcherTest {
         assertThat(compareEq(new Float(1.1f), new Integer(1)), is(false));
         assertThat(compareEq(new Integer(1), new Float(1.1f)), is(false));
 
-        assertThat(compareNE(new Float(1.0f), new Integer(1)), is(false));
-        assertThat(compareNE(new Integer(1), new Float(1.0f)), is(false));
-        assertThat(compareNE(new Float(1.1f), new Integer(1)), is(false));
-        assertThat(compareNE(new Integer(1), new Float(1.1f)), is(false));
-
         assertThat(compareLT(new Float(1.0f), new Integer(1)), is(false));
         assertThat(compareLT(new Integer(1), new Float(1.0f)), is(false));
         assertThat(compareLT(new Float(1.1f), new Integer(1)), is(false));
@@ -140,9 +128,6 @@ public class UnindexedMatcherTest {
         assertThat(compareEq("mike", "mike"), is(true));
         assertThat(compareEq("mike", "Mike"), is(false));
 
-        assertThat(compareNE("mike", "mike"), is(false));
-        assertThat(compareNE("mike", "Mike"), is(true));
-
         assertThat(compareLT("mike", "mike"), is(false));
         assertThat(compareLT("mike", "fred"), is(false));
         assertThat(compareLT("fred", "mike"), is(true));
@@ -166,9 +151,6 @@ public class UnindexedMatcherTest {
         assertThat(compareEq("1", new Integer(1)), is(false));
         assertThat(compareEq(new Integer(1), "1"), is(false));
 
-        assertThat(compareNE("1", new Integer(1)), is(true));
-        assertThat(compareNE(new Integer(1), "1"), is(true));
-
         assertThat(compareLT("1", new Integer(1)), is(false));
         assertThat(compareLT(new Integer(1), "1"), is(true));
 
@@ -189,11 +171,6 @@ public class UnindexedMatcherTest {
         assertThat(compareEq(new Double(1.0), new Double(1.00)), is(true));
         assertThat(compareEq(new Double(1.0), new Double(1.1)), is(false));
         assertThat(compareEq(new Double(1.1), new Double(1.0)), is(false));
-
-        assertThat(compareNE(new Double(1.0), new Double(1.0)), is(false));
-        assertThat(compareNE(new Double(1.0), new Double(1.00)), is(false));
-        assertThat(compareNE(new Double(1.0), new Double(1.1)), is(true));
-        assertThat(compareNE(new Double(1.1), new Double(1.0)), is(true));
 
         assertThat(compareLT(new Double(1.0), new Double(1.0)), is(false));
         assertThat(compareLT(new Double(1.0), new Double(1.00)), is(false));
@@ -223,11 +200,6 @@ public class UnindexedMatcherTest {
         assertThat(compareEq(new Long(1l), new Double(1.0)), is(true));
         assertThat(compareEq(new Double(1.1), new Long(1l)), is(false));
         assertThat(compareEq(new Long(1l), new Double(1.1)), is(false));
-
-        assertThat(compareNE(new Double(1.0), new Long(1l)), is(false));
-        assertThat(compareNE(new Long(1l), new Double(1.0)), is(false));
-        assertThat(compareNE(new Double(1.1), new Long(1l)), is(true));
-        assertThat(compareNE(new Long(1l), new Double(1.1)), is(true));
 
         assertThat(compareLT(new Double(1.0), new Long(1l)), is(false));
         assertThat(compareLT(new Long(1l), new Double(1.0)), is(false));
@@ -267,11 +239,6 @@ public class UnindexedMatcherTest {
         assertThat(compareEq(new Double(1.1), new Integer(1)), is(false));
         assertThat(compareEq(new Integer(1), new Double(1.1)), is(false));
 
-        assertThat(compareNE(new Double(1.0), new Integer(1)), is(false));
-        assertThat(compareNE(new Integer(1), new Double(1.0)), is(false));
-        assertThat(compareNE(new Double(1.1), new Integer(1)), is(true));
-        assertThat(compareNE(new Integer(1), new Double(1.1)), is(true));
-
         assertThat(compareLT(new Double(1.0), new Integer(1)), is(false));
         assertThat(compareLT(new Integer(1), new Double(1.0)), is(false));
         assertThat(compareLT(new Double(1.1), new Integer(1)), is(false));
@@ -308,10 +275,6 @@ public class UnindexedMatcherTest {
         assertThat(compareEq(new Long(1l), new Long(2l)), is(false));
         assertThat(compareEq(new Long(2l), new Long(1l)), is(false));
 
-        assertThat(compareNE(new Long(1l), new Long(1l)), is(false));
-        assertThat(compareNE(new Long(1l), new Long(2l)), is(true));
-        assertThat(compareNE(new Long(2l), new Long(1l)), is(true));
-
         assertThat(compareLT(new Long(1l), new Long(1l)), is(false));
         assertThat(compareLT(new Long(1l), new Long(2l)), is(true));
         assertThat(compareLT(new Long(2l), new Long(1l)), is(false));
@@ -336,11 +299,6 @@ public class UnindexedMatcherTest {
         assertThat(compareEq(new Integer(1), new Long(1l)), is(true));
         assertThat(compareEq(new Long(1l), new Integer(2)), is(false));
         assertThat(compareEq(new Integer(2), new Long(1l)), is(false));
-
-        assertThat(compareNE(new Long(1l), new Integer(1)), is(false));
-        assertThat(compareNE(new Integer(1), new Long(1l)), is(false));
-        assertThat(compareNE(new Long(1l), new Integer(2)), is(true));
-        assertThat(compareNE(new Integer(2), new Long(1l)), is(true));
 
         assertThat(compareLT(new Long(1l), new Integer(1)), is(false));
         assertThat(compareLT(new Integer(1), new Long(1l)), is(false));
@@ -947,13 +905,40 @@ public class UnindexedMatcherTest {
         assertThat(matcher.matches(rev), is(false));
     }
 
-    // ($not) We can be fairly simple here as we know that the internal is that $not just negates.
+    // ($not) - We can be fairly simple here as we know that the internal is that $not just negates.
+    // ($ne)  - $ne translates to $not..$eq
 
     @Test
      public void noMatchNotEq() {
         // Selector - { "name" : { "$not" : { "$eq" : "mike" } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$eq", "mike");
+        Map<String, Object> not = new HashMap<String, Object>();
+        not.put("$not", op);
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("name", not);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void noMatchNe() {
+        // Selector - { "name" : { "$ne" : "mike" } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$ne", "mike");
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("name", op);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void noMatchNotNe() {
+        // Selector - { "name" : { "$not" : { "$ne" : "fred" } } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$ne", "fred");
         Map<String, Object> not = new HashMap<String, Object>();
         not.put("$not", op);
         Map<String, Object> selector = new HashMap<String, Object>();
@@ -978,6 +963,32 @@ public class UnindexedMatcherTest {
     }
 
     @Test
+    public void matchNe() {
+        // Selector - { "name" : { "$ne" : "fred" } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$ne", "fred");
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("name", op);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void matchNotNe() {
+        // Selector - { "name" : { "$not" : { "$ne" : "mike" } } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$ne", "mike");
+        Map<String, Object> not = new HashMap<String, Object>();
+        not.put("$not", op);
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("name", not);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
     public void matchNotEqBadField() {
         // Selector - { "species" : { "$not" : { "$eq" : "fred" } } }
         Map<String, Object> op = new HashMap<String, Object>();
@@ -986,6 +997,18 @@ public class UnindexedMatcherTest {
         not.put("$not", op);
         Map<String, Object> selector = new HashMap<String, Object>();
         selector.put("species", not);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void matchNeBadField() {
+        // Selector - { "species" : { "$ne" : "fred" } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$ne", "fred");
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("species", op);
         selector = QueryValidator.normaliseAndValidateQuery(selector);
         UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
         assertThat(matcher.matches(rev), is(true));
@@ -1002,7 +1025,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchGoodItemWithNot() {
+    public void noMatchGoodItemWithNot() {
         // Selector - { "pets" : { "$not" : { "$eq" : "white_cat" } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$eq", "white_cat");
@@ -1012,7 +1035,19 @@ public class UnindexedMatcherTest {
         selector.put("pets", not);
         selector = QueryValidator.normaliseAndValidateQuery(selector);
         UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
-        assertThat(matcher.matches(rev), is(true));
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void noMatchGoodItemWithNe() {
+        // Selector - { "pets" : { "$ne" : "white_cat" } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$ne", "white_cat");
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("pets", op);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
     }
 
     @Test
@@ -1028,6 +1063,20 @@ public class UnindexedMatcherTest {
     @Test
     public void matchBadItemWithNot() {
         // Selector - { "pets" : { "$not" : { "$eq" : "tabby_cat" } } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$eq", "tabby_cat");
+        Map<String, Object> not = new HashMap<String, Object>();
+        not.put("$not", op);
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("pets", not);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void matchBadItemWithNe() {
+        // Selector - { "pets" : { "$ne" : "tabby_cat" } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$eq", "tabby_cat");
         Map<String, Object> not = new HashMap<String, Object>();

@@ -98,6 +98,8 @@ class QuerySqlTranslator {
     private static final String OR = "$or";
     private static final String NOT = "$not";
     private static final String EXISTS = "$exists";
+    private static final String EQ = "$eq";
+    private static final String NE = "$ne";  // $ne is used as shorthand for $not..$eq
 
     private static final Logger logger = Logger.getLogger(QuerySqlTranslator.class.getName());
 
@@ -346,7 +348,7 @@ class QuerySqlTranslator {
             return null;
         }
 
-        SqlParts where = whereSqlForAndClause(clause);
+        SqlParts where = whereSqlForAndClause(clause, indexName);
 
         if (where == null) {
             return null;
@@ -361,7 +363,7 @@ class QuerySqlTranslator {
     }
 
     @SuppressWarnings("unchecked")
-    protected static SqlParts whereSqlForAndClause(List<Object> clause) {
+    protected static SqlParts whereSqlForAndClause(List<Object> clause, String indexName) {
         if (clause == null || clause.isEmpty()) {
             return null;  //  no point in querying empty set of fields
         }
@@ -377,16 +379,6 @@ class QuerySqlTranslator {
         operatorMap.put("$gte", ">=");
         operatorMap.put("$lt", "<");
         operatorMap.put("$lte", "<=");
-        operatorMap.put("$ne", "!=");
-
-        // We apply these if the clause is negated, along with the NULL clause
-        Map<String, String> notOperatorMap = new HashMap<String, String>();
-        notOperatorMap.put("$eq", "!=");
-        notOperatorMap.put("$gt", "<=");
-        notOperatorMap.put("$gte", "<");
-        notOperatorMap.put("$lt", ">=");
-        notOperatorMap.put("$lte", ">");
-        notOperatorMap.put("$ne", "=");
 
         for (Object rawComponent: clause) {
             Map<String, Object> component = (Map<String, Object>) rawComponent;
@@ -409,7 +401,7 @@ class QuerySqlTranslator {
 
             String operator = (String) predicate.keySet().toArray()[0];
 
-            // $not specifies the opposite operator OR NULL documents be returned
+            // $not specifies ALL documents NOT in the set of documents that match the operator.
             if (operator.equals(NOT)) {
                 Map<String, Object> negatedPredicate = (Map<String, Object>) predicate.get(NOT);
 
@@ -431,22 +423,24 @@ class QuerySqlTranslator {
                     // since this clause is negated we need to negate the bool value
                     whereClauses.add(convertExistsToSqlClauseForFieldName(fieldName, exists));
                 } else {
-                    String sqlOperator = notOperatorMap.get(operator);
-
-                    if (sqlOperator == null || sqlOperator.isEmpty()) {
-                        String msg = String.format("Unsupported comparison operator %s", operator);
-                        logger.log(Level.SEVERE, msg);
-                        return null;
+                    String whereClause;
+                    if (operator.equals(NE)) {
+                        // Treat $not..$ne as $eq
+                        whereClause = String.format("\"%s\" %s ?", fieldName, operatorMap.get(EQ));
+                    } else {
+                        String sqlOperator = operatorMap.get(operator);
+                        String tableName = IndexManager.tableNameForIndex(indexName);
+                        whereClause = whereClauseForNot(fieldName, sqlOperator, tableName);
                     }
 
-                    String whereClause = String.format("(\"%s\" %s ? OR \"%s\" IS NULL)",
-                                                       fieldName,
-                                                       sqlOperator,
-                                                       fieldName);
-                    predicateValue = negatedPredicate.get(operator);
-
-                    sqlParameters.add(predicateValue);
                     whereClauses.add(whereClause);
+                    predicateValue = negatedPredicate.get(operator);
+                    if (validatePredicateValue(predicateValue)) {
+                        sqlParameters.add(String.valueOf(predicateValue));
+                    } else {
+                        logger.log(Level.SEVERE, "Predicate value is invalid.");
+                        return null;
+                    }
                 }
 
             } else {
@@ -454,20 +448,23 @@ class QuerySqlTranslator {
                     boolean exists = (Boolean) predicate.get(operator);
                     whereClauses.add(convertExistsToSqlClauseForFieldName(fieldName, exists));
                 } else {
-                    String sqlOperator = operatorMap.get(operator);
-                    if (sqlOperator == null || sqlOperator.isEmpty()) {
-                        String msg = String.format("Unsupported comparison operator %s", operator);
-                        logger.log(Level.SEVERE, msg);
-                        return null;
+                    String whereClause;
+                    if (operator.equals(NE)) {
+                        String tableName = IndexManager.tableNameForIndex(indexName);
+                        whereClause = whereClauseForNot(fieldName,
+                                                        operatorMap.get(EQ),
+                                                        tableName);
+                    } else {
+                        String sqlOperator = operatorMap.get(operator);
+                        whereClause = String.format("\"%s\" %s ?", fieldName, sqlOperator);
                     }
 
-                    String whereClause = String.format("\"%s\" %s ?", fieldName, sqlOperator);
                     whereClauses.add(whereClause);
                     Object predicateValue = predicate.get(operator);
                     if (validatePredicateValue(predicateValue)) {
                         sqlParameters.add(String.valueOf(predicateValue));
                     } else {
-                        logger.log(Level.SEVERE, "Unsupported predicate type");
+                        logger.log(Level.SEVERE, "Predicate value is invalid.");
                         return null;
                     }
                 }
@@ -485,6 +482,29 @@ class QuerySqlTranslator {
         return SqlParts.partsForSql(where, parameterArray);
     }
 
+    /**
+     * WHERE clause representation of $not must be handled by using a
+     * sub-SELECT statement of the operator which is then applied to
+     * _id NOT IN (...).  This is because this process is the only
+     * way that we can ensure that documents that contain arrays are
+     * handled correctly.
+     *
+     * @param fieldName the field to be NOT-ted
+     * @param sqlOperator the SQL operator used in the sub-SELECT
+     * @param tableName the chosen table index
+     * @return the NOT-ted WHERE clause for the fieldName and sqlOperator
+     */
+    private static String whereClauseForNot(String fieldName,
+                                                String sqlOperator,
+                                                String tableName) {
+        String whereForSubSelect = String.format("\"%s\" %s ?", fieldName, sqlOperator);
+        String subSelect = String.format("SELECT _id FROM %s WHERE %s",
+                                         tableName,
+                                         whereForSubSelect);
+
+        return String.format("_id NOT IN (%s)", subSelect);
+    }
+
     private static String convertExistsToSqlClauseForFieldName(String fieldName, boolean exists) {
         String sqlClause;
         if (exists) {
@@ -499,10 +519,9 @@ class QuerySqlTranslator {
     }
 
     private static boolean validatePredicateValue(Object predicateValue) {
-        // String, Boolean or Number other than Float is valid
-        return ((predicateValue instanceof String ||
-                 predicateValue instanceof Number ||
-                 predicateValue instanceof Boolean) && !(predicateValue instanceof Float));
+        // String or Number other than Float is valid
+        return ((predicateValue instanceof String || predicateValue instanceof Number) &&
+                !(predicateValue instanceof Float));
     }
 
 }

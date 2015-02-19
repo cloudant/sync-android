@@ -29,7 +29,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -1174,7 +1173,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     // When indexing array fields
 
     @Test
-    public void canFindDocumentWithArray() throws Exception {
+    public void canFindDocumentsWithArray() throws Exception {
         setUpArrayIndexingData();
         // query - { "pet" : { "$eq" : "dog" } }
         Map<String, Object> operator = new HashMap<String, Object>();
@@ -1182,7 +1181,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("pet", operator);
         QueryResult queryResult = im.find(query);
-        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12"));
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "mike34"));
     }
 
     @Test
@@ -1198,7 +1197,40 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canFindDocumentsWithAndWithoutArraysUsingNOT() throws Exception {
+    public void canFindDocumentsWithAndWithoutArray() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pet" : { "$eq" : "cat" } }
+        Map<String, Object> operator = new HashMap<String, Object>();
+        operator.put("$eq", "cat");
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", operator);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "mike34", "john22"));
+    }
+
+    @Test
+    public void canFindDocumentsWithAndWithoutArrayUsingNotNE() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pet" : { "$not" : { "$ne" : "cat" } } }
+        Map<String, Object> neCat = new HashMap<String, Object>();
+        neCat.put("$ne", "cat");
+        Map<String, Object> notNeCat = new HashMap<String, Object>();
+        notNeCat.put("$not", neCat);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", notNeCat);
+        System.out.println("QUERY:" + query);
+        QueryResult queryResult = im.find(query);
+        System.out.println("DOCUMENTS: " + queryResult.documentIds());
+        // Should be same as $eq
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "mike34", "john22"));
+    }
+
+    // Queries like { "pet" : { "$not" : { "$eq" : "dog" } } }
+    //     and      { "pet" : { "$ne" : "dog" } } }
+    // Should yield the same result set.  Evidenced in the next two tests.
+
+    @Test
+    public void canFindDocumentsWithAndWithoutArrayUsingNOT() throws Exception {
         setUpArrayIndexingData();
         // query - { "pet" : { "$not" : { "$eq" : "dog" } } }
         Map<String, Object> eqOp = new HashMap<String, Object>();
@@ -1208,7 +1240,118 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("pet", notOp);
         QueryResult queryResult = im.find(query);
-        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "fred34"));
+        assertThat(queryResult.documentIds(), containsInAnyOrder("fred34",
+                                                                 "john44",
+                                                                 "john22",
+                                                                 "fred12"));
+    }
+
+    @Test
+    public void canFindDocumentsWithAndWithoutArrayUsingNE() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pet" : { "$ne" : "dog" } } }
+        Map<String, Object> neOp = new HashMap<String, Object>();
+        neOp.put("$ne", "dog");
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", neOp);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("fred34",
+                                                                 "john44",
+                                                                 "john22",
+                                                                 "fred12"));
+    }
+
+    // The $gt and $lte operators are logically opposite.  Consequently querying
+    // with those operators and for that matter $gte/$lt will yield result sets
+    // that are logically opposite.  Whereas using $not..$gt will yield a result
+    // set that consists of documents that do NOT satisfy the "greater than"
+    // condition.  This can be a result set that differs from the logical
+    // opposite as is evidenced in the following three tests.
+
+    @Test
+    public void canFindDocumentsWithAndWithoutArrayUsingGT() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pet" : { "$gt" : "dog" } } }
+        Map<String, Object> gtOp = new HashMap<String, Object>();
+        gtOp.put("$gt", "dog");
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", gtOp);
+        QueryResult queryResult = im.find(query);
+
+        // mike34 appears in the results because of the "fish" entry in his
+        // list of pets { "pet" : [ "cat", "dog", "fish"] }
+        assertThat(queryResult.documentIds(), containsInAnyOrder("fred34", "john44", "mike34"));
+    }
+
+    @Test
+    public void canFindDocumentsWithAndWithoutArrayUsingLTE() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pet" : { "$lte" : "dog" } } }
+        Map<String, Object> lteOp = new HashMap<String, Object>();
+        lteOp.put("$lte", "dog");
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", lteOp);
+        QueryResult queryResult = im.find(query);
+
+        // mike34 appears in the results because of the "cat" entry in his
+        // list of pets { "pet" : [ "cat", "dog", "fish"] }
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "john22", "mike34"));
+    }
+
+    @Test
+    public void canFindDocumentsWithAndWithoutArrayUsingNotGT() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pet" : { "$not" : { "$gt" : "dog" } } }
+        Map<String, Object> gtOp = new HashMap<String, Object>();
+        gtOp.put("$gt", "dog");
+        Map<String, Object> notOp = new HashMap<String, Object>();
+        notOp.put("$not", gtOp);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", notOp);
+        QueryResult queryResult = im.find(query);
+
+        // mike34 does NOT appear in the results here because this result set is strictly
+        // a set of documents that are NOT in the set of documents that satisfy the
+        // "$gt" : "dog" condition which the Mike34 document is a member of. 
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "fred12", "john22"));
+    }
+
+    @Test
+    public void canFindDocumentsWithAndWithoutArrayUsingMultipleNot() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "$and" : [ { "pet" : { "$not" : { "$eq" : "cat" } } },
+        //                      { "pet" : { "$not" : { "$eq" : "dog" } } }
+        //                    ] }
+        Map<String, Object> eqCat = new HashMap<String, Object>();
+        eqCat.put("$eq", "cat");
+        Map<String, Object> notCat = new HashMap<String, Object>();
+        notCat.put("$not", eqCat);
+        Map<String, Object> eqDog = new HashMap<String, Object>();
+        eqDog.put("$eq", "dog");
+        Map<String, Object> notDog = new HashMap<String, Object>();
+        notDog.put("$not", eqDog);
+        Map<String, Object> petNotCat = new HashMap<String, Object>();
+        petNotCat.put("pet", notCat);
+        Map<String, Object> petNotDog = new HashMap<String, Object>();
+        petNotDog.put("pet", notDog);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("$and", Arrays.<Object>asList(petNotCat, petNotDog));
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("fred34", "fred12", "john44"));
+    }
+
+    @Test
+    public void returnsNullWhenUsingArrayInQuery() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pet" : { "$not" : { "$eq" : [ "dog" ] } } }
+        Map<String, Object> eqDog = new HashMap<String, Object>();
+        eqDog.put("$eq", Arrays.asList("dog"));
+        Map<String, Object> notDog = new HashMap<String, Object>();
+        notDog.put("$not", eqDog);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", notDog);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult, is(nullValue()));
     }
 
     // When querying using $exists operator
