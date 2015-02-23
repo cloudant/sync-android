@@ -110,4 +110,16 @@ class DatastoreConstants {
         };
     };
 
+    public static String[] getSchemaVersion6(){
+        return new String[]{
+                "    CREATE TABLE new_localdocs ( " +
+                "            docid TEXT UNIQUE NOT NULL, " +
+                "            json BLOB); ",
+                "    INSERT INTO new_localdocs SELECT docid, json FROM localdocs",
+                "    DROP TABLE localdocs",
+                "    ALTER TABLE new_localdocs RENAME TO localdocs",
+                "    CREATE INDEX localdocs_by_docid ON localdocs(docid); "
+        };
+    }
+
 }

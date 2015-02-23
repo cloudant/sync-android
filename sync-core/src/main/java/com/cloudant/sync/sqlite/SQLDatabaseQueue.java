@@ -15,10 +15,14 @@
 package com.cloudant.sync.sqlite;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * SQLDatabaseQuue provides the ability to ensure that the
@@ -29,6 +33,7 @@ public class SQLDatabaseQueue {
 
     private final SQLDatabase db;
     private final ExecutorService queue = Executors.newSingleThreadExecutor();
+    private final Logger logger = Logger.getLogger(SQLDatabase.class.getCanonicalName());
 
     /**
      * Creates an SQLQueue for the database specified.
@@ -59,6 +64,28 @@ public class SQLDatabaseQueue {
             }
         }); //fire and forget
 
+    }
+
+    /**
+     * Returns the current version of the database.
+     * @return The current version of the database.
+     * @throws SQLException Throws if there was an error getting the current database version
+     */
+    public int getVersion() throws SQLException {
+        try {
+            return queue.submit(new Callable<Integer>() {
+                 @Override
+                 public Integer call() throws Exception {
+                     return db.getVersion();
+                 }
+             }).get();
+        } catch (InterruptedException e) {
+            logger.log(Level.SEVERE,"Failed to get database version",e);
+            throw new SQLException(e);
+        } catch (ExecutionException e) {
+            logger.log(Level.SEVERE,"Failed to get database version",e);
+            throw new SQLException(e);
+        }
     }
 
     /**

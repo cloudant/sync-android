@@ -2,6 +2,9 @@
 # 0.11.0 (Unreleased)
 
 - [FIX] Using MongoDB query as the "gold" standard, query support for `NOT` has been fixed to return result sets correctly (as in MongoDB query).  Previously, the result set from a query like `{ "pet": { "$not" { "$eq": "dog" } } }` would include a document like `{ "pet" : [ "cat", "dog" ], ... }` because the array contains an object that isn't `dog`.  The new behavior is that `$not` now inverts the result set, so this document will no longer be included because it has an array element that matches `dog`.
+- [BREAKING CHANGE] Changed local document APIs. createLocalDocument and updateLocalDocument have been removed and replaced by insertLocalDocument. The return type of getLocalDocument has been changed to LocalDocument.
+- [NEW] getVersion API added to SQLDatabaseQueue
+- [NEW] Datastore will not be created if the database version is not supported by the version of the library opening it. 
 
 
 

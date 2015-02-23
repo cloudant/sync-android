@@ -128,10 +128,6 @@ public class BasicDocumentRevision implements DocumentRevision, Comparable<Basic
         return body;
     }
 
-    public boolean isLocal(){
-        return revision.endsWith("-local");
-    }
-
     /**
      * <p>Returns {@code true} if this revision is the current winner for the
      * document.</p>
