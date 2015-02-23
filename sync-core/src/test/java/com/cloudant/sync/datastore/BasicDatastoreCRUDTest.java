@@ -139,26 +139,12 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         return m;
     }
 
-    @Test
-    public void createLocalDocument_bodyOnly_success() throws Exception {
-        BasicDocumentRevision rev = datastore.createLocalDocument(bodyOne);
-        validateNewlyCreateLocalDocument(rev);
-    }
 
     @Test
     public void createLocalDocument_docIdAndBody_success() throws Exception {
         String docId = CouchUtils.generateDocumentId();
-        BasicDocumentRevision rev = datastore.createLocalDocument(docId, bodyOne);
-        validateNewlyCreateLocalDocument(rev);
-        Assert.assertEquals(docId, rev.getId());
-    }
-
-    @Test(expected = DocumentException.class)
-    public void createLocalDocument_existDocId_exception() throws Exception {
-        String docId = CouchUtils.generateDocumentId();
-        BasicDocumentRevision rev = datastore.createLocalDocument(docId, bodyOne);
-        validateNewlyCreateLocalDocument(rev);
-        datastore.createLocalDocument(docId, bodyOne);
+        LocalDocument localDocument = datastore.insertLocalDocument(docId, bodyOne);
+        Assert.assertEquals(docId, localDocument.docId);
     }
 
     @Test
@@ -357,28 +343,15 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void getLocalDocument_twoDoc() throws Exception {
-        BasicDocumentRevision rev_1 = datastore.createLocalDocument(bodyOne);
-        validateNewlyCreateLocalDocument(rev_1);
-
-        BasicDocumentRevision revRead = datastore.getLocalDocument(rev_1.getId());
-        Assert.assertTrue(revRead.isLocal());
-    }
-
-    @Test
     public void updateLocalDocument_existingDocument_success() throws Exception {
-        BasicDocumentRevision rev_1 = datastore.createLocalDocument(bodyOne);
-        validateNewlyCreateLocalDocument(rev_1);
+        LocalDocument rev_1 = datastore.insertLocalDocument("docid",bodyOne);
 
-        BasicDocumentRevision rev_2 = datastore.updateLocalDocument(rev_1.getId(), rev_1.getRevision(), bodyTwo);
+        LocalDocument rev_2 = datastore.insertLocalDocument(rev_1.docId, bodyTwo);
         Assert.assertNotNull(rev_2);
-        Assert.assertEquals(2, CouchUtils.generationFromRevId(rev_2.getRevision()));
 
-        BasicDocumentRevision rev1Read = datastore.getLocalDocument(rev_1.getId(), rev_1.getRevision());
-        Assert.assertNull(rev1Read);
-
-        BasicDocumentRevision rev2Read = datastore.getLocalDocument(rev_2.getId(), rev_2.getRevision());
+        LocalDocument rev2Read = datastore.getLocalDocument(rev_2.docId);
         Assert.assertNotNull(rev2Read);
+        Assert.assertEquals(rev2Read.body.asMap(),bodyTwo.asMap());
     }
 
     @Test

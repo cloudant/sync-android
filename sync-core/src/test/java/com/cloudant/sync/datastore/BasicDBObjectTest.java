@@ -49,24 +49,8 @@ public class BasicDBObjectTest {
         BasicDocumentRevision td = this.builder.build();
         Assert.assertEquals(DOCUMENT_ID, td.getId());
         Assert.assertEquals(REVISION_ID, td.getRevision());
-        Assert.assertFalse(td.isLocal());
         Assert.assertTrue(td.isDeleted());
         Assert.assertFalse(td.isCurrent());
-        Assert.assertEquals("test data", (String) td.getBody().asMap().get("a"));
-    }
-
-    @Test
-    public void constructor_localObject_localObjectShouldBeCreated() {
-        this.builder.setDocId(DOCUMENT_ID);
-        this.builder.setRevId(LOCAL_REVISION_ID);
-        this.builder.setBody(new BasicDocumentBody(JSON_BODY));
-
-        BasicDocumentRevision td = this.builder.buildBasicDBObjectLocalDocument();
-        Assert.assertEquals(DOCUMENT_ID, td.getId());
-        Assert.assertEquals(LOCAL_REVISION_ID, td.getRevision());
-        Assert.assertTrue(td.isLocal());
-        Assert.assertFalse(td.isDeleted());
-        Assert.assertTrue(td.isCurrent());
         Assert.assertEquals("test data", (String) td.getBody().asMap().get("a"));
     }
 

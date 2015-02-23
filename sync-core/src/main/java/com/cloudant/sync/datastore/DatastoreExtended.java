@@ -39,60 +39,24 @@ import java.util.Map;
 public interface DatastoreExtended extends Datastore {
 
     /**
-     * <p>Adds a new local document with an ID and body.</p>
+     * <p>Inserts a local document with an ID and body. Replacing the current local document of the
+     * same id if one is present. </p>
      *
      * <p>Local documents are not replicated between datastores.</p>
      *
-     * @param documentId id for the document
+     * @param docId      The document id for the document
      * @param body       JSON body for the document
      * @return {@code DocumentRevision} of the newly created document
      */
-    public BasicDocumentRevision createLocalDocument(String documentId, DocumentBody body) throws DocumentException;
-
-    /**
-     * <p>Adds a new local document with an auto-generated ID.</p>
-     *
-     * <p>The document's ID will be auto-generated, and can be found by
-     * inspecting the returned {@code DocumentRevision}.</p>
-     *
-     * @param body JSON body for the document
-     * @return {@code DocumentRevision} of the newly created document
-     *
-     * @see DatastoreExtended#createLocalDocument(String, DocumentBody)
-     */
-    public BasicDocumentRevision createLocalDocument(DocumentBody body) throws DocumentException;
+    public LocalDocument insertLocalDocument(String docId, DocumentBody body) throws DocumentException;
 
     /**
      * <p>Returns the current winning revision of a local document.</p>
      *
      * @param documentId id of the local document
-     * @return {@code DocumentRevision} of the document
+     * @return {@code LocalDocument} of the document
      */
-    public BasicDocumentRevision getLocalDocument(String documentId);
-
-    /**
-     * <p>Returns a given revision local document.</p>
-     *
-     * @param documentId id of the document
-     * @param revisionId id of the revision
-     * @return specified revision as DocumentRevision of a local document
-     */
-    public BasicDocumentRevision getLocalDocument(String documentId, String revisionId);
-
-    /**
-     * <p>Updates a local document that exists in the datastore with a new
-     * revision.</p>
-     *
-     * <p>The {@code prevRevisionId} must match the current winning revision
-     * for the document.</p>
-     *
-     * @param documentId ID of the document
-     * @param prevRevisionId revision id of the document's current winning
-     *                       revision
-     * @param body body of the new revision
-     * @return {@code DocumentRevision} for the updated revision
-     */
-    public BasicDocumentRevision updateLocalDocument(String documentId, String prevRevisionId, DocumentBody body) throws DocumentException;
+    public LocalDocument getLocalDocument(String documentId) throws DocumentNotFoundException;
 
     /**
      * <p>Deletes a local document.</p>

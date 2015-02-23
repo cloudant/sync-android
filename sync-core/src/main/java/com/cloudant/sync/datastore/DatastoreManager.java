@@ -229,6 +229,8 @@ public class DatastoreManager {
             throw new DatastoreNotCreatedException("Database not found: " + dbName, e);
         } catch (SQLException e) {
             throw new DatastoreNotCreatedException("Database not initialized correctly: " + dbName, e);
+        } catch (DatastoreException e){
+            throw new DatastoreNotCreatedException("Datastore not initialized correctly: " + dbName, e);
         }
     }
 
