@@ -26,10 +26,22 @@ import java.util.logging.Logger;
  */
 class QueryValidator {
 
-    public static final String AND = "$and";
-    public static final String OR = "$or";
-    public static final String EQ = "$eq";
+    private static final String AND = "$and";
+    private static final String OR = "$or";
+    private static final String EQ = "$eq";
+    private static final String NOT = "$not";
+    private static final String NE = "$ne";
 
+    // negatedShortHand is used for operator shorthand processing.
+    // A shorthand operator like $ne has a longhand representation
+    // that is { "$not" : { "$eq" : ... } }.  Therefore the negation
+    // of the $ne operator is $eq.
+    // Presently only $ne is supported.  More to come soon...
+    private static final Map<String, String> negatedShortHand = new HashMap<String, String>() {
+        {
+            put(NE,EQ);
+        }
+    };
     private static final Logger logger = Logger.getLogger(QueryValidator.class.getName());
 
     /**
@@ -54,16 +66,32 @@ class QueryValidator {
 
         // At this point we will have a single entry map, key AND or OR,
         // forming the compound predicate.
-        // Next make sure all the predicates have an operator -- the EQ
-        // operator is implicit and we need to add it if there isn't one.
-        // Take
-        //     [ {"field1": @"mike"}, ... ]
-        // and make
-        //     [ {"field1": { "$eq": "mike"} }, ... } ]
         String compoundOperator = (String) query.keySet().toArray()[0];
         List<Object> predicates = new ArrayList<Object>();
         if (query.get(compoundOperator) instanceof List) {
+            // Next make sure all the predicates have an operator -- the EQ
+            // operator is implicit and we need to add it if there isn't one.
+            // Take
+            //     [ {"field1": "mike"}, ... ]
+            // and make
+            //     [ {"field1": { "$eq": "mike"} }, ... ]
             predicates = addImplicitEq((List<Object>) query.get(compoundOperator));
+
+            // Then all shorthand operators like $ne, if present, need to be converted
+            // to their logical longhand equivalent.
+            // Take
+            //     [ { "field1": { "$ne": "mike"} }, ... ]
+            // and make
+            //     [ { "field1": { "$not" : { "$eq": "mike"} } }, ... ]
+            predicates = handleShortHandOperators(predicates);
+
+            // Now in the event that extraneous $not operators exist in the query,
+            // these operators must be compressed down to the their logical equivalent.
+            // Take
+            //     [ { "field1": { "$not" : { $"not" : { "$eq": "mike"} } } }, ... ]
+            // and make
+            //     [ { "field1": { "$eq": "mike"} }, ... ]
+            predicates = compressMultipleNotOperators(predicates);
         }
 
         Map<String, Object> selector = new HashMap<String, Object>();
@@ -115,12 +143,14 @@ class QueryValidator {
             //  or     { "$or": [ ... ] } -- we don't
             Object predicate;
             String fieldName;
-            // if fieldClause isn't a dictionary, we don't know what to do so pass it back
             if (fieldClause instanceof Map && !((Map) fieldClause).isEmpty()) {
                 Map<String, Object> fieldClauseMap = (Map<String, Object>) fieldClause;
                 fieldName = (String) fieldClauseMap.keySet().toArray()[0];
                 predicate = fieldClauseMap.get(fieldName);
             } else {
+                // if this isn't a map, we don't know what to do so add the clause
+                // to the accumulator to be dealt with later as part of the final selector
+                // validation.
                 accumulator.add(fieldClause);
                 continue;
             }
@@ -141,6 +171,168 @@ class QueryValidator {
             Map<String, Object> element = new HashMap<String, Object>();
             element.put(fieldName, predicate);
             accumulator.add(element);  // can't put null into accumulator
+        }
+
+        return accumulator;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Object> handleShortHandOperators(List<Object> clause) {
+        List<Object> accumulator = new ArrayList<Object>();
+
+        for (Object fieldClause: clause) {
+            Object predicate;
+            String fieldName;
+            if (fieldClause instanceof Map && !((Map) fieldClause).isEmpty()) {
+                Map<String, Object> fieldClauseMap = (Map<String, Object>) fieldClause;
+                fieldName = (String) fieldClauseMap.keySet().toArray()[0];
+                predicate = fieldClauseMap.get(fieldName);
+                if (fieldName.startsWith("$") && predicate instanceof List) {
+                    predicate = handleShortHandOperators((List<Object>) predicate);
+                } else if (predicate instanceof Map && !((Map) predicate).isEmpty()) {
+                    // if the clause isn't a special clause (the field name starts with
+                    // $, e.g., $and), we need to check whether the clause has a shorthand
+                    // operator like $ne. If it does, we need to convert it to its longhand
+                    // version.
+                    // Take:  { "$ne" : ... }
+                    // Make:  { "$not" : { "$eq" : ... } }
+                    predicate = replaceWithLonghand((Map <String, Object>) predicate);
+                } else {
+                    accumulator.add(fieldClause);
+                    continue;
+                }
+            } else {
+                // if this isn't a map, we don't know what to do so add the clause
+                // to the accumulator to be dealt with later as part of the final selector
+                // validation.
+                accumulator.add(fieldClause);
+                continue;
+            }
+            Map<String, Object> element = new HashMap<String, Object>();
+            element.put(fieldName, predicate);
+            accumulator.add(element);
+        }
+
+        return accumulator;
+    }
+
+    /**
+     * This method traverses the predicate map and once it reaches the last operator
+     * in the tree, it checks it for a shorthand representation.  If one exists then
+     * that shorthand representation is replaced with its longhand version.
+     * For example:   { "$ne" : ... }
+     * is replaced by { "$not" : { "$eq" : ... } }
+     *
+     * @param predicate the map to process
+     * @return the processed map
+     */
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> replaceWithLonghand(Map<String, Object> predicate) {
+        Map<String, Object> accumulator = new HashMap<String, Object>();
+
+        if (predicate == null || predicate.isEmpty()) {
+            return predicate;
+        }
+        String operator = (String) predicate.keySet().toArray()[0];
+        Object subPredicate = predicate.get(operator);
+        if (subPredicate instanceof Map) {
+            accumulator.put(operator, replaceWithLonghand((Map<String, Object>) subPredicate));
+        } else if (negatedShortHand.get(operator) != null) {
+            Map<String, Object> positivePredicate = new HashMap<String, Object>();
+            positivePredicate.put(negatedShortHand.get(operator), subPredicate);
+            accumulator.put(NOT, positivePredicate);
+        } else {
+            accumulator.put(operator, subPredicate);
+        }
+        return accumulator;
+    }
+
+    /**
+     * This method takes a string of $not operators down to either none or a single $not
+     * operator.  For example:  { "$not" : { "$not" : { "$eq" : "mike" } } }
+     * should compress down to  { "$not" : { "$eq" : "mike" } }
+     *
+     * @param clause the clause to be normalized/compressed
+     * @return the "$not" compressed clause
+     */
+    @SuppressWarnings("unchecked")
+    private static List<Object> compressMultipleNotOperators(List<Object> clause) {
+        List<Object> accumulator = new ArrayList<Object>();
+
+        for (Object fieldClause: clause) {
+            Object predicate;
+            String fieldName;
+            if (fieldClause instanceof Map && !((Map) fieldClause).isEmpty()) {
+                Map<String, Object> fieldClauseMap = (Map<String, Object>) fieldClause;
+                fieldName = (String) fieldClauseMap.keySet().toArray()[0];
+                predicate = fieldClauseMap.get(fieldName);
+            } else {
+                // if this isn't a map, we don't know what to do so add the clause
+                // to the accumulator to be dealt with later as part of the final selector
+                // validation.
+                accumulator.add(fieldClause);
+                continue;
+            }
+
+            if (fieldName.startsWith("$") && predicate instanceof List) {
+                predicate = compressMultipleNotOperators((List<Object>) predicate);
+            } else {
+                String operator;
+                Object operatorPredicate;
+                if (predicate instanceof Map && !((Map) predicate).isEmpty()) {
+                    Map<String, Object> predicateMap = (Map<String, Object>) predicate;
+                    operator = (String) predicateMap.keySet().toArray()[0];
+                    operatorPredicate = predicateMap.get(operator);
+                } else {
+                    // if this isn't a map, we don't know what to do so add the clause
+                    // to the accumulator to be dealt with later as part of the final selector
+                    // validation.
+                    accumulator.add(fieldClause);
+                    continue;
+                }
+                if (operator.equals(NOT)) {
+                    // If a $not operator is encountered we need to check for
+                    // a series of nested $not operators.
+                    boolean notOpFound = true;
+                    boolean negateOperator = false;
+                    Object originalOperatorPredicate = operatorPredicate;
+                    while (notOpFound) {
+                        // if a series of nested $not operators are found then they need to
+                        // be compressed down to one $not operator or in the case of an
+                        // even set of $not operators, down to zero $not operators.
+                        if (operatorPredicate instanceof Map) {
+                            Map<String, Object> notClauseMap;
+                            notClauseMap = (Map<String, Object>) operatorPredicate;
+                            String nextOperator = (String) notClauseMap.keySet().toArray()[0];
+                            if (nextOperator.equals(NOT)) {
+                                // Each time we find a $not operator we flip the negateOperator's
+                                // boolean value.
+                                negateOperator = !negateOperator;
+                                operatorPredicate = notClauseMap.get(nextOperator);
+                            } else {
+                                notOpFound = false;
+                            }
+                        } else {
+                            // unexpected condition - revert back to original
+                            operatorPredicate = originalOperatorPredicate;
+                            negateOperator = false;
+                            notOpFound = false;
+                        }
+                    }
+                    if (negateOperator) {
+                        Map<String, Object> operatorPredicateMap;
+                        operatorPredicateMap = (Map<String, Object>) operatorPredicate;
+                        operator = (String) operatorPredicateMap.keySet().toArray()[0];
+                        operatorPredicate = operatorPredicateMap.get(operator);
+                    }
+                    ((Map<String, Object>) predicate).clear();
+                    ((Map<String, Object>) predicate).put(operator, operatorPredicate);
+                }
+            }
+
+            Map<String, Object> element = new HashMap<String, Object>();
+            element.put(fieldName, predicate);
+            accumulator.add(element);
         }
 
         return accumulator;
