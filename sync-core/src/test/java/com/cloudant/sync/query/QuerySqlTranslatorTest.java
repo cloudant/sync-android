@@ -718,21 +718,6 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-     public void correctlyTranslatesNeSQLOperatorToNotIn() {
-        Map<String, Object> op = new HashMap<String, Object>();
-        op.put("$ne", "mike");
-        Map<String, Object> name = new HashMap<String, Object>();
-        name.put("name", op);
-
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
-                                                                 indexName);
-        String expected = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" = ?)",
-                                        IndexManager.tableNameForIndex(indexName));
-        assertThat(where.sqlWithPlaceHolders, is(expected));
-        assertThat(where.placeHolderValues, is(arrayContaining("mike")));
-    }
-
-    @Test
     public void usesCorrectSQLOperatorForEXISTSTrue() {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$exists", true);
@@ -910,22 +895,6 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorWhenUsingNOTNE() {
-        Map<String, Object> op = new HashMap<String, Object>();
-        op.put("$ne", "mike");
-        Map<String, Object> not = new HashMap<String, Object>();
-        not.put("$not", op);
-        Map<String, Object> name = new HashMap<String, Object>();
-        name.put("name", not);
-
-        SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
-                                                                 indexName);
-        String expected = "\"name\" = ?";
-        assertThat(where.sqlWithPlaceHolders, is(expected));
-        assertThat(where.placeHolderValues, is(arrayContaining("mike")));
-    }
-
-    @Test
     public void returnsCorrectWhenTwoConditionsOneField() {
         Map<String, Object> c1op = new HashMap<String, Object>();
         c1op.put("$eq", "mike");
@@ -963,9 +932,11 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> c3 = new HashMap<String, Object>();
         c3.put("name", c3op);
         Map<String, Object> c4op = new HashMap<String, Object>();
-        c4op.put("$ne", 30);
+        c4op.put("$eq", 30);
+        Map<String, Object> c4NotOp = new HashMap<String, Object>();
+        c4NotOp.put("$not", c4op);
         Map<String, Object> c4 = new HashMap<String, Object>();
-        c4.put("age", c4op);
+        c4.put("age", c4NotOp);
         Map<String, Object> c5op = new HashMap<String, Object>();
         c5op.put("$eq", 42);
         Map<String, Object> c5 = new HashMap<String, Object>();
