@@ -219,6 +219,10 @@ for (DocumentRevision revision : result) {
 
 See [Index and Querying Data](https://github.com/cloudant/sync-android/blob/master/doc/query.md).
 
+For information about migrating your legacy indexing/query code to the new Cloudant Query - Android implementation.
+
+See [Index and Querying Migration](https://github.com/cloudant/sync-android/blob/master/doc/query-migration.md)
+
 ### Conflicts
 
 An obvious repercussion of being able to replicate documents about the place
