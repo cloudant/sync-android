@@ -29,6 +29,7 @@ import com.cloudant.sync.util.TestUtils;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -113,6 +114,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
 
     @Test
     public void pushAttachmentsTest() throws Exception {
+        Assume.assumeFalse(IGNORE_MULTIPART_ATTACHMENTS);
         // simple 1-rev attachment
         String attachmentName = "attachment_1.txt";
         populateSomeDataInLocalDatastore();
@@ -137,6 +139,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
 
     @Test
     public void pushBigAttachmentsTest() throws Exception {
+        Assume.assumeFalse(IGNORE_MULTIPART_ATTACHMENTS);
         // simple 1-rev attachment
         String attachmentName = "bonsai-boston.jpg";
         populateSomeDataInLocalDatastore();
@@ -161,6 +164,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
 
     @Test
     public void pushAttachmentsTest2() throws Exception {
+        Assume.assumeFalse(IGNORE_MULTIPART_ATTACHMENTS);
         // more complex test with attachments changing between revisions
         String attachmentName1 = "attachment_1.txt";
         String attachmentName2 = "attachment_2.txt";
