@@ -14,6 +14,8 @@ package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.DocumentRevision;
 
+import static com.cloudant.sync.query.QueryConstants.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -82,10 +84,6 @@ class UnindexedMatcher {
     private ChildrenQueryNode root;
 
     private static final Logger logger = Logger.getLogger(UnindexedMatcher.class.getName());
-
-    private static final String AND = "$and";
-    private static final String OR = "$or";
-    private static final String NOT = "$not";
 
     /**
      *  Return a new initialised matcher.
