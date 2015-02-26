@@ -12,6 +12,8 @@
 
 package com.cloudant.sync.query;
 
+import static com.cloudant.sync.query.QueryConstants.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,12 +27,6 @@ import java.util.logging.Logger;
  *  two different implementations of query.
  */
 class QueryValidator {
-
-    private static final String AND = "$and";
-    private static final String OR = "$or";
-    private static final String EQ = "$eq";
-    private static final String NOT = "$not";
-    private static final String NE = "$ne";
 
     // negatedShortHand is used for operator shorthand processing.
     // A shorthand operator like $ne has a longhand representation

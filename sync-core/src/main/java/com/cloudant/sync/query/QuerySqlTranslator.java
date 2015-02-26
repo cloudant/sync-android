@@ -12,6 +12,8 @@
 
 package com.cloudant.sync.query;
 
+import static com.cloudant.sync.query.QueryConstants.*;
+
 import com.google.common.base.Joiner;
 
 import java.util.ArrayList;
@@ -93,11 +95,6 @@ import java.util.logging.Logger;
  *  These basic patterns can be composed into more complicate structures.
  */
 class QuerySqlTranslator {
-
-    private static final String AND = "$and";
-    private static final String OR = "$or";
-    private static final String NOT = "$not";
-    private static final String EXISTS = "$exists";
 
     private static final Logger logger = Logger.getLogger(QuerySqlTranslator.class.getName());
 
