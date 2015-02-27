@@ -26,6 +26,8 @@ final class QueryConstants {
 
     public static final String NE = "$ne";
 
+    public static final String IN = "$in";
+
     private QueryConstants() {
         throw new AssertionError();
     }

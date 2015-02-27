@@ -1078,14 +1078,116 @@ public class UnindexedMatcherTest {
     public void matchBadItemWithNe() {
         // Selector - { "pets" : { "$ne" : "tabby_cat" } }
         Map<String, Object> op = new HashMap<String, Object>();
-        op.put("$eq", "tabby_cat");
-        Map<String, Object> not = new HashMap<String, Object>();
-        not.put("$not", op);
+        op.put("$ne", "tabby_cat");
         Map<String, Object> selector = new HashMap<String, Object>();
-        selector.put("pets", not);
+        selector.put("pets", op);
         selector = QueryValidator.normaliseAndValidateQuery(selector);
         UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
         assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void matchOnArrayUsingIn() {
+        // Selector - { "pets" : { "$in" : [ "white_cat", "tabby_cat" ] } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$in", Arrays.<Object>asList("white_cat", "tabby_cat"));
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("pets", op);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void noMatchOnArrayUsingIn() {
+        // Selector - { "pets" : { "$in" : [ "grey_cat", "tabby_cat" ] } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$in", Arrays.<Object>asList("grey_cat", "tabby_cat"));
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("pets", op);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void matchOnNonArrayUsingIn() {
+        // Selector - { "name" : { "$in" : [ "mike", "fred" ] } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$in", Arrays.<Object>asList("mike", "fred"));
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("name", op);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void noMatchOnNonArrayUsingIn() {
+        // Selector - { "name" : { "$in" : [ "john", "fred" ] } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$in", Arrays.<Object>asList("john", "fred"));
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("name", op);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void matchOnArrayUsingNotIn() {
+        // Selector - { "pets" : { "$not" : { "$in" : [ "grey_cat", "tabby_cat" ] } } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$in", Arrays.<Object>asList("grey_cat", "tabby_cat"));
+        Map<String, Object> notOp = new HashMap<String, Object>();
+        notOp.put("$not", op);
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("pets", notOp);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void noMatchOnArrayUsingNotIn() {
+        // Selector - { "pets" : { "$not" : { "$in" : [ "white_cat", "tabby_cat" ] } } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$in", Arrays.<Object>asList("white_cat", "tabby_cat"));
+        Map<String, Object> notOp = new HashMap<String, Object>();
+        notOp.put("$not", op);
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("pets", notOp);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void matchOnNonArrayUsingNotIn() {
+        // Selector - { "name" : { "$not" : { "$in" : [ "john", "fred" ] } } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$in", Arrays.<Object>asList("john", "fred"));
+        Map<String, Object> notOp = new HashMap<String, Object>();
+        notOp.put("$not", op);
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("name", notOp);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void noMatchOnNonArrayUsingNotIn() {
+        // Selector - { "name" : { "$not" : { "$in" : [ "mike", "fred" ] } } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$in", Arrays.<Object>asList("mike", "fred"));
+        Map<String, Object> notOp = new HashMap<String, Object>();
+        notOp.put("$not", op);
+        Map<String, Object> selector = new HashMap<String, Object>();
+        selector.put("name", notOp);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
     }
 
     @Test

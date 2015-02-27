@@ -273,6 +273,7 @@ public abstract class AbstractQueryTestBase {
 
     // Used to setup document data testing:
     // - When indexing array fields
+    // - When querying using $in operator
     public void setUpArrayIndexingData() throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "mike12";

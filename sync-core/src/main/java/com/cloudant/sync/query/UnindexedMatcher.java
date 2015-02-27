@@ -17,6 +17,7 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import static com.cloudant.sync.query.QueryConstants.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -155,7 +156,7 @@ class UnindexedMatcher {
         for (Object rawClause: clauses) {
             Map<String, Object> clause = (Map<String, Object>) rawClause;
             String field = (String) clause.keySet().toArray()[0];
-            if (field.startsWith("$or")) {
+            if (field.equals(OR)) {
                 QueryNode orNode = buildExecutionTreeForSelector(clause);
                 if (root != null) {
                     root.children.add(orNode);
@@ -167,7 +168,7 @@ class UnindexedMatcher {
         for (Object rawClause: clauses) {
             Map<String, Object> clause = (Map<String, Object>) rawClause;
             String field = (String) clause.keySet().toArray()[0];
-            if (field.startsWith("$and")) {
+            if (field.equals(AND)) {
                 QueryNode andNode = buildExecutionTreeForSelector(clause);
                 if (root != null) {
                     root.children.add(andNode);
@@ -233,17 +234,23 @@ class UnindexedMatcher {
                 operator = (String) operatorExpression.keySet().toArray()[0];
             }
 
-            Object expected = operatorExpression.get(operator);
+            Object expectedValues = operatorExpression.get(operator);
+            if (!(expectedValues instanceof List)) {
+                expectedValues = Arrays.asList(expectedValues);
+            }
             Object actual = ValueExtractor.extractValueForFieldName(fieldName, rev);
 
             boolean passed = false;
-            if (actual instanceof List) {
-                for (Object item: (List<Object>) actual) {
-                    // OR as any value in the array can match
-                    passed = passed || valueCompare(item, operator, expected);
+            for (Object expected : (List<Object>) expectedValues) {
+                if (actual instanceof List) {
+                    for (Object actualItem: (List<Object>) actual) {
+                        // OR since any actual item can match any value in the expected list
+                        passed = passed || valueCompare(actualItem, operator, expected);
+                    }
+                } else {
+                    // OR since any value in the expected list can match the actual
+                    passed = passed || valueCompare(actual, operator, expected);
                 }
-            } else {
-                passed = valueCompare(actual, operator, expected);
             }
 
             return invertResult ? !passed : passed;
@@ -258,7 +265,7 @@ class UnindexedMatcher {
     private boolean valueCompare(Object actual, String operator, Object expected) {
         boolean passed;
 
-        if (operator.equals("$eq")) {
+        if (operator.equals("$eq") || operator.equals("$in")) {
             passed = compareEq(actual, expected);
         } else if (operator.equals("$lt")) {
             passed = compareLT(actual, expected);

@@ -247,6 +247,25 @@ public class QueryValidatorTest {
     }
 
     @Test
+    public void normalizesQueryWithIN() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "name" : { "$in" : ["mike", "fred"] } }
+        Map<String, Object> inOp = new HashMap<String, Object>();
+        inOp.put("$in", Arrays.<Object>asList("mike", "fred"));
+        query.put("name", inOp);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+
+        // normalized query - { "$and" : [ { "name" : { "$in" : ["mike", "fred"] } } ] }
+        Map<String, Object> c1op = new HashMap<String, Object>();
+        c1op.put("$in", Arrays.<Object>asList("mike", "fred"));
+        Map<String, Object> c1 = new HashMap<String, Object>();
+        c1.put("name", c1op);
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        expected.put("$and", Arrays.<Object>asList(c1));
+        assertThat(normalizedQuery, is(expected));
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     public void checkForInvalidValues() {
         Map<String, Object> query = new HashMap<String, Object>();
@@ -292,12 +311,32 @@ public class QueryValidatorTest {
     @Test
     public void returnsNullForInvalidOperatorWithNOT() {
         Map<String, Object> query = new HashMap<String, Object>();
-        // query - { "name" : { "$blah" : "mike" } }
+        // query - { "name" : { "$not" : { "$blah" : "mike" } } }
         Map<String, Object> blah = new HashMap<String, Object>();
         blah.put("$blah", "mike");
         Map<String, Object> notBlah = new HashMap<String, Object>();
         notBlah.put("$not", blah);
         query.put("name", notBlah);
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullForNOTWithoutOperator() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "name" : { "$not" : "mike" } }
+        Map<String, Object> notMike = new HashMap<String, Object>();
+        notMike.put("$not", "mike");
+        query.put("name", notMike);
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullForInvalidIN() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "name" : { "$in" : "mike" } }
+        Map<String, Object> inMike = new HashMap<String, Object>();
+        inMike.put("$in", "mike");
+        query.put("name", inMike);
         assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
     }
 
