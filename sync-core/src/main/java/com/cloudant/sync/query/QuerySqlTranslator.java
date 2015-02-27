@@ -423,86 +423,66 @@ class QuerySqlTranslator {
                     boolean exists = !((Boolean) predicateValue);
                     // since this clause is negated we need to negate the bool value
                     whereClauses.add(convertExistsToSqlClauseForFieldName(fieldName, exists));
-                } else if (operator.equals(IN)) {
-                    String sqlOperator = operatorMap.get(operator);
-                    String tableName = IndexManager.tableNameForIndex(indexName);
-                    String inOperands = "(";
-
-                    // The predicate map value must be a List here.
-                    // This was validated during normalization.
-                    List<Object> inList = (List<Object>) negatedPredicate.get(operator);
-                    for (Object negatedPredicateValue : inList) {
-                        if (validatePredicateValue(negatedPredicateValue)) {
-                            if (inOperands.endsWith("?")) {
-                                inOperands = String.format("%s, ?", inOperands);
-                            } else {
-                                inOperands = String.format("%s ?", inOperands);
-                            }
-                            sqlParameters.add(String.valueOf(negatedPredicateValue));
-                        } else {
-                            logger.log(Level.SEVERE, "Predicate value is invalid.");
-                            return null;
-                        }
-                    }
-                    inOperands = String.format("%s )", inOperands);
-                    String whereClause = whereClauseForNot(fieldName,
-                                                           sqlOperator,
-                                                           tableName,
-                                                           inOperands);
-                    whereClauses.add(whereClause);
                 } else {
+                    String whereClause;
                     String sqlOperator = operatorMap.get(operator);
                     String tableName = IndexManager.tableNameForIndex(indexName);
-                    String whereClause = whereClauseForNot(fieldName, sqlOperator, tableName, "?");
-
-                    whereClauses.add(whereClause);
-                    predicateValue = negatedPredicate.get(operator);
-                    if (validatePredicateValue(predicateValue)) {
-                        sqlParameters.add(String.valueOf(predicateValue));
+                    String argument;
+                    if (operator.equals(IN)) {
+                        // The predicate map value must be a List here.
+                        // This was validated during normalization.
+                        List<Object> inList = (List<Object>) negatedPredicate.get(operator);
+                        argument = buildWhereClauseArgument(inList, sqlParameters);
+                        // If the argument is a single "?" placeholder then we are
+                        // dealing with a single equality comparison.  Therefore,
+                        // we set the operator to $eq.
+                        if (argument != null && argument.equals("?")) {
+                            sqlOperator = operatorMap.get(EQ);
+                        }
                     } else {
-                        logger.log(Level.SEVERE, "Predicate value is invalid.");
+                        predicateValue = negatedPredicate.get(operator);
+                        argument = buildWhereClauseArgument(Arrays.asList(predicateValue),
+                                                            sqlParameters);
+                    }
+                    if (argument == null) {
+                        // An error occurred and logged in buildWhereClauseArgument
                         return null;
                     }
+                    whereClause = whereClauseForNot(fieldName, sqlOperator, tableName, argument);
+                    whereClauses.add(whereClause);
                 }
-
             } else {
                 if (operator.equals(EXISTS)) {
                     boolean exists = (Boolean) predicate.get(operator);
                     whereClauses.add(convertExistsToSqlClauseForFieldName(fieldName, exists));
-                } else if (operator.equals(IN)) {
-                    String sqlOperator = operatorMap.get(operator);
-                    String whereClause = String.format("\"%s\" %s (", fieldName, sqlOperator);
-
-                    // The predicate map value must be a List here.
-                    // This was validated during normalization
-                    List<Object> inList = (List<Object>) predicate.get(operator);
-                    for (Object predicateValue : inList) {
-                        if (validatePredicateValue(predicateValue)) {
-                            if (whereClause.endsWith("?")) {
-                                whereClause = String.format("%s, ?", whereClause);
-                            } else {
-                                whereClause = String.format("%s ?", whereClause);
-                            }
-                            sqlParameters.add(String.valueOf(predicateValue));
-                        } else {
-                            logger.log(Level.SEVERE, "Predicate value is invalid.");
-                            return null;
-                        }
-                    }
-                    whereClause = String.format("%s )", whereClause);
-                    whereClauses.add(whereClause);
                 } else {
+                    String whereClause;
                     String sqlOperator = operatorMap.get(operator);
-                    String whereClause = String.format("\"%s\" %s ?", fieldName, sqlOperator);
-
-                    whereClauses.add(whereClause);
-                    Object predicateValue = predicate.get(operator);
-                    if (validatePredicateValue(predicateValue)) {
-                        sqlParameters.add(String.valueOf(predicateValue));
+                    String argument;
+                    if (operator.equals(IN)) {
+                        // The predicate map value must be a List here.
+                        // This was validated during normalization.
+                        List<Object> inList = (List<Object>) predicate.get(operator);
+                        argument = buildWhereClauseArgument(inList, sqlParameters);
+                        // If the argument is a single "?" placeholder then we are
+                        // dealing with a single equality comparison.  Therefore,
+                        // we set the operator to $eq.
+                        if (argument != null && argument.equals("?")) {
+                            sqlOperator = operatorMap.get(EQ);
+                        }
                     } else {
-                        logger.log(Level.SEVERE, "Predicate value is invalid.");
+                        Object predicateValue = predicate.get(operator);
+                        argument = buildWhereClauseArgument(Arrays.asList(predicateValue),
+                                                            sqlParameters);
+                    }
+                    if (argument == null) {
+                        // An error occurred and logged in buildWhereClauseArgument
                         return null;
                     }
+                    whereClause = String.format("\"%s\" %s %s", fieldName,
+                                                                sqlOperator,
+                                                                argument);
+                    whereClauses.add(whereClause);
                 }
             }
         }
@@ -516,6 +496,27 @@ class QuerySqlTranslator {
         }
 
         return SqlParts.partsForSql(where, parameterArray);
+    }
+
+    private static String buildWhereClauseArgument(List<Object> values,
+                                                   List<Object> sqlParameters) {
+        List<String> inOperands = new ArrayList<String>();
+        for (Object value : values) {
+            if (validatePredicateValue(value)) {
+                inOperands.add("?");
+                sqlParameters.add(String.valueOf(value));
+            } else {
+                logger.log(Level.SEVERE, "Predicate value is invalid.");
+                return null;
+            }
+        }
+
+        if (inOperands.size() == 1) {
+            return inOperands.get(0);
+        } else {
+            Joiner opJoiner = Joiner.on(", ").skipNulls();
+            return String.format("( %s )", opJoiner.join(inOperands));
+        }
     }
 
     /**
