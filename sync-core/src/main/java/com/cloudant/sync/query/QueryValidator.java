@@ -29,13 +29,14 @@ import java.util.logging.Logger;
 class QueryValidator {
 
     // negatedShortHand is used for operator shorthand processing.
-    // A shorthand operator like $ne has a longhand representation
+    // For example:
+    // The shorthand operator $ne has a longhand representation
     // that is { "$not" : { "$eq" : ... } }.  Therefore the negation
-    // of the $ne operator is $eq.
-    // Presently only $ne is supported.  More to come soon...
+    // of the $ne operator is the $eq operator.
     private static final Map<String, String> negatedShortHand = new HashMap<String, String>() {
         {
             put(NE, EQ);
+            put(NIN, IN);
         }
     };
     private static final Logger logger = Logger.getLogger(QueryValidator.class.getName());

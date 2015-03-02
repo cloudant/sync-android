@@ -28,8 +28,10 @@ final class QueryConstants {
 
     public static final String IN = "$in";
 
+    public static final String NIN = "$nin";
+
     private QueryConstants() {
         throw new AssertionError();
     }
-    
+
 }

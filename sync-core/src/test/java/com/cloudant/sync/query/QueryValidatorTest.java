@@ -266,6 +266,76 @@ public class QueryValidatorTest {
     }
 
     @Test
+    public void normalizesQueryWithNIN() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "name" : { "$nin" : ["mike", "fred"] } }
+        Map<String, Object> inOp = new HashMap<String, Object>();
+        inOp.put("$nin", Arrays.<Object>asList("mike", "fred"));
+        query.put("name", inOp);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+
+        // normalized query - { "$and" : [ { "name" : { "$not" : { "$in" : ["mike", "fred"] }}}]}
+        Map<String, Object> c1op = new HashMap<String, Object>();
+        c1op.put("$in", Arrays.<Object>asList("mike", "fred"));
+        Map<String, Object> notC1op = new HashMap<String, Object>();
+        notC1op.put("$not", c1op);
+        Map<String, Object> c1 = new HashMap<String, Object>();
+        c1.put("name", notC1op);
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        expected.put("$and", Arrays.<Object>asList(c1));
+        assertThat(normalizedQuery, is(expected));
+    }
+
+    @Test
+    public void normalizesQueryWithNOTNIN() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "name" : { "$not" : { "$nin" : ["mike", "fred"] } } }
+        Map<String, Object> ninOp = new HashMap<String, Object>();
+        ninOp.put("$nin", Arrays.<Object>asList("mike", "fred"));
+        Map<String, Object> notNinOp = new HashMap<String, Object>();
+        notNinOp.put("$not", ninOp);
+        query.put("name", notNinOp);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+
+        // normalized query - { "$and" : [ { "name" : { "$in" : ["mike", "fred"] } } ] }
+        Map<String, Object> c1op = new HashMap<String, Object>();
+        c1op.put("$in", Arrays.<Object>asList("mike", "fred"));
+        Map<String, Object> c1 = new HashMap<String, Object>();
+        c1.put("name", c1op);
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        expected.put("$and", Arrays.<Object>asList(c1));
+        assertThat(normalizedQuery, is(expected));
+    }
+
+    @Test
+    public void normalizesQueryWithNOTNOTNIN() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "name" : { "$not" : { "$not" : { "$nin" : ["mike", "fred"] } } } }
+
+        Map<String, Object> predicate = new HashMap<String, Object>()
+        {
+            { put("$nin", Arrays.<Object>asList("mike", "fred")); }
+        };
+        for (int i = 0; i < 2; i++) {
+            final Map<String, Object> prevPredicate = predicate;
+            predicate = new HashMap<String, Object>(){{ put("$not", prevPredicate); }};
+        }
+        query.put("name", predicate);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+
+        // normalized query - { "$and" : [ { "name" : { "$not" : { "$in" : ["mike", "fred"] }}} ] }
+        Map<String, Object> c1op = new HashMap<String, Object>();
+        c1op.put("$in", Arrays.<Object>asList("mike", "fred"));
+        Map<String, Object> notC1op = new HashMap<String, Object>();
+        notC1op.put("$not", c1op);
+        Map<String, Object> c1 = new HashMap<String, Object>();
+        c1.put("name", notC1op);
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        expected.put("$and", Arrays.<Object>asList(c1));
+        assertThat(normalizedQuery, is(expected));
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     public void checkForInvalidValues() {
         Map<String, Object> query = new HashMap<String, Object>();

@@ -783,7 +783,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         name.put("name", op);
 
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
-                         indexName);
+                                                                 indexName);
         String expected = "\"name\" = ?";
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
