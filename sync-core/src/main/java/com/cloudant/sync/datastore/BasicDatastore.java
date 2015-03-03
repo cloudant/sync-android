@@ -95,7 +95,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     private boolean dbOpen = false;
 
-    public BasicDatastore(String dir, String name) throws SQLException, IOException {
+    public BasicDatastore(String dir, String name) throws SQLException, IOException, DatastoreException {
         Preconditions.checkNotNull(dir);
         Preconditions.checkNotNull(name);
 
@@ -104,9 +104,15 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         this.extensionsDir = FilenameUtils.concat(this.datastoreDir, "extensions");
         final String dbFilename = FilenameUtils.concat(this.datastoreDir, DB_FILE_NAME);
         queue = new SQLDatabaseQueue(dbFilename);
+        int dbVersion = queue.getVersion();
+        if(dbVersion >= 100){
+            throw new DatastoreException(String.format("Database version is higher than the version supported " +
+                    "by this library, current version %d , highest supported version %d",dbVersion, 99));
+        }
         queue.updateSchema(DatastoreConstants.getSchemaVersion3(), 3);
         queue.updateSchema(DatastoreConstants.getSchemaVersion4(), 4);
         queue.updateSchema(DatastoreConstants.getSchemaVersion5(), 5);
+        queue.updateSchema(DatastoreConstants.getSchemaVersion6(), 6);
         dbOpen = true;
         this.eventBus = new EventBus();
         this.attachmentManager = new AttachmentManager(this);
@@ -574,40 +580,21 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public BasicDocumentRevision getLocalDocument(final String docId) {
+    public LocalDocument getLocalDocument(final String docId) throws DocumentNotFoundException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         try {
-            return queue.submit(new SQLQueueCallable<BasicDocumentRevision>(){
+            return queue.submit(new SQLQueueCallable<LocalDocument>(){
                 @Override
-                public BasicDocumentRevision call(SQLDatabase db) throws Exception {
-                    return doGetLocalDocument(db,docId, null);
+                public LocalDocument call(SQLDatabase db) throws Exception {
+                    return doGetLocalDocument(db,docId);
                 }
             }).get();
         } catch (InterruptedException e) {
             logger.log(Level.SEVERE,"Failed to get local document",e);
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE,"Failed to get local document",e);
+            throw new DocumentNotFoundException(e);
         }
         return null;
-    }
-
-    @Override
-    public BasicDocumentRevision getLocalDocument(final String docId,final String revId) {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
-        assert !Strings.isNullOrEmpty(revId);
-        try {
-            return queue.submit(new SQLQueueCallable<BasicDocumentRevision>(){
-                @Override
-                public BasicDocumentRevision call(SQLDatabase db) throws Exception {
-                    return doGetLocalDocument(db,docId, revId);
-                }
-            }).get();
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE,"Failed to get local document",e);
-        } catch (ExecutionException e) {
-            logger.log(Level.SEVERE,"Failed to get local document",e);
-        }
-    return null;
     }
 
     private BasicDocumentRevision createDocument(SQLDatabase db,String docId, final DocumentBody body)
@@ -680,48 +667,37 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public BasicDocumentRevision createLocalDocument(final DocumentBody body) throws DocumentException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
-        String documentId = CouchUtils.generateDocumentId();
-        return createLocalDocument(documentId, body);
-    }
-
-    @Override
-    public BasicDocumentRevision createLocalDocument(final String docId, final DocumentBody body)
-            throws DocumentException {
+    public LocalDocument insertLocalDocument(final String docId, final DocumentBody body) throws DocumentException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         CouchUtils.validateDocumentId(docId);
         Preconditions.checkNotNull(body, "Input document body can not be null");
         try {
-            return queue.submitTransaction(new SQLQueueCallable<BasicDocumentRevision>(){
+            return queue.submitTransaction(new SQLQueueCallable<LocalDocument>() {
                 @Override
-                public BasicDocumentRevision call(SQLDatabase db) throws Exception {
-                        String firstRevId = CouchUtils.getFirstLocalDocRevisionId();
-                        ContentValues values = new ContentValues();
-                        values.put("docid", docId);
-                        values.put("revid", firstRevId);
-                        values.put("json", body.asBytes());
+                public LocalDocument call(SQLDatabase db) throws Exception {
+                    ContentValues values = new ContentValues();
+                    values.put("docid", docId);
+                    values.put("json", body.asBytes());
 
-                        long lineId = db.insert("localdocs", values);
-                        if (lineId < 0) {
-                            throw new DocumentException("Can not insert new local doc, likely the docId exists already: "
-                                    + docId);
-                        } else {
-                            logger.finer("New local doc inserted: " + lineId + ", " + docId);
-                        }
+                    long rowId = db.insertWithOnConflict("localdocs", values, SQLDatabase
+                            .CONFLICT_REPLACE);
+                    if (rowId < 0) {
+                        throw new DocumentException("Failed to insert local document");
+                    } else {
+                        logger.finer(String.format("Local doc inserted: %d , %s", rowId, docId));
+                    }
 
-                        return doGetLocalDocument(db,docId, firstRevId);
+                    return doGetLocalDocument(db, docId);
                 }
             }).get();
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE,"Failed to create local document",e);
+            logger.log(Level.SEVERE, "Failed to insert local document", e);
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE,"Failed to create local document",e);
-            throw new DocumentException("Cannot insert new local document",e);
+            logger.log(Level.SEVERE,"Failed to insert local document",e);
+            throw new DocumentException("Cannot insert local document",e);
         }
 
         return null;
-
     }
 
     private BasicDocumentRevision updateDocument(SQLDatabase db,String docId,
@@ -750,45 +726,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         this.setCurrent(db, preRevision, false);
         String newRevisionId = this.insertNewWinnerRevision(db, body, preRevision, copyAttachments);
         return this.getDocumentInQueue(db, preRevision.getId(), newRevisionId);
-    }
-
-    @Override
-    public BasicDocumentRevision updateLocalDocument(final String docId, final String prevRevId, final DocumentBody body) throws DocumentException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
-                "Input document id can not be empty");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(prevRevId),
-                "Input previous revision id can not be empty");
-        Preconditions.checkNotNull(body, "Input document body can not be null");
-
-        CouchUtils.validateRevisionId(prevRevId);
-
-        final BasicDocumentRevision preRevision = this.getLocalDocument(docId, prevRevId);
-
-        try {
-            return  queue.submitTransaction(new SQLQueueCallable<BasicDocumentRevision>(){
-                @Override
-                public BasicDocumentRevision call(SQLDatabase db) throws Exception {
-                        String newRevId = CouchUtils.generateNextLocalRevisionId(prevRevId);
-                        ContentValues values = new ContentValues();
-                        values.put("revid", newRevId);
-                        values.put("json", body.asBytes());
-                        String[] whereArgs = new String[]{docId, prevRevId};
-                        int rowsUpdated = db.update("localdocs", values, "docid=? AND revid=?", whereArgs);
-                        if (rowsUpdated == 1) {
-                            return doGetLocalDocument(db,docId, newRevId);
-                        } else {
-                            throw new DocumentException("Error updating local document: " + preRevision);
-                        }
-                }
-            }).get();
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE,"Failed to update local document",e);
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to update local document", e);
-            throw new DocumentException(e);
-        }
     }
 
     private BasicDocumentRevision deleteDocumentInQueue(SQLDatabase db, final String docId,
@@ -956,33 +893,22 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return insertRevision(db,options);
     }
 
-    // Keep in mind we do not keep local document revision history
-    private BasicDocumentRevision doGetLocalDocument(SQLDatabase db, String docId, String revId)
+    private LocalDocument doGetLocalDocument(SQLDatabase db, String docId)
             throws  DocumentNotFoundException, DocumentException, DatastoreException {
         assert !Strings.isNullOrEmpty(docId);
         Cursor cursor = null;
         try {
             String[] args = {docId};
-            cursor = db.rawQuery("SELECT revid, json FROM localdocs WHERE docid=?", args);
+            cursor = db.rawQuery("SELECT json FROM localdocs WHERE docid=?", args);
             if (cursor.moveToFirst()) {
-                String gotRevID = cursor.getString(0);
+                byte[] json = cursor.getBlob(0);
 
-                if (revId != null && !revId.equals(gotRevID)) {
-                    throw new DocumentNotFoundException("No local document found with id: " + docId + ", revId: " + revId);
-                }
-
-                byte[] json = cursor.getBlob(1);
-
-                DocumentRevisionBuilder builder = new DocumentRevisionBuilder()
-                        .setDocId(docId)
-                        .setRevId(gotRevID)
-                        .setBody(BasicDocumentBody.bodyWith(json));
-
-                return builder.buildBasicDBObjectLocalDocument();
+                return new LocalDocument(docId,BasicDocumentBody.bodyWith(json));
             } else {
-                throw new DocumentNotFoundException("No local document found with id: " + docId + ", revId: " + revId);
+                throw new DocumentNotFoundException(String.format("No local document found with id: %s", docId));
             }
         } catch (SQLException e) {
+            logger.log(Level.SEVERE, String.format("Error getting local document with id: %s",docId),e);
             throw new DatastoreException("Error getting local document with id: " + docId, e);
         } finally {
             DatabaseUtils.closeCursorQuietly(cursor);

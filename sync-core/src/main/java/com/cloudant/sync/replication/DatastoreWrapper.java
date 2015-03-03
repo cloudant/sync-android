@@ -22,9 +22,11 @@ import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentException;
+import com.cloudant.sync.datastore.DocumentNotFoundException;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.DocumentRevsUtils;
+import com.cloudant.sync.datastore.LocalDocument;
 import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.util.JSONUtils;
 
@@ -36,7 +38,6 @@ import java.util.logging.Logger;
 
 class DatastoreWrapper {
 
-    private final static String LOG_TAG = "DatastoreWrapper";
     private final static Logger logger = Logger.getLogger(DatastoreWrapper.class.getCanonicalName());
 
     private DatastoreExtended dbCore;
@@ -55,12 +56,16 @@ class DatastoreWrapper {
 
     public Object getCheckpoint(String replicatorIdentifier) {
         logger.entering("DatastoreWrapper","getCheckpoint" + replicatorIdentifier);
-        BasicDocumentRevision doc = dbCore.getLocalDocument(getCheckpointDocumentId(replicatorIdentifier));
-        if(doc == null) {
+        LocalDocument doc;
+        try {
+            doc = dbCore.getLocalDocument(getCheckpointDocumentId(replicatorIdentifier));
+        } catch (DocumentNotFoundException e){
+            //this exception is expected it means we don't have a checkpoint doc yet so we'll just
+            //return null
             return null;
         }
 
-        Map<String, Object> checkpointDoc = JSONUtils.deserialize(doc.asBytes(), Map.class);
+        Map<String, Object> checkpointDoc = JSONUtils.deserialize(doc.body.asBytes(), Map.class);
         if(checkpointDoc == null) {
             return null;
         } else {
@@ -72,15 +77,11 @@ class DatastoreWrapper {
 
         logger.entering("DatastoreWrapper","putCheckpoint",new Object[]{replicatorIdentifier,sequence});
         String checkpointDocumentId = getCheckpointDocumentId(replicatorIdentifier);
-        BasicDocumentRevision doc = dbCore.getLocalDocument(checkpointDocumentId);
         Map<String, Object> checkpointDoc = new HashMap<String, Object>();
         checkpointDoc.put("lastSequence", sequence);
         byte[] json = JSONUtils.serializeAsBytes(checkpointDoc);
-        if(doc == null) {
-            dbCore.createLocalDocument(checkpointDocumentId, DocumentBodyFactory.create(json));
-        } else {
-            dbCore.updateLocalDocument(doc.getId(), doc.getRevision(), DocumentBodyFactory.create(json));
-        }
+        dbCore.insertLocalDocument(checkpointDocumentId, DocumentBodyFactory.create(json));
+
     }
 
     private String getCheckpointDocumentId(String replicatorIdentifier) {
