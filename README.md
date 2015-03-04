@@ -117,6 +117,23 @@ _Note_: Older versions than 0.3.0 had a separate Mazha jar. This was rolled
 into the main jar for distribution simplicity. The dependency needs removing
 from gradle and maven build files.
 
+## Tested Platforms
+
+The library is Reguarly tested on the following platforms:
+
+Android (via emulated):
+
+* API Level 15
+* API Level 16
+* API Level 17
+* API Level 18
+* API Level 19
+* API Level 21
+
+Java:
+
+* 1.8 (Java 8)
+
 ## Example application
 
 There is a [sample application and a quickstart guide](/sample/).
