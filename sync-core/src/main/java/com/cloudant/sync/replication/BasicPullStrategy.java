@@ -164,7 +164,7 @@ class BasicPullStrategy implements ReplicationStrategy {
 
         replicationTerminated = true;
 
-        String msg = "Push replication terminated via ";
+        String msg = "Pull replication terminated via ";
         msg += this.cancel? "cancel." : "completion.";
 
         // notify complete/errored on eventbus
