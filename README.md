@@ -121,7 +121,7 @@ from gradle and maven build files.
 
 The library is Reguarly tested on the following platforms:
 
-Android (via emulated):
+Android (via emulator):
 
 * API Level 15
 * API Level 16
