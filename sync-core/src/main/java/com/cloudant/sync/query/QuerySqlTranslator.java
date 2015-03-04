@@ -12,6 +12,8 @@
 
 package com.cloudant.sync.query;
 
+import static com.cloudant.sync.query.QueryConstants.*;
+
 import com.google.common.base.Joiner;
 
 import java.util.ArrayList;
@@ -94,13 +96,6 @@ import java.util.logging.Logger;
  */
 class QuerySqlTranslator {
 
-    private static final String AND = "$and";
-    private static final String OR = "$or";
-    private static final String NOT = "$not";
-    private static final String EXISTS = "$exists";
-    private static final String EQ = "$eq";
-    private static final String NE = "$ne";  // $ne is used as shorthand for $not..$eq
-
     private static final Logger logger = Logger.getLogger(QuerySqlTranslator.class.getName());
 
     public static QueryNode translateQuery(Map<String, Object> query,
@@ -167,75 +162,39 @@ class QuerySqlTranslator {
         // logic below.
         //
 
-        List<Object> basicClauses = new ArrayList<Object>();
+        List<Object> basicClauses = null;
 
         for (Object rawClause: clauses) {
             Map<String, Object> clause = (Map<String, Object>) rawClause;
             String field = (String) clause.keySet().toArray()[0];
             if (!field.startsWith("$")) {
+                if (basicClauses == null) {
+                    basicClauses = new ArrayList<Object>();
+                }
                 basicClauses.add(rawClause);
             }
         }
 
-        if (query.get(AND) != null) {
-            // For an AND query, we require a single compound index and we generate a
-            // single SQL statement to use that index to satisfy the clauses.
+        if (basicClauses != null) {
+            if (query.get(AND) != null) {
+                // For an AND query, we require a single compound index and we generate a
+                // single SQL statement to use that index to satisfy the clauses.
 
-            String chosenIndex = chooseIndexForAndClause(basicClauses, indexes);
-            if (chosenIndex == null || chosenIndex.isEmpty()) {
-                state.atLeastOneIndexMissing = true;
-                String msg = String.format("No single index contains all of %s; %s",
-                                           basicClauses.toString(),
-                                           "add index for these fields to query efficiently.");
-                logger.log(Level.WARNING, msg);
-            } else {
-                state.atLeastOneIndexUsed = true;
-
-                // Execute SQL on that index with appropriate values
-                SqlParts select = selectStatementForAndClause(basicClauses, chosenIndex);
-                if (select == null) {
-                    String msg = String.format("Error generating SELECT clause for %s",
-                                               basicClauses);
-                    logger.log(Level.SEVERE, msg);
-                    return null;
-                }
-
-                SqlQueryNode sqlNode = new SqlQueryNode();
-                sqlNode.sql = select;
-
-                if (root != null) {
-                    root.children.add(sqlNode);
-                }
-            }
-        } else if (query.get(OR) != null) {
-            // OR nodes require a query for each clause.
-            //
-            // We want to allow OR clauses to use separate indexes, unlike for AND, to allow
-            // users to query over multiple indexes during a single query. This prevents users
-            // having to create a single huge index just because one query in their application
-            // requires it, slowing execution of all the other queries down.
-            //
-            // We could optimise for OR parts where we have an appropriate compound index,
-            // but we don't for now.
-
-            for (Object basicClause : basicClauses) {
-                List<Object> wrappedClause = Arrays.asList(basicClause);
-                String chosenIndex = chooseIndexForAndClause(wrappedClause, indexes);
+                String chosenIndex = chooseIndexForAndClause(basicClauses, indexes);
                 if (chosenIndex == null || chosenIndex.isEmpty()) {
                     state.atLeastOneIndexMissing = true;
-                    state.atLeastOneORIndexMissing = true;
                     String msg = String.format("No single index contains all of %s; %s",
-                                               basicClauses.toString(),
-                                               "add index for these fields to query efficiently.");
+                            basicClauses.toString(),
+                            "add index for these fields to query efficiently.");
                     logger.log(Level.WARNING, msg);
                 } else {
                     state.atLeastOneIndexUsed = true;
 
                     // Execute SQL on that index with appropriate values
-                    SqlParts select = selectStatementForAndClause(wrappedClause, chosenIndex);
+                    SqlParts select = selectStatementForAndClause(basicClauses, chosenIndex);
                     if (select == null) {
                         String msg = String.format("Error generating SELECT clause for %s",
-                                                   basicClauses);
+                                basicClauses);
                         logger.log(Level.SEVERE, msg);
                         return null;
                     }
@@ -245,6 +204,47 @@ class QuerySqlTranslator {
 
                     if (root != null) {
                         root.children.add(sqlNode);
+                    }
+                }
+            } else if (query.get(OR) != null) {
+                // OR nodes require a query for each clause.
+                //
+                // We want to allow OR clauses to use separate indexes, unlike for AND, to allow
+                // users to query over multiple indexes during a single query. This prevents users
+                // having to create a single huge index just because one query in their application
+                // requires it, slowing execution of all the other queries down.
+                //
+                // We could optimise for OR parts where we have an appropriate compound index,
+                // but we don't for now.
+
+                for (Object basicClause : basicClauses) {
+                    List<Object> wrappedClause = Arrays.asList(basicClause);
+                    String chosenIndex = chooseIndexForAndClause(wrappedClause, indexes);
+                    if (chosenIndex == null || chosenIndex.isEmpty()) {
+                        state.atLeastOneIndexMissing = true;
+                        state.atLeastOneORIndexMissing = true;
+                        String msg = String.format("No single index contains all of %s; %s",
+                                basicClauses.toString(),
+                                "add index for these fields to query efficiently.");
+                        logger.log(Level.WARNING, msg);
+                    } else {
+                        state.atLeastOneIndexUsed = true;
+
+                        // Execute SQL on that index with appropriate values
+                        SqlParts select = selectStatementForAndClause(wrappedClause, chosenIndex);
+                        if (select == null) {
+                            String msg = String.format("Error generating SELECT clause for %s",
+                                    basicClauses);
+                            logger.log(Level.SEVERE, msg);
+                            return null;
+                        }
+
+                        SqlQueryNode sqlNode = new SqlQueryNode();
+                        sqlNode.sql = select;
+
+                        if (root != null) {
+                            root.children.add(sqlNode);
+                        }
                     }
                 }
             }
@@ -423,15 +423,9 @@ class QuerySqlTranslator {
                     // since this clause is negated we need to negate the bool value
                     whereClauses.add(convertExistsToSqlClauseForFieldName(fieldName, exists));
                 } else {
-                    String whereClause;
-                    if (operator.equals(NE)) {
-                        // Treat $not..$ne as $eq
-                        whereClause = String.format("\"%s\" %s ?", fieldName, operatorMap.get(EQ));
-                    } else {
-                        String sqlOperator = operatorMap.get(operator);
-                        String tableName = IndexManager.tableNameForIndex(indexName);
-                        whereClause = whereClauseForNot(fieldName, sqlOperator, tableName);
-                    }
+                    String sqlOperator = operatorMap.get(operator);
+                    String tableName = IndexManager.tableNameForIndex(indexName);
+                    String whereClause = whereClauseForNot(fieldName, sqlOperator, tableName);
 
                     whereClauses.add(whereClause);
                     predicateValue = negatedPredicate.get(operator);
@@ -448,16 +442,8 @@ class QuerySqlTranslator {
                     boolean exists = (Boolean) predicate.get(operator);
                     whereClauses.add(convertExistsToSqlClauseForFieldName(fieldName, exists));
                 } else {
-                    String whereClause;
-                    if (operator.equals(NE)) {
-                        String tableName = IndexManager.tableNameForIndex(indexName);
-                        whereClause = whereClauseForNot(fieldName,
-                                                        operatorMap.get(EQ),
-                                                        tableName);
-                    } else {
-                        String sqlOperator = operatorMap.get(operator);
-                        whereClause = String.format("\"%s\" %s ?", fieldName, sqlOperator);
-                    }
+                    String sqlOperator = operatorMap.get(operator);
+                    String whereClause = String.format("\"%s\" %s ?", fieldName, sqlOperator);
 
                     whereClauses.add(whereClause);
                     Object predicateValue = predicate.get(operator);

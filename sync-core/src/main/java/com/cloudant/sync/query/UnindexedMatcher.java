@@ -14,8 +14,9 @@ package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.DocumentRevision;
 
+import static com.cloudant.sync.query.QueryConstants.*;
+
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -84,12 +85,6 @@ class UnindexedMatcher {
 
     private static final Logger logger = Logger.getLogger(UnindexedMatcher.class.getName());
 
-    private static final String AND = "$and";
-    private static final String OR = "$or";
-    private static final String NOT = "$not";
-    private static final String NE = "$ne";
-    private static final String EQ = "$eq";
-
     /**
      *  Return a new initialised matcher.
      *
@@ -137,13 +132,7 @@ class UnindexedMatcher {
             Map<String, Object> clause = (Map<String, Object>) rawClause;
             String field = (String) clause.keySet().toArray()[0];
             if (!field.startsWith("$")) {
-                Object converted = convertNeClauseToNotEq(field,
-                                                          (Map<String, Object>) clause.get(field));
-                if (converted == null) {
-                    basicClauses.add(rawClause);
-                } else {
-                    basicClauses.add(converted);
-                }
+                basicClauses.add(rawClause);
             }
         }
 
@@ -187,36 +176,6 @@ class UnindexedMatcher {
         }
 
         return root;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> convertNeClauseToNotEq(String field,
-                                                              Map<String, Object> clause) {
-        // We either have { "$not" : { "$operator" : "value" } }
-        //     or         { "$operator" : "value" }
-        Map<String, Object> converted = null;
-        String operator = (String) clause.keySet().toArray()[0];
-        if (operator.equals(NE)) {
-            // Convert { "$ne" : "value" } to { "$not" : { "$eq" : "value" } }
-            Map<String, Object> eqClause = new HashMap<String, Object>();
-            eqClause.put(EQ, clause.get(operator));
-            Map<String, Object> notClause = new HashMap<String, Object>();
-            notClause.put(NOT, eqClause);
-            converted = new HashMap<String, Object>();
-            converted.put(field, notClause);
-        } else if (operator.equals(NOT)) {
-            Map<String, Object> subClause = (Map<String, Object>) clause.get(operator);
-            String subOperator = (String) subClause.keySet().toArray()[0];
-            if (subOperator.equals(NE)) {
-                // Convert { "$not" : { "$ne" : "value" } } to { "$eq" : "value" }
-                Map<String, Object> eqClause = new HashMap<String, Object>();
-                eqClause.put(EQ, subClause.get(subOperator));
-                converted = new HashMap<String, Object>();
-                converted.put(field, eqClause);
-            }
-        }
-
-        return converted;
     }
 
     /**
