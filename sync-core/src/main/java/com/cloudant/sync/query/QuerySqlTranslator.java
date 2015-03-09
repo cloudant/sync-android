@@ -260,7 +260,7 @@ class QuerySqlTranslator {
         for (Object rawClause: clauses) {
             Map<String, Object> clause = (Map<String, Object>) rawClause;
             String field = (String) clause.keySet().toArray()[0];
-            if (field.startsWith("$or")) {
+            if (field.equals(OR)) {
                 QueryNode orNode = translateQuery(clause, indexes, state);
                 if (root != null) {
                     root.children.add(orNode);
@@ -272,7 +272,7 @@ class QuerySqlTranslator {
         for (Object rawClause: clauses) {
             Map<String, Object> clause = (Map<String, Object>) rawClause;
             String field = (String) clause.keySet().toArray()[0];
-            if (field.startsWith("$and")) {
+            if (field.equals(AND)) {
                 QueryNode andNode = translateQuery(clause, indexes, state);
                 if (root != null) {
                     root.children.add(andNode);
@@ -374,11 +374,12 @@ class QuerySqlTranslator {
         List<Object> sqlParameters = new ArrayList<Object>();
 
         Map<String, String> operatorMap = new HashMap<String, String>();
-        operatorMap.put("$eq", "=");
-        operatorMap.put("$gt", ">");
-        operatorMap.put("$gte", ">=");
-        operatorMap.put("$lt", "<");
-        operatorMap.put("$lte", "<=");
+        operatorMap.put(EQ, "=");
+        operatorMap.put(GT, ">");
+        operatorMap.put(GTE, ">=");
+        operatorMap.put(LT, "<");
+        operatorMap.put(LTE, "<=");
+        operatorMap.put(IN, "IN");
 
         for (Object rawComponent: clause) {
             Map<String, Object> component = (Map<String, Object>) rawComponent;
@@ -423,36 +424,53 @@ class QuerySqlTranslator {
                     // since this clause is negated we need to negate the bool value
                     whereClauses.add(convertExistsToSqlClauseForFieldName(fieldName, exists));
                 } else {
+                    String whereClause;
                     String sqlOperator = operatorMap.get(operator);
                     String tableName = IndexManager.tableNameForIndex(indexName);
-                    String whereClause = whereClauseForNot(fieldName, sqlOperator, tableName);
-
-                    whereClauses.add(whereClause);
-                    predicateValue = negatedPredicate.get(operator);
-                    if (validatePredicateValue(predicateValue)) {
-                        sqlParameters.add(String.valueOf(predicateValue));
+                    String placeholder;
+                    if (operator.equals(IN)) {
+                        // The predicate map value must be a List here.
+                        // This was validated during normalization.
+                        List<Object> inList = (List<Object>) negatedPredicate.get(operator);
+                        placeholder = placeholdersForInList(inList, sqlParameters);
                     } else {
-                        logger.log(Level.SEVERE, "Predicate value is invalid.");
-                        return null;
+                        // The predicate map value must be either a
+                        // String or a non-Float Number here.
+                        // This was validated during normalization.
+                        predicateValue = negatedPredicate.get(operator);
+                        placeholder = "?";
+                        sqlParameters.add(String.valueOf(predicateValue));
                     }
-                }
 
+                    whereClause = whereClauseForNot(fieldName, sqlOperator, tableName, placeholder);
+                    whereClauses.add(whereClause);
+                }
             } else {
                 if (operator.equals(EXISTS)) {
                     boolean exists = (Boolean) predicate.get(operator);
                     whereClauses.add(convertExistsToSqlClauseForFieldName(fieldName, exists));
                 } else {
+                    String whereClause;
                     String sqlOperator = operatorMap.get(operator);
-                    String whereClause = String.format("\"%s\" %s ?", fieldName, sqlOperator);
-
-                    whereClauses.add(whereClause);
-                    Object predicateValue = predicate.get(operator);
-                    if (validatePredicateValue(predicateValue)) {
-                        sqlParameters.add(String.valueOf(predicateValue));
+                    String placeholder;
+                    if (operator.equals(IN)) {
+                        // The predicate map value must be a List here.
+                        // This was validated during normalization.
+                        List<Object> inList = (List<Object>) predicate.get(operator);
+                        placeholder = placeholdersForInList(inList, sqlParameters);
                     } else {
-                        logger.log(Level.SEVERE, "Predicate value is invalid.");
-                        return null;
+                        // The predicate map value must be either a
+                        // String or a non-Float Number here.
+                        // This was validated during normalization.
+                        Object predicateValue = predicate.get(operator);
+                        placeholder = "?";
+                        sqlParameters.add(String.valueOf(predicateValue));
                     }
+
+                    whereClause = String.format("\"%s\" %s %s", fieldName,
+                                                                sqlOperator,
+                                                                placeholder);
+                    whereClauses.add(whereClause);
                 }
             }
         }
@@ -468,6 +486,17 @@ class QuerySqlTranslator {
         return SqlParts.partsForSql(where, parameterArray);
     }
 
+    private static String placeholdersForInList(List<Object> values, List<Object> sqlParameters) {
+        List<String> inOperands = new ArrayList<String>();
+        for (Object value : values) {
+            inOperands.add("?");
+            sqlParameters.add(String.valueOf(value));
+        }
+
+        Joiner opJoiner = Joiner.on(", ").skipNulls();
+        return String.format("( %s )", opJoiner.join(inOperands));
+    }
+
     /**
      * WHERE clause representation of $not must be handled by using a
      * sub-SELECT statement of the operator which is then applied to
@@ -481,9 +510,10 @@ class QuerySqlTranslator {
      * @return the NOT-ted WHERE clause for the fieldName and sqlOperator
      */
     private static String whereClauseForNot(String fieldName,
-                                                String sqlOperator,
-                                                String tableName) {
-        String whereForSubSelect = String.format("\"%s\" %s ?", fieldName, sqlOperator);
+                                            String sqlOperator,
+                                            String tableName,
+                                            String operand) {
+        String whereForSubSelect = String.format("\"%s\" %s %s", fieldName, sqlOperator, operand);
         String subSelect = String.format("SELECT _id FROM %s WHERE %s",
                                          tableName,
                                          whereForSubSelect);
@@ -502,12 +532,6 @@ class QuerySqlTranslator {
         }
 
         return sqlClause;
-    }
-
-    private static boolean validatePredicateValue(Object predicateValue) {
-        // String or Number other than Float is valid
-        return ((predicateValue instanceof String || predicateValue instanceof Number) &&
-                !(predicateValue instanceof Float));
     }
 
 }

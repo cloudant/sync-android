@@ -1380,9 +1380,9 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         System.out.println(query);
         QueryResult queryResult = im.find(query);
         assertThat(queryResult.documentIds(), containsInAnyOrder("mike12",
-                "mike34",
-                "mike72",
-                "fred34"));
+                                                                 "mike34",
+                                                                 "mike72",
+                                                                 "fred34"));
     }
 
     @Test
@@ -1414,6 +1414,71 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         query.put("pet", notOp);
         QueryResult queryResult = im.find(query);
         assertThat(queryResult.documentIds(), contains("fred12"));
+    }
+
+    // When querying using $in operator
+
+    @Test
+    public void canFindDocumentsWithArraysUsingIN() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pet" : { "$in" : [ "fish", "hamster" ] } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$in", Arrays.<Object>asList("fish", "hamster"));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike34", "john44"));
+    }
+
+    @Test
+    public void canFindDocumentWithoutArraysUsingIN() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pet" : { "$in" : [ "parrot", "turtle" ] } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$in", Arrays.<Object>asList("parrot", "turtle"));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), contains("fred34"));
+    }
+
+    @Test
+    public void canFindDocumentsWithAndWithoutArraysUsingIN() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pet" : { "$in" : [ "cat", "dog" ] } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$in", Arrays.<Object>asList("cat", "dog"));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "mike34", "john22"));
+    }
+
+    @Test
+    public void returnsEmptyResultWhenNoMatchUsingIN() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pet" : { "$in" : [ "turtle", "pig" ] } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        //op.put("$in", Arrays.<Object>asList("turtle", "pig"));
+        op.put("$eq", "turtle");
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.size(), is(0));
+    }
+
+    @Test
+    public void canFindDocumentsWithAndWithoutArraysUsingNOTIN() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pet" : { "$not" : { "$in" : [ "cat", "dog" ] } } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$in", Arrays.<Object>asList("cat", "dog"));
+        Map<String, Object> notOp = new HashMap<String, Object>();
+        notOp.put("$not", op);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", notOp);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("fred12", "fred34", "john44"));
     }
 
     // When there is a large result set

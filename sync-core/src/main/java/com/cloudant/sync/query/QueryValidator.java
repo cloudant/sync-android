@@ -29,13 +29,14 @@ import java.util.logging.Logger;
 class QueryValidator {
 
     // negatedShortHand is used for operator shorthand processing.
-    // A shorthand operator like $ne has a longhand representation
+    // For example:
+    // The shorthand operator $ne has a longhand representation
     // that is { "$not" : { "$eq" : ... } }.  Therefore the negation
-    // of the $ne operator is $eq.
-    // Presently only $ne is supported.  More to come soon...
+    // of the $ne operator is the $eq operator.
     private static final Map<String, String> negatedShortHand = new HashMap<String, String>() {
         {
-            put(NE,EQ);
+            put(NE, EQ);
+            put(NIN, IN);
         }
     };
     private static final Logger logger = Logger.getLogger(QueryValidator.class.getName());
@@ -48,12 +49,6 @@ class QueryValidator {
         boolean isWildCard = false;
         if (query.isEmpty()) {
             isWildCard = true;
-        }
-
-        if (!validateQueryValue(query)) {
-            String msg = String.format("Invalid value encountered in query: %s", query.toString());
-            logger.log(Level.SEVERE, msg);
-            return null;
         }
 
         // First expand the query to include a leading compound predicate
@@ -336,7 +331,7 @@ class QueryValidator {
 
     private static boolean validateCompoundOperatorOperand(Object operand) {
         if (!(operand instanceof List)) {
-            String msg = String.format("Argument to compound operator is not an NSArray: %s",
+            String msg = String.format("Argument to compound operator is not a List: %s",
                                        operand.toString());
             logger.log(Level.SEVERE, msg);
             return false;
@@ -385,12 +380,12 @@ class QueryValidator {
             }
 
             String key = (String) clause.keySet().toArray()[0];
-            if (Arrays.asList("$or", "$not", "$and").contains(key)) {
+            if (Arrays.asList(OR, NOT, AND).contains(key)) {
                 // this should have a list as top level type
                 Object compoundClauses = clause.get(key);
                 if (validateCompoundOperatorOperand(compoundClauses)) {
                     // validate list
-                    valid = validateCompoundOperatorClauses((List) compoundClauses);
+                    valid = validateCompoundOperatorClauses((List<Object>) compoundClauses);
                 }
             } else if (!(key.startsWith("$"))) {
                 // this should have a map
@@ -403,7 +398,7 @@ class QueryValidator {
             }
 
             if (!valid) {
-                break;  // if we have gotten here with valid being no, we should abort
+                break;  // if we have gotten here with valid being false, we should abort
             }
         }
 
@@ -417,19 +412,24 @@ class QueryValidator {
                                                     "$gt",
                                                     "$exists",
                                                     "$not",
-                                                    "$ne",
                                                     "$gte",
-                                                    "$lte");
+                                                    "$lte",
+                                                    "$in");
         if (clause.size() == 1) {
             String operator = (String) clause.keySet().toArray()[0];
             if (validOperators.contains(operator)) {
                 // contains correct operator
                 Object clauseOperand = clause.get(operator);
-                // handle special case, $not is the only op that expects a dict
-                if (operator.equals("$not") && clauseOperand instanceof Map) {
-                    return validateClause((Map) clauseOperand);
-                } else if (validatePredicateValue(clauseOperand, operator)) {
-                    return true;
+                // Handle special cases:
+                //  - $not is the only operator that expects a Map
+                //  - $in is the only operator that expects a List
+                if (operator.equals(NOT)) {
+                    return clauseOperand instanceof Map && validateClause((Map) clauseOperand);
+                } else if (operator.equals(IN)) {
+                    return clauseOperand instanceof List &&
+                           validateInListValues((List<Object>) clauseOperand);
+                } else {
+                    return validatePredicateValue(clauseOperand, operator);
                 }
             }
         }
@@ -437,13 +437,27 @@ class QueryValidator {
         return false;
     }
 
-    private static boolean validatePredicateValue(Object predicateValue, String operator) {
-        if (operator.equals("$exists")) {
-            return validateExistsArgument(predicateValue);
-        } else {
-            return (predicateValue instanceof String ||
-                    predicateValue instanceof Number && !(predicateValue instanceof Float));
+    private static boolean validateInListValues(List<Object> inListValues) {
+        boolean valid = true;
+
+        for (Object value : inListValues) {
+            if (!validatePredicateValue(value, IN)) {
+                valid = false;
+                break;
+            }
         }
+
+        return valid;
+    }
+
+    private static boolean validatePredicateValue(Object predicateValue, String operator) {
+        if (operator.equals(EXISTS)) {
+            return validateExistsArgument(predicateValue);
+        } else if (validateNotAFloat(predicateValue)) {
+            return (predicateValue instanceof String || predicateValue instanceof Number);
+        }
+
+        return false;
     }
 
     private static boolean validateExistsArgument(Object exists) {
@@ -457,18 +471,12 @@ class QueryValidator {
         return valid;
     }
 
-    private static boolean validateQueryValue(Object value) {
+    private static boolean validateNotAFloat(Object value) {
         boolean valid = true;
-        if (value instanceof Map) {
-            for (Object key: ((Map) value).keySet()) {
-                valid = valid && validateQueryValue(((Map) value).get(key));
-            }
-        } else if (value instanceof List) {
-            for (Object element : (List) value) {
-                valid = valid && validateQueryValue(element);
-            }
-        } else if (value instanceof Float) {
+
+        if (value instanceof Float) {
             valid = false;
+            logger.log(Level.SEVERE, "Float value found in query: %f - Use Double instead.", value);
         }
 
         return valid;
