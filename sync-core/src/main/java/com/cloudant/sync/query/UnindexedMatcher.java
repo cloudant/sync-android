@@ -270,17 +270,17 @@ class UnindexedMatcher {
     private boolean valueCompare(Object actual, String operator, Object expected) {
         boolean passed;
 
-        if (operator.equals("$eq")) {
+        if (operator.equals(EQ)) {
             passed = compareEq(actual, expected);
-        } else if (operator.equals("$lt")) {
+        } else if (operator.equals(LT)) {
             passed = compareLT(actual, expected);
-        } else if (operator.equals("$lte")) {
+        } else if (operator.equals(LTE)) {
             passed = compareLTE(actual, expected);
-        } else if (operator.equals("$gt")) {
+        } else if (operator.equals(GT)) {
             passed = compareGT(actual, expected);
-        } else if (operator.equals("$gte")) {
+        } else if (operator.equals(GTE)) {
             passed = compareGTE(actual, expected);
-        } else if (operator.equals("$exists")) {
+        } else if (operator.equals(EXISTS)) {
             boolean expectedBool = (Boolean) expected;
             boolean exists = (actual != null);
             passed = (exists == expectedBool);

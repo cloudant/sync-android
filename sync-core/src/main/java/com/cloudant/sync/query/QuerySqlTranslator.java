@@ -374,12 +374,12 @@ class QuerySqlTranslator {
         List<Object> sqlParameters = new ArrayList<Object>();
 
         Map<String, String> operatorMap = new HashMap<String, String>();
-        operatorMap.put("$eq", "=");
-        operatorMap.put("$gt", ">");
-        operatorMap.put("$gte", ">=");
-        operatorMap.put("$lt", "<");
-        operatorMap.put("$lte", "<=");
-        operatorMap.put("$in", "IN");
+        operatorMap.put(EQ, "=");
+        operatorMap.put(GT, ">");
+        operatorMap.put(GTE, ">=");
+        operatorMap.put(LT, "<");
+        operatorMap.put(LTE, "<=");
+        operatorMap.put(IN, "IN");
 
         for (Object rawComponent: clause) {
             Map<String, Object> component = (Map<String, Object>) rawComponent;
