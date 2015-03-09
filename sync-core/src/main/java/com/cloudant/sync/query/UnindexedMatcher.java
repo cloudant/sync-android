@@ -234,22 +234,27 @@ class UnindexedMatcher {
                 operator = (String) operatorExpression.keySet().toArray()[0];
             }
 
-            Object expectedValues = operatorExpression.get(operator);
-            if (!(expectedValues instanceof List)) {
-                expectedValues = Arrays.asList(expectedValues);
-            }
+            Object expected = operatorExpression.get(operator);
             Object actual = ValueExtractor.extractValueForFieldName(fieldName, rev);
+            // Since $in is the same as a series of $eq comparisons -
+            // Treat them the same by:
+            // - Ensuring that both expected and actual are Lists.
+            // - Convert the $in operator to the $eq operator.
+            if (!(expected instanceof List)) {
+                expected = Arrays.asList(expected);
+            }
+            if (!(actual instanceof List)) {
+                actual = Arrays.asList(actual);
+            }
+            if (operator.equals(IN)) {
+                operator = EQ;
+            }
 
             boolean passed = false;
-            for (Object expected : (List<Object>) expectedValues) {
-                if (actual instanceof List) {
-                    for (Object actualItem: (List<Object>) actual) {
-                        // OR since any actual item can match any value in the expected list
-                        passed = passed || valueCompare(actualItem, operator, expected);
-                    }
-                } else {
-                    // OR since any value in the expected list can match the actual
-                    passed = passed || valueCompare(actual, operator, expected);
+            for (Object expectedItem : (List<Object>) expected) {
+                for (Object actualItem: (List<Object>) actual) {
+                    // OR since any actual item can match any value in the expected list
+                    passed = passed || valueCompare(actualItem, operator, expectedItem);
                 }
             }
 
@@ -265,7 +270,7 @@ class UnindexedMatcher {
     private boolean valueCompare(Object actual, String operator, Object expected) {
         boolean passed;
 
-        if (operator.equals("$eq") || operator.equals("$in")) {
+        if (operator.equals("$eq")) {
             passed = compareEq(actual, expected);
         } else if (operator.equals("$lt")) {
             passed = compareLT(actual, expected);
@@ -293,10 +298,6 @@ class UnindexedMatcher {
             return l.equals(r);
         } else if (l instanceof Boolean && r instanceof Boolean) {
             return l == r;
-        } else if (l instanceof Float || r instanceof Float) {
-            String msg = String.format("Value in comparison is a Float: %s, %s", l, r);
-            logger.log(Level.WARNING, msg);
-            return false;
         } else {
             return l instanceof Number && r instanceof Number &&
                     ((Number) l).doubleValue() == ((Number) r).doubleValue();
@@ -333,13 +334,7 @@ class UnindexedMatcher {
             Number lNum = (Number) l;
             Number rNum = (Number) r;
 
-            if (l instanceof Float || r instanceof Float) {
-                String msg = String.format("Value in comparison is a Float: %s, %s", l, r);
-                logger.log(Level.WARNING, msg);
-                return false;
-            } else {
-                return lNum.doubleValue() < rNum.doubleValue();
-            }
+            return lNum.doubleValue() < rNum.doubleValue();
         }
     }
 
@@ -351,13 +346,7 @@ class UnindexedMatcher {
             logger.log(Level.WARNING, msg);
             return false;  // Not sure how to compare values that are not numbers or strings
         } else {
-            if (l instanceof Float || r instanceof Float) {
-                String msg = String.format("Value in comparison is a Float: %s, %s", l, r);
-                logger.log(Level.WARNING, msg);
-                return false;
-            } else {
-                return compareLT(l, r) || compareEq(l, r);
-            }
+            return compareLT(l, r) || compareEq(l, r);
         }
     }
 
@@ -369,13 +358,7 @@ class UnindexedMatcher {
             logger.log(Level.WARNING, msg);
             return false;  // Not sure how to compare values that are not numbers or strings
         } else {
-            if (l instanceof Float || r instanceof Float) {
-                String msg = String.format("Value in comparison is a Float: %s, %s", l, r);
-                logger.log(Level.WARNING, msg);
-                return false;
-            } else {
-                return !compareLTE(l, r);
-            }
+            return !compareLTE(l, r);
         }
     }
 
@@ -387,13 +370,7 @@ class UnindexedMatcher {
             logger.log(Level.WARNING, msg);
             return false;  // Not sure how to compare values that are not numbers or strings
         } else {
-            if (l instanceof Float || r instanceof Float) {
-                String msg = String.format("Value in comparison is a Float: %s, %s", l, r);
-                logger.log(Level.WARNING, msg);
-                return false;
-            } else {
-                return !compareLT(l, r);
-            }
+            return !compareLT(l, r);
         }
     }
 

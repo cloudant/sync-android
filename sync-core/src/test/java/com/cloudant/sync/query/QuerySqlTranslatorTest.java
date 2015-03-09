@@ -784,7 +784,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
                                                                  indexName);
-        String expected = "\"name\" = ?";
+        String expected = "\"name\" IN ( ? )";
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
     }
@@ -935,10 +935,9 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
                                                                  indexName);
-        String expectedSubWhere = "WHERE \"name\" IN ( ?, ? ))";
-        String expected = String.format("_id NOT IN (SELECT _id FROM %s %s",
+        String expected = String.format("_id NOT IN (SELECT _id FROM %s %s)",
                                         indexTable,
-                                        expectedSubWhere);
+                                        "WHERE \"name\" IN ( ?, ? )");
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike", "fred")));
     }

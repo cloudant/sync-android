@@ -93,36 +93,6 @@ public class UnindexedMatcherTest {
         assertThat(compareGTE(1, null), is(false));
     }
 
-    // Floats are not allowed.  Result should always be false.
-    @Test
-    @SuppressWarnings("UnnecessaryBoxing")
-    public void compareFloats() {
-        assertThat(compareEq(new Float(1.0f), new Integer(1)), is(false));
-        assertThat(compareEq(new Integer(1), new Float(1.0f)), is(false));
-        assertThat(compareEq(new Float(1.1f), new Integer(1)), is(false));
-        assertThat(compareEq(new Integer(1), new Float(1.1f)), is(false));
-
-        assertThat(compareLT(new Float(1.0f), new Integer(1)), is(false));
-        assertThat(compareLT(new Integer(1), new Float(1.0f)), is(false));
-        assertThat(compareLT(new Float(1.1f), new Integer(1)), is(false));
-        assertThat(compareLT(new Integer(1), new Float(1.1f)), is(false));
-
-        assertThat(compareLTE(new Float(1.0f), new Integer(1)), is(false));
-        assertThat(compareLTE(new Integer(1), new Float(1.0f)), is(false));
-        assertThat(compareLTE(new Float(1.1f), new Integer(1)), is(false));
-        assertThat(compareLTE(new Integer(1), new Float(1.1f)), is(false));
-
-        assertThat(compareGT(new Float(1.0f), new Integer(1)), is(false));
-        assertThat(compareGT(new Integer(1), new Float(1.0f)), is(false));
-        assertThat(compareGT(new Float(1.1f), new Integer(1)), is(false));
-        assertThat(compareGT(new Integer(1), new Float(1.1f)), is(false));
-
-        assertThat(compareGTE(new Float(1.0f), new Integer(1)), is(false));
-        assertThat(compareGTE(new Integer(1), new Float(1.0f)), is(false));
-        assertThat(compareGTE(new Float(1.1f), new Integer(1)), is(false));
-        assertThat(compareGTE(new Integer(1), new Float(1.1f)), is(false));
-    }
-
     @Test
     public void compareStringToString() {
         assertThat(compareEq("mike", "mike"), is(true));

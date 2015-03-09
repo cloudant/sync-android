@@ -427,28 +427,22 @@ class QuerySqlTranslator {
                     String whereClause;
                     String sqlOperator = operatorMap.get(operator);
                     String tableName = IndexManager.tableNameForIndex(indexName);
-                    String argument;
+                    String placeholder;
                     if (operator.equals(IN)) {
                         // The predicate map value must be a List here.
                         // This was validated during normalization.
                         List<Object> inList = (List<Object>) negatedPredicate.get(operator);
-                        argument = buildWhereClauseArgument(inList, sqlParameters);
-                        // If the argument is a single "?" placeholder then we are
-                        // dealing with a single equality comparison.  Therefore,
-                        // we set the operator to $eq.
-                        if (argument != null && argument.equals("?")) {
-                            sqlOperator = operatorMap.get(EQ);
-                        }
+                        placeholder = placeholdersForInList(inList, sqlParameters);
                     } else {
+                        // The predicate map value must be either a
+                        // String or a non-Float Number here.
+                        // This was validated during normalization.
                         predicateValue = negatedPredicate.get(operator);
-                        argument = buildWhereClauseArgument(Arrays.asList(predicateValue),
-                                                            sqlParameters);
+                        placeholder = "?";
+                        sqlParameters.add(String.valueOf(predicateValue));
                     }
-                    if (argument == null) {
-                        // An error occurred and logged in buildWhereClauseArgument
-                        return null;
-                    }
-                    whereClause = whereClauseForNot(fieldName, sqlOperator, tableName, argument);
+
+                    whereClause = whereClauseForNot(fieldName, sqlOperator, tableName, placeholder);
                     whereClauses.add(whereClause);
                 }
             } else {
@@ -458,30 +452,24 @@ class QuerySqlTranslator {
                 } else {
                     String whereClause;
                     String sqlOperator = operatorMap.get(operator);
-                    String argument;
+                    String placeholder;
                     if (operator.equals(IN)) {
                         // The predicate map value must be a List here.
                         // This was validated during normalization.
                         List<Object> inList = (List<Object>) predicate.get(operator);
-                        argument = buildWhereClauseArgument(inList, sqlParameters);
-                        // If the argument is a single "?" placeholder then we are
-                        // dealing with a single equality comparison.  Therefore,
-                        // we set the operator to $eq.
-                        if (argument != null && argument.equals("?")) {
-                            sqlOperator = operatorMap.get(EQ);
-                        }
+                        placeholder = placeholdersForInList(inList, sqlParameters);
                     } else {
+                        // The predicate map value must be either a
+                        // String or a non-Float Number here.
+                        // This was validated during normalization.
                         Object predicateValue = predicate.get(operator);
-                        argument = buildWhereClauseArgument(Arrays.asList(predicateValue),
-                                                            sqlParameters);
+                        placeholder = "?";
+                        sqlParameters.add(String.valueOf(predicateValue));
                     }
-                    if (argument == null) {
-                        // An error occurred and logged in buildWhereClauseArgument
-                        return null;
-                    }
+
                     whereClause = String.format("\"%s\" %s %s", fieldName,
                                                                 sqlOperator,
-                                                                argument);
+                                                                placeholder);
                     whereClauses.add(whereClause);
                 }
             }
@@ -498,25 +486,15 @@ class QuerySqlTranslator {
         return SqlParts.partsForSql(where, parameterArray);
     }
 
-    private static String buildWhereClauseArgument(List<Object> values,
-                                                   List<Object> sqlParameters) {
+    private static String placeholdersForInList(List<Object> values, List<Object> sqlParameters) {
         List<String> inOperands = new ArrayList<String>();
         for (Object value : values) {
-            if (validatePredicateValue(value)) {
-                inOperands.add("?");
-                sqlParameters.add(String.valueOf(value));
-            } else {
-                logger.log(Level.SEVERE, "Predicate value is invalid.");
-                return null;
-            }
+            inOperands.add("?");
+            sqlParameters.add(String.valueOf(value));
         }
 
-        if (inOperands.size() == 1) {
-            return inOperands.get(0);
-        } else {
-            Joiner opJoiner = Joiner.on(", ").skipNulls();
-            return String.format("( %s )", opJoiner.join(inOperands));
-        }
+        Joiner opJoiner = Joiner.on(", ").skipNulls();
+        return String.format("( %s )", opJoiner.join(inOperands));
     }
 
     /**
@@ -554,12 +532,6 @@ class QuerySqlTranslator {
         }
 
         return sqlClause;
-    }
-
-    private static boolean validatePredicateValue(Object predicateValue) {
-        // String or Number other than Float is valid
-        return ((predicateValue instanceof String || predicateValue instanceof Number) &&
-                !(predicateValue instanceof Float));
     }
 
 }

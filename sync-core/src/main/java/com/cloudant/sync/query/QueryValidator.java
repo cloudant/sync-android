@@ -476,7 +476,7 @@ class QueryValidator {
 
         if (value instanceof Float) {
             valid = false;
-            logger.log(Level.SEVERE, "Float value encountered in query");
+            logger.log(Level.SEVERE, "Float value found in query: %f - Use Double instead.", value);
         }
 
         return valid;
