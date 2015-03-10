@@ -49,8 +49,8 @@ public class MyActivity extends ListActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //set up dexcache this is a workaround for https://code.google.com/p/dexmaker/issues/detail?id=2
-        System.setProperty( "dexmaker.dexcache", this.getCacheDir().getPath() );
+
+        setTestProperties();
 
         trs = TestResultStorage.getInstance();
         mAdapter = new ArrayAdapter<TestResults>(this,R.layout.list_view_text);
@@ -155,6 +155,16 @@ public class MyActivity extends ListActivity {
         intent.putExtra(BundleConstants.EXCEPTION_STACK,tr.exceptionStack());
 
         this.startActivity(intent); // start display
+
+    }
+
+    private void setTestProperties(){
+        //set up dexcache this is a workaround for https://code.google.com/p/dexmaker/issues/detail?id=2
+        System.setProperty( "dexmaker.dexcache", this.getCacheDir().getPath() );
+
+        for(String[] testOption : BuildConfig.TEST_CONFIG){
+                System.setProperty(testOption[0], testOption[1]);
+        }
 
     }
 }

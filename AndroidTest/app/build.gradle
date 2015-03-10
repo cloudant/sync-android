@@ -3,6 +3,7 @@ apply plugin: 'com.android.application'
 def testResultsFile = "testResults_"+UUID.randomUUID().toString()+".xml"
 def scriptLocation = project.projectDir.getAbsolutePath(); //this is the location of THIS file
 def testSrcDir = "../../sync-core/src/test/java/" // this is the location of your test code, relative to this file
+def testConfig = convertTestSysPropsToHash()
 
 android {
     def classes = findAllTestClasses(new File("$scriptLocation/$testSrcDir")).toString().replace("[","{").replace("]","}");
@@ -19,6 +20,11 @@ android {
         buildConfigField "Class[]", "classToTests", "$classes"
         buildConfigField "String", "testOutputFile", "\"$testResultsFile\""
         buildConfigField "Class[]", "testExcludes", "{com.cloudant.common.SystemTest.class, com.cloudant.common.RequireRunningCouchDB.class, com.cloudant.common.PerformanceTest.class}"
+
+        //pass test config as key value pairs
+
+        buildConfigField "String[][]", "TEST_CONFIG", testConfig
+
     }
 
     productFlavors {
@@ -101,6 +107,17 @@ task(uploadFixtures,type:Exec) {
     // this will work irrespective of current working directory due to use of $scriptLocation
     def android = "$System.env.ANDROID_HOME"
     commandLine "$android/platform-tools/adb","push", "-p", "$scriptLocation/../../fixture", "/sdcard/fixture"
+}
+
+def convertTestSysPropsToHash (){
+
+    return "{" +
+        System.properties
+        .grep { prop -> prop.key.startsWith("test") }
+        .collect(new ArrayList()) { prop -> "{\""+prop.key+"\",\""+ prop.value+"\"}"}
+        .join(",") +
+        "}"
+
 }
 
 def findAllTestClasses(File root){
