@@ -36,10 +36,6 @@ public abstract class CouchTestBase {
     public static final Boolean IGNORE_AUTH_HEADERS = Boolean.valueOf(
             System.getProperty("test.couch.ignore.auth.headers",Boolean.FALSE.toString()));
 
-    //See FB (Cloudant internal issue tracker) 45086 for reason why this option exists
-    public static final Boolean IGNORE_MULTIPART_ATTACHMENTS = Boolean.valueOf(
-            System.getProperty("test.couch.ignore.multipart.attachments",Boolean.TRUE.toString()));
-
     public CouchConfig getCouchConfig(String db) {
 
         if (SPECIFIED_COUCH) {
