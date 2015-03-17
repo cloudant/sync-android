@@ -22,6 +22,8 @@ import com.google.common.eventbus.Subscribe;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -256,8 +258,17 @@ public class BasicReplicatorMockTest {
         verify(mockListener).complete(rc);
         verify(mockListener, never()).error(any(ReplicationErrored.class));
 
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                Thread.sleep(1000); //sleep for a second, will give enough time to check state
+                return null;
+            }
+        }).when(mockStrategy).run();
+
         replicator.start();
         Assert.assertEquals(Replicator.State.STARTED, replicator.getState());
+
         Assert.assertTrue(replicator.strategyThread().isAlive());
         replicator.await();
         Assert.assertFalse(replicator.strategyThread().isAlive());
@@ -279,6 +290,13 @@ public class BasicReplicatorMockTest {
         verify(mockListener).error(re);
         verify(mockListener, never()).complete(any(ReplicationCompleted.class));
 
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                Thread.sleep(1000); //sleep for a second, will give enough time to check state
+                return null;
+            }
+        }).when(mockStrategy).run();
         replicator.start();
         Assert.assertEquals(Replicator.State.STARTED, replicator.getState());
         Assert.assertTrue(replicator.strategyThread().isAlive());
