@@ -14,32 +14,31 @@
 
 package com.cloudant.sync.replication;
 
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.startsWith;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.AnimalDb;
 import com.cloudant.mazha.CouchClient;
-import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
-import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
-import com.cloudant.sync.indexing.IndexManager;
-import com.cloudant.sync.indexing.QueryBuilder;
-import com.cloudant.sync.indexing.QueryResult;
+import com.cloudant.sync.query.IndexManager;
+import com.cloudant.sync.query.QueryResult;
 import com.google.common.collect.ImmutableMap;
-import org.junit.After;
+
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.startsWith;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @Category(RequireRunningCouchDB.class)
 public class BasicPullStrategyTest extends ReplicationTestBase {
@@ -347,15 +346,16 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
         IndexManager im = new IndexManager(datastore);
         try {
-            im.ensureIndexed("diet", "diet");
+            im.ensureIndexed(Arrays.<Object>asList("diet"), "diet");
 
             AnimalDb.populateWithoutFilter(remoteDb.couchClient);
             this.pull();
 
             Assert.assertEquals(10, datastore.getDocumentCount());
 
-            QueryBuilder qb = new QueryBuilder();
-            QueryResult qr = im.query(qb.index("diet").equalTo("herbivore").build());
+            Map<String, Object> query = new HashMap<String, Object>();
+            query.put("diet", "herbivore");
+            QueryResult qr = im.find(query);
             Assert.assertEquals(4, qr.size());
         } finally {
             im.close();
