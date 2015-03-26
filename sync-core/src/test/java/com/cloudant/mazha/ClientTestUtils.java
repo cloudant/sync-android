@@ -22,6 +22,8 @@ import static org.hamcrest.CoreMatchers.startsWith;
 
 import com.cloudant.common.CouchConstants;
 import com.cloudant.common.CouchUtils;
+import com.cloudant.http.Http;
+import com.cloudant.http.HttpConnection;
 import com.cloudant.mazha.json.JSONHelper;
 
 import org.apache.commons.io.IOUtils;
@@ -31,8 +33,6 @@ import org.json.JSONTokener;
 import org.junit.Assert;
 
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -202,14 +202,25 @@ public class ClientTestUtils {
     }
 
 
-    public static int executeHttpPostRequest(CouchClient couchClient, URI uri, String payload) {
-        HttpRequests requests = couchClient.getHttpClient();
-        return requests.postResponse(uri,payload).getStatusLine().getStatusCode();
+    public static int executeHttpPostRequest(URI uri, String payload) {
+        HttpConnection connection = Http.connect("POST", "application/json", uri);
+        try {
+            connection.setInput(payload);
+            connection.execute();
+        } catch (Exception e) {
+            ; // ignore exception
+        }
+        try {
+            return connection.getConnection().getResponseCode();
+        } catch (Exception e) {
+            System.out.println("*** got ex "+e);
+            return 0;
+        }
     }
 
-    public static List<String> getRemoteRevisionIDs(CouchClient couchClient, URI uri) throws Exception{
-        HttpRequests requests = couchClient.getHttpClient();
-        InputStream in = requests.get(uri);
+    public static List<String> getRemoteRevisionIDs(URI uri) throws Exception{
+        HttpConnection connection = Http.GET(uri);
+        InputStream in = connection.executeToInputStream();
 
         JSONObject jsonObject = new JSONObject(new JSONTokener(IOUtils.toString(in)));
         JSONArray revsInfo = jsonObject.getJSONArray("_revs_info");

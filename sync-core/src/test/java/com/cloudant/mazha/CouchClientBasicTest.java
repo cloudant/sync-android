@@ -44,11 +44,6 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     // to another class
 
     @Test
-    public void getHttpClient() {
-        Assert.assertNotNull(client.getHttpClient());
-    }
-
-    @Test
     public void getJsonHelper_mustNotBeNull() {
         Assert.assertNotNull(client.jsonHelper);
     }

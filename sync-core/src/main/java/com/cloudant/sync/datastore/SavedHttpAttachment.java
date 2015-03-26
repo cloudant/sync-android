@@ -14,10 +14,10 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64InputStreamFactory;
-import com.cloudant.mazha.HttpRequests;
+import com.cloudant.http.Http;
+import com.cloudant.http.HttpConnection;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.params.BasicHttpParams;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -74,11 +74,14 @@ public class SavedHttpAttachment extends Attachment {
     @Override
     public InputStream getInputStream() throws IOException {
         if( data == null) {
-            HttpRequests requests = new HttpRequests(new BasicHttpParams(), null, null);
+            HttpConnection connection = Http.GET(attachmentURI);
             if(encoding == Encoding.Gzip) {
-                return new GZIPInputStream(requests.getCompressed(attachmentURI));
+                connection.requestProperties.put("Accept-Encoding", "gzip");
+                InputStream is = connection.executeToInputStream();
+                return new GZIPInputStream(is);
             } else {
-                return requests.get(attachmentURI);
+                InputStream is = connection.executeToInputStream();
+                return is;
             }
         } else {
             return new ByteArrayInputStream(data);
