@@ -14,7 +14,7 @@ android {
     defaultConfig {
         applicationId "cloudant.com.androidtest"
         minSdkVersion 14
-        targetSdkVersion 20
+        targetSdkVersion 19
         versionCode 1
         versionName "1.0"
         buildConfigField "Class[]", "classToTests", "$classes"
