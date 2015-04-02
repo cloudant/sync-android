@@ -3,6 +3,27 @@
 Cloudant Sync - Android is written in Java and uses
 [gradle](http://www.gradle.org) as its build tool.
 
+## Contributor License Agreement
+
+In order for us to accept pull-requests, the contributor must first complete
+a Contributor License Agreement (CLA). This clarifies the intellectual 
+property license granted with any contribution. It is for your protection as a 
+Contributor as well as the protection of IBM and its customers; it does not 
+change your rights to use your own Contributions for any other purpose.
+
+This is a quick process: one option is signing using Preview on a Mac,
+then sending a copy to us via email. Signing this agreement covers both
+[CDTDatastore](https://github.com/cloudant/CDTDatastore) and 
+[sync-android](https://github.com/cloudant/sync-android).
+
+You can download the CLAs here:
+
+ - [Individual](http://cloudant.github.io/cloudant-sync-eap/cla/cla-individual.pdf)
+ - [Corporate](http://cloudant.github.io/cloudant-sync-eap/cla/cla-corporate.pdf)
+
+If you are an IBMer, please contact us directly as the contribution process is
+slightly different.
+
 ## Requirements
 
 The main requirements are:
