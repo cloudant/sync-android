@@ -282,10 +282,14 @@ class AttachmentManager {
      * @param parentSequence
      */
     protected void copyAttachment(SQLDatabase db, long parentSequence, long newSequence, String filename) throws SQLException {
-        Cursor c = db.rawQuery(SQL_ATTACHMENTS_SELECT,
-                new String[]{filename, String.valueOf(parentSequence)});
-        copyCursorValuesToNewSequence(db,c, newSequence);
-        DatabaseUtils.closeCursorQuietly(c);
+        Cursor c = null;
+        try{
+            c = db.rawQuery(SQL_ATTACHMENTS_SELECT,
+                    new String[]{filename, String.valueOf(parentSequence)});
+            copyCursorValuesToNewSequence(db,c, newSequence);
+        }finally{
+            DatabaseUtils.closeCursorQuietly(c);
+        }
     }
 
     /**
