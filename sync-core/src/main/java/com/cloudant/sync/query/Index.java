@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -71,16 +70,16 @@ class Index {
      * @param indexName the index name
      * @return the Index object or null if arguments passed in were invalid.
      */
-    public static Index setUp(List<Object> fieldNames, String indexName) {
-        return setUp(fieldNames, indexName, JSON_TYPE);
+    public static Index getInstance(List<Object> fieldNames, String indexName) {
+        return getInstance(fieldNames, indexName, JSON_TYPE);
     }
 
-    public static Index setUp(List<Object> fieldNames, String indexName, String indexType) {
-        return setUp(fieldNames, indexName, indexType, null);
+    public static Index getInstance(List<Object> fieldNames, String indexName, String indexType) {
+        return getInstance(fieldNames, indexName, indexType, null);
     }
 
     /**
-     * The setUp method handles index specific validation and ensures that the constructed
+     * This method handles index specific validation and ensures that the constructed
      * Index object is valid.
      *
      * @param fieldNames the field names in the index
@@ -90,7 +89,7 @@ class Index {
      *                      Only supported parameter is 'tokenize' for text indexes only.
      * @return the Index object or null if arguments passed in were invalid.
      */
-    public static Index setUp(List<Object> fieldNames,
+    public static Index getInstance(List<Object> fieldNames,
                               String indexName,
                               String indexType,
                               Map<String, String> indexSettings) {
@@ -175,6 +174,25 @@ class Index {
         // We perform a deep comparison of hash maps to ensure that both objects
         // and any sub-objects are equal regardless of order within the maps.
         return this.indexSettings.equals(settings);
+    }
+
+    /**
+     * Converts the index settings to a JSON string
+     *
+     * @return the JSON representation of the index settings
+     */
+    protected String settingsAsJSON() {
+        String json = null;
+        if (indexSettings != null) {
+            try {
+                json = getObjectMapper().writeValueAsString(indexSettings);
+            } catch (JsonProcessingException e) {
+                String msg = String.format("Error processing index settings %s",
+                                           this.indexSettings.toString());
+                logger.log(Level.SEVERE, msg, e);
+            }
+        }
+        return json;
     }
 
     private ObjectMapper getObjectMapper() {

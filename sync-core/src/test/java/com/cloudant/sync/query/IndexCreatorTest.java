@@ -196,6 +196,12 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
                                             "basic",
                                             "json");
         assertThat(indexName, is("basic"));
+        Map<String, Object> indexes = im.listIndexes();
+        assertThat(indexes.size(), is(1));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
+        assertThat((String) index.get("type"), is("json"));
+        assertThat(index.get("settings"), is(nullValue()));
     }
 
     @Test
@@ -205,10 +211,55 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         HashMap<String, String> ageField = new HashMap<String, String>();
         ageField.put("age", "desc");
 
-        // doesn't support using the text type
         String indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField),
                                             "basic",
                                             "text");
+        assertThat(indexName, is("basic"));
+        Map<String, Object> indexes = im.listIndexes();
+        assertThat(indexes.size(), is(1));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
+        assertThat((String) index.get("type"), is("text"));
+        assertThat((String) index.get("settings"), is("{\"tokenize\":\"simple\"}"));
+    }
+
+    @Test
+    public void createIndexWithTextTypeAndTokenizeSetting() {
+        Map<String, String> settings = new HashMap<String, String>();
+        settings.put("tokenize", "porter");
+        String indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"),
+                                            "basic",
+                                            "text",
+                                             settings);
+        assertThat(indexName, is("basic"));
+        Map<String, Object> indexes = im.listIndexes();
+        assertThat(indexes.size(), is(1));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
+        assertThat((String) index.get("type"), is("text"));
+        assertThat((String) index.get("settings"), is("{\"tokenize\":\"porter\"}"));
+    }
+
+    @Test
+    public void indexAndTextIndexCanCoexist() {
+        Map<String, String> settings = new HashMap<String, String>();
+        settings.put("tokenize", "porter");
+        String indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"),
+                                            "textIndex",
+                                            "text",
+                                            settings);
+        assertThat(indexName, is("textIndex"));
+        indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"), "jsonIndex");
+        assertThat(indexName, is("jsonIndex"));
+        Map<String, Object> indexes = im.listIndexes();
+        assertThat(indexes.keySet(), containsInAnyOrder("textIndex", "jsonIndex"));
+    }
+
+    @Test
+    public void correctlyLimitsTextIndexesToOne() {
+        String indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic", "text");
+        assertThat(indexName, is("basic"));
+        indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"), "anotherIndex", "text");
         assertThat(indexName, is(nullValue()));
     }
 

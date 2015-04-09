@@ -48,41 +48,30 @@ class IndexCreator {
         this.queue = queue;
     }
 
-    protected static String ensureIndexed(List<Object> fieldNames,
-                                          String indexName,
-                                          String indexType,
+    protected static String ensureIndexed(Index index,
                                           SQLDatabase database,
                                           Datastore datastore,
                                           ExecutorService queue) {
         IndexCreator executor = new IndexCreator(database, datastore, queue);
 
-        return executor.ensureIndexed(fieldNames, indexName, indexType);
+        return executor.ensureIndexed(index);
     }
 
     /**
-     *  Add a single, possibly compound, index for the given field names.
+     *  Add a single, possibly compound, possibly text index for the given field names.
      *
      *  This function generates a name for the new index.
      *
-     *  @param fieldNames List of field names in the sort format
-     *  @param indexName Name of index to create
-     *  @param indexType "json" is the only supported type for now
+     *  @param index The object that defines an index.  Includes field list, name, type and options.
      *  @return name of created index
      */
-    private String ensureIndexed(List<Object> fieldNames,
-                                 final String indexName,
-                                 final String indexType) {
-        if (fieldNames == null || fieldNames.isEmpty()) {
-            logger.log(Level.SEVERE, "No field names were passed to ensureIndexed");
+    @SuppressWarnings("unchecked")
+    private String ensureIndexed(final Index index) {
+        if (index == null) {
             return null;
         }
 
-        if (indexName == null || indexName.isEmpty()) {
-            logger.log(Level.SEVERE, "No index name was passed to ensureIndexed");
-            return null;
-        }
-
-        final List<String> fieldNamesList = removeDirectionsFromFields(fieldNames);
+        final List<String> fieldNamesList = removeDirectionsFromFields(index.fieldNames);
 
         for (String fieldName: fieldNamesList) {
             if (!validFieldName(fieldName)) {
@@ -95,7 +84,7 @@ class IndexCreator {
         Set<String> uniqueNames = new HashSet<String>(fieldNamesList);
         if (uniqueNames.size() != fieldNamesList.size()) {
             String msg = String.format("Cannot create index with duplicated field names %s"
-                                       , fieldNames);
+                                       , index.fieldNames);
             logger.log(Level.SEVERE, msg);
         }
 
@@ -108,25 +97,33 @@ class IndexCreator {
             fieldNamesList.add(0, "_id");
         }
 
-        // Does the index already exist; return success if it does and is same, else fail
+        // Check the index limit.  Limit is 1 for "text" indexes and unlimited for "json" indexes.
+        // Then check whether the index already exists; return success if it does and is same,
+        // else fail.
         try {
             Map<String, Object> existingIndexes = listIndexesInDatabaseQueue();
-            if (existingIndexes != null && existingIndexes.get(indexName) != null) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> index = (Map<String, Object>) existingIndexes.get(indexName);
-                String existingType = (String) index.get("type");
-                @SuppressWarnings("unchecked")
-                List<String> existingFieldsList = (List<String>) index.get("fields");
+            if (indexLimitReached(index, existingIndexes)) {
+                String msg = String.format("Index limit reached.  Cannot create index %s.",
+                                           index.indexName);
+                logger.log(Level.SEVERE, msg);
+                return null;
+            }
+            if (existingIndexes != null && existingIndexes.get(index.indexName) != null) {
+                Map<String, Object> existingIndex =
+                        (Map<String, Object>) existingIndexes.get(index.indexName);
+                String existingType = (String) existingIndex.get("type");
+                String existingSettings = (String) existingIndex.get("settings");
+                List<String> existingFieldsList = (List<String>) existingIndex.get("fields");
                 Set<String> existingFields = new HashSet<String>(existingFieldsList);
                 Set<String> newFields = new HashSet<String>(fieldNamesList);
-
-                if (existingType.equalsIgnoreCase(indexType) && existingFields.equals(newFields)) {
-                    boolean success = IndexUpdater.updateIndex(indexName,
+                if (existingFields.equals(newFields) &&
+                    index.compareIndexTypeTo(existingType, existingSettings)) {
+                    boolean success = IndexUpdater.updateIndex(index.indexName,
                                                                fieldNamesList,
                                                                database,
                                                                datastore,
                                                                queue);
-                    return success ? indexName : null;
+                    return success ? index.indexName : null;
                 }
             }
         } catch (ExecutionException e) {
@@ -146,8 +143,9 @@ class IndexCreator {
                 // Insert metadata table entries
                 for (String fieldName: fieldNamesList) {
                     ContentValues parameters = new ContentValues();
-                    parameters.put("index_name", indexName);
-                    parameters.put("index_type", indexType);
+                    parameters.put("index_name", index.indexName);
+                    parameters.put("index_type", index.indexType);
+                    parameters.put("index_settings", index.settingsAsJSON());
                     parameters.put("field_name", fieldName);
                     parameters.put("last_sequence", 0);
                     long rowId = database.insert(IndexManager.INDEX_METADATA_TABLE_NAME,
@@ -158,23 +156,42 @@ class IndexCreator {
                     }
                 }
 
-                String statement = null;
-                try {
-                    List<String> columnList = new ArrayList<String>();
-                    for (String field: fieldNamesList) {
-                        columnList.add("\"" + field + "\"");
-                    }
-                    // Create the table for the index
-                    statement = createIndexTableStatementForIndexName(indexName, columnList);
-                    database.execSQL(statement);
+                // Create SQLite data structures to support the index
+                // For JSON index type create a SQLite table and a SQLite index
+                // For TEXT index type create a SQLite virtual table
+                List<String> columnList = new ArrayList<String>();
+                for (String field: fieldNamesList) {
+                    columnList.add("\"" + field + "\"");
+                }
 
-                    // Create the SQLite index on the index table
-                    statement = createIndexIndexStatementForIndexName(indexName, columnList);
-                    database.execSQL(statement);
-                } catch (SQLException e) {
-                    String msg = String.format("Index creation error occurred (%s):",statement);
-                    logger.log(Level.SEVERE, msg, e);
-                    transactionSuccess = false;
+                List<String> statements = new ArrayList<String>();
+                if (index.indexType.equalsIgnoreCase(Index.TEXT_TYPE)) {
+                    List<String> settingsList = new ArrayList<String>();
+                    // Ensure that the _id and _rev columns are not included
+                    // when querying for a search term as part of a full
+                    // text search.
+                    settingsList.add("notindexed=\"_id\"");
+                    settingsList.add("notindexed=\"_rev\"");
+                    // Add text settings
+                    for (String key : index.indexSettings.keySet()) {
+                        settingsList.add(String.format("%s=%s", key, index.indexSettings.get(key)));
+                    }
+                    statements.add(createVirtualTableStatementForIndex(index.indexName,
+                                                                       columnList,
+                                                                       settingsList));
+                } else {
+                    statements.add(createIndexTableStatementForIndex(index.indexName, columnList));
+                    statements.add(createIndexIndexStatementForIndex(index.indexName, columnList));
+                }
+                for (String statement : statements) {
+                    try {
+                        database.execSQL(statement);
+                    } catch (SQLException e) {
+                        String msg = String.format("Index creation error occurred (%s):",statement);
+                        logger.log(Level.SEVERE, msg, e);
+                        transactionSuccess = false;
+                        break;
+                    }
                 }
 
                 if (transactionSuccess) {
@@ -199,14 +216,14 @@ class IndexCreator {
         }
 
         if (success) {
-            success = IndexUpdater.updateIndex(indexName,
+            success = IndexUpdater.updateIndex(index.indexName,
                                                fieldNamesList,
                                                database,
                                                datastore,
                                                queue);
         }
 
-        return success ? indexName : null;
+        return success ? index.indexName : null;
     }
 
     /**
@@ -252,6 +269,35 @@ class IndexCreator {
         return result;
     }
 
+    /**
+     * Based on the proposed index and the list of existing indexes, this method checks
+     * whether another index can be created.  Currently the limit for TEXT indexes is 1.
+     * JSON indexes are unlimited.
+     *
+     * @param index the proposed index
+     * @param existingIndexes the list of already existing indexes
+     * @return whether the index limit has been reached
+     */
+    @SuppressWarnings("unchecked")
+    protected static boolean indexLimitReached(Index index, Map<String, Object> existingIndexes) {
+        if (index.indexType.equalsIgnoreCase(Index.TEXT_TYPE)) {
+            for (String name : existingIndexes.keySet()) {
+                Map<String, Object> existingIndex = (Map<String, Object>) existingIndexes.get(name);
+                String type = (String) existingIndex.get("type");
+                if (type.equalsIgnoreCase(Index.TEXT_TYPE) &&
+                    !name.equalsIgnoreCase(index.indexName)) {
+                    logger.log(Level.SEVERE,
+                            String.format("The text index %s already exists.  ", name) +
+                            "One text index per datastore permitted.  " +
+                            String.format("Delete %s and recreate %s.", name, index.indexName));
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private Map<String, Object> listIndexesInDatabaseQueue() throws ExecutionException,
                                                                     InterruptedException {
         Future<Map<String, Object>> indexes = queue.submit(new Callable<Map<String, Object>>() {
@@ -264,7 +310,7 @@ class IndexCreator {
         return indexes.get();
     }
 
-    private String createIndexTableStatementForIndexName(String indexName, List<String> columns) {
+    private String createIndexTableStatementForIndex(String indexName, List<String> columns) {
         String tableName = IndexManager.tableNameForIndex(indexName);
         Joiner joiner = Joiner.on(" NONE,").skipNulls();
         String cols = joiner.join(columns);
@@ -272,13 +318,37 @@ class IndexCreator {
         return String.format("CREATE TABLE %s ( %s NONE )", tableName, cols);
     }
 
-    private String createIndexIndexStatementForIndexName(String indexName, List<String> columns) {
+    private String createIndexIndexStatementForIndex(String indexName, List<String> columns) {
         String tableName = IndexManager.tableNameForIndex(indexName);
         String sqlIndexName = tableName.concat("_index");
         Joiner joiner = Joiner.on(",").skipNulls();
         String cols = joiner.join(columns);
 
         return String.format("CREATE INDEX %s ON %s ( %s )", sqlIndexName, tableName, cols);
+    }
+
+    /**
+     * This method generates the virtual table create SQL for the specified index.
+     * Note:  Any column that contains an '=' will cause the statement to fail
+     *        because it triggers SQLite to expect that a parameter/value is being passed in.
+     *
+     * @param indexName the index name to be used when creating the SQLite virtual table
+     * @param columns the columns in the table
+     * @param indexSettings the special settings to apply to the virtual table -
+     *                      (only 'tokenize' is current supported)
+     * @return the SQL to create the SQLite virtual table
+     */
+    private String createVirtualTableStatementForIndex(String indexName,
+                                                       List<String> columns,
+                                                       List<String> indexSettings) {
+        String tableName = IndexManager.tableNameForIndex(indexName);
+        Joiner joiner = Joiner.on(",").skipNulls();
+        String cols = joiner.join(columns);
+        String settings = joiner.join(indexSettings);
+
+        return String.format("CREATE VIRTUAL TABLE %s USING FTS4 ( %s, %s )", tableName,
+                                                                              cols,
+                                                                              settings);
     }
 
 }

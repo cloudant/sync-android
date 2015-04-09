@@ -120,4 +120,26 @@ public class IndexManagerTest extends AbstractIndexTestBase {
         assertThat(im.listIndexes().keySet(), containsInAnyOrder("basic", "basic3"));
     }
 
+    @Test
+    public void deleteATextIndex() throws Exception {
+        for (int i = 0; i < 4; i++) {
+            MutableDocumentRevision rev = new MutableDocumentRevision();
+            Map<String, Object> bodyMap = new HashMap<String, Object>();
+            bodyMap.put("name", "mike");
+            bodyMap.put("age", 12);
+            Map<String, Object> petMap = new HashMap<String, Object>();
+            petMap.put("species", "cat");
+            petMap.put("name", "mike");
+            bodyMap.put("pet", petMap);
+            rev.body = DocumentBodyFactory.create(bodyMap);
+            ds.createDocumentFromRevision(rev);
+        }
+
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic", "text");
+        assertThat(im.listIndexes().keySet(), contains("basic"));
+
+        assertThat(im.deleteIndexNamed("basic"), is(true));
+        assertThat(im.listIndexes().isEmpty(), is(true));
+    }
+
 }

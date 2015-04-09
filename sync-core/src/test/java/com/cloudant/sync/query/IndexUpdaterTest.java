@@ -30,6 +30,8 @@ import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -38,9 +40,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@RunWith(Parameterized.class)
 public class IndexUpdaterTest extends AbstractIndexTestBase {
 
+    private static final String TEXT_INDEX_EXECUTION = "Execute TEXT index update tests";
+    private static final String JSON_INDEX_EXECUTION = "Execute JSON index update tests";
+
+    private String testType = null;
+
     List<String> fields;
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Iterable<Object[]> data() throws Exception {
+        return Arrays.asList(new Object[][]{ { TEXT_INDEX_EXECUTION },
+                                             { JSON_INDEX_EXECUTION } });
+    }
+
+    public IndexUpdaterTest(String testType) {
+        this.testType = testType;
+    }
 
     @Override
     public void tearDown() {
@@ -599,9 +617,14 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         rev.body = DocumentBodyFactory.create(bodyMap);
         ds.createDocumentFromRevision(rev);
 
-
-        createIndex("basic", Arrays.<Object>asList("age", "pet", "name"));
-        createIndex("basicName", Arrays.<Object>asList("name"));
+        // Test index updates for multiple json indexes as well as
+        // index updates for co-existing json and text indexes.
+        if (testType.equals(TEXT_INDEX_EXECUTION)) {
+            createIndex("basic", Arrays.<Object>asList("age", "pet", "name"), "text");
+        } else {
+            createIndex("basic", Arrays.<Object>asList("age", "pet", "name"), "json");
+        }
+        createIndex("basicName", Arrays.<Object>asList("name"), "json");
 
         im.updateAllIndexes();
 
@@ -712,19 +735,27 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         return lastSequence;
     }
 
-    @SuppressWarnings("unchecked")
     private void createIndex(String indexName, List<Object> fieldNames) {
-        assertThat(im.ensureIndexed(fieldNames, indexName), is(indexName));
+        if (testType.equals(TEXT_INDEX_EXECUTION)) {
+            createIndex(indexName, fieldNames, "text");
+        } else {
+            createIndex(indexName, fieldNames, "json");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void createIndex(String indexName, List<Object> fieldNames, String indexType) {
+        assertThat(im.ensureIndexed(fieldNames, indexName, indexType), is(indexName));
 
         Map<String, Object> indexes = im.listIndexes();
         assertThat(indexes, hasKey(indexName));
 
         Map<String, Object> index = (Map<String, Object>) indexes.get(indexName);
         fields = (List<String>) index.get("fields");
-        assertThat(fields.size(), is(fieldNames.size() +2));
+        assertThat(fields.size(), is(fieldNames.size() + 2));
         assertThat(fields, hasItems(Arrays.copyOf(fieldNames.toArray(),
-                                                  fieldNames.size(),
-                                                  String[].class)));
+                fieldNames.size(),
+                String[].class)));
         assertThat(fields, hasItems("_id", "_rev"));
     }
 
