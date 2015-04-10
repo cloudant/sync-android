@@ -95,6 +95,7 @@ dependencies {
 
     compile 'com.google.code.findbugs:jsr305:3.0.0' //this is needed for some versions of android
 
+    compile files('src/main/jniLibs/sqlcipher.jar') //required sqlcipher lib
 }
 
 repositories {
@@ -123,8 +124,9 @@ def convertTestSysPropsToHash (){
 def findAllTestClasses(File root){
     // get all the files in test directories
     def classNames =new ArrayList<String>()
-    // TOOD filter out anything that doesn't have a .java extension
-    processDir(root, root).each { file -> classNames.add(file.replaceAll(".java\$",".class")) }
+    //Filter out anything that doesn't have a .java extension
+    processDir(root, root).each { file ->
+        if(file.matches(~/.*.java/)) {classNames.add(file.replaceAll(".java\$",".class"))} }
     return classNames;
 }
 
