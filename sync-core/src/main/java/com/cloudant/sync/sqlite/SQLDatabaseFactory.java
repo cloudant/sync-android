@@ -17,7 +17,7 @@
 
 package com.cloudant.sync.sqlite;
 
-import com.cloudant.android.encryption.KeyProvider;
+import com.cloudant.sync.sqlite.android.encryption.KeyProvider;
 import com.cloudant.sync.util.Misc;
 import com.google.common.base.Preconditions;
 
