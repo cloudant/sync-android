@@ -27,6 +27,7 @@ import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.sqlite.SQLQueueCallable;
+import com.cloudant.sync.sqlite.android.encryption.KeyProvider;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.JSONUtils;
@@ -114,6 +115,38 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         this.eventBus = new EventBus();
         this.attachmentManager = new AttachmentManager(this);
 
+    }
+
+    /**
+     * Constructor for single thread SQLCipher-based datastore.
+     * @param dir The directory where the datastore will be created
+     * @param name The user-defined name of the datastore
+     * @param provider The key provider object that contains the user-defined SQLCipher key
+     * @throws SQLException
+     * @throws IOException
+     */
+    public BasicDatastore(String dir, String name, KeyProvider provider) throws SQLException, IOException, DatastoreException {
+        Preconditions.checkNotNull(dir);
+        Preconditions.checkNotNull(name);
+
+        this.datastoreDir = dir;
+        this.datastoreName = name;
+        this.extensionsDir = FilenameUtils.concat(this.datastoreDir, "extensions");
+        final String dbFilename = FilenameUtils.concat(this.datastoreDir, DB_FILE_NAME);
+        queue = new SQLDatabaseQueue(dbFilename, provider);
+
+        int dbVersion = queue.getVersion();
+        if(dbVersion >= 100){
+            throw new DatastoreException(String.format("Database version is higher than the version supported " +
+                    "by this library, current version %d , highest supported version %d",dbVersion, 99));
+        }
+        queue.updateSchema(DatastoreConstants.getSchemaVersion3(), 3);
+        queue.updateSchema(DatastoreConstants.getSchemaVersion4(), 4);
+        queue.updateSchema(DatastoreConstants.getSchemaVersion5(), 5);
+        queue.updateSchema(DatastoreConstants.getSchemaVersion6(), 6);
+        dbOpen = true;
+        this.eventBus = new EventBus();
+        this.attachmentManager = new AttachmentManager(this);
     }
 
     @Override
