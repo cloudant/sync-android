@@ -23,11 +23,11 @@ package com.cloudant.sync.sqlite.android;
  * Created by estebanmlaver on 2/19/15.
  */
 
-import com.cloudant.android.encryption.KeyProvider;
 
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.android.encryption.KeyProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
