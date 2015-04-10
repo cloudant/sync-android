@@ -18,6 +18,8 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64InputStreamFactory;
+import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
@@ -94,6 +96,18 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     private final SQLDatabaseQueue queue;
 
     public BasicDatastore(String dir, String name) throws SQLException, IOException, DatastoreException {
+        this(dir, name, new NullKeyProvider());
+    }
+
+    /**
+     * Constructor for single thread SQLCipher-based datastore.
+     * @param dir The directory where the datastore will be created
+     * @param name The user-defined name of the datastore
+     * @param provider The key provider object that contains the user-defined SQLCipher key
+     * @throws SQLException
+     * @throws IOException
+     */
+    public BasicDatastore(String dir, String name, KeyProvider provider) throws SQLException, IOException, DatastoreException {
         Preconditions.checkNotNull(dir);
         Preconditions.checkNotNull(name);
 
@@ -101,7 +115,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         this.datastoreName = name;
         this.extensionsDir = FilenameUtils.concat(this.datastoreDir, "extensions");
         final String dbFilename = FilenameUtils.concat(this.datastoreDir, DB_FILE_NAME);
-        queue = new SQLDatabaseQueue(dbFilename);
+        queue = new SQLDatabaseQueue(dbFilename, provider);
+
         int dbVersion = queue.getVersion();
         if(dbVersion >= 100){
             throw new DatastoreException(String.format("Database version is higher than the version supported " +
@@ -113,7 +128,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         queue.updateSchema(DatastoreConstants.getSchemaVersion6(), 6);
         this.eventBus = new EventBus();
         this.attachmentManager = new AttachmentManager(this);
-
     }
 
     @Override

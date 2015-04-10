@@ -14,9 +14,11 @@
 
 package com.cloudant.sync.sqlite;
 
+import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
+
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,9 +46,18 @@ public class SQLDatabaseQueue {
      * @throws IOException If an problem is encountered creating the DB
      */
     public SQLDatabaseQueue(String filename) throws IOException {
-        this.db = SQLDatabaseFactory.createSQLDatabase(filename);
-        //can directly add to queue no need to check
-        //if it is still running
+        this(filename, new NullKeyProvider());
+    }
+
+    /**
+     * Creates an SQLQueue for the SQLCipher-based database specified.
+     * @param filename The file where the database is located
+     * @param provider The key provider object that contains the user-defined SQLCipher key.
+     *                 Supply a NullKeyProvider to use a non-encrypted database.
+     * @throws IOException If a problem occurs creating the database
+     */
+    public SQLDatabaseQueue(String filename, KeyProvider provider) throws IOException {
+        this.db = SQLDatabaseFactory.createSQLDatabase(filename, provider);
         queue.submit(new Runnable() {
             @Override
             public void run() {

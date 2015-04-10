@@ -1,6 +1,8 @@
 dependencies {
     compile project(':sync-core')
 
+    compile files('../AndroidTest/app/src/main/jniLibs/sqlcipher.jar')
+
     compile group: 'com.google.android', name: 'android', version:'4.0.1.2'
 
     // for unit tests
