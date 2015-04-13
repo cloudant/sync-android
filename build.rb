@@ -72,7 +72,7 @@ else
 
 	unless system("docker run -p 5984:#{docker_port} -d -h db1.dockertest --name 'couchdb' #{params["couch"]}")
 		#we need to stop, we failed to run the docker container, just in case we will delete
-		system("docker rm couchdb")
+		system("docker rm --force couchdb")
 		exit 1
 
 	end
