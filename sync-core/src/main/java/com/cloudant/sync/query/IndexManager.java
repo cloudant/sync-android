@@ -43,7 +43,6 @@ import com.cloudant.sync.sqlite.SQLDatabaseFactory;
 import com.cloudant.sync.util.DatabaseUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,8 +75,6 @@ public class IndexManager {
     private static final String EXTENSION_NAME = "com.cloudant.sync.query";
     private static final String INDEX_FIELD_NAME_PATTERN = "^[a-zA-Z][a-zA-Z0-9_]*$";
 
-    public static final int VERSION = 1;
-
     private static final Logger logger = Logger.getLogger(IndexManager.class.getName());
 
     private final Datastore datastore;
@@ -94,19 +91,15 @@ public class IndexManager {
         queue = Executors.newSingleThreadExecutor();
 
         final String filename = datastore.extensionDataFolder(EXTENSION_NAME) + File.separator
-                                                                        + "indexes.sqlite";
+                                                                              + "indexes.sqlite";
         SQLDatabase sqlDatabase = null;
         try {
             sqlDatabase = queue.submit(new Callable<SQLDatabase>() {
                 @Override
                 public SQLDatabase call() throws Exception {
                     SQLDatabase db = SQLDatabaseFactory.openSqlDatabase(filename);
-                    String[] schemaIndex = { "CREATE TABLE " + INDEX_METADATA_TABLE_NAME + " ( "
-                            + "        index_name TEXT NOT NULL, "
-                            + "        index_type TEXT NOT NULL, "
-                            + "        field_name TEXT NOT NULL, "
-                            + "        last_sequence INTEGER NOT NULL);" };
-                    SQLDatabaseFactory.updateSchema(db, schemaIndex, VERSION);
+                    SQLDatabaseFactory.updateSchema(db, QueryConstants.getSchemaVersion1(), 1);
+                    SQLDatabaseFactory.updateSchema(db, QueryConstants.getSchemaVersion2(), 2);
                     return db;
                 }
             }).get();
@@ -168,8 +161,9 @@ public class IndexManager {
 
     protected static Map<String, Object> listIndexesInDatabase(SQLDatabase db) {
         // Accumulate indexes and definitions into a map
-        String sql = String.format("SELECT index_name, index_type, field_name FROM %s",
-                                   INDEX_METADATA_TABLE_NAME);
+        String sql;
+        sql = String.format("SELECT index_name, index_type, field_name, index_settings FROM %s",
+                             INDEX_METADATA_TABLE_NAME);
         Map<String, Object> indexes = null;
         Map<String, Object> index;
         List<String> fields = null;
@@ -181,12 +175,16 @@ public class IndexManager {
                 String rowIndex = cursor.getString(0);
                 String rowType = cursor.getString(1);
                 String rowField = cursor.getString(2);
+                String rowSettings = cursor.getString(3);
                 if (!indexes.containsKey(rowIndex)) {
                     index = new HashMap<String, Object>();
                     fields = new ArrayList<String>();
                     index.put("type", rowType);
                     index.put("name", rowIndex);
                     index.put("fields", fields);
+                    if (rowSettings != null && !rowSettings.isEmpty()) {
+                        index.put("settings", rowSettings);
+                    }
                     indexes.put(rowIndex, index);
                 }
                 if (fields != null) {
@@ -226,7 +224,10 @@ public class IndexManager {
      *  @return name of created index
      */
     public String ensureIndexed(List<Object> fieldNames, String indexName) {
-        return ensureIndexed(fieldNames, indexName, "json");
+        return IndexCreator.ensureIndexed(Index.getInstance(fieldNames, indexName),
+                                          database,
+                                          datastore,
+                                          queue);
     }
 
     /**
@@ -236,25 +237,33 @@ public class IndexManager {
      *
      *  @param fieldNames List of field names in the sort format
      *  @param indexName Name of index to create
-     *  @param indexType "json" is the only supported type for now
+     *  @param indexType The type of index (json or text currently supported)
      *  @return name of created index
      */
     public String ensureIndexed(List<Object> fieldNames, String indexName, String indexType) {
-        if (fieldNames == null || fieldNames.isEmpty()) {
-            return null;
-        }
+        return ensureIndexed(fieldNames, indexName, indexType, null);
+    }
 
-        if (indexName == null || indexName.isEmpty()) {
-            return null;
-        }
-
-        if (indexType == null || !indexType.equalsIgnoreCase("json")) {
-            return null;
-        }
-
-        return IndexCreator.ensureIndexed(fieldNames,
-                                          indexName,
-                                          indexType,
+    /**
+     *  Add a single, possibly compound, index for the given field names.
+     *
+     *  This function generates a name for the new index.
+     *
+     *  @param fieldNames List of field names in the sort format
+     *  @param indexName Name of index to create
+     *  @param indexType The type of index (json or text currently supported)
+     *  @param indexSettings The optional settings to be applied to an index
+     *                       Only text indexes support settings - Ex. { "tokenize" : "simple" }
+     *  @return name of created index
+     */
+    public String ensureIndexed(List<Object> fieldNames,
+                                String indexName,
+                                String indexType,
+                                Map<String, String> indexSettings) {
+        return IndexCreator.ensureIndexed(Index.getInstance(fieldNames,
+                                                            indexName,
+                                                            indexType,
+                                                            indexSettings),
                                           database,
                                           datastore,
                                           queue);

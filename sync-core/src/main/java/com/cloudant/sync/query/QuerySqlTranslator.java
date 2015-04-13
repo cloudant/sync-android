@@ -327,6 +327,15 @@ class QuerySqlTranslator {
         String chosenIndex = null;
         for (String indexName: indexes.keySet()) {
             Map<String, Object> indexDefinition = (Map<String, Object>) indexes.get(indexName);
+
+            // TODO - Remove once the query component of full text search is added.
+            String indexType = (String) indexDefinition.get("type");
+            if (indexType.equalsIgnoreCase("text")) {
+                logger.log(Level.INFO, "Full text search is not yet supported.  " +
+                        String.format("Text index %s is being ignored.", indexName));
+                continue;
+            }
+
             List<String> fieldList = (List<String>) indexDefinition.get("fields");
             Set<String> providedFields = new HashSet<String>(fieldList);
             if (providedFields.containsAll(neededFields)) {
