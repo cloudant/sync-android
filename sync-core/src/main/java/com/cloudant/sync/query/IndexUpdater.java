@@ -56,7 +56,7 @@ class IndexUpdater {
     /**
      *  Update all indexes in a set.
      *
-     *  This indexes are assumed to already exist.
+     *  These indexes are assumed to already exist.
      *
      *  @param indexes Map of indexes and their definitions.
      *  @param database The local database
