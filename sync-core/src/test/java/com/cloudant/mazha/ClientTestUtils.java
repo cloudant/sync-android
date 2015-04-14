@@ -203,9 +203,9 @@ public class ClientTestUtils {
 
 
     public static int executeHttpPostRequest(URI uri, String payload) {
-        HttpConnection connection = Http.connect("POST", "application/json", uri);
+        HttpConnection connection = Http.connect("POST", uri, "application/json");
         try {
-            connection.setInput(payload);
+            connection.setRequestBody(payload);
             connection.execute();
         } catch (Exception e) {
             ; // ignore exception
@@ -220,7 +220,7 @@ public class ClientTestUtils {
 
     public static List<String> getRemoteRevisionIDs(URI uri) throws Exception{
         HttpConnection connection = Http.GET(uri);
-        InputStream in = connection.executeToInputStream();
+        InputStream in = connection.execute().responseAsInputStream();
 
         JSONObject jsonObject = new JSONObject(new JSONTokener(IOUtils.toString(in)));
         JSONArray revsInfo = jsonObject.getJSONArray("_revs_info");

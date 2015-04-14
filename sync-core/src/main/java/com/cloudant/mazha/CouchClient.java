@@ -58,85 +58,86 @@ public class CouchClient  {
         return this.uriHelper.getRootUri();
     }
 
-    // TODO this exception handling code is a bit hairy
+    // - if 2xx then return stream
+    // - map 404 to NoResourceException
+    // - if there's a couch error returned as json, unmarshall and throw
+    // - anything else, just throw the IOException back, use the cause part of the exception?
+
     // it needs to catch eg FileNotFoundException and rethrow to emulate the previous exception handling behaviour
     private InputStream executeToInputStream(HttpConnection connection) throws CouchException {
-        // TODO this header setting should go elsewhere
+
+        // all couchclient requests want to receive application/json responses
         connection.requestProperties.put("Accept", "application/json");
-        InputStream is = null;
+        InputStream is = null; // input stream - response from server on success
+        InputStream es = null; // error stream - response from server for a 500 etc
         String response = null;
         int code = -1;
+        Throwable cause = null;
+
+        // first try to execute our request and get the input stream with the server's response
+        // we want to catch IOException because HttpUrlConnection throws these for non-success
+        // responses (eg 404 throws a FileNotFoundException) but we need to map to our own
+        // specific exceptions
         try {
-            is = connection.executeToInputStream();
+            is = connection.execute().responseAsInputStream();
         } catch (IOException ioe) {
-            System.out.println("original exception "+ioe);
-            try {
-                response = connection.getConnection().getResponseMessage();
-            } catch (IOException ioe2) {
-                // response can't be retrieved
-            }
+            cause = ioe;
         }
+
         try {
-            // TODO restore this message in the last throw block
-            //String msg = String.format("Request: %s << Status: %s (%s) ", request.getRequestLine(), code, response.getStatusLine().getReasonPhrase()
             code = connection.getConnection().getResponseCode();
-            if (code == 200 || code == 201 || code == 202) { // success (ok | created | accepted)
-                // ok
+            response = connection.getConnection().getResponseMessage();
+            // everything ok? return the stream
+            if (code / 100 == 2) { // success [200,299]
+                return is;
             } else if (code == 404) {
-                throw new NoResourceException("todo"); // TODO fix message
+                throw new NoResourceException(response, cause);
             } else {
-                is = connection.getConnection().getErrorStream();
-                CouchException ex = this.jsonHelper.fromJson(new InputStreamReader(is), CouchException.class);
+                es = connection.getConnection().getErrorStream();
+                // TODO what if deserialisation fails?
+                CouchException ex = this.jsonHelper.fromJson(new InputStreamReader(es), CouchException.class);
                 ex.setStatusCode(code);
                 throw ex;
             }
         } catch (IOException ioe) {
-            throw new CouchException(response, code);
-        }
-        return is;
-    }
-
-
-
-    public void createDb() {
-        InputStream is = null;
-        try {
-            HttpConnection connection = Http.PUT("application/json", this.uriHelper
-                    .getRootUri());
-            is = this.executeToInputStream(connection);
-            DBOperationResponse res = jsonHelper.fromJson(new InputStreamReader(is), DBOperationResponse.class);
-            if (!res.getOk()) {
-                throw new ServerException("Response from couch db server: " + res.toString());
+            throw new CouchException("Error retrieving server response", ioe, code);
+        } finally {
+            if (es != null) {
+                try {
+                    es.close();
+                } catch (IOException ioe) {
+                    ;
+                }
             }
         }
-        finally {
-            closeQuietly(is);
+    }
+
+    private <T> T executeToJsonObject(HttpConnection connection, Class<T> c) throws CouchException {
+        InputStream is = this.executeToInputStream(connection);
+        InputStreamReader isr = new InputStreamReader(is);
+        T json = new JSONHelper().fromJson(isr, c);
+        return json;
+    }
+
+    public void createDb() {
+        HttpConnection connection = Http.PUT(this.uriHelper.getRootUri(), "application/json");
+        DBOperationResponse res = executeToJsonObject(connection, DBOperationResponse.class);
+        if (!res.getOk()) {
+            throw new ServerException("Response from couch db server: " + res.toString());
         }
     }
 
     public void deleteDb() {
-        InputStream is = null;
-        try {
-            HttpConnection connection = Http.DELETE(this.uriHelper.getRootUri());
-            is = this.executeToInputStream(connection);
-            DBOperationResponse res = jsonHelper.fromJson(new InputStreamReader(is), DBOperationResponse.class);
-            if (!res.getOk()) {
-                throw new ServerException("Response from couch db server: " + res.toString());
-            }
-        } finally {
-            closeQuietly(is);
+        HttpConnection connection = Http.DELETE(this.uriHelper.getRootUri());
+        DBOperationResponse res = executeToJsonObject(connection, DBOperationResponse.class);
+        if (!res.getOk()) {
+            throw new ServerException("Response from couch db server: " + res.toString());
         }
     }
 
     public CouchDbInfo getDbInfo() {
-        InputStream is = null;
-        try {
-            HttpConnection connection = Http.GET(this.uriHelper.getRootUri());
-            is = this.executeToInputStream(connection);
-            return jsonHelper.fromJson(new InputStreamReader(is), CouchDbInfo.class);
-        } finally {
-            closeQuietly(is);
-        }
+        HttpConnection connection = Http.GET(this.uriHelper.getRootUri());
+        return executeToJsonObject(connection, CouchDbInfo.class);
     }
 
     private Map<String, Object> getDefaultChangeFeeOptions() {
@@ -173,15 +174,9 @@ public class CouchClient  {
 
     public ChangesResult changes(Map<String, Object> options) {
         Preconditions.checkNotNull(options, "options must not be null");
-        InputStream is = null;
-        try {
-            URI changesFeedUri = this.uriHelper.changesUri(options);
-            HttpConnection connection = Http.GET(changesFeedUri);
-            is = this.executeToInputStream(connection);
-            return jsonHelper.fromJson(new InputStreamReader(is), ChangesResult.class);
-        } finally {
-            closeQuietly(is);
-        }
+        URI changesFeedUri = this.uriHelper.changesUri(options);
+        HttpConnection connection = Http.GET(changesFeedUri);
+        return executeToJsonObject(connection, ChangesResult.class);
     }
 
     // TODO does this still work the same way we expect it to?
@@ -201,10 +196,9 @@ public class CouchClient  {
         String json = jsonHelper.toJson(document);
         InputStream is = null;
         try {
-            HttpConnection connection = Http.POST("application/json", this.uriHelper.getRootUri());
-            connection.setInput(json);
-            is = this.executeToInputStream(connection);
-            Response res = jsonHelper.fromJson(new InputStreamReader(is), Response.class);
+            HttpConnection connection = Http.POST(this.uriHelper.getRootUri(), "application/json");
+            connection.setRequestBody(json);
+            Response res = executeToJsonObject(connection, Response.class);
             if (!res.getOk()) {
                 throw new ServerException(res.toString());
             } else {
@@ -216,14 +210,8 @@ public class CouchClient  {
             } else {
                 throw e;
             }
-        } finally {
-            closeQuietly(is);
         }
     }
-
-    // TODO TODO TODO
-    // slim down the number of methods here, we don't need all of these variants
-    // make revid null if we don't want to specify it; bool flag for compressed/uncompressed atts
 
     public InputStream getDocumentStream(String id) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
@@ -284,8 +272,8 @@ public class CouchClient  {
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
         URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
-        HttpConnection connection = Http.PUT("application/json", doc);
-        connection.setInput(attachmentString);
+        HttpConnection connection = Http.PUT(doc, "application/json");
+        connection.setRequestBody(attachmentString);
         this.executeToInputStream(connection);
     }
 
@@ -295,8 +283,8 @@ public class CouchClient  {
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
         URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
-        HttpConnection connection = Http.PUT(contentType, doc);
-        connection.setInput(attachmentData);
+        HttpConnection connection = Http.PUT(doc, contentType);
+        connection.setRequestBody(attachmentData);
         this.executeToInputStream(connection);
     }
 
@@ -443,20 +431,16 @@ public class CouchClient  {
 
         String json = jsonHelper.toJson(document);
         URI doc = this.uriHelper.documentUri(id);
-        InputStream is = null;
         try {
-            HttpConnection connection = Http.PUT("application/json", doc);
-            connection.setInput(json);
-            is = this.executeToInputStream(connection);
-            return jsonHelper.fromJson(new InputStreamReader(is), Response.class);
+            HttpConnection connection = Http.PUT(doc, "application/json");
+            connection.setRequestBody(json);
+            return executeToJsonObject(connection, Response.class);
         } catch (CouchException e) {
             if (e.getStatusCode() == 409) {
                 throw new DocumentConflictException(e.toString());
             } else {
                 throw e;
             }
-        } finally {
-            closeQuietly(is);
         }
     }
 
@@ -466,19 +450,15 @@ public class CouchClient  {
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
         URI doc = this.uriHelper.documentUri(id, queries);
-        InputStream is = null;
         try {
             HttpConnection connection = Http.DELETE(doc);
-            is = this.executeToInputStream(connection);
-            return jsonHelper.fromJson(new InputStreamReader(is), Response.class);
+            return executeToJsonObject(connection, Response.class);
         } catch (CouchException e) {
             if (e.getStatusCode() == 409) {
                 throw new DocumentConflictException(e.toString());
             } else {
                 throw e;
             }
-        } finally {
-            closeQuietly(is);
         }
     }
 
@@ -498,8 +478,8 @@ public class CouchClient  {
         URI uri = this.uriHelper.bulkDocsUri();
         String payload = String.format("{%s%s%s}", newEditsVal, "\"docs\": ",
                 jsonHelper.toJson(objects));
-        HttpConnection connection = Http.POST("application/json", uri);
-        connection.setInput(payload);
+        HttpConnection connection = Http.POST(uri, "application/json");
+        connection.setRequestBody(payload);
         return this.executeToInputStream(connection);
     }
 
@@ -540,8 +520,8 @@ public class CouchClient  {
         String payload = createBulkSerializedDocsPayload(serializedDocs);
         URI uri = this.uriHelper.bulkDocsUri();
         InputStream is = null;
-        HttpConnection connection = Http.POST("application/json", uri);
-        connection.setInput(payload);
+        HttpConnection connection = Http.POST(uri, "application/json");
+        connection.setRequestBody(payload);
         try {
             is = this.executeToInputStream(connection);
             return jsonHelper.fromJsonToList(new InputStreamReader(is), new TypeReference<List<Response>>() {});
@@ -594,12 +574,16 @@ public class CouchClient  {
         String payload = this.jsonHelper.toJson(revisions);
         InputStream is = null;
         try {
-            HttpConnection connection = Http.POST("application/json", uri);
-            connection.setInput(payload);
-            is = connection.executeToInputStream();
-            Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is),
+            HttpConnection connection = Http.POST(uri, "application/json");
+            connection.setRequestBody(payload);
+            try {
+                is = connection.execute().responseAsInputStream();
+                Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is),
                     new TypeReference<Map<String, MissingRevisions>>() { });
-            return diff;
+                return diff;
+            } catch (IOException ioe) {
+                return null;
+            }
         } finally {
             closeQuietly(is);
         }
@@ -609,17 +593,10 @@ public class CouchClient  {
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("new_edits", "false");
         URI uri = this.uriHelper.documentUri(mpw.getId(), options);
-        HashMap<String, String> headers = new HashMap<String, String>();
         String contentType = "multipart/related;boundary=" + mpw.getBoundary();
-        HttpConnection connection = Http.PUT(contentType, uri);
-        connection.setInput(mpw, mpw.getContentLength());
-        try {
-            InputStream is = connection.executeToInputStream();
-            return jsonHelper.fromJson(new InputStreamReader(is), Response.class);
-        } catch (IOException ioe) {
-            // TODO
-            return null;
-        }
+        HttpConnection connection = Http.PUT(uri, contentType);
+        connection.setRequestBody(mpw, mpw.getContentLength());
+        return executeToJsonObject(connection, Response.class);
     }
 
     public static class MissingRevisions {

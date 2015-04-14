@@ -32,6 +32,11 @@ public class CouchException extends RuntimeException {
         this.statusCode = statusCode;
     }
 
+    public CouchException(String message, Throwable cause, int statusCode) {
+        super(message, cause);
+        this.statusCode = statusCode;
+    }
+
     public int getStatusCode() {
         return this.statusCode;
     }
@@ -58,11 +63,12 @@ public class CouchException extends RuntimeException {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("CouchException: { ");
-        sb.append("error :").append(error);
+        StringBuilder sb = new StringBuilder("CouchException: ");
+        sb.append("error: ").append(error);
         sb.append(", reason: ").append(reason);
         sb.append(", statusCode: ").append(statusCode);
         sb.append(", msg: ").append(getMessage());
+        sb.append(", cause: ").append(getCause());
         return sb.toString();
     }
 }

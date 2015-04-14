@@ -77,10 +77,10 @@ public class SavedHttpAttachment extends Attachment {
             HttpConnection connection = Http.GET(attachmentURI);
             if(encoding == Encoding.Gzip) {
                 connection.requestProperties.put("Accept-Encoding", "gzip");
-                InputStream is = connection.executeToInputStream();
+                InputStream is = connection.execute().responseAsInputStream();
                 return new GZIPInputStream(is);
             } else {
-                InputStream is = connection.executeToInputStream();
+                InputStream is = connection.execute().responseAsInputStream();
                 return is;
             }
         } else {
