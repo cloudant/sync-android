@@ -351,15 +351,27 @@ class QueryValidator {
             Object topLevelArg = selector.get(topLevelOp);
             if (topLevelArg instanceof List) {
                 // safe we know its a List
-                return validateCompoundOperatorClauses((List<Object>) topLevelArg);
+                return validateCompoundOperatorClauses((List<Object>) topLevelArg,
+                                                       new Boolean[]{ false });
             }
         }
 
         return false;
     }
 
+    /**
+     * This method runs the list of clauses making up the selector through a series of
+     * validation steps and returns whether the clause list is valid or not.
+     *
+     * @param clauses A list of clauses making up a query selector
+     * @param textClauseLimitReached A flag used to track the text clause limit
+     *                               throughout the validation process.  The
+     *                               current limit is one text clause per query.
+     * @return true/false whether the list of clauses passed validation.
+     */
     @SuppressWarnings("unchecked")
-    private static boolean validateCompoundOperatorClauses(List<Object> clauses) {
+    private static boolean validateCompoundOperatorClauses(List<Object> clauses,
+                                                           Boolean[] textClauseLimitReached) {
         boolean valid = false;
 
         for (Object obj : clauses) {
@@ -385,12 +397,18 @@ class QueryValidator {
                 Object compoundClauses = clause.get(key);
                 if (validateCompoundOperatorOperand(compoundClauses)) {
                     // validate list
-                    valid = validateCompoundOperatorClauses((List<Object>) compoundClauses);
+                    valid = validateCompoundOperatorClauses((List<Object>) compoundClauses,
+                                                            textClauseLimitReached);
                 }
             } else if (!(key.startsWith("$"))) {
                 // this should have a map
                 // send this for validation
                 valid = validateClause((Map<String, Object>) clause.get(key));
+            } else if (key.equalsIgnoreCase(TEXT)) {
+                // this should have a map
+                // send this for validation
+                valid = validateTextClause(clause.get(key),
+                                           textClauseLimitReached);
             } else {
                 String msg = String.format("%s operator cannot be a top level operator", key);
                 logger.log(Level.SEVERE, msg);
@@ -437,6 +455,52 @@ class QueryValidator {
         return false;
     }
 
+    /**
+     * This method handles the special case where a text search clause is encountered.
+     * This case is special because a $text operator expects a Map value whose key can
+     * only be the $search operator.
+     *
+     * @param clause The text clause to validate
+     * @param textClauseLimitReached A flag used to track the text clause limit
+     *                               throughout the validation process.  The
+     *                               current limit is one text clause per query.
+     * @return true/false whether the clause is valid
+     */
+    @SuppressWarnings("unchecked")
+    private static boolean validateTextClause(Object clause,
+                                              Boolean[] textClauseLimitReached) {
+        Map<String, Object> textClause;
+        if (!(clause instanceof Map)) {
+            String msg = String.format("Text search expects a Map, found %s instead.", clause);
+            logger.log(Level.SEVERE, msg);
+            return false;
+        }
+
+        textClause = (Map<String, Object>) clause;
+        if (textClause.size() != 1) {
+            String msg = String.format("Unexpected content %s in text search.", textClause);
+            logger.log(Level.SEVERE, msg);
+            return false;
+        }
+
+        String operator = (String) textClause.keySet().toArray()[0];
+        if (!operator.equals(SEARCH)) {
+            String msg = String.format("Invalid operator %s in text search", operator);
+            logger.log(Level.SEVERE, msg);
+            return false;
+        }
+
+
+        if (textClauseLimitReached[0]) {
+            logger.log(Level.SEVERE, "Multiple text search clauses not allowed in a query.  " +
+                                     "Rewrite query to contain at most one text search clause.");
+            return false;
+        }
+
+        textClauseLimitReached[0] = true;
+        return validatePredicateValue(textClause.get(operator), operator);
+    }
+
     private static boolean validateInListValues(List<Object> inListValues) {
         boolean valid = true;
 
@@ -453,6 +517,8 @@ class QueryValidator {
     private static boolean validatePredicateValue(Object predicateValue, String operator) {
         if (operator.equals(EXISTS)) {
             return validateExistsArgument(predicateValue);
+        } else if (operator.equals(SEARCH)) {
+            return validateTextSearchArgument(predicateValue);
         } else if (validateNotAFloat(predicateValue)) {
             return (predicateValue instanceof String || predicateValue instanceof Number);
         }
@@ -466,6 +532,17 @@ class QueryValidator {
         if (!(exists instanceof Boolean)) {
             valid = false;
             logger.log(Level.SEVERE, "$exists operator expects true or false");
+        }
+
+        return valid;
+    }
+
+    private static boolean validateTextSearchArgument(Object textSearch) {
+        boolean valid = true;
+
+        if (!(textSearch instanceof String)) {
+            valid = false;
+            logger.log(Level.SEVERE, "$search operator expects a String");
         }
 
         return valid;
