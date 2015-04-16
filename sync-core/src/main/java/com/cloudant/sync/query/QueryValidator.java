@@ -407,8 +407,12 @@ class QueryValidator {
             } else if (key.equalsIgnoreCase(TEXT)) {
                 // this should have a map
                 // send this for validation
-                valid = validateTextClause(clause.get(key),
-                                           textClauseLimitReached);
+
+                // TODO Enable text search as part of text search unit tests PR.
+                // valid = validateTextClause(clause.get(key),
+                //                           textClauseLimitReached);
+                logger.log(Level.INFO, "Text search is currently not supported.");
+                break;
             } else {
                 String msg = String.format("%s operator cannot be a top level operator", key);
                 logger.log(Level.SEVERE, msg);
