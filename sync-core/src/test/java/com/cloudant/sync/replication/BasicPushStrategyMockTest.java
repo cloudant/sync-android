@@ -15,6 +15,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.mazha.CouchClient;
 import com.google.common.eventbus.Subscribe;
 import org.junit.Assert;
 import org.junit.Test;
@@ -98,7 +99,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
 
         when(mockRemoteDb.getCheckpoint(anyString())).thenReturn("0", "1");
         when(mockRemoteDb.exists()).thenReturn(true);
-        when(mockRemoteDb.revsDiff(any(Map.class))).thenReturn(new HashMap<String, Set<String>>());
+        when(mockRemoteDb.revsDiff(any(Map.class))).thenReturn(new HashMap<String, CouchClient.MissingRevisions>());
 
         // Exec
         pushStrategy.run();
