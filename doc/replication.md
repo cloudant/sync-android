@@ -128,7 +128,10 @@ Datastore ds = manager.openDatastore("my_datastore");
 
 // Create a replicator that replicates changes from the local
 // datastore to the remote database.
-Replicator replicator = ReplicatorFactory.oneway(ds, uri);
+PushReplication push = new PushReplication();
+push.source = ds;
+push.target = uri;
+Replicator replicator = ReplicatorFactory.oneway(push);
 
 // Use a CountDownLatch to provide a lightweight way to wait for completion
 CountDownLatch latch = new CountDownLatch(1);
@@ -153,7 +156,10 @@ Datastore ds = manager.openDatastore("my_datastore");
 
 // Create a replictor that replicates changes from the remote
 // database to the local datastore.
-Replicator replicator = ReplicatorFactory.oneway(url, ds);
+PullReplication pull = new PullReplication();
+pull.source = uri;
+pull.target = ds;
+Replicator replicator = ReplicatorFactory.oneway(pull);
 
 // Use a CountDownLatch to provide a lightweight way to wait for completion
 CountDownLatch latch = new CountDownLatch(1);
@@ -178,10 +184,16 @@ URI uri = new URI("https://username:password@username.cloudant.com/my_database")
 Datastore ds = manager.openDatastore("my_datastore");
 
 // Create the pull replicator
-Replicator replicator_pull = ReplicatorFactory.oneway(url, ds);
+PullReplication pull = new PullReplication();
+pull.source = uri;
+pull.target = ds;
+Replicator replicator_pull = ReplicatorFactory.oneway(pull);
 
 // Create the push replicator
-Replicator replicator_push = ReplicatorFactory.oneway(ds, url);
+PushReplication push = new PushReplication();
+push.source = ds;
+push.target = uri;
+Replicator replicator_push = ReplicatorFactory.oneway(push);
 
 // Use a latch starting at 2 as we're waiting for two replications to finish
 latch = new CountDownLatch(2);
@@ -226,9 +238,12 @@ URI uri = new URI("https://username:password@username.cloudant.com/my_database")
 
 Datastore ds = manager.openDatastore("my_datastore");
 
-// Create a replicator that replicates changes from the local
-// datastore to the remote database.
-Replicator replicator = ReplicatorFactory.oneway(ds, uri);
+// Create a replictor that replicates changes from the remote
+// database to the local datastore.
+PullReplication pull = new PullReplication();
+pull.source = uri;
+pull.target = ds;
+Replicator replicator = ReplicatorFactory.oneway(pull);
 
 // Create a sample index on type field
 IndexManager indexManager = new IndexManager(ds);
