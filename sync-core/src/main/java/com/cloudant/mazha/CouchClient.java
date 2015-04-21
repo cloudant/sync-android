@@ -528,7 +528,7 @@ public class CouchClient  {
      *
      * @see <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
      */
-    public Map<String, Set<String>> revsDiff(Map<String, Set<String>> revisions) {
+    public Map<String, MissingRevisions> revsDiff(Map<String, Set<String>> revisions) {
         Preconditions.checkNotNull(revisions, "Input revisions must not be null");
         URI uri = this.uriHelper.revsDiffUri();
         String payload = this.jsonHelper.toJson(revisions);
@@ -537,11 +537,7 @@ public class CouchClient  {
             is = this.httpClient.post(uri, payload);
             Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is),
                     new TypeReference<Map<String, MissingRevisions>>() { });
-            Map<String, Set<String>> res = new HashMap<String, Set<String>>();
-            for(Map.Entry<String, MissingRevisions> e : diff.entrySet()) {
-                res.put(e.getKey(), e.getValue().missing);
-            }
-            return res;
+            return diff;
         } finally {
             closeQuietly(is);
         }
@@ -558,6 +554,7 @@ public class CouchClient  {
     }
 
     public static class MissingRevisions {
+        public Set<String> possible_ancestors;
         public Set<String> missing;
     }
 

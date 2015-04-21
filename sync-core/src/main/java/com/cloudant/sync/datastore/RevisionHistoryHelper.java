@@ -108,13 +108,13 @@ public class RevisionHistoryHelper {
 
     /**
      * Serialise a branch's revision history, without attachments.
-     * See {@link #revisionHistoryToJson(java.util.List, java.util.List, com.cloudant.sync.replication.PushAttachmentsInline)} for details.
+     * See {@link #revisionHistoryToJson(java.util.List, java.util.List, com.cloudant.sync.replication.PushAttachmentsInline, int)} for details.
      * @param history list of {@code DocumentRevision}s.
      * @return JSON-serialised {@code String} suitable for sending to CouchDB's
      *      _bulk_docs endpoint.
      */
     public static Map<String, Object> revisionHistoryToJson(List<BasicDocumentRevision> history) {
-        return revisionHistoryToJson(history, null, null);
+        return revisionHistoryToJson(history, null, null, 0);
     }
 
     /**
@@ -128,6 +128,10 @@ public class RevisionHistoryHelper {
      *                    dictionary to be correctly serialised. If there are no attachments, set
      *                    to null.
      * @param inlinePreference strategy to decide whether to upload attachments inline or separately.
+     * @param minRevPos generation number of most recent ancestor on the remote database. If the
+     *                  {@code revpos} value of a given attachment is greater than {@code minRevPos},
+     *                  then it is newer than the version on the remote database and must be sent.
+     *                  Otherwise, a stub can be sent.
      * @return JSON-serialised {@code String} suitable for sending to CouchDB's
      *      _bulk_docs endpoint.
      *
@@ -135,7 +139,8 @@ public class RevisionHistoryHelper {
      */
     public static Map<String, Object> revisionHistoryToJson(List<BasicDocumentRevision> history,
                                                             List<? extends Attachment> attachments,
-                                                            PushAttachmentsInline inlinePreference) {
+                                                            PushAttachmentsInline inlinePreference,
+                                                            int minRevPos) {
         Preconditions.checkNotNull(history, "History must not be null");
         Preconditions.checkArgument(history.size() > 0, "History must have at least one DocumentRevision.");
         Preconditions.checkArgument(checkHistoryIsInDescendingOrder(history),
@@ -146,7 +151,7 @@ public class RevisionHistoryHelper {
         Map<String, Object> m = currentNode.asMap();
         if (attachments != null && !attachments.isEmpty()) {
             // graft attachments on to m for this particular revision here
-            addAttachments(attachments, currentNode, m, inlinePreference);
+            addAttachments(attachments, m, inlinePreference, minRevPos);
         }
 
         m.put(CouchConstants._revisions, createRevisions(history));
@@ -155,40 +160,42 @@ public class RevisionHistoryHelper {
     }
 
     /**
-     * Create a MultipartAttachmentWriter object needed to subsequently write the JSON body and
-     * attachments as a multipart/related stream
+     * Create a {@code MultipartAttachmentWriter} object needed to subsequently write the JSON body and
+     * attachments as a MIME multipart/related stream
+     *
+     * @param revision document revision. This allows the JSON to be serialised into the first MIME
+     *                 body part
+     * @param attachments list of {@code Attachment}s, if any. This allows the {@code _attachments}
+     *                    dictionary to be serialised into subsequent MIME body parts
+     * @param inlinePreference strategy to decide whether to upload attachments inline or separately.
+     * @param minRevPos generation number of most recent ancestor on the remote database. If the
+     *                  {@code revpos} value of a given attachment is greater than {@code minRevPos},
+     *                  then it is newer than the version on the remote database and must be sent.
+     *                  Otherwise, a stub can be sent.
+     *
+     * @return a {@code MultipartAttachmentWriter} object, or {@code null} if there are no attachments
+     *         or all attachments are to be sent inline
+     *
+     * @see com.cloudant.sync.datastore.MultipartAttachmentWriter
      */
-    public static MultipartAttachmentWriter createMultipartWriter(List<BasicDocumentRevision> history,
+    public static MultipartAttachmentWriter createMultipartWriter(BasicDocumentRevision revision,
                                                                   List<? extends Attachment> attachments,
-                                                                  PushAttachmentsInline inlinePreference) {
-
-        Preconditions.checkNotNull(history, "History must not be null");
-        Preconditions.checkArgument(history.size() > 0, "History must have at least one DocumentRevision.");
-        Preconditions.checkArgument(checkHistoryIsInDescendingOrder(history),
-                "History must be in descending order.");
-
-        BasicDocumentRevision currentNode = history.get(0);
-
+                                                                  PushAttachmentsInline inlinePreference,
+                                                                  int minRevPos) {
         MultipartAttachmentWriter mpw = null;
-        int revpos = CouchUtils.generationFromRevId(currentNode.getRevision());
         for (Attachment att : attachments) {
             // we need to cast down to SavedAttachment, which we know is what the AttachmentManager gives us
             SavedAttachment savedAtt = (SavedAttachment) att;
             try {
-                if (savedAtt.revpos < revpos) {
-                    ; // skip
-                } else {
-                    if (!savedAtt.shouldInline(inlinePreference)) {
-                        // add
-                        if (mpw == null) {
-                            // 1st time init
-                            mpw = new MultipartAttachmentWriter();
-                            mpw.setBody(currentNode);
-                        }
-                        mpw.addAttachment(att);
-                    } else {
-                        // skip
+                // add the attachment if it's newer than the minimum revpos and it's not being sent inline
+                if (savedAtt.revpos > minRevPos && !savedAtt.shouldInline(inlinePreference)) {
+                    // add
+                    if (mpw == null) {
+                        // 1st time init
+                        mpw = new MultipartAttachmentWriter();
+                        mpw.setBody(revision);
                     }
+                    mpw.addAttachment(att);
                 }
             } catch (IOException ioe) {
                 logger.log(Level.WARNING,"IOException caught when adding multiparts",ioe);
@@ -206,21 +213,18 @@ public class RevisionHistoryHelper {
      * If it isn't inlined, set follows=true to show it will be included in the multipart/related
      */
     private static void addAttachments(List<? extends Attachment> attachments,
-                                   BasicDocumentRevision revision,
                                    Map<String, Object> outMap,
-                                   PushAttachmentsInline inlinePreference) {
+                                   PushAttachmentsInline inlinePreference,
+                                   int minRevPos) {
         LinkedHashMap<String, Object> attsMap = new LinkedHashMap<String, Object>();
-        int revpos = CouchUtils.generationFromRevId(revision.getRevision());
         outMap.put("_attachments", attsMap);
         for (Attachment att : attachments) {
             // we need to cast down to SavedAttachment, which we know is what the AttachmentManager gives us
             SavedAttachment savedAtt = (SavedAttachment)att;
             HashMap<String, Object> theAtt = new HashMap<String, Object>();
             try {
-                if (savedAtt.revpos < revpos) {
-                    // if the revpos of the current doc is higher than that of the attachment, it's a stub
-                    theAtt.put("stub", true);
-                } else {
+                // add the attachment if it's newer than the minimum revpos
+                if (savedAtt.revpos > minRevPos) {
                     if (!savedAtt.shouldInline(inlinePreference)) {
                         theAtt.put("follows", true);
                     } else {
@@ -248,6 +252,9 @@ public class RevisionHistoryHelper {
                     theAtt.put("length", savedAtt.getSize());
                     theAtt.put("content_type", savedAtt.type);
                     theAtt.put("revpos", savedAtt.revpos);
+                } else {
+                    // if the revpos of the attachment is higher than the minimum, it's a stub
+                    theAtt.put("stub", true);
                 }
             } catch (IOException ioe) {
                 // if we can't read the file containing the attachment then skip it

@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.datastore.Attachment;
@@ -253,7 +254,7 @@ class BasicPushStrategy implements ReplicationStrategy {
 
             Map<String, DocumentRevisionTree> allTrees = this.sourceDb.getDocumentTrees(batch);
             Map<String, Set<String>> docOpenRevs = this.openRevisions(allTrees);
-            Map<String, Set<String>> docMissingRevs = this.targetDb.revsDiff(docOpenRevs);
+            Map<String, CouchClient.MissingRevisions> docMissingRevs = this.targetDb.revsDiff(docOpenRevs);
 
             ItemsToPush itemsToPush = missingRevisionsToJsonDocs(allTrees, docMissingRevs);
             List<String> serialisedMissingRevs = itemsToPush.serializedDocs;
@@ -278,15 +279,31 @@ class BasicPushStrategy implements ReplicationStrategy {
         return changesProcessed;
     }
 
+    /**
+     * Generate serialised JSON strings and/or MIME multipart/related writer objects for revisions
+     * which are missing on the server
+     *
+     * @param allTrees batch of document trees, keyed by document id, in local database
+     * @param revisions {@code MissingRevisions} objects, keyed by document id, as returned from
+     *                  remote database by querying revs_diff endpoint.
+     *
+     * @return {@code ItemsToPush} object representing serialised JSON strings and/or MIME
+     *         multipart/related writer
+     *
+     * @throws AttachmentException
+     *
+     * @see com.cloudant.mazha.CouchClient.MissingRevisions
+     * @see com.cloudant.sync.replication.BasicPushStrategy.ItemsToPush
+     */
     private ItemsToPush missingRevisionsToJsonDocs(
             Map<String, DocumentRevisionTree> allTrees,
-            Map<String, Set<String>> revisions) throws AttachmentException {
+            Map<String, CouchClient.MissingRevisions> revisions) throws AttachmentException {
 
         ItemsToPush itemsToPush = new ItemsToPush();
 
-        for(Map.Entry<String, Set<String>> e : revisions.entrySet()) {
+        for(Map.Entry<String, CouchClient.MissingRevisions> e : revisions.entrySet()) {
             String docId = e.getKey();
-            Set<String> missingRevisions = e.getValue();
+            Set<String> missingRevisions = e.getValue().missing;
             DocumentRevisionTree tree = allTrees.get(docId);
             for(String rev : missingRevisions) {
                 long sequence = tree.lookup(docId, rev).getSequence();
@@ -296,10 +313,26 @@ class BasicPushStrategy implements ReplicationStrategy {
                 BasicDocumentRevision dr = path.get(0);
                 List<? extends Attachment> atts = this.sourceDb.getDbCore().attachmentsForRevision(dr);
 
+                // get common ancestor generation - needed to correctly stub out attachments
+                // closest back (first) instance of one of the possible ancestors rev id in the history tree
+                int minRevPos = 0;
+                for (BasicDocumentRevision ancestor : path) {
+                    if (e.getValue().possible_ancestors != null &&
+                            e.getValue().possible_ancestors.contains(ancestor.getRevision())) {
+                        minRevPos = ancestor.getGeneration();
+                    }
+                }
+
                 // get the json, and inline any small attachments
-                Map<String, Object> json = RevisionHistoryHelper.revisionHistoryToJson(path, atts, this.config.pushAttachmentsInline);
+                Map<String, Object> json = RevisionHistoryHelper.revisionHistoryToJson(path,
+                        atts,
+                        this.config.pushAttachmentsInline,
+                        minRevPos);
                 // if there are any large atts we will get a multipart writer, otherwise null
-                MultipartAttachmentWriter mpw = RevisionHistoryHelper.createMultipartWriter(path, atts, this.config.pushAttachmentsInline);
+                MultipartAttachmentWriter mpw = RevisionHistoryHelper.createMultipartWriter(dr,
+                        atts,
+                        this.config.pushAttachmentsInline,
+                        minRevPos);
 
                 // now we will have either a multipart or a plain doc
                 if (mpw == null) {

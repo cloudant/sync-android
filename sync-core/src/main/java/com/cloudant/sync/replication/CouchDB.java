@@ -15,6 +15,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.mazha.ChangesResult;
+import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
@@ -52,6 +53,6 @@ interface CouchDB {
     public void bulk(List<BasicDocumentRevision> revisions);
     public void bulkSerializedDocs(List<String> serializedDocs);
     public List<Response> putMultiparts(List<MultipartAttachmentWriter> multiparts);
-    public Map<String, Set<String>> revsDiff(Map<String, Set<String>> revisions);
+    public Map<String, CouchClient.MissingRevisions> revsDiff(Map<String, Set<String>> revisions);
     public UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType, String encoding);
 }

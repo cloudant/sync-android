@@ -216,6 +216,50 @@ public class AttachmentsPushTest extends ReplicationTestBase {
 
     }
 
+    // regression test for FB 46326 - see
+    // https://groups.google.com/forum/#!topic/cloudant-sync/xAgWtuSsrk8 for details
+    @Test
+    public void pushAttachmentsStubsCorrectlySent() throws Exception {
+        // more complex test with attachments changing between revisions
+        String attachmentName1 = "attachment_1.txt";
+        String attachmentName2 = "attachment_2.txt";
+        populateSomeDataInLocalDatastore();
+        File f1 = TestUtils.loadFixture("fixture/"+ attachmentName1);
+        File f2 = TestUtils.loadFixture("fixture/"+ attachmentName2);
+        Attachment att1 = new UnsavedFileAttachment(f1, "text/plain");
+        Attachment att2 = new UnsavedFileAttachment(f2, "text/plain");
+        BasicDocumentRevision rev1 = datastore.getDocument(id1);
+        BasicDocumentRevision rev2 = null;
+        // set attachment
+        MutableDocumentRevision rev1_mut = rev1.mutableCopy();
+        rev1_mut.attachments.put(attachmentName1, att1);
+        rev2 = datastore.updateDocumentFromRevision(rev1_mut);
+
+        MutableDocumentRevision rev2_mut = rev2.mutableCopy();
+        BasicDocumentRevision rev3 = datastore.updateDocumentFromRevision(rev2_mut);
+
+        BasicDocumentRevision rev4 = null;
+        // set attachment
+        MutableDocumentRevision rev3_mut = rev3.mutableCopy();
+        rev3_mut.attachments.put(attachmentName2, att2);
+        rev4 = datastore.updateDocumentFromRevision(rev3_mut);
+
+        // push replication - att1 & att2 should be uploaded
+        push();
+
+        InputStream isOriginal1;
+        InputStream isOriginal2;
+
+        InputStream isRev4Att1 = this.couchClient.getAttachmentStreamUncompressed(id1, rev4.getRevision(), attachmentName1);
+        InputStream isRev4Att2 = this.couchClient.getAttachmentStreamUncompressed(id1, rev4.getRevision(), attachmentName2);
+
+        isOriginal1 = new FileInputStream(f1);
+        isOriginal2 = new FileInputStream(f2);
+        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev4Att1, isOriginal1));
+        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev4Att2, isOriginal2));
+
+    }
+
     private void push() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
         BasicPushStrategy push = new BasicPushStrategy(this.createPushReplication(),

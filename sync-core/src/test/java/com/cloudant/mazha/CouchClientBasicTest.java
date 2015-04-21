@@ -384,7 +384,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
 
     @Test
     public void revsDiff_emptyInput_returnNothing() {
-        Map<String, Set<String>> diffs = client.revsDiff(new HashMap<String, Set<String>>());
+        Map<String, CouchClient.MissingRevisions> diffs = client.revsDiff(new HashMap<String, Set<String>>());
         Assert.assertEquals(0, diffs.size());
     }
 
@@ -395,11 +395,11 @@ public class CouchClientBasicTest extends CouchClientTestBase {
             revisions.add(String.valueOf(i + "-a" ));
         }
         Map<String, Set<String>> revs = ImmutableMap.of("A", revisions);
-        Map<String, Set<String>> diffs = client.revsDiff(revs);
+        Map<String, CouchClient.MissingRevisions> diffs = client.revsDiff(revs);
 
         Assert.assertEquals(1, diffs.size());
-        Assert.assertEquals(10000, diffs.get("A").size());
-        Assert.assertThat(diffs.get("A"), hasItems("0-a", "9999-a"));
+        Assert.assertEquals(10000, diffs.get("A").missing.size());
+        Assert.assertThat(diffs.get("A").missing, hasItems("0-a", "9999-a"));
     }
 
     @Test
@@ -408,15 +408,15 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         Set<String> revs2 = ImmutableSet.of("1-c", "2-d");
         Map<String, Set<String>> revs = ImmutableMap.of("A", revs1, "B", revs2);
 
-        Map<String, Set<String>> diffs = client.revsDiff(revs);
+        Map<String, CouchClient.MissingRevisions> diffs = client.revsDiff(revs);
         Assert.assertEquals(2, diffs.size());
         Assert.assertThat(diffs.keySet(), hasItems("A", "B"));
 
-        Assert.assertEquals(2, diffs.get("A").size());
-        Assert.assertEquals(2, diffs.get("B").size());
+        Assert.assertEquals(2, diffs.get("A").missing.size());
+        Assert.assertEquals(2, diffs.get("B").missing.size());
 
-        Assert.assertThat(diffs.get("A"), hasItems("1-a", "2-b"));
-        Assert.assertThat(diffs.get("B"), hasItems("1-c", "2-d"));
+        Assert.assertThat(diffs.get("A").missing, hasItems("1-a", "2-b"));
+        Assert.assertThat(diffs.get("B").missing, hasItems("1-c", "2-d"));
     }
 
     @Test
@@ -426,7 +426,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         Set<String> revs1 = ImmutableSet.of(res.getRev());
         Map<String, Set<String>> revs = ImmutableMap.of(res.getId(), revs1);
 
-        Map<String, Set<String>> diffs = client.revsDiff(revs);
+        Map<String, CouchClient.MissingRevisions> diffs = client.revsDiff(revs);
         Assert.assertEquals(0, diffs.size());
     }
 
@@ -437,10 +437,10 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         Set<String> revs1 = ImmutableSet.of(res.getRev(), "2-a");
         Map<String, Set<String>> revs = ImmutableMap.of(res.getId(), revs1);
 
-        Map<String, Set<String>> diffs = client.revsDiff(revs);
+        Map<String, CouchClient.MissingRevisions> diffs = client.revsDiff(revs);
         Assert.assertEquals(1, diffs.size());
-        Assert.assertEquals(1, diffs.get(res.getId()).size());
-        Assert.assertThat(diffs.get(res.getId()), hasItem("2-a"));
+        Assert.assertEquals(1, diffs.get(res.getId()).missing.size());
+        Assert.assertThat(diffs.get(res.getId()).missing, hasItem("2-a"));
     }
 
     private boolean isDbExist(String dbName) {

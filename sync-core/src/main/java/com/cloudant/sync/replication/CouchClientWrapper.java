@@ -237,7 +237,7 @@ public class CouchClientWrapper implements CouchDB {
     }
 
     @Override
-    public Map<String, Set<String>> revsDiff(Map<String, Set<String>> revisions) {
+    public Map<String, CouchClient.MissingRevisions> revsDiff(Map<String, Set<String>> revisions) {
         return this.couchClient.revsDiff(revisions);
     }
 
