@@ -174,7 +174,7 @@ if (replicator.getState() != Replicator.State.COMPLETE) {
 }
 ```
 
-And running a full sync, that is, two one way replicaitons:
+And running a full sync, that is, two one way replication:
 
 ```java
 
