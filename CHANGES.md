@@ -1,4 +1,4 @@
-# 0.11.0 (Unreleased)
+# 0.11.0 (2015-04-22)
 
 - [FIX] Using MongoDB query as the "gold" standard, query support for
   `NOT` has been fixed to return result sets correctly (as in MongoDB
