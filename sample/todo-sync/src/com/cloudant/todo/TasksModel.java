@@ -24,6 +24,8 @@ import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
+import com.cloudant.sync.replication.PullReplication;
+import com.cloudant.sync.replication.PushReplication;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorFactory;
 import com.google.common.eventbus.Subscribe;
@@ -236,10 +238,18 @@ class TasksModel {
         // Set up the new replicator objects
         URI uri = this.createServerURI();
 
-        mPushReplicator = ReplicatorFactory.oneway(mDatastore, uri);
+        PushReplication push = new PushReplication();
+        push.source = mDatastore;
+        push.target = uri;
+
+        mPushReplicator = ReplicatorFactory.oneway(push);
         mPushReplicator.getEventBus().register(this);
 
-        mPullReplicator = ReplicatorFactory.oneway(uri, mDatastore);
+        PullReplication pull = new PullReplication();
+        pull.source = uri;
+        pull.target = mDatastore;
+
+        mPullReplicator = ReplicatorFactory.oneway(pull);
         mPullReplicator.getEventBus().register(this);
 
         Log.d(LOG_TAG, "Set up replicators for URI:" + uri.toString());
