@@ -22,6 +22,8 @@ final class QueryConstants {
 
     public static final String EXISTS = "$exists";
 
+    public static final String TEXT = "$text";
+
     public static final String EQ = "$eq";
 
     public static final String NE = "$ne";
@@ -37,6 +39,8 @@ final class QueryConstants {
     public static final String IN = "$in";
 
     public static final String NIN = "$nin";
+
+    public static final String SEARCH = "$search";
 
     private QueryConstants() {
         throw new AssertionError();

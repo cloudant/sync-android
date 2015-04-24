@@ -104,10 +104,23 @@ class QuerySqlTranslator {
         TranslatorState state = new TranslatorState();
         QueryNode node = translateQuery(query, indexes, state);
 
-        // If we haven't used a single index or an OR clause is missing an index,
-        // we need to return a query which returns every document, so the posthoc
-        // matcher can run over every document to manually carry out the query.
-        if (!state.atLeastOneIndexUsed || state.atLeastOneORIndexMissing) {
+        if (state.textIndexMissing) {
+            String msg = "No text index defined, cannot execute query containing a text search.";
+            logger.log(Level.SEVERE, msg);
+            return null;
+        } else if (state.textIndexRequired && state.atLeastOneIndexMissing) {
+            String msg = String.format("Query %s contains a text search but is missing \"json\"" +
+                                       " index(es).  All indexes must exist in order to execute a" +
+                                       " query containing a text search.  Create all necessary" +
+                                       " indexes for the query and re-execute.",
+                                       query.toString());
+            logger.log(Level.SEVERE, msg);
+            return null;
+        } else if (!state.textIndexRequired &&
+                      (!state.atLeastOneIndexUsed || state.atLeastOneORIndexMissing)) {
+            // If we haven't used a single index or an OR clause is missing an index,
+            // we need to return a query which returns every document, so the posthoc
+            // matcher can run over every document to manually carry out the query.
             Set<String> neededFields = new HashSet<String>(Arrays.asList("_id"));
             String allDocsIndex = chooseIndexForFields(neededFields, indexes);
 
@@ -156,13 +169,11 @@ class QuerySqlTranslator {
             root = new OrQueryNode();
         }
 
-        //
-        // First handle the simple "field": { "$operator": "value" } clauses. These are
-        // handled differently for AND and OR parents, so we need to have the conditional
-        // logic below.
-        //
-
+        // Compile a list of simple clauses to be handled below.  If a text clause is
+        // encountered, store it separately from the simple clauses since it will be
+        // handled later on its own.
         List<Object> basicClauses = null;
+        Object textClause = null;
 
         for (Object rawClause: clauses) {
             Map<String, Object> clause = (Map<String, Object>) rawClause;
@@ -172,9 +183,14 @@ class QuerySqlTranslator {
                     basicClauses = new ArrayList<Object>();
                 }
                 basicClauses.add(rawClause);
+            } else if (field.equalsIgnoreCase(TEXT)) {
+                textClause = rawClause;
             }
         }
 
+        // Handle the simple "field": { "$operator": "value" } clauses. These are
+        // handled differently for AND and OR parents, so we need to have the conditional
+        // logic below.
         if (basicClauses != null) {
             if (query.get(AND) != null) {
                 // For an AND query, we require a single compound index and we generate a
@@ -246,6 +262,32 @@ class QuerySqlTranslator {
                             root.children.add(sqlNode);
                         }
                     }
+                }
+            }
+        }
+
+        // A text clause such as { "$text" : { "$search" : "foo bar baz" } }
+        // by nature uses its own text index.  It is therefor handled
+        // separately from other simple clauses.
+        if (textClause != null) {
+            state.textIndexRequired = true;
+            String textIndex = getTextIndex(indexes);
+            if (textIndex == null || textIndex.isEmpty()) {
+                state.textIndexMissing = true;
+            } else {
+                SqlParts select = selectStatementForTextClause(textClause, textIndex);
+                if (select == null) {
+                    String msg = String.format("Error generating SELECT clause for %s",
+                            textClause.toString());
+                    logger.log(Level.SEVERE, msg);
+                    return null;
+                }
+
+                SqlQueryNode sqlNode = new SqlQueryNode();
+                sqlNode.sql = select;
+
+                if (root != null) {
+                    root.children.add(sqlNode);
                 }
             }
         }
@@ -328,11 +370,9 @@ class QuerySqlTranslator {
         for (String indexName: indexes.keySet()) {
             Map<String, Object> indexDefinition = (Map<String, Object>) indexes.get(indexName);
 
-            // TODO - Remove once the query component of full text search is added.
+            // Don't choose a text index for a non-text query clause
             String indexType = (String) indexDefinition.get("type");
             if (indexType.equalsIgnoreCase("text")) {
-                logger.log(Level.INFO, "Full text search is not yet supported.  " +
-                        String.format("Text index %s is being ignored.", indexName));
                 continue;
             }
 
@@ -345,6 +385,20 @@ class QuerySqlTranslator {
         }
 
         return chosenIndex;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static String getTextIndex(Map<String, Object> indexes) {
+        String textIndex = null;
+        for (String indexName: indexes.keySet()) {
+            Map<String, Object> indexDefinition = (Map<String, Object>) indexes.get(indexName);
+            String indexType = (String) indexDefinition.get("type");
+            if (indexType.equalsIgnoreCase("text")) {
+                textIndex = indexName;
+            }
+        }
+
+        return textIndex;
     }
 
     protected static SqlParts selectStatementForAndClause(List<Object> clause,
@@ -369,6 +423,32 @@ class QuerySqlTranslator {
                                    tableName,
                                    where.sqlWithPlaceHolders);
         return SqlParts.partsForSql(sql, where.placeHolderValues);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static SqlParts selectStatementForTextClause(Object clause,
+                                                           String indexName) {
+        if (clause == null) {
+            return null;  // no query here
+        }
+
+        if (indexName == null || indexName.isEmpty()) {
+            return null;
+        }
+
+        if (!(clause instanceof Map)) {
+            return null;  // should never get here as this would not pass normalization
+        }
+
+        Map<String, Object> textClause = (Map<String, Object>) clause;
+        Map<String, String> searchClause = (Map<String, String>) textClause.get(TEXT);
+
+        String tableName = IndexManager.tableNameForIndex(indexName);
+        String search = searchClause.get(SEARCH);
+        search = search.replace("'", "''");
+
+        String sql = String.format("SELECT _id FROM %s WHERE %s MATCH ?", tableName, tableName);
+        return SqlParts.partsForSql(sql, new String[]{ String.format("'%s'", search) });
     }
 
     @SuppressWarnings("unchecked")

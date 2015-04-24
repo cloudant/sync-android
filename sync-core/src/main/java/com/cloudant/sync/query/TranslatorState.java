@@ -27,11 +27,15 @@ class TranslatorState {
     public boolean atLeastOneIndexUsed;
     public boolean atLeastOneIndexMissing;
     public boolean atLeastOneORIndexMissing;
+    public boolean textIndexRequired;
+    public boolean textIndexMissing;
 
     TranslatorState() {
         atLeastOneIndexUsed = false;
         atLeastOneIndexMissing = false;
         atLeastOneORIndexMissing = false;
+        textIndexRequired = false;
+        textIndexMissing = false;
     }
 
 }
