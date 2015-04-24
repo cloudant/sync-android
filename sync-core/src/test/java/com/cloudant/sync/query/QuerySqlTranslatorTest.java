@@ -36,16 +36,21 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     Boolean[] indexesCoverQuery;
     String indexName;
     String indexTable;
+    String textIndexName;
+    String textIndexTable;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
         indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet"), "basic");
         assertThat(indexName, is("basic"));
+        textIndexName = im.ensureIndexed(Arrays.<Object>asList("comments"), "basic_text", "text");
+        assertThat(textIndexName, is("basic_text"));
         indexes = im.listIndexes();
-        assertThat(indexes, is(notNullValue()));
+        assertThat(indexes.size(), is(2));
         indexesCoverQuery = new Boolean[]{ false };
         indexTable = String.format("_t_cloudant_sync_query_index_%s", indexName);
+        textIndexTable = String.format("_t_cloudant_sync_query_index_%s", textIndexName);
     }
 
     // When creating a tree
@@ -1066,6 +1071,158 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         String expected = String.format("%s%s", select, where);
         assertThat(sql.sqlWithPlaceHolders, is(expected));
         assertThat(sql.placeHolderValues, is(arrayContainingInAnyOrder("mike", "12", "cat")));
+    }
+
+    // Dealing with Text searches
+
+    @Test
+    public void supportsSingleTextSearch() {
+        // query - { "$text" : { "$search" : "foo bar baz" } }
+        Map<String, Object> searchMap = new HashMap<String, Object>();
+        searchMap.put("$search", "foo bar baz");
+        Map<String, Object> query = new LinkedHashMap<String, Object>();
+        query.put("$text", searchMap);
+        query = QueryValidator.normaliseAndValidateQuery(query);
+
+        QueryNode node = QuerySqlTranslator.translateQuery(query, indexes, indexesCoverQuery);
+        assertThat(node, is(instanceOf(AndQueryNode.class)));
+        assertThat(indexesCoverQuery[0], is(true));
+
+        //        AND
+        //         |
+        //        sql
+
+        AndQueryNode andNode = (AndQueryNode) node;
+        assertThat(andNode.children.size(), is(1));
+
+        SqlQueryNode sqlNode = (SqlQueryNode) andNode.children.get(0);
+        String sql = sqlNode.sql.sqlWithPlaceHolders;
+        String[] placeHolderValues = sqlNode.sql.placeHolderValues;
+
+        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic_text";
+        String where = " WHERE _t_cloudant_sync_query_index_basic_text MATCH ?";
+        assertThat(sql, is(String.format("%s%s", select, where)));
+        assertThat(placeHolderValues, is(arrayContainingInAnyOrder("'foo bar baz'")));
+    }
+
+    @Test
+    public void supportsANDWithTextSearch() {
+        // query - { "$and" : [ { "name" : "mike" }, { "$text" : { "$search" : "foo bar baz" } } ] }
+        Map<String, Object> nameMap = new HashMap<String, Object>();
+        nameMap.put("name", "mike");
+        Map<String, Object> searchMap = new HashMap<String, Object>();
+        searchMap.put("$search", "foo bar baz");
+        Map<String, Object> textMap = new HashMap<String, Object>();
+        textMap.put("$text", searchMap);
+        Map<String, Object> query = new LinkedHashMap<String, Object>();
+        query.put("$and", Arrays.<Object>asList(nameMap, textMap));
+        query = QueryValidator.normaliseAndValidateQuery(query);
+
+        QueryNode node = QuerySqlTranslator.translateQuery(query, indexes, indexesCoverQuery);
+        assertThat(node, is(instanceOf(AndQueryNode.class)));
+        assertThat(indexesCoverQuery[0], is(true));
+
+        //        AND
+        //       /  \
+        //     sql  sql
+
+        AndQueryNode andNode = (AndQueryNode) node;
+        assertThat(andNode.children.size(), is(2));
+
+        SqlQueryNode sqlNode = (SqlQueryNode) andNode.children.get(0);
+        String sql = sqlNode.sql.sqlWithPlaceHolders;
+        String[] placeHolderValues = sqlNode.sql.placeHolderValues;
+
+        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String where = " WHERE \"name\" = ?";
+        assertThat(sql, is(String.format("%s%s", select, where)));
+        assertThat(placeHolderValues, is(arrayContainingInAnyOrder("mike")));
+
+        sqlNode = (SqlQueryNode) andNode.children.get(1);
+        sql = sqlNode.sql.sqlWithPlaceHolders;
+        placeHolderValues = sqlNode.sql.placeHolderValues;
+
+        select = "SELECT _id FROM _t_cloudant_sync_query_index_basic_text";
+        where = " WHERE _t_cloudant_sync_query_index_basic_text MATCH ?";
+        assertThat(sql, is(String.format("%s%s", select, where)));
+        assertThat(placeHolderValues, is(arrayContainingInAnyOrder("'foo bar baz'")));
+    }
+
+    @Test
+    public void supportsORWithTextSearch() {
+        // query - { "$or" : [ { "name" : "mike" }, { "$text" : { "$search" : "foo bar baz" } } ] }
+        Map<String, Object> nameMap = new HashMap<String, Object>();
+        nameMap.put("name", "mike");
+        Map<String, Object> searchMap = new HashMap<String, Object>();
+        searchMap.put("$search", "foo bar baz");
+        Map<String, Object> textMap = new HashMap<String, Object>();
+        textMap.put("$text", searchMap);
+        Map<String, Object> query = new LinkedHashMap<String, Object>();
+        query.put("$or", Arrays.<Object>asList(nameMap, textMap));
+        query = QueryValidator.normaliseAndValidateQuery(query);
+
+        QueryNode node = QuerySqlTranslator.translateQuery(query, indexes, indexesCoverQuery);
+        assertThat(node, is(instanceOf(OrQueryNode.class)));
+        assertThat(indexesCoverQuery[0], is(true));
+
+        //        _OR_
+        //       /    \
+        //     sql    sql
+
+        OrQueryNode orNode = (OrQueryNode) node;
+        assertThat(orNode.children.size(), is(2));
+
+        String selectLeft = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String whereLeft = " WHERE \"name\" = ?";
+        String sqlLeft = String.format("%s%s", selectLeft, whereLeft);
+
+        String selectRight = "SELECT _id FROM _t_cloudant_sync_query_index_basic_text";
+        String whereRight = " WHERE _t_cloudant_sync_query_index_basic_text MATCH ?";
+        String sqlRight = String.format("%s%s", selectRight, whereRight);
+
+        SqlQueryNode sqlNode = (SqlQueryNode) orNode.children.get(0);
+        assertThat(sqlNode.sql.sqlWithPlaceHolders, is(sqlLeft));
+        assertThat(sqlNode.sql.placeHolderValues, is(arrayContaining("mike")));
+
+        sqlNode = (SqlQueryNode) orNode.children.get(1);
+        assertThat(sqlNode.sql.sqlWithPlaceHolders, is(sqlRight));
+        assertThat(sqlNode.sql.placeHolderValues, is(arrayContainingInAnyOrder("'foo bar baz'")));
+    }
+
+    @Test
+    public void nullWhenTextSearchDoesNotFindTextIndex() {
+        assertThat(im.deleteIndexNamed("basic_text"), is(true));
+        // query - { "$text" : { "$search" : "foo bar baz" } }
+        Map<String, Object> searchMap = new HashMap<String, Object>();
+        searchMap.put("$search", "foo bar baz");
+        Map<String, Object> query = new LinkedHashMap<String, Object>();
+        query.put("$text", searchMap);
+        query = QueryValidator.normaliseAndValidateQuery(query);
+
+        QueryNode node = QuerySqlTranslator.translateQuery(query,
+                                                           im.listIndexes(),
+                                                           indexesCoverQuery);
+        assertThat(node, is(nullValue()));
+    }
+
+    @Test
+    public void nullWhenCompoundQueryIncludesTextSearchDoesNotFindJsonIndex() {
+        assertThat(im.deleteIndexNamed("basic"), is(true));
+        // query - { "$and" : [ { "name" : "mike" }, { "$text" : { "$search" : "foo bar baz" } } ] }
+        Map<String, Object> nameMap = new HashMap<String, Object>();
+        nameMap.put("name", "mike");
+        Map<String, Object> searchMap = new HashMap<String, Object>();
+        searchMap.put("$search", "foo bar baz");
+        Map<String, Object> textMap = new HashMap<String, Object>();
+        textMap.put("$text", searchMap);
+        Map<String, Object> query = new LinkedHashMap<String, Object>();
+        query.put("$and", Arrays.<Object>asList(nameMap, textMap));
+        query = QueryValidator.normaliseAndValidateQuery(query);
+
+        QueryNode node = QuerySqlTranslator.translateQuery(query,
+                                                           im.listIndexes(),
+                                                           indexesCoverQuery);
+        assertThat(node, is(nullValue()));
     }
 
 }
