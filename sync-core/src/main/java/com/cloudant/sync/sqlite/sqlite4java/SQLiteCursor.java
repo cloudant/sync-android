@@ -118,8 +118,8 @@ public class SQLiteCursor implements Cursor {
 
     @Override
     public int getColumnIndex(String columnName) {
-        if(columnName.contains(columnName)) {
-            return columnName.indexOf(columnName);
+        if(names.contains(columnName)) {
+            return names.indexOf(columnName);
         } else {
             return -1;
         }
