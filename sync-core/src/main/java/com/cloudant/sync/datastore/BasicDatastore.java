@@ -1678,20 +1678,20 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     private static BasicDocumentRevision getFullRevisionFromCurrentCursor(Cursor cursor,
                                                                           List<? extends Attachment> attachments) {
-        String docId = cursor.getString(0);
-        long internalId = cursor.getLong(1);
-        String revId = cursor.getString(2);
-        long sequence = cursor.getLong(3);
-        byte[] json = cursor.getBlob(4);
-        boolean current = cursor.getInt(5) > 0;
-        boolean deleted = cursor.getInt(6) > 0;
+        String docId = cursor.getString(cursor.getColumnIndex("docid"));
+        long internalId = cursor.getLong(cursor.getColumnIndex("doc_id"));
+        String revId = cursor.getString(cursor.getColumnIndex("revid"));
+        long sequence = cursor.getLong(cursor.getColumnIndex("sequence"));
+        byte[] json = cursor.getBlob(cursor.getColumnIndex("json"));
+        boolean current = cursor.getInt(cursor.getColumnIndex("current")) > 0;
+        boolean deleted = cursor.getInt(cursor.getColumnIndex("deleted")) > 0;
 
         long parent = -1L;
-        if(cursor.columnType(7) == Cursor.FIELD_TYPE_INTEGER) {
-            parent = cursor.getLong(7);
-        } else if(cursor.columnType(7) == Cursor.FIELD_TYPE_NULL) {
+        if(cursor.columnType(cursor.getColumnIndex("parent")) == Cursor.FIELD_TYPE_INTEGER) {
+            parent = cursor.getLong(cursor.getColumnIndex("parent"));
+        } else if(cursor.columnType(cursor.getColumnIndex("parent")) == Cursor.FIELD_TYPE_NULL) {
         } else {
-            throw new RuntimeException("Unexpected type: " + cursor.columnType(7));
+            throw new RuntimeException("Unexpected type: " + cursor.columnType(cursor.getColumnIndex("parent")));
         }
 
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder()
