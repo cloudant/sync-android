@@ -74,4 +74,13 @@ public class MutableDocumentRevision implements DocumentRevision
     }
 
 
+    MutableDocumentRevision copy() {
+        MutableDocumentRevision copy =  new MutableDocumentRevision();
+        copy.docId = docId;
+        copy.body = body;
+        copy.attachments = attachments;
+        return copy;
+    }
+
+
 }

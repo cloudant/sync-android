@@ -1780,13 +1780,14 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public BasicDocumentRevision createDocumentFromRevision(final MutableDocumentRevision rev)
+    public BasicDocumentRevision createDocumentFromRevision(MutableDocumentRevision rev)
             throws DocumentException, AttachmentException {
         Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
         Preconditions.checkState(isOpen(), "Datastore is closed");
+        final MutableDocumentRevision copy = rev.copy();
         // create docid if docid is null
-        if (rev.docId == null) {
-            rev.docId = CouchUtils.generateDocumentId();
+        if (copy.docId == null) {
+            copy.docId = CouchUtils.generateDocumentId();
         }
         final AttachmentManager.PreparedAndSavedAttachments preparedAndSavedAttachments =
                 attachmentManager.prepareAttachments(rev.attachments != null ? rev.attachments.values() : null);
@@ -1796,7 +1797,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 @Override
                 public BasicDocumentRevision call(SQLDatabase db) throws Exception {
                         // save document with body
-                        BasicDocumentRevision saved = createDocument(db,rev.docId, rev.body);
+                        BasicDocumentRevision saved = createDocument(db,copy.docId, copy.body);
                         // set attachments
                         attachmentManager.setAttachments(db,saved, preparedAndSavedAttachments);
                         // now re-fetch the revision with updated attachments

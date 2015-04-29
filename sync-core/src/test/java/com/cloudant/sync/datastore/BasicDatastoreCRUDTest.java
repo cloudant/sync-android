@@ -89,6 +89,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         rev_mut.body = bodyOne;
         BasicDocumentRevision rev = datastore.createDocumentFromRevision(rev_mut);
         validateNewlyCreatedDocument(rev);
+        Assert.assertNull(rev_mut.docId);
     }
 
     @Test
