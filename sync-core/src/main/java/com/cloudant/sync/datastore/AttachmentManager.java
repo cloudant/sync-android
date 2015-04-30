@@ -322,29 +322,33 @@ class AttachmentManager {
             db.delete("attachments", "sequence IN " +
                     "(SELECT sequence from revs WHERE json IS null)", null);
             // get all keys from attachments table
-             c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
+            c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
             while (c.moveToNext()) {
                 byte[] key = c.getBlob(0);
                 currentKeys.add(keyToString(key));
             }
             // iterate thru attachments dir
-            for (File f : new File(attachmentsDir).listFiles()) {
-                // if file isn't in the keys list, delete it
-                String keyForFile = f.getName();
-                if (!currentKeys.contains(keyForFile)) {
-                    try {
-                        boolean deleted = f.delete();
-                        if (!deleted) {
+            File[] attachments = new File(attachmentsDir).listFiles();
+            if (attachments != null) {
+                for (File f : attachments) {
+                    // if file isn't in the keys list, delete it
+                    String keyForFile = f.getName();
+                    if (!currentKeys.contains(keyForFile)) {
+                        try {
+                            boolean deleted = f.delete();
+                            if (!deleted) {
 
-                            logger.warning("Could not delete file from BLOB store: " +
-                                    f.getAbsolutePath());
+                                logger.warning("Could not delete file from BLOB store: " +
+                                        f.getAbsolutePath());
+                            }
+                        } catch (SecurityException e) {
+                            logger.log(Level.WARNING, "SecurityException when trying to delete file " +
+
+                                    "from BLOB store: " + f.getAbsolutePath(), e);
                         }
-                    } catch (SecurityException e) {
-                        logger.log(Level.WARNING, "SecurityException when trying to delete file " +
-                                "from BLOB store: " + f.getAbsolutePath(), e);
                     }
                 }
-            }
+        }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Problem in purgeAttachments, executing SQL to fetch all attachment keys ", e);
         }finally {
