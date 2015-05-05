@@ -121,18 +121,16 @@ import com.cloudant.sync.replication.ReplicatorFactory;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.PushReplication;
 
-URI uri = new URI("https://username.cloudant.com/my_database");
+// Username/password are supplied in the URL and can be Cloudant API keys
+URI uri = new URI("https://username:password@username.cloudant.com/my_database");
+
 Datastore ds = manager.openDatastore("my_datastore");
 
 // Create a replicator that replicates changes from the local
 // datastore to the remote database.
-// username/password can be Cloudant API keys
 PushReplication push = new PushReplication();
-push.username = "username";
-push.password = "password";
 push.source = ds;
 push.target = uri;
-
 Replicator replicator = ReplicatorFactory.oneway(push);
 
 // Use a CountDownLatch to provide a lightweight way to wait for completion
@@ -151,18 +149,16 @@ if (replicator.getState() != Replicator.State.COMPLETE) {
 And getting data from a remote database to a local one:
 
 ```java
-URI uri = new URI("https://username.cloudant.com/my_database");
+// Username/password are supplied in the URL and can be Cloudant API keys
+URI uri = new URI("https://username:password@username.cloudant.com/my_database");
+
 Datastore ds = manager.openDatastore("my_datastore");
 
 // Create a replictor that replicates changes from the remote
 // database to the local datastore.
-// username/password can be Cloudant API keys
 PullReplication pull = new PullReplication();
-pull.username = "username";
-pull.password = "password";
 pull.source = uri;
 pull.target = ds;
-
 Replicator replicator = ReplicatorFactory.oneway(pull);
 
 // Use a CountDownLatch to provide a lightweight way to wait for completion
@@ -178,27 +174,25 @@ if (replicator.getState() != Replicator.State.COMPLETE) {
 }
 ```
 
-And running a full sync, that is, two one way replicaitons:
+And running a full sync, that is, two one way replications:
 
 ```java
 
-URI uri = new URI("https://username.cloudant.com/my_database");
+// Username/password are supplied in the URL and can be Cloudant API keys
+URI uri = new URI("https://username:password@username.cloudant.com/my_database");
+
 Datastore ds = manager.openDatastore("my_datastore");
 
-// username/password can be Cloudant API keys
+// Create the pull replicator
 PullReplication pull = new PullReplication();
-pull.username = "username";
-pull.password = "password";
 pull.source = uri;
 pull.target = ds;
-
-PushReplication push = new PushReplication();
-pull.username = "username";
-pull.password = "password";
-pull.source = ds;
-pull.target = uri;
-
 Replicator replicator_pull = ReplicatorFactory.oneway(pull);
+
+// Create the push replicator
+PushReplication push = new PushReplication();
+push.source = ds;
+push.target = uri;
 Replicator replicator_push = ReplicatorFactory.oneway(push);
 
 // Use a latch starting at 2 as we're waiting for two replications to finish
@@ -241,11 +235,15 @@ import com.cloudant.sync.indexing.IndexManager;
 
 // username/password can be Cloudant API keys
 URI uri = new URI("https://username:password@username.cloudant.com/my_database");
+
 Datastore ds = manager.openDatastore("my_datastore");
 
-// Create a replicator that replicates changes from the local
-// datastore to the remote database.
-Replicator replicator = ReplicatorFactory.oneway(ds, uri);
+// Create a replictor that replicates changes from the remote
+// database to the local datastore.
+PullReplication pull = new PullReplication();
+pull.source = uri;
+pull.target = ds;
+Replicator replicator = ReplicatorFactory.oneway(pull);
 
 // Create a sample index on type field
 IndexManager indexManager = new IndexManager(ds);
