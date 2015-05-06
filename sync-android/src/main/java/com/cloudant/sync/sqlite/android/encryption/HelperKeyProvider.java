@@ -14,7 +14,8 @@
 package com.cloudant.sync.sqlite.android.encryption;
 
 /**
- * Created by estebanmlaver on 3/25/15.
+ * Class provides SQLCipher key for test cases.
+ * Created by estebanmlaver.
  */
 public class HelperKeyProvider extends KeyProvider {
 
