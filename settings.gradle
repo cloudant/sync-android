@@ -1,5 +1,3 @@
 include 'sync-core'
 include 'sync-android'
 include 'sync-javase'
-include 'sync-android-encryption'
-
