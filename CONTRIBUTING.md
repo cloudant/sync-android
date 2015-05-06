@@ -159,18 +159,6 @@ Note: some tests need to be ignored based on the configuration of the CouchDB in
 
 Your gradle.properties should NEVER be checked into git repo as it contains your CouchDB credentials.
 
-### Code coverage
-
-To get code coverage, you need the `coberturaReport` task before the tests you want to run:
-
-```bash
-$ ./gradlew coberturaReport test
-$ ./gradlew coberturaReport integrationTest
-$ ./gradlew coberturaReport systemTest
-```
-
-Code coverage metrics end up in `build/reports`.
-
 ## Using IntelliJ IDEA / Android Studio
 
 For IDEA, the best way to get everything set up correctly is to use
