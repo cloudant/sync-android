@@ -15,12 +15,13 @@
 package com.cloudant.sync.sqlite.android;
 
 /**
- * Extend SQLDatabase class with support for SQLCipher.
+ * Similar to AndroidSQLite class.  Replaces Android SQLite implementation with
+ * SQLCipher-based SQLite.
  * SQLCipher adds:
- * - A user-based password (provided with the KeyProvider object) for encryption
- * - Method to change password
+ * - TODO A user-based password (provided with the KeyProvider object) for encryption
+ * - TODO Method to change password (will be handled through key management feature)
  *
- * Created by estebanmlaver on 2/19/15.
+ * Created by estebanmlaver.
  */
 
 
