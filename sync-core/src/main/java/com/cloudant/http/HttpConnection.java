@@ -179,6 +179,7 @@ public class HttpConnection  {
             while((nRead = is.read(buf)) >= 0) {
                 os.write(buf, 0, nRead);
             }
+            os.flush();
             // we do not call os.close() - on some JVMs this incurs a delay of several seconds
             // see http://stackoverflow.com/questions/19860436
         }
