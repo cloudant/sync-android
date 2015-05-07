@@ -27,11 +27,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
-import org.apache.http.client.params.HttpClientParams;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -604,21 +599,4 @@ public class CouchClient  {
         public Set<String> missing;
     }
 
-    private HttpParams getHttpConnectionParams(CouchConfig config) {
-        BasicHttpParams params = new BasicHttpParams();
-
-        // Turn off stale checking.  Our connections break all the time anyway,
-        // and it's not worth it to pay the penalty of checking every time.
-        HttpConnectionParams.setStaleCheckingEnabled(params, config.isStaleConnectionCheckingEnabled());
-        HttpConnectionParams.setConnectionTimeout(params, config.getConnectionTimeout());
-        HttpConnectionParams.setSoTimeout(params, config.getSocketTimeout());
-        HttpConnectionParams.setSocketBufferSize(params, config.getBufferSize());
-
-        // Don't handle redirects -- return them to the caller.  Our code
-        // often wants to re-POST after a redirect, which we must do ourselves.
-        HttpClientParams.setRedirecting(params, config.isHandleRedirectEnabled());
-
-
-        return params;
-    }
 }
