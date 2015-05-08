@@ -58,7 +58,8 @@ class IndexCreator {
     }
 
     /**
-     *  Add a single, possibly compound, possibly text index for the given field names.
+     *  Add a single, possibly compound index for the given field names and ensure all indexing
+     *  constraints are met.
      *
      *  This function generates a name for the new index.
      *
@@ -69,6 +70,14 @@ class IndexCreator {
     private String ensureIndexed(final Index index) {
         if (index == null) {
             return null;
+        }
+
+        if (index.indexType.equalsIgnoreCase("text")) {
+            if (!IndexManager.ftsAvailable(queue, database)) {
+                logger.log(Level.SEVERE, "Text search not supported.  To add support for text " +
+                                         "search, enable FTS compile options in SQLite.");
+                return null;
+            }
         }
 
         final List<String> fieldNamesList = removeDirectionsFromFields(index.fieldNames);
