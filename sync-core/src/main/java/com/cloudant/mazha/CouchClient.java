@@ -577,7 +577,8 @@ public class CouchClient  {
                     new TypeReference<Map<String, MissingRevisions>>() { });
                 return diff;
             } catch (IOException ioe) {
-                return null;
+                // return empty map
+                return new HashMap<String, MissingRevisions>();
             }
         } finally {
             closeQuietly(is);
