@@ -410,4 +410,101 @@ public class QueryValidatorTest {
         assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
     }
 
+    @Test
+    public void normalizesSingleTextSearch() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "$text" : { "$search" : "foo bar baz" } }
+        Map<String, Object> search = new HashMap<String, Object>();
+        search.put("$search", "foo bar baz");
+        query.put("$text", search);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+
+        // normalized query - { "$and" : [ { "$text" : { "$search" : "foo bar baz" } } ] }
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        Map<String, Object> exText = new HashMap<String, Object>();
+        Map<String, Object> exSearch = new HashMap<String, Object>();
+        exSearch.put("$search", "foo bar baz");
+        exText.put("$text", exSearch);
+        expected.put("$and", Arrays.<Object>asList(exText));
+        assertThat(normalizedQuery, is(expected));
+    }
+
+    @Test
+    public void normalizesMultiFieldQueryWithTextSearch() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "name" : "mike", "$text" : { "$search" : "foo bar baz" } }
+        query.put("name", "mike");
+        Map<String, Object> search = new HashMap<String, Object>();
+        search.put("$search", "foo bar baz");
+        query.put("$text", search);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+
+        // normalized query - { "$and" : [ { "name" : { "$eq" : "mike" } },
+        //                                 { "$text" : { "$search" : "foo bar baz" } } ] }
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        Map<String, Object> exName = new HashMap<String, Object>();
+        Map<String, Object> exEq = new HashMap<String, Object>();
+        exEq.put("$eq", "mike");
+        exName.put("name", exEq);
+        Map<String, Object> exText = new HashMap<String, Object>();
+        Map<String, Object> exSearch = new HashMap<String, Object>();
+        exSearch.put("$search", "foo bar baz");
+        exText.put("$text", exSearch);
+        expected.put("$and", Arrays.<Object>asList(exName, exText));
+        assertThat(normalizedQuery, is(expected));
+    }
+
+    @Test
+    public void returnsNullForInvalidTextSearchContent() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "$text" : { "$search" : 12 } }
+        Map<String, Object> search = new HashMap<String, Object>();
+        search.put("$search", 12);
+        query.put("$text", search);
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullForMultipleTextSearchClauses() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "$or" : [ { "$text" : { "$search" : "foo bar" } },
+        //                     { "$text" : { "$search" : "baz" } } ] }
+        Map<String, Object> text1 = new HashMap<String, Object>();
+        Map<String, Object> search1 = new HashMap<String, Object>();
+        search1.put("$search", "foo bar");
+        text1.put("$text", search1);
+        Map<String, Object> text2 = new HashMap<String, Object>();
+        Map<String, Object> search2 = new HashMap<String, Object>();
+        search2.put("$search", "baz");
+        text2.put("$text", search2);
+        query.put("$or", Arrays.<Object>asList(text1, text2));
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullForInvalidTextSearchOperator() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "$text" : { "$eq" : "foo bar baz" } }
+        Map<String, Object> search = new HashMap<String, Object>();
+        search.put("$eq", "foo bar baz");
+        query.put("$text", search);
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullForTextOperatorWithoutSearchOperator() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "$text" : "foo bar baz" }
+        query.put("$text", "foo bar baz");
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullForSearchOperatorWithoutTextOperator() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "$search" : "foo bar baz" }
+        query.put("$search", "foo bar baz");
+        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+    }
+
 }
