@@ -55,4 +55,20 @@ public class SQLDatabaseTestUtils {
         }
     }
 
+    public static Set<String> getCompileOptions(SQLDatabase db) throws SQLException {
+        Cursor cursor = null;
+        Set<String> compileOptions = new HashSet<String>();
+        try {
+            cursor = db.rawQuery("PRAGMA compile_options", new String[]{});
+            while(cursor.moveToNext()) {
+                compileOptions.add(cursor.getString(0));
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return compileOptions;
+    }
+
 }
