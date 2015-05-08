@@ -38,7 +38,7 @@ import java.util.ArrayList;
  * CouchClient myClient;
  * ...
  * MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
- * mpw.setBody(myDocument);
+ * mpw.setRequestBody(myDocument);
  * for (Attachment a : myAttachments) {
  *     mpw.addAttachment(a);
  * }

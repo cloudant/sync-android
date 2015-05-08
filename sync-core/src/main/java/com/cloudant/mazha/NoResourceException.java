@@ -21,4 +21,10 @@ public class NoResourceException extends CouchException {
     public NoResourceException(String message) {
         super(message, 404);
     }
+
+    public NoResourceException(String message, Throwable cause) {
+        super(message, cause, 404);
+    }
+
+
 }

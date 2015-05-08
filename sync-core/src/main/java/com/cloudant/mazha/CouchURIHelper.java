@@ -91,7 +91,7 @@ public class CouchURIHelper {
     }
 
     /**
-     * Returns URI for {@code _revs_diff} endpoint.
+     * Returns URI for {@code _revs_diff} endpoi
      */
     public URI revsDiffUri() {
         String uri = String.format(
