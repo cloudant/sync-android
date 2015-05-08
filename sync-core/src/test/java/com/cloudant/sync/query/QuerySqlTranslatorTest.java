@@ -1102,7 +1102,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic_text";
         String where = " WHERE _t_cloudant_sync_query_index_basic_text MATCH ?";
         assertThat(sql, is(String.format("%s%s", select, where)));
-        assertThat(placeHolderValues, is(arrayContainingInAnyOrder("'foo bar baz'")));
+        assertThat(placeHolderValues, is(arrayContainingInAnyOrder("foo bar baz")));
     }
 
     @Test
@@ -1145,7 +1145,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         select = "SELECT _id FROM _t_cloudant_sync_query_index_basic_text";
         where = " WHERE _t_cloudant_sync_query_index_basic_text MATCH ?";
         assertThat(sql, is(String.format("%s%s", select, where)));
-        assertThat(placeHolderValues, is(arrayContainingInAnyOrder("'foo bar baz'")));
+        assertThat(placeHolderValues, is(arrayContainingInAnyOrder("foo bar baz")));
     }
 
     @Test
@@ -1186,7 +1186,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         sqlNode = (SqlQueryNode) orNode.children.get(1);
         assertThat(sqlNode.sql.sqlWithPlaceHolders, is(sqlRight));
-        assertThat(sqlNode.sql.placeHolderValues, is(arrayContainingInAnyOrder("'foo bar baz'")));
+        assertThat(sqlNode.sql.placeHolderValues, is(arrayContainingInAnyOrder("foo bar baz")));
     }
 
     @Test
