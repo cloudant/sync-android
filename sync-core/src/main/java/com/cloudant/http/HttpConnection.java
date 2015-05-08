@@ -133,6 +133,7 @@ public class HttpConnection  {
      * @throws IOException
      */
     public HttpConnection execute() throws IOException {
+        System.setProperty("http.keepAlive", "false");
         connection = (HttpURLConnection) url.openConnection();
         for (String key : requestProperties.keySet()) {
             connection.setRequestProperty(key, requestProperties.get(key));
