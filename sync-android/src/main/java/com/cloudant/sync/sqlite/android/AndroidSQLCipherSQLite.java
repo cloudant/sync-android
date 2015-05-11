@@ -51,7 +51,7 @@ public class AndroidSQLCipherSQLite extends SQLDatabase {
     public static AndroidSQLCipherSQLite createAndroidSQLite(String path, KeyProvider provider) {
 
         //Call SQLCipher-based method for opening database, or creating if database not found
-        SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(path, provider.getEncryptedKey(), null);
+        SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(path, provider.getEncryptionKey(), null);
 
         return new AndroidSQLCipherSQLite(db);
     }
@@ -65,7 +65,7 @@ public class AndroidSQLCipherSQLite extends SQLDatabase {
     public static AndroidSQLCipherSQLite openAndroidSQLite(String path, KeyProvider provider) {
 
         //Call SQLCipher-based method for opening (or creating) database
-        SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(path, provider.getEncryptedKey(), null);
+        SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(path, provider.getEncryptionKey(), null);
 
         return new AndroidSQLCipherSQLite(db);
     }

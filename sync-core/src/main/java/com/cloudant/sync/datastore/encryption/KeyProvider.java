@@ -22,13 +22,14 @@ package com.cloudant.sync.datastore.encryption;
  * Created by estebanmlaver.
  */
 public class KeyProvider  {
+
     private String encryptedKey;
 
     public KeyProvider(String password) {
         this.encryptedKey = password;
     }
 
-    public String getEncryptedKey() {
+    public String getEncryptionKey() {
         return encryptedKey;
     }
 }
