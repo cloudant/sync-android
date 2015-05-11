@@ -54,17 +54,4 @@ public class ReplicatorFactoryTest {
         Assert.assertTrue(replicator instanceof BasicReplicator);
     }
 
-    @Test
-    public void removeUsernamePassword_uriWithUsernamePassword() throws URISyntaxException {
-        URI uri = new URI("https://usename:password@myhost.com:443/mydb");
-        URI expected = new URI("https://myhost.com:443/mydb");
-        Assert.assertEquals(expected, ReplicatorFactory.removeUsernamePassword(uri));
-    }
-
-    @Test
-    public void removeUsernamePassword_uriWithoutUsernamePassword() throws URISyntaxException {
-        URI uri = new URI("https://myhost.com:443/mydb");
-        URI expected = new URI("https://myhost.com:443/mydb");
-        Assert.assertEquals(expected, ReplicatorFactory.removeUsernamePassword(uri));
-    }
 }
