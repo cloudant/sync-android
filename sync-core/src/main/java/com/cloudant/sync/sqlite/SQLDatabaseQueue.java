@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.sqlite;
 
-import com.cloudant.sync.sqlite.android.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.KeyProvider;
 
 import java.io.IOException;
 import java.sql.SQLException;

@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.sync.sqlite.android.encryption.HelperKeyProvider;
+import com.cloudant.sync.datastore.encryption.HelperKeyProvider;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.After;
