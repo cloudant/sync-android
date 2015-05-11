@@ -11,17 +11,24 @@
  * either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package com.cloudant.sync.sqlite.android.encryption;
+package com.cloudant.sync.datastore.encryption;
 
 /**
- * Class provides SQLCipher key for test cases.
+ * This class retrieves the user's SQLCipher password.
+ * A secure key is generated based on the password, and
+ * is then stored into local storage.
+ *
+ * TODO: Add JSONStore implementation for proper encryption and key management.
  * Created by estebanmlaver.
  */
-public class HelperKeyProvider extends KeyProvider {
+public class KeyProvider  {
+    private String encryptedKey;
 
-    public HelperKeyProvider() {
-        //Pass a SQLCipher password for testing
-        super("testSQLCipherKey");
+    public KeyProvider(String password) {
+        this.encryptedKey = password;
     }
 
+    public String getEncryptedKey() {
+        return encryptedKey;
+    }
 }

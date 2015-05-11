@@ -21,7 +21,7 @@ import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DatabaseCreated;
 import com.cloudant.sync.notifications.DatabaseDeleted;
 import com.cloudant.sync.notifications.DatabaseOpened;
-import com.cloudant.sync.sqlite.android.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
