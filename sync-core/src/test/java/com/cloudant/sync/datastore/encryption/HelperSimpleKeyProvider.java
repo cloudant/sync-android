@@ -17,9 +17,9 @@ package com.cloudant.sync.datastore.encryption;
  * Class provides SQLCipher key for test cases.
  * Created by estebanmlaver.
  */
-public class HelperKeyProvider extends KeyProvider {
+public class HelperSimpleKeyProvider extends SimpleKeyProvider {
 
-    public HelperKeyProvider() {
+    public HelperSimpleKeyProvider() {
         //Pass a SQLCipher password for testing
         super("testSQLCipherKey");
     }

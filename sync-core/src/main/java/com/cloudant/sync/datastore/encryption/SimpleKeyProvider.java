@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015 IBM Cloudant, Inc. All rights reserved.
+ * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -11,21 +11,26 @@
  * either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-
 package com.cloudant.sync.datastore.encryption;
 
 /**
- * Classes implementing this interface provide encryption
- * keys used by the datastore when encryption is enabled.
+ * This class retrieves the user's SQLCipher password.
+ * A secure key is generated based on the password, and
+ * is then stored into local storage.
  *
- * Created by Mike Rhodes on 11/05/15.
+ * TODO: Add JSONStore implementation for proper encryption and key management.
+ * Created by estebanmlaver.
  */
-public interface KeyProvider {
+public class SimpleKeyProvider implements KeyProvider {
 
-    /**
-     * Returns the encryption key used to encrypt datastore data.
-     *
-     * @return
-     */
-    String getEncryptionKey();
+    private String encryptedKey;
+
+    public SimpleKeyProvider(String password) {
+        this.encryptedKey = password;
+    }
+
+    @Override
+    public String getEncryptionKey() {
+        return encryptedKey;
+    }
 }

@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.sync.datastore.encryption.HelperKeyProvider;
+import com.cloudant.sync.datastore.encryption.HelperSimpleKeyProvider;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.After;
@@ -37,7 +37,7 @@ public abstract class DatastoreTestBase {
 
         //Open SQLCipher-based datastore if SQLCipher parameter is 'true'
         if(Boolean.valueOf(System.getProperty("test.sqlcipher.passphrase"))) {
-            this.datastore = (BasicDatastore) (this.datastoreManager.openDatastore(getClass().getSimpleName(), new HelperKeyProvider()));
+            this.datastore = (BasicDatastore) (this.datastoreManager.openDatastore(getClass().getSimpleName(), new HelperSimpleKeyProvider()));
         } else {
             this.datastore = (BasicDatastore) (this.datastoreManager.openDatastore(getClass().getSimpleName()));
         }
