@@ -27,7 +27,7 @@ import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.sqlite.SQLQueueCallable;
-import com.cloudant.sync.sqlite.android.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.JSONUtils;
