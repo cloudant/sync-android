@@ -3,7 +3,6 @@ apply plugin: 'com.android.application'
 def scriptLocation = project.projectDir.getAbsolutePath(); //this is the location of THIS file
 def testConfig = convertTestSysPropsToHash()
 
-android {
 
     compileSdkVersion 20
     buildToolsVersion "20.0.0"
