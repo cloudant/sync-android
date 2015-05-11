@@ -18,7 +18,6 @@ dependencies {
     compile project(':sync-core')
     compile project(':sync-javase')
     compile project(':sync-android')
-    compile files('AndroidTest/app/src/main/jniLibs/sqlcipher.jar')
 }
 
 subprojects {
