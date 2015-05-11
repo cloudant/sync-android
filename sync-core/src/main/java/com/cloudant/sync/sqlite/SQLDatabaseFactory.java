@@ -18,6 +18,7 @@
 package com.cloudant.sync.sqlite;
 
 import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.SimpleKeyProvider;
 import com.cloudant.sync.util.Misc;
 import com.google.common.base.Preconditions;
 
@@ -79,7 +80,7 @@ public class SQLDatabaseFactory {
                 //Load class to create SQLCipher-based database
                 Class c = Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLCipherSQLite");
 
-                Method m = c.getMethod("createAndroidSQLite", String.class, KeyProvider.class);
+                Method m = c.getMethod("createAndroidSQLite", String.class, SimpleKeyProvider.class);
                 return (SQLDatabase)m.invoke(null, new Object[]{dbFilename, provider});
 
             } catch (Exception e) {
@@ -139,7 +140,7 @@ public class SQLDatabaseFactory {
                 //Load class for opening SQLCipher-based database
                 Class c = Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLCipherSQLite");
 
-                Method m = c.getMethod("openAndroidSQLite", String.class, KeyProvider.class);
+                Method m = c.getMethod("openAndroidSQLite", String.class, SimpleKeyProvider.class);
                 return (SQLDatabase)m.invoke(null, new Object[]{dbFilename, provider});
 
             } catch (Exception e) {
