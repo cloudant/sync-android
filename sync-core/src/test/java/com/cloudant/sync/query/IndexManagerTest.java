@@ -15,17 +15,20 @@ package com.cloudant.sync.query;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
+import com.cloudant.sync.util.SQLDatabaseTestUtils;
 
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class IndexManagerTest extends AbstractIndexTestBase {
 
@@ -140,6 +143,14 @@ public class IndexManagerTest extends AbstractIndexTestBase {
 
         assertThat(im.deleteIndexNamed("basic"), is(true));
         assertThat(im.listIndexes().isEmpty(), is(true));
+    }
+
+    @Test
+    public void validateTextSearchIsAvailable() throws Exception {
+        Set<String> compileOptions = SQLDatabaseTestUtils.getCompileOptions(db);
+        assertThat(compileOptions, hasItems("ENABLE_FTS3", "ENABLE_FTS3_PARENTHESIS"));
+
+        assertThat(im.isTextSearchEnabled(), is(true));
     }
 
 }
