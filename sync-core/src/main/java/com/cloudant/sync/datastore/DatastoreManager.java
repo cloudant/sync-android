@@ -68,6 +68,8 @@ public class DatastoreManager {
 
     private final EventBus eventBus = new EventBus();
 
+    private KeyProvider provider = null;
+
     /**
      * <p>Constructs a {@code DatastoreManager} to manage a directory.</p>
      *
@@ -193,6 +195,7 @@ public class DatastoreManager {
         if (!openedDatastores.containsKey(dbName)) {
             synchronized (openedDatastores) {
                 if (!openedDatastores.containsKey(dbName)) {
+                    this.provider = provider;
                     Datastore ds = createDatastore(dbName, provider);
                     ds.getEventBus().register(this);
                     openedDatastores.put(dbName, ds);
@@ -320,5 +323,9 @@ public class DatastoreManager {
             this.openedDatastores.remove(databaseClosed.dbName);
         }
         this.eventBus.post(databaseClosed);
+    }
+
+    public KeyProvider getEncryptionKeyProvider() {
+        return provider;
     }
 }
