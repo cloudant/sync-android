@@ -39,27 +39,58 @@ Secondly, these documents are in the datastore:
 ```java
 { "name": "mike", 
   "age": 12, 
-  "pet": {"species": "cat"} };
+  "pet": {"species": "cat"},
+  "comment": "Mike goes to middle school and likes reading books." };
 
 { "name": "mike", 
   "age": 34, 
-  "pet": {"species": "dog"} };
+  "pet": {"species": "dog"},
+  "comment": "Mike is a doctor and likes reading books." };
 
 { "name": "fred", 
   "age": 23, 
-  "pet": {"species": "cat"} };
+  "pet": {"species": "cat"},
+  "comment": "Fred works for a startup out of his home office." };
 ```
 
-### Creating indexes
+### Creating Indexes
 
-In order to query documents, indexes need to be created over
-the fields to be queried against.
+In order to query documents, creating indexes over
+the fields to be queried against will typically enhance query performance.  Currently we support two types of indexes.  The first, a JSON index, is used by query clauses containing comparison operators like `$eq`, `$lt`, and `$gt`.  Query clauses containing these operators are based on standard SQLite indexes to provide query results.  The second, a TEXT index, uses SQLite's full text search (FTS) engine.  A query clause containing a `$text` operator with a `$search` operator uses [SQLite FTS SQL syntax] [ftsHome] along with a TEXT index to provide query results.
 
-Use `ensureIndexed(List<Object> fieldNames, String indexName)` to create indexes. These indexes are persistent across application restarts as they are saved to disk. They are kept up to date documents change; there's no need to call `ensureIndexed(List<Object> fieldNames, String indexName)` each time your applications starts, though there is no harm in doing so.
+Basic querying of fields benefits but does _not require_ a JSON index. For example, `{ "name" : { "$eq" : "mike" } }` would benefit from a JSON index on the `name` field but would succeed even if there isn't an index on `name`. Text queries, by contrast, _require_ an index. Therefore `{ "$text" : { "$search" : "doctor books" } }` would need a TEXT index on the `comment` field (based on the content of the above documents). A TEXT index is used to perform term searches, phrase searches and prefix searches (starts with... queries). Querying capabilities and syntax are covered later in this document.
 
-The first argument to `ensureIndexed(List<Object> fieldNames, String indexName)` is a list of fields to put into this index. The second argument is a name for the index. This is used to delete indexes at a later stage and appears when you list the indexes in the database.
+[ftsHome]: http://www.sqlite.org/fts3.html#section_3
 
-A field can appear in more than one index. The query engine will select an appropriate index to use for a given query. However, the more indexes you have, the more disk space they will use and the greater overhead in keeping them up to date.
+
+
+Use the following methods to create a JSON index:
+
+```
+ensureIndexed(List<Object> fieldNames, 
+              String indexName)
+```
+
+Use either of the following methods to create a TEXT index:
+
+```
+ensureIndexed(List<Object> fieldNames, 
+              String indexName, 
+              String indexType)
+
+// or 
+
+ensureIndexed(List<Object> fieldNames, 
+              String indexName, 
+              String indexType, 
+              Map<String, String> indexSettings)
+``` 
+
+These indexes are persistent across application restarts as they are saved to disk. They are kept up to date as documents change; there's no need to call the `ensureIndexed(...)` method each time your applications starts, though there is no harm in doing so.
+
+The first argument, `fieldNames` is a list of fields to put into the index. The second argument, `indexName` is a name for the index. This is used to delete indexes at a later stage and appears when you list the indexes in the database.  The third argument, `indexType` defines what type of index to create.  Valid index types are `json` and `text`.  If not provided, the index type defaults to `json`.  The fourth argument, `indexSettings` is comprised of index parameters and their values.  Currently the only valid index setting is `tokenize` and it can only apply to a TEXT index.  If index settings are not provided for a TEXT index, the `tokenize` parameter defaults to the value `simple`.
+
+A field can appear in more than one index. The query engine will select an appropriate index to use for a given query. However, the more indexes you have, the more disk space they will use and the greater the overhead in keeping them up to date.
 
 To index values in sub-documents, use _dotted notation_. This notation puts the field names in the path to a particular value into a single string, separated by dots. Therefore, to index the `species` field of the `pet` sub-document in the examples above, use `pet.species`.
 
@@ -72,9 +103,56 @@ if (name == null) {
 }
 ```
 
-`ensureIndexed(List<Object> fieldNames, String indexName)` returns the name of the index if it is successful, otherwise it returns `null`.
+####Indexing for text search
 
-If an index needs to be changed, first delete the existing index by calling `deleteIndexNamed(String indexName)` where the argument is the index name, then call  `ensureIndexed(List<Object> fieldNames, String indexName)` with the new definition.
+Since text search relies on SQLite FTS which is a compile time option, we must ensure that SQLite FTS is infact available.  To verify that text search is enabled and that a text index can be created use `isTextSearchEnabled()` before attempting to create a text index.  If text search is not enabled see [compiling and enabling SQLite FTS][enableFTS] and [SQLite Android Bindings][androidBind] for details. 
+
+[enableFTS]: http://www.sqlite.org/fts3.html#section_2
+[androidBind]: https://www.sqlite.org/android/doc/trunk/www/index.wiki
+
+```java
+if (im.isTextSearchEnabled()) {
+    // Create a text index over the name and comment fields.
+    String name = im.ensureIndexed(Arrays.<Object>asList("name", "comment"), 
+                                   "basic_text_index", 
+                                   "text");
+    if (name == null) {
+        // there was an error creating the index
+    }
+}
+```
+
+As text indexing relies on SQLite FTS functionality any custom tokenizers need to be managed through SQLite.  SQLite comes standard with the "simple" default tokenizer as well as a Porter stemming algorithm tokenizer ("porter").  Please refer to [SQLite FTS tokenizers][fts] for additional information on custom tokenizers.
+
+[fts]: http://www.sqlite.org/fts3.html#tokenizer  
+
+When creating a text index, overriding the default tokenizer setting is done by providing a `tokenize` parameter setting as part of the index settings.  The value should be the same as the tokenizer name given to SQLite when registering that tokenizer.  In the example below we set the tokenizer to `porter`.
+
+```java
+if (im.isTextSearchEnabled()) {
+    Map<String, String> settings = new HashMap<String, String>();
+    settings.add("tokenize", "porter");
+    // Create a text index over the name and comment fields.
+    String name = im.ensureIndexed(Arrays.<Object>asList("name", "comment"), 
+                                   "basic_text_index", 
+                                   "text",
+                                   settings);
+    if (name == null) {
+        // there was an error creating the index
+    }
+}
+```
+
+The `ensureIndexed(...)` methods return the name of the index if it is successful, otherwise they return `null`.
+
+##### Restrictions
+
+- There is a limit of one text index per datastore.
+- Text indexes cannot be created on field names containing an `=` sign. This is due to restrictions imposed by SQLite's virtual table syntax.
+
+####Changing and removing indexes
+
+If an index needs to be changed, first delete the existing index by calling `deleteIndexNamed(String indexName)` where the argument is the index name, then call the appropriate `ensureIndexed(...)` method with the new definition.
 
 #### Indexing document metadata (_id and _rev)
 
@@ -89,7 +167,7 @@ querying semantics.
 
 ### Querying syntax
 
-Query documents using `Map` objects. These use the [Cloudant Query `selector`][sel]
+Query documents are `Map` objects that use the [Cloudant Query `selector`][sel]
 syntax. Several features of Cloudant Query are not yet supported in this implementation.
 See below for more details.
 
@@ -118,6 +196,79 @@ query.put("age", gt12);
 ```
 
 See below for supported operators (Selections -> Conditions).
+
+#### Text search
+
+After creating a text index, a text clause may be used as part of a query to perform full text search term matching, phrase matching, and prefix matching.  A text clause can stand on its own as a query or can be part of a compound query (see below).  Text search supports either SQLite [Standard Query Syntax][ftsStandard] or [Enhanced Query Syntax][ftsEnhanced].  This is dependent on which syntax is enabled as part of SQLite FTS.  Typically SQLite FTS on Android comes configured with the SQLite Standard Query Syntax (confirmed during testing on Android API levels 19, 20, and 21).  See [SQLite full text query][ftsQuery] for more details on syntax that is possible with text search.
+
+[ftsQuery]: http://www.sqlite.org/fts3.html#section_3
+[ftsStandard]: http://www.sqlite.org/fts3.html#section_3_1
+[ftsEnhanced]: http://www.sqlite.org/fts3.html#section_3_2
+
+##### Restrictions
+
+- Only one text clause per query is permitted.
+- All clauses in a query must be satisfied by an index if that query contains a text search clause.
+- Both tokenizers, `simple` and `porter`, that come with text search by default are case-insensitive.
+
+To find documents that include all of the terms in `doctor books` use:
+
+```java         
+// query: { "$text" : { "$search" : "doctor books" } }
+Map<String, Object> query = new HashMap<String, Object>();
+Map<String, Object> search = new HashMap<String, Object>();
+search.put("$search", "doctor books");
+query.put("$text", search);
+```
+
+This query will match the following document because both `doctor` and `books` are found in its comment field.
+
+```
+{ "name": "mike", 
+  "age": 34, 
+  "pet": {"species": "dog"},
+  "comment": "Mike is a doctor and likes reading books." };
+```
+
+To find documents that include the phrase `is a doctor` use:
+
+```java  
+// query: { "$text" : { "$search" : "\"is a doctor\"" } }
+Map<String, Object> query = new HashMap<String, Object>();
+Map<String, Object> search = new HashMap<String, Object>();
+search.put("$search", "\"is a doctor\"");
+query.put("$text", search);
+```
+
+This query will match the following document because the phrase `is a doctor` is found in its comment field.
+
+```
+{ "name": "mike", 
+  "age": 34, 
+  "pet": {"species": "dog"},
+  "comment": "Mike is a doctor and likes reading books." };
+```
+
+To find documents that include the prefix `doc` use:
+
+```java              
+// query: { "$text" : { "$search" : "doc*" } }
+Map<String, Object> query = new HashMap<String, Object>();
+Map<String, Object> search = new HashMap<String, Object>();
+search.put("$search", "doc*");
+query.put("$text", search);
+```
+
+This query will match the following document because the prefix `doc` followed by the `*` wildcard matches `doctor` found in its comment field.
+
+```
+{ "name": "mike", 
+  "age": 34, 
+  "pet": {"species": "dog"},
+  "comment": "Mike is a doctor and likes reading books." };
+```
+
+These examples are a small sample of what can be done using text search.  Take a look at the [SQLite full text query][ftsQuery] documentation for more details.
 
 #### Compound queries
 
@@ -372,6 +523,7 @@ Right now the list of supported features is:
 - Limiting returned results.
 - Skipping results.
 - Queries can include unindexed fields.
+- Queries can include a text search clause, although if they do no unindexed fields may be used.
       
 Selectors -> combination
 
@@ -394,6 +546,16 @@ Selectors -> combination
 Selectors -> Condition -> Objects
 
 - `$exists`
+
+Selectors -> Condition -> Misc
+
+- `$text` in combination with `$search`
+
+Selectors -> Condition -> Array
+
+- `$in`
+- `$nin`
+
 
 Implicit operators
 
@@ -427,9 +589,9 @@ Overall restrictions:
 
 Selectors -> combination
 
-- `$nor` #10
+- `$nor` (unplanned)
 - `$all` (unplanned)
-- `$elemMatch` (unplanned, waiting on arrays support for query)
+- `$elemMatch` (unplanned)
 
 Selectors -> Condition -> Objects
 
@@ -437,13 +599,11 @@ Selectors -> Condition -> Objects
 
 Selectors -> Condition -> Array
 
-- `$in` (waiting on arrays support)
-- `$nin` (waiting on arrays support)
-- `$size` (waiting on arrays support)
+- `$size` (planned)
 
 Selectors -> Condition -> Misc
 
-- `$mod` (unplanned, waiting on filtering)
+- `$mod` (planned)
 - `$regex` (unplanned, waiting on filtering)
 
 
@@ -483,6 +643,7 @@ Here:
 <em>expression</em> := 
     <em>compound-expression</em>
     <em>comparison-expression</em>
+    <em>text-search-expression</em>
 
 <em>compound-expression</em> := 
     <strong>{</strong> (&quot;$and&quot; | &quot;$nor&quot; | &quot;$or&quot;) <strong>:</strong> <strong>[</strong> <em>many-expressions</em> <strong>] }</strong>  // nor not implemented
@@ -506,6 +667,9 @@ Here:
     <strong>{</strong> &quot;$exists&quot; <strong>:</strong> <em>boolean</em> <strong>}</strong>
     <strong>{</strong> &quot;$type&quot; <strong>:</strong> <em>type</em> <strong>}</strong>  // not implemented
 
+<em>text-search-expression</em> :=     
+    <strong>{</strong> &quot;$text&quot; <strong>:</strong><strong> {</strong> &quot;$search&quot; <strong>:</strong> <em>string-value</em> <strong>}</strong> <strong>}</strong>
+
 <em>operator</em> := &quot;$gt&quot; | &quot;$gte&quot; | &quot;$lt&quot; | &quot;$lte&quot; | &quot;$eq&quot; | &quot;$neq&quot;
 
 // Obviously List, but easier to express like this
@@ -516,6 +680,8 @@ Here:
 <em>field</em> := <em>String</em>  // a field name
 
 <em>simple-value</em> := <em>String</em> | <em>Number</em>
+
+<em>string-value</em> := <em>String</em>
 
 <em>positive-integer</em> := <em>Integer</em>
 
