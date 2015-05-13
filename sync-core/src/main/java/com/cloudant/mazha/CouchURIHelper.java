@@ -236,7 +236,9 @@ public class CouchURIHelper {
                     null // fragment
             );
             return uri.toASCIIString()
-                    .replace("&", "%26").replace("=", "%3D")  // encode qs separators
+                    .replace("&", "%26")
+                    .replace("=", "%3D")  // encode qs separators
+                    .replace("+", "%2B")
                     .substring(1);  // remove leading ?
         } catch (URISyntaxException e) {
             throw new RuntimeException(
