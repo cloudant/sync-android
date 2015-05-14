@@ -59,7 +59,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-class BasicDatastore implements Datastore, DatastoreExtended {
+public class BasicDatastore implements Datastore, DatastoreExtended {
 
     private static final String LOG_TAG = "BasicDatastore";
     private static final Logger logger = Logger.getLogger(BasicDatastore.class.getCanonicalName());
