@@ -1,0 +1,15 @@
+[
+  {
+    "ok":{
+      "_id":"",
+      "_rev":"1-bd42b942b8b672f0289cf3cd1f67044c",
+      "hello":"foo",
+      "_revisions": {
+        "start": 1,
+        "ids": [
+        "bd42b942b8b672f0289cf3cd1f67044c"
+        ]
+      }
+    }
+  }
+]
