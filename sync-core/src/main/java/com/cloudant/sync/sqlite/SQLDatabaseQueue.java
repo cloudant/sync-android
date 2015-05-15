@@ -21,6 +21,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,6 +36,7 @@ public class SQLDatabaseQueue {
     private final SQLDatabase db;
     private final ExecutorService queue = Executors.newSingleThreadExecutor();
     private final Logger logger = Logger.getLogger(SQLDatabase.class.getCanonicalName());
+    private volatile boolean acceptTasks = true;
 
     /**
      * Creates an SQLQueue for the database specified.
@@ -42,6 +45,8 @@ public class SQLDatabaseQueue {
      */
     public SQLDatabaseQueue(String filename) throws IOException {
         this.db = SQLDatabaseFactory.createSQLDatabase(filename);
+        //can directly add to queue no need to check
+        //if it is still running
         queue.submit(new Runnable() {
             @Override
             public void run() {
@@ -56,14 +61,13 @@ public class SQLDatabaseQueue {
      * @param version The version of the schema
      */
     public void updateSchema(final String[] schema, final int version){
-        queue.submit(new Callable<Object>() {
+        this.submit(new SQLQueueCallable<Object>() {
             @Override
-            public Object call() throws Exception {
-                SQLDatabaseFactory.updateSchema(db,schema,version);
+            public Object call(SQLDatabase db) throws Exception {
+                SQLDatabaseFactory.updateSchema(db, schema, version);
                 return null;
             }
         }); //fire and forget
-
     }
 
     /**
@@ -73,17 +77,17 @@ public class SQLDatabaseQueue {
      */
     public int getVersion() throws SQLException {
         try {
-            return queue.submit(new Callable<Integer>() {
-                 @Override
-                 public Integer call() throws Exception {
-                     return db.getVersion();
-                 }
-             }).get();
+            return this.submit(new SQLQueueCallable<Integer>() {
+                @Override
+                public Integer call(SQLDatabase db) throws Exception {
+                    return db.getVersion();
+                }
+            }).get();
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE,"Failed to get database version",e);
+            logger.log(Level.SEVERE, "Failed to get database version", e);
             throw new SQLException(e);
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE,"Failed to get database version",e);
+            logger.log(Level.SEVERE, "Failed to get database version", e);
             throw new SQLException(e);
         }
     }
@@ -92,25 +96,26 @@ public class SQLDatabaseQueue {
      * Submits a database task for execution
      * @param callable The task to be performed
      * @param <T> The type of object that is returned from the task
-     * @return
+     * @throws RejectedExecutionException Thrown when the queue has been shutdown
+     * @return Future representing the task to be executed.
      */
     public <T> Future<T> submit(SQLQueueCallable<T> callable){
         callable.setDb(db);
         callable.setRunInTransaction(false);
-        return queue.submit(callable);
-
+        return this.submitTaskToQueue(callable);
     }
 
     /**
-     * submits a database task for execution in a transaction
-     * @param callable
-     * @param <T>
-     * @return
+     * Submits a database task for execution in a transaction
+     * @param callable The task to be performed
+     * @param <T> The type of object that is returned from the task
+     * @throws RejectedExecutionException thrown when the queue has been shutdown
+     * @return Future representing the task to be executed.
      */
     public <T> Future<T> submitTransaction(SQLQueueCallable<T> callable){
         callable.setDb(db);
         callable.setRunInTransaction(true);
-        return queue.submit(callable);
+        return this.submitTaskToQueue(callable);
     }
 
     /**
@@ -121,6 +126,8 @@ public class SQLDatabaseQueue {
      * tasks
      */
     public void shutdown() {
+        acceptTasks = false;
+        //pass straight to queue, tasks passed via submitTaskToQueue will now be blocked.
         queue.submit(new Runnable() {
             @Override
             public void run() {
@@ -128,6 +135,12 @@ public class SQLDatabaseQueue {
             }
         });
         queue.shutdown();
+        try {
+            queue.awaitTermination(5,TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            logger.log(Level.SEVERE,"Interrupted while waiting for queue to terminate",e);
+        }
+
     }
 
     /**
@@ -136,5 +149,21 @@ public class SQLDatabaseQueue {
      */
     public boolean isShutdown() {
         return queue.isShutdown();
+    }
+
+    /**
+     * Adds a task to the queue, checking if the queue is still open
+     * to accepting tasks
+     * @param callable The task to submit to the queue
+     * @param <T> The type of object that the callable returns
+     * @return Future representing the task to be executed.
+     * @throws RejectedExecutionException If the queue has been shutdown.
+     */
+    private <T> Future<T> submitTaskToQueue(SQLQueueCallable<T> callable){
+        if(acceptTasks){
+            return queue.submit(callable);
+        } else {
+            throw new RejectedExecutionException("Database is closed");
+        }
     }
 }
