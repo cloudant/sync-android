@@ -93,8 +93,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     //Single thread executor to esnure only one tread accesses the db
     private final SQLDatabaseQueue queue;
 
-    private boolean dbOpen = false;
-
     public BasicDatastore(String dir, String name) throws SQLException, IOException, DatastoreException {
         Preconditions.checkNotNull(dir);
         Preconditions.checkNotNull(name);
@@ -113,7 +111,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         queue.updateSchema(DatastoreConstants.getSchemaVersion4(), 4);
         queue.updateSchema(DatastoreConstants.getSchemaVersion5(), 5);
         queue.updateSchema(DatastoreConstants.getSchemaVersion6(), 6);
-        dbOpen = true;
         this.eventBus = new EventBus();
         this.attachmentManager = new AttachmentManager(this);
 
@@ -1392,29 +1389,13 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     @Override
     public void close() {
-        try {
-            queue.submit(new SQLQueueCallable<Object>() {
-                @Override
-                public Object call(SQLDatabase db) {
-                    if (db != null && db.isOpen()) {
-                        db.close();
-                    }
-                    return null;
-                }
-            }).get();
-        } catch (InterruptedException e) {
-           logger.log(Level.SEVERE,"Closing db failed",e);
-        } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Closing db failed", e);
-        }
         queue.shutdown();
-        dbOpen = false;
         eventBus.post(new DatabaseClosed(datastoreName));
 
     }
 
     boolean isOpen() {
-        return !queue.isShutdown() && dbOpen;
+        return !queue.isShutdown();
     }
 
     @Override
