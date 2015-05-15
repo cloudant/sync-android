@@ -431,7 +431,7 @@ public class QueryValidatorTest {
 
     @Test
     public void normalizesMultiFieldQueryWithTextSearch() {
-        Map<String, Object> query = new HashMap<String, Object>();
+        Map<String, Object> query = new LinkedHashMap<String, Object>();
         // query - { "name" : "mike", "$text" : { "$search" : "foo bar baz" } }
         query.put("name", "mike");
         Map<String, Object> search = new HashMap<String, Object>();
