@@ -44,7 +44,7 @@ public abstract class SQLQueueCallable<T> implements Callable<T> {
 
     /**
      * Called either within a transaction or not depending on if
-     * @{link com.cloudant.sync.sqlite.SQLDatabaseQueue#setRunInTransaction(SQLQueueCallable} or
+     * {@link com.cloudant.sync.sqlite.SQLDatabaseQueue#submitTransaction(SQLQueueCallable)} or
      * {@link com.cloudant.sync.sqlite.SQLDatabaseQueue#submit(SQLQueueCallable)} is called
      *
      * When called within a transaction, to mark the transaction as successful
