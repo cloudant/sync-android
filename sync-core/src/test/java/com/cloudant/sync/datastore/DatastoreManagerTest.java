@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
- *
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software distributed under the
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language governing permissions
@@ -31,7 +31,8 @@ public class DatastoreManagerTest {
 
     @Before
     public void setUp() {
-        TEST_PATH = FileUtils.getTempDirectory().getAbsolutePath() + File.separator + "DatastoreManagerTest";
+        TEST_PATH = FileUtils.getTempDirectory().getAbsolutePath() + File.separator +
+                "DatastoreManagerTest";
         new File(TEST_PATH).mkdirs();
         manager = new DatastoreManager(TEST_PATH);
     }
@@ -42,8 +43,15 @@ public class DatastoreManagerTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void c_root_exception() {
-        manager = new DatastoreManager("/");
+    public void nonWritableDatastoreManagerPathThrows() {
+        File f = new File(TEST_PATH, "c_root_test");
+        try {
+            f.setReadOnly();
+            manager = new DatastoreManager(f.getAbsolutePath());
+        } finally {
+            f.setWritable(true);
+            f.delete();
+        }
     }
 
     @Test
@@ -82,8 +90,9 @@ public class DatastoreManagerTest {
             Assert.assertTrue(new File(dbFile).isFile());
             assertsFailed = false;
         } finally {
-            if (assertsFailed)
+            if (assertsFailed) {
                 ds.close();
+            }
         }
         return ds;
     }
@@ -142,28 +151,38 @@ public class DatastoreManagerTest {
 
     @Test
     public void list5Datastores() throws Exception {
+        List<Datastore> opened = new ArrayList<Datastore>();
 
-        for (int i = 0; i < 5; i++) {
-            manager.openDatastore("datastore" + i);
-        }
+        try {
+            for (int i = 0; i < 5; i++) {
+                opened.add(manager.openDatastore("datastore" + i));
+            }
 
-        List<String> datastores = manager.listAllDatastores();
+            List<String> datastores = manager.listAllDatastores();
 
-        Assert.assertEquals(5, datastores.size());
-        for (int i = 0; i < 5; i++) {
-            Assert.assertTrue(datastores.contains("datastore" + i));
+            Assert.assertEquals(5, datastores.size());
+            for (int i = 0; i < 5; i++) {
+                Assert.assertTrue(datastores.contains("datastore" + i));
+            }
+        } finally {
+            for (Datastore ds : opened) {
+                ds.close();
+            }
         }
 
     }
 
     @Test
     public void listDatastoresWithSlashes() throws Exception {
-        manager.openDatastore("datastore/mynewdatastore");
+        Datastore ds = manager.openDatastore("datastore/mynewdatastore");
+        try {
+            List<String> datastores = manager.listAllDatastores();
 
-        List<String> datastores = manager.listAllDatastores();
-
-        Assert.assertEquals(1, datastores.size());
-        Assert.assertEquals("datastore/mynewdatastore", datastores.get(0));
+            Assert.assertEquals(1, datastores.size());
+            Assert.assertEquals("datastore/mynewdatastore", datastores.get(0));
+        } finally {
+            ds.close();
+        }
 
     }
 
