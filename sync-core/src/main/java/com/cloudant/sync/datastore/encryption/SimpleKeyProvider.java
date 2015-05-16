@@ -14,23 +14,20 @@
 package com.cloudant.sync.datastore.encryption;
 
 /**
- * This class retrieves the user's SQLCipher password.
- * A secure key is generated based on the password, and
- * is then stored into local storage.
- *
- * TODO: Add JSONStore implementation for proper encryption and key management.
- * Created by estebanmlaver.
+ * SimpleKeyProvider simply takes raw key bytes in its
+ * constructor and uses these to provide that key to
+ * datastore methods.
  */
 public class SimpleKeyProvider implements KeyProvider {
 
-    private String encryptedKey;
+    private EncryptionKey key;
 
-    public SimpleKeyProvider(String password) {
-        this.encryptedKey = password;
+    public SimpleKeyProvider(byte[] key) {
+        this.key = new EncryptionKey(key);
     }
 
     @Override
-    public String getEncryptionKey() {
-        return encryptedKey;
+    public EncryptionKey getEncryptionKey() {
+        return key;
     }
 }

@@ -15,17 +15,32 @@
 package com.cloudant.sync.datastore.encryption;
 
 /**
- * Classes implementing this interface provide encryption
- * keys used by the datastore when encryption is enabled.
+ * Class to enforce restrictions on encryption keys used
+ * with the datastore.
  *
- * Created by Mike Rhodes on 11/05/15.
+ * SQLCipher requires a 32-byte/256-bit key. This class
+ * enforces that.
  */
-public interface KeyProvider {
+public class EncryptionKey {
 
-    /**
-     * Returns the encryption key used to encrypt datastore data.
-     *
-     * @return
-     */
-    EncryptionKey getEncryptionKey();
+    private static int REQUIRED_KEY_LENGTH = 32;
+
+    private byte[] key;
+
+    public EncryptionKey(byte[] key) {
+        if (key == null) {
+            throw new IllegalArgumentException("Key array must not be null");
+        }
+
+        if (key.length != REQUIRED_KEY_LENGTH) {
+            throw new IllegalArgumentException("Key array must be 32 bytes");
+        }
+
+        this.key = key;
+    }
+
+    public byte[] getKey() {
+        return key;
+    }
+
 }

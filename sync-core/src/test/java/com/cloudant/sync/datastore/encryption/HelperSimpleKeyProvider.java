@@ -20,8 +20,10 @@ package com.cloudant.sync.datastore.encryption;
 public class HelperSimpleKeyProvider extends SimpleKeyProvider {
 
     public HelperSimpleKeyProvider() {
-        //Pass a SQLCipher password for testing
-        super("testSQLCipherKey");
+        // Create a key provider with a hard-coded key
+        super(new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
+                -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
+                -15, -123, -22, -15, 53, -22 });
     }
 
 }
