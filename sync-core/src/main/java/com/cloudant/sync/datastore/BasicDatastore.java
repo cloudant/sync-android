@@ -19,6 +19,7 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64InputStreamFactory;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
@@ -95,26 +96,7 @@ public class BasicDatastore implements Datastore, DatastoreExtended {
     private final SQLDatabaseQueue queue;
 
     public BasicDatastore(String dir, String name) throws SQLException, IOException, DatastoreException {
-        Preconditions.checkNotNull(dir);
-        Preconditions.checkNotNull(name);
-
-        this.datastoreDir = dir;
-        this.datastoreName = name;
-        this.extensionsDir = FilenameUtils.concat(this.datastoreDir, "extensions");
-        final String dbFilename = FilenameUtils.concat(this.datastoreDir, DB_FILE_NAME);
-        queue = new SQLDatabaseQueue(dbFilename);
-        int dbVersion = queue.getVersion();
-        if(dbVersion >= 100){
-            throw new DatastoreException(String.format("Database version is higher than the version supported " +
-                    "by this library, current version %d , highest supported version %d",dbVersion, 99));
-        }
-        queue.updateSchema(DatastoreConstants.getSchemaVersion3(), 3);
-        queue.updateSchema(DatastoreConstants.getSchemaVersion4(), 4);
-        queue.updateSchema(DatastoreConstants.getSchemaVersion5(), 5);
-        queue.updateSchema(DatastoreConstants.getSchemaVersion6(), 6);
-        this.eventBus = new EventBus();
-        this.attachmentManager = new AttachmentManager(this);
-
+        this(dir, name, new NullKeyProvider());
     }
 
     /**
@@ -144,7 +126,6 @@ public class BasicDatastore implements Datastore, DatastoreExtended {
         queue.updateSchema(DatastoreConstants.getSchemaVersion4(), 4);
         queue.updateSchema(DatastoreConstants.getSchemaVersion5(), 5);
         queue.updateSchema(DatastoreConstants.getSchemaVersion6(), 6);
-        dbOpen = true;
         this.eventBus = new EventBus();
         this.attachmentManager = new AttachmentManager(this);
     }
