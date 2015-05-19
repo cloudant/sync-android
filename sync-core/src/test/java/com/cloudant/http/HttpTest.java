@@ -14,13 +14,17 @@ import com.cloudant.common.CouchTestBase;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.CouchConfig;
+import com.cloudant.mazha.json.JSONHelper;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Map;
 
 /**
  * Created by tomblench on 06/05/15.
@@ -118,5 +122,50 @@ public class HttpTest extends CouchTestBase {
         // stream was not read because execute() was not called
         Assert.assertEquals(bis.available(), data.getBytes().length);
         client.deleteDb();
+    }
+
+
+    //NOTE: This test doesn't work with specified couch servers,
+    // the URL will always include the creds specified for the test
+    //
+    // A couchdb server needs to be set and running with the correct
+    // security settings, the database *must* not be public, it *must*
+    // be named cookie_test
+    //
+    @Test
+    public void testCookieAuthWithoutRetry() throws IOException {
+
+        Assume.assumeFalse(IGNORE_AUTH_HEADERS);
+
+        CookieFilter filter = new CookieFilter(System.getProperty("test.couch.username"),
+                System.getProperty("test.couch.password"));
+
+        CouchConfig config = getCouchConfig("cookie_test");
+        HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
+                "application/json");
+        conn.responseFilters.add(filter);
+        conn.requestFilters.add(filter);
+        ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
+
+        // nothing read from stream
+        Assert.assertEquals(bis.available(), data.getBytes().length);
+
+        conn.setRequestBody(bis);
+        conn.execute();
+
+        // stream was read to end
+        Assert.assertEquals(bis.available(), 0);
+        Assert.assertEquals(2, conn.getConnection().getResponseCode() / 100);
+
+        //check the json
+        JSONHelper helper = new JSONHelper();
+        Map<String,Object> jsonRes = helper.fromJson(new InputStreamReader(conn.getConnection()
+                .getInputStream()));
+
+        Assert.assertTrue(jsonRes.containsKey("ok"));
+        Assert.assertTrue((Boolean)jsonRes.get("ok"));
+        Assert.assertTrue(jsonRes.containsKey("id"));
+        Assert.assertTrue(jsonRes.containsKey("rev"));
+
     }
 }
