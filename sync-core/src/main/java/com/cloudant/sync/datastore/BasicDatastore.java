@@ -92,7 +92,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     private static final String DB_FILE_NAME = "db.sync";
 
-    //Single thread executor to esnure only one tread accesses the db
+    /**
+     * Queue for all database tasks.
+     */
     private final SQLDatabaseQueue queue;
 
     public BasicDatastore(String dir, String name) throws SQLException, IOException, DatastoreException {
