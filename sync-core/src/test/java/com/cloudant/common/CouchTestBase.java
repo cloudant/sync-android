@@ -57,7 +57,7 @@ public abstract class CouchTestBase {
             System.getProperty("test.couch.ignore.compaction",Boolean.FALSE.toString()));
 
     public static final Boolean IGNORE_AUTH_HEADERS = Boolean.valueOf(
-            System.getProperty("test.couch.ignore.auth.headers",Boolean.FALSE.toString()));
+            System.getProperty("test.couch.ignore.auth.headers",Boolean.TRUE.toString()));
 
     public CouchConfig getCouchConfig(String db) {
 
