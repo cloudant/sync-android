@@ -14,6 +14,8 @@
 
 package com.cloudant.sync.datastore.encryption;
 
+import java.util.Arrays;
+
 /**
  * Class to enforce restrictions on encryption keys used
  * with the datastore.
@@ -23,9 +25,9 @@ package com.cloudant.sync.datastore.encryption;
  */
 public class EncryptionKey {
 
-    private static int REQUIRED_KEY_LENGTH = 32;
+    private final static int REQUIRED_KEY_LENGTH = 32;
 
-    private byte[] key;
+    private final byte[] key;
 
     public EncryptionKey(byte[] key) {
         if (key == null) {
@@ -36,11 +38,11 @@ public class EncryptionKey {
             throw new IllegalArgumentException("Key array must be 32 bytes");
         }
 
-        this.key = key;
+        this.key = Arrays.copyOf(key, REQUIRED_KEY_LENGTH);
     }
 
     public byte[] getKey() {
-        return key;
+        return Arrays.copyOf(key, REQUIRED_KEY_LENGTH);
     }
 
 }

@@ -17,6 +17,8 @@ package com.cloudant.sync.datastore.encryption;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 /**
  * This test makes sure that the EncryptionKey class only allows
  * itself to be constructed using a 32 byte array.
@@ -41,7 +43,8 @@ public class EncryptionKeyTest {
     @Test
     public void keyWith32ByteLength() {
         EncryptionKey key = new EncryptionKey(keyLength32);
-        Assert.assertEquals("Returned key should match creation key", keyLength32, key.getKey());
+        Assert.assertArrayEquals("Returned key should match creation key", keyLength32, key
+                .getKey());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -62,5 +65,28 @@ public class EncryptionKeyTest {
     @Test(expected = IllegalArgumentException.class)
     public void keyWithNullBytes() {
         new EncryptionKey(null);
+    }
+
+    @Test
+    /** Modifying the key used to create an EncryptionKey object shouldn't
+     * cause the key contained by the EncryptionKey object to change.
+     */
+    public void keyIsImmutable() {
+        byte[] copy32 = Arrays.copyOf(keyLength32, 32);
+        EncryptionKey key = new EncryptionKey(copy32);
+        copy32[12] = 14;
+        Assert.assertArrayEquals("Modifying creation key shouldn't change stored key",
+                keyLength32, key.getKey());
+    }
+
+    @Test
+    /** Modifying the key retrieved from an EncryptionKey object shouldn't
+     * cause the key contained by the EncryptionKey object to change.
+     */
+    public void returnedKeyIsImmutable() {
+        EncryptionKey key = new EncryptionKey(keyLength32);
+        key.getKey()[12] = 14;
+        Assert.assertArrayEquals("Modifying retrieved key shouldn't change stored key",
+                keyLength32, key.getKey());
     }
 }
