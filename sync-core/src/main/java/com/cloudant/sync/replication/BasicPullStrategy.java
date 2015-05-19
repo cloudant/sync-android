@@ -387,6 +387,11 @@ class BasicPullStrategy implements ReplicationStrategy {
 
         List<Callable<DocumentRevsList>> tasks = new ArrayList<Callable<DocumentRevsList>>();
         for(String id : ids) {
+            //skip any document with an empty id
+            if(id.isEmpty()){
+                logger.info("Found document with empty ID in change feed, skipping");
+                continue;
+            }
             // get list for atts_since (these are possible ancestors we have, it's ok to be eager
             // and get all revision IDs higher up in the tree even if they're not our ancestors and
             // belong to a different subtree)

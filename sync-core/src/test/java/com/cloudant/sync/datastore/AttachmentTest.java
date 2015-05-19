@@ -21,6 +21,8 @@ import com.cloudant.sync.util.Misc;
 import com.cloudant.sync.util.TestUtils;
 
 import static org.hamcrest.CoreMatchers.is;
+
+import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -53,16 +55,21 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             Assert.fail("ConflictException thrown: "+ce);
         }
         // get attachment...
+        FileInputStream fis = null;
         try {
-            byte[] expectedSha1 = Misc.getSha1(new FileInputStream(f));
+            byte[] expectedSha1 = Misc.getSha1((fis = new FileInputStream(f)));
 
-            SavedAttachment savedAtt = (SavedAttachment) datastore.getAttachment(newRevision, attachmentName);
+            SavedAttachment savedAtt = (SavedAttachment) datastore.getAttachment(newRevision,
+                    attachmentName);
             Assert.assertArrayEquals(expectedSha1, savedAtt.key);
 
-            SavedAttachment savedAtt2 = (SavedAttachment) datastore.attachmentsForRevision(newRevision).get(0);
+            SavedAttachment savedAtt2 = (SavedAttachment) datastore.attachmentsForRevision
+                    (newRevision).get(0);
             Assert.assertArrayEquals(expectedSha1, savedAtt2.key);
         } catch (FileNotFoundException fnfe) {
-            Assert.fail("FileNotFoundException thrown "+fnfe);
+            Assert.fail("FileNotFoundException thrown " + fnfe);
+        } finally {
+            IOUtils.closeQuietly(fis);
         }
     }
 

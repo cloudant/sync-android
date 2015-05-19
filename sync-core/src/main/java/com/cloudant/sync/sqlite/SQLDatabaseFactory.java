@@ -18,6 +18,7 @@
 package com.cloudant.sync.sqlite;
 
 import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.util.Misc;
 import com.google.common.base.Preconditions;
 
@@ -35,60 +36,47 @@ public class SQLDatabaseFactory {
 
     private final static Logger logger = Logger.getLogger(SQLDatabaseFactory.class.getCanonicalName());
 
-    public static SQLDatabase createSQLDatabase(String dbFilename) throws IOException {
-
-        makeSureFileExists(dbFilename);
-        if(Misc.isRunningOnAndroid()) {
-            try {
-                Class c = Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLite");
-
-                Method m = c.getMethod("createAndroidSQLite",String.class);
-                return (SQLDatabase)m.invoke(null,dbFilename);
-
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Failed to load database module", e);
-                return null;
-            }
-        } else {
-            try {
-                Class c = Class.forName("com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper");
-                Method m = c.getMethod("openSQLiteWrapper", String.class);
-                return (SQLDatabase)m.invoke(null, dbFilename);
-
-            } catch (Exception e) {
-                logger.log(Level.SEVERE,"Failed to load database module",e);
-                return null;
-            }
-        }
-
-    }
-
     /**
      * SQLCipher-based implementation for creating database.
      * @param dbFilename full file path of the db file
      * @param provider Key provider object storing the SQLCipher key
+     *                 Supply a NullKeyProvider to use a non-encrypted database.
      * @return {@code SQLDatabase} for the given filename
      * @throws IOException if the file does not exists, and also
      *         can not be created
      */
     public static SQLDatabase createSQLDatabase(String dbFilename, KeyProvider provider) throws IOException {
 
+        boolean runningOnAndroid =  Misc.isRunningOnAndroid();
+        boolean useSqlCipher = (provider.getEncryptionKey() != null);
+
         makeSureFileExists(dbFilename);
-        if(Misc.isRunningOnAndroid()) {
-            try {
-                //Load class to create SQLCipher-based database
-                Class c = Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLCipherSQLite");
 
-                Method m = c.getMethod("createAndroidSQLite", String.class, KeyProvider.class);
-                return (SQLDatabase)m.invoke(null, new Object[]{dbFilename, provider});
+        try {
 
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Failed to load database module", e);
-                return null;
+            if (runningOnAndroid) {
+                if (useSqlCipher) {
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLCipherSQLite")
+                            .getMethod("createAndroidSQLite", String.class, KeyProvider.class)
+                            .invoke(null, new Object[]{dbFilename, provider});
+                } else {
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLite")
+                            .getMethod("createAndroidSQLite", String.class)
+                            .invoke(null, dbFilename);
+                }
+            } else {
+                if (useSqlCipher) {
+                    throw new IOException("No SQLCipher-based database implementation for Java SE");
+                } else {
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper")
+                            .getMethod("openSQLiteWrapper", String.class)
+                            .invoke(null, dbFilename);
+                }
             }
-        } else {
-            //Currently, no implementation for Java SE
-            throw new IOException("No SQLCipher-based database implementation for Java SE");
+
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to load database module", e);
+            return null;
         }
 
     }
@@ -102,53 +90,50 @@ public class SQLDatabaseFactory {
      *         can not be created
      */
     public static SQLDatabase openSqlDatabase(String dbFilename) throws IOException {
-        makeSureFileExists(dbFilename);
-        if(Misc.isRunningOnAndroid()) {
-            try {
-                Class c = Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLite");
-                Method m = c.getMethod("createAndroidSQLite", String.class);
-                return (SQLDatabase)m.invoke(null, dbFilename);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Failed to load database module", e);
-                return null;
-            }
-        } else {
-            try {
-                Class c = Class.forName("com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper");
-                Method m = c.getMethod("openSQLiteWrapper", String.class);
-                return (SQLDatabase)m.invoke(null, dbFilename);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Failed to load database module", e);
-                return null;
-            }
-        }
+        return openSqlDatabase(dbFilename, new NullKeyProvider());
     }
 
     /**
      * SQLCipher-based implementation for opening database.
      * @param dbFilename full file path of the db file
      * @param provider Key provider object storing the SQLCipher key
+     *                 Supply a NullKeyProvider to use a non-encrypted database.
      * @return {@code SQLDatabase} for the given filename
      * @throws IOException if the file does not exists, and also
      *         can not be created
      */
     public static SQLDatabase openSqlDatabase(String dbFilename, KeyProvider provider) throws IOException {
+
+        boolean runningOnAndroid =  Misc.isRunningOnAndroid();
+        boolean useSqlCipher = (provider.getEncryptionKey() != null);
+
         makeSureFileExists(dbFilename);
-        if(Misc.isRunningOnAndroid()) {
-            try {
-                //Load class for opening SQLCipher-based database
-                Class c = Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLCipherSQLite");
 
-                Method m = c.getMethod("openAndroidSQLite", String.class, KeyProvider.class);
-                return (SQLDatabase)m.invoke(null, new Object[]{dbFilename, provider});
+        try {
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
+            if (runningOnAndroid) {
+                if (useSqlCipher) {
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLCipherSQLite")
+                            .getMethod("openAndroidSQLite", String.class, KeyProvider.class)
+                            .invoke(null, new Object[]{dbFilename, provider});
+                } else {
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLite")
+                            .getMethod("createAndroidSQLite", String.class)
+                            .invoke(null, dbFilename);
+                }
+            } else {
+                if (useSqlCipher) {
+                    throw new IOException("No SQLCipher-based database implementation for Java SE");
+                } else {
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper")
+                            .getMethod("openSQLiteWrapper", String.class)
+                            .invoke(null, dbFilename);
+                }
             }
-        } else {
-            //Currently, no implementation for Java SE
-            throw new IOException("No SQLCipher-based database implementation for Java SE");
+
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to load database module", e);
+            return null;
         }
     }
 

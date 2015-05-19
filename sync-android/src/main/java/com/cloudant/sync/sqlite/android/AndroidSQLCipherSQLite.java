@@ -25,10 +25,11 @@ package com.cloudant.sync.sqlite.android;
  */
 
 
+import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.KeyUtils;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
-import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
@@ -51,7 +52,8 @@ public class AndroidSQLCipherSQLite extends SQLDatabase {
     public static AndroidSQLCipherSQLite createAndroidSQLite(String path, KeyProvider provider) {
 
         //Call SQLCipher-based method for opening database, or creating if database not found
-        SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(path, provider.getEncryptedKey(), null);
+        SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(path,
+                KeyUtils.sqlCipherKeyForKeyProvider(provider), null);
 
         return new AndroidSQLCipherSQLite(db);
     }
@@ -65,7 +67,8 @@ public class AndroidSQLCipherSQLite extends SQLDatabase {
     public static AndroidSQLCipherSQLite openAndroidSQLite(String path, KeyProvider provider) {
 
         //Call SQLCipher-based method for opening (or creating) database
-        SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(path, provider.getEncryptedKey(), null);
+        SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(path,
+                KeyUtils.sqlCipherKeyForKeyProvider(provider), null);
 
         return new AndroidSQLCipherSQLite(db);
     }

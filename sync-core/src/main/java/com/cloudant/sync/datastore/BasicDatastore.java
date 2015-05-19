@@ -18,6 +18,8 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64InputStreamFactory;
+import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
@@ -94,9 +96,19 @@ public class BasicDatastore implements Datastore, DatastoreExtended {
     //Single thread executor to esnure only one tread accesses the db
     private final SQLDatabaseQueue queue;
 
-    private boolean dbOpen = false;
-
     public BasicDatastore(String dir, String name) throws SQLException, IOException, DatastoreException {
+        this(dir, name, new NullKeyProvider());
+    }
+
+    /**
+     * Constructor for single thread SQLCipher-based datastore.
+     * @param dir The directory where the datastore will be created
+     * @param name The user-defined name of the datastore
+     * @param provider The key provider object that contains the user-defined SQLCipher key
+     * @throws SQLException
+     * @throws IOException
+     */
+    public BasicDatastore(String dir, String name, KeyProvider provider) throws SQLException, IOException, DatastoreException {
         Preconditions.checkNotNull(dir);
         Preconditions.checkNotNull(name);
 
@@ -104,7 +116,8 @@ public class BasicDatastore implements Datastore, DatastoreExtended {
         this.datastoreName = name;
         this.extensionsDir = FilenameUtils.concat(this.datastoreDir, "extensions");
         final String dbFilename = FilenameUtils.concat(this.datastoreDir, DB_FILE_NAME);
-        queue = new SQLDatabaseQueue(dbFilename);
+        queue = new SQLDatabaseQueue(dbFilename, provider);
+
         int dbVersion = queue.getVersion();
         if(dbVersion >= 100){
             throw new DatastoreException(String.format("Database version is higher than the version supported " +
@@ -114,10 +127,8 @@ public class BasicDatastore implements Datastore, DatastoreExtended {
         queue.updateSchema(DatastoreConstants.getSchemaVersion4(), 4);
         queue.updateSchema(DatastoreConstants.getSchemaVersion5(), 5);
         queue.updateSchema(DatastoreConstants.getSchemaVersion6(), 6);
-        dbOpen = true;
         this.eventBus = new EventBus();
         this.attachmentManager = new AttachmentManager(this);
-
     }
 
     /**
@@ -1425,29 +1436,13 @@ public class BasicDatastore implements Datastore, DatastoreExtended {
 
     @Override
     public void close() {
-        try {
-            queue.submit(new SQLQueueCallable<Object>() {
-                @Override
-                public Object call(SQLDatabase db) {
-                    if (db != null && db.isOpen()) {
-                        db.close();
-                    }
-                    return null;
-                }
-            }).get();
-        } catch (InterruptedException e) {
-           logger.log(Level.SEVERE,"Closing db failed",e);
-        } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Closing db failed", e);
-        }
         queue.shutdown();
-        dbOpen = false;
         eventBus.post(new DatabaseClosed(datastoreName));
 
     }
 
     boolean isOpen() {
-        return !queue.isShutdown() && dbOpen;
+        return !queue.isShutdown();
     }
 
     @Override

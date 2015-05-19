@@ -11,28 +11,23 @@
  * either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
+package com.cloudant.sync.datastore.encryption;
 
-package com.cloudant.mazha;
+/**
+ * SimpleKeyProvider simply takes raw key bytes in its
+ * constructor and uses these to provide that key to
+ * datastore methods.
+ */
+public class SimpleKeyProvider implements KeyProvider {
 
+    private EncryptionKey key;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+    public SimpleKeyProvider(byte[] key) {
+        this.key = new EncryptionKey(key);
+    }
 
-import com.cloudant.common.RequireRunningCouchDB;
-import com.google.common.base.Strings;
-
-import java.io.InputStream;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-
-
-@Category(RequireRunningCouchDB.class)
-public class HttpRequestsTest extends CouchClientTestBase {
-// HTTPRequests no longer exists!
-
+    @Override
+    public EncryptionKey getEncryptionKey() {
+        return key;
+    }
 }

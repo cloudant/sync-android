@@ -15,17 +15,13 @@
 package com.cloudant.sync.datastore.encryption;
 
 /**
- * Classes implementing this interface provide encryption
- * keys used by the datastore when encryption is enabled.
- *
- * Created by Mike Rhodes on 11/05/15.
+ * This implementation of KeyProvider always returns a null
+ * key.
  */
-public interface KeyProvider {
+public class NullKeyProvider implements KeyProvider {
 
-    /**
-     * Returns the encryption key used to encrypt datastore data.
-     *
-     * @return
-     */
-    EncryptionKey getEncryptionKey();
+    @Override
+    public EncryptionKey getEncryptionKey() {
+        return null;
+    }
 }

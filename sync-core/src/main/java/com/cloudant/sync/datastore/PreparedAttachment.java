@@ -17,6 +17,7 @@ package com.cloudant.sync.datastore;
 import com.cloudant.sync.util.Misc;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,11 +43,15 @@ public class PreparedAttachment {
                               String attachmentsDir) throws AttachmentException {
         this.attachment = attachment;
         this.tempFile = new File(attachmentsDir, "temp" + UUID.randomUUID());
+        FileInputStream tempFileIS = null;
         try {
             FileUtils.copyInputStreamToFile(attachment.getInputStream(), tempFile);
-            this.sha1 = Misc.getSha1(new FileInputStream(tempFile));
-        } catch (IOException e){
+            this.sha1 = Misc.getSha1((tempFileIS = new FileInputStream(tempFile)));
+        } catch (IOException e) {
             throw new AttachmentNotSavedException(e);
+        } finally {
+            //ensure the temp file is closed after calculating the hash
+            IOUtils.closeQuietly(tempFileIS);
         }
     }
 

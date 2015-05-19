@@ -11,28 +11,19 @@
  * either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
+package com.cloudant.sync.datastore.encryption;
 
-package com.cloudant.mazha;
+/**
+ * Class provides SQLCipher key for test cases.
+ * Created by estebanmlaver.
+ */
+public class HelperSimpleKeyProvider extends SimpleKeyProvider {
 
-
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
-import com.cloudant.common.RequireRunningCouchDB;
-import com.google.common.base.Strings;
-
-import java.io.InputStream;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-
-
-@Category(RequireRunningCouchDB.class)
-public class HttpRequestsTest extends CouchClientTestBase {
-// HTTPRequests no longer exists!
+    public HelperSimpleKeyProvider() {
+        // Create a key provider with a hard-coded key
+        super(new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
+                -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
+                -15, -123, -22, -15, 53, -22 });
+    }
 
 }

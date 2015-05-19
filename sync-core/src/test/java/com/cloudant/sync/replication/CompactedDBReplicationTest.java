@@ -72,7 +72,7 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
 
         URI postURI = new URI(couchClient.getRootUri().toString() + "/_compact");
 
-        Assert.assertEquals(ClientTestUtils.executeHttpPostRequest(couchClient, postURI, ""), 202);
+        Assert.assertEquals(ClientTestUtils.executeHttpPostRequest(postURI, ""), 202);
         CouchDbInfo info = couchClient.getDbInfo();
 
         while(info.isCompactRunning()) {
@@ -105,7 +105,7 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
 
         URI getURI = new URI(couchClient.getRootUri().toString() + "/" + documentName + "?revs_info=true");
 
-        List<String> remoteRevs = ClientTestUtils.getRemoteRevisionIDs(couchClient, getURI);
+        List<String> remoteRevs = ClientTestUtils.getRemoteRevisionIDs(getURI);
         List<String> localRevs = new ArrayList<String>();
         DocumentRevisionTree localRevsTree = datastore.getAllRevisionsOfDocument(bar.getId());
 

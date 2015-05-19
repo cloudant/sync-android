@@ -448,7 +448,7 @@ class QuerySqlTranslator {
         search = search.replace("'", "''");
 
         String sql = String.format("SELECT _id FROM %s WHERE %s MATCH ?", tableName, tableName);
-        return SqlParts.partsForSql(sql, new String[]{ String.format("'%s'", search) });
+        return SqlParts.partsForSql(sql, new String[]{ search });
     }
 
     @SuppressWarnings("unchecked")

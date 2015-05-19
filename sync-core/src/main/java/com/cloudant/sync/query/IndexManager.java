@@ -45,6 +45,7 @@ import com.cloudant.sync.util.DatabaseUtils;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,8 @@ public class IndexManager {
     private final Pattern validFieldName;
     private final ExecutorService queue;
 
+    private boolean textSearchEnabled;
+
     /**
      *  Constructs a new IndexManager which indexes documents in 'datastore'
      */
@@ -109,6 +112,7 @@ public class IndexManager {
             logger.log(Level.SEVERE, "Problem opening or creating database.", e);
         }
         database = sqlDatabase;
+        textSearchEnabled = ftsAvailable(queue, database);
     }
 
     public void close() {
@@ -374,6 +378,60 @@ public class IndexManager {
 
     protected SQLDatabase getDatabase() {
         return database;
+    }
+
+    /**
+     * Check that the necessary settings to support text search are included
+     * in the SQLite compile options.
+     *
+     * @return text search enabled setting
+     */
+    protected static boolean ftsAvailable(ExecutorService q, final SQLDatabase db) {
+        boolean ftsOptionsExist = false;
+        if (q != null && db != null) {
+            try {
+                ftsOptionsExist = q.submit(new Callable<Boolean>() {
+                    @Override
+                    public Boolean call() {
+                        List<String> ftsCompileOptions = new ArrayList<String>();
+                        ftsCompileOptions.add("ENABLE_FTS3");
+                        ftsCompileOptions.add("ENABLE_FTS3_PARENTHESIS");
+                        String pragmaStatement = "PRAGMA compile_options;";
+                        Cursor compileOptions = null;
+                        try {
+                            compileOptions = db.rawQuery(pragmaStatement, new String[]{});
+                            while (compileOptions.moveToNext()) {
+                                String compileOption = compileOptions.getString(0);
+                                ftsCompileOptions.remove(compileOption);
+                            }
+                        } catch (SQLException e) {
+                            String msg = "Failed to get a list of compile options from SQLite.";
+                            logger.log(Level.SEVERE, msg, e);
+                        } finally {
+                            DatabaseUtils.closeCursorQuietly(compileOptions);
+                        }
+                        return ftsCompileOptions.isEmpty();
+                    }
+                }).get();
+            } catch (InterruptedException e) {
+                logger.log(Level.SEVERE, "Execution interrupted error during compile option " +
+                                         "check:", e);
+            } catch (ExecutionException e) {
+                logger.log(Level.SEVERE, "Execution error during compile option check:", e);
+            }
+        }
+
+        return ftsOptionsExist;
+    }
+
+    public boolean isTextSearchEnabled() {
+        if (!textSearchEnabled) {
+            logger.log(Level.INFO, "Based on SQLite compile options, " +
+                                   "text search is currently not supported.  " +
+                                   "To enable text search recompile SQLite with " +
+                                   "the full text saerch compile options turned on.");
+        }
+        return textSearchEnabled;
     }
 
 }

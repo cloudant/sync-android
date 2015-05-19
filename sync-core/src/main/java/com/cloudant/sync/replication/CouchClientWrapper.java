@@ -29,6 +29,8 @@ import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,8 +44,6 @@ public class CouchClientWrapper implements CouchDB {
 
     private final static String LOG_TAG = "CouchClientWrapper";
     private static final Logger logger = Logger.getLogger(CouchClientWrapper.class.getCanonicalName());
-    public static final int SOCKET_TIMEOUT_DEFAULT = 30000;
-    public static final int CONNECTION_TIMEOUT_DEFAULT = 30000;
 
     final CouchClient couchClient;
 
