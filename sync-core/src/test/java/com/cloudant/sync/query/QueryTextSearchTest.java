@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class QueryTextSearchTest extends AbstractQueryTestBase {
 
@@ -302,36 +303,44 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void canQueryUsingEnhancedQuerySyntaxNOT() {
-        List<Object> fields = Collections.<Object>singletonList("comment");
-        assertThat(im.ensureIndexed(fields, "basic_text", "text"), is("basic_text"));
+    public void canQueryUsingEnhancedQuerySyntaxNOT() throws Exception{
+        // Only execute this test if SQLite enhanced query syntax is enabled
+        Set<String> compileOptions = SQLDatabaseTestUtils.getCompileOptions(db);
+        if (compileOptions.containsAll(Arrays.asList("ENABLE_FTS3", "ENABLE_FTS3_PARENTHESIS"))) {
+            List<Object> fields = Collections.<Object>singletonList("comment");
+            assertThat(im.ensureIndexed(fields, "basic_text", "text"), is("basic_text"));
 
-        // query - { "$text" : { "$search" : "Remus NOT Romulus" } }
-        // - Enhanced Query Syntax - logical operators must be uppercase otherwise they will
-        //   be treated as a search token
-        // - NOT operator only works between tokens as in (token1 NOT token2)
-        Map<String, Object> search = new HashMap<String, Object>();
-        search.put("$search", "Remus NOT Romulus");
-        Map<String, Object> query = new HashMap<String, Object>();
-        query.put("$text", search);
-        QueryResult queryResult = im.find(query);
-        assertThat(queryResult.documentIds(), contains("mike72"));
+            // query - { "$text" : { "$search" : "Remus NOT Romulus" } }
+            // - Enhanced Query Syntax - logical operators must be uppercase otherwise they will
+            //   be treated as a search token
+            // - NOT operator only works between tokens as in (token1 NOT token2)
+            Map<String, Object> search = new HashMap<String, Object>();
+            search.put("$search", "Remus NOT Romulus");
+            Map<String, Object> query = new HashMap<String, Object>();
+            query.put("$text", search);
+            QueryResult queryResult = im.find(query);
+            assertThat(queryResult.documentIds(), contains("mike72"));
+        }
     }
 
     @Test
-    public void canQueryUsingEnhancedQuerySyntaxParentheses() {
-        List<Object> fields = Collections.<Object>singletonList("comment");
-        assertThat(im.ensureIndexed(fields, "basic_text", "text"), is("basic_text"));
+    public void canQueryUsingEnhancedQuerySyntaxParentheses() throws Exception{
+        // Only execute this test if SQLite enhanced query syntax is enabled
+        Set<String> compileOptions = SQLDatabaseTestUtils.getCompileOptions(db);
+        if (compileOptions.containsAll(Arrays.asList("ENABLE_FTS3", "ENABLE_FTS3_PARENTHESIS"))) {
+            List<Object> fields = Collections.<Object>singletonList("comment");
+            assertThat(im.ensureIndexed(fields, "basic_text", "text"), is("basic_text"));
 
-        // query - { "$text" : { "$search" : "(Remus OR Romulus) AND \"lives next door\"" } }
-        // - Parentheses are used to override SQLite enhanced query syntax operator precedence
-        // - Operator precedence is NOT -> AND -> OR
-        Map<String, Object> search = new HashMap<String, Object>();
-        search.put("$search", "(Remus OR Romulus) AND \"lives next door\"");
-        Map<String, Object> query = new HashMap<String, Object>();
-        query.put("$text", search);
-        QueryResult queryResult = im.find(query);
-        assertThat(queryResult.documentIds(), contains("fred34"));
+            // query - { "$text" : { "$search" : "(Remus OR Romulus) AND \"lives next door\"" } }
+            // - Parentheses are used to override SQLite enhanced query syntax operator precedence
+            // - Operator precedence is NOT -> AND -> OR
+            Map<String, Object> search = new HashMap<String, Object>();
+            search.put("$search", "(Remus OR Romulus) AND \"lives next door\"");
+            Map<String, Object> query = new HashMap<String, Object>();
+            query.put("$text", search);
+            QueryResult queryResult = im.find(query);
+            assertThat(queryResult.documentIds(), contains("fred34"));
+        }
     }
 
     @Test
