@@ -46,7 +46,7 @@ public class KeyUtils {
             return null;
         }
 
-        Hex encoder = new Hex(Charsets.UTF_8.name());
-        return String.format("x'%1$s'", encoder.encodeHexString(keyBytes));
+        String hexKey = new String(Hex.encodeHex(keyBytes));
+        return String.format("x'%1$s'", hexKey);
     }
 }
