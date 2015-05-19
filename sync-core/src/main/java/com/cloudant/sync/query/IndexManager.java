@@ -71,6 +71,7 @@ import java.util.regex.Pattern;
 public class IndexManager {
 
     private static final String INDEX_TABLE_PREFIX = "_t_cloudant_sync_query_index_";
+    private static final String FTS_CHECK_TABLE_NAME = "_t_cloudant_sync_query_fts_check";
     public static final String INDEX_METADATA_TABLE_NAME = "_t_cloudant_sync_query_metadata";
 
     private static final String EXTENSION_NAME = "com.cloudant.sync.query";
@@ -381,55 +382,58 @@ public class IndexManager {
     }
 
     /**
-     * Check that the necessary settings to support text search are included
-     * in the SQLite compile options.
+     * Check that support for text search exists in SQLite by building a VIRTUAL table.
      *
      * @return text search enabled setting
      */
     protected static boolean ftsAvailable(ExecutorService q, final SQLDatabase db) {
-        boolean ftsOptionsExist = false;
-        if (q != null && db != null) {
-            try {
-                ftsOptionsExist = q.submit(new Callable<Boolean>() {
-                    @Override
-                    public Boolean call() {
-                        List<String> ftsCompileOptions = new ArrayList<String>();
-                        ftsCompileOptions.add("ENABLE_FTS3");
-                        ftsCompileOptions.add("ENABLE_FTS3_PARENTHESIS");
-                        String pragmaStatement = "PRAGMA compile_options;";
-                        Cursor compileOptions = null;
-                        try {
-                            compileOptions = db.rawQuery(pragmaStatement, new String[]{});
-                            while (compileOptions.moveToNext()) {
-                                String compileOption = compileOptions.getString(0);
-                                ftsCompileOptions.remove(compileOption);
-                            }
-                        } catch (SQLException e) {
-                            String msg = "Failed to get a list of compile options from SQLite.";
-                            logger.log(Level.SEVERE, msg, e);
-                        } finally {
-                            DatabaseUtils.closeCursorQuietly(compileOptions);
-                        }
-                        return ftsCompileOptions.isEmpty();
+        boolean ftsAvailable = false;
+        Future<Boolean> result = q.submit(new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+                Boolean transactionSuccess = true;
+                db.beginTransaction();
+                List<String> statements = new ArrayList<String>();
+                statements.add(String.format("CREATE VIRTUAL TABLE %s USING FTS4 ( col )",
+                                             FTS_CHECK_TABLE_NAME));
+                statements.add(String.format("DROP TABLE %s", FTS_CHECK_TABLE_NAME));
+
+                for (String statement : statements) {
+                    try {
+                        db.execSQL(statement);
+                    } catch (SQLException e) {
+                        // An exception here means that FTS is not enabled in SQLite.
+                        // Logging happens in calling method.
+                        transactionSuccess = false;
+                        break;
                     }
-                }).get();
-            } catch (InterruptedException e) {
-                logger.log(Level.SEVERE, "Execution interrupted error during compile option " +
-                                         "check:", e);
-            } catch (ExecutionException e) {
-                logger.log(Level.SEVERE, "Execution error during compile option check:", e);
+                }
+
+                if (transactionSuccess) {
+                    db.setTransactionSuccessful();
+                }
+                db.endTransaction();
+
+                return  transactionSuccess;
             }
+        });
+
+        try {
+            ftsAvailable = result.get();
+        } catch (ExecutionException e) {
+            logger.log(Level.SEVERE, "Execution error encountered:", e);
+        } catch (InterruptedException e) {
+            logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
         }
 
-        return ftsOptionsExist;
+        return ftsAvailable;
     }
 
     public boolean isTextSearchEnabled() {
         if (!textSearchEnabled) {
-            logger.log(Level.INFO, "Based on SQLite compile options, " +
-                                   "text search is currently not supported.  " +
+            logger.log(Level.INFO, "Text search is currently not supported.  " +
                                    "To enable text search recompile SQLite with " +
-                                   "the full text saerch compile options turned on.");
+                                   "the full text search compile options enabled.");
         }
         return textSearchEnabled;
     }
