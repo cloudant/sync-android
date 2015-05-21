@@ -147,9 +147,6 @@ public class IndexManagerTest extends AbstractIndexTestBase {
 
     @Test
     public void validateTextSearchIsAvailable() throws Exception {
-        Set<String> compileOptions = SQLDatabaseTestUtils.getCompileOptions(db);
-        assertThat(compileOptions, hasItems("ENABLE_FTS3", "ENABLE_FTS3_PARENTHESIS"));
-
         assertThat(im.isTextSearchEnabled(), is(true));
     }
 
