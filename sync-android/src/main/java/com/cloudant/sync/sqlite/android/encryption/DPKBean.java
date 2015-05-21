@@ -16,77 +16,67 @@
 
 package com.cloudant.sync.sqlite.android.encryption;
 
-import com.cloudant.sync.sqlite.android.encryption.jackson.JacksonSerializedJSONObject;
-import com.cloudant.sync.sqlite.android.encryption.jackson.JsonOrgModule;
+import com.cloudant.sync.util.JSONUtils;
 
 import org.json.JSONException;
-import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 // TODO: in the future, do a better job of hiding the fact that JSON is being
 // used under the covers (i.e., don't throw JSON exceptions, etc.).
 
 public class DPKBean {
-     private static final String KEY_DPK = "dpk"; //$NON-NLS-1$
-     private static final String KEY_ITERATIONS = "iterations"; //$NON-NLS-1$
-     private static final String KEY_IV = "iv"; //$NON-NLS-1$
-     private static final String KEY_SALT = "jsonSalt"; //$NON-NLS-1$
-     private static final String KEY_VERSION = "version"; //$NON-NLS-1$
-     private static final String VERSION_NUM = "1.0"; //$NON-NLS-1$
-     
-     private JSONObject obj;
+    private static final String KEY_DPK = "dpk"; //$NON-NLS-1$
+    private static final String KEY_ITERATIONS = "iterations"; //$NON-NLS-1$
+    private static final String KEY_IV = "iv"; //$NON-NLS-1$
+    private static final String KEY_SALT = "jsonSalt"; //$NON-NLS-1$
+    private static final String KEY_VERSION = "version"; //$NON-NLS-1$
+    private static final String VERSION_NUM = "1.0"; //$NON-NLS-1$
 
-     
-     protected DPKBean (String json) throws JSONException {
-          try {
-               //TODO implement deserialize
-               this.obj = JsonOrgModule.deserializeJSONObject(json);
+    private Map<String, Object> obj;
 
-          }
-          
-          catch (Throwable e) {
-               throw new JSONException (e.toString());
-          }
-     }
-     
-     protected DPKBean (String encryptedDPK, String iv, String salt,
-          int iterations) throws JSONException {
-          this.obj = new JacksonSerializedJSONObject();
-          
-          // Fill in the DPK object fields.
+    protected DPKBean (String json)  {
+        this.obj = JSONUtils.deserialize(json.getBytes());
+    }
 
-          if(encryptedDPK != null) {
-             this.obj.put(DPKBean.KEY_DPK, encryptedDPK);
-          } else {
-              this.obj.put(DPKBean.KEY_DPK, "");
-          }
-          this.obj.put (DPKBean.KEY_ITERATIONS, iterations);
-          this.obj.put (DPKBean.KEY_IV, iv);
-          this.obj.put (DPKBean.KEY_SALT, salt);
+    protected DPKBean (String encryptedDPK, String iv, String salt,
+                       int iterations) throws JSONException {
+        this.obj = new HashMap<String, Object>();
 
-          //this.obj.put (DPKBean.KEY_VERSION, DPKBean.VERSION_NUM);
-     }
+        // Fill in the DPK object fields.
+        if(encryptedDPK != null) {
+            this.obj.put(DPKBean.KEY_DPK, encryptedDPK);
+        } else {
+            this.obj.put(DPKBean.KEY_DPK, "");
+        }
+        this.obj.put (DPKBean.KEY_ITERATIONS, iterations);
+        this.obj.put (DPKBean.KEY_IV, iv);
+        this.obj.put (DPKBean.KEY_SALT, salt);
+        this.obj.put (DPKBean.KEY_VERSION, DPKBean.VERSION_NUM);
+    }
 
-    public String getEncryptedDPK () throws JSONException {
-          return this.obj.getString (DPKBean.KEY_DPK);
-     }
-     
-     public int getIterations () throws JSONException {
-          return this.obj.getInt (DPKBean.KEY_ITERATIONS);
-     }
-     
-     public String getIV () throws JSONException {
-          return this.obj.getString (DPKBean.KEY_IV);
-     }
-     
-     public String getSalt () throws JSONException {
-          return this.obj.getString (DPKBean.KEY_SALT);
-     }
-     
-     public String getVersion () throws JSONException {
-          return this.obj.getString (DPKBean.KEY_VERSION);
-     }
-     
-     public String toString () {
-          return this.obj.toString();
-     }
+    public String getEncryptedDPK () {
+        return (String)this.obj.get(DPKBean.KEY_DPK);
+    }
+
+    public int getIterations () {
+        return (Integer)this.obj.get(DPKBean.KEY_ITERATIONS);
+    }
+
+    public String getIV () {
+        return (String)this.obj.get(DPKBean.KEY_IV);
+    }
+
+    public String getSalt () {
+        return (String)this.obj.get(DPKBean.KEY_SALT);
+    }
+
+    public String getVersion () {
+        return (String)this.obj.get(DPKBean.KEY_VERSION);
+    }
+
+    public String toString () {
+        return this.obj.toString();
+    }
 }
