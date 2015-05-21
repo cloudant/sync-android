@@ -29,6 +29,10 @@ android {
     }
     buildToolsVersion "19.1"
 
+    packagingOptions {
+        exclude 'META-INF/LICENSE.txt'
+    }
+
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
