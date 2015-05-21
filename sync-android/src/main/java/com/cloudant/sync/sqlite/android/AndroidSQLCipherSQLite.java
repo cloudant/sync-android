@@ -24,7 +24,6 @@ package com.cloudant.sync.sqlite.android;
  * Created by estebanmlaver.
  */
 
-
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.KeyUtils;
 import com.cloudant.sync.sqlite.ContentValues;
@@ -35,13 +34,10 @@ import com.google.common.base.Strings;
 
 import net.sqlcipher.database.SQLiteConstraintException;
 import net.sqlcipher.database.SQLiteDatabase;
-import net.sqlcipher.database.SQLiteException;
 
 public class AndroidSQLCipherSQLite extends SQLDatabase {
 
     SQLiteDatabase database = null;
-    private Thread threadWhichOpened = null;
-    private ThreadLocal<Boolean> appearsOpen = null;
 
     /**
      * Constructor for creating SQLCipher-based SQLite database.
@@ -75,13 +71,6 @@ public class AndroidSQLCipherSQLite extends SQLDatabase {
 
     public AndroidSQLCipherSQLite(final SQLiteDatabase database) {
         this.database = database;
-        this.threadWhichOpened = Thread.currentThread();
-        this.appearsOpen = new ThreadLocal<Boolean>(){
-            @Override
-            protected Boolean initialValue() {
-                return database.isOpen();
-            }
-        };
     }
 
     @Override
@@ -96,14 +85,7 @@ public class AndroidSQLCipherSQLite extends SQLDatabase {
 
     @Override
     public void close() {
-        // Since the JavaSE version of this needs to have each thread that operated on the db
-        // close its connection to the db. Since android does not have ThreadLocal connections
-        // the connection only needs to be closed once.
-        // To maintain compatibility with JavaSE unless the current thread opened the connection,
-        // the db only appears closed to the thread that called close
-        if(threadWhichOpened == Thread.currentThread())
-            this.database.close();
-        appearsOpen.set(Boolean.FALSE);
+        this.database.close();
     }
 
     // This implementation of isOpen will only return true if the database is open AND the current
@@ -111,7 +93,7 @@ public class AndroidSQLCipherSQLite extends SQLDatabase {
     // with the JavaSE SQLiteWrapper, where each thread closes its own connection.
     @Override
     public boolean isOpen() {
-        return this.database.isOpen() && this.appearsOpen.get();
+        return this.database.isOpen();
     }
 
     @Override
