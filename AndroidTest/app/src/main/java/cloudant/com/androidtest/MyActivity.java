@@ -49,10 +49,9 @@ public class MyActivity extends ListActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         //Stop the tests being re-run when we are returned to this activity
         if(savedInstanceState == null) {
-
-            super.onCreate(savedInstanceState);
 
             setTestProperties();
 
