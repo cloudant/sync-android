@@ -19,6 +19,7 @@ package com.cloudant.sync.sqlite;
 
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
+import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.Misc;
 import com.google.common.base.Preconditions;
 
@@ -113,9 +114,15 @@ public class SQLDatabaseFactory {
 
             if (runningOnAndroid) {
                 if (useSqlCipher) {
-                    return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLCipherSQLite")
+                    SQLDatabase result = (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLCipherSQLite")
                             .getMethod("openAndroidSQLite", String.class, KeyProvider.class)
                             .invoke(null, new Object[]{dbFilename, provider});
+
+                    if (validateOpenedDatabase(result)) {
+                        return result;
+                    } else {
+                        return null;
+                    }
                 } else {
                     return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLite")
                             .getMethod("createAndroidSQLite", String.class)
@@ -134,6 +141,31 @@ public class SQLDatabaseFactory {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to load database module", e);
             return null;
+        }
+    }
+
+    /**
+     * This method runs a simple SQL query to validate the opened database
+     * is readable. In particular, this is useful for testing the key we
+     * passed SQLCipher is the correct key.
+     *
+     * @param db database to check is readable
+     * @return true if database passes validation, false otherwise
+     */
+    private static boolean validateOpenedDatabase(SQLDatabase db) {
+        Cursor c = null;
+        try {
+            c = db.rawQuery("SELECT count(*) FROM sqlite_master", null);
+            if (c.moveToFirst()) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Error performing database start up validation", ex);
+            return false;
+        } finally {
+            DatabaseUtils.closeCursorQuietly(c);
         }
     }
 
