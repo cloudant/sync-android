@@ -66,7 +66,7 @@ public class SQLDatabaseFactory {
                 }
             } else {
                 if (useSqlCipher) {
-                    throw new IOException("No SQLCipher-based database implementation for Java SE");
+                    throw new UnsupportedOperationException("No SQLCipher-based database implementation for Java SE");
                 } else {
                     return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper")
                             .getMethod("openSQLiteWrapper", String.class)
@@ -123,7 +123,7 @@ public class SQLDatabaseFactory {
                 }
             } else {
                 if (useSqlCipher) {
-                    throw new IOException("No SQLCipher-based database implementation for Java SE");
+                    throw new UnsupportedOperationException("No SQLCipher-based database implementation for Java SE");
                 } else {
                     return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper")
                             .getMethod("openSQLiteWrapper", String.class)
