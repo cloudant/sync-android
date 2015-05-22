@@ -3,10 +3,14 @@ apply plugin: 'com.android.application'
 def testResultsFile = "testResults_"+UUID.randomUUID().toString()+".xml"
 def scriptLocation = project.projectDir.getAbsolutePath(); //this is the location of THIS file
 def testSrcDir = "../../sync-core/src/test/java/" // this is the location of your test code, relative to this file
+def testEncryptionSrcDir = "../../sync-android/src/test/java/" // sqlcipher encryption test code
 def testConfig = convertTestSysPropsToHash()
 
 android {
-    def classes = findAllTestClasses(new File("$scriptLocation/$testSrcDir")).toString().replace("[","{").replace("]","}");
+    def File[] testClassArray = [new File("$scriptLocation/$testSrcDir"), new File("$scriptLocation/$testEncryptionSrcDir")];
+    def classes = findAllTestClasses(testClassArray)
+            .toString().replace("[","{").replace("]","}")
+
 
     compileSdkVersion 20
     buildToolsVersion "20.0.0"
@@ -95,6 +99,7 @@ dependencies {
 
     compile 'com.google.code.findbugs:jsr305:3.0.0' //this is needed for some versions of android
 
+    compile files('src/main/jniLibs/sqlcipher.jar') //required sqlcipher lib
 }
 
 repositories {
@@ -120,11 +125,15 @@ def convertTestSysPropsToHash (){
 
 }
 
-def findAllTestClasses(File root){
+def findAllTestClasses(File[] files){
     // get all the files in test directories
     def classNames =new ArrayList<String>()
-    // TOOD filter out anything that doesn't have a .java extension
-    processDir(root, root).each { file -> classNames.add(file.replaceAll(".java\$",".class")) }
+    //Filter out anything that doesn't have a .java extension
+    for (File root : files) {
+        processDir(root, root).each { file ->
+            if(file.matches(~/.*.java/)) {classNames.add(file.replaceAll(".java\$",".class"))} }
+    }
+
     return classNames;
 }
 
