@@ -4,25 +4,35 @@ import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.KeyUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
+import org.apache.commons.io.IOUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
 
 /**
- * Created by estebanmlaver on 5/12/15.
+ * Created by estebanmlaver.
  */
 public class AttachmentStreamFactory {
 
     private static final int ANDROID_BUFFER_8K = 8192;
 
+    private static Attachment.Encoding encoding;
+    private static KeyProvider provider;
+
     private static AttachmentStreamFactory singleton;
 
-    public AttachmentStreamFactory(){ }
+    private AttachmentStreamFactory(){ }
+
+    public static synchronized AttachmentStreamFactory getInstance() {
+        if (singleton == null) {
+            singleton = new AttachmentStreamFactory();
+        }
+        return singleton;
+    }
 
 
-    public static InputStream getStream(Attachment.Encoding encoding, File file, KeyProvider provider) throws IOException {
+    /*public static InputStream getStream(Attachment.Encoding encoding, File file, KeyProvider provider) throws IOException {
         InputStream inputStream = null;
         //Get key from provider
         String sqlcipherKey = null;
@@ -38,13 +48,31 @@ public class AttachmentStreamFactory {
         unwrapEncoding(encoding, sqlcipherKey, file, isEncryption);
 
         return inputStream;
+    }*/
+
+    public static InputStream openStream(InputStream attachmentStream, KeyProvider provider) throws IOException {
+        InputStream inputStream = null;
+        //Get key from provider
+        String sqlcipherKey = null;
+        boolean isEncryption = false;
+        if(provider != null) {
+            sqlcipherKey = KeyUtils.sqlCipherKeyForKeyProvider(provider);
+            //Check that key exists
+            if(!sqlcipherKey.isEmpty()) {
+                isEncryption = true;
+            }
+        }
+
+        unwrapEncoding(attachmentStream, encoding, sqlcipherKey, isEncryption);
+
+        return inputStream;
     }
 
-    private static InputStream unwrapEncoding(Attachment.Encoding encoding, String sqlcipherKey, File file, boolean isEncryption)
+    /*private static InputStream unwrapEncoding(Attachment.Encoding encoding, String sqlcipherKey, boolean isEncryption)
             throws IOException {
         if(encoding == Attachment.Encoding.Gzip) {
             if(isEncryption) {
-                return unwrapEncryption(sqlcipherKey, file, true);
+                return unwrapEncryption(sqlcipherKey, true);
             } else {
                 //Send input stream with GZIP
                 return new GZIPInputStream(new FileInputStream(file));
@@ -57,11 +85,36 @@ public class AttachmentStreamFactory {
                 return new FileInputStream(file);
             }
         }
+    }*/
+
+    private static InputStream unwrapEncoding(InputStream attachmentStream, Attachment.Encoding encoding, String sqlcipherKey,
+                                              boolean isEncryption)
+            throws IOException {
+        if(encoding == Attachment.Encoding.Gzip) {
+            if(isEncryption) {
+                return unwrapEncryption(attachmentStream, sqlcipherKey, true);
+            } else {
+                //Send input stream with GZIP
+                return new GZIPInputStream(attachmentStream);
+            }
+        } else {
+            if(isEncryption) {
+                return unwrapEncryption(attachmentStream, sqlcipherKey, false);
+            } else {
+                //Return file input stream
+                return attachmentStream;
+            }
+        }
     }
 
-    private static InputStream unwrapEncryption(String sqlcipherKey, File file, boolean isGzip) throws IOException {
+    private static InputStream unwrapEncryption(InputStream attachmentStream, String sqlcipherKey,
+                                                boolean isGzip) throws IOException {
 
         //TODO
+
+        //Convert stream to byte array
+        byte[] encryptedByteArray = IOUtils.toByteArray(attachmentStream);
+
         if(isGzip) {
             //SecurityManager.getInstance().decryptAttachmentFileStream()
         } else {
@@ -69,5 +122,9 @@ public class AttachmentStreamFactory {
         }
         //Return decrypted stream
         return null;
+    }
+
+    public void setEncryptionStream(Attachment.Encoding encoding, KeyProvider provider) {
+        this.encoding = encoding;
     }
 }

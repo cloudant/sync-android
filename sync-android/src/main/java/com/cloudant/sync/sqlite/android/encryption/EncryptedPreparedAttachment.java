@@ -34,7 +34,7 @@ public class EncryptedPreparedAttachment {
             //Get SHA1 before encryption
             this.sha1 = Misc.getSha1(new FileInputStream(tempFile));
             //Encrypt file attachment
-            EncryptionFileUtils.copyInputStreamToEncryptedFile(attachment.getInputStream(),tempFile,sqlcipherKey);
+            EncryptionInputStreamUtils.copyInputStreamToEncryptedFile(attachment.getInputStream(),tempFile,sqlcipherKey);
         } catch (IOException e){
             throw new AttachmentNotSavedException(e);
         } catch (Exception e) {

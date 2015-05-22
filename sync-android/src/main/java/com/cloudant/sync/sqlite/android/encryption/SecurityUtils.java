@@ -13,6 +13,8 @@ package com.cloudant.sync.sqlite.android.encryption;
 
 import android.os.Build;
 
+import org.apache.commons.codec.binary.Hex;
+
 import java.security.SecureRandom;
 
 import javax.crypto.SecretKey;
@@ -31,7 +33,9 @@ public class SecurityUtils {
      public static byte[] decode (String key, String value, String iv)
           throws Exception {
 
-          String decryptedString = FipsWrapper.decryptAES(key, iv, EncryptionUtils.hexStringToByteArray(value));
+          //TODO removed FIPS class - implementation in progress
+          String decryptedString = "";
+          //String decryptedString = .decryptAES(key, iv, EncryptionUtils.hexStringToByteArray(value));
           // If decryption failed, we mimic what used to happen when we used javax.crypto.Cipher and decryption 
           // failed; we thrown a similar exception.
           if (decryptedString == null || decryptedString.length () == 0) {
@@ -40,32 +44,20 @@ public class SecurityUtils {
          return decryptedString.getBytes();
      }
      
-     public static String encodeBytesAsHexString (byte bytes[]) {
-          StringBuilder result = new StringBuilder();
-          
-          if (bytes != null) {
-               for (byte curByte : bytes) {
-                    result.append (String.format ("%02X", curByte)); //$NON-NLS-1$
-               }
-          }
-          
-          return result.toString();
-     }
-     
      public static String encodeKeyAsHexString (SecretKey key) {
-          return SecurityUtils.encodeBytesAsHexString(key.getEncoded());
+          return new String(Hex.encodeHex(key.getEncoded()));
      }
      
      public static byte[] encrypt (String key, String value, String iv)
           throws Exception {
-          byte[] encryptedBytes = FipsWrapper.encryptAES(key, iv, value);
-          return encryptedBytes;
+          //TODO removed FIPS class - implementation in progress
+          return null;
      }
 
      public static byte[] encrypt (String key, byte[] value, String iv)
              throws Exception {
-          byte[] encryptedBytes = FipsWrapper.encryptAES(key, iv, value);
-          return encryptedBytes;
+          //TODO removed FIPS class - implementation in progress
+          return null;
      }
      
      public static byte[] generateIV (int numBytes) {
@@ -107,6 +99,6 @@ public class SecurityUtils {
       */
      public static String getRandomString(int byteLength) {
           byte[] randomByteArray = generateLocalKey(byteLength);
-          return encodeBytesAsHexString(randomByteArray);
+          return new String(Hex.encodeHex(randomByteArray));
      }
 }
