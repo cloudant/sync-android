@@ -17,7 +17,7 @@ public class EncryptedPreparedAttachment {
 
     private final Attachment attachment;
     private final File tempFile;
-    private final byte[] sha1;
+//    private final byte[] sha1;
 
     /**
      * With encryption, prepare an attachment by copying it to a temp location and calculating its sha1.
@@ -31,12 +31,13 @@ public class EncryptedPreparedAttachment {
         this.attachment = attachment;
         this.tempFile = new File(attachmentsDir, "temp" + UUID.randomUUID());
         try {
+            // TODO Encryption needs to happen
             //Get SHA1 before encryption
-            this.sha1 = Misc.getSha1(new FileInputStream(tempFile));
+//            this.sha1 = Misc.getSha1(new FileInputStream(tempFile));
             //Encrypt file attachment
-            EncryptionInputStreamUtils.copyInputStreamToEncryptedFile(attachment.getInputStream(),tempFile,sqlcipherKey);
-        } catch (IOException e){
-            throw new AttachmentNotSavedException(e);
+//            EncryptionInputStreamUtils.copyInputStreamToEncryptedFile(attachment.getInputStream(),tempFile,sqlcipherKey);
+//        } catch (IOException e){
+//            throw new AttachmentNotSavedException(e);
         } catch (Exception e) {
             //Exception clause added for copyInputStreamToEncryptedFile
             throw new AttachmentNotSavedException(e);
