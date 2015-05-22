@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Cloudant, Inc. All rights reserved.
+ * Copyright (c) 2015 IBM Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -12,7 +12,7 @@
  * and limitations under the License.
  */
 
-package com.cloudant.sync.sqlite.android;
+package com.cloudant.sync.sqlite.android.encryption;
 
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
