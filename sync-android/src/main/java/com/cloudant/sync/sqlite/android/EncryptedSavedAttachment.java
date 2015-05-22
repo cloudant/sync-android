@@ -17,7 +17,6 @@ package com.cloudant.sync.sqlite.android;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.replication.PushAttachmentsInline;
-import com.cloudant.sync.sqlite.android.encryption.AttachmentStreamFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,7 +59,8 @@ public class EncryptedSavedAttachment extends Attachment {
 
     public InputStream getInputStream() throws IOException {
 
-        return AttachmentStreamFactory.getStream(encoding,file,provider);
+        return null;
+        //return AttachmentStreamFactory.getStream(encoding,file,provider);
         /*if (encoding == Encoding.Gzip) {
             return new GZIPInputStream(new FileInputStream(file));
         } else {

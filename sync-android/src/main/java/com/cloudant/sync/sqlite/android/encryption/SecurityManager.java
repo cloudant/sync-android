@@ -14,6 +14,8 @@ package com.cloudant.sync.sqlite.android.encryption;
 import android.content.Context;
 import android.util.Base64;
 
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.io.FileUtils;
 
 import java.io.ByteArrayInputStream;
@@ -110,19 +112,19 @@ public class SecurityManager {
           //Number of bytes for salt is 32
           String salt = SecurityUtils.getRandomString(32);
 
-          dpk = SecurityUtils.encodeBytesAsHexString (SecurityUtils
+          dpk = encodeBytesAsHexString (SecurityUtils
                   .generateLocalKey(SecurityManager.LOCAL_KEY_NUM_BYTES));
 
-          iv = SecurityUtils.encodeBytesAsHexString (SecurityUtils
-                  .generateIV (SecurityManager.IV_NUM_BYTES));
+          iv = encodeBytesAsHexString(SecurityUtils
+                  .generateIV(SecurityManager.IV_NUM_BYTES));
           pwKey = SecurityUtils.encodeKeyAsHexString (SecurityUtils
                   .generateKey (password, salt));
 
           // Encrypt the DPK and store everything in a bean that can be stored
           // in the keychain.
 
-          encryptedDPK = Base64.encodeToString (SecurityUtils
-                  .encodeBytesAsHexString (SecurityUtils.encrypt (pwKey, dpk, iv))
+          encryptedDPK = Base64.encodeToString (
+                  encodeBytesAsHexString (SecurityUtils.encrypt (pwKey, dpk, iv))
                   .getBytes (), Base64.DEFAULT);
 
           dpkBean = new DPKBean (encryptedDPK, iv, salt,
@@ -131,8 +133,6 @@ public class SecurityManager {
           // Finally, save everything in the keychain.
 
           this.keychain.setDPKBean (identifier, dpkBean);
-
-          //return false;
      }
 
      public void encryptAttachment (String password, String identifier, File attachmentFile, byte[] sourceByteArray)
@@ -143,72 +143,82 @@ public class SecurityManager {
           byte[] encryptedAttachmentByteArray;
           String encryptedAttachmentIv;
           String pwKey;
+          String encryptedAttachmentDPK;
+          String attachmentDpk;
 
+          //Grab sqlcipher DPK that will be used for encrypting attachments
+          DPKBean sqlcipherDpkBean = this.keychain.getDPKBean(identifier);
 
-
-          //Number of bytes for salt is 32
-          String encryptedAttachmentSalt = SecurityUtils.getRandomString(32);
-
-          //String decryptedDPK = getDPK(password, null);
+          //TODO use decrypted DPK
+          String decryptedDPK = getDPK(password, null);
 
           //Grab existing dpk bean from Android keychain storage and add random salt
           //dpkBean = this.keychain.getDPKBean(identifier);
-          pwKey = SecurityUtils.encodeKeyAsHexString(SecurityUtils
-                  .generateKey(password, encryptedAttachmentSalt));
+
+          attachmentDpk = encodeBytesAsHexString (SecurityUtils
+                  .generateLocalKey(SecurityManager.LOCAL_KEY_NUM_BYTES));
+
+          /*pwKey = SecurityUtils.encodeKeyAsHexString(SecurityUtils
+                  .generateKey(password, sqlcipherDpkBean.getSalt()));*/
 
           //Create a new iv for attachment
-          encryptedAttachmentIv = SecurityUtils.encodeBytesAsHexString(SecurityUtils
+          encryptedAttachmentIv = encodeBytesAsHexString(SecurityUtils
                   .generateIV(SecurityManager.IV_NUM_BYTES));
 
-          encryptedAttachmentByteArray = Base64.encode(SecurityUtils
-                  .encodeBytesAsHexString(SecurityUtils.encrypt(pwKey, sourceByteArray, encryptedAttachmentIv))
+          encryptedAttachmentByteArray = Base64.encode(
+                  encodeBytesAsHexString(SecurityUtils.encrypt(decryptedDPK, sourceByteArray,
+                          encryptedAttachmentIv))
                   .getBytes(), Base64.DEFAULT);
 
-          /*encryptedDPK = Base64.encodeToString(SecurityUtils
-                  .encodeBytesAsHexString(SecurityUtils.encrypt(pwKey, dpk, iv))
-                  .getBytes(), Base64.DEFAULT);
 
-          dpkBean = new DPKBean (encryptedDPK, iv, salt,
+          /*dpkBean = new DPKBean (encryptedDPK, iv, salt,
                   SecurityUtils.PBKDF2_ITERATIONS);
                   */
 
-          // Finally, save everything in the keychain.
+          // Save everything to a combined byte array starting with IV
 
-          dpkBean = new DPKBean (null,encryptedAttachmentIv, encryptedAttachmentSalt,
-                  SecurityUtils.PBKDF2_ITERATIONS);
+          //Add IV to header of file - needs review
+          byte[] IvAndEncryptFileByteArray = null;
 
-          this.keychain.setDPKBean(attachmentFile.getName(), dpkBean);
+          byte[] ivByteArray = hexStringToBytes(encryptedAttachmentIv);
+
+          System.arraycopy(ivByteArray,0,IvAndEncryptFileByteArray,0,ivByteArray.length);
+          System.arraycopy(encryptedAttachmentByteArray,0,IvAndEncryptFileByteArray,ivByteArray.length
+                  ,encryptedAttachmentByteArray.length);
+
+
 
           //TODO check performance on large files
           FileUtils.writeByteArrayToFile(attachmentFile, encryptedAttachmentByteArray);
      }
 
-     public InputStream decryptAttachmentFileStream (String password, String identifier, File encryptedAttachmentFile)
+     public InputStream decryptAttachmentFileStream (String password, String attachmentFileName, File encryptedAttachmentFile)
              throws Exception {
-          //String dpk;
 
-          DPKBean dpkBean;
-          byte[] encryptedAttachmentByteArray;
-          String encryptedAttachmentIv;
+          byte[] decryptedAttachmentByteArray;
+          String AttachmentIv;
           String pwKey;
 
           //Use getDPK to get the IV and salt to decrypt the file attachment
           String decodedDPK;
           //Identifier is the attachment file name
-          dpkBean = this.keychain.getDPKBean (identifier);
-          pwKey = SecurityUtils.encodeKeyAsHexString(SecurityUtils
-                  .generateKey(password, dpkBean.getSalt()));
+          DPKBean dpkBean = this.keychain.getDPKBean (attachmentFileName);
+          pwKey = SecurityUtils.encodeKeyAsHexString (SecurityUtils
+                  .generateKey (password, dpkBean.getSalt ()));
 
           // The DPK is base-64 encoded, so decode it before decrypting.
 
           decodedDPK = new String (Base64.decode (dpkBean.getEncryptedDPK (),
                   Base64.DEFAULT));
 
-          String decryptedString = new String (SecurityUtils.decode (pwKey, decodedDPK,
-                  dpkBean.getIV ()));
+          //TODO take IV from encrypted file
+          byte[] decryptedFileByteArray = SecurityUtils.decode (pwKey, decodedDPK,
+                  dpkBean.getIV ());
 
+         // return EncryptionInputStreamUtils.decryptInputStream()
 
-          return new ByteArrayInputStream(decryptedString.getBytes(StandardCharsets.UTF_8));
+          //return new ByteArrayInputStream(decryptedString.getBytes(StandardCharsets.UTF_8));
+          return null;
      }
 
      //TODO
@@ -217,8 +227,6 @@ public class SecurityManager {
           //String dpk;
 
           DPKBean dpkBean;
-          byte[] encryptedAttachmentByteArray;
-          String encryptedAttachmentIv;
           String pwKey;
 
           //Use getDPK to get the IV and salt to decrypt the file attachment
@@ -236,7 +244,27 @@ public class SecurityManager {
           String decryptedString = new String (SecurityUtils.decode (pwKey, decodedDPK,
                   dpkBean.getIV ()));
 
-
           return new ByteArrayInputStream(decryptedString.getBytes(StandardCharsets.UTF_8));
      }
+
+     /*public static String encodeBytesAsHexString (byte bytes[]) {
+          StringBuilder result = new StringBuilder();
+
+          if (bytes != null) {
+               for (byte curByte : bytes) {
+                    result.append (String.format ("%02X", curByte)); //$NON-NLS-1$
+               }
+          }
+
+          return result.toString();
+     }*/
+
+     private String encodeBytesAsHexString(byte[] bytes) {
+          return new String(Hex.encodeHexString(bytes));
+     }
+
+     private byte[] hexStringToBytes(String hexString) {
+          return StringUtils.getBytesUnchecked(hexString, String.valueOf(StandardCharsets.UTF_8));
+     }
+
 }
