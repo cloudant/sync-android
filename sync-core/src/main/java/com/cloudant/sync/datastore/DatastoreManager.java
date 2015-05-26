@@ -136,13 +136,8 @@ public class DatastoreManager {
     /**
      * <p>Opens a datastore.</p>
      *
-     * <p>This method finds the appropriate datastore file for a
-     * datastore, then initialises a {@link Datastore} object connected
-     * to that underlying storage file.</p>
-     *
-     * <p>If the datastore was successfully created and opened, a 
-     * {@link com.cloudant.sync.notifications.DatabaseOpened DatabaseOpened}
-     * event is posted on the event bus.</p>
+     * <p>Equivalent to calling {@link #openDatastore(String, KeyProvider)} with
+     * a {@code NullKeyProvider}.</p>
      *
      * @param dbName name of datastore to open
      * @return {@code Datastore} with the given name
@@ -157,18 +152,23 @@ public class DatastoreManager {
     }
 
     /**
-     * <p>Opens a datastore that requires SQLCipher encryption.
-     * Key provider object contains the user defined SQLCipher key.</p>
+     * <p>Opens a datastore.</p>
      *
-     * <p>This method finds the appropriate datastore file for a
-     * datastore, then initialises a {@link Datastore} object connected
-     * to that underlying storage file.</p>
+     * <p>Opens an existing datastore on disk, or creates a new one with the given name.</p>
      *
-     * <p>If the datastore was successfully created and opened, a
-     * {@link DatabaseOpened DatabaseOpened}
-     * event is posted on the event bus.</p>
+     * <p>If encryption is enabled for this platform, passing a KeyProvider containing a non-null
+     * key will open or create an encrypted database. If opening a database, the key used to
+     * create the database must be used. If encryption is not enabled for this platform, returning
+     * a non-null key will result in an exception.</p>
+     *
+     * <p>If there is no existing datastore with the given name, and one is successfully
+     * created, a {@link DatabaseOpened DatabaseOpened} event is posted on the event bus.</p>
+     *
+     * <p>Datastores are uniqued: calling this method with the name of an already open datastore
+     * will return the existing {@link Datastore} object.</p>
      *
      * @param dbName name of datastore to open
+     * @param provider  KeyProvider object; use a NullKeyProvider if database shouldn't be encrypted.
      * @return {@code Datastore} with the given name
      *
      * @see DatastoreManager#getEventBus()
@@ -233,9 +233,16 @@ public class DatastoreManager {
         }
     }
 
-    /*
-    * Creates a datastore that requires SQLCipher encryption.
-    */
+    /**
+     * <p>Creates a datastore object for a given name.</p>
+     *
+     * <p>This method will either open an existing database on disk or create a new one.</p>
+     *
+     * @param dbName Name of database to create
+     * @param provider KeyProvider object; use a NullKeyProvider if database shouldn't be encrypted.
+     * @return initialise datastore object
+     * @throws DatastoreNotCreatedException if the database cannot be opened
+     */
     private Datastore createDatastore(String dbName, KeyProvider provider) throws DatastoreNotCreatedException {
         try {
             String dbDirectory = this.getDatastoreDirectory(dbName);
