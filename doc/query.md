@@ -15,6 +15,13 @@ These notes assume familiarity with Cloudant Sync Datastore.
 
 Cloudant Query uses indexes explicitly defined over the fields in the document. Multiple indexes can be created for use in different queries, the same field may end up indexed in more than one index.
 
+Query offers a powerful way to find documents within your datastore. There are a couple of restrictions on field names you need to be aware of before using query:
+
+- A dollar sign (`$`) cannot be the first character of any field name.  This is because, when querying, a dollar sign tells the query engine to handle the object as a query operator and not a field.
+- A field with a name that contains a period (`.`) cannot be indexed nor successfully queried.  This is because the query engine assumes dot notation refers to a sub-object.
+
+These come from Query's MongoDB heritage where these characters are not allowed in field names, which we don't share. Hopefully we'll work around these restrictions in the future.
+
 Querying is carried out by supplying a query in the form of a map which describes the query.
 
 For the following examples, assume two things.
