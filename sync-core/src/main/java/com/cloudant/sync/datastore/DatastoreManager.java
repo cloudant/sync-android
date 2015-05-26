@@ -18,6 +18,7 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DatabaseCreated;
 import com.cloudant.sync.notifications.DatabaseDeleted;
@@ -67,8 +68,6 @@ public class DatastoreManager {
     protected static final String LEGAL_CHARACTERS = "^[a-zA-Z]+[a-zA-Z0-9_\\Q-$()/\\E]*";
 
     private final EventBus eventBus = new EventBus();
-
-    private KeyProvider provider = null;
 
     /**
      * <p>Constructs a {@code DatastoreManager} to manage a directory.</p>
@@ -154,20 +153,7 @@ public class DatastoreManager {
      * @see DatastoreManager#getEventBus() 
      */
     public Datastore openDatastore(String dbName) throws DatastoreNotCreatedException {
-        Preconditions.checkArgument(dbName.matches(LEGAL_CHARACTERS),
-                "A database must be named with all lowercase letters (a-z), digits (0-9),"
-                        + " or any of the _$()+-/ characters. The name has to start with a"
-                        + " lowercase letter (a-z).");
-        if (!openedDatastores.containsKey(dbName)) {
-            synchronized (openedDatastores) {
-                if (!openedDatastores.containsKey(dbName)) {
-                    Datastore ds = createDatastore(dbName);
-                    ds.getEventBus().register(this);
-                    openedDatastores.put(dbName, ds);
-                }
-            }
-        }
-        return openedDatastores.get(dbName);
+        return this.openDatastore(dbName, new NullKeyProvider());
     }
 
     /**
@@ -195,7 +181,6 @@ public class DatastoreManager {
         if (!openedDatastores.containsKey(dbName)) {
             synchronized (openedDatastores) {
                 if (!openedDatastores.containsKey(dbName)) {
-                    this.provider = provider;
                     Datastore ds = createDatastore(dbName, provider);
                     ds.getEventBus().register(this);
                     openedDatastores.put(dbName, ds);
@@ -323,9 +308,5 @@ public class DatastoreManager {
             this.openedDatastores.remove(databaseClosed.dbName);
         }
         this.eventBus.post(databaseClosed);
-    }
-
-    public KeyProvider getEncryptionKeyProvider() {
-        return provider;
     }
 }
