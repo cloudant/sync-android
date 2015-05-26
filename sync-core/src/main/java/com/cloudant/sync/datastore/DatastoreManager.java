@@ -233,30 +233,6 @@ public class DatastoreManager {
         }
     }
 
-    private Datastore createDatastore(String dbName) throws DatastoreNotCreatedException {
-        try {
-            String dbDirectory = this.getDatastoreDirectory(dbName);
-            boolean dbDirectoryExist = new File(dbDirectory).exists();
-            logger.info("path: " + this.path);
-            logger.info("dbDirectory: " + dbDirectory);
-            logger.info("dbDirectoryExist: " + dbDirectoryExist);
-            // dbDirectory will created in BasicDatastore constructor
-            // if it does not exist
-            BasicDatastore ds = new BasicDatastore(dbDirectory, dbName);
-            if(!dbDirectoryExist) {
-                this.eventBus.post(new DatabaseCreated(dbName));
-            }
-            eventBus.post(new DatabaseOpened(dbName));
-            return ds;
-        } catch (IOException e) {
-            throw new DatastoreNotCreatedException("Database not found: " + dbName, e);
-        } catch (SQLException e) {
-            throw new DatastoreNotCreatedException("Database not initialized correctly: " + dbName, e);
-        } catch (DatastoreException e){
-            throw new DatastoreNotCreatedException("Datastore not initialized correctly: " + dbName, e);
-        }
-    }
-
     /*
     * Creates a datastore that requires SQLCipher encryption.
     */
