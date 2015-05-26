@@ -92,7 +92,15 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     private static final String DB_FILE_NAME = "db.sync";
 
-    //Single thread executor to esnure only one tread accesses the db
+    /**
+     * Stores a reference to the encryption key provider so
+     * it can be passed to extensions.
+     */
+    private final KeyProvider keyProvider;
+
+    /**
+     * Queue for all database tasks.
+     */
     private final SQLDatabaseQueue queue;
 
     public BasicDatastore(String dir, String name) throws SQLException, IOException, DatastoreException {
@@ -110,7 +118,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     public BasicDatastore(String dir, String name, KeyProvider provider) throws SQLException, IOException, DatastoreException {
         Preconditions.checkNotNull(dir);
         Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(provider);
 
+        this.keyProvider = provider;
         this.datastoreDir = dir;
         this.datastoreName = name;
         this.extensionsDir = FilenameUtils.concat(this.datastoreDir, "extensions");
@@ -134,6 +144,11 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     public String getDatastoreName() {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         return this.datastoreName;
+    }
+
+    @Override
+    public KeyProvider getKeyProvider() {
+        return this.keyProvider;
     }
 
     @Override
