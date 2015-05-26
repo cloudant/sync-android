@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.sqlite.SQLDatabaseFactory;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import org.apache.commons.io.FileUtils;
@@ -34,7 +35,8 @@ public class DatastoreTestUtils {
         String path = database_dir + File.separator + database_file + DATABASE_FILE_EXT;
         File dbFile = new File(path);
         FileUtils.touch(dbFile);
-        SQLDatabase database = SQLDatabaseFactory.openSqlDatabase(dbFile.getAbsolutePath());
+        SQLDatabase database = SQLDatabaseFactory.openSqlDatabase(dbFile.getAbsolutePath(),
+                new NullKeyProvider());
         SQLDatabaseFactory.updateSchema(database, DatastoreConstants.getSchemaVersion3(), 3);
         SQLDatabaseFactory.updateSchema(database, DatastoreConstants.getSchemaVersion4(), 4);
         SQLDatabaseFactory.updateSchema(database, DatastoreConstants.getSchemaVersion5(), 5);
