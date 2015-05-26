@@ -60,12 +60,11 @@ public class AndroidKeyProvider implements KeyProvider {
      * Creates a {@link AndroidKeyProvider} containing the supplied {@link KeyManager}
      *
      * @param password An user-provided password
-     * @param manager The {@link KeyManager} used to generate and persist the DPK.
-     *
+     * @param manager  The {@link KeyManager} used to generate and persist the DPK.
      * @see KeyManager
      */
-    public AndroidKeyProvider(String password, KeyManager manager){
-        if (password != null  && manager != null) {
+    public AndroidKeyProvider(String password, KeyManager manager) {
+        if (password != null && manager != null) {
             this.password = password;
             this.manager = manager;
         } else {

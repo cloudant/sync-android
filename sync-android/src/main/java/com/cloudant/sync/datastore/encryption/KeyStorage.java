@@ -73,10 +73,10 @@ public class KeyStorage {
     }
 
     /**
-     A {@link KeyData} previously saved with this storage (or other storage created before
-     with the same identifier).
-
-     @return A {@link KeyData} saved before or null
+     * A {@link KeyData} previously saved with this storage (or other storage created before
+     * with the same identifier).
+     *
+     * @return A {@link KeyData} saved before or null
      */
     public KeyData getEncryptionKeyData() {
         KeyData encryptionData = null;
@@ -99,15 +99,15 @@ public class KeyStorage {
         return encryptionData;
     }
 
-    /*
-     Save to the {@link SharedPreferences} a {@link KeyData}.
-
-     Notice that if there is already data in the {@link SharedPreferences} bound to the same identifier used to create
-     this storage, the operation will fail.
-
-     @param data {@link KeyData} to save to the {@link SharedPreferences}
-
-     @return true (success) or false (fail)
+    /**
+     * Save to the {@link SharedPreferences} a {@link KeyData}.
+     * <p/>
+     * Notice that if there is already data in the {@link SharedPreferences} bound to the same
+     * identifier used to create
+     * this storage, the operation will fail.
+     *
+     * @param data {@link KeyData} to save to the {@link SharedPreferences}
+     * @return true (success) or false (fail)
      */
     public boolean saveEncryptionKeyData(KeyData data) {
         JSONObject objectToSave = new JSONObject();
@@ -134,12 +134,13 @@ public class KeyStorage {
     }
 
     /**
-     Remove from the {@link SharedPreferences} a {@link KeyData} associated to the same identifier used to
-     create this storage.
-
-     It will succeed if the data is deleted or if there is no data at all.
-
-     @return true (success) or false (fail)
+     * Remove from the {@link SharedPreferences} a {@link KeyData} associated to the same
+     * identifier used to
+     * create this storage.
+     * <p/>
+     * It will succeed if the data is deleted or if there is no data at all.
+     *
+     * @return true (success) or false (fail)
      */
     public boolean clearEncryptionKeyData() {
         try {
@@ -154,9 +155,10 @@ public class KeyStorage {
     }
 
     /**
-     Look for data saved in the {@link SharedPreferences} with the same identifier used to create this storage instance.
-
-     @return true (data found) or false (data not found)
+     * Look for data saved in the {@link SharedPreferences} with the same identifier used to
+     * create this storage instance.
+     *
+     * @return true (data found) or false (data not found)
      */
     public boolean encryptionKeyDataExists() {
         return this.prefs.contains(buildKey());
