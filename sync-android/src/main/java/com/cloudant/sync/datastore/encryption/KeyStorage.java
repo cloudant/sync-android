@@ -63,7 +63,7 @@ public class KeyStorage {
      * @param identifier A string
      */
     public KeyStorage(Context context, String identifier) {
-        if (identifier != null && context != null) {
+        if (identifier != null && context != null && !identifier.equals("")) {
             this.service = CDTENCRYPTION_KEYCHAINSTORAGE_SERVICE_VALUE;
             this.account = identifier;
             this.prefs = context.getSharedPreferences(this.service, Context.MODE_PRIVATE);

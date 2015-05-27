@@ -53,7 +53,15 @@ public class AndroidKeyProvider implements KeyProvider {
      * @see KeyManager
      */
     public AndroidKeyProvider(Context context, String password, String identifier) {
-        this(password, new KeyManager(new KeyStorage(context, identifier)));
+        if (context != null && password != null && identifier != null && !password.equals("") &&
+                !identifier.equals("")) {
+            this.password = password;
+            KeyStorage storage = new KeyStorage(context, identifier);
+            this.manager = new KeyManager(storage);
+        } else {
+            LOGGER.severe("All parameters are mandatory");
+            throw new IllegalArgumentException("All parameters are mandatory");
+        }
     }
 
     /**
@@ -64,7 +72,7 @@ public class AndroidKeyProvider implements KeyProvider {
      * @see KeyManager
      */
     public AndroidKeyProvider(String password, KeyManager manager) {
-        if (password != null && manager != null) {
+        if (password != null && manager != null && !password.equals("")) {
             this.password = password;
             this.manager = manager;
         } else {

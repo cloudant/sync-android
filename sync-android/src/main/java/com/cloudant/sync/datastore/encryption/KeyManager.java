@@ -44,7 +44,7 @@ import android.content.SharedPreferences;
  * - Use AES to cipher the DPK with the key and the IV.
  * - Return the DPK and save the encrypted version to the keychain.
  */
-class KeyManager {
+public class KeyManager {
     private static final int BYTES_TO_BITS = 8;
 
     private static final int CDTENCRYPTION_KEYCHAIN_AES_KEY_SIZE = 32;
@@ -85,6 +85,10 @@ class KeyManager {
      * @return The DPK
      */
     public EncryptionKey loadKeyUsingPassword(String password) {
+        if (password == null || password.equals("")) {
+            throw new IllegalArgumentException("password is required to be a non-null/non-empty " +
+                    "string");
+        }
         KeyData data = this.storage.getEncryptionKeyData();
         if (data == null || !validateEncryptionKeyData(data)) {
             return null;
@@ -100,7 +104,7 @@ class KeyManager {
 
             dpk = new EncryptionKey(dpkBytes);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to decrypt DPK: " + e.getLocalizedMessage(), e);
+            throw new DPKException("Failed to decrypt DPK", e);
         }
         return dpk;
     }
@@ -114,6 +118,10 @@ class KeyManager {
      */
     public EncryptionKey generateAndSaveKeyProtectedByPassword(String password) {
         EncryptionKey dpk = null;
+        if (password == null || password.equals("")) {
+            throw new IllegalArgumentException("password is required to be a non-null/non-empty " +
+                    "string");
+        }
         try {
             if (!keyExists()) {
                 byte[] dpkBytes = generateSecureRandomBytesWithLength
@@ -136,7 +144,7 @@ class KeyManager {
                 }
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to encrypt DPK: " + e.getLocalizedMessage(), e);
+            throw new DPKException("Failed to encrypt DPK", e);
         }
         return dpk;
     }

@@ -15,9 +15,9 @@
 package com.cloudant.sync.datastore.encryption;
 
 /**
- This class defines all the values required to store an encrypted DPK and decipher it later on.
-
- @see KeyStorage
+ * This class defines all the values required to store an encrypted DPK and decipher it later on.
+ *
+ * @see KeyStorage
  */
 public class KeyData {
 
@@ -29,18 +29,26 @@ public class KeyData {
 
     /**
      * Contains the encrypted DPK and all the values required to decrypt it.
+     *
      * @param encryptedDPK The encrypted Data Protection Key (DPK)
-     * @param salt The salt used for encryption
-     * @param iv The initialization vector
-     * @param iterations The number of iterations
-     * @param version The version
+     * @param salt         The salt used for encryption
+     * @param iv           The initialization vector
+     * @param iterations   The number of iterations
+     * @param version      The version
      */
     public KeyData(byte[] encryptedDPK, byte[] salt, byte[] iv, int iterations, String version) {
-        this.encryptedDPK = encryptedDPK;
-        this.salt = salt;
-        this.iv = iv;
-        this.iterations = iterations;
-        this.version = version;
+        if (encryptedDPK != null && salt != null && iv != null && iterations > 0 && version !=
+                null && encryptedDPK.length > 0 && salt.length > 0 && iv.length > 0 && !version
+                .equals("")) {
+            this.encryptedDPK = encryptedDPK;
+            this.salt = salt;
+            this.iv = iv;
+            this.iterations = iterations;
+            this.version = version;
+        } else {
+            throw new IllegalArgumentException("All parameters are required to be " +
+                    "non-null/non-empty values");
+        }
     }
 
     /**
