@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Cloudant, Inc. All rights reserved.
+ * Copyright (c) 2015 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -14,15 +14,18 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.sync.util.Misc;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * An attachment which has been been copied to a temporary location and had its sha1 calculated,
@@ -32,6 +35,7 @@ import java.util.UUID;
  */
 public class PreparedAttachment {
 
+    private Logger logger = Logger.getLogger(PreparedAttachment.class.getCanonicalName());
     /**
      * Prepare an attachment by copying it to a temp location and calculating its sha1.
      *
@@ -43,20 +47,46 @@ public class PreparedAttachment {
                               String attachmentsDir) throws AttachmentException {
         this.attachment = attachment;
         this.tempFile = new File(attachmentsDir, "temp" + UUID.randomUUID());
-        FileInputStream tempFileIS = null;
+        InputStream attachmentInStream = null;
+        OutputStream tempFileOutStream = null;
+        MessageDigest calculateSha1 = null;
+        int totalRead = 0;
         try {
-            FileUtils.copyInputStreamToFile(attachment.getInputStream(), tempFile);
-            this.sha1 = Misc.getSha1((tempFileIS = new FileInputStream(tempFile)));
+            attachmentInStream = attachment.getInputStream();
+
+            //Use FileUtils to create folder structure and file if necessary for output stream
+            tempFileOutStream = FileUtils.openOutputStream(this.tempFile);
+
+            calculateSha1 = MessageDigest.getInstance("SHA-1");
+            int bufferSize = 1024;
+            byte[] buffer = new byte[bufferSize];
+            int bytesRead;
+            while ((bytesRead = attachmentInStream.read(buffer)) != -1) {
+                calculateSha1.update(buffer, 0, bytesRead);
+                tempFileOutStream.write(buffer, 0, bytesRead);
+                totalRead += bytesRead;
+            }
         } catch (IOException e) {
+            logger.log(Level.WARNING, "Problem reading from input or writing to output stream ", e);
+            throw new AttachmentNotSavedException(e);
+        } catch (NoSuchAlgorithmException e) {
+            logger.log(Level.WARNING, "Problem calculating SHA1 for attachment stream ", e);
             throw new AttachmentNotSavedException(e);
         } finally {
-            //ensure the temp file is closed after calculating the hash
-            IOUtils.closeQuietly(tempFileIS);
+            //Ensure the attachment input stream and file output stream is closed after calculating the hash
+            IOUtils.closeQuietly(attachmentInStream);
+            IOUtils.closeQuietly(tempFileOutStream);
         }
+        //Set attachment length from bytes read in input stream
+        this.length = totalRead;
+        this.sha1 = calculateSha1.digest();
     }
 
     public final Attachment attachment;
     public final File tempFile;
     public final byte[] sha1;
+    public final long length;
 }
+
+
 
