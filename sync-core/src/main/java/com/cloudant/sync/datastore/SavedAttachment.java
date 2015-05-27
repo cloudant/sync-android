@@ -36,21 +36,22 @@ class SavedAttachment extends Attachment {
     static final int largeSizeBytes = 65536;
     private static final Logger logger = Logger.getLogger(SavedAttachment.class.getCanonicalName());
 
-    protected SavedAttachment(String name, long revpos, long seq, byte[] key, String type, File file, Encoding encoding) {
+    private final AttachmentStreamFactory attachmentStreamFactory;
+
+    protected SavedAttachment(String name, long revpos, long seq, byte[] key, String type, File file, Encoding encoding,
+                              AttachmentStreamFactory asf) {
         super(name, type, encoding);
         this.revpos = revpos;
         this.seq = seq;
         this.key = key;
         this.file = file;
         this.encoding = encoding;
+
+        this.attachmentStreamFactory = asf;
     }
 
     public InputStream getInputStream() throws IOException {
-        if (encoding == Encoding.Gzip) {
-            return new GZIPInputStream(new FileInputStream(file));
-        } else {
-            return new FileInputStream(file);
-        }
+        return this.attachmentStreamFactory.getInputStream(file, encoding);
     }
 
     public boolean isLarge() {

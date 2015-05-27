@@ -1726,8 +1726,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     @Override
     public PreparedAttachment prepareAttachment(Attachment att) throws AttachmentException {
-        PreparedAttachment preparedAttachment = new PreparedAttachment(att, this.attachmentManager.attachmentsDir);
-        return preparedAttachment;
+        return this.attachmentManager.prepareAttachment(att);
     }
 
     @Override
