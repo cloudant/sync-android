@@ -91,7 +91,7 @@ public class MultipartAttachmentWriterTests {
             }
             byte[] bytes = (s.toString()).getBytes();
             Attachment att0 = new UnsavedStreamAttachment(new ByteArrayInputStream(bytes), name, "text/plain");
-            mpw.addAttachment(att0);
+            mpw.addAttachment(att0, bytes.length);
         }
         mpw.close();
 
@@ -120,8 +120,9 @@ public class MultipartAttachmentWriterTests {
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
         mpw.setBody(doc);
 
-        Attachment att0 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/bonsai-boston.jpg"), "image/jpeg");
-        mpw.addAttachment(att0);
+        File f = TestUtils.loadFixture("fixture/bonsai-boston.jpg");
+        Attachment att0 = new UnsavedFileAttachment(f, "image/jpeg");
+        mpw.addAttachment(att0, f.length());
         mpw.close();
 
         int amountRead = 0;

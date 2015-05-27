@@ -291,7 +291,17 @@ class BasicPullStrategy implements ReplicationStrategy {
                                 atts.put(new String[]{documentRevs.getId(), documentRevs.getRev()}, preparedAtts);
 
                                 for (String attachmentName : attachments.keySet()) {
-                                    int revpos = (Integer) ((Map<String, Object>) attachments.get(attachmentName)).get("revpos");
+                                    Map attachmentMetadata = (Map)attachments.get(attachmentName);
+                                    int revpos = (Integer) attachmentMetadata.get("revpos");
+                                    String contentType = (String) attachmentMetadata.get("content_type");
+                                    String encoding = (String) attachmentMetadata.get("encoding");
+                                    long length = (Integer) attachmentMetadata.get("length");
+                                    long encodedLength = 0; // encodedLength can default to 0 if it's not encoded
+                                    if (Attachment.getEncodingFromString(encoding) != Attachment
+                                            .Encoding.Plain) {
+                                        encodedLength = (Integer) attachmentMetadata.get("encoded_length");
+                                    }
+
                                     // do we already have the attachment @ this revpos?
                                     // look back up the tree for this document and see:
                                     // if we already have it, then we don't need to fetch it
@@ -311,12 +321,10 @@ class BasicPullStrategy implements ReplicationStrategy {
                                             //do nothing, we may not have the document yet
                                         }
                                     }
-                                    String contentType = ((Map<String, String>) attachments.get(attachmentName)).get("content_type");
-                                    String encoding = (String) ((Map<String, Object>) attachments.get(attachmentName)).get("encoding");
                                     UnsavedStreamAttachment usa = this.sourceDb.getAttachmentStream(documentRevs.getId(), documentRevs.getRev(), attachmentName, contentType, encoding);
 
                                     // by preparing the attachment here, it is downloaded outside of the database transaction
-                                    preparedAtts.add(this.targetDb.prepareAttachment(usa));
+                                    preparedAtts.add(this.targetDb.prepareAttachment(usa, length, encodedLength));
                                 }
                             }
                         } catch (Exception e) {

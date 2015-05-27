@@ -195,7 +195,8 @@ public class RevisionHistoryHelper {
                         mpw = new MultipartAttachmentWriter();
                         mpw.setBody(revision);
                     }
-                    mpw.addAttachment(att);
+                    mpw.addAttachment(savedAtt,
+                            savedAtt.encoding == Attachment.Encoding.Plain ? savedAtt.length : savedAtt.encodedLength);
                 }
             } catch (IOException ioe) {
                 logger.log(Level.WARNING,"IOException caught when adding multiparts",ioe);
@@ -249,7 +250,8 @@ public class RevisionHistoryHelper {
                         bos.close();
                         theAtt.put("data", baos.toString());  //base64 of data
                     }
-                    theAtt.put("length", savedAtt.getSize());
+                    theAtt.put("length", savedAtt.length);
+                    theAtt.put("encoded_length", savedAtt.encodedLength);
                     theAtt.put("content_type", savedAtt.type);
                     theAtt.put("revpos", savedAtt.revpos);
                 } else {

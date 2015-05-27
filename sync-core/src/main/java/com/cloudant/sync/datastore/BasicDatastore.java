@@ -291,7 +291,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     @Override
     public BasicDocumentRevision getDocument(final String id, final String rev) throws DocumentNotFoundException{
         Preconditions.checkState(this.isOpen(), "Database is closed");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "DocumentRevisionTree id can not be empty");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "DocumentRevisionTree id can not " +
+                "be empty");
 
         try {
             return queue.submit(new SQLQueueCallable<BasicDocumentRevision>(){
@@ -494,7 +495,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                                     "WHERE deleted = 0 AND current = 1 AND docs.doc_id = revs.doc_id " +
                                     "ORDER BY docs.doc_id %1$s, revid DESC LIMIT %2$s OFFSET %3$s ",
                             (descending ? "DESC" : "ASC"), limit, offset);
-                    return getRevisionsFromRawQuery(db,sql, new String[]{});
+                    return getRevisionsFromRawQuery(db, sql, new String[]{});
                 }
             }).get();
         } catch (InterruptedException e) {
@@ -612,7 +613,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             return queue.submit(new SQLQueueCallable<LocalDocument>(){
                 @Override
                 public LocalDocument call(SQLDatabase db) throws Exception {
-                    return doGetLocalDocument(db,docId);
+                    return doGetLocalDocument(db, docId);
                 }
             }).get();
         } catch (InterruptedException e) {
@@ -916,7 +917,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         options.current = false;
         options.data = JSONUtils.EMPTY_JSON;
         options.available = false;
-        return insertRevision(db,options);
+        return insertRevision(db, options);
     }
 
     private LocalDocument doGetLocalDocument(SQLDatabase db, String docId)
@@ -1050,25 +1051,24 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                     if (pullAttachmentsInline) {
                         if (attachments != null) {
                             for (String att : attachments.keySet()) {
-                                Boolean stub = ((Map<String, Boolean>) attachments.get(att)).get
-                                        ("stub");
-                                if (stub != null && stub.booleanValue()) {
+                                Map attachmentMetadata = (Map)attachments.get(att);
+                                Boolean stub = (Boolean) attachmentMetadata.get("stub");
+
+                                if (stub != null && stub) {
                                     // stubs get copied forward at the end of
                                     // insertDocumentHistoryIntoExistingTree - nothing to do here
                                     continue;
                                 }
-                                String data = (String) ((Map<String,
-                                        Object>) attachments.get(att)).get("data");
+                                String data = (String) attachmentMetadata.get("data");
+                                String type = (String) attachmentMetadata.get("content_type");
                                 InputStream is = Base64InputStreamFactory.get(new
                                         ByteArrayInputStream(data.getBytes()));
-                                String type = (String) ((Map<String,
-                                        Object>) attachments.get(att)).get("content_type");
                                 // inline attachments are automatically decompressed,
                                 // so we don't have to worry about that
                                 UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is,
                                         att, type);
                                 try {
-                                    PreparedAttachment pa = prepareAttachment(usa);
+                                    PreparedAttachment pa = attachmentManager.prepareAttachment(usa);
                                     attachmentManager.addAttachment(db, pa, rev);
                                 } catch (Exception e) {
                                     logger.log(Level.SEVERE, "There was a problem adding the " +
@@ -1138,7 +1138,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     @Override
     public void forceInsert(BasicDocumentRevision rev, String... revisionHistory) throws DocumentException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
-        this.forceInsert(rev, Arrays.asList(revisionHistory),null, null, false);
+        this.forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
     }
 
     private boolean checkRevisionIsInCorrectOrder(List<String> revisionHistory) {
@@ -1499,7 +1499,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         String[] keys = revisions.keySet().toArray(new String[revisions.keySet().size()]);
         String[] values = revisions.values().toArray(new String[revisions.size()]);
         System.arraycopy(keys, 0, args, 0, revisions.keySet().size());
-        System.arraycopy(values, 0,args, revisions.keySet().size(), revisions.size());
+        System.arraycopy(values, 0, args, revisions.keySet().size(), revisions.size());
 
         Cursor cursor = null;
         try {
@@ -1718,11 +1718,11 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return builder.build();
     }
 
-
+    // this is just a facade into attachmentManager.PrepareAttachment for the sake of DatastoreWrapper
     @Override
-    public PreparedAttachment prepareAttachment(Attachment att) throws AttachmentException {
-        PreparedAttachment preparedAttachment = new PreparedAttachment(att, this.attachmentManager.attachmentsDir);
-        return preparedAttachment;
+    public PreparedAttachment prepareAttachment(Attachment att, long length, long encodedLength) throws AttachmentException {
+        PreparedAttachment pa = attachmentManager.prepareAttachment(att, length, encodedLength);
+        return pa;
     }
 
     @Override
