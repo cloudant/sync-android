@@ -88,10 +88,12 @@ public class EncryptedAttachmentInputStream extends FilterInputStream {
      * @param in the input stream object.
      * @param key the encryption key to use. Length must be supported by underlying
      *            JCE implementation.
+     *
+     * @throws InvalidKeyException if key is wrong size
+     * @throws IOException on I/O exceptions
      */
     public EncryptedAttachmentInputStream(InputStream in, byte[] key)
-            throws NoSuchPaddingException, NoSuchAlgorithmException,
-            InvalidAlgorithmParameterException, InvalidKeyException, IOException {
+            throws InvalidKeyException, IOException {
 
         super(in);
 
@@ -100,37 +102,50 @@ public class EncryptedAttachmentInputStream extends FilterInputStream {
         // Don't change under our feet
         byte[] keyCopy = Arrays.copyOf(key, key.length);
 
-        // Be sure Cipher is valid with passed parameters before reading anything
-        c = Cipher.getInstance(EncryptionConstants.CIPHER);
-        c.init(Cipher.DECRYPT_MODE,
-                new SecretKeySpec(keyCopy, EncryptionConstants.KEY_ALGORITHM),
-                new IvParameterSpec(new byte[16]));  // Empty IV to test key length, don't reuse!
+        try {
 
-        int read;
+            // Be sure Cipher is valid with passed parameters before reading anything
+            c = Cipher.getInstance(EncryptionConstants.CIPHER);
+            c.init(Cipher.DECRYPT_MODE,
+                    new SecretKeySpec(keyCopy, EncryptionConstants.KEY_ALGORITHM),
+                    new IvParameterSpec(new byte[16]));  // Empty IV to test key length, don't reuse!
 
-        // Read version, check correct - 1-byte
-        byte[] version = new byte[1];
-        read = in.read(version);
-        if (read != 1) {
-            throw new IOException("Could not read version from file header.");
+            int read;
+
+            // Read version, check correct - 1-byte
+            byte[] version = new byte[1];
+            read = in.read(version);
+            if (read != 1) {
+                throw new IOException("Could not read version from file header.");
+            }
+            if (version[0] > EncryptionConstants.ATTACHMENT_DISK_VERSION) {
+                throw new IOException("Unsupported on-disk version for attachment decryption.");
+            }
+
+            // Read IV - 16-bytes
+            byte[] ivBuffer = new byte[16];
+            read = in.read(ivBuffer);
+            if (read != 16) {
+                throw new IOException("Could not read initialisation vector from file header.");
+            }
+
+            // Decrypt cipher text - rest of file
+            c = Cipher.getInstance(EncryptionConstants.CIPHER);
+            c.init(Cipher.DECRYPT_MODE,
+                    new SecretKeySpec(keyCopy, EncryptionConstants.KEY_ALGORITHM),
+                    new IvParameterSpec(ivBuffer));
+            cipherInputStream = new CipherInputStream(in, c);
+
+        } catch (NoSuchPaddingException ex) {
+            // Should not happen, padding should be supported by every JCE, so wrap in RuntimeEx
+            throw new RuntimeException("Couldn't initialise crypto engine", ex);
+        } catch (NoSuchAlgorithmException ex) {
+            // Should not happen, AES should be supported by every JCE, so wrap in RuntimeException
+            throw new RuntimeException("Couldn't initialise crypto engine", ex);
+        } catch (InvalidAlgorithmParameterException ex) {
+            // Should not happen, 16 byte IV for AES is correct, so wrap in RuntimeEx
+            throw new RuntimeException("Couldn't initialise crypto engine", ex);
         }
-        if (version[0] > EncryptionConstants.ATTACHMENT_DISK_VERSION) {
-            throw new IOException("Unsupported on-disk version for attachment decryption.");
-        }
-
-        // Read IV - 16-bytes
-        byte[] ivBuffer = new byte[16];
-        read = in.read(ivBuffer);
-        if (read != 16) {
-            throw new IOException("Could not read initialisation vector from file header.");
-        }
-
-        // Decrypt cipher text - rest of file
-        c = Cipher.getInstance(EncryptionConstants.CIPHER);
-        c.init(Cipher.DECRYPT_MODE,
-                new SecretKeySpec(keyCopy, EncryptionConstants.KEY_ALGORITHM),
-                new IvParameterSpec(ivBuffer));
-        cipherInputStream = new CipherInputStream(in, c);
     }
 
     @Override

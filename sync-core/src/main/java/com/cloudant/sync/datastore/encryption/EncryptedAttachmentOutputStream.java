@@ -84,28 +84,41 @@ public class EncryptedAttachmentOutputStream extends java.io.FilterOutputStream 
      * @param key the encryption key to use. Length must be supported by underlying
      *            JCE implementation.
      * @param iv the initialisation vector to use.
+     *
+     * @throws InvalidAlgorithmParameterException if IV is wrong size
+     * @throws InvalidKeyException if key is wrong size
+     * @throws IOException on I/O exceptions
      */
     public EncryptedAttachmentOutputStream(OutputStream out, byte[] key, byte[] iv)
-            throws NoSuchPaddingException, NoSuchAlgorithmException,
-            InvalidAlgorithmParameterException, InvalidKeyException, IOException {
+            throws InvalidAlgorithmParameterException, InvalidKeyException, IOException {
         super(out);
 
         // Don't change under our feet
         byte[] keyCopy = Arrays.copyOf(key, key.length);
         byte[] ivCopy = Arrays.copyOf(iv, iv.length);
 
-        // Be sure Cipher is valid with passed parameters before writing anything
-        Cipher c = Cipher.getInstance(EncryptionConstants.CIPHER);
-        c.init(Cipher.ENCRYPT_MODE,
-                new SecretKeySpec(keyCopy, EncryptionConstants.KEY_ALGORITHM),
-                new IvParameterSpec(ivCopy));
+        try {
 
-        // Write header
-        out.write(new byte[] { EncryptionConstants.ATTACHMENT_DISK_VERSION });
-        out.write(ivCopy);
+            // Be sure Cipher is valid with passed parameters before writing anything
+            Cipher c = Cipher.getInstance(EncryptionConstants.CIPHER);
+            c.init(Cipher.ENCRYPT_MODE,
+                    new SecretKeySpec(keyCopy, EncryptionConstants.KEY_ALGORITHM),
+                    new IvParameterSpec(ivCopy));
 
-        // Ready to write the encrypted body
-        cipherOutputStream = new CipherOutputStream(out, c);
+            // Write header
+            out.write(new byte[]{EncryptionConstants.ATTACHMENT_DISK_VERSION});
+            out.write(ivCopy);
+
+            // Ready to write the encrypted body
+            cipherOutputStream = new CipherOutputStream(out, c);
+
+        } catch (NoSuchPaddingException ex) {
+            // Should not happen, padding should be supported by every JCE, so wrap in RuntimeEx
+            throw new RuntimeException("Couldn't initialise crypto engine", ex);
+        } catch (NoSuchAlgorithmException ex) {
+            // Should not happen, AES should be supported by every JCE, so wrap in RuntimeException
+            throw new RuntimeException("Couldn't initialise crypto engine", ex);
+        }
     }
 
     @Override
