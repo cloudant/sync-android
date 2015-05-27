@@ -95,12 +95,20 @@ public class EncryptedAttachmentInputStream extends FilterInputStream {
 
         super(in);
 
+        Cipher c;
+
         // Don't change under our feet
         byte[] keyCopy = Arrays.copyOf(key, key.length);
 
+        // Be sure Cipher is valid with passed parameters before reading anything
+        c = Cipher.getInstance(EncryptionConstants.CIPHER);
+        c.init(Cipher.DECRYPT_MODE,
+                new SecretKeySpec(keyCopy, EncryptionConstants.KEY_ALGORITHM),
+                new IvParameterSpec(new byte[16]));  // Empty IV to test key length, don't reuse!
+
         int read;
 
-        // Read version - 1-byte
+        // Read version, check correct - 1-byte
         byte[] version = new byte[1];
         read = in.read(version);
         if (read != 1) {
@@ -118,7 +126,7 @@ public class EncryptedAttachmentInputStream extends FilterInputStream {
         }
 
         // Decrypt cipher text - rest of file
-        Cipher c = Cipher.getInstance(EncryptionConstants.CIPHER);
+        c = Cipher.getInstance(EncryptionConstants.CIPHER);
         c.init(Cipher.DECRYPT_MODE,
                 new SecretKeySpec(keyCopy, EncryptionConstants.KEY_ALGORITHM),
                 new IvParameterSpec(ivBuffer));

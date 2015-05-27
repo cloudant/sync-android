@@ -70,4 +70,17 @@ public class EncryptedAttachmentOutputStreamTest {
                         new ByteArrayInputStream(actualEncryptedOutput.toByteArray()),
                         new FileInputStream(expectedCipherText)));
     }
+
+    @Test(expected=InvalidKeyException.class)
+    public void Test31ByteKey() throws NoSuchPaddingException, NoSuchAlgorithmException,
+            InvalidAlgorithmParameterException, InvalidKeyException, IOException {
+        new EncryptedAttachmentOutputStream(null, keyLength31, ivLength16);
+    }
+
+    byte[] keyLength31 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
+            -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
+            -15, -123, -22, -15, 53 };
+
+    byte[] ivLength16 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
+            -123, -22, -15, 53, -22 };
 }
