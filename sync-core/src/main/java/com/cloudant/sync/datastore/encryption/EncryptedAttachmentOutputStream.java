@@ -94,15 +94,17 @@ public class EncryptedAttachmentOutputStream extends java.io.FilterOutputStream 
         byte[] keyCopy = Arrays.copyOf(key, key.length);
         byte[] ivCopy = Arrays.copyOf(iv, iv.length);
 
+        // Be sure Cipher is valid with passed parameters before writing anything
+        Cipher c = Cipher.getInstance(EncryptionConstants.CIPHER);
+        c.init(Cipher.ENCRYPT_MODE,
+                new SecretKeySpec(keyCopy, EncryptionConstants.KEY_ALGORITHM),
+                new IvParameterSpec(ivCopy));
+
         // Write header
         out.write(new byte[] { EncryptionConstants.ATTACHMENT_DISK_VERSION });
         out.write(ivCopy);
 
         // Ready to write the encrypted body
-        Cipher c = Cipher.getInstance(EncryptionConstants.CIPHER);
-        c.init(Cipher.ENCRYPT_MODE,
-                new SecretKeySpec(keyCopy, EncryptionConstants.KEY_ALGORITHM),
-                new IvParameterSpec(ivCopy));
         cipherOutputStream = new CipherOutputStream(out, c);
     }
 

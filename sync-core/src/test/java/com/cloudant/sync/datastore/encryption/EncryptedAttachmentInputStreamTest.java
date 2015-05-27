@@ -16,14 +16,12 @@ package com.cloudant.sync.datastore.encryption;
 
 import com.cloudant.sync.util.TestUtils;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 import org.junit.Assert;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidAlgorithmParameterException;
@@ -43,6 +41,10 @@ public class EncryptedAttachmentInputStreamTest {
      */
     private byte[] key = hexStringToByteArray("F4F57C148B3A836EC6D74D0672DB4FC2");
 
+    byte[] keyLength31 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
+            -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
+            -15, -123, -22, -15, 53 };
+
     @Test
     public void testReadingValidFile() throws IOException, InvalidAlgorithmParameterException,
             NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException {
@@ -58,6 +60,12 @@ public class EncryptedAttachmentInputStreamTest {
 
         Assert.assertTrue("Reading encrypted stream didn't give expected plain text",
                 IOUtils.contentEquals(encryptedInputStream, plainTextInputStream));
+    }
+
+    @Test(expected=InvalidKeyException.class)
+    public void Test31ByteKey() throws NoSuchPaddingException, NoSuchAlgorithmException,
+            InvalidAlgorithmParameterException, InvalidKeyException, IOException {
+        new EncryptedAttachmentInputStream(null, keyLength31);
     }
 
     public static byte[] hexStringToByteArray(String s) {
