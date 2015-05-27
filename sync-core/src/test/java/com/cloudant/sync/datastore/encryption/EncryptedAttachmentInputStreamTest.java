@@ -14,9 +14,9 @@
 
 package com.cloudant.sync.datastore.encryption;
 
+import com.cloudant.sync.matcher.CauseMatcher;
 import com.cloudant.sync.util.TestUtils;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Rule;
 import org.junit.Test;
@@ -27,10 +27,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 /**
@@ -84,7 +83,7 @@ public class EncryptedAttachmentInputStreamTest {
     }
 
     /**
-     * Test when we read file shorter than IV.
+     * Test when we read file shorter than IV that we fail during construction.
      */
     @Test
     public void testReadingTruncatedIVFile() throws IOException, InvalidKeyException {
@@ -98,16 +97,22 @@ public class EncryptedAttachmentInputStreamTest {
     }
 
     /**
-     * Test when we read file shorter than block multiple
+     * Test when we read file shorter than block multiple that an IOException escapes.
      */
     @Test
     public void testReadingTruncatedDataFile() throws IOException, InvalidKeyException {
+        exception.expect(IOException.class);
+        exception.expectCause(new CauseMatcher(IllegalBlockSizeException.class));
+
         File encryptedAttachmentBlob = TestUtils.loadFixture(
                 "fixture/EncryptedAttachmentTest_truncatedData");
         InputStream encryptedInputStream = new EncryptedAttachmentInputStream(
                 new FileInputStream(encryptedAttachmentBlob), key);
 
-
+        //noinspection StatementWithEmptyBody
+        while (encryptedInputStream.read(new byte[1024]) != -1) {
+            // just read the data
+        }
     }
 
     @Test(expected=InvalidKeyException.class)
