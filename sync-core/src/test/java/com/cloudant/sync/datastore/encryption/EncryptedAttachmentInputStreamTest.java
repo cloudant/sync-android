@@ -16,9 +16,12 @@ package com.cloudant.sync.datastore.encryption;
 
 import com.cloudant.sync.util.TestUtils;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.Assert;
+import org.junit.rules.ExpectedException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,6 +38,10 @@ import javax.crypto.NoSuchPaddingException;
  */
 public class EncryptedAttachmentInputStreamTest {
 
+    /** Allow us to check exception messages */
+    @Rule
+    public ExpectedException exception = ExpectedException.none();
+
     /**
      * JavaSE has default 16-byte key length limit, so we use that in testing to make
      * CI set up easier. Given this is just a key, it shouldn't affect underlying testing.
@@ -46,8 +53,7 @@ public class EncryptedAttachmentInputStreamTest {
             -15, -123, -22, -15, 53 };
 
     @Test
-    public void testReadingValidFile() throws IOException, InvalidAlgorithmParameterException,
-            NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException {
+    public void testReadingValidFile() throws IOException, InvalidKeyException {
         File encryptedAttachmentBlob = TestUtils.loadFixture(
                 "fixture/EncryptedAttachmentTest_cipherText_aes128");
         File expectedPlainText = TestUtils.loadFixture(
@@ -62,9 +68,50 @@ public class EncryptedAttachmentInputStreamTest {
                 IOUtils.contentEquals(encryptedInputStream, plainTextInputStream));
     }
 
+    /**
+     * Test we reject on-disk versions newer than latest.
+     */
+    @Test
+    public void testReadingTooNewVersionFile() throws IOException, InvalidKeyException {
+        exception.expect(IOException.class);
+        exception.expectMessage("Unsupported on-disk version for attachment decryption.");
+
+        File encryptedAttachmentBlob = TestUtils.loadFixture(
+                "fixture/EncryptedAttachmentTest_badOnDiskVersion");
+
+        InputStream encryptedInputStream = new EncryptedAttachmentInputStream(
+                new FileInputStream(encryptedAttachmentBlob), key);
+    }
+
+    /**
+     * Test when we read file shorter than IV.
+     */
+    @Test
+    public void testReadingTruncatedIVFile() throws IOException, InvalidKeyException {
+        exception.expect(IOException.class);
+        exception.expectMessage("Could not read initialisation vector from file header.");
+
+        File encryptedAttachmentBlob = TestUtils.loadFixture(
+                "fixture/EncryptedAttachmentTest_truncatedIV");
+        InputStream encryptedInputStream = new EncryptedAttachmentInputStream(
+                new FileInputStream(encryptedAttachmentBlob), key);
+    }
+
+    /**
+     * Test when we read file shorter than block multiple
+     */
+    @Test
+    public void testReadingTruncatedDataFile() throws IOException, InvalidKeyException {
+        File encryptedAttachmentBlob = TestUtils.loadFixture(
+                "fixture/EncryptedAttachmentTest_truncatedData");
+        InputStream encryptedInputStream = new EncryptedAttachmentInputStream(
+                new FileInputStream(encryptedAttachmentBlob), key);
+
+
+    }
+
     @Test(expected=InvalidKeyException.class)
-    public void Test31ByteKey() throws NoSuchPaddingException, NoSuchAlgorithmException,
-            InvalidAlgorithmParameterException, InvalidKeyException, IOException {
+    public void Test31ByteKey() throws IOException, InvalidKeyException {
         new EncryptedAttachmentInputStream(null, keyLength31);
     }
 
