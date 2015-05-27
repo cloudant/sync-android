@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -74,11 +75,14 @@ class AttachmentManager {
 
     public final String attachmentsDir;
 
+    private final AttachmentStreamFactory attachmentStreamFactory;
+
     private BasicDatastore datastore;
 
     public AttachmentManager(BasicDatastore datastore) {
         this.datastore = datastore;
         this.attachmentsDir = datastore.extensionDataFolder(EXTENSION_NAME);
+        this.attachmentStreamFactory = new AttachmentStreamFactory(datastore.getKeyProvider());
     }
 
     public void addAttachment(SQLDatabase db,PreparedAttachment a, BasicDocumentRevision rev) throws  AttachmentNotSavedException {
@@ -145,6 +149,22 @@ class AttachmentManager {
 
     }
 
+    /**
+     * Creates a PreparedAttachment from {@code att}, preparing it for insertion into
+     * the datastore.
+     *
+     * @param att Attachment to prepare for insertion into datastore
+     * @return PreparedAttachment, which can be used in addAttachment methods
+     * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
+     *                  attachment data.
+     */
+    public PreparedAttachment prepareAttachment(Attachment att)
+            throws AttachmentException {
+        PreparedAttachment preparedAttachment = new PreparedAttachment(
+                att, this.attachmentsDir, this.attachmentStreamFactory);
+        return preparedAttachment;
+    }
+
     class PreparedAndSavedAttachments
     {
         List<SavedAttachment> savedAttachments = new ArrayList<SavedAttachment>();
@@ -170,7 +190,8 @@ class AttachmentManager {
 
         for (Attachment a : attachments) {
             if (!(a instanceof SavedAttachment)) {
-                preparedAndSavedAttachments.preparedAttachments.add(new PreparedAttachment(a, this.attachmentsDir));
+                preparedAndSavedAttachments.preparedAttachments.add(
+                        new PreparedAttachment(a, this.attachmentsDir, this.attachmentStreamFactory));
             } else {
                 preparedAndSavedAttachments.savedAttachments.add((SavedAttachment)a);
             }
@@ -219,7 +240,8 @@ class AttachmentManager {
                 int encoding = c.getInt(4);
                 int revpos = c.getInt(7);
                 File file = fileFromKey(key);
-                return new SavedAttachment(attachmentName, revpos, sequence, key, type, file, Attachment.Encoding.values()[encoding]);
+                return new SavedAttachment(attachmentName, revpos, sequence, key, type, file,
+                        Attachment.Encoding.values()[encoding], this.attachmentStreamFactory);
             }
 
             return null;
@@ -243,7 +265,8 @@ class AttachmentManager {
                 int encoding = c.getInt(4);
                 int revpos = c.getInt(7);
                 File file = fileFromKey(key);
-                atts.add(new SavedAttachment(name, revpos, sequence, key, type, file, Attachment.Encoding.values()[encoding]));
+                atts.add(new SavedAttachment(name, revpos, sequence, key, type, file,
+                        Attachment.Encoding.values()[encoding], this.attachmentStreamFactory));
             }
             return atts;
         } catch (SQLException e) {

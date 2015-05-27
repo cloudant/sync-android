@@ -44,7 +44,8 @@ public class PreparedAttachment {
      * @throws AttachmentNotSavedException
      */
     public PreparedAttachment(Attachment attachment,
-                              String attachmentsDir) throws AttachmentException {
+                              String attachmentsDir,
+                              AttachmentStreamFactory attachmentStreamFactory) throws AttachmentException {
         this.attachment = attachment;
         this.tempFile = new File(attachmentsDir, "temp" + UUID.randomUUID());
         InputStream attachmentInStream = null;
@@ -54,8 +55,8 @@ public class PreparedAttachment {
         try {
             attachmentInStream = attachment.getInputStream();
 
-            //Use FileUtils to create folder structure and file if necessary for output stream
-            tempFileOutStream = FileUtils.openOutputStream(this.tempFile);
+            tempFileOutStream = attachmentStreamFactory.getOutputStream(this.tempFile,
+                    Attachment.Encoding.Plain);
 
             calculateSha1 = MessageDigest.getInstance("SHA-1");
             int bufferSize = 1024;
