@@ -77,8 +77,8 @@ public class EncryptedAttachmentOutputStream extends java.io.FilterOutputStream 
      *
      * <p>This constructor writes bytes to the out parameter in order to write the header.</p>
      *
-     * <p>Note: if the specified output stream is null, a NullPointerException may be thrown
-     * later when it is used.</p>
+     * <p>Note: if the specified output stream is null, a NullPointerException is thrown as
+     * the constructor tries to write to the passed output stream.</p>
      *
      * @param out the output stream object.
      * @param key the encryption key to use. Length must be supported by underlying
@@ -126,14 +126,15 @@ public class EncryptedAttachmentOutputStream extends java.io.FilterOutputStream 
      * <p>Closes this output stream and releases any system resources associated with this
      * stream.</p>
      *
-     * <p>This method invokes the doFinal method of the encapsulated cipher object, which
+     * <p>This just proxies to the underlying CipherOutputStream, which:</p>
+     *
+     * <ul>
+     * <li>Invokes the doFinal method of the encapsulated cipher object, which
      * causes any bytes buffered by the encapsulated cipher to be processed. The result is
-     * written out by calling the flush method of this output stream.</p>
-     *
-     * <p>This method resets the encapsulated cipher object to its initial state and calls
-     * the close method of the underlying output stream.</p>
-     *
-     * <p>This just proxies to the underlying CipherOutputStream.</p>
+     * written out by calling the flush method of this output stream.</li>
+     * <li>Resets the encapsulated cipher object to its initial state and calls
+     * the close method of the underlying output stream.</li>
+     * </ul>
      */
     public void close() throws IOException {
         cipherOutputStream.close();
