@@ -82,8 +82,8 @@ public class EncryptedAttachmentInputStream extends FilterInputStream {
      *
      * <p>This constructor reads bytes from the in parameter in order to read the header.</p>
      *
-     * <p>Note: if the specified input stream is null, a NullPointerException may be thrown
-     * later when it is used.</p>
+     * <p>Note: if the specified input stream is null, a NullPointerException is thrown as
+     * the constructor tries to read from the passed input stream.</p>
      *
      * @param in the input stream object.
      * @param key the encryption key to use. Length must be supported by underlying
@@ -237,8 +237,7 @@ public class EncryptedAttachmentInputStream extends FilterInputStream {
     /**
      * <p>Closes this input stream and releases any system resources associated with the stream.</p>
      *
-     * <p>The EncryptedAttachmentInputStream method of CipherInputStream calls the close method
-     * of its underlying input stream.</p>
+     * <p>This method calls close on its proxied CipherInputStream.</p>
      * @throws IOException
      */
     public void close()
@@ -250,7 +249,10 @@ public class EncryptedAttachmentInputStream extends FilterInputStream {
     /**
      * <p>Tests if this input stream supports the mark and reset methods, which it does not.</p>
      *
-     * @return false, since this class does not support the mark and reset methods.
+     * <p>This method proxies to the underlying CipherInputStream, which don't support mark
+     * and reset.</p>
+     *
+     * @return false, since the underlying method call always returns false.
      */
     public boolean markSupported() {
         return cipherInputStream.markSupported();
