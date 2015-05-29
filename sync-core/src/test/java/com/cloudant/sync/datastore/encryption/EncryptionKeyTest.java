@@ -25,41 +25,26 @@ import java.util.Arrays;
  */
 public class EncryptionKeyTest {
 
-    byte[] keyLength32 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
-            -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
-            -15, -123, -22, -15, 53, -22 };
-
-    byte[] keyLength31 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
-            -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
-            -15, -123, -22, -15, 53 };
-
-    byte[] keyLength33 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
-            -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
-            -15, -123, -22, -15, 53, -22, -123 };
-
-    byte[] keyLength16 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
-            -123, -22, -15, 53, -22 };
-
     @Test
     public void keyWith32ByteLength() {
-        EncryptionKey key = new EncryptionKey(keyLength32);
-        Assert.assertArrayEquals("Returned key should match creation key", keyLength32, key
+        EncryptionKey key = new EncryptionKey(EncryptionTestConstants.keyLength32);
+        Assert.assertArrayEquals("Returned key should match creation key", EncryptionTestConstants.keyLength32, key
                 .getKey());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void keyWith31ByteLength() {
-        new EncryptionKey(keyLength31);
+        new EncryptionKey(EncryptionTestConstants.keyLength31);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void keyWith33ByteLength() {
-        new EncryptionKey(keyLength33);
+        new EncryptionKey(EncryptionTestConstants.keyLength33);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void keyWith16ByteLength() {
-        new EncryptionKey(keyLength16);
+        new EncryptionKey(EncryptionTestConstants.keyLength16);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -72,11 +57,11 @@ public class EncryptionKeyTest {
      * cause the key contained by the EncryptionKey object to change.
      */
     public void keyIsImmutable() {
-        byte[] copy32 = Arrays.copyOf(keyLength32, 32);
+        byte[] copy32 = Arrays.copyOf(EncryptionTestConstants.keyLength32, 32);
         EncryptionKey key = new EncryptionKey(copy32);
         copy32[12] = 14;
         Assert.assertArrayEquals("Modifying creation key shouldn't change stored key",
-                keyLength32, key.getKey());
+                EncryptionTestConstants.keyLength32, key.getKey());
     }
 
     @Test
@@ -84,9 +69,9 @@ public class EncryptionKeyTest {
      * cause the key contained by the EncryptionKey object to change.
      */
     public void returnedKeyIsImmutable() {
-        EncryptionKey key = new EncryptionKey(keyLength32);
+        EncryptionKey key = new EncryptionKey(EncryptionTestConstants.keyLength32);
         key.getKey()[12] = 14;
         Assert.assertArrayEquals("Modifying retrieved key shouldn't change stored key",
-                keyLength32, key.getKey());
+                EncryptionTestConstants.keyLength32, key.getKey());
     }
 }

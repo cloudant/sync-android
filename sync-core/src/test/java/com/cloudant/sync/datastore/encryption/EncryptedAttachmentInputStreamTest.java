@@ -41,16 +41,6 @@ public class EncryptedAttachmentInputStreamTest {
     @Rule
     public ExpectedException exception = ExpectedException.none();
 
-    /**
-     * JavaSE has default 16-byte key length limit, so we use that in testing to make
-     * CI set up easier. Given this is just a key, it shouldn't affect underlying testing.
-     */
-    private byte[] key = hexStringToByteArray("F4F57C148B3A836EC6D74D0672DB4FC2");
-
-    byte[] keyLength31 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
-            -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
-            -15, -123, -22, -15, 53 };
-
     @Test
     public void testReadingValidFile() throws IOException, InvalidKeyException {
         File encryptedAttachmentBlob = TestUtils.loadFixture(
@@ -59,7 +49,7 @@ public class EncryptedAttachmentInputStreamTest {
                 "fixture/EncryptedAttachmentTest_plainText");
 
         InputStream encryptedInputStream = new EncryptedAttachmentInputStream(
-                new FileInputStream(encryptedAttachmentBlob), key);
+                new FileInputStream(encryptedAttachmentBlob), EncryptionTestConstants.key16Byte);
 
         InputStream plainTextInputStream = new FileInputStream(expectedPlainText);
 
@@ -79,7 +69,7 @@ public class EncryptedAttachmentInputStreamTest {
                 "fixture/EncryptedAttachmentTest_badOnDiskVersion");
 
         InputStream encryptedInputStream = new EncryptedAttachmentInputStream(
-                new FileInputStream(encryptedAttachmentBlob), key);
+                new FileInputStream(encryptedAttachmentBlob), EncryptionTestConstants.key16Byte);
     }
 
     /**
@@ -93,7 +83,7 @@ public class EncryptedAttachmentInputStreamTest {
         File encryptedAttachmentBlob = TestUtils.loadFixture(
                 "fixture/EncryptedAttachmentTest_truncatedIV");
         InputStream encryptedInputStream = new EncryptedAttachmentInputStream(
-                new FileInputStream(encryptedAttachmentBlob), key);
+                new FileInputStream(encryptedAttachmentBlob), EncryptionTestConstants.key16Byte);
     }
 
     /**
@@ -107,7 +97,7 @@ public class EncryptedAttachmentInputStreamTest {
         File encryptedAttachmentBlob = TestUtils.loadFixture(
                 "fixture/EncryptedAttachmentTest_truncatedData");
         InputStream encryptedInputStream = new EncryptedAttachmentInputStream(
-                new FileInputStream(encryptedAttachmentBlob), key);
+                new FileInputStream(encryptedAttachmentBlob), EncryptionTestConstants.key16Byte);
 
         //noinspection StatementWithEmptyBody
         while (encryptedInputStream.read(new byte[1024]) != -1) {
@@ -117,17 +107,7 @@ public class EncryptedAttachmentInputStreamTest {
 
     @Test(expected=InvalidKeyException.class)
     public void Test31ByteKey() throws IOException, InvalidKeyException {
-        new EncryptedAttachmentInputStream(null, keyLength31);
-    }
-
-    public static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i+1), 16));
-        }
-        return data;
+        new EncryptedAttachmentInputStream(null, EncryptionTestConstants.keyLength31);
     }
 
 }
