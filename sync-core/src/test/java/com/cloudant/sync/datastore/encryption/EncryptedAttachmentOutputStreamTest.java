@@ -37,15 +37,6 @@ import javax.crypto.NoSuchPaddingException;
  */
 public class EncryptedAttachmentOutputStreamTest {
 
-    /**
-     * JavaSE has default 16-byte key length limit, so we use that in testing to make
-     * CI set up easier. Given this is just a key, it shouldn't affect underlying testing.
-     */
-    private byte[] key = EncryptedAttachmentInputStreamTest.hexStringToByteArray(
-            "F4F57C148B3A836EC6D74D0672DB4FC2");
-    private byte[] iv = EncryptedAttachmentInputStreamTest.hexStringToByteArray(
-            "CA7806E5DA7F83ACE8C0BB92BBF76326");  // Always 16 bytes
-
     @Test
     public void testWritingValidFile() throws IOException, InvalidAlgorithmParameterException,
             NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException {
@@ -57,7 +48,7 @@ public class EncryptedAttachmentOutputStreamTest {
         ByteArrayOutputStream actualEncryptedOutput = new ByteArrayOutputStream();
 
         OutputStream encryptedOutputStream = new EncryptedAttachmentOutputStream(
-                actualEncryptedOutput, key, iv);
+                actualEncryptedOutput, EncryptionTestConstants.key16Byte, EncryptionTestConstants.iv);
         IOUtils.copy(new FileInputStream(plainText), encryptedOutputStream);
         encryptedOutputStream.close();
         actualEncryptedOutput.close();
@@ -71,13 +62,8 @@ public class EncryptedAttachmentOutputStreamTest {
     @Test(expected=InvalidKeyException.class)
     public void Test31ByteKey() throws NoSuchPaddingException, NoSuchAlgorithmException,
             InvalidAlgorithmParameterException, InvalidKeyException, IOException {
-        new EncryptedAttachmentOutputStream(null, keyLength31, ivLength16);
+        new EncryptedAttachmentOutputStream(
+                null, EncryptionTestConstants.keyLength31, EncryptionTestConstants.ivLength16);
     }
 
-    byte[] keyLength31 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
-            -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
-            -15, -123, -22, -15, 53 };
-
-    byte[] ivLength16 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
-            -123, -22, -15, 53, -22 };
 }
