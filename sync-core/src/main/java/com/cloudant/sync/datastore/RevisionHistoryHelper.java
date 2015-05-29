@@ -21,6 +21,8 @@ import com.cloudant.sync.replication.PushAttachmentsInline;
 import com.cloudant.sync.util.CouchUtils;
 import com.google.common.base.Preconditions;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -233,21 +235,28 @@ public class RevisionHistoryHelper {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         OutputStream bos = Base64OutputStreamFactory.get(baos);
                         InputStream fis = savedAtt.getInputStream();
-                        int bufSiz = 1024;
-                        byte[] buf = new byte[bufSiz];
-                        int n = 0;
-                        do {
-                            n = fis.read(buf);
-                            if (n > 0) {
-                                bos.write(buf, 0, n);
-                            }
-                        } while (n > 0);
-                        // out of paranoia, close and flush - docs don't say what you have to do to
-                        // ensure all base64 is written, but close seems to do the right thing with
-                        // the apache codec implementation
-                        bos.flush();
-                        bos.close();
-                        theAtt.put("data", baos.toString());  //base64 of data
+                        try {
+                            int bufSiz = 1024;
+                            byte[] buf = new byte[bufSiz];
+                            int n = 0;
+                            do {
+                                n = fis.read(buf);
+                                if (n > 0) {
+                                    bos.write(buf, 0, n);
+                                }
+                            } while (n > 0);
+                            // out of paranoia, close and flush - docs don't say what you have to
+                            // do to
+
+                            // ensure all base64 is written, but close seems to do the right
+                            // thing with
+                            // the apache codec implementation
+                            bos.flush();
+                            bos.close();
+                            theAtt.put("data", baos.toString());  //base64 of data
+                        } finally {
+                            IOUtils.closeQuietly(fis);
+                        }
                     }
                     theAtt.put("length", savedAtt.getSize());
                     theAtt.put("content_type", savedAtt.type);
