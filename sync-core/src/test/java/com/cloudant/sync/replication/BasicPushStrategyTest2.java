@@ -78,6 +78,20 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         return datastore.updateDocumentFromRevision(rev).getId();
     }
 
+    // check that we can correctly push after compaction
+    @Test
+    public void replicate_compactedTest() throws Exception {
+        BasicPushStrategy push = push();
+
+        populateSomeDataInLocalDatastore();
+        waitForPushToFinish(push);
+
+        datastore.deleteDocument(id1);
+        datastore.compact();
+
+        waitForPushToFinish(push);
+    }
+
     @Test
     public void replicate_fullTest() throws Exception {
 

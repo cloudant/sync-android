@@ -30,7 +30,10 @@ final class BasicDocumentBody implements DocumentBody {
     private Map<String, Object> map;
 
     protected BasicDocumentBody(byte[] bytes) {
-        assert bytes != null;
+        // compacted revisions have their bodies set to null, so return an empty body
+        if (bytes == null) {
+            bytes = JSONUtils.EMPTY_JSON;
+        }
         if(JSONUtils.isValidJSON(bytes)) {
             this.bytes = bytes;
         } else {
