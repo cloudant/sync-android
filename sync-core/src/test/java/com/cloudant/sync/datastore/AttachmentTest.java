@@ -281,12 +281,12 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         long expectedImageFileLength = imageFile.length();
 
         Attachment att = new UnsavedFileAttachment(textFile, "text/plain");
-        PreparedAttachment textPatt = new PreparedAttachment(att, datastore_manager_dir);
+        PreparedAttachment textPatt = new PreparedAttachment(att, datastore_manager_dir, 0);
         //Assert that the original file length is equal to the prepared attachment length
         Assert.assertEquals(expectedTextFileLength, textPatt.length);
 
         Attachment att2 = new UnsavedFileAttachment(imageFile, "image/jpeg");
-        PreparedAttachment imagePatt = new PreparedAttachment(att2, datastore_manager_dir);
+        PreparedAttachment imagePatt = new PreparedAttachment(att2, datastore_manager_dir, 0);
         Assert.assertEquals(expectedImageFileLength, imagePatt.length);
     }
 
@@ -297,7 +297,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
 
         Attachment nonexistentAtt = new UnsavedFileAttachment(nonExistentFile, "text/plain");
 
-        PreparedAttachment nonexistentPatt = new PreparedAttachment(nonexistentAtt, datastore_manager_dir);
+        PreparedAttachment nonexistentPatt = new PreparedAttachment(nonexistentAtt, datastore_manager_dir, 0);
     }
 
     @Test
@@ -309,14 +309,14 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         File imageFile = TestUtils.loadFixture("fixture/" + imageAttachmentName);
 
         Attachment att = new UnsavedFileAttachment(textFile, "text/plain");
-        PreparedAttachment textPatt = new PreparedAttachment(att, datastore_manager_dir);
+        PreparedAttachment textPatt = new PreparedAttachment(att, datastore_manager_dir, 0);
 
         byte[] textExpectedSha1 = Misc.getSha1((new FileInputStream(textFile)));
         //Assert that the expected sha1 is equal to the prepared attachment sha1
         Assert.assertArrayEquals(textExpectedSha1, textPatt.sha1);
 
         Attachment att2 = new UnsavedFileAttachment(imageFile, "image/jpeg");
-        PreparedAttachment imagePatt = new PreparedAttachment(att2, datastore_manager_dir);
+        PreparedAttachment imagePatt = new PreparedAttachment(att2, datastore_manager_dir, 0);
 
         byte[] imageExpectedSha1 = Misc.getSha1((new FileInputStream(imageFile)));
         Assert.assertArrayEquals(imageExpectedSha1, imagePatt.sha1);
@@ -331,7 +331,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         File imageFile = TestUtils.loadFixture("fixture/" + imageAttachmentName);
 
         Attachment att2 = new UnsavedFileAttachment(imageFile, "image/jpeg");
-        PreparedAttachment imagePatt = new PreparedAttachment(att2, datastore_manager_dir);
+        PreparedAttachment imagePatt = new PreparedAttachment(att2, datastore_manager_dir, 0);
 
         IOUtils.contentEquals(
                 new FileInputStream(imageFile),

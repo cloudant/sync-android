@@ -75,8 +75,6 @@ public class PreparedAttachment {
                 tempFileOutStream.write(buffer, 0, bytesRead);
                 totalRead += bytesRead;
             }
-            this.sha1 = Misc.getSha1((tempFileIS = new FileInputStream(tempFile)));
-
         } catch (IOException e) {
             logger.log(Level.WARNING, "Problem reading from input or writing to output stream ", e);
             throw new AttachmentNotSavedException(e);
@@ -105,6 +103,3 @@ public class PreparedAttachment {
     }
 
 }
-
-
-
