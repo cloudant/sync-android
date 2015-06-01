@@ -3,7 +3,7 @@ package com.cloudant.sync.datastore.encryption;
 /**
  * Exception thrown when encryption or decryption of Data Protect Key fails.
  */
-public class DPKException extends RuntimeException {
+class DPKException extends RuntimeException {
 
     /**
      * @param description Context of failure

@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2015 IBM Cloudant, Inc. All rights reserved.
- * <p/>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
- * <p/>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language governing permissions
@@ -16,6 +16,8 @@ package com.cloudant.sync.datastore.encryption;
 
 import android.os.Build;
 
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -37,7 +39,7 @@ import javax.crypto.spec.PBEKeySpec;
 /**
  * A utility to aid in encrypting/decrypting the DPK
  */
-class DKPEncryptionUtil {
+class DPKEncryptionUtil {
 
     /**
      * Convert a String to a hex byte array
@@ -45,14 +47,8 @@ class DKPEncryptionUtil {
      * @param s The string
      * @return The hex byte array
      */
-    public static final byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i + 1), 16));
-        }
-        return data;
+    public static final byte[] hexStringToByteArray(String s) throws DecoderException {
+        return new Hex().decode(s.getBytes());
     }
 
     /**
@@ -62,14 +58,7 @@ class DKPEncryptionUtil {
      * @return The string
      */
     public static final String byteArrayToHexString(byte[] bytes) {
-        StringBuilder sb = new StringBuilder(bytes.length * 2);
-
-        Formatter formatter = new Formatter(sb);
-        for (byte b : bytes) {
-            formatter.format("%02x", b);
-        }
-        formatter.close();
-        return sb.toString();
+        return new String(new Hex().encode(bytes));
     }
 
     /**
@@ -79,10 +68,16 @@ class DKPEncryptionUtil {
      * @param iv               The iv
      * @param unencryptedBytes The data to encrypt
      * @return The encrypted data
-     * @throws Exception
+     * @throws NoSuchPaddingException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidAlgorithmParameterException
+     * @throws InvalidKeyException
+     * @throws BadPaddingException
+     * @throws IllegalBlockSizeException
      */
     public static byte[] encryptAES(SecretKey key, byte[] iv, byte[] unencryptedBytes) throws
-            Exception {
+            NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException,
+            InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         IvParameterSpec ivParameter = new IvParameterSpec(iv);
         aesCipher.init(Cipher.ENCRYPT_MODE, key, ivParameter);
@@ -96,10 +91,16 @@ class DKPEncryptionUtil {
      * @param iv             The iv
      * @param encryptedBytes The data to decrypt
      * @return The decrypted data
-     * @throws Exception
+     * @throws NoSuchPaddingException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidAlgorithmParameterException
+     * @throws InvalidKeyException
+     * @throws BadPaddingException
+     * @throws IllegalBlockSizeException
      */
     public static byte[] decryptAES(SecretKey key, byte[] iv, byte[] encryptedBytes) throws
-            Exception {
+            NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException,
+            InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         IvParameterSpec ivParameter = new IvParameterSpec(iv);
         aesCipher.init(Cipher.DECRYPT_MODE, key, ivParameter);

@@ -17,6 +17,7 @@ package com.cloudant.sync.datastore.encryption;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import org.apache.commons.codec.DecoderException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -29,7 +30,7 @@ import java.util.logging.Logger;
  * identifier. To say in another way, it is possible to store multiple {@link KeyData}
  * instances as long as you use a {@link KeyStorage} with a different identifier for each
  * one.
- * <p/>
+ *
  * Each {@link KeyData} is bound to a specific identifier and all of them are grouped in
  * the keychain by service (service name defined with CDTENCRYPTION_KEYCHAINSTORAGE_SERVICE_VALUE).
  * This means that if you use the same identifier to store other data in the {@link
@@ -38,7 +39,7 @@ import java.util.logging.Logger;
  *
  * @see KeyData
  */
-public class KeyStorage {
+class KeyStorage {
     private static final Logger LOGGER = Logger.getLogger(KeyStorage.class.getCanonicalName());
     private static final String CDTENCRYPTION_KEYCHAINSTORAGE_SERVICE_VALUE =
             "com.cloudant.sync.CDTEncryptionKeychainStorage.keychain.service";
@@ -50,6 +51,7 @@ public class KeyStorage {
     private static final String KEY_IV = "iv"; //$NON-NLS-1$
     private static final String KEY_SALT = "salt"; //$NON-NLS-1$
     private static final String KEY_VERSION = "version"; //$NON-NLS-1$
+    private final String preferenceKey;
 
     private String service;
     private String account;
@@ -67,6 +69,7 @@ public class KeyStorage {
             this.service = CDTENCRYPTION_KEYCHAINSTORAGE_SERVICE_VALUE;
             this.account = identifier;
             this.prefs = context.getSharedPreferences(this.service, Context.MODE_PRIVATE);
+            this.preferenceKey = PREF_NAME_DPK + "-" + this.account;
         } else {
             throw new IllegalArgumentException("All parameters are required");
         }
@@ -81,17 +84,20 @@ public class KeyStorage {
     public KeyData getEncryptionKeyData() {
         KeyData encryptionData = null;
 
-        String savedValue = this.prefs.getString(buildKey(), null);
+        String savedValue = this.prefs.getString(preferenceKey, null);
         if (savedValue != null) {
             JSONObject savedObject = null;
             try {
-                savedObject = convertStringToJSON(savedValue);
-                encryptionData = new KeyData(DKPEncryptionUtil.hexStringToByteArray(savedObject
-                        .getString(KEY_DPK)), DKPEncryptionUtil.hexStringToByteArray
-                        (savedObject.getString(KEY_SALT)), DKPEncryptionUtil
+                savedObject = new JSONObject(savedValue);
+                encryptionData = new KeyData(DPKEncryptionUtil.hexStringToByteArray(savedObject
+                        .getString(KEY_DPK)), DPKEncryptionUtil.hexStringToByteArray
+                        (savedObject.getString(KEY_SALT)), DPKEncryptionUtil
                         .hexStringToByteArray(savedObject.getString(KEY_IV)), savedObject.getInt
                         (KEY_ITERATIONS), savedObject.getString(KEY_VERSION));
             } catch (JSONException e) {
+                LOGGER.log(Level.SEVERE, e.getLocalizedMessage(), e);
+                return null;
+            } catch (DecoderException e) {
                 LOGGER.log(Level.SEVERE, e.getLocalizedMessage(), e);
                 return null;
             }
@@ -112,17 +118,17 @@ public class KeyStorage {
     public boolean saveEncryptionKeyData(KeyData data) {
         JSONObject objectToSave = new JSONObject();
         try {
-            objectToSave.put(KEY_DPK, DKPEncryptionUtil.byteArrayToHexString(data
+            objectToSave.put(KEY_DPK, DPKEncryptionUtil.byteArrayToHexString(data
                     .getEncryptedDPK()));
-            objectToSave.put(KEY_IV, DKPEncryptionUtil.byteArrayToHexString(data.getIv()));
-            objectToSave.put(KEY_SALT, DKPEncryptionUtil.byteArrayToHexString(data.getSalt()));
-            objectToSave.put(KEY_ITERATIONS, data.getIterations());
-            objectToSave.put(KEY_VERSION, data.getVersion());
+            objectToSave.put(KEY_IV, DPKEncryptionUtil.byteArrayToHexString(data.getIv()));
+            objectToSave.put(KEY_SALT, DPKEncryptionUtil.byteArrayToHexString(data.getSalt()));
+            objectToSave.put(KEY_ITERATIONS, data.iterations);
+            objectToSave.put(KEY_VERSION, data.version);
 
             String valueToSave = objectToSave.toString();
 
             SharedPreferences.Editor editor = this.prefs.edit();
-            editor.putString(buildKey(), valueToSave);
+            editor.putString(preferenceKey, valueToSave);
             editor.commit();
 
         } catch (JSONException e) {
@@ -145,7 +151,7 @@ public class KeyStorage {
     public boolean clearEncryptionKeyData() {
         try {
             SharedPreferences.Editor editor = this.prefs.edit();
-            editor.remove(buildKey());
+            editor.remove(preferenceKey);
             editor.commit();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, e.getLocalizedMessage(), e);
@@ -161,26 +167,6 @@ public class KeyStorage {
      * @return true (data found) or false (data not found)
      */
     public boolean encryptionKeyDataExists() {
-        return this.prefs.contains(buildKey());
-    }
-
-    private String buildKey() {
-        return PREF_NAME_DPK + "-" + this.account;
-    }
-
-    private JSONObject convertStringToJSON(String jsonString) throws JSONException {
-        int beginIndex = jsonString.indexOf("{");
-        int endIndex = jsonString.lastIndexOf("}");
-
-        if (beginIndex == -1 || endIndex == -1 || beginIndex > endIndex + 1) {
-            String message = "Input string does not contain brackets, or input string is invalid." +
-                    " The string is: " + jsonString;
-            //logger.debug (message);
-            throw new JSONException(message);
-        }
-
-        String secureJSONString = jsonString.substring(beginIndex, endIndex + 1);
-        JSONObject jsonObject = new JSONObject(secureJSONString);
-        return jsonObject;
+        return this.prefs.contains(preferenceKey);
     }
 }

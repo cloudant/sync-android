@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2015 IBM Cloudant, Inc. All rights reserved.
- * <p/>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
- * <p/>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under thegregree
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language governing permissions
@@ -19,13 +19,13 @@ package com.cloudant.sync.datastore.encryption;
  *
  * @see KeyStorage
  */
-public class KeyData {
+class KeyData {
 
-    private byte[] encryptedDPK;
-    private byte[] salt;
-    private byte[] iv;
-    private int iterations;
-    private String version;
+    private final byte[] encryptedDPK;
+    private final byte[] salt;
+    private final byte[] iv;
+    public final int iterations;
+    public final String version;
 
     /**
      * Contains the encrypted DPK and all the values required to decrypt it.
@@ -70,19 +70,5 @@ public class KeyData {
      */
     public byte[] getIv() {
         return iv;
-    }
-
-    /**
-     * @return The number of iterationss
-     */
-    public int getIterations() {
-        return iterations;
-    }
-
-    /**
-     * @return The version
-     */
-    public String getVersion() {
-        return version;
     }
 }

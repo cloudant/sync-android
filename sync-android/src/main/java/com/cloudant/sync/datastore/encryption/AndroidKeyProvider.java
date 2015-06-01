@@ -21,11 +21,11 @@ import java.util.logging.Logger;
 /**
  * This class implements the interface {@link KeyProvider} and it can be used to create an
  * encrypted datastore.
- * <p/>
+ *
  * Given an user-provided password and an identifier, it generates a strong key and store it safely
- * in the applications {@link android.content.SharedPreferences}, so the same key can be retrieved
+ * in the application's {@link android.content.SharedPreferences}, so the same key can be retrieved
  * later provided that the user supplies the same password and id.
- * <p/>
+ *
  * The password is used to protect the key before saving it to the {@link android.content
  * .SharedPreferences}. The identifier is an
  * easy way to have more than one encryption key in the same app, the only condition is to provide
@@ -82,7 +82,7 @@ public class AndroidKeyProvider implements KeyProvider {
     }
 
     @Override
-    public EncryptionKey getEncryptionKey() {
+    public synchronized EncryptionKey getEncryptionKey() {
         EncryptionKey key = null;
         if (this.manager.keyExists()) {
             key = this.manager.loadKeyUsingPassword(this.password);
@@ -91,5 +91,9 @@ public class AndroidKeyProvider implements KeyProvider {
         }
 
         return key;
+    }
+
+    KeyManager getManager() {
+        return this.manager;
     }
 }

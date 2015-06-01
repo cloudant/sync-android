@@ -1,4 +1,4 @@
-package cloudant.com.androidtest.keyprovider;
+package com.cloudant.sync.datastore.encryption;
 
 import com.cloudant.sync.datastore.encryption.KeyData;
 
@@ -7,6 +7,8 @@ import java.util.Random;
 import java.util.UUID;
 
 public class ProviderTestUtil {
+    public static final String password = "provider1password";
+
     public static String getUniqueIdentifier() {
         return "test-id-" + UUID.randomUUID();
     }

@@ -16,12 +16,16 @@ package com.cloudant.sync.datastore.encryption;
 
 import android.os.Build;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -31,7 +35,7 @@ import android.content.SharedPreferences;
 /**
  * Use this class to generate a Data Protection Key (DPK), i.e. a strong password that can be used
  * later on for other purposes like encrypting a database.
- * <p/>
+ *
  * The generated DPK is automatically encrypted and saved to the {@link android.content
  * .SharedPreferences}, for this reason, it is
  * necessary to provide a password to generate and retrieve the DPK. On a high level, this is
@@ -42,9 +46,9 @@ import android.content.SharedPreferences;
  * - Use PBKDF2 to derive a key based on the user-provided password and the salt.
  * - Generate an initialization vector (IV) as a 16 bytes buffer with secure random values.
  * - Use AES to cipher the DPK with the key and the IV.
- * - Return the DPK and save the encrypted version to the keychain.
+ * - Return the DPK and save the encrypted version to the {@link SharedPreferences}.
  */
-public class KeyManager {
+class KeyManager {
     private static final int BYTES_TO_BITS = 8;
 
     private static final int CDTENCRYPTION_KEYCHAIN_AES_KEY_SIZE = 32;
@@ -56,10 +60,11 @@ public class KeyManager {
 
     private static final Logger LOGGER = Logger.getLogger(KeyManager.class.getCanonicalName());
     private KeyStorage storage;
+    private SecureRandom secureRandom;
 
     /**
      * Initialise a manager with a CDTEncryptionKeychainStorage instance.
-     * <p/>
+     *
      * A {@link KeyStorage} binds an entry in the {@link SharedPreferences} to an identifier. The
      * data protection key (DPK) saved to the {@link SharedPreferences} by this class will
      * therefore be bound to the storage's identifier. To save different DPKs (say for different
@@ -72,6 +77,7 @@ public class KeyManager {
     public KeyManager(KeyStorage storage) {
         if (storage != null) {
             this.storage = storage;
+            this.secureRandom = new SecureRandom();
         } else {
             LOGGER.severe("Storage is mandatory");
             throw new IllegalArgumentException("Storage is mandatory");
@@ -97,15 +103,27 @@ public class KeyManager {
         EncryptionKey dpk = null;
         SecretKey aesKey = null;
         try {
-            aesKey = pbkdf2DerivedKeyForPassword(password, data.getSalt(), data.getIterations(),
+            aesKey = pbkdf2DerivedKeyForPassword(password, data.getSalt(), data.iterations,
                     CDTENCRYPTION_KEYCHAIN_AES_KEY_SIZE);
-            byte[] dpkBytes = DKPEncryptionUtil.decryptAES(aesKey, data.getIv(), data
+            byte[] dpkBytes = DPKEncryptionUtil.decryptAES(aesKey, data.getIv(), data
                     .getEncryptedDPK());
-
             dpk = new EncryptionKey(dpkBytes);
-        } catch (Exception e) {
+        } catch (NoSuchAlgorithmException e) {
+            throw new DPKException("Failed to decrypt DPK", e);
+        } catch (InvalidKeySpecException e) {
+            throw new DPKException("Failed to decrypt DPK", e);
+        } catch (IllegalBlockSizeException e) {
+            throw new DPKException("Failed to decrypt DPK", e);
+        } catch (InvalidKeyException e) {
+            throw new DPKException("Failed to decrypt DPK", e);
+        } catch (BadPaddingException e) {
+            throw new DPKException("Failed to decrypt DPK", e);
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new DPKException("Failed to decrypt DPK", e);
+        } catch (NoSuchPaddingException e) {
             throw new DPKException("Failed to decrypt DPK", e);
         }
+
         return dpk;
     }
 
@@ -134,7 +152,7 @@ public class KeyManager {
                         CDTENCRYPTION_KEYCHAIN_PBKDF2_ITERATIONS,
                         CDTENCRYPTION_KEYCHAIN_AES_KEY_SIZE);
 
-                byte[] encryptedDpkBytes = DKPEncryptionUtil.encryptAES(aesKey, iv, dpkBytes);
+                byte[] encryptedDpkBytes = DPKEncryptionUtil.encryptAES(aesKey, iv, dpkBytes);
 
                 KeyData keyData = new KeyData(encryptedDpkBytes, salt, iv,
                         CDTENCRYPTION_KEYCHAIN_PBKDF2_ITERATIONS, CDTENCRYPTION_KEYCHAIN_VERSION);
@@ -143,7 +161,19 @@ public class KeyManager {
                     dpk = new EncryptionKey(dpkBytes);
                 }
             }
-        } catch (Exception e) {
+        } catch (InvalidKeyException e) {
+            throw new DPKException("Failed to encrypt DPK", e);
+        } catch (NoSuchPaddingException e) {
+            throw new DPKException("Failed to encrypt DPK", e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new DPKException("Failed to encrypt DPK", e);
+        } catch (IllegalBlockSizeException e) {
+            throw new DPKException("Failed to encrypt DPK", e);
+        } catch (BadPaddingException e) {
+            throw new DPKException("Failed to encrypt DPK", e);
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new DPKException("Failed to encrypt DPK", e);
+        } catch (InvalidKeySpecException e) {
             throw new DPKException("Failed to encrypt DPK", e);
         }
         return dpk;
@@ -180,22 +210,25 @@ public class KeyManager {
     private SecretKey pbkdf2DerivedKeyForPassword(String password, byte[] salt, int
             iterations, int length) throws NoSuchAlgorithmException, InvalidKeySpecException {
         if (length < 1) {
-            throw new IllegalArgumentException("Length must greater than 0");
+            throw new IllegalArgumentException("length must greater than 0");
         }
 
         if (password == null || password.length() < 1) {
-            throw new IllegalArgumentException("Length must greater than 0");
+            throw new IllegalArgumentException("password must not be null or empty String");
         }
 
         if (salt == null || salt.length < 1) {
-            throw new IllegalArgumentException("Length must greater than 0");
+            throw new IllegalArgumentException("salt must not be null or empty byte array");
         }
 
         if (iterations < 1) {
-            throw new IllegalArgumentException("Length must greater than 0");
+            throw new IllegalArgumentException("iterations must greater than 0");
         }
 
         SecretKeyFactory pbkdf2Factory;
+
+        // Handle Android 4.4 changes to SecretKeyFactory API.
+        // See http://android-developers.blogspot.co.uk/2013/12/changes-to-secretkeyfactory-api-in.html
         if (Build.VERSION.SDK_INT >= 19) {
             // Use compatibility key factory required for backwards compatibility in API 19 and up.
             pbkdf2Factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1And8bit"); //$NON-NLS-1$
@@ -211,7 +244,7 @@ public class KeyManager {
 
     private byte[] generateSecureRandomBytesWithLength(int length) {
         byte[] randBytes = new byte[length];
-        new SecureRandom().nextBytes(randBytes);
+        secureRandom.nextBytes(randBytes);
         return randBytes;
     }
 }

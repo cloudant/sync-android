@@ -1,4 +1,4 @@
-package cloudant.com.androidtest.keyprovider;
+package com.cloudant.sync.datastore.encryption;
 
 import android.test.AndroidTestCase;
 
@@ -13,8 +13,8 @@ import java.util.Arrays;
 public class AndroidKeyProviderTests extends AndroidTestCase {
 
     public void testCreateProviderWithIdentifier() {
-        AndroidKeyProvider provider = new AndroidKeyProvider(getContext(), "provider1password",
-                ProviderTestUtil.getUniqueIdentifier());
+        AndroidKeyProvider provider = new AndroidKeyProvider(getContext(), ProviderTestUtil
+                .password, ProviderTestUtil.getUniqueIdentifier());
 
         EncryptionKey createdKey = provider.getEncryptionKey();
         assertNotNull("EncryptionKey was not created", createdKey);
@@ -24,12 +24,14 @@ public class AndroidKeyProviderTests extends AndroidTestCase {
 
         assertTrue("loadedKey did not match createdKey", Arrays.equals(createdKey.getKey(),
                 loadedKey.getKey()));
+
+        provider.getManager().clearKey();
     }
 
     public void testCreateProviderWithManager() {
         KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
         KeyManager manager = new KeyManager(storage);
-        AndroidKeyProvider provider = new AndroidKeyProvider("provider1password", manager);
+        AndroidKeyProvider provider = new AndroidKeyProvider(ProviderTestUtil.password, manager);
 
         EncryptionKey createdKey = provider.getEncryptionKey();
         assertNotNull("EncryptionKey was not created", createdKey);
@@ -39,14 +41,16 @@ public class AndroidKeyProviderTests extends AndroidTestCase {
 
         assertTrue("loadedKey did not match createdKey", Arrays.equals(createdKey.getKey(),
                 loadedKey.getKey()));
+
+        provider.getManager().clearKey();
     }
 
     public void testCreateTwoProvidersWithSameIdentifier() {
         String identifier = ProviderTestUtil.getUniqueIdentifier();
-        AndroidKeyProvider provider1 = new AndroidKeyProvider(getContext(), "provider1password",
-                identifier);
-        AndroidKeyProvider provider2 = new AndroidKeyProvider(getContext(), "provider1password",
-                identifier);
+        AndroidKeyProvider provider1 = new AndroidKeyProvider(getContext(), ProviderTestUtil
+                .password, identifier);
+        AndroidKeyProvider provider2 = new AndroidKeyProvider(getContext(), ProviderTestUtil
+                .password, identifier);
 
         EncryptionKey provider1Key = provider1.getEncryptionKey();
         assertNotNull("provider1 EncryptionKey was not created", provider1Key);
@@ -56,13 +60,16 @@ public class AndroidKeyProviderTests extends AndroidTestCase {
 
         assertTrue("provider1 key and provider2 key should be equal", Arrays.equals(provider1Key
                 .getKey(), provider2Key.getKey()));
+
+        provider1.getManager().clearKey();
+        provider2.getManager().clearKey();
     }
 
     public void testCreateTwoProvidersWithDifferentIdentifier() {
-        AndroidKeyProvider provider1 = new AndroidKeyProvider(getContext(), "provider1password",
-                ProviderTestUtil.getUniqueIdentifier());
-        AndroidKeyProvider provider2 = new AndroidKeyProvider(getContext(), "provider2password",
-                ProviderTestUtil.getUniqueIdentifier());
+        AndroidKeyProvider provider1 = new AndroidKeyProvider(getContext(), ProviderTestUtil
+                .password, ProviderTestUtil.getUniqueIdentifier());
+        AndroidKeyProvider provider2 = new AndroidKeyProvider(getContext(), ProviderTestUtil
+                .password, ProviderTestUtil.getUniqueIdentifier());
 
         EncryptionKey provider1Key = provider1.getEncryptionKey();
         assertNotNull("provider1 EncryptionKey was not created", provider1Key);
@@ -73,12 +80,15 @@ public class AndroidKeyProviderTests extends AndroidTestCase {
         assertFalse("provider1 key and provider2 key should not be equal", Arrays.equals
                 (provider1Key.getKey(),
                         provider2Key.getKey()));
+
+        provider1.getManager().clearKey();
+        provider2.getManager().clearKey();
     }
 
     // Negative tests
     public void testCreateProviderWithNullContext() {
         try {
-            new AndroidKeyProvider(null, "provider1password", ProviderTestUtil
+            new AndroidKeyProvider(null, ProviderTestUtil.password, ProviderTestUtil
                     .getUniqueIdentifier());
             fail("AndroidKeyProvider constructor should fail if context is null");
         } catch (IllegalArgumentException e) {
@@ -127,7 +137,7 @@ public class AndroidKeyProviderTests extends AndroidTestCase {
 
     public void testCreateProviderWithNullIdentifier() {
         try {
-            new AndroidKeyProvider(getContext(), "passw0rd", null);
+            new AndroidKeyProvider(getContext(), ProviderTestUtil.password, null);
             fail("AndroidKeyProvider constructor should fail if identifier is null");
         } catch (IllegalArgumentException e) {
             assertNotNull(e);
@@ -139,7 +149,7 @@ public class AndroidKeyProviderTests extends AndroidTestCase {
 
     public void testCreateProviderWithEmptyIdentifier() {
         try {
-            new AndroidKeyProvider(getContext(), "password", "");
+            new AndroidKeyProvider(getContext(), ProviderTestUtil.password, "");
             fail("AndroidKeyProvider constructor should fail if identifier is empty string");
         } catch (IllegalArgumentException e) {
             assertNotNull(e);
@@ -151,7 +161,8 @@ public class AndroidKeyProviderTests extends AndroidTestCase {
 
     public void testLoadWithWrongPassword() {
         String identifier = ProviderTestUtil.getUniqueIdentifier();
-        AndroidKeyProvider provider1 = new AndroidKeyProvider(getContext(), "provider1password",
+        AndroidKeyProvider provider1 = new AndroidKeyProvider(getContext(), ProviderTestUtil
+                .password,
                 identifier);
         AndroidKeyProvider provider2 = new AndroidKeyProvider(getContext(), "wrongpassword",
                 identifier);
@@ -168,6 +179,9 @@ public class AndroidKeyProviderTests extends AndroidTestCase {
             fail("Failed to throw DPKException.  Found: " + t.getClass()
                     .getSimpleName() + ": " + t.getLocalizedMessage());
         }
+
+        provider1.getManager().clearKey();
+        provider2.getManager().clearKey();
     }
 
 }

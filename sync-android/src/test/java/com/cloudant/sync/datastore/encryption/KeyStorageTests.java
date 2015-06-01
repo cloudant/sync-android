@@ -1,4 +1,4 @@
-package cloudant.com.androidtest.keyprovider;
+package com.cloudant.sync.datastore.encryption;
 
 import android.test.AndroidTestCase;
 
@@ -10,7 +10,7 @@ import java.util.Arrays;
 public class KeyStorageTests extends AndroidTestCase {
 
     // Green Path Tests
-    public void testKeyDataSaveAndRetreive() {
+    public void testKeyDataSaveAndRetrieve() {
         KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
         KeyData original = ProviderTestUtil.createKeyData();
 
@@ -20,18 +20,24 @@ public class KeyStorageTests extends AndroidTestCase {
         KeyData savedData = storage.getEncryptionKeyData();
 
         assertTrue("saved KeyData should be equal to original", keyDataEquals(original, savedData));
+
+        storage.clearEncryptionKeyData();
     }
 
     public void testKeyDataExists() {
         KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
         KeyData original = ProviderTestUtil.createKeyData();
 
+        boolean keyDataExists = storage.encryptionKeyDataExists();
+        assertFalse("KeyData should not exist", keyDataExists);
+
         boolean saveSuccess = storage.saveEncryptionKeyData(original);
         assertTrue("saveEncryptionKeyData failed", saveSuccess);
 
-        boolean keyDataExists = storage.encryptionKeyDataExists();
-
+        keyDataExists = storage.encryptionKeyDataExists();
         assertTrue("KeyData should exist", keyDataExists);
+
+        storage.clearEncryptionKeyData();
     }
 
     public void testKeyDataClear() {
@@ -42,7 +48,6 @@ public class KeyStorageTests extends AndroidTestCase {
         assertTrue("saveEncryptionKeyData failed", saveSuccess);
 
         boolean keyDataExists = storage.encryptionKeyDataExists();
-
         assertTrue("KeyData should exist", keyDataExists);
 
         boolean dataCleared = storage.clearEncryptionKeyData();
@@ -50,6 +55,11 @@ public class KeyStorageTests extends AndroidTestCase {
 
         KeyData savedKeyData = storage.getEncryptionKeyData();
         assertNull("KeyData should not exist", savedKeyData);
+
+        keyDataExists = storage.encryptionKeyDataExists();
+        assertFalse("KeyData should exist", keyDataExists);
+
+        storage.clearEncryptionKeyData();
     }
 
     // Negative Tests
@@ -97,8 +107,8 @@ public class KeyStorageTests extends AndroidTestCase {
         }
         return Arrays.equals(data1.getEncryptedDPK(), data2.getEncryptedDPK()) && Arrays.equals
                 (data1.getSalt(), data2.getSalt()) && Arrays.equals(data1.getIv(),
-                data2.getIv()) && data1.getIterations() == data2.getIterations() && data1
-                .getVersion().equals(data2.getVersion());
+                data2.getIv()) && data1.iterations == data2.iterations && data1
+                .version.equals(data2.version);
     }
 
 }

@@ -1,4 +1,4 @@
-package cloudant.com.androidtest.keyprovider;
+package com.cloudant.sync.datastore.encryption;
 
 import android.test.AndroidTestCase;
 
@@ -10,75 +10,74 @@ import com.cloudant.sync.datastore.encryption.KeyStorage;
 import java.util.Arrays;
 
 public class KeyManagerTests extends AndroidTestCase {
+    private KeyManager manager;
+    private KeyStorage storage;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
+        manager = new KeyManager(storage);
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        manager.clearKey();
+        super.tearDown();
+    }
+
     public void testGenerateDPK() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
-        KeyManager manager = new KeyManager(storage);
-
-        String password = "passw0rd";
-
-        EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(password);
+        EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
+                .password);
         assertNotNull("DPK should not be null", dpk);
         assertNotNull("byte[] of DPK should not be null", dpk.getKey());
-        assertTrue("byte[] of DPK should not be empty", dpk.getKey().length > 0);
     }
 
     public void testLoadDPK() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
-        KeyManager manager = new KeyManager(storage);
-
-        String password = "passw0rd";
-
-        EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(password);
+        EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
+                .password);
         assertNotNull("DPK should not be null", dpk);
         assertNotNull("byte[] of DPK should not be null", dpk.getKey());
-        assertTrue("byte[] of DPK should not be empty", dpk.getKey().length > 0);
 
-        EncryptionKey storedDPK = manager.loadKeyUsingPassword(password);
+        EncryptionKey storedDPK = manager.loadKeyUsingPassword(ProviderTestUtil.password);
         assertNotNull("DPK should not be null", storedDPK);
         assertNotNull("byte[] of DPK should not be null", storedDPK.getKey());
-        assertTrue("byte[] of DPK should not be empty", storedDPK.getKey().length > 0);
 
         assertTrue(Arrays.equals(dpk.getKey(), storedDPK.getKey()));
     }
 
+    public void testLoadBeforeGenerateDPK() {
+        EncryptionKey storedDPK = manager.loadKeyUsingPassword(ProviderTestUtil.password);
+        assertNull("DPK should not be null", storedDPK);
+    }
+
     public void testDPKExists() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
-        KeyManager manager = new KeyManager(storage);
-
-        String password = "passw0rd";
-
-        EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(password);
+        EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
+                .password);
         assertNotNull("DPK should not be null", dpk);
         assertNotNull("byte[] of DPK should not be null", dpk.getKey());
-        assertTrue("byte[] of DPK should not be empty", dpk.getKey().length > 0);
 
         boolean keyExists = manager.keyExists();
         assertTrue("DPK should exist but does not exist", keyExists);
     }
 
     public void testDPKClear() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
-        KeyManager manager = new KeyManager(storage);
-
-        String password = "passw0rd";
-
-        EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(password);
+        EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
+                .password);
         assertNotNull("DPK should not be null", dpk);
         assertNotNull("byte[] of DPK should not be null", dpk.getKey());
-        assertTrue("byte[] of DPK should not be empty", dpk.getKey().length > 0);
 
         boolean keyExists = manager.keyExists();
         assertTrue("DPK should exist but does not exist", keyExists);
 
-        EncryptionKey storedDPK = manager.loadKeyUsingPassword(password);
+        EncryptionKey storedDPK = manager.loadKeyUsingPassword(ProviderTestUtil.password);
         assertNotNull("DPK should not be null", storedDPK);
         assertNotNull("byte[] of DPK should not be null", storedDPK.getKey());
-        assertTrue("byte[] of DPK should not be empty", storedDPK.getKey().length > 0);
 
         boolean clearSuccess = manager.clearKey();
         assertTrue("clear key failed", clearSuccess);
 
-        storedDPK = manager.loadKeyUsingPassword(password);
+        storedDPK = manager.loadKeyUsingPassword(ProviderTestUtil.password);
         assertNull("DPK should be null", storedDPK);
 
         keyExists = manager.keyExists();
@@ -86,15 +85,10 @@ public class KeyManagerTests extends AndroidTestCase {
     }
 
     public void testDPKRecreateAfterClear() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
-        KeyManager manager = new KeyManager(storage);
-
-        String password = "passw0rd";
-
-        EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(password);
+        EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
+                .password);
         assertNotNull("DPK should not be null", dpk);
         assertNotNull("byte[] of DPK should not be null", dpk.getKey());
-        assertTrue("byte[] of DPK should not be empty", dpk.getKey().length > 0);
 
         boolean keyExists = manager.keyExists();
         assertTrue("DPK should exist but does not exist", keyExists);
@@ -105,10 +99,10 @@ public class KeyManagerTests extends AndroidTestCase {
         keyExists = manager.keyExists();
         assertFalse("DPK should not exist but does not exist", keyExists);
 
-        EncryptionKey newDPK = manager.generateAndSaveKeyProtectedByPassword(password);
+        EncryptionKey newDPK = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
+                .password);
         assertNotNull("DPK should not be null", newDPK);
         assertNotNull("byte[] of DPK should not be null", newDPK.getKey());
-        assertTrue("byte[] of DPK should not be empty", newDPK.getKey().length > 0);
 
         assertFalse("newKey should not be the same as the original deleted key", Arrays.equals
                 (dpk.getKey(), newDPK.getKey()));
@@ -116,9 +110,6 @@ public class KeyManagerTests extends AndroidTestCase {
 
     // Negative tests
     public void testGenerateDPKWithNullPassword() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
-        KeyManager manager = new KeyManager(storage);
-
         try {
             manager.generateAndSaveKeyProtectedByPassword(null);
             fail("KeyManager generateAndSaveKeyProtectedByPassword should fail if password is " +
@@ -132,9 +123,6 @@ public class KeyManagerTests extends AndroidTestCase {
     }
 
     public void testGenerateDPKWithEmptyPassword() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
-        KeyManager manager = new KeyManager(storage);
-
         try {
             manager.generateAndSaveKeyProtectedByPassword("");
             fail("KeyManager generateAndSaveKeyProtectedByPassword should fail if password is " +
@@ -148,9 +136,6 @@ public class KeyManagerTests extends AndroidTestCase {
     }
 
     public void testLoadDPKWithNullPassword() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
-        KeyManager manager = new KeyManager(storage);
-
         try {
             manager.loadKeyUsingPassword(null);
             fail("KeyManager loadKeyUsingPassword should fail if password is null");
@@ -163,9 +148,6 @@ public class KeyManagerTests extends AndroidTestCase {
     }
 
     public void testLoadDPKWithEmptyPassword() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
-        KeyManager manager = new KeyManager(storage);
-
         try {
             manager.loadKeyUsingPassword("");
             fail("KeyManager loadKeyUsingPassword should fail if password is empty string");
@@ -178,15 +160,10 @@ public class KeyManagerTests extends AndroidTestCase {
     }
 
     public void testLoadWithWrongPassword() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
-        KeyManager manager = new KeyManager(storage);
-
-        String password = "passw0rd";
-
-        EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(password);
+        EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
+                .password);
         assertNotNull("DPK should not be null", dpk);
         assertNotNull("byte[] of DPK should not be null", dpk.getKey());
-        assertTrue("byte[] of DPK should not be empty", dpk.getKey().length > 0);
 
         try {
             manager.loadKeyUsingPassword("wrongpass");
