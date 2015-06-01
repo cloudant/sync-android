@@ -1,15 +1,25 @@
 package com.cloudant.sync.datastore.encryption;
 
-import android.test.AndroidTestCase;
-
-import com.cloudant.sync.datastore.encryption.KeyData;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Arrays;
 
-public class KeyDataTests extends AndroidTestCase {
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+
+public class KeyDataTests {
+
+    private KeyData original;
+
+    @Before
+    public void setUp() {
+        original = ProviderTestUtil.createKeyData();
+    }
+
+    @Test
     public void testConstructorGreenPath() {
-        KeyData original = ProviderTestUtil.createKeyData();
         KeyData newData = new KeyData(original.getEncryptedDPK(), original.getSalt(), original
                 .getIv(), original.iterations, original.version);
 
@@ -25,130 +35,67 @@ public class KeyDataTests extends AndroidTestCase {
                 .version));
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorNullDPK() {
-        KeyData original = ProviderTestUtil.createKeyData();
-        try {
-            new KeyData(null, original.getSalt(), original.getIv(), original
-                    .iterations, original.version);
-            fail("KeyData constructor should throw IllegalArgumentException if DPK is null");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        new KeyData(null, original.getSalt(), original.getIv(), original
+                .iterations, original.version);
+        fail("KeyData constructor should throw IllegalArgumentException if DPK is null");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorEmptyDPK() {
-        KeyData original = ProviderTestUtil.createKeyData();
-        try {
-            new KeyData(new byte[0], original.getSalt(), original.getIv(),
-                    original.iterations, original.version);
-            fail("KeyData constructor should throw IllegalArgumentException if DPK is empty");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        new KeyData(new byte[0], original.getSalt(), original.getIv(),
+                original.iterations, original.version);
+        fail("KeyData constructor should throw IllegalArgumentException if DPK is empty");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorNullSalt() {
-        KeyData original = ProviderTestUtil.createKeyData();
-        try {
-            new KeyData(original.getEncryptedDPK(), null, original.getIv(),
-                    original.iterations, original.version);
-            fail("KeyData constructor should throw IllegalArgumentException if Salt is null");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        new KeyData(original.getEncryptedDPK(), null, original.getIv(),
+                original.iterations, original.version);
+        fail("KeyData constructor should throw IllegalArgumentException if Salt is null");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorEmptySalt() {
-        KeyData original = ProviderTestUtil.createKeyData();
-        try {
-            new KeyData(original.getEncryptedDPK(), new byte[0], original.getIv(),
-                    original.iterations, original.version);
-            fail("KeyData constructor should throw IllegalArgumentException if Salt is empty");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        new KeyData(original.getEncryptedDPK(), new byte[0], original.getIv(),
+                original.iterations, original.version);
+        fail("KeyData constructor should throw IllegalArgumentException if Salt is empty");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorNullIV() {
-        KeyData original = ProviderTestUtil.createKeyData();
-        try {
-            new KeyData(original.getEncryptedDPK(), original.getSalt(), null,
-                    original.iterations, original.version);
-            fail("KeyData constructor should throw IllegalArgumentException if iv is null");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        new KeyData(original.getEncryptedDPK(), original.getSalt(), null,
+                original.iterations, original.version);
+        fail("KeyData constructor should throw IllegalArgumentException if iv is null");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorEmptyIV() {
-        KeyData original = ProviderTestUtil.createKeyData();
-        try {
-            new KeyData(original.getEncryptedDPK(), original.getSalt(), null,
-                    original.iterations, original.version);
-            fail("KeyData constructor should throw IllegalArgumentException if iv is empty");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        new KeyData(original.getEncryptedDPK(), original.getSalt(), null,
+                original.iterations, original.version);
+        fail("KeyData constructor should throw IllegalArgumentException if iv is empty");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorNegativeIterations() {
-        KeyData original = ProviderTestUtil.createKeyData();
-        try {
-            new KeyData(original.getEncryptedDPK(), original.getSalt(), original.getIv(),
-                    -1, original.version);
-            fail("KeyData constructor should throw IllegalArgumentException if iterations is " +
-                    "negative");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        new KeyData(original.getEncryptedDPK(), original.getSalt(), original.getIv(),
+                -1, original.version);
+        fail("KeyData constructor should throw IllegalArgumentException if iterations is " +
+                "negative");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorNullVersion() {
-        KeyData original = ProviderTestUtil.createKeyData();
-        try {
-            new KeyData(original.getEncryptedDPK(), original.getSalt(), original.getIv(),
-                    original.iterations, null);
-            fail("KeyData constructor should throw IllegalArgumentException if version is null");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        new KeyData(original.getEncryptedDPK(), original.getSalt(), original.getIv(),
+                original.iterations, null);
+        fail("KeyData constructor should throw IllegalArgumentException if version is null");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorEmptyVersion() {
-        KeyData original = ProviderTestUtil.createKeyData();
-        try {
-            new KeyData(original.getEncryptedDPK(), original.getSalt(), original.getIv(),
-                    original.iterations, "");
-            fail("KeyData constructor should throw IllegalArgumentException if version is null");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        new KeyData(original.getEncryptedDPK(), original.getSalt(), original.getIv(),
+                original.iterations, "");
+        fail("KeyData constructor should throw IllegalArgumentException if version is null");
     }
 }

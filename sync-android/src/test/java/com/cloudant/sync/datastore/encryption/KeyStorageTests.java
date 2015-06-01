@@ -1,17 +1,23 @@
 package com.cloudant.sync.datastore.encryption;
 
-import android.test.AndroidTestCase;
-
-import com.cloudant.sync.datastore.encryption.KeyData;
-import com.cloudant.sync.datastore.encryption.KeyStorage;
+import org.junit.Test;
 
 import java.util.Arrays;
 
-public class KeyStorageTests extends AndroidTestCase {
+import cloudant.com.androidtest.AndroidTestUtil;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+public class KeyStorageTests {
 
     // Green Path Tests
+    @Test
     public void testKeyDataSaveAndRetrieve() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
+        KeyStorage storage = new KeyStorage(AndroidTestUtil.context, ProviderTestUtil
+                .getUniqueIdentifier());
         KeyData original = ProviderTestUtil.createKeyData();
 
         boolean saveSuccess = storage.saveEncryptionKeyData(original);
@@ -24,8 +30,10 @@ public class KeyStorageTests extends AndroidTestCase {
         storage.clearEncryptionKeyData();
     }
 
+    @Test
     public void testKeyDataExists() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
+        KeyStorage storage = new KeyStorage(AndroidTestUtil.context, ProviderTestUtil
+                .getUniqueIdentifier());
         KeyData original = ProviderTestUtil.createKeyData();
 
         boolean keyDataExists = storage.encryptionKeyDataExists();
@@ -40,8 +48,10 @@ public class KeyStorageTests extends AndroidTestCase {
         storage.clearEncryptionKeyData();
     }
 
+    @Test
     public void testKeyDataClear() {
-        KeyStorage storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
+        KeyStorage storage = new KeyStorage(AndroidTestUtil.context, ProviderTestUtil
+                .getUniqueIdentifier());
         KeyData original = ProviderTestUtil.createKeyData();
 
         boolean saveSuccess = storage.saveEncryptionKeyData(original);
@@ -63,41 +73,23 @@ public class KeyStorageTests extends AndroidTestCase {
     }
 
     // Negative Tests
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorNullContext() {
-        try {
-            new KeyStorage(null, ProviderTestUtil.getUniqueIdentifier());
-            fail("KeyStorage constructor should fail if Context is null");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        new KeyStorage(null, ProviderTestUtil.getUniqueIdentifier());
+        fail("KeyStorage constructor should fail if Context is null");
 
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorNullIdentifier() {
-        try {
-            new KeyStorage(getContext(), null);
-            fail("KeyStorage constructor should fail if identifer is null");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        new KeyStorage(AndroidTestUtil.context, null);
+        fail("KeyStorage constructor should fail if identifer is null");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorEmptyStringIdentifier() {
-        try {
-            new KeyStorage(getContext(), "");
-            fail("KeyStorage constructor should fail if identifer is empty string");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        new KeyStorage(AndroidTestUtil.context, "");
+        fail("KeyStorage constructor should fail if identifer is empty string");
     }
 
     // Helper methods

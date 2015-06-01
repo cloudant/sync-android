@@ -1,7 +1,5 @@
 package com.cloudant.sync.datastore.encryption;
 
-import com.cloudant.sync.datastore.encryption.KeyData;
-
 import java.security.SecureRandom;
 import java.util.Random;
 import java.util.UUID;

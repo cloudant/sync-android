@@ -52,7 +52,7 @@ public class MyActivity extends ListActivity {
         super.onCreate(savedInstanceState);
         //Stop the tests being re-run when we are returned to this activity
         if(savedInstanceState == null) {
-
+            AndroidTestUtil.context = this;
             setTestProperties();
 
             //If sqlcipher testing parameter is 'true', load required library for SQLCipher datastore testing

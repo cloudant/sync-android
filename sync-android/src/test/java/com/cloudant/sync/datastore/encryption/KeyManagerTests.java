@@ -1,31 +1,35 @@
 package com.cloudant.sync.datastore.encryption;
 
-import android.test.AndroidTestCase;
-
-import com.cloudant.sync.datastore.encryption.DPKException;
-import com.cloudant.sync.datastore.encryption.EncryptionKey;
-import com.cloudant.sync.datastore.encryption.KeyManager;
-import com.cloudant.sync.datastore.encryption.KeyStorage;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Arrays;
 
-public class KeyManagerTests extends AndroidTestCase {
+import cloudant.com.androidtest.AndroidTestUtil;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+public class KeyManagerTests {
     private KeyManager manager;
     private KeyStorage storage;
 
-    @Override
+    @Before
     protected void setUp() throws Exception {
-        super.setUp();
-        storage = new KeyStorage(getContext(), ProviderTestUtil.getUniqueIdentifier());
+        storage = new KeyStorage(AndroidTestUtil.context, ProviderTestUtil.getUniqueIdentifier());
         manager = new KeyManager(storage);
     }
 
-    @Override
+    @After
     protected void tearDown() throws Exception {
         manager.clearKey();
-        super.tearDown();
     }
 
+    @Test
     public void testGenerateDPK() {
         EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
                 .password);
@@ -33,6 +37,7 @@ public class KeyManagerTests extends AndroidTestCase {
         assertNotNull("byte[] of DPK should not be null", dpk.getKey());
     }
 
+    @Test
     public void testLoadDPK() {
         EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
                 .password);
@@ -46,11 +51,13 @@ public class KeyManagerTests extends AndroidTestCase {
         assertTrue(Arrays.equals(dpk.getKey(), storedDPK.getKey()));
     }
 
+    @Test
     public void testLoadBeforeGenerateDPK() {
         EncryptionKey storedDPK = manager.loadKeyUsingPassword(ProviderTestUtil.password);
         assertNull("DPK should not be null", storedDPK);
     }
 
+    @Test
     public void testDPKExists() {
         EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
                 .password);
@@ -61,6 +68,7 @@ public class KeyManagerTests extends AndroidTestCase {
         assertTrue("DPK should exist but does not exist", keyExists);
     }
 
+    @Test
     public void testDPKClear() {
         EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
                 .password);
@@ -84,6 +92,7 @@ public class KeyManagerTests extends AndroidTestCase {
         assertFalse("DPK should not exist but does not exist", keyExists);
     }
 
+    @Test
     public void testDPKRecreateAfterClear() {
         EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
                 .password);
@@ -109,70 +118,40 @@ public class KeyManagerTests extends AndroidTestCase {
     }
 
     // Negative tests
+    @Test(expected = IllegalArgumentException.class)
     public void testGenerateDPKWithNullPassword() {
-        try {
-            manager.generateAndSaveKeyProtectedByPassword(null);
-            fail("KeyManager generateAndSaveKeyProtectedByPassword should fail if password is " +
-                    "null");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        manager.generateAndSaveKeyProtectedByPassword(null);
+        fail("KeyManager generateAndSaveKeyProtectedByPassword should fail if password is " +
+                "null");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testGenerateDPKWithEmptyPassword() {
-        try {
-            manager.generateAndSaveKeyProtectedByPassword("");
-            fail("KeyManager generateAndSaveKeyProtectedByPassword should fail if password is " +
-                    "empty string");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        manager.generateAndSaveKeyProtectedByPassword("");
+        fail("KeyManager generateAndSaveKeyProtectedByPassword should fail if password is " +
+                "empty string");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testLoadDPKWithNullPassword() {
-        try {
-            manager.loadKeyUsingPassword(null);
-            fail("KeyManager loadKeyUsingPassword should fail if password is null");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        manager.loadKeyUsingPassword(null);
+        fail("KeyManager loadKeyUsingPassword should fail if password is null");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testLoadDPKWithEmptyPassword() {
-        try {
-            manager.loadKeyUsingPassword("");
-            fail("KeyManager loadKeyUsingPassword should fail if password is empty string");
-        } catch (IllegalArgumentException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw IllegalArgumentException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        manager.loadKeyUsingPassword("");
+        fail("KeyManager loadKeyUsingPassword should fail if password is empty string");
     }
 
+    @Test(expected = IllegalArgumentException.class)
     public void testLoadWithWrongPassword() {
         EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
                 .password);
         assertNotNull("DPK should not be null", dpk);
         assertNotNull("byte[] of DPK should not be null", dpk.getKey());
 
-        try {
-            manager.loadKeyUsingPassword("wrongpass");
-            fail("KeyManager loadKeyUsingPassword should fail if password is not correct");
-        } catch (DPKException e) {
-            assertNotNull(e);
-        } catch (Throwable t) {
-            fail("Failed to throw DPKException.  Found: " + t.getClass()
-                    .getSimpleName() + ": " + t.getLocalizedMessage());
-        }
+        manager.loadKeyUsingPassword("wrongpass");
+        fail("KeyManager loadKeyUsingPassword should fail if password is not correct");
     }
 }
