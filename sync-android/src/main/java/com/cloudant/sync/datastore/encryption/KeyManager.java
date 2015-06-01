@@ -51,12 +51,12 @@ import android.content.SharedPreferences;
 class KeyManager {
     private static final int BYTES_TO_BITS = 8;
 
-    private static final int CDTENCRYPTION_KEYCHAIN_AES_KEY_SIZE = 32;
-    private static final int CDTENCRYPTION_KEYCHAIN_ENCRYPTIONKEY_SIZE = 32;
-    private static final int CDTENCRYPTION_KEYCHAIN_PBKDF2_SALT_SIZE = 32;
-    private static final int CDTENCRYPTION_KEYCHAIN_PBKDF2_ITERATIONS = 10000;
-    private static final String CDTENCRYPTION_KEYCHAIN_VERSION = "1.0";
-    private static final int CDTENCRYPTIONKEYCHAINMANAGER_AES_IV_SIZE = 16;
+    static final int ENCRYPTION_KEYCHAIN_AES_KEY_SIZE = 32;
+    static final int ENCRYPTION_KEYCHAIN_ENCRYPTIONKEY_SIZE = 32;
+    static final int ENCRYPTION_KEYCHAIN_PBKDF2_SALT_SIZE = 32;
+    static final int ENCRYPTION_KEYCHAIN_PBKDF2_ITERATIONS = 10000;
+    static final String ENCRYPTION_KEYCHAIN_VERSION = "1.0";
+    static final int ENCRYPTIONKEYCHAINMANAGER_AES_IV_SIZE = 16;
 
     private static final Logger LOGGER = Logger.getLogger(KeyManager.class.getCanonicalName());
     private KeyStorage storage;
@@ -104,7 +104,7 @@ class KeyManager {
         SecretKey aesKey = null;
         try {
             aesKey = pbkdf2DerivedKeyForPassword(password, data.getSalt(), data.iterations,
-                    CDTENCRYPTION_KEYCHAIN_AES_KEY_SIZE);
+                    ENCRYPTION_KEYCHAIN_AES_KEY_SIZE);
             byte[] dpkBytes = DPKEncryptionUtil.decryptAES(aesKey, data.getIv(), data
                     .getEncryptedDPK());
             dpk = new EncryptionKey(dpkBytes);
@@ -143,19 +143,19 @@ class KeyManager {
         try {
             if (!keyExists()) {
                 byte[] dpkBytes = generateSecureRandomBytesWithLength
-                        (CDTENCRYPTION_KEYCHAIN_ENCRYPTIONKEY_SIZE);
+                        (ENCRYPTION_KEYCHAIN_ENCRYPTIONKEY_SIZE);
                 byte[] salt = generateSecureRandomBytesWithLength
-                        (CDTENCRYPTION_KEYCHAIN_PBKDF2_SALT_SIZE);
+                        (ENCRYPTION_KEYCHAIN_PBKDF2_SALT_SIZE);
                 byte[] iv = generateSecureRandomBytesWithLength
-                        (CDTENCRYPTIONKEYCHAINMANAGER_AES_IV_SIZE);
+                        (ENCRYPTIONKEYCHAINMANAGER_AES_IV_SIZE);
                 SecretKey aesKey = pbkdf2DerivedKeyForPassword(password, salt,
-                        CDTENCRYPTION_KEYCHAIN_PBKDF2_ITERATIONS,
-                        CDTENCRYPTION_KEYCHAIN_AES_KEY_SIZE);
+                        ENCRYPTION_KEYCHAIN_PBKDF2_ITERATIONS,
+                        ENCRYPTION_KEYCHAIN_AES_KEY_SIZE);
 
                 byte[] encryptedDpkBytes = DPKEncryptionUtil.encryptAES(aesKey, iv, dpkBytes);
 
                 KeyData keyData = new KeyData(encryptedDpkBytes, salt, iv,
-                        CDTENCRYPTION_KEYCHAIN_PBKDF2_ITERATIONS, CDTENCRYPTION_KEYCHAIN_VERSION);
+                        ENCRYPTION_KEYCHAIN_PBKDF2_ITERATIONS, ENCRYPTION_KEYCHAIN_VERSION);
 
                 if (this.storage.saveEncryptionKeyData(keyData)) {
                     dpk = new EncryptionKey(dpkBytes);
@@ -199,9 +199,9 @@ class KeyManager {
 
     // PRIVATE HELPER METHODS
     private boolean validateEncryptionKeyData(KeyData data) {
-        if (data.getIv().length != CDTENCRYPTIONKEYCHAINMANAGER_AES_IV_SIZE) {
+        if (data.getIv().length != ENCRYPTIONKEYCHAINMANAGER_AES_IV_SIZE) {
             LOGGER.warning("IV does not have the expected size: " +
-                    CDTENCRYPTIONKEYCHAINMANAGER_AES_IV_SIZE + " bytes");
+                    ENCRYPTIONKEYCHAINMANAGER_AES_IV_SIZE + " bytes");
             return false;
         }
         return true;

@@ -14,9 +14,9 @@ public class ProviderTestUtil {
     }
 
     public static KeyData createKeyData() {
-        byte[] encryptedDPK = new byte[32];
-        byte[] salt = new byte[32];
-        byte[] iv = new byte[32];
+        byte[] encryptedDPK = new byte[KeyManager.ENCRYPTION_KEYCHAIN_AES_KEY_SIZE];
+        byte[] salt = new byte[KeyManager.ENCRYPTION_KEYCHAIN_PBKDF2_SALT_SIZE];
+        byte[] iv = new byte[KeyManager.ENCRYPTIONKEYCHAINMANAGER_AES_IV_SIZE];
         int iterations = new Random().nextInt(100000);
         String version = "1." + System.currentTimeMillis();
 
