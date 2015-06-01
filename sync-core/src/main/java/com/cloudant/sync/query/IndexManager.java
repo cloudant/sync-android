@@ -95,9 +95,8 @@ public class IndexManager {
         validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
         queue = Executors.newSingleThreadExecutor();
 
-        final String filename = datastore.extensionDataFolder(EXTENSION_NAME)
-                + File.separator
-                + "indexes.sqlite";
+        final String filename = datastore.extensionDataFolder(EXTENSION_NAME) + File.separator
+                                                                              + "indexes.sqlite";
         final KeyProvider keyProvider = datastore.getKeyProvider();
 
         SQLDatabase sqlDatabase = null;
