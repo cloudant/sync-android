@@ -154,9 +154,10 @@ DatastoreManager manager = new DatastoreManager(path.getAbsolutePath());
 Datastore ds = manager.openDatastore("my_datastore");
 
 // Create a document
-DocumentBody body = new BasicDBBody(jsonData);
 MutableDocumentRevision revision = new MutableDocumentRevision();
-revision.body = body;
+Map<String, Object> body = new HashMap<String, Object>();
+body.put("animal", "cat");
+revision.body = DocumentBodyFactory.create(body);
 DocumentRevision saved = ds.createDocumentFromRevision(revision);
 
 // Add an attachment -- binary data like a JPEG
