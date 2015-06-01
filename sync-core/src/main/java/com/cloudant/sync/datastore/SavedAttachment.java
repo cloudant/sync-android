@@ -66,7 +66,7 @@ class SavedAttachment extends Attachment {
     }
 
     public boolean isLarge() {
-        return this.encodedLength > largeSizeBytes;
+        return this.file.length() > largeSizeBytes;
     }
 
     public boolean shouldInline(PushAttachmentsInline inlinePreference) {
