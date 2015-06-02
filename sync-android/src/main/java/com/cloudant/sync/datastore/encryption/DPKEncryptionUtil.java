@@ -48,7 +48,7 @@ class DPKEncryptionUtil {
      * @return The hex byte array
      */
     public static final byte[] hexStringToByteArray(String s) throws DecoderException {
-        return new Hex().decode(s.getBytes());
+        return Hex.decodeHex(s.toCharArray());
     }
 
     /**

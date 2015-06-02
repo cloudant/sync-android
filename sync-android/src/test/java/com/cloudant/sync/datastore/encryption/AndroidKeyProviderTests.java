@@ -22,31 +22,15 @@ public class AndroidKeyProviderTests {
         AndroidKeyProvider provider = new AndroidKeyProvider(ProviderTestUtil.getContext(),
                 ProviderTestUtil.password, ProviderTestUtil.getUniqueIdentifier());
 
+        // This will cause the provider to generate a key.  The key will be encrypted and persisted.
         EncryptionKey createdKey = provider.getEncryptionKey();
         assertNotNull("EncryptionKey was not created", createdKey);
 
+        // This will cause the provider to decrypt and load a key that was persisted.
         EncryptionKey loadedKey = provider.getEncryptionKey();
         assertNotNull("EncryptionKey was not loaded", loadedKey);
 
-        assertTrue("loadedKey did not match createdKey", Arrays.equals(createdKey.getKey(),
-                loadedKey.getKey()));
-
-        provider.getManager().clearKey();
-    }
-
-    @Test
-    public void testCreateProviderWithManager() {
-        KeyStorage storage = new KeyStorage(ProviderTestUtil.getContext(), ProviderTestUtil
-                .getUniqueIdentifier());
-        KeyManager manager = new KeyManager(storage);
-        AndroidKeyProvider provider = new AndroidKeyProvider(ProviderTestUtil.password, manager);
-
-        EncryptionKey createdKey = provider.getEncryptionKey();
-        assertNotNull("EncryptionKey was not created", createdKey);
-
-        EncryptionKey loadedKey = provider.getEncryptionKey();
-        assertNotNull("EncryptionKey was not loaded", loadedKey);
-
+        // Compare the decrypted persisted key to the original generated key.
         assertTrue("loadedKey did not match createdKey", Arrays.equals(createdKey.getKey(),
                 loadedKey.getKey()));
 
@@ -100,12 +84,6 @@ public class AndroidKeyProviderTests {
         new AndroidKeyProvider(null, ProviderTestUtil.password, ProviderTestUtil
                 .getUniqueIdentifier());
         fail("AndroidKeyProvider constructor should fail if context is null");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCreateProviderWithNullManager() {
-        new AndroidKeyProvider("passw0rd", null);
-        fail("AndroidKeyProvider constructor should fail if manager is null");
     }
 
     @Test(expected = IllegalArgumentException.class)

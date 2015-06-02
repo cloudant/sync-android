@@ -64,23 +64,6 @@ public class AndroidKeyProvider implements KeyProvider {
         }
     }
 
-    /**
-     * Creates a {@link AndroidKeyProvider} containing the supplied {@link KeyManager}
-     *
-     * @param password An user-provided password
-     * @param manager  The {@link KeyManager} used to generate and persist the DPK.
-     * @see KeyManager
-     */
-    public AndroidKeyProvider(String password, KeyManager manager) {
-        if (password != null && manager != null && !password.equals("")) {
-            this.password = password;
-            this.manager = manager;
-        } else {
-            LOGGER.severe("All parameters are mandatory");
-            throw new IllegalArgumentException("All parameters are mandatory");
-        }
-    }
-
     @Override
     public synchronized EncryptionKey getEncryptionKey() {
         EncryptionKey key = null;

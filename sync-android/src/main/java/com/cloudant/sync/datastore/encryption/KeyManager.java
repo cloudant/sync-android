@@ -228,7 +228,6 @@ class KeyManager {
         SecretKeyFactory pbkdf2Factory;
 
         // Handle Android 4.4 changes to SecretKeyFactory API.
-        // See http://android-developers.blogspot.co.uk/2013/12/changes-to-secretkeyfactory-api-in.html
         if (Build.VERSION.SDK_INT >= 19) {
             // Use compatibility key factory required for backwards compatibility in API 19 and up.
             pbkdf2Factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1And8bit"); //$NON-NLS-1$
