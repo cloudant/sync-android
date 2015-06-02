@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -39,11 +38,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by tomblench on 14/03/2014.
+ * An AttachmentManager handles attachment related tasks: adding, removing and retrieving
+ * attachments for documents from disk. It handles both disk read/write and managing the
+ * attachment related tables in the datastore's database.
+ *
+ * Attachments are stored on disk in an extension directory, {@code EXTENSION_NAME}.
  */
 class AttachmentManager {
-
-    private static final String LOG_TAG = "AttachmentManager";
 
     private static final String EXTENSION_NAME = "com.cloudant.attachments";
     private static final Logger logger = Logger.getLogger(AttachmentManager.class.getCanonicalName());
@@ -77,10 +78,7 @@ class AttachmentManager {
 
     private final AttachmentStreamFactory attachmentStreamFactory;
 
-    private BasicDatastore datastore;
-
     public AttachmentManager(BasicDatastore datastore) {
-        this.datastore = datastore;
         this.attachmentsDir = datastore.extensionDataFolder(EXTENSION_NAME);
         this.attachmentStreamFactory = new AttachmentStreamFactory(datastore.getKeyProvider());
     }
@@ -160,9 +158,8 @@ class AttachmentManager {
      */
     public PreparedAttachment prepareAttachment(Attachment att)
             throws AttachmentException {
-        PreparedAttachment preparedAttachment = new PreparedAttachment(
+        return new PreparedAttachment(
                 att, this.attachmentsDir, this.attachmentStreamFactory);
-        return preparedAttachment;
     }
 
     class PreparedAndSavedAttachments
@@ -219,7 +216,7 @@ class AttachmentManager {
             for (SavedAttachment a : preparedAndSavedAttachments.savedAttachments) {
                 // go thru existing (from previous rev) and new (from another document) saved attachments
                 // and add them (the effect on existing attachments is to copy them forward to this revision)
-                long parentSequence = ((SavedAttachment) a).seq;
+                long parentSequence = a.seq;
                 long newSequence = rev.getSequence();
                 this.copyAttachment(db,parentSequence, newSequence, a.name);
             }
@@ -301,8 +298,12 @@ class AttachmentManager {
     }
 
     /**
-     * Called by BasicDatastore to copy one attachment to a new revision
-     * @param parentSequence
+     * Copy a single attachment for a given revision to a new revision.
+     *
+     * @param db database to use
+     * @param parentSequence identifies sequence number of revision to copy attachment data from
+     * @param newSequence identifies sequence number of revision to copy attachment data to
+     * @param filename filename of attachment to copy
      */
     protected void copyAttachment(SQLDatabase db, long parentSequence, long newSequence, String filename) throws SQLException {
         Cursor c = null;
@@ -316,8 +317,11 @@ class AttachmentManager {
     }
 
     /**
-     * Called by BasicDatastore to copy attachments to a new revision
-     * @param parentSequence
+     * Copy all attachments for a given revision to a new revision.
+     *
+     * @param db database to use
+     * @param parentSequence identifies sequence number of revision to copy attachment data from
+     * @param newSequence identifies sequence number of revision to copy attachment data to
      */
     protected void copyAttachments(SQLDatabase db, long parentSequence, long newSequence) throws DatastoreException {
         Cursor c = null;
@@ -334,7 +338,7 @@ class AttachmentManager {
 
     /**
      * Called by BasicDatastore on the execution queue, this needs have the db passed ot it
-     * @param db database to perge attachments from
+     * @param db database to purge attachments from
      */
     protected void purgeAttachments(SQLDatabase db) {
         // it's easier to deal with Strings since java doesn't know how to compare byte[]s
@@ -384,8 +388,7 @@ class AttachmentManager {
     }
 
     private File fileFromKey(byte[] key) {
-        File file = new File(attachmentsDir, keyToString(key));
-        return file;
+        return new File(attachmentsDir, keyToString(key));
     }
 }
 
