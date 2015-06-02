@@ -254,6 +254,7 @@ public class RevisionHistoryHelper {
                     theAtt.put("encoded_length", savedAtt.encodedLength);
                     theAtt.put("content_type", savedAtt.type);
                     theAtt.put("revpos", savedAtt.revpos);
+                    theAtt.put("encoding", savedAtt.encoding);
                 } else {
                     // if the revpos of the attachment is higher than the minimum, it's a stub
                     theAtt.put("stub", true);
