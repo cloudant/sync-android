@@ -11,20 +11,23 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNotNull;
 
 public class KeyManagerTests {
     private KeyManager manager;
     private KeyStorage storage;
 
     @Before
-    protected void setUp() throws Exception {
+    public void beforeMethod() {
+        assumeNotNull(ProviderTestUtil.getContext());
         storage = new KeyStorage(ProviderTestUtil.getContext(), ProviderTestUtil.getUniqueIdentifier());
         manager = new KeyManager(storage);
     }
 
     @After
-    protected void tearDown() throws Exception {
-        manager.clearKey();
+    public void afterMethod() throws Exception {
+        if(manager != null)
+            manager.clearKey();
     }
 
     @Test
@@ -142,7 +145,7 @@ public class KeyManagerTests {
         fail("KeyManager loadKeyUsingPassword should fail if password is empty string");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = DPKException.class)
     public void testLoadWithWrongPassword() {
         EncryptionKey dpk = manager.generateAndSaveKeyProtectedByPassword(ProviderTestUtil
                 .password);

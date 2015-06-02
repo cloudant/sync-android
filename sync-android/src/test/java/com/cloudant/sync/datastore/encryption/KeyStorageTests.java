@@ -1,5 +1,6 @@
 package com.cloudant.sync.datastore.encryption;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -8,8 +9,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNotNull;
 
 public class KeyStorageTests {
+
+    @Before
+    public void beforeMethod(){
+        assumeNotNull(ProviderTestUtil.getContext());
+    }
 
     // Green Path Tests
     @Test
