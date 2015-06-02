@@ -155,6 +155,17 @@ public class CouchURIHelperTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test
+    public void buildDocumentUri_options_hasPlus() throws Exception {
+        URI expected = new URI(uriBase + "/test/path1%2Fpath2?q=class:mammal%2Bwith%2Bplusses");
+
+        TreeMap<String, Object> options = new TreeMap<String, Object>();
+        options.put("q", "class:mammal+with+plusses");
+        URI actual = helper(path+"/test").documentUri("path1/path2", options);
+        Assert.assertEquals(expected, actual);
+    }
+
+
     // this test shows that non-ascii characters will be represented correctly
     // in the url but that we don't escape characters like / in the root url, but that they are
     // correctly escaped in the document part of the url
