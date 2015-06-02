@@ -17,6 +17,7 @@ package com.cloudant.sync.util;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseFactory;
 
@@ -45,7 +46,8 @@ public class TestUtils {
     public static SQLDatabase createEmptyDatabase(String database_dir, String database_file) throws IOException, SQLException {
         File dbFile = new File(database_dir + File.separator + database_file + DATABASE_FILE_EXT);
         FileUtils.touch(dbFile);
-        SQLDatabase database = SQLDatabaseFactory.openSqlDatabase(dbFile.getAbsolutePath());
+        SQLDatabase database = SQLDatabaseFactory.openSqlDatabase(dbFile.getAbsolutePath(),
+                new NullKeyProvider());
         return database;
     }
 
@@ -156,7 +158,8 @@ public class TestUtils {
            String filePath = (String) db.getClass()
                    .getMethod("getDatabaseFile")
                    .invoke(db);
-           return SQLDatabaseFactory.openSqlDatabase(filePath);
+           return SQLDatabaseFactory.openSqlDatabase(filePath,
+                   new NullKeyProvider());
        } catch (IllegalAccessException e) {
            e.printStackTrace();
        } catch (InvocationTargetException e) {

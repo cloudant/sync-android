@@ -83,18 +83,6 @@ public class SQLDatabaseFactory {
     }
 
     /**
-     * Return {@code SQLDatabase} for the given dbFilename
-     *
-     * @param dbFilename full file path of the db file
-     * @return {@code SQLDatabase} for the give filename
-     * @throws IOException if the file does not exists, and also
-     *         can not be created
-     */
-    public static SQLDatabase openSqlDatabase(String dbFilename) throws IOException {
-        return openSqlDatabase(dbFilename, new NullKeyProvider());
-    }
-
-    /**
      * SQLCipher-based implementation for opening database.
      * @param dbFilename full file path of the db file
      * @param provider Key provider object storing the SQLCipher key
