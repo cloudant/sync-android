@@ -118,7 +118,7 @@ public class EncryptedAttachmentInputStream extends FilterInputStream {
             if (read != 1) {
                 throw new IOException("Could not read version from file header.");
             }
-            if (version[0] > EncryptionConstants.ATTACHMENT_DISK_VERSION) {
+            if (version[0] <= 0 || version[0] > EncryptionConstants.ATTACHMENT_DISK_VERSION) {
                 throw new IOException("Unsupported on-disk version for attachment decryption.");
             }
 
