@@ -4,8 +4,6 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import cloudant.com.androidtest.AndroidTestUtil;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -15,7 +13,7 @@ public class AndroidKeyProviderTests {
 
     @Test
     public void testCreateProviderWithIdentifier() {
-        AndroidKeyProvider provider = new AndroidKeyProvider(AndroidTestUtil.context,
+        AndroidKeyProvider provider = new AndroidKeyProvider(ProviderTestUtil.getContext(),
                 ProviderTestUtil.password, ProviderTestUtil.getUniqueIdentifier());
 
         EncryptionKey createdKey = provider.getEncryptionKey();
@@ -32,7 +30,7 @@ public class AndroidKeyProviderTests {
 
     @Test
     public void testCreateProviderWithManager() {
-        KeyStorage storage = new KeyStorage(AndroidTestUtil.context, ProviderTestUtil
+        KeyStorage storage = new KeyStorage(ProviderTestUtil.getContext(), ProviderTestUtil
                 .getUniqueIdentifier());
         KeyManager manager = new KeyManager(storage);
         AndroidKeyProvider provider = new AndroidKeyProvider(ProviderTestUtil.password, manager);
@@ -52,9 +50,9 @@ public class AndroidKeyProviderTests {
     @Test
     public void testCreateTwoProvidersWithSameIdentifier() {
         String identifier = ProviderTestUtil.getUniqueIdentifier();
-        AndroidKeyProvider provider1 = new AndroidKeyProvider(AndroidTestUtil.context,
+        AndroidKeyProvider provider1 = new AndroidKeyProvider(ProviderTestUtil.getContext(),
                 ProviderTestUtil.password, identifier);
-        AndroidKeyProvider provider2 = new AndroidKeyProvider(AndroidTestUtil.context,
+        AndroidKeyProvider provider2 = new AndroidKeyProvider(ProviderTestUtil.getContext(),
                 ProviderTestUtil.password, identifier);
 
         EncryptionKey provider1Key = provider1.getEncryptionKey();
@@ -72,9 +70,9 @@ public class AndroidKeyProviderTests {
 
     @Test
     public void testCreateTwoProvidersWithDifferentIdentifier() {
-        AndroidKeyProvider provider1 = new AndroidKeyProvider(AndroidTestUtil.context,
+        AndroidKeyProvider provider1 = new AndroidKeyProvider(ProviderTestUtil.getContext(),
                 ProviderTestUtil.password, ProviderTestUtil.getUniqueIdentifier());
-        AndroidKeyProvider provider2 = new AndroidKeyProvider(AndroidTestUtil.context,
+        AndroidKeyProvider provider2 = new AndroidKeyProvider(ProviderTestUtil.getContext(),
                 ProviderTestUtil.password, ProviderTestUtil.getUniqueIdentifier());
 
         EncryptionKey provider1Key = provider1.getEncryptionKey();
@@ -106,35 +104,35 @@ public class AndroidKeyProviderTests {
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateProviderWithNullPassword() {
-        new AndroidKeyProvider(AndroidTestUtil.context, null, ProviderTestUtil
+        new AndroidKeyProvider(ProviderTestUtil.getContext(), null, ProviderTestUtil
                 .getUniqueIdentifier());
         fail("AndroidKeyProvider constructor should fail if password is null");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateProviderWithEmptyPassword() {
-        new AndroidKeyProvider(AndroidTestUtil.context, "", ProviderTestUtil.getUniqueIdentifier());
+        new AndroidKeyProvider(ProviderTestUtil.getContext(), "", ProviderTestUtil.getUniqueIdentifier());
         fail("AndroidKeyProvider constructor should fail if password is empty string");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateProviderWithNullIdentifier() {
-        new AndroidKeyProvider(AndroidTestUtil.context, ProviderTestUtil.password, null);
+        new AndroidKeyProvider(ProviderTestUtil.getContext(), ProviderTestUtil.password, null);
         fail("AndroidKeyProvider constructor should fail if identifier is null");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateProviderWithEmptyIdentifier() {
-        new AndroidKeyProvider(AndroidTestUtil.context, ProviderTestUtil.password, "");
+        new AndroidKeyProvider(ProviderTestUtil.getContext(), ProviderTestUtil.password, "");
         fail("AndroidKeyProvider constructor should fail if identifier is empty string");
     }
 
     @Test(expected = DPKException.class)
     public void testLoadWithWrongPassword() {
         String identifier = ProviderTestUtil.getUniqueIdentifier();
-        AndroidKeyProvider provider1 = new AndroidKeyProvider(AndroidTestUtil.context,
+        AndroidKeyProvider provider1 = new AndroidKeyProvider(ProviderTestUtil.getContext(),
                 ProviderTestUtil.password, identifier);
-        AndroidKeyProvider provider2 = new AndroidKeyProvider(AndroidTestUtil.context,
+        AndroidKeyProvider provider2 = new AndroidKeyProvider(ProviderTestUtil.getContext(),
                 "wrongpassword", identifier);
 
         EncryptionKey provider1Key = provider1.getEncryptionKey();

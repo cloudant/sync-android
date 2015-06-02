@@ -4,8 +4,6 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import cloudant.com.androidtest.AndroidTestUtil;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -16,7 +14,7 @@ public class KeyStorageTests {
     // Green Path Tests
     @Test
     public void testKeyDataSaveAndRetrieve() {
-        KeyStorage storage = new KeyStorage(AndroidTestUtil.context, ProviderTestUtil
+        KeyStorage storage = new KeyStorage(ProviderTestUtil.getContext(), ProviderTestUtil
                 .getUniqueIdentifier());
         KeyData original = ProviderTestUtil.createKeyData();
 
@@ -32,7 +30,7 @@ public class KeyStorageTests {
 
     @Test
     public void testKeyDataExists() {
-        KeyStorage storage = new KeyStorage(AndroidTestUtil.context, ProviderTestUtil
+        KeyStorage storage = new KeyStorage(ProviderTestUtil.getContext(), ProviderTestUtil
                 .getUniqueIdentifier());
         KeyData original = ProviderTestUtil.createKeyData();
 
@@ -50,7 +48,7 @@ public class KeyStorageTests {
 
     @Test
     public void testKeyDataClear() {
-        KeyStorage storage = new KeyStorage(AndroidTestUtil.context, ProviderTestUtil
+        KeyStorage storage = new KeyStorage(ProviderTestUtil.getContext(), ProviderTestUtil
                 .getUniqueIdentifier());
         KeyData original = ProviderTestUtil.createKeyData();
 
@@ -82,13 +80,13 @@ public class KeyStorageTests {
 
     @Test(expected = IllegalArgumentException.class)
     public void testConstructorNullIdentifier() {
-        new KeyStorage(AndroidTestUtil.context, null);
+        new KeyStorage(ProviderTestUtil.getContext(), null);
         fail("KeyStorage constructor should fail if identifer is null");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testConstructorEmptyStringIdentifier() {
-        new KeyStorage(AndroidTestUtil.context, "");
+        new KeyStorage(ProviderTestUtil.getContext(), "");
         fail("KeyStorage constructor should fail if identifer is empty string");
     }
 

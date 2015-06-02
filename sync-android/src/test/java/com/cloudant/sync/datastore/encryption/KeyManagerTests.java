@@ -6,8 +6,6 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import cloudant.com.androidtest.AndroidTestUtil;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -20,7 +18,7 @@ public class KeyManagerTests {
 
     @Before
     protected void setUp() throws Exception {
-        storage = new KeyStorage(AndroidTestUtil.context, ProviderTestUtil.getUniqueIdentifier());
+        storage = new KeyStorage(ProviderTestUtil.getContext(), ProviderTestUtil.getUniqueIdentifier());
         manager = new KeyManager(storage);
     }
 
