@@ -96,11 +96,6 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         }
     }
 
-    // NB these tests don't currently pull back gzipped attachments
-    // as inline base64 attachments aren't compressed
-    // for future ref:
-    // compressible_types = text/*, application/javascript, application/json, application/xml
-
     @Test
     public void pullRevisionsWithBigAttachments() throws Exception {
         try {
@@ -132,6 +127,31 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         Attachment a = datastore.getAttachment(docRev, bigTextAttachmentName);
         Assert.assertNotNull("Attachment is null", a);
         Assert.assertEquals(bigTextAttachmentName, a.name);
+
+        // check that the attachment is correctly saved to the blob store:
+        // get the 1 and only file at the known location and look at the first 2 bytes
+        // if it was saved uncompressed (pulled inline) will be first 2 bytes of text
+        // if it was saved compressed (pulled separately) will be magic bytes of gzip file
+        File attachments = new File(this.datastoreManagerPath + "/AttachmentsPullTest/extensions/com.cloudant.attachments");
+        int count = attachments.listFiles().length;
+        Assert.assertEquals("Did not find 1 file in blob store", 1, count);
+        File attFile = attachments.listFiles()[0];
+        FileInputStream fis = new FileInputStream(attFile);
+        byte[] magic = new byte[2];
+        int read = fis.read(magic);
+        Assert.assertEquals(2, read);
+        if (pullAttachmentsInline) {
+            // ascii Lo
+            Assert.assertEquals('L', magic[0]);
+            Assert.assertEquals('o', magic[1]);
+            Assert.assertEquals(a.encoding, Attachment.Encoding.Plain);
+        } else {
+            // 1f 8b
+            Assert.assertEquals(31, magic[0]);
+            Assert.assertEquals(-117, magic[1]);
+            Assert.assertEquals(a.encoding, Attachment.Encoding.Gzip);
+        }
+        fis.close();
         try {
             Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new FileInputStream(TestUtils.loadFixture("fixture/"+ bigTextAttachmentName)), a.getInputStream()));
         } catch (IOException ioe) {
