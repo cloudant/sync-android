@@ -20,6 +20,7 @@ package com.cloudant.sync.datastore;
 import com.cloudant.android.Base64InputStreamFactory;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
+import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
@@ -132,10 +133,10 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             throw new DatastoreException(String.format("Database version is higher than the version supported " +
                     "by this library, current version %d , highest supported version %d",dbVersion, 99));
         }
-        queue.updateSchema(DatastoreConstants.getSchemaVersion3(), 3);
-        queue.updateSchema(DatastoreConstants.getSchemaVersion4(), 4);
-        queue.updateSchema(DatastoreConstants.getSchemaVersion5(), 5);
-        queue.updateSchema(DatastoreConstants.getSchemaVersion6(), 6);
+        queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion3()), 3);
+        queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion4()), 4);
+        queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion5()), 5);
+        queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion6()), 6);
         this.eventBus = new EventBus();
         this.attachmentManager = new AttachmentManager(this);
     }
