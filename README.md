@@ -158,16 +158,17 @@ MutableDocumentRevision revision = new MutableDocumentRevision();
 Map<String, Object> body = new HashMap<String, Object>();
 body.put("animal", "cat");
 revision.body = DocumentBodyFactory.create(body);
-DocumentRevision saved = ds.createDocumentFromRevision(revision);
+BasicDocumentRevision saved = ds.createDocumentFromRevision(revision);
 
 // Add an attachment -- binary data like a JPEG
+MutableDocumentRevision update = saved.mutableCopy();  // BasicDocumentRevision is readonly
 UnsavedFileAttachment att1 = new UnsavedFileAttachment(new File("/path/to/image.jpg"),
                                                        "image/jpeg");
-revision.attachments.put(att1.name, att1);
-DocumentRevision updated = ds.createDocumentFromRevision(revision);
+update.attachments.put(att1.name, att1);
+BasicDocumentRevision updated = ds.createDocumentFromRevision(update);
 
 // Read a document
-DocumentRevision aRevision = ds.getDocument(revision.getId());
+BasicDocumentRevision aRevision = ds.getDocument(updated.getId());
 ```
 
 Read more in [the CRUD document](https://github.com/cloudant/sync-android/blob/master/doc/crud.md).
