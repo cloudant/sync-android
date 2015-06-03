@@ -1,15 +1,16 @@
 apply plugin: 'com.android.application'
 
-def testResultsFile = "testResults_"+UUID.randomUUID().toString()+".xml"
 def scriptLocation = project.projectDir.getAbsolutePath(); //this is the location of THIS file
-def testSrcDir = "../../sync-core/src/test/java/" // this is the location of your test code, relative to this file
 def testConfig = convertTestSysPropsToHash()
 
 android {
-    def classes = findAllTestClasses(new File("$scriptLocation/$testSrcDir")).toString().replace("[","{").replace("]","}");
 
     compileSdkVersion 20
     buildToolsVersion "20.0.0"
+
+    lintOptions {
+        abortOnError false
+    }
 
     defaultConfig {
         applicationId "cloudant.com.androidtest"
@@ -17,29 +18,11 @@ android {
         targetSdkVersion 19
         versionCode 1
         versionName "1.0"
-        buildConfigField "Class[]", "classToTests", "$classes"
-        buildConfigField "String", "testOutputFile", "\"$testResultsFile\""
-        buildConfigField "Class[]", "testExcludes", "{com.cloudant.common.SystemTest.class, com.cloudant.common.RequireRunningCouchDB.class, com.cloudant.common.PerformanceTest.class}"
-
         //pass test config as key value pairs
 
         buildConfigField "String[][]", "TEST_CONFIG", testConfig
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
-    }
-
-    productFlavors {
-        standardTest{
-            // we don't need to override the standard config
-        }
-        integrationTest {
-            buildConfigField "Class[]", "testExcludes", "{com.cloudant.common.SystemTest.class, com.cloudant.common.PerformanceTest.class}"
-        }
-        performanceTest {
-            buildConfigField "Class[]", "testExcludes", "{com.cloudant.common.SystemTest.class, com.cloudant.common.RequireRunningCouchDB.class}"
-        }
-        systemTest {
-            buildConfigField "Class[]", "testExcludes", "{}"
-        }
     }
 
     buildTypes {
@@ -55,10 +38,13 @@ android {
     sourceSets {
         main {
             java.srcDirs = ['src/main/java',
-                            "$scriptLocation/../../sync-core/src/test/java/",
-                            "$scriptLocation/../../sync-core/src/main/java/",
-                            "$scriptLocation/../../sync-android/src/test/java/",
-                            "$scriptLocation/../../sync-android/src/main/java/"]
+                            "$scriptLocation/../../sync-core/src/main/java",
+                            "$scriptLocation/../../sync-android/src/main/java"]
+        }
+        androidTest {
+            java.srcDirs = ["$scriptLocation/../../sync-core/src/test/java/",
+                            "$scriptLocation/../../sync-android/src/test/java/"
+            ]
         }
     }
 
@@ -80,20 +66,24 @@ dependencies {
     compile group: 'com.google.guava', name: 'guava', version: '15.0'
     compile group: 'commons-io', name: 'commons-io', version: '2.4'
     compile group: 'commons-codec', name: 'commons-codec', version: '1.9'
-    compile group: 'org.hamcrest', name: 'hamcrest-library', version: '1.3'
-    compile group: 'junit', name: 'junit', version: '4.11'
-    compile group: 'org.mockito', name: 'mockito-core', version: '1.9.5'
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
-    compile group: 'com.google.dexmaker', name: 'dexmaker-mockito', version: '1.1'
-    compile group: 'com.google.dexmaker', name: 'dexmaker', version: '1.1'
-    compile group: 'commons-validator', name: 'commons-validator', version: '1.4.0'
+    compile 'com.google.code.findbugs:jsr305:3.0.0' //this is needed for some versions of android
 
-    compile ('org.objenesis:objenesis:2.1'){
+    androidTestCompile group:'org.hamcrest', name:'hamcrest-library', version:'1.3'
+    androidTestCompile group:'junit', name:'junit', version:'4.11'
+    androidTestCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5'
+    androidTestCompile group: 'com.google.dexmaker', name: 'dexmaker-mockito', version: '1.1'
+    androidTestCompile group: 'com.google.dexmaker', name: 'dexmaker', version: '1.1'
+    androidTestCompile group: 'commons-validator', name: 'commons-validator', version: '1.4.0'
+
+    androidTestCompile('com.android.support.test:runner:0.2'){
+        exclude group:'junit'
+    }
+
+    androidTestCompile ('org.objenesis:objenesis:2.1'){
         // the current version of objenesis which mockito depends on is buggy on android, so force a newer version
         force true
     }
-
-    compile 'com.google.code.findbugs:jsr305:3.0.0' //this is needed for some versions of android
 
 }
 
@@ -105,8 +95,26 @@ repositories {
 task(uploadFixtures,type:Exec) {
     // need to upload the fixtures to the device/emulator external storage
     // this will work irrespective of current working directory due to use of $scriptLocation
-    def android = "$System.env.ANDROID_HOME"
-    commandLine "$android/platform-tools/adb","push", "-p", "$scriptLocation/../../fixture", "/sdcard/fixture"
+
+    def rootDir = project.rootDir
+    def localProperties = new File(rootDir, "local.properties")
+    def androidPath = null;
+    if (localProperties.exists()) {
+        Properties properties = new Properties()
+        localProperties.withInputStream { instr ->
+            properties.load(instr)
+        }
+        androidPath = properties.getProperty('sdk.dir')
+    }
+
+    if(androidPath == null){
+         androidPath = System.env.ANDROID_HOME
+        if(androidPath == null){
+            throw new Exception("Couldn't find android sdk directory, set ANDROID_HOME or sdk.dir in local.properties");
+        }
+    }
+
+    commandLine "$androidPath/platform-tools/adb","push", "-p", "$scriptLocation/../../fixture", "/sdcard/fixture"
 }
 
 def convertTestSysPropsToHash (){
@@ -118,65 +126,4 @@ def convertTestSysPropsToHash (){
         .join(",") +
         "}"
 
-}
-
-def findAllTestClasses(File root){
-    // get all the files in test directories
-    def classNames =new ArrayList<String>()
-    // TOOD filter out anything that doesn't have a .java extension
-    processDir(root, root).each { file -> classNames.add(file.replaceAll(".java\$",".class")) }
-    return classNames;
-}
-
-// recursively process directories:
-// for each file, get the trailing path/to/file.java (relative to root)
-// and convert to a class name like path.to.file.class
-def processDir(File root, File directory){
-
-    def processedFiles =new ArrayList<String>()
-
-    for(File f : directory.listFiles()){
-        if(f.isDirectory()){
-            def returned = processDir(root, f)
-            processedFiles.addAll(returned)
-        } else {
-            def filePath = f.getAbsolutePath();
-            def rootPath = root.getAbsolutePath();
-            // we want to get the full path after the root
-            def components = filePath.split("^"+rootPath+"/");
-            if (components.length != 2)
-                continue;
-            def className = components[1].replace('/','.')
-            processedFiles.add(className)
-        }
-    }
-
-    return processedFiles
-}
-
-task(startTestApp,type:Exec,dependsOn:uploadFixtures){
-    def android = "$System.env.ANDROID_HOME"
-    commandLine "$android/platform-tools/adb","shell", "am", "start","-n", "cloudant.com.androidtest/.MyActivity"
-}
-
-task(waitForTestAppToFinishTests,dependsOn:startTestApp) << {
-
-    def runAgain = true
-    def android = "$System.env.ANDROID_HOME";
-
-    while (runAgain) {
-
-        def output = new ByteArrayOutputStream()
-        exec {
-            commandLine "$android/platform-tools/adb","pull", "-p", "/sdcard/$testResultsFile", "$project.buildDir.absolutePath/test-results/$testResultsFile"
-            errorOutput = output
-            ignoreExitValue = true
-        }
-        if (output.toString().contains("Transferring")) {
-            runAgain = false
-        } else {
-            runAgain = true
-            sleep(60*1000)
-        }
-    }
 }
