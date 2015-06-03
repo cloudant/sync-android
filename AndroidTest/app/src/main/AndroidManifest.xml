@@ -8,7 +8,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".MyActivity"
+            android:name=".TestActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -19,10 +19,10 @@
         <activity
             android:name=".TestInformation"
             android:label="@string/title_activity_test_information"
-            android:parentActivityName=".MyActivity" >
+            android:parentActivityName=".TestActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="cloudant.com.androidtest.MyActivity" />
+                android:value=".TestActivity" />
         </activity>
     </application>
 

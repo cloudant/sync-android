@@ -19,6 +19,7 @@ import com.cloudant.mazha.SpecifiedCouch;
 import com.cloudant.sync.util.Misc;
 import com.google.common.base.Strings;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -26,6 +27,28 @@ import java.net.URISyntaxException;
  * Created by tomblench on 20/01/15.
  */
 public abstract class CouchTestBase {
+
+
+    static {
+        try {
+
+            //  When running on android we need to load the test config from the BuildConfig class
+            //  which is only available on android. As a result we get the TEST_CONFIG field via
+            //  reflection and convert the 2D array into System properties to be used by the tests.
+
+            if (Misc.isRunningOnAndroid()) {
+                Class klass = Class.forName("cloudant.com.androidtest.test.BuildConfig");
+                Field testConfig = klass.getField("TEST_CONFIG");
+                String[][] testConfigHash  = (String[][])testConfig.get(null);
+                for(String[] configPair : testConfigHash){
+                    System.setProperty(configPair[0],configPair[1]);
+                }
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
 
     private static final Boolean SPECIFIED_COUCH = Boolean.valueOf(
             System.getProperty("test.with.specified.couch",Boolean.FALSE.toString()));
