@@ -2,6 +2,20 @@ dependencies {
     compile project(':sync-core')
 
     compile group: 'com.google.android', name: 'android', version:'4.0.1.2'
+
+    // for unit tests
+    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version:'1.3'
+    testCompile group: 'junit', name: 'junit', version:'4.11'
+    testCompile group: 'org.mockito', name: 'mockito-all', version:'1.9.5'    
+}
+
+//
+// Test: we don't want to run Android-specific tests on Java SE, but it's
+// still useful to build them. So we just exclude all tests.
+//
+
+test {
+     exclude '**/**'
 }
 
 //
