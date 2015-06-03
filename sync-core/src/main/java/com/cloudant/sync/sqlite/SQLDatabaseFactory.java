@@ -19,6 +19,7 @@ package com.cloudant.sync.sqlite;
 
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
+import com.cloudant.sync.datastore.migrations.Migration;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.Misc;
 import com.google.common.base.Preconditions;
@@ -158,29 +159,27 @@ public class SQLDatabaseFactory {
     }
 
     /**
-     * <p>Update schema for give {@code SQLDatabase}</p>
+     * <p>Update schema for {@code SQLDatabase}</p>
      *
      * <p>Each input schema has a version, if the database's version is
-     * smaller in the schema version, the schema statements are executed.</p>
+     * smaller than {@code version}, the schema statements are executed.</p>
      *
-     * <p>SQLDatabase's version is defined as:</p>
+     * <p>SQLDatabase's version is defined stored in {@code user_version} in the
+     * database:</p>
      *
-     * <pre>    PRAGMA user_version;</pre>
+     * <pre>PRAGMA user_version;</pre>
      *
-     * <p>In the schema statements, it must contains statement to update
-     * database version:</p>
+     * <p>This method updates {@code user_version} if the migration is successful.</p>
      *
-     * <pre>    PRAGMA user_version = version</pre>
+     * @param database database to perform migration in.
+     * @param migration migration to perform.
+     * @param version the version this migration migrates to.
      *
-     *
-     * @param database
-     * @param schema
-     * @param version
-     * @throws SQLException
+     * @throws SQLException if migration fails
      *
      * @see com.cloudant.sync.sqlite.SQLDatabase#getVersion()
      */
-    public static void updateSchema(SQLDatabase database, String[] schema, int version)
+    public static void updateSchema(SQLDatabase database, Migration migration, int version)
             throws SQLException {
         Preconditions.checkArgument(version > 0, "Schema version number must be positive");
 
@@ -189,23 +188,24 @@ public class SQLDatabaseFactory {
         database.execSQL("PRAGMA foreign_keys = ON;");
         int dbVersion = database.getVersion();
         if(dbVersion < version) {
-            executeStatements(database, schema, version);
-        }
-    }
 
-    private static int executeStatements(SQLDatabase database, String[] statements, int version)
-            throws SQLException {
-        database.beginTransaction();
-        try {
-            for (String statement : statements) {
-                database.execSQL(statement);
+            database.beginTransaction();
+            try {
+                try {
+                    migration.runMigration(database);
+                    database.execSQL("PRAGMA user_version = " + version + ";");
+
+                    database.setTransactionSuccessful();
+                } catch (Exception ex) {
+                    // don't set the transaction successful, so it'll rollback
+                    throw new SQLException(
+                            String.format("Migration from %1$d to %2$d failed.", dbVersion, version),
+                            ex);
+                }
+            } finally {
+                database.endTransaction();
             }
-            database.execSQL("PRAGMA user_version = " + version + ";");
 
-            database.setTransactionSuccessful();
-            return database.getVersion();
-        } finally {
-            database.endTransaction();
         }
     }
 

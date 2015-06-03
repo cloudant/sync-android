@@ -16,6 +16,7 @@ package com.cloudant.sync.sqlite;
 
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
+import com.cloudant.sync.datastore.migrations.Migration;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -66,14 +67,14 @@ public class SQLDatabaseQueue {
 
     /**
      * Updates the schema of the database.
-     * @param schema The new Schmea for the database
+     * @param migration Object which performs migration; should not check or set version
      * @param version The version of the schema
      */
-    public void updateSchema(final String[] schema, final int version){
+    public void updateSchema(final Migration migration, final int version){
         queue.submit(new Callable<Object>() {
             @Override
             public Object call() throws Exception {
-                SQLDatabaseFactory.updateSchema(db,schema,version);
+                SQLDatabaseFactory.updateSchema(db, migration, version);
                 return null;
             }
         }); //fire and forget

@@ -38,6 +38,7 @@ package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseFactory;
@@ -46,7 +47,6 @@ import com.cloudant.sync.util.DatabaseUtils;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,8 +107,10 @@ public class IndexManager {
                     SQLDatabase db = SQLDatabaseFactory.openSqlDatabase(filename, keyProvider);
 
                     if (db != null) {
-                        SQLDatabaseFactory.updateSchema(db, QueryConstants.getSchemaVersion1(), 1);
-                        SQLDatabaseFactory.updateSchema(db, QueryConstants.getSchemaVersion2(), 2);
+                        SQLDatabaseFactory.updateSchema(db,
+                                new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
+                        SQLDatabaseFactory.updateSchema(db,
+                                new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
                     }
 
                     return db;
