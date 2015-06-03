@@ -91,7 +91,7 @@ system("chmod a+x ./gradlew ")
 if params["platform"] == "java"
 	system("./gradlew #{params[:d_options].join(" ")} clean check integrationTest")
 elsif params["platform"] == "android"
-	system("./gradlew -b AndroidTest/build.gradle #{params[:d_options].join(" ")} clean installIntegrationTestDebug waitForTestAppToFinish")
+	system("./gradlew -b AndroidTest/build.gradle #{params[:d_options].join(" ")} clean  uploadFixtures connectedCheck")
 end
 
 #get the build exit code, will exit with this after tearing down the docker container
