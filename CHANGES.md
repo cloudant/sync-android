@@ -1,15 +1,15 @@
 # Unreleased
 
-- [REMOVED] Remove dependency on Apache HttpClient library. The
-  built-in HttpURLConnection class is now used instead.
-- [FIX] Fix issues with database compaction.
-- [REMOVED] Removed oneway methods from ReplicatorFactory. Users
-  should use the method described in the
-  [replication documentation](https://github.com/cloudant/sync-android/blob/master/doc/replication.md)
-  instead
 - [NEW] Added query text search support.  See
   [query documentation](https://github.com/cloudant/sync-android/blob/master/doc/query.md)
   for details.
+- [FIX] Fix issues with database compaction.
+- [REMOVED] Remove dependency on Apache HttpClient library. The
+  built-in HttpURLConnection class is now used instead.
+- [REMOVED] Removed `oneway` methods from ReplicatorFactory. Users
+  should use the method described in the
+  [replication documentation](https://github.com/cloudant/sync-android/blob/master/doc/replication.md)
+  instead.
 
 # 0.11.0 (2015-04-22)
 
