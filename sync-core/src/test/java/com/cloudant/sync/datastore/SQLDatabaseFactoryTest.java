@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseFactory;
@@ -69,7 +70,7 @@ public class SQLDatabaseFactoryTest {
     @Test
     public void initialized_schemaVersion1_version1TablesShouldBeCreated() throws Exception {
         String[] version1Tables = new String[] { "person", "address" };
-        SQLDatabaseFactory.updateSchema(database, SCHEMA_1, 1);
+        SQLDatabaseFactory.updateSchema(database, new SchemaOnlyMigration(SCHEMA_1), 1);
         verifyForeignKeyEnabled(database);
         Assert.assertEquals(1, database.getVersion());
         verifyAllTablesCreated(version1Tables);
@@ -78,8 +79,8 @@ public class SQLDatabaseFactoryTest {
     @Test
     public void initialize_schemaVersion1And2_version2TablesShouldBeCreated() throws Exception {
         String[] version2Tables = new String[] { "person", "address", "email" };
-        SQLDatabaseFactory.updateSchema(database, SCHEMA_1, 1);
-        SQLDatabaseFactory.updateSchema(database, SCHEMA_2, 2);
+        SQLDatabaseFactory.updateSchema(database, new SchemaOnlyMigration(SCHEMA_1), 1);
+        SQLDatabaseFactory.updateSchema(database, new SchemaOnlyMigration(SCHEMA_2), 2);
         verifyForeignKeyEnabled(database);
         Assert.assertEquals(2, database.getVersion());
         verifyAllTablesCreated(version2Tables);
