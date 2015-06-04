@@ -34,9 +34,8 @@ public class SavedHttpAttachment extends Attachment {
 
 
     private URI attachmentURI;
-    private int size;
+    private long size;
     private byte[] data;
-    private Encoding encoding;
 
 
     /**
@@ -49,23 +48,26 @@ public class SavedHttpAttachment extends Attachment {
      */
     public SavedHttpAttachment(String name, Map<String,Object> attachmentData, URI attachmentURI)
            throws IOException {
-         super(name, (String)attachmentData.get("content_type"), Encoding.Plain);
-         Boolean stub = (Boolean) attachmentData.get("stub");
-         Number length = (Number)attachmentData.get("length");
+         super(name,
+                 (String)attachmentData.get("content_type"),
+                 Attachment.getEncodingFromString((String)attachmentData.get("encoding")));
+
+         Number length;
          String data = (String)attachmentData.get("data");
-         String encoding =  (String)attachmentData.get("encoding");
-         this.encoding = Attachment.getEncodingFromString(encoding);
-         if(!stub){
+         if(data != null){
             byte[] dataArray =  data.getBytes();
             InputStream is = Base64InputStreamFactory.get(new ByteArrayInputStream(dataArray));
             this.data = IOUtils.toByteArray(is);
+            length = this.data.length;
+         } else {
+            length = (Number)attachmentData.get("length");
          }
 
          this.attachmentURI = attachmentURI;
-         this.size = length.intValue();
-
+         this.size = length.longValue();
 
     }
+
     @Override
     public long getSize() {
         return size;
