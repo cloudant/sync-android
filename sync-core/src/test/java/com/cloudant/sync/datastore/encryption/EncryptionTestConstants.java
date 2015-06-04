@@ -23,19 +23,19 @@ import java.security.Key;
  */
 public class EncryptionTestConstants {
 
-    static byte[] keyLength32 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
+    public static byte[] keyLength32 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
             -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
             -15, -123, -22, -15, 53, -22 };
-    static byte[] keyLength31 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
+    public static byte[] keyLength31 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
             -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
             -15, -123, -22, -15, 53 };
-    static byte[] keyLength33 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
+    public static byte[] keyLength33 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
             -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
             -15, -123, -22, -15, 53, -22, -123 };
-    static byte[] keyLength16 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
+    public static byte[] keyLength16 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
             -123, -22, -15, 53, -22 };
 
-    static byte[] ivLength16 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
+    public static byte[] ivLength16 = new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
             -123, -22, -15, 53, -22 };
 
     /**
@@ -44,12 +44,21 @@ public class EncryptionTestConstants {
      * JavaSE has default 16-byte key length limit, so we use that in testing to make
      * CI set up easier. Given this is just a key, it shouldn't affect underlying testing.
      */
-    static byte[] key16Byte = hexStringToByteArray("F4F57C148B3A836EC6D74D0672DB4FC2");
+    public static byte[] key16Byte = hexStringToByteArray("F4F57C148B3A836EC6D74D0672DB4FC2");
+
+    /**
+     * A KeyProvider which returns {@link #key16Byte} as its key, allowing use on Java SE.
+     */
+    public static KeyProvider keyProvider16Byte = new ShortEncryptionKeyProvider(key16Byte);
 
     /**
      * Well-known 16-byte AES IV used for fixture encrypted files.
      */
-    static byte[] iv = hexStringToByteArray("CA7806E5DA7F83ACE8C0BB92BBF76326");
+    public static byte[] iv = hexStringToByteArray("CA7806E5DA7F83ACE8C0BB92BBF76326");
+
+    public static KeyProvider keyProviderUsingBytesAsKey(byte[] key) {
+        return new ShortEncryptionKeyProvider(key);
+    }
 
     private static byte[] hexStringToByteArray(String s) {
         try {
@@ -57,6 +66,41 @@ public class EncryptionTestConstants {
         } catch (DecoderException ex) {
             // Crash the tests at this point, we've input bad data in our hard-coded values
             throw new RuntimeException("Error decoding hex data: " + s);
+        }
+    }
+
+    /**
+     * A KeyProvider which allows returning 16-byte (or any length keys). Used to allow us
+     * to provide shorter keys during testing to respect Java SE's 16-byte AES key policy
+     * imposed limit.
+     */
+    private static class ShortEncryptionKeyProvider implements KeyProvider {
+
+        private class ShortEncryptionKey extends EncryptionKey {
+
+            private final byte[] shortKey;
+
+            public ShortEncryptionKey(byte[] key) {
+                super(new byte[32]);  // which we don't use.
+                this.shortKey = key;
+            }
+
+            @Override
+            public byte[] getKey() {
+                return this.shortKey;
+            }
+
+        }
+
+        private final ShortEncryptionKey shortKey;
+
+        public ShortEncryptionKeyProvider(byte[] keyBytes) {
+            shortKey = new ShortEncryptionKey(keyBytes);
+        }
+
+        @Override
+        public EncryptionKey getEncryptionKey() {
+            return shortKey;
         }
     }
 }
