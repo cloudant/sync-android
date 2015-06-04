@@ -14,23 +14,22 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.sync.datastore.encryption.EncryptionKey;
+import com.cloudant.sync.datastore.encryption.EncryptedAttachmentInputStream;
+import com.cloudant.sync.datastore.encryption.EncryptedAttachmentOutputStream;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.SecureRandom;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-
-import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
 
 /**
  * Class to manage returning appropriate streams to access on disk attachments.
@@ -38,8 +37,8 @@ import javax.crypto.CipherOutputStream;
  * These may be encrypted and/or gzip encoded. This class handles returning an
  * appropriate input/output stream chain to handle this.
  *
- * The input stream returned will allow reading unencrypted, unzipped data from
- * disk.
+ * The input stream returned will contain the unencrypted, unzipped representation
+ * of the data from disk.
  *
  * The output stream returned should have unencrypted, unzipped data written to
  * its write method.
@@ -76,22 +75,31 @@ class AttachmentStreamFactory {
      * @param file File object to read from.
      * @param encoding Encoding of attachment.
      * @return Stream for reading attachment data.
-     * @throws IOException
+     * @throws IOException if there's a problem reading from disk, including issues with
+     *      encryption (bad key length and other key issues).
      */
     public InputStream getInputStream(File file, Attachment.Encoding encoding) throws IOException {
+
+        // First, open a stream to the raw bytes on disk.
+        // Then, if we have a key assume the file is encrypted, so add a stream
+        // to the chain which decrypts the data as we read from disk.
+        // Finally, decode (unzip) the data if the attachment is encoded before
+        // returning the data to the user.
+        //
+        //  Read from disk [-> Decryption Stream] [-> Decoding Stream] -> user reads
 
         InputStream is = new FileInputStream(file);
 
         if (key != null) {
-            // TODO wrap encrypted stream
-
-            // For InputStream:
-            // 1. Read header, check valid, throw if not
-            // 3. Init AES Cipher object (wrapped by our header-writing stream)
-            // 4. Forward on requests to read() to AES CipherOutputStream
-            // 5. Close appropriately
-
-            throw new UnsupportedOperationException("Encryption not yet supported");
+            try {
+                is = new EncryptedAttachmentInputStream(is, key);
+            } catch (InvalidKeyException ex) {
+                // Replace with an IOException as we validate the key when opening
+                // the databases and the key should be the same -- it's therefore
+                // not worth forcing the developer to catch something they can't
+                // fix during file read; generic IOException works better.
+                throw new IOException("Bad key used to open file; check encryption key.", ex);
+            }
         }
 
         switch (encoding) {
@@ -109,29 +117,51 @@ class AttachmentStreamFactory {
      *
      * Opens the output stream using {@see FileUtils#openOutputStream(File)}.
      *
-     * Data should be written to the stream un-encoded, un-encrypted.
+     * Data should be written to the stream unencoded, unencrypted.
      *
      * @param file File to write to.
      * @param encoding Encoding to use.
      * @return Stream for writing.
-     * @throws IOException
+     * @throws IOException if there's a problem writing to disk, including issues with
+     *      encryption (bad key length and other key issues).
      */
     public OutputStream getOutputStream(File file, Attachment.Encoding encoding) throws
             IOException {
 
+        // First, open a stream to the raw bytes on disk.
+        // Then, if we have a key assume the file should be encrypted before writing,
+        // so wrap the file stream in a stream which encrypts during writing.
+        // If the attachment needs encoding, we need to encode the data before it
+        // is encrypted, so wrap a stream which will encode (gzip) before passing
+        // to encryption stream, or directly to file stream if not encrypting.
+        //
+        //  User writes [-> Encoding Stream] [-> Encryption Stream] -> write to disk
+
         OutputStream os = FileUtils.openOutputStream(file);
 
         if (key != null) {
-            // TODO wrap encrypted stream
 
-            // For OutputStream:
-            // 1. Generate an IV
-            // 2. Write header to os
-            // 3. Init AES Cipher object (wrapped by our header-writing stream)
-            // 4. Forward on requests to write() to AES CipherOutputStream
-            // 5. Close appropriately
+            try {
 
-            throw new UnsupportedOperationException("Encryption not yet supported");
+                // Create IV
+                byte[] iv = new byte[16];
+                new SecureRandom().nextBytes(iv);
+
+                os = new EncryptedAttachmentOutputStream(os, key, iv);
+
+            } catch (InvalidKeyException ex) {
+                // Replace with an IOException as we validate the key when opening
+                // the databases and the key should be the same -- it's therefore
+                // not worth forcing the developer to catch something they can't
+                // fix during file read; generic IOException works better.
+                throw new IOException("Bad key used to write file; check encryption key.", ex);
+            } catch (InvalidAlgorithmParameterException ex) {
+                // We are creating what should be a valid IV for AES, 16-bytes.
+                // Therefore this shouldn't happen. Again, the developer cannot
+                // fix it, so wrap in an IOException as we can't write the file.
+                throw new IOException("Bad key used to write file; check encryption key.", ex);
+            }
+
         }
 
         switch (encoding) {
