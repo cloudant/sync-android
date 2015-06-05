@@ -139,7 +139,18 @@ class AttachmentManager {
             throw new AttachmentNotSavedException("Could not insert attachment " + a + " into database with values " + values + "; not copying to attachments directory");
         }
         // move file to blob store, with file name based on sha1
-        File newFile = fileFromKey(db, sha1);
+        File newFile = null;
+        try {
+            newFile = fileFromKey(db, sha1);
+        } catch (NameGenerationException ex) {
+            // As we couldn't generate a filename, we can't save the attachment. Clean up
+            // temporary file and throw an exception.
+            if (a.tempFile.exists()){
+                a.tempFile.delete();
+            }
+            throw new AttachmentNotSavedException("Couldn't generate name for new attachment", ex);
+        }
+
         try {
             FileUtils.moveFile(a.tempFile, newFile);
         } catch (FileExistsException fee) {
@@ -245,7 +256,7 @@ class AttachmentManager {
         }
     }
 
-    protected Attachment getAttachment(SQLDatabase db, BasicDocumentRevision rev, String attachmentName) {
+    protected Attachment getAttachment(SQLDatabase db, BasicDocumentRevision rev, String attachmentName) throws AttachmentException {
         Cursor c = null;
         try {
              c = db.rawQuery(SQL_ATTACHMENTS_SELECT,
@@ -263,7 +274,10 @@ class AttachmentManager {
 
             return null;
         } catch (SQLException e) {
-            return null;
+            logger.log(Level.SEVERE,
+                    String.format("Failed to get %1$s for doc %2$s", rev.getId(), attachmentName),
+                    e);
+            throw new AttachmentException(e);
         } finally {
             DatabaseUtils.closeCursorQuietly(c);
         }
@@ -425,7 +439,7 @@ class AttachmentManager {
      * @param key key to lookup filename for.
      * @return File object for blob associated with {@code key}.
      */
-    private File fileFromKey(SQLDatabase db, byte[] key) {
+    private File fileFromKey(SQLDatabase db, byte[] key) throws NameGenerationException {
 
         String keyString = keyToString(key);
         String filename = null;
@@ -474,8 +488,16 @@ class AttachmentManager {
         if (filename != null) {
             return new File(attachmentsDir, filename);
         } else {
-            return null;
+            throw new NameGenerationException("Couldn't generate unique filename for attachment");
         }
+    }
+
+    private class NameGenerationException extends AttachmentException {
+
+        NameGenerationException(String msg) {
+            super(msg);
+        }
+
     }
 }
 
