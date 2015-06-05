@@ -455,10 +455,12 @@ class AttachmentManager {
                 // Iterate candidate filenames generated from the filenameRandom generator
                 // until we find one which doesn't already exist (filename is declared
                 // UNIQUE in the attachments_key_filename table).
+                // 200 iterations should give us many millions of files before a name
+                // fails to be generated.
 
                 long result = -1;  // -1 is error for insert call
                 int tries = 0;
-                while (result == -1 && tries < 100) {
+                while (result == -1 && tries < 200) {
                     byte[] randomBytes = new byte[20];
                     filenameRandom.nextBytes(randomBytes);
                     String candidate = keyToString(randomBytes);
