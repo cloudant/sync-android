@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -73,6 +74,25 @@ class AttachmentManager {
 
     private static final String SQL_ATTACHMENTS_SELECT_ALL_KEYS = "SELECT key " +
             "FROM attachments";
+
+    /**
+     * Name of database mapping key to filename.
+     */
+    public static final String ATTACHMENTS_KEY_FILENAME = "attachments_key_filename";
+    /**
+     * SQL statement to look up filename for key.
+     */
+    public static final String SQL_FILENAME_LOOKUP_QUERY = String.format(
+            "SELECT filename FROM %1$s WHERE key=?", ATTACHMENTS_KEY_FILENAME);
+    /**
+     * SQL statement to return all key,filename mappings.
+     */
+    public static final String SQL_ATTACHMENTS_SELECT_KEYS_FILENAMES = String.format(
+            "SELECT key,filename FROM %1$s", ATTACHMENTS_KEY_FILENAME);
+    /**
+     * Random number generator used to generate filenames.
+     */
+    private static final Random filenameRandom = new Random();
 
     public final String attachmentsDir;
 
@@ -119,7 +139,7 @@ class AttachmentManager {
             throw new AttachmentNotSavedException("Could not insert attachment " + a + " into database with values " + values + "; not copying to attachments directory");
         }
         // move file to blob store, with file name based on sha1
-        File newFile = fileFromKey(sha1);
+        File newFile = fileFromKey(db, sha1);
         try {
             FileUtils.moveFile(a.tempFile, newFile);
         } catch (FileExistsException fee) {
@@ -236,7 +256,7 @@ class AttachmentManager {
                 String type = c.getString(3);
                 int encoding = c.getInt(4);
                 int revpos = c.getInt(7);
-                File file = fileFromKey(key);
+                File file = fileFromKey(db, key);
                 return new SavedAttachment(attachmentName, revpos, sequence, key, type, file,
                         Attachment.Encoding.values()[encoding], this.attachmentStreamFactory);
             }
@@ -261,7 +281,7 @@ class AttachmentManager {
                 String type = c.getString(3);
                 int encoding = c.getInt(4);
                 int revpos = c.getInt(7);
-                File file = fileFromKey(key);
+                File file = fileFromKey(db, key);
                 atts.add(new SavedAttachment(name, revpos, sequence, key, type, file,
                         Attachment.Encoding.values()[encoding], this.attachmentStreamFactory));
             }
@@ -348,38 +368,42 @@ class AttachmentManager {
             // delete attachment table entries for revs which have been purged
             db.delete("attachments", "sequence IN " +
                     "(SELECT sequence from revs WHERE json IS null)", null);
+
             // get all keys from attachments table
             c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
             while (c.moveToNext()) {
                 byte[] key = c.getBlob(0);
                 currentKeys.add(keyToString(key));
             }
-            // iterate thru attachments dir
-            File[] attachments = new File(attachmentsDir).listFiles();
-            if (attachments != null) {
-                for (File f : attachments) {
-                    // if file isn't in the keys list, delete it
-                    String keyForFile = f.getName();
-                    if (!currentKeys.contains(keyForFile)) {
-                        try {
-                            boolean deleted = f.delete();
-                            if (!deleted) {
 
-                                logger.warning("Could not delete file from BLOB store: " +
-                                        f.getAbsolutePath());
-                            }
-                        } catch (SecurityException e) {
-                            logger.log(Level.WARNING, "SecurityException when trying to delete file " +
+            // Now iterate through the attachments_key_filename, deleting items we need to
+            // (both db row and file on disk).
+            File attachments = new File(attachmentsDir);
+            c = db.rawQuery(SQL_ATTACHMENTS_SELECT_KEYS_FILENAMES, null);
+            while (c.moveToNext()) {
+                String keyForFile = c.getString(0);
 
-                                    "from BLOB store: " + f.getAbsolutePath(), e);
+                if (!currentKeys.contains(keyForFile)) {
+                    File f = new File(attachments, c.getString(1));
+                    try {
+                        boolean deleted = f.delete();
+                        if (deleted) {
+                            db.delete(ATTACHMENTS_KEY_FILENAME, "key = ?", new String[]{keyForFile});
+                        } else {
+                            logger.warning("Could not delete file from BLOB store: " +
+                                    f.getAbsolutePath());
                         }
+                    } catch (SecurityException e) {
+                        logger.log(Level.WARNING, "SecurityException when trying to delete file " +
+                                "from BLOB store: " + f.getAbsolutePath(), e);
                     }
                 }
-        }
+            }
+
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Problem in purgeAttachments, executing SQL to fetch all attachment keys ", e);
         }finally {
-           DatabaseUtils.closeCursorQuietly(c);
+            DatabaseUtils.closeCursorQuietly(c);
         }
     }
 
@@ -387,8 +411,71 @@ class AttachmentManager {
         return new String(new Hex().encode(key));
     }
 
-    private File fileFromKey(byte[] key) {
-        return new File(attachmentsDir, keyToString(key));
+    /**
+     * Lookup or create a on disk File representation of blob, in {@code db} using {@code key}.
+     *
+     * Existing attachments will have an entry in db, so the method just looks this up
+     * and returns the File object for the path.
+     *
+     * For new attachments, the {@code key} doesn't already have an associated filename,
+     * one is generated and inserted into the database before returning a File object
+     * for blob associated with {@code key}.
+     *
+     * @param db database to use.
+     * @param key key to lookup filename for.
+     * @return File object for blob associated with {@code key}.
+     */
+    private File fileFromKey(SQLDatabase db, byte[] key) {
+
+        String keyString = keyToString(key);
+        String filename = null;
+
+        db.beginTransaction();
+        try {
+            Cursor c = db.rawQuery(SQL_FILENAME_LOOKUP_QUERY, new String[]{ keyString });
+            if (c.moveToFirst()) {
+                filename = c.getString(0);
+                System.out.println(String.format("FOUND filename %1$s for key %2$s", filename, keyString));
+            } else {
+
+                // Iterate candidate filenames generated from the filenameRandom generator
+                // until we find one which doesn't already exist (filename is declared
+                // UNIQUE in the attachments_key_filename table).
+
+                long result = -1;  // -1 is error for insert call
+                int tries = 0;
+                while (result == -1 && tries < 100) {
+                    byte[] randomBytes = new byte[20];
+                    filenameRandom.nextBytes(randomBytes);
+                    String candidate = keyToString(randomBytes);
+
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put("key", keyString);
+                    contentValues.put("filename", candidate);
+                    result = db.insert(ATTACHMENTS_KEY_FILENAME, contentValues);
+
+                    if (result != -1) {  // i.e., insert worked, filename unique
+                        filename = candidate;
+                    }
+
+                    tries++;
+                }
+                System.out.println(String.format("ADDED filename %1$s for key %2$s", filename, keyString));
+            }
+            c.close();
+            db.setTransactionSuccessful();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            filename = null;
+        } finally {
+            db.endTransaction();
+        }
+
+        if (filename != null) {
+            return new File(attachmentsDir, filename);
+        } else {
+            return null;
+        }
     }
 }
 
