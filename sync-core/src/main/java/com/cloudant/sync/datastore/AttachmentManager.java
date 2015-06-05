@@ -390,6 +390,16 @@ class AttachmentManager {
                 currentKeys.add(keyToString(key));
             }
 
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE,
+                    "SQL exception in purgeAttachments when updating attachments table", e);
+            return;  // not safe to continue
+        } finally {
+            DatabaseUtils.closeCursorQuietly(c);
+        }
+
+        try {
+
             // Now iterate through the attachments_key_filename, deleting items we need to
             // (both db row and file on disk).
             File attachments = new File(attachmentsDir);
@@ -408,14 +418,16 @@ class AttachmentManager {
                                     f.getAbsolutePath());
                         }
                     } catch (SecurityException e) {
-                        logger.log(Level.WARNING, "SecurityException when trying to delete file " +
-                                "from BLOB store: " + f.getAbsolutePath(), e);
+                        String msg = String.format("SecurityException deleting %s from blob store",
+                                f.getAbsolutePath());
+                        logger.log(Level.WARNING, msg, e);
                     }
                 }
             }
 
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Problem in purgeAttachments, executing SQL to fetch all attachment keys ", e);
+            logger.log(Level.SEVERE,
+                    "SQL exception in purgeAttachments when removing redundant attachments", e);
         } finally {
             DatabaseUtils.closeCursorQuietly(c);
         }
