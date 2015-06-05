@@ -141,7 +141,7 @@ class AttachmentManager {
         // move file to blob store, with file name based on sha1
         File newFile = null;
         try {
-            newFile = fileFromKey(db, sha1);
+            newFile = fileFromKey(db, sha1, true);
         } catch (AttachmentException ex) {
             // As we couldn't generate a filename, we can't save the attachment. Clean up
             // temporary file and throw an exception.
@@ -267,7 +267,7 @@ class AttachmentManager {
                 String type = c.getString(3);
                 int encoding = c.getInt(4);
                 int revpos = c.getInt(7);
-                File file = fileFromKey(db, key);
+                File file = fileFromKey(db, key, false);
                 return new SavedAttachment(attachmentName, revpos, sequence, key, type, file,
                         Attachment.Encoding.values()[encoding], this.attachmentStreamFactory);
             }
@@ -295,7 +295,7 @@ class AttachmentManager {
                 String type = c.getString(3);
                 int encoding = c.getInt(4);
                 int revpos = c.getInt(7);
-                File file = fileFromKey(db, key);
+                File file = fileFromKey(db, key, false);
                 atts.add(new SavedAttachment(name, revpos, sequence, key, type, file,
                         Attachment.Encoding.values()[encoding], this.attachmentStreamFactory));
             }
@@ -437,9 +437,14 @@ class AttachmentManager {
      *
      * @param db database to use.
      * @param key key to lookup filename for.
+     * @param allowCreateName if the is no existing mapping, whether one should be created
+     *                        and returned. If false, and no existing mapping, AttachmentException
+     *                        is thrown.
      * @return File object for blob associated with {@code key}.
+     * @throws AttachmentException if a mapping doesn't exist and {@code allowCreateName} is
+     *          false or if the name generation process fails.
      */
-    File fileFromKey(SQLDatabase db, byte[] key) throws AttachmentException {
+    File fileFromKey(SQLDatabase db, byte[] key, boolean allowCreateName) throws AttachmentException {
 
         String keyString = keyToString(key);
         String filename = null;
@@ -450,7 +455,7 @@ class AttachmentManager {
             if (c.moveToFirst()) {
                 filename = c.getString(0);
                 System.out.println(String.format("FOUND filename %1$s for key %2$s", filename, keyString));
-            } else {
+            } else if (allowCreateName) {
                 filename = generateFilenameForKey(db, keyString);
                 System.out.println(String.format("ADDED filename %1$s for key %2$s", filename, keyString));
             }
