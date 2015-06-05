@@ -416,7 +416,7 @@ class AttachmentManager {
 
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Problem in purgeAttachments, executing SQL to fetch all attachment keys ", e);
-        }finally {
+        } finally {
             DatabaseUtils.closeCursorQuietly(c);
         }
     }
@@ -454,15 +454,15 @@ class AttachmentManager {
             Cursor c = db.rawQuery(SQL_FILENAME_LOOKUP_QUERY, new String[]{ keyString });
             if (c.moveToFirst()) {
                 filename = c.getString(0);
-                System.out.println(String.format("FOUND filename %1$s for key %2$s", filename, keyString));
+                logger.finest(String.format("Found filename %s for key %s", filename, keyString));
             } else if (allowCreateName) {
                 filename = generateFilenameForKey(db, keyString);
-                System.out.println(String.format("ADDED filename %1$s for key %2$s", filename, keyString));
+                logger.finest(String.format("Added filename %s for key %s", filename, keyString));
             }
             c.close();
             db.setTransactionSuccessful();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING, "Couldn't read key,filename mapping database", e);
             filename = null;
         } finally {
             db.endTransaction();
@@ -494,9 +494,10 @@ class AttachmentManager {
      * loop forever.
      *
      * @param db database to use
-     * @param keyString blobs key
+     * @param keyString blob's key
      */
-    static String generateFilenameForKey(SQLDatabase db, String keyString) throws NameGenerationException {
+    static String generateFilenameForKey(SQLDatabase db, String keyString)
+            throws NameGenerationException {
 
         String filename = null;
 
@@ -522,7 +523,8 @@ class AttachmentManager {
         if (filename != null) {
             return filename;
         } else {
-            throw new NameGenerationException("Couldn't generate unique filename for attachment");
+            throw new NameGenerationException(String.format(
+                    "Couldn't generate unique filename for attachment with key %s", keyString));
         }
     }
 
