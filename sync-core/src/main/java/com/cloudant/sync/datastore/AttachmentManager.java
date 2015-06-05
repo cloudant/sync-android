@@ -142,7 +142,7 @@ class AttachmentManager {
         File newFile = null;
         try {
             newFile = fileFromKey(db, sha1);
-        } catch (NameGenerationException ex) {
+        } catch (AttachmentException ex) {
             // As we couldn't generate a filename, we can't save the attachment. Clean up
             // temporary file and throw an exception.
             if (a.tempFile.exists()){
@@ -421,7 +421,7 @@ class AttachmentManager {
         }
     }
 
-    private String keyToString(byte[] key) {
+    private static String keyToString(byte[] key) {
         return new String(new Hex().encode(key));
     }
 
@@ -439,7 +439,7 @@ class AttachmentManager {
      * @param key key to lookup filename for.
      * @return File object for blob associated with {@code key}.
      */
-    private File fileFromKey(SQLDatabase db, byte[] key) throws NameGenerationException {
+    File fileFromKey(SQLDatabase db, byte[] key) throws AttachmentException {
 
         String keyString = keyToString(key);
         String filename = null;
@@ -451,31 +451,7 @@ class AttachmentManager {
                 filename = c.getString(0);
                 System.out.println(String.format("FOUND filename %1$s for key %2$s", filename, keyString));
             } else {
-
-                // Iterate candidate filenames generated from the filenameRandom generator
-                // until we find one which doesn't already exist (filename is declared
-                // UNIQUE in the attachments_key_filename table).
-                // 200 iterations should give us many millions of files before a name
-                // fails to be generated.
-
-                long result = -1;  // -1 is error for insert call
-                int tries = 0;
-                while (result == -1 && tries < 200) {
-                    byte[] randomBytes = new byte[20];
-                    filenameRandom.nextBytes(randomBytes);
-                    String candidate = keyToString(randomBytes);
-
-                    ContentValues contentValues = new ContentValues();
-                    contentValues.put("key", keyString);
-                    contentValues.put("filename", candidate);
-                    result = db.insert(ATTACHMENTS_KEY_FILENAME, contentValues);
-
-                    if (result != -1) {  // i.e., insert worked, filename unique
-                        filename = candidate;
-                    }
-
-                    tries++;
-                }
+                filename = generateFilenameForKey(db, keyString);
                 System.out.println(String.format("ADDED filename %1$s for key %2$s", filename, keyString));
             }
             c.close();
@@ -490,11 +466,62 @@ class AttachmentManager {
         if (filename != null) {
             return new File(attachmentsDir, filename);
         } else {
+            // generateFilenameForKey throws an exception if we couldn't generate, this
+            // means we couldn't get one from the database.
+            throw new AttachmentException("Couldn't retrieve filename for attachment");
+        }
+    }
+
+
+    /**
+     * Iterate candidate filenames generated from the filenameRandom generator
+     * until we find one which doesn't already exist.
+     *
+     * We try inserting the new record into attachments_key_filename to find a
+     * unique filename rather than checking on disk filenames. This is because we
+     * can make use of the fact that this method is called on a serial database
+     * queue to make sure our name is unique, whereas we don't have that guarantee
+     * for on-disk filenames. This works because filename is declared
+     * UNIQUE in the attachments_key_filename table.
+     *
+     * We allow up to 200 random name generations, which should give us many millions
+     * of files before a name fails to be generated and makes sure this method doesn't
+     * loop forever.
+     *
+     * @param db database to use
+     * @param keyString blobs key
+     */
+    static String generateFilenameForKey(SQLDatabase db, String keyString) throws NameGenerationException {
+
+        String filename = null;
+
+        long result = -1;  // -1 is error for insert call
+        int tries = 0;
+        while (result == -1 && tries < 200) {
+            byte[] randomBytes = new byte[20];
+            filenameRandom.nextBytes(randomBytes);
+            String candidate = keyToString(randomBytes);
+
+            ContentValues contentValues = new ContentValues();
+            contentValues.put("key", keyString);
+            contentValues.put("filename", candidate);
+            result = db.insert(ATTACHMENTS_KEY_FILENAME, contentValues);
+
+            if (result != -1) {  // i.e., insert worked, filename unique
+                filename = candidate;
+            }
+
+            tries++;
+        }
+
+        if (filename != null) {
+            return filename;
+        } else {
             throw new NameGenerationException("Couldn't generate unique filename for attachment");
         }
     }
 
-    private class NameGenerationException extends AttachmentException {
+    public static class NameGenerationException extends AttachmentException {
 
         NameGenerationException(String msg) {
             super(msg);
