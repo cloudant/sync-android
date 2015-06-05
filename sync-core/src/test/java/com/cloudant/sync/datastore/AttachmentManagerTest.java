@@ -63,9 +63,10 @@ public class AttachmentManagerTest {
 
         File expected = new File("blah", my_filename);
 
-        // Test
+        // Test both true/false pathways (name should be retrieved each time, regardless)
         AttachmentManager attachmentManager = new AttachmentManager(ds);
-        Assert.assertEquals(expected, attachmentManager.fileFromKey(db, new byte[]{-1, 23}));
+        Assert.assertEquals(expected, attachmentManager.fileFromKey(db, new byte[]{-1, 23}, true));
+        Assert.assertEquals(expected, attachmentManager.fileFromKey(db, new byte[]{-1, 23}, false));
 
     }
 
@@ -77,11 +78,13 @@ public class AttachmentManagerTest {
 
         final String my_filename = "my_filename";
 
-        // Force returning my_filename
+        // Force returning no filename
         Cursor c = mock(Cursor.class);
         when(c.moveToFirst()).thenReturn(false);  // no existing filename
         SQLDatabase db = mock(SQLDatabase.class);
         when(db.rawQuery(anyString(), any(String[].class))).thenReturn(c);  // no existing filename
+
+        // Always succeed when generating a filename
         when(db.insert(anyString(), any(ContentValues.class))).thenReturn(10l);  // 10 => success
 
         // Mock enough datastore for AttachmentManager
@@ -91,10 +94,41 @@ public class AttachmentManagerTest {
 
         // Test
         AttachmentManager attachmentManager = new AttachmentManager(ds);
-        final File fileFromKey = attachmentManager.fileFromKey(db, new byte[]{-1, 23});
+        final File fileFromKey = attachmentManager.fileFromKey(db, new byte[]{-1, 23}, true);
         Assert.assertEquals(new File("blah"), fileFromKey.getParentFile());
         Assert.assertNotNull(fileFromKey.getName());
         Assert.assertTrue(fileFromKey.getName().length() == 40);
+    }
+
+    /**
+     * Test that name is not generated when there is no existing filename but the
+     * method is told it can't generate new filenames.
+     */
+    @Test
+    public void testFileForNameCannotGenerateName() throws AttachmentException, SQLException {
+
+        // Force returning no filename
+        Cursor c = mock(Cursor.class);
+        when(c.moveToFirst()).thenReturn(false);  // no existing filename
+        SQLDatabase db = mock(SQLDatabase.class);
+        when(db.rawQuery(anyString(), any(String[].class))).thenReturn(c);  // no existing filename
+
+        // Mock enough datastore for AttachmentManager
+        BasicDatastore ds = mock(BasicDatastore.class);
+        when(ds.extensionDataFolder(anyString())).thenReturn("blah");
+        when(ds.getKeyProvider()).thenReturn(new NullKeyProvider());
+
+        // Test
+
+        // Catch exception so we can verify insert calls
+        try {
+            AttachmentManager attachmentManager = new AttachmentManager(ds);
+            attachmentManager.fileFromKey(db, new byte[]{-1, 23}, false);
+            Assert.fail("Exception not thrown when name not generated");
+        } catch (AttachmentException ex) {
+            // We should never try to insert, which indicates generating names
+            verify(db, never()).insert(anyString(), any(ContentValues.class));
+        }
     }
 
     /**
@@ -104,8 +138,22 @@ public class AttachmentManagerTest {
     @Test
     public void testNameGeneration() throws AttachmentManager.NameGenerationException {
         SQLDatabase db = mock(SQLDatabase.class);
-        when(db.insert(anyString(), any(ContentValues.class))).thenReturn(10l);  // 10 => success
+        when(db.insert(anyString(), any(ContentValues.class))).thenReturn(1l);  // 1 => success
         Assert.assertNotNull(AttachmentManager.generateFilenameForKey(db, "blah"));
+        verify(db, times(1)).insert(anyString(), any(ContentValues.class));
+    }
+
+    /**
+     * Tests that generateFilenameForKey returns a filename when
+     * inserting into the database succeeds.
+     */
+    @Test
+    public void testNameGenerationFirstTimeFails()
+            throws AttachmentManager.NameGenerationException {
+        SQLDatabase db = mock(SQLDatabase.class);
+        when(db.insert(anyString(), any(ContentValues.class))).thenReturn(-1l).thenReturn(1l);
+        Assert.assertNotNull(AttachmentManager.generateFilenameForKey(db, "blah"));
+        verify(db, times(2)).insert(anyString(), any(ContentValues.class));
     }
 
     /**
