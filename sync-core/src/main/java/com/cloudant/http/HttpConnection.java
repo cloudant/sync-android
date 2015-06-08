@@ -11,6 +11,8 @@
 package com.cloudant.http;
 
 import com.cloudant.android.Base64OutputStreamFactory;
+import com.cloudant.sync.util.Misc;
+import com.google.common.io.Resources;
 
 import org.apache.commons.io.IOUtils;
 
@@ -22,6 +24,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.Properties;
 
 /**
  * Created by tomblench on 23/03/15.
@@ -73,6 +76,8 @@ public class HttpConnection  {
     private long inputLength;
 
     public final HashMap<String, String> requestProperties;
+
+    private static String userAgent = getUserAgent();
 
     public HttpConnection(String requestMethod,
                           URL url,
@@ -144,6 +149,7 @@ public class HttpConnection  {
         if (contentType != null) {
             connection.setRequestProperty("Content-type", contentType);
         }
+        connection.setRequestProperty("User-Agent", userAgent);
         if (url.getUserInfo() != null) {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             OutputStream bos = Base64OutputStreamFactory.get(baos);
@@ -253,6 +259,40 @@ public class HttpConnection  {
      */
     public HttpURLConnection getConnection() {
         return connection;
+    }
+
+    private static String getUserAgent() {
+        String userAgent;
+        String ua = getUserAgentFromResource();
+        if (Misc.isRunningOnAndroid()) {
+            try {
+                Class c = Class.forName("android.os.Build$VERSION");
+                String codename = (String) c.getField("CODENAME").get(null);
+                int sdkInt = c.getField("SDK_INT").getInt(null);
+                userAgent = String.format("%s Android %s %d", ua, codename, sdkInt);
+            } catch (Exception e) {
+                userAgent = String.format("%s Android unknown version", ua);
+            }
+        } else {
+            userAgent = String.format("%s Java (%s; %s; %s)",
+                    ua,
+                    System.getProperty("os.arch"),
+                    System.getProperty("os.name"),
+                    System.getProperty("os.version"));
+        }
+        return userAgent;
+    }
+
+    private static String getUserAgentFromResource() {
+        final String defaultUserAgent = "CloudantSync";
+        final URL url = HttpConnection.class.getClassLoader().getResource("mazha.properties");
+        final Properties properties = new Properties();
+        try {
+            properties.load(Resources.newInputStreamSupplier(url).getInput());
+            return properties.getProperty("user.agent", defaultUserAgent);
+        } catch (Exception ex) {
+            return defaultUserAgent;
+        }
     }
 
 }
