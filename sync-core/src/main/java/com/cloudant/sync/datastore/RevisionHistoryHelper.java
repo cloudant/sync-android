@@ -195,8 +195,7 @@ public class RevisionHistoryHelper {
                         mpw = new MultipartAttachmentWriter();
                         mpw.setBody(revision);
                     }
-                    mpw.addAttachment(savedAtt,
-                            savedAtt.encoding == Attachment.Encoding.Plain ? savedAtt.length : savedAtt.encodedLength);
+                    mpw.addAttachment(savedAtt, savedAtt.onDiskLength());
                 }
             } catch (IOException ioe) {
                 logger.log(Level.WARNING,"IOException caught when adding multiparts",ioe);

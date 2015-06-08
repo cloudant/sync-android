@@ -66,7 +66,7 @@ class SavedAttachment extends Attachment {
     }
 
     public boolean isLarge() {
-        return this.file.length() > largeSizeBytes;
+        return this.onDiskLength() > largeSizeBytes;
     }
 
     public boolean shouldInline(PushAttachmentsInline inlinePreference) {
@@ -78,5 +78,12 @@ class SavedAttachment extends Attachment {
             logger.finer("inline true");
             return true;
         }
+    }
+
+    // size of file, as stored on disk
+    // this is the same as
+    // encoding == Encoding.Plain ? length : encodedLength
+    public long onDiskLength() {
+        return this.file.length();
     }
 }
