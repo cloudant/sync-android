@@ -469,6 +469,7 @@ class QuerySqlTranslator {
         operatorMap.put(LT, "<");
         operatorMap.put(LTE, "<=");
         operatorMap.put(IN, "IN");
+        operatorMap.put(MOD, "%");
 
         for (Object rawComponent: clause) {
             Map<String, Object> component = (Map<String, Object>) rawComponent;
@@ -522,6 +523,15 @@ class QuerySqlTranslator {
                         // This was validated during normalization.
                         List<Object> inList = (List<Object>) negatedPredicate.get(operator);
                         placeholder = placeholdersForInList(inList, sqlParameters);
+                    } else if (operator.equals(MOD)) {
+                        // The predicate map value must be a two element list containing integers
+                        // here.  This was validated during normalization.
+                        List<Integer> modulus = (List<Integer>) negatedPredicate.get(operator);
+                        // Casting the remainder as integer ensures proper processing of the modulo
+                        // operation by SQLite.  If left un-cast, unexpected results occur.
+                        placeholder = String.format("? %s CAST(? AS INTEGER)", operatorMap.get(EQ));
+                        sqlParameters.add(modulus.get(0));
+                        sqlParameters.add(modulus.get(1));
                     } else {
                         // The predicate map value must be either a
                         // String or a non-Float Number here.
@@ -547,6 +557,15 @@ class QuerySqlTranslator {
                         // This was validated during normalization.
                         List<Object> inList = (List<Object>) predicate.get(operator);
                         placeholder = placeholdersForInList(inList, sqlParameters);
+                    } else if (operator.equals(MOD)) {
+                        // The predicate map value must be a two element list containing integers
+                        // here.  This was validated during normalization.
+                        List<Integer> modulus = (List<Integer>) predicate.get(operator);
+                        // Casting the remainder as integer ensures proper processing of the modulo
+                        // operation by SQLite.  If left un-cast, unexpected results occur.
+                        placeholder = String.format("? %s CAST(? AS INTEGER)", operatorMap.get(EQ));
+                        sqlParameters.add(modulus.get(0));
+                        sqlParameters.add(modulus.get(1));
                     } else {
                         // The predicate map value must be either a
                         // String or a non-Float Number here.
