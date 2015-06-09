@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.nullValue;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -505,6 +506,140 @@ public class QueryValidatorTest {
         // query - { "$search" : "foo bar baz" }
         query.put("$search", "foo bar baz");
         assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+    }
+
+    @Test
+    public void normalizesQueryWithMODOperator() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "age" : { "$mod" : [ 2, 1 ] } }
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(2, 1));
+        query.put("age", mod);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+
+        // normalized query - { "$and" : [ { "age" : { "$mod" : [ 2, 1 ] } } ] }
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        Map<String, Object> exMod = new HashMap<String, Object>();
+        exMod.put("$mod", Arrays.<Object>asList(2, 1));
+        Map<String, Object> exAge = new HashMap<String, Object>();
+        exAge.put("age", exMod);
+        expected.put("$and", Collections.<Object>singletonList(exAge));
+        assertThat(normalizedQuery, is(expected));
+    }
+
+    @Test
+    public void normalizesQueryWithMODOperatorAndNonWholeNumberValues() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "age" : { "$mod" : [ 2.6, 1.7 ] } }
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(2.6, 1.7));
+        query.put("age", mod);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+
+        // normalized query - { "$and" : [ { "age" : { "$mod" : [ 2, 1 ] } } ] }
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        Map<String, Object> exMod = new HashMap<String, Object>();
+        exMod.put("$mod", Arrays.<Object>asList(2, 1));
+        Map<String, Object> exAge = new HashMap<String, Object>();
+        exAge.put("age", exMod);
+        expected.put("$and", Collections.<Object>singletonList(exAge));
+        assertThat(normalizedQuery, is(expected));
+    }
+
+    @Test
+    public void normalizesQueryWithMODOperatorAndNegativeValues() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "age" : { "$mod" : [ -2.6, -1.7 ] } }
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(-2.6, -1.7));
+        query.put("age", mod);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+
+        // normalized query - { "$and" : [ { "age" : { "$mod" : [ -2, -1 ] } } ] }
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        Map<String, Object> exMod = new HashMap<String, Object>();
+        exMod.put("$mod", Arrays.<Object>asList(-2, -1));
+        Map<String, Object> exAge = new HashMap<String, Object>();
+        exAge.put("age", exMod);
+        expected.put("$and", Collections.<Object>singletonList(exAge));
+        assertThat(normalizedQuery, is(expected));
+    }
+
+    @Test
+    public void returnsNullWhenMODArgumentNotArray() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "age" : { "$mod" : "blah" } }
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", "blah");
+        query.put("age", mod);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+        assertThat(normalizedQuery, is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullWhenTooManyMODArguments() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "age" : { "$mod" : [ 2, 1, 0 ] } }
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(2, 1, 0));
+        query.put("age", mod);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+        assertThat(normalizedQuery, is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullWhenMODArgumentIsInvalid() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "age" : { "$mod" : [ 2, "blah" ] } }
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(2, "blah"));
+        query.put("age", mod);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+        assertThat(normalizedQuery, is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullWhenMODDivisorArgumentIs0() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "age" : { "$mod" : [ 0, 1 ] } }
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(0, 1));
+        query.put("age", mod);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+        assertThat(normalizedQuery, is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullWhenMODDivisorArgumentIs0point0() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "age" : { "$mod" : [ 0.0, 1 ] } }
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(0.0, 1));
+        query.put("age", mod);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+        assertThat(normalizedQuery, is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullWhenMODDivisorArgumentIsBetween0And1() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "age" : { "$mod" : [ 0.2, 1 ] } }
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(0.2, 1));
+        query.put("age", mod);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+        assertThat(normalizedQuery, is(nullValue()));
+    }
+
+    @Test
+    public void returnsNullWhenMODDivisorArgumentIsBetween0AndNegative1() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "age" : { "$mod" : [ -0.2, 1 ] } }
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(-0.2, 1));
+        query.put("age", mod);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+        assertThat(normalizedQuery, is(nullValue()));
     }
 
 }
