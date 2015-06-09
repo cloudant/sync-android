@@ -162,19 +162,19 @@ class KeyManager {
                 }
             }
         } catch (InvalidKeyException e) {
-            throw new DPKException("Failed to encrypt DPK", e);
+            throw new DPKException("Failed to encrypt DPK.  Cause: " + e.getLocalizedMessage(), e);
         } catch (NoSuchPaddingException e) {
-            throw new DPKException("Failed to encrypt DPK", e);
+            throw new DPKException("Failed to encrypt DPK.  Cause: " + e.getLocalizedMessage(), e);
         } catch (NoSuchAlgorithmException e) {
-            throw new DPKException("Failed to encrypt DPK", e);
+            throw new DPKException("Failed to encrypt DPK.  Cause: " + e.getLocalizedMessage(), e);
         } catch (IllegalBlockSizeException e) {
-            throw new DPKException("Failed to encrypt DPK", e);
+            throw new DPKException("Failed to encrypt DPK.  Cause: " + e.getLocalizedMessage(), e);
         } catch (BadPaddingException e) {
-            throw new DPKException("Failed to encrypt DPK", e);
+            throw new DPKException("Failed to encrypt DPK.  Cause: " + e.getLocalizedMessage(), e);
         } catch (InvalidAlgorithmParameterException e) {
-            throw new DPKException("Failed to encrypt DPK", e);
+            throw new DPKException("Failed to encrypt DPK.  Cause: " + e.getLocalizedMessage(), e);
         } catch (InvalidKeySpecException e) {
-            throw new DPKException("Failed to encrypt DPK", e);
+            throw new DPKException("Failed to encrypt DPK.  Cause: " + e.getLocalizedMessage(), e);
         }
         return dpk;
     }

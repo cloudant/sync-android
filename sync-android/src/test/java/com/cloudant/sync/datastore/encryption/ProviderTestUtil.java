@@ -5,7 +5,6 @@ import android.content.Context;
 import com.cloudant.sync.util.Misc;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.security.SecureRandom;
 import java.util.Random;
 import java.util.UUID;
