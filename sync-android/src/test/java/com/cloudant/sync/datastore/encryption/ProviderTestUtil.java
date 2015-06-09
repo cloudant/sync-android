@@ -4,7 +4,8 @@ import android.content.Context;
 
 import com.cloudant.sync.util.Misc;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.SecureRandom;
 import java.util.Random;
 import java.util.UUID;
@@ -33,26 +34,24 @@ public class ProviderTestUtil {
     }
 
     public static synchronized Context getContext(){
-        if(context == null) {
             if (Misc.isRunningOnAndroid()) {
+
                 try {
-                    Class<?> androidTestUtilClazz = Class.forName("cloudant.com.androidtest.AndroidTestUtil");
-                    if (androidTestUtilClazz != null) {
-                        Field contextField = androidTestUtilClazz.getField("context");
-                        if (contextField != null) {
-                            Object contextObj = contextField.get(null);
-                            if (contextObj instanceof Context)
-                                context = (Context) contextObj;
-                        }
+                    Class klass = Class.forName("android.support.test.InstrumentationRegistry");
+                    Method method = klass.getMethod("getTargetContext");
+                    return (Context) method.invoke(null);
+                } catch (ClassNotFoundException e){
 
-                    }
+                } catch (NoSuchMethodException e){
 
-                } catch (Exception e) {
-                    // do nothing
-                    context = null;
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
                 }
+
+
             }
-        }
         return context;
     }
 }
