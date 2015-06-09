@@ -83,7 +83,7 @@ class AttachmentManager {
         this.attachmentStreamFactory = new AttachmentStreamFactory(datastore.getKeyProvider());
     }
 
-    public void addAttachment(SQLDatabase db,PreparedAttachment a, BasicDocumentRevision rev) throws  AttachmentNotSavedException {
+    public void addAttachment(SQLDatabase db, PreparedAttachment a, BasicDocumentRevision rev) throws  AttachmentNotSavedException {
 
         // do it this way to only go thru inputstream once
         // * write to temp location using copyinputstreamtofile
@@ -98,6 +98,7 @@ class AttachmentManager {
         String type = a.attachment.type;
         int encoding = a.attachment.encoding.ordinal();
         long length = a.length;
+        long encodedLength = a.encodedLength;
         long revpos = CouchUtils.generationFromRevId(rev.getRevision());
 
         values.put("sequence", sequence);
@@ -106,7 +107,7 @@ class AttachmentManager {
         values.put("type", type);
         values.put("encoding", encoding);
         values.put("length", length);
-        values.put("encoded_length", length);
+        values.put("encoded_length", encodedLength);
         values.put("revpos", revpos);
 
         // delete and insert in case there is already an attachment at this seq (eg copied over from a previous rev)
@@ -147,21 +148,6 @@ class AttachmentManager {
 
     }
 
-    /**
-     * Creates a PreparedAttachment from {@code att}, preparing it for insertion into
-     * the datastore.
-     *
-     * @param att Attachment to prepare for insertion into datastore
-     * @return PreparedAttachment, which can be used in addAttachment methods
-     * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
-     *                  attachment data.
-     */
-    public PreparedAttachment prepareAttachment(Attachment att)
-            throws AttachmentException {
-        return new PreparedAttachment(
-                att, this.attachmentsDir, this.attachmentStreamFactory);
-    }
-
     class PreparedAndSavedAttachments
     {
         List<SavedAttachment> savedAttachments = new ArrayList<SavedAttachment>();
@@ -170,6 +156,39 @@ class AttachmentManager {
         public boolean isEmpty() {
             return savedAttachments.isEmpty() && preparedAttachments.isEmpty();
         }
+    }
+
+    /**
+     * Creates a PreparedAttachment from {@code attachment}, preparing it for insertion into
+     * the datastore.
+     *
+     * @param attachment Attachment to prepare for insertion into datastore
+     * @return PreparedAttachment, which can be used in addAttachment methods
+     * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
+     *                  attachment data.
+     */    protected PreparedAttachment prepareAttachment(Attachment attachment) throws AttachmentException {
+        if (attachment.encoding != Attachment.Encoding.Plain) {
+            throw new AttachmentNotSavedException("Encoded attachments can only be prepared if the value of \"length\" is known");
+        }
+        return new PreparedAttachment(attachment, this.attachmentsDir, 0, attachmentStreamFactory);
+    }
+
+    // prepare an attachment and check validity of length and encodedLength metadata
+    protected PreparedAttachment prepareAttachment(Attachment attachment, long length, long encodedLength) throws AttachmentException {
+        PreparedAttachment pa = new PreparedAttachment(attachment, this.attachmentsDir, length, attachmentStreamFactory);
+        // check the length on disk is correct:
+        // - plain encoding, length on disk is signalled by the "length" metadata property
+        // - all other encodings, length on disk is signalled by the "encoded_length" metadata property
+        if (pa.attachment.encoding == Attachment.Encoding.Plain) {
+            if (pa.length != length) {
+                throw new AttachmentNotSavedException(String.format("Actual length of %d does not equal expected length of %d", pa.length, length));
+            }
+        } else {
+            if (pa.encodedLength != encodedLength) {
+                throw new AttachmentNotSavedException(String.format("Actual encoded length of %d does not equal expected encoded length of %d", pa.encodedLength, pa.length));
+            }
+        }
+        return pa;
     }
 
     // take a set of attachments, and:
@@ -187,8 +206,8 @@ class AttachmentManager {
 
         for (Attachment a : attachments) {
             if (!(a instanceof SavedAttachment)) {
-                preparedAndSavedAttachments.preparedAttachments.add(
-                        new PreparedAttachment(a, this.attachmentsDir, this.attachmentStreamFactory));
+                PreparedAttachment pa = this.prepareAttachment(a);
+                preparedAndSavedAttachments.preparedAttachments.add(pa);
             } else {
                 preparedAndSavedAttachments.savedAttachments.add((SavedAttachment)a);
             }
@@ -231,14 +250,19 @@ class AttachmentManager {
              c = db.rawQuery(SQL_ATTACHMENTS_SELECT,
                      new String[]{attachmentName, String.valueOf(rev.getSequence())});
             if (c.moveToFirst()) {
-                int sequence = c.getInt(0);
-                byte[] key = c.getBlob(2);
-                String type = c.getString(3);
-                int encoding = c.getInt(4);
-                int revpos = c.getInt(7);
+                int sequence = c.getInt(c.getColumnIndex("sequence"));
+                String filename = c.getString(c.getColumnIndex("filename"));
+                byte[] key = c.getBlob(c.getColumnIndex("key"));
+                String type = c.getString(c.getColumnIndex("type"));
+                int encoding = c.getInt(c.getColumnIndex("encoding"));
+                long length = c.getInt(c.getColumnIndex("length"));
+                long encodedLength = c.getInt(c.getColumnIndex("encoded_length"));
+                int revpos = c.getInt(c.getColumnIndex("revpos"));
                 File file = fileFromKey(key);
-                return new SavedAttachment(attachmentName, revpos, sequence, key, type, file,
-                        Attachment.Encoding.values()[encoding], this.attachmentStreamFactory);
+
+                return new SavedAttachment(sequence, filename, key, type, Attachment.Encoding
+                        .values()[encoding], length, encodedLength, revpos, file,
+                        attachmentStreamFactory);
             }
 
             return null;
@@ -256,14 +280,18 @@ class AttachmentManager {
             c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
                     new String[]{String.valueOf(sequence)});
             while (c.moveToNext()) {
-                String name = c.getString(1);
-                byte[] key = c.getBlob(2);
-                String type = c.getString(3);
-                int encoding = c.getInt(4);
-                int revpos = c.getInt(7);
+                String filename = c.getString(c.getColumnIndex("filename"));
+                byte[] key = c.getBlob(c.getColumnIndex("key"));
+                String type = c.getString(c.getColumnIndex("type"));
+                int encoding = c.getInt(c.getColumnIndex("encoding"));
+                long length = c.getInt(c.getColumnIndex("length"));
+                long encodedLength = c.getInt(c.getColumnIndex("encoded_length"));
+                int revpos = c.getInt(c.getColumnIndex("revpos"));
                 File file = fileFromKey(key);
-                atts.add(new SavedAttachment(name, revpos, sequence, key, type, file,
-                        Attachment.Encoding.values()[encoding], this.attachmentStreamFactory));
+
+                atts.add(new SavedAttachment(sequence, filename, key, type, Attachment.Encoding
+                        .values()[encoding], length, encodedLength, revpos, file,
+                        attachmentStreamFactory));
             }
             return atts;
         } catch (SQLException e) {
@@ -281,7 +309,7 @@ class AttachmentManager {
             String type = c.getString(3);
             int encoding = c.getInt(4);
             int length = c.getInt(5);
-            int encoded_length = c.getInt(6);
+            int encodedLength = c.getInt(6);
             int revpos = c.getInt(7);
 
             ContentValues values = new ContentValues();
@@ -291,7 +319,7 @@ class AttachmentManager {
             values.put("type", type);
             values.put("encoding", encoding);
             values.put("length", length);
-            values.put("encoded_length", encoded_length);
+            values.put("encoded_length", encodedLength);
             values.put("revpos", revpos);
             db.insert("attachments", values);
         }

@@ -199,7 +199,7 @@ public interface DatastoreExtended extends Datastore {
      * @return A prepared attachment, ready to be added to the datastore
      * @throws AttachmentException
      */
-    public PreparedAttachment prepareAttachment(Attachment att) throws AttachmentException;
+    public PreparedAttachment prepareAttachment(Attachment att, long length, long encodedLength) throws AttachmentException;
 
     /**
      * Add attachment to document revision without incrementing revision.
