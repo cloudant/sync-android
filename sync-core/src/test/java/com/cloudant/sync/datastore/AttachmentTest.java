@@ -14,13 +14,12 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.Misc;
 import com.cloudant.sync.util.TestUtils;
-
-import static org.hamcrest.CoreMatchers.is;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
@@ -29,9 +28,10 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
+
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.equalTo;
 
 /**
  * Created by tomblench on 12/03/2014.
@@ -271,4 +271,77 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         }
     }
 
+    @Test
+    public void testLengthPreparedAttachmentsTest() throws Exception {
+        String textAttachmentName = "attachment_1.txt";
+        File textFile = TestUtils.loadFixture("fixture/" + textAttachmentName);
+        long expectedTextFileLength = textFile.length();
+
+        String imageAttachmentName = "bonsai-boston.jpg";
+        File imageFile = TestUtils.loadFixture("fixture/" + imageAttachmentName);
+        long expectedImageFileLength = imageFile.length();
+
+        Attachment att = new UnsavedFileAttachment(textFile, "text/plain");
+        PreparedAttachment textPatt = new PreparedAttachment(att, datastore_manager_dir, 0,
+                new AttachmentStreamFactory(new NullKeyProvider()));
+        //Assert that the original file length is equal to the prepared attachment length
+        Assert.assertEquals(expectedTextFileLength, textPatt.length);
+
+        Attachment att2 = new UnsavedFileAttachment(imageFile, "image/jpeg");
+        PreparedAttachment imagePatt = new PreparedAttachment(att2, datastore_manager_dir, 0,
+                new AttachmentStreamFactory(new NullKeyProvider()));
+        Assert.assertEquals(expectedImageFileLength, imagePatt.length);
+    }
+
+    @Test(expected = AttachmentNotSavedException.class)
+    public void testNonexistentPreparedAttachmentsTest() throws Exception {
+        String nonexistentFileName = "nonexistentfile";
+        File nonExistentFile = TestUtils.loadFixture("fixture/" + nonexistentFileName);
+
+        Attachment nonexistentAtt = new UnsavedFileAttachment(nonExistentFile, "text/plain");
+
+        PreparedAttachment nonexistentPatt = new PreparedAttachment(nonexistentAtt, datastore_manager_dir, 0,
+                new AttachmentStreamFactory(new NullKeyProvider()));
+    }
+
+    @Test
+    public void testSha1PreparedAttachmentsTest() throws Exception {
+        String textAttachmentName = "attachment_1.txt";
+        File textFile = TestUtils.loadFixture("fixture/" + textAttachmentName);
+
+        String imageAttachmentName = "bonsai-boston.jpg";
+        File imageFile = TestUtils.loadFixture("fixture/" + imageAttachmentName);
+
+        Attachment att = new UnsavedFileAttachment(textFile, "text/plain");
+        PreparedAttachment textPatt = new PreparedAttachment(att, datastore_manager_dir, 0,
+                new AttachmentStreamFactory(new NullKeyProvider()));
+
+        byte[] textExpectedSha1 = Misc.getSha1((new FileInputStream(textFile)));
+        //Assert that the expected sha1 is equal to the prepared attachment sha1
+        Assert.assertArrayEquals(textExpectedSha1, textPatt.sha1);
+
+        Attachment att2 = new UnsavedFileAttachment(imageFile, "image/jpeg");
+        PreparedAttachment imagePatt = new PreparedAttachment(att2, datastore_manager_dir, 0,
+                new AttachmentStreamFactory(new NullKeyProvider()));
+
+        byte[] imageExpectedSha1 = Misc.getSha1((new FileInputStream(imageFile)));
+        Assert.assertArrayEquals(imageExpectedSha1, imagePatt.sha1);
+
+        //Assert that the text file expected sha1 is NOT equal to the prepared attachment image sha1
+        Assert.assertThat(textExpectedSha1, not(equalTo(imagePatt.sha1)));
+    }
+
+    @Test
+    public void testContentPreparedAttachmentsTest() throws Exception {
+        String imageAttachmentName = "bonsai-boston.jpg";
+        File imageFile = TestUtils.loadFixture("fixture/" + imageAttachmentName);
+
+        Attachment att2 = new UnsavedFileAttachment(imageFile, "image/jpeg");
+        PreparedAttachment imagePatt = new PreparedAttachment(att2, datastore_manager_dir, 0,
+                new AttachmentStreamFactory(new NullKeyProvider()));
+
+        IOUtils.contentEquals(
+                new FileInputStream(imageFile),
+                new FileInputStream(imagePatt.tempFile));
+    }
 }

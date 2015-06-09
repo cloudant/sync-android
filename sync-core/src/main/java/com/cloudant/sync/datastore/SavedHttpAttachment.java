@@ -66,10 +66,6 @@ public class SavedHttpAttachment extends Attachment {
 
 
     }
-    @Override
-    public long getSize() {
-        return size;
-    }
 
     @Override
     public InputStream getInputStream() throws IOException {

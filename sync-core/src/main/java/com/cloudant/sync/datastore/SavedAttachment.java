@@ -15,6 +15,7 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.replication.PushAttachmentsInline;
+import com.cloudant.sync.sqlite.Cursor;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,25 +37,49 @@ class SavedAttachment extends Attachment {
     static final int largeSizeBytes = 65536;
     private static final Logger logger = Logger.getLogger(SavedAttachment.class.getCanonicalName());
 
-    protected SavedAttachment(String name, long revpos, long seq, byte[] key, String type, File file, Encoding encoding) {
+    private static final String SQL_ATTACHMENTS_SELECT = "SELECT sequence, " +
+            "filename, " +
+            "key, " +
+            "type, " +
+            "encoding, " +
+            "length, " +
+            "encoded_length, " +
+            "revpos " +
+            "FROM attachments " +
+            "WHERE filename = ? and sequence = ?";
+
+    // these properties come directly from the database
+    protected final long seq;
+    protected final byte[] key;  // sha of file, used for file path on disk.
+    protected final long length;
+    protected final long encodedLength;
+    protected final long revpos;
+
+    private final File file;
+    private final AttachmentStreamFactory attachmentStreamFactory;
+
+    protected SavedAttachment(long seq, String name, byte[] key, String type, Encoding encoding,
+                              long length, long encodedLength, long revpos, File file,
+                              AttachmentStreamFactory asf) {
         super(name, type, encoding);
+
         this.revpos = revpos;
         this.seq = seq;
         this.key = key;
+        this.length = length;
+        this.encodedLength = encodedLength;
+
         this.file = file;
-        this.encoding = encoding;
+
+        this.attachmentStreamFactory = asf;
     }
 
     public InputStream getInputStream() throws IOException {
-        if (encoding == Encoding.Gzip) {
-            return new GZIPInputStream(new FileInputStream(file));
-        } else {
-            return new FileInputStream(file);
-        }
+        return this.attachmentStreamFactory.getInputStream(file, encoding);
     }
 
     public boolean isLarge() {
-        return this.getSize() > largeSizeBytes;
+        return this.onDiskLength() > largeSizeBytes;
     }
 
     public boolean shouldInline(PushAttachmentsInline inlinePreference) {
@@ -68,14 +93,9 @@ class SavedAttachment extends Attachment {
         }
     }
 
-    public long getSize() {
-        return file.length();
+    // size of file, as stored on disk
+    // note that this may be different from file.length() due to encryption
+    public long onDiskLength() {
+        return encoding == Encoding.Plain ? length : encodedLength;
     }
-
-    protected final long revpos;
-    protected final long seq;
-    protected final byte[] key;  // sha of file, used for file path on disk.
-    private final File file;
-    private Encoding encoding;
-
 }

@@ -17,6 +17,7 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.google.common.eventbus.EventBus;
 
 import java.io.IOException;
@@ -67,6 +68,16 @@ public interface Datastore {
      * @return the name of this datastore
      */
     public String getDatastoreName();
+
+    /**
+     * <p>Returns the encryption KeyProvider of this datastore.</p>
+     *
+     * <p>Note the key provider could return null for the key,
+     * in which case encryption isn't used on this datastore.</p>
+     *
+     * @return the key provider used by this datastore.
+     */
+    public KeyProvider getKeyProvider();
 
     /**
      * <p>Returns the current winning revision of a document.</p>

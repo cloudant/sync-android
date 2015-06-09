@@ -197,7 +197,7 @@ public class RevisionHistoryHelper {
                         mpw = new MultipartAttachmentWriter();
                         mpw.setBody(revision);
                     }
-                    mpw.addAttachment(att);
+                    mpw.addAttachment(savedAtt, savedAtt.onDiskLength());
                 }
             } catch (IOException ioe) {
                 logger.log(Level.WARNING,"IOException caught when adding multiparts",ioe);
@@ -258,9 +258,13 @@ public class RevisionHistoryHelper {
                             IOUtils.closeQuietly(fis);
                         }
                     }
-                    theAtt.put("length", savedAtt.getSize());
+                    theAtt.put("length", savedAtt.length);
+                    theAtt.put("encoded_length", savedAtt.encodedLength);
                     theAtt.put("content_type", savedAtt.type);
                     theAtt.put("revpos", savedAtt.revpos);
+                    if (savedAtt.encoding != Attachment.Encoding.Plain) {
+                        theAtt.put("encoding", savedAtt.encoding.toString().toLowerCase());
+                    }
                 } else {
                     // if the revpos of the attachment is higher than the minimum, it's a stub
                     theAtt.put("stub", true);

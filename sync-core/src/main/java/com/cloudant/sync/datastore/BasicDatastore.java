@@ -18,6 +18,10 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64InputStreamFactory;
+import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
+import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
+import com.cloudant.sync.datastore.migrations.MigrateDatabase6To100;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
@@ -90,36 +94,66 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     private static final String DB_FILE_NAME = "db.sync";
 
-    //Single thread executor to esnure only one tread accesses the db
+    /**
+     * Stores a reference to the encryption key provider so
+     * it can be passed to extensions.
+     */
+    private final KeyProvider keyProvider;
+
+    /**
+     * Queue for all database tasks.
+     */
     private final SQLDatabaseQueue queue;
 
     public BasicDatastore(String dir, String name) throws SQLException, IOException, DatastoreException {
+        this(dir, name, new NullKeyProvider());
+    }
+
+    /**
+     * Constructor for single thread SQLCipher-based datastore.
+     * @param dir The directory where the datastore will be created
+     * @param name The user-defined name of the datastore
+     * @param provider The key provider object that contains the user-defined SQLCipher key
+     * @throws SQLException
+     * @throws IOException
+     */
+    public BasicDatastore(String dir, String name, KeyProvider provider) throws SQLException, IOException, DatastoreException {
         Preconditions.checkNotNull(dir);
         Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(provider);
 
+        this.keyProvider = provider;
         this.datastoreDir = dir;
         this.datastoreName = name;
         this.extensionsDir = FilenameUtils.concat(this.datastoreDir, "extensions");
         final String dbFilename = FilenameUtils.concat(this.datastoreDir, DB_FILE_NAME);
-        queue = new SQLDatabaseQueue(dbFilename);
+        queue = new SQLDatabaseQueue(dbFilename, provider);
+
         int dbVersion = queue.getVersion();
-        if(dbVersion >= 100){
+        // Increment the hundreds position if a schema change means that older
+        // versions of the code will not be able to read the migrated database.
+        if(dbVersion >= 200){
             throw new DatastoreException(String.format("Database version is higher than the version supported " +
                     "by this library, current version %d , highest supported version %d",dbVersion, 99));
         }
-        queue.updateSchema(DatastoreConstants.getSchemaVersion3(), 3);
-        queue.updateSchema(DatastoreConstants.getSchemaVersion4(), 4);
-        queue.updateSchema(DatastoreConstants.getSchemaVersion5(), 5);
-        queue.updateSchema(DatastoreConstants.getSchemaVersion6(), 6);
+        queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion3()), 3);
+        queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion4()), 4);
+        queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion5()), 5);
+        queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion6()), 6);
+        queue.updateSchema(new MigrateDatabase6To100(), 100);
         this.eventBus = new EventBus();
         this.attachmentManager = new AttachmentManager(this);
-
     }
 
     @Override
     public String getDatastoreName() {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         return this.datastoreName;
+    }
+
+    @Override
+    public KeyProvider getKeyProvider() {
+        return this.keyProvider;
     }
 
     @Override
@@ -262,7 +296,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     @Override
     public BasicDocumentRevision getDocument(final String id, final String rev) throws DocumentNotFoundException{
         Preconditions.checkState(this.isOpen(), "Database is closed");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "DocumentRevisionTree id can not be empty");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "DocumentRevisionTree id can not " +
+                "be empty");
 
         try {
             return queue.submit(new SQLQueueCallable<BasicDocumentRevision>(){
@@ -465,7 +500,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                                     "WHERE deleted = 0 AND current = 1 AND docs.doc_id = revs.doc_id " +
                                     "ORDER BY docs.doc_id %1$s, revid DESC LIMIT %2$s OFFSET %3$s ",
                             (descending ? "DESC" : "ASC"), limit, offset);
-                    return getRevisionsFromRawQuery(db,sql, new String[]{});
+                    return getRevisionsFromRawQuery(db, sql, new String[]{});
                 }
             }).get();
         } catch (InterruptedException e) {
@@ -583,7 +618,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             return queue.submit(new SQLQueueCallable<LocalDocument>(){
                 @Override
                 public LocalDocument call(SQLDatabase db) throws Exception {
-                    return doGetLocalDocument(db,docId);
+                    return doGetLocalDocument(db, docId);
                 }
             }).get();
         } catch (InterruptedException e) {
@@ -887,7 +922,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         options.current = false;
         options.data = JSONUtils.EMPTY_JSON;
         options.available = false;
-        return insertRevision(db,options);
+        return insertRevision(db, options);
     }
 
     private LocalDocument doGetLocalDocument(SQLDatabase db, String docId)
@@ -1021,25 +1056,24 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                     if (pullAttachmentsInline) {
                         if (attachments != null) {
                             for (String att : attachments.keySet()) {
-                                Boolean stub = ((Map<String, Boolean>) attachments.get(att)).get
-                                        ("stub");
-                                if (stub != null && stub.booleanValue()) {
+                                Map attachmentMetadata = (Map)attachments.get(att);
+                                Boolean stub = (Boolean) attachmentMetadata.get("stub");
+
+                                if (stub != null && stub) {
                                     // stubs get copied forward at the end of
                                     // insertDocumentHistoryIntoExistingTree - nothing to do here
                                     continue;
                                 }
-                                String data = (String) ((Map<String,
-                                        Object>) attachments.get(att)).get("data");
+                                String data = (String) attachmentMetadata.get("data");
+                                String type = (String) attachmentMetadata.get("content_type");
                                 InputStream is = Base64InputStreamFactory.get(new
                                         ByteArrayInputStream(data.getBytes()));
-                                String type = (String) ((Map<String,
-                                        Object>) attachments.get(att)).get("content_type");
                                 // inline attachments are automatically decompressed,
                                 // so we don't have to worry about that
                                 UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is,
                                         att, type);
                                 try {
-                                    PreparedAttachment pa = prepareAttachment(usa);
+                                    PreparedAttachment pa = attachmentManager.prepareAttachment(usa);
                                     attachmentManager.addAttachment(db, pa, rev);
                                 } catch (Exception e) {
                                     logger.log(Level.SEVERE, "There was a problem adding the " +
@@ -1109,7 +1143,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     @Override
     public void forceInsert(BasicDocumentRevision rev, String... revisionHistory) throws DocumentException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
-        this.forceInsert(rev, Arrays.asList(revisionHistory),null, null, false);
+        this.forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
     }
 
     private boolean checkRevisionIsInCorrectOrder(List<String> revisionHistory) {
@@ -1470,7 +1504,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         String[] keys = revisions.keySet().toArray(new String[revisions.keySet().size()]);
         String[] values = revisions.values().toArray(new String[revisions.size()]);
         System.arraycopy(keys, 0, args, 0, revisions.keySet().size());
-        System.arraycopy(values, 0,args, revisions.keySet().size(), revisions.size());
+        System.arraycopy(values, 0, args, revisions.keySet().size(), revisions.size());
 
         Cursor cursor = null;
         try {
@@ -1690,12 +1724,13 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
 
+    // this is just a facade into attachmentManager.PrepareAttachment for the sake of DatastoreWrapper
     @Override
-    public PreparedAttachment prepareAttachment(Attachment att) throws AttachmentException {
-        PreparedAttachment preparedAttachment = new PreparedAttachment(att, this.attachmentManager.attachmentsDir);
-        return preparedAttachment;
+    public PreparedAttachment prepareAttachment(Attachment att, long length, long encodedLength) throws AttachmentException {
+        PreparedAttachment pa = attachmentManager.prepareAttachment(att, length, encodedLength);
+        return pa;
     }
-
+    
     @Override
     public void addAttachment(final PreparedAttachment att, final BasicDocumentRevision rev) throws AttachmentException {
 
