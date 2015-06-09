@@ -35,6 +35,7 @@ import java.util.Map;
 public class UnindexedMatcherTest {
 
     DocumentRevision rev;
+    DocumentRevision negRev;
 
     @Before
     public void setUp() {
@@ -57,6 +58,23 @@ public class UnindexedMatcherTest {
         builder.setRevId("1-qweqeqwewqe");
         builder.setBody(body);
         rev = builder.build();
+
+        // body content: { "name" : "phil",
+        //                 "score" : -15,
+        //                 "pets" : [ "white_cat", "black_cat" ],
+        //                 "address" : { "number" : "1", "road" : "infinite loop" }
+        //               }
+        Map<String, Object> negRevBodyMap = new HashMap<String, Object>();
+        negRevBodyMap.put("name", "phil");
+        negRevBodyMap.put("score", -15);
+        negRevBodyMap.put("pets", Arrays.asList("white_cat", "black_cat"));
+        negRevBodyMap.put("address", addressDetail);
+        DocumentBody negRevBody = DocumentBodyFactory.create(negRevBodyMap);
+        DocumentRevisionBuilder negRevBuilder = new DocumentRevisionBuilder();
+        negRevBuilder.setDocId("negrevdsfsdfdfs");
+        negRevBuilder.setRevId("1-negrevqweqeqwewqe");
+        negRevBuilder.setBody(negRevBody);
+        negRev = negRevBuilder.build();
     }
 
     @Test
@@ -735,6 +753,148 @@ public class UnindexedMatcherTest {
         selector = QueryValidator.normaliseAndValidateQuery(selector);
         UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
         assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void matchWhenUsingIntegerDivisorWithMOD() {
+        // Selector - { "age": { "$mod":  [ 3, 1 ] } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(3, 1));
+        selector.put("age", mod);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void matchWhenUsingNegativeDivisorWithMOD() {
+        // Selector - { "age": { "$mod":  [ -3, 1 ] } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(-3, 1));
+        selector.put("age", mod);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void matchByTruncatingADoubleDivisorWithMOD() {
+        // Selector - { "age": { "$mod":  [ 3.6, 1.0 ] } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(3.6, 1.0));
+        selector.put("age", mod);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+
+        // Selector - { "age": { "$mod":  [ 3.2, 1.0 ] } }
+        mod.clear();
+        mod.put("$mod", Arrays.<Object>asList(3.2, 1.0));
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void noMatchWhenUsingIntegerDivisorWithMOD() {
+        // Selector - { "age": { "$mod":  [ 3, 2 ] } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(3, 2));
+        selector.put("age", mod);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void noMatchWhenUsingNegativeDivisorWithMOD() {
+        // Selector - { "age": { "$mod":  [ -3, 2 ] } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(-3, 2));
+        selector.put("age", mod);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void noMatchWhenUsingDoubleDivisorWithMOD() {
+        // Selector - { "age": { "$mod":  [ 3.6, 2.0 ] } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(3.6, 2.0));
+        selector.put("age", mod);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+
+        // Selector - { "age": { "$mod":  [ 3.2, 2.0 ] } }
+        mod.clear();
+        mod.put("$mod", Arrays.<Object>asList(3.2, 2.0));
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void matchOnNegativeFieldWhenUsingIntegerDivisorWithMOD() {
+        // Selector - { "score": { "$mod":  [ 2, -1 ] } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(2, -1));
+        selector.put("score", mod);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(negRev), is(true));
+    }
+
+    @Test
+    public void matchOnNegativeFieldWhenUsingNegativeDivisorWithMOD() {
+        // Selector - { "score": { "$mod":  [ -2, -1 ] } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(-2, -1));
+        selector.put("score", mod);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(negRev), is(true));
+    }
+
+    @Test
+    public void noMatchOnNegativeFieldWhenUsingIntegerDivisorWithMOD() {
+        // Selector - { "score": { "$mod":  [ 3, -1 ] } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(3, -1));
+        selector.put("score", mod);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(negRev), is(false));
+    }
+
+    @Test
+    public void noMatchOnNegativeFieldWhenUsingPositiveRemainderWithMOD() {
+        // Selector - { "score": { "$mod":  [ -2, 1 ] } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(-2, 1));
+        selector.put("score", mod);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(negRev), is(false));
+    }
+
+    @Test
+    public void noMatchOnNegativeFieldWhenUsingNegativeDivisorWithMOD() {
+        // Selector - { "score": { "$mod":  [ -3, -1 ] } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> mod = new HashMap<String, Object>();
+        mod.put("$mod", Arrays.<Object>asList(-3, -1));
+        selector.put("score", mod);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(negRev), is(false));
     }
 
     @Test
