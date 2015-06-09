@@ -42,6 +42,8 @@ final class QueryConstants {
 
     public static final String SEARCH = "$search";
 
+    public static final String MOD = "$mod";
+
     private QueryConstants() {
         throw new AssertionError();
     }
