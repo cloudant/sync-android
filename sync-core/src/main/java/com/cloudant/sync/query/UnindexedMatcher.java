@@ -17,7 +17,7 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import static com.cloudant.sync.query.QueryConstants.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -236,25 +236,34 @@ class UnindexedMatcher {
 
             Object expected = operatorExpression.get(operator);
             Object actual = ValueExtractor.extractValueForFieldName(fieldName, rev);
-            // Since $in is the same as a series of $eq comparisons -
-            // Treat them the same by:
-            // - Ensuring that both expected and actual are Lists.
-            // - Convert the $in operator to the $eq operator.
-            if (!(expected instanceof List)) {
-                expected = Arrays.asList(expected);
-            }
-            if (!(actual instanceof List)) {
-                actual = Arrays.asList(actual);
-            }
-            if (operator.equals(IN)) {
-                operator = EQ;
-            }
 
             boolean passed = false;
-            for (Object expectedItem : (List<Object>) expected) {
-                for (Object actualItem: (List<Object>) actual) {
-                    // OR since any actual item can match any value in the expected list
-                    passed = passed || valueCompare(actualItem, operator, expectedItem);
+            if (operator.equals(MOD)) {
+                // We need to treat a $mod operator as a special case because for
+                // $mod we need to perform modulo arithmetic on the actual value
+                // using the first element in the expected list as the divisor before
+                // comparing the result to the second element in the expected list.
+                passed = valueCompare(actual, operator, expected);
+            } else {
+                // Since $in is the same as a series of $eq comparisons -
+                // Treat them the same by:
+                // - Ensuring that both expected and actual are lists/collections.
+                // - Convert the $in operator to the $eq operator.
+                if (!(expected instanceof List)) {
+                    expected = Collections.singletonList(expected);
+                }
+                if (!(actual instanceof List)) {
+                    actual = Collections.singletonList(actual);
+                }
+                if (operator.equals(IN)) {
+                    operator = EQ;
+                }
+
+                for (Object expectedItem : (List<Object>) expected) {
+                    for (Object actualItem: (List<Object>) actual) {
+                        // OR since any actual item can match any value in the expected list
+                        passed = passed || valueCompare(actualItem, operator, expectedItem);
+                    }
                 }
             }
 
@@ -280,6 +289,8 @@ class UnindexedMatcher {
             passed = compareGT(actual, expected);
         } else if (operator.equals(GTE)) {
             passed = compareGTE(actual, expected);
+        } else if (operator.equals(MOD)) {
+            passed = compareMOD(actual, expected);
         } else if (operator.equals(EXISTS)) {
             boolean expectedBool = (Boolean) expected;
             boolean exists = (actual != null);
@@ -372,6 +383,26 @@ class UnindexedMatcher {
         } else {
             return !compareLT(l, r);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static boolean compareMOD(Object l, Object r) {
+        if (!(l instanceof Number)) {
+            return false;
+        }
+
+        // r should be a list containing two numbers.  These two numbers are assured
+        // to be integers and the divisor is assured to not be 0.  This would have been
+        // handled during normalization and validation.
+        int divisor = ((List<Integer>) r).get(0);
+        int expectedRemainder = ((List<Integer>) r).get(1);
+
+        // Calculate the actual remainder based on the truncated whole
+        // number value of l which is the actual number from the document.
+        // This is the desired behavior to replicate the SQL engine.
+        int actualRemainder = ((Number) l).intValue() % divisor;
+
+        return actualRemainder == expectedRemainder;
     }
 
 }
