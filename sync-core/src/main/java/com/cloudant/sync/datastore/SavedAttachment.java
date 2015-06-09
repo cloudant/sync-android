@@ -81,9 +81,8 @@ class SavedAttachment extends Attachment {
     }
 
     // size of file, as stored on disk
-    // this is the same as
-    // encoding == Encoding.Plain ? length : encodedLength
+    // note that this may be different from file.length() due to encryption
     public long onDiskLength() {
-        return this.file.length();
+        return encoding == Encoding.Plain ? length : encodedLength;
     }
 }
