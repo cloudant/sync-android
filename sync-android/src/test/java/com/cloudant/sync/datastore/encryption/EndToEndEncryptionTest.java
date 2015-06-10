@@ -186,7 +186,7 @@ public class EndToEndEncryptionTest {
             byte[] actualContent = new byte[expectedFirstAttachmentByte.length];
             int readLength = in.read(actualContent);
             assertEquals("Didn't read full buffer", actualContent.length, readLength);
-            assertArrayEquals("First byte not version byte", actualContent, expectedFirstAttachmentByte);
+            assertArrayEquals("First byte not version byte", expectedFirstAttachmentByte, actualContent);
 
         } else {
             assertTrue(IOUtils.contentEquals(new FileInputStream(expectedPlainText), in));
