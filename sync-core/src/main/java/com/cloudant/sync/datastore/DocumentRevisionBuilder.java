@@ -267,7 +267,9 @@ public class DocumentRevisionBuilder {
                 URI attachmentURI= null;
                 try {
                     attachmentURI = new URI(documentURI.getScheme(),
-                            documentURI.getAuthority(),
+                            documentURI.getUserInfo(),
+                            documentURI.getHost(),
+                            documentURI.getPort(),
                             attachmentURIPath,
                             documentURI.getQuery(),
                             documentURI.getFragment());

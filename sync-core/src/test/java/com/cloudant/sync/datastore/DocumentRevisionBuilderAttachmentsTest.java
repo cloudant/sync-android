@@ -108,14 +108,12 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
         byte[] unencodedAttachment = FileUtils.readFileToByteArray(file);
         byte[] encodedAttachment = this.encodeAttachment(unencodedAttachment);
 
-        String encodedAttachmentString = new String(encodedAttachment);
-
         //create a revision on a couchDB instance so we can test the download
         //of attachments
         Map<String,Object> remoteDoc = new HashMap<String,Object>();
         remoteDoc.put("_id","someIdHere");
         Map<String,Map<String,Object>> remoteAttachments = new HashMap<String,Map<String,Object>>();
-        Map<String,Object> remoteBonsai = createAttachmentMap(encodedAttachment,"image/jpeg",false);//new HashMap<String,Object>();
+        Map<String,Object> remoteBonsai = createAttachmentMap(encodedAttachment,"image/jpeg",false);
 
         remoteAttachments.put("bonsai-boston.jpg",remoteBonsai);
         remoteDoc.put("_attachments",remoteAttachments);
@@ -254,14 +252,15 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
     private Map<String,Object> createAttachmentMap(byte[] encodedAttachment,String contentType,boolean stub){
         String encodedAttachmentString = new String(encodedAttachment);
 
-
         Map<String,Object> remoteBonsai = new HashMap<String,Object>();
-        remoteBonsai.put("length",encodedAttachmentString.length());
         remoteBonsai.put("digest","thisisahasiswear");
         remoteBonsai.put("revpos",1);
         remoteBonsai.put("content_type",contentType);
-        remoteBonsai.put("stub",stub);
-        if(!stub) {
+        if(stub) {
+            remoteBonsai.put("stub", stub);
+            remoteBonsai.put("length",encodedAttachmentString.length());
+
+        } else  {
             remoteBonsai.put("data", encodedAttachmentString);
         }
 
