@@ -40,14 +40,6 @@ public class UnsavedStreamAttachment extends Attachment {
         return stream;
     }
 
-    public long getSize() {
-        try {
-            return stream.available();
-        } catch(IOException ioe) {
-            return -1;
-        }
-    }
-
     private InputStream stream;
 
 }

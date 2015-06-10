@@ -132,10 +132,10 @@ public class MultipartAttachmentWriter extends InputStream {
      * @param attachment The attachment to be streamed
      * @throws IOException
      */
-    public void addAttachment(Attachment attachment) throws IOException {
+    public void addAttachment(Attachment attachment, long length) throws IOException {
         contentLength += partBoundary.length;
         contentLength += 6; // 3 * crlf
-        contentLength += attachment.getSize();
+        contentLength += length;
 
         components.add(new ByteArrayInputStream(crlf));
         components.add(new ByteArrayInputStream(partBoundary));
