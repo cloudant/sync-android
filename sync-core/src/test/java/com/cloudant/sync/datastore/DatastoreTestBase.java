@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.sync.datastore.encryption.HelperSimpleKeyProvider;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.After;
@@ -34,13 +33,8 @@ public abstract class DatastoreTestBase {
     public void setUp() throws Exception {
         datastore_manager_dir = TestUtils.createTempTestingDir(this.getClass().getName());
         datastoreManager = new DatastoreManager(this.datastore_manager_dir);
+        this.datastore = (BasicDatastore) (this.datastoreManager.openDatastore(getClass().getSimpleName()));
 
-        //Open SQLCipher-based datastore if SQLCipher parameter is 'true'
-        if(Boolean.valueOf(System.getProperty("test.sqlcipher.passphrase"))) {
-            this.datastore = (BasicDatastore) (this.datastoreManager.openDatastore(getClass().getSimpleName(), new HelperSimpleKeyProvider()));
-        } else {
-            this.datastore = (BasicDatastore) (this.datastoreManager.openDatastore(getClass().getSimpleName()));
-        }
     }
 
     @After
