@@ -154,7 +154,7 @@ URI uri = new URI("https://username:password@username.cloudant.com/my_database")
 
 Datastore ds = manager.openDatastore("my_datastore");
 
-// Create a replictor that replicates changes from the remote
+// Create a replicator that replicates changes from the remote
 // database to the local datastore.
 PullReplication pull = new PullReplication();
 pull.source = uri;
@@ -219,7 +219,7 @@ if (replicator_pull.getState() != Replicator.State.COMPLETE) {
     System.out.println(listener.error);
 }
 if (replicator_push.getState() != Replicator.State.COMPLETE) {
-    System.out.println("Error replicating FROM remote");
+    System.out.println("Error replicating TO remote");
     System.out.println(listener.error);
 }
 ```
@@ -238,7 +238,7 @@ URI uri = new URI("https://username:password@username.cloudant.com/my_database")
 
 Datastore ds = manager.openDatastore("my_datastore");
 
-// Create a replictor that replicates changes from the remote
+// Create a replicator that replicates changes from the remote
 // database to the local datastore.
 PullReplication pull = new PullReplication();
 pull.source = uri;
