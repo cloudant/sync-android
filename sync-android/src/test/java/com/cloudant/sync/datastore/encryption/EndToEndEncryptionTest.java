@@ -72,7 +72,7 @@ public class EndToEndEncryptionTest {
     @Parameterized.Parameter
     public boolean dataShouldBeEncrypted;
 
-    String datastore_manager_dir;
+    String datastoreManagerDir;
     DatastoreManager datastoreManager;
     Datastore datastore = null;
 
@@ -82,8 +82,8 @@ public class EndToEndEncryptionTest {
 
     @Before
     public void setUp() throws DatastoreNotCreatedException {
-        datastore_manager_dir = TestUtils.createTempTestingDir(this.getClass().getName());
-        datastoreManager = new DatastoreManager(this.datastore_manager_dir);
+        datastoreManagerDir = TestUtils.createTempTestingDir(this.getClass().getName());
+        datastoreManager = new DatastoreManager(this.datastoreManagerDir);
 
         if(dataShouldBeEncrypted) {
             this.datastore = this.datastoreManager.openDatastore(getClass().getSimpleName(),
@@ -97,12 +97,12 @@ public class EndToEndEncryptionTest {
 
     @After
     public void tearDown() {
-        TestUtils.deleteTempTestingDir(datastore_manager_dir);
+        TestUtils.deleteTempTestingDir(datastoreManagerDir);
     }
 
     @Test
     public void jsonDataEncrypted() throws IOException {
-        File jsonDatabase = new File(datastore_manager_dir
+        File jsonDatabase = new File(datastoreManagerDir
                 + File.separator + "EndToEndEncryptionTest"
                 + File.separator + "db.sync");
 
@@ -135,7 +135,7 @@ public class EndToEndEncryptionTest {
         IndexManager im = new IndexManager(this.datastore);
         im.ensureIndexed(Arrays.<Object>asList("name", "age"));
 
-        File jsonDatabase = new File(datastore_manager_dir
+        File jsonDatabase = new File(datastoreManagerDir
                 + File.separator + "EndToEndEncryptionTest"
                 + File.separator + "extensions"
                 + File.separator + "com.cloudant.sync.query"
@@ -171,7 +171,7 @@ public class EndToEndEncryptionTest {
 
         datastore.createDocumentFromRevision(rev);
 
-        File attachmentsFolder = new File(datastore_manager_dir
+        File attachmentsFolder = new File(datastoreManagerDir
                 + File.separator + "EndToEndEncryptionTest"
                 + File.separator + "extensions"
                 + File.separator + "com.cloudant.attachments");
