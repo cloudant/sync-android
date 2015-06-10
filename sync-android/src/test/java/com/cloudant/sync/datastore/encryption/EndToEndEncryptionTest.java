@@ -74,7 +74,7 @@ public class EndToEndEncryptionTest {
 
     String datastoreManagerDir;
     DatastoreManager datastoreManager;
-    Datastore datastore = null;
+    Datastore datastore;
 
     // Magic bytes are "SQLite format 3" + null-terminator
     byte[] sqlCipherMagicBytes = hexStringToByteArray("53514c69746520666f726d6174203300");
