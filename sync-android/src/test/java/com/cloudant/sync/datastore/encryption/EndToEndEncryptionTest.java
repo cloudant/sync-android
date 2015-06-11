@@ -14,6 +14,10 @@
 
 package com.cloudant.sync.datastore.encryption;
 
+import com.cloudant.sync.datastore.Attachment;
+import com.cloudant.sync.datastore.AttachmentException;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DatastoreNotCreatedException;
@@ -21,6 +25,7 @@ import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
+import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.query.IndexManager;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -35,19 +40,27 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringBufferInputStream;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 
 /**
@@ -56,6 +69,10 @@ import static org.junit.Assert.assertThat;
  */
 @RunWith(Parameterized.class)
 public class EndToEndEncryptionTest {
+
+    public static final byte[] KEY = new byte[]{-123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
+            -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
+            -15, -123, -22, -15, 53, -22};
 
     static {
         // Load SQLCipher libraries
@@ -87,9 +104,7 @@ public class EndToEndEncryptionTest {
 
         if(dataShouldBeEncrypted) {
             this.datastore = this.datastoreManager.openDatastore(getClass().getSimpleName(),
-                    new SimpleKeyProvider(new byte[] { -123, 53, -22, -15, -123, 53, -22, -15, 53, -22, -15,
-                            -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
-                            -15, -123, -22, -15, 53, -22 }));
+                    new SimpleKeyProvider(KEY));
         } else {
             this.datastore = this.datastoreManager.openDatastore(getClass().getSimpleName());
         }
@@ -157,7 +172,7 @@ public class EndToEndEncryptionTest {
     }
 
     @Test
-    public void attachmentsDataEncrypted() throws IOException, DocumentException {
+    public void attachmentsDataEncrypted() throws IOException, DocumentException, InvalidKeyException {
 
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.body = DocumentBodyFactory.create(new HashMap<String, String>());
@@ -188,9 +203,87 @@ public class EndToEndEncryptionTest {
             assertEquals("Didn't read full buffer", actualContent.length, readLength);
             assertArrayEquals("First byte not version byte", expectedFirstAttachmentByte, actualContent);
 
+            assertTrue("Encrypted attachment did not decrypt correctly", IOUtils.contentEquals(
+                    new EncryptedAttachmentInputStream(new FileInputStream(contents[0]), KEY),
+                    new FileInputStream(expectedPlainText)));
+
         } else {
-            assertTrue(IOUtils.contentEquals(new FileInputStream(expectedPlainText), in));
+            assertTrue("Unencrypted attachment did not read correctly",
+                    IOUtils.contentEquals(new FileInputStream(expectedPlainText), in));
         }
+    }
+
+    /**
+     * A basic check things round trip successfully.
+     */
+    @Test
+    public void readAndWriteDocument() throws DocumentException, IOException {
+
+        String documentId = "a-test-document";
+        final String nonAsciiText = "摇;摃:xx\uD83D\uDC79⌚️\uD83D\uDC7D";
+
+        HashMap<String, String> documentBody = new HashMap<String,String>();
+        documentBody.put("name", "mike");
+        documentBody.put("pet", "cat");
+        documentBody.put("non-ascii", nonAsciiText);
+
+        // Create
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.docId = documentId;
+        rev.body = DocumentBodyFactory.create(documentBody);
+        BasicDocumentRevision saved = datastore.createDocumentFromRevision(rev);
+        assertNotNull(saved);
+
+        // Read
+        BasicDocumentRevision retrieved = datastore.getDocument(documentId);
+        assertNotNull(retrieved);
+        Map<String, Object> retrievedBody = retrieved.getBody().asMap();
+        assertEquals("mike", retrievedBody.get("name"));
+        assertEquals("cat", retrievedBody.get("pet"));
+        assertEquals(nonAsciiText, retrievedBody.get("non-ascii"));
+        assertEquals(3, retrievedBody.size());
+
+        // Update
+        MutableDocumentRevision update = retrieved.mutableCopy();
+        Map<String, Object> updateBody = retrieved.getBody().asMap();
+        updateBody.put("name", "fred");
+        update.body = DocumentBodyFactory.create(updateBody);
+        BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        assertNotNull(updated);
+        Map<String, Object> updatedBody = updated.getBody().asMap();
+        assertEquals("fred", updatedBody.get("name"));
+        assertEquals("cat", updatedBody.get("pet"));
+        assertEquals(nonAsciiText, updatedBody.get("non-ascii"));
+        assertEquals(3, updatedBody.size());
+
+        // Update with attachments, one from file, one a non-ascii string test
+        final String attachmentName = "EncryptedAttachmentTest_plainText";
+        File expectedPlainText = TestUtils.loadFixture("fixture/EncryptedAttachmentTest_plainText");
+        assertNotNull(expectedPlainText);
+        MutableDocumentRevision attachmentRevision = updated.mutableCopy();
+        final Map<String, Attachment> atts = attachmentRevision.attachments;
+        atts.put(attachmentName, new UnsavedFileAttachment(expectedPlainText, "text/plain"));
+        atts.put("non-ascii", new UnsavedStreamAttachment(
+                new ByteArrayInputStream(nonAsciiText.getBytes()),
+                "non-ascii", "text/plain"));
+        BasicDocumentRevision updatedWithAttachment = datastore.updateDocumentFromRevision(attachmentRevision);
+        InputStream in = updatedWithAttachment.getAttachments().get(attachmentName).getInputStream();
+        assertTrue("Saved attachment did not read correctly",
+                IOUtils.contentEquals(new FileInputStream(expectedPlainText), in));
+        in = updatedWithAttachment.getAttachments().get("non-ascii").getInputStream();
+        assertTrue("Saved attachment did not read correctly",
+                IOUtils.contentEquals(new ByteArrayInputStream(nonAsciiText.getBytes()), in));
+
+        // Delete
+        try {
+            datastore.deleteDocumentFromRevision(saved);
+            fail("Deleting document from old revision succeeded");
+        } catch (ConflictException ex) {
+            // Expected exception
+        }
+        BasicDocumentRevision deleted = datastore.deleteDocumentFromRevision(updatedWithAttachment);
+        assertNotNull(deleted);
+        assertEquals(true, deleted.isDeleted());
     }
 
     public static byte[] hexStringToByteArray(String s) {
