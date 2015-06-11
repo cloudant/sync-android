@@ -121,3 +121,17 @@ protected void onCreate(Bundle savedInstanceState) {
     // ...
 ````
 
+## License
+
+We use [JCE][JCE] library to encrypt the attachments before
+saving to disk. There should be no licencing concerns for using JCE.
+
+Databases are automatically encrypted with
+[SQLCipher][SQLCipher]. SQLCipher requires including its
+[BSD-style license][BSD-style license] and copyright in your application and
+documentation. Therefore, if you use datastore encryption in your application, 
+please follow the instructions mentioned [here](https://www.zetetic.net/sqlcipher/open-source/).
+
+[SQLCipher]: https://www.zetetic.net/sqlcipher/
+[JCE]: http://developer.android.com/reference/javax/crypto/package-summary.html
+[BSD-style license]:https://www.zetetic.net/sqlcipher/license/
