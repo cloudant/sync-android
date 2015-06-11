@@ -33,16 +33,19 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by tomblench on 14/03/2014.
+ * An AttachmentManager handles attachment related tasks: adding, removing and retrieving
+ * attachments for documents from disk. It handles both disk read/write and managing the
+ * attachment related tables in the datastore's database.
+ *
+ * Attachments are stored on disk in an extension directory, {@code EXTENSION_NAME}.
  */
 class AttachmentManager {
-
-    private static final String LOG_TAG = "AttachmentManager";
 
     private static final String EXTENSION_NAME = "com.cloudant.attachments";
     private static final Logger logger = Logger.getLogger(AttachmentManager.class.getCanonicalName());
@@ -72,13 +75,32 @@ class AttachmentManager {
     private static final String SQL_ATTACHMENTS_SELECT_ALL_KEYS = "SELECT key " +
             "FROM attachments";
 
+    /**
+     * Name of database mapping key to filename.
+     */
+    public static final String ATTACHMENTS_KEY_FILENAME = "attachments_key_filename";
+    /**
+     * SQL statement to look up filename for key.
+     */
+    public static final String SQL_FILENAME_LOOKUP_QUERY = String.format(
+            "SELECT filename FROM %1$s WHERE key=?", ATTACHMENTS_KEY_FILENAME);
+    /**
+     * SQL statement to return all key,filename mappings.
+     */
+    public static final String SQL_ATTACHMENTS_SELECT_KEYS_FILENAMES = String.format(
+            "SELECT key,filename FROM %1$s", ATTACHMENTS_KEY_FILENAME);
+    /**
+     * Random number generator used to generate filenames.
+     */
+    private static final Random filenameRandom = new Random();
+
     public final String attachmentsDir;
 
-    private BasicDatastore datastore;
+    private final AttachmentStreamFactory attachmentStreamFactory;
 
     public AttachmentManager(BasicDatastore datastore) {
-        this.datastore = datastore;
         this.attachmentsDir = datastore.extensionDataFolder(EXTENSION_NAME);
+        this.attachmentStreamFactory = new AttachmentStreamFactory(datastore.getKeyProvider());
     }
 
     public void addAttachment(SQLDatabase db,PreparedAttachment a, BasicDocumentRevision rev) throws  AttachmentNotSavedException {
@@ -95,7 +117,7 @@ class AttachmentManager {
         byte[] sha1 = a.sha1;
         String type = a.attachment.type;
         int encoding = a.attachment.encoding.ordinal();
-        long length = a.tempFile.length();
+        long length = a.length;
         long revpos = CouchUtils.generationFromRevId(rev.getRevision());
 
         values.put("sequence", sequence);
@@ -117,7 +139,18 @@ class AttachmentManager {
             throw new AttachmentNotSavedException("Could not insert attachment " + a + " into database with values " + values + "; not copying to attachments directory");
         }
         // move file to blob store, with file name based on sha1
-        File newFile = fileFromKey(sha1);
+        File newFile = null;
+        try {
+            newFile = fileFromKey(db, sha1, attachmentsDir, true);
+        } catch (AttachmentException ex) {
+            // As we couldn't generate a filename, we can't save the attachment. Clean up
+            // temporary file and throw an exception.
+            if (a.tempFile.exists()){
+                a.tempFile.delete();
+            }
+            throw new AttachmentNotSavedException("Couldn't generate name for new attachment", ex);
+        }
+
         try {
             FileUtils.moveFile(a.tempFile, newFile);
         } catch (FileExistsException fee) {
@@ -145,6 +178,21 @@ class AttachmentManager {
 
     }
 
+    /**
+     * Creates a PreparedAttachment from {@code att}, preparing it for insertion into
+     * the datastore.
+     *
+     * @param att Attachment to prepare for insertion into datastore
+     * @return PreparedAttachment, which can be used in addAttachment methods
+     * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
+     *                  attachment data.
+     */
+    public PreparedAttachment prepareAttachment(Attachment att)
+            throws AttachmentException {
+        return new PreparedAttachment(
+                att, this.attachmentsDir, this.attachmentStreamFactory);
+    }
+
     class PreparedAndSavedAttachments
     {
         List<SavedAttachment> savedAttachments = new ArrayList<SavedAttachment>();
@@ -170,7 +218,8 @@ class AttachmentManager {
 
         for (Attachment a : attachments) {
             if (!(a instanceof SavedAttachment)) {
-                preparedAndSavedAttachments.preparedAttachments.add(new PreparedAttachment(a, this.attachmentsDir));
+                preparedAndSavedAttachments.preparedAttachments.add(
+                        new PreparedAttachment(a, this.attachmentsDir, this.attachmentStreamFactory));
             } else {
                 preparedAndSavedAttachments.savedAttachments.add((SavedAttachment)a);
             }
@@ -198,7 +247,7 @@ class AttachmentManager {
             for (SavedAttachment a : preparedAndSavedAttachments.savedAttachments) {
                 // go thru existing (from previous rev) and new (from another document) saved attachments
                 // and add them (the effect on existing attachments is to copy them forward to this revision)
-                long parentSequence = ((SavedAttachment) a).seq;
+                long parentSequence = a.seq;
                 long newSequence = rev.getSequence();
                 this.copyAttachment(db,parentSequence, newSequence, a.name);
             }
@@ -207,7 +256,7 @@ class AttachmentManager {
         }
     }
 
-    protected Attachment getAttachment(SQLDatabase db, BasicDocumentRevision rev, String attachmentName) {
+    protected Attachment getAttachment(SQLDatabase db, BasicDocumentRevision rev, String attachmentName) throws AttachmentException {
         Cursor c = null;
         try {
              c = db.rawQuery(SQL_ATTACHMENTS_SELECT,
@@ -218,13 +267,17 @@ class AttachmentManager {
                 String type = c.getString(3);
                 int encoding = c.getInt(4);
                 int revpos = c.getInt(7);
-                File file = fileFromKey(key);
-                return new SavedAttachment(attachmentName, revpos, sequence, key, type, file, Attachment.Encoding.values()[encoding]);
+                File file = fileFromKey(db, key, attachmentsDir, false);
+                return new SavedAttachment(attachmentName, revpos, sequence, key, type, file,
+                        Attachment.Encoding.values()[encoding], this.attachmentStreamFactory);
             }
 
             return null;
         } catch (SQLException e) {
-            return null;
+            logger.log(Level.SEVERE,
+                    String.format("Failed to get %1$s for doc %2$s", rev.getId(), attachmentName),
+                    e);
+            throw new AttachmentException(e);
         } finally {
             DatabaseUtils.closeCursorQuietly(c);
         }
@@ -242,8 +295,9 @@ class AttachmentManager {
                 String type = c.getString(3);
                 int encoding = c.getInt(4);
                 int revpos = c.getInt(7);
-                File file = fileFromKey(key);
-                atts.add(new SavedAttachment(name, revpos, sequence, key, type, file, Attachment.Encoding.values()[encoding]));
+                File file = fileFromKey(db, key, attachmentsDir, false);
+                atts.add(new SavedAttachment(name, revpos, sequence, key, type, file,
+                        Attachment.Encoding.values()[encoding], this.attachmentStreamFactory));
             }
             return atts;
         } catch (SQLException e) {
@@ -278,8 +332,12 @@ class AttachmentManager {
     }
 
     /**
-     * Called by BasicDatastore to copy one attachment to a new revision
-     * @param parentSequence
+     * Copy a single attachment for a given revision to a new revision.
+     *
+     * @param db database to use
+     * @param parentSequence identifies sequence number of revision to copy attachment data from
+     * @param newSequence identifies sequence number of revision to copy attachment data to
+     * @param filename filename of attachment to copy
      */
     protected void copyAttachment(SQLDatabase db, long parentSequence, long newSequence, String filename) throws SQLException {
         Cursor c = null;
@@ -293,8 +351,11 @@ class AttachmentManager {
     }
 
     /**
-     * Called by BasicDatastore to copy attachments to a new revision
-     * @param parentSequence
+     * Copy all attachments for a given revision to a new revision.
+     *
+     * @param db database to use
+     * @param parentSequence identifies sequence number of revision to copy attachment data from
+     * @param newSequence identifies sequence number of revision to copy attachment data to
      */
     protected void copyAttachments(SQLDatabase db, long parentSequence, long newSequence) throws DatastoreException {
         Cursor c = null;
@@ -311,7 +372,7 @@ class AttachmentManager {
 
     /**
      * Called by BasicDatastore on the execution queue, this needs have the db passed ot it
-     * @param db database to perge attachments from
+     * @param db database to purge attachments from
      */
     protected void purgeAttachments(SQLDatabase db) {
         // it's easier to deal with Strings since java doesn't know how to compare byte[]s
@@ -321,48 +382,172 @@ class AttachmentManager {
             // delete attachment table entries for revs which have been purged
             db.delete("attachments", "sequence IN " +
                     "(SELECT sequence from revs WHERE json IS null)", null);
+
             // get all keys from attachments table
             c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL_KEYS, null);
             while (c.moveToNext()) {
                 byte[] key = c.getBlob(0);
                 currentKeys.add(keyToString(key));
             }
-            // iterate thru attachments dir
-            File[] attachments = new File(attachmentsDir).listFiles();
-            if (attachments != null) {
-                for (File f : attachments) {
-                    // if file isn't in the keys list, delete it
-                    String keyForFile = f.getName();
-                    if (!currentKeys.contains(keyForFile)) {
-                        try {
-                            boolean deleted = f.delete();
-                            if (!deleted) {
 
-                                logger.warning("Could not delete file from BLOB store: " +
-                                        f.getAbsolutePath());
-                            }
-                        } catch (SecurityException e) {
-                            logger.log(Level.WARNING, "SecurityException when trying to delete file " +
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE,
+                    "SQL exception in purgeAttachments when updating attachments table", e);
+            return;  // not safe to continue
+        } finally {
+            DatabaseUtils.closeCursorQuietly(c);
+        }
 
-                                    "from BLOB store: " + f.getAbsolutePath(), e);
+        try {
+
+            // Now iterate through the attachments_key_filename, deleting items we need to
+            // (both db row and file on disk).
+            File attachments = new File(attachmentsDir);
+            c = db.rawQuery(SQL_ATTACHMENTS_SELECT_KEYS_FILENAMES, null);
+            while (c.moveToNext()) {
+                String keyForFile = c.getString(0);
+
+                if (!currentKeys.contains(keyForFile)) {
+                    File f = new File(attachments, c.getString(1));
+                    try {
+                        boolean deleted = f.delete();
+                        if (deleted) {
+                            db.delete(ATTACHMENTS_KEY_FILENAME, "key = ?", new String[]{keyForFile});
+                        } else {
+                            logger.warning("Could not delete file from BLOB store: " +
+                                    f.getAbsolutePath());
                         }
+                    } catch (SecurityException e) {
+                        String msg = String.format("SecurityException deleting %s from blob store",
+                                f.getAbsolutePath());
+                        logger.log(Level.WARNING, msg, e);
                     }
                 }
-        }
+            }
+
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Problem in purgeAttachments, executing SQL to fetch all attachment keys ", e);
-        }finally {
-           DatabaseUtils.closeCursorQuietly(c);
+            logger.log(Level.SEVERE,
+                    "SQL exception in purgeAttachments when removing redundant attachments", e);
+        } finally {
+            DatabaseUtils.closeCursorQuietly(c);
         }
     }
 
-    private String keyToString(byte[] key) {
+    private static String keyToString(byte[] key) {
         return new String(new Hex().encode(key));
     }
 
-    private File fileFromKey(byte[] key) {
-        File file = new File(attachmentsDir, keyToString(key));
-        return file;
+    /**
+     * Lookup or create a on disk File representation of blob, in {@code db} using {@code key}.
+     *
+     * Existing attachments will have an entry in db, so the method just looks this up
+     * and returns the File object for the path.
+     *
+     * For new attachments, the {@code key} doesn't already have an associated filename,
+     * one is generated and inserted into the database before returning a File object
+     * for blob associated with {@code key}.
+     *
+     * @param db database to use.
+     * @param key key to lookup filename for.
+     * @param attachmentsDir Root directory for attachment blobs.
+     * @param allowCreateName if the is no existing mapping, whether one should be created
+     *                        and returned. If false, and no existing mapping, AttachmentException
+     *                        is thrown.
+     * @return File object for blob associated with {@code key}.
+     * @throws AttachmentException if a mapping doesn't exist and {@code allowCreateName} is
+     *          false or if the name generation process fails.
+     */
+    static File fileFromKey(SQLDatabase db, byte[] key, String attachmentsDir, boolean allowCreateName)
+            throws AttachmentException {
+
+        String keyString = keyToString(key);
+        String filename = null;
+
+        db.beginTransaction();
+        try {
+            Cursor c = db.rawQuery(SQL_FILENAME_LOOKUP_QUERY, new String[]{ keyString });
+            if (c.moveToFirst()) {
+                filename = c.getString(0);
+                logger.finest(String.format("Found filename %s for key %s", filename, keyString));
+            } else if (allowCreateName) {
+                filename = generateFilenameForKey(db, keyString);
+                logger.finest(String.format("Added filename %s for key %s", filename, keyString));
+            }
+            c.close();
+            db.setTransactionSuccessful();
+        } catch (SQLException e) {
+            logger.log(Level.WARNING, "Couldn't read key,filename mapping database", e);
+            filename = null;
+        } finally {
+            db.endTransaction();
+        }
+
+        if (filename != null) {
+            return new File(attachmentsDir, filename);
+        } else {
+            // generateFilenameForKey throws an exception if we couldn't generate, this
+            // means we couldn't get one from the database.
+            throw new AttachmentException("Couldn't retrieve filename for attachment");
+        }
+    }
+
+
+    /**
+     * Iterate candidate filenames generated from the filenameRandom generator
+     * until we find one which doesn't already exist.
+     *
+     * We try inserting the new record into attachments_key_filename to find a
+     * unique filename rather than checking on disk filenames. This is because we
+     * can make use of the fact that this method is called on a serial database
+     * queue to make sure our name is unique, whereas we don't have that guarantee
+     * for on-disk filenames. This works because filename is declared
+     * UNIQUE in the attachments_key_filename table.
+     *
+     * We allow up to 200 random name generations, which should give us many millions
+     * of files before a name fails to be generated and makes sure this method doesn't
+     * loop forever.
+     *
+     * @param db database to use
+     * @param keyString blob's key
+     */
+    static String generateFilenameForKey(SQLDatabase db, String keyString)
+            throws NameGenerationException {
+
+        String filename = null;
+
+        long result = -1;  // -1 is error for insert call
+        int tries = 0;
+        while (result == -1 && tries < 200) {
+            byte[] randomBytes = new byte[20];
+            filenameRandom.nextBytes(randomBytes);
+            String candidate = keyToString(randomBytes);
+
+            ContentValues contentValues = new ContentValues();
+            contentValues.put("key", keyString);
+            contentValues.put("filename", candidate);
+            result = db.insert(ATTACHMENTS_KEY_FILENAME, contentValues);
+
+            if (result != -1) {  // i.e., insert worked, filename unique
+                filename = candidate;
+            }
+
+            tries++;
+        }
+
+        if (filename != null) {
+            return filename;
+        } else {
+            throw new NameGenerationException(String.format(
+                    "Couldn't generate unique filename for attachment with key %s", keyString));
+        }
+    }
+
+    public static class NameGenerationException extends AttachmentException {
+
+        NameGenerationException(String msg) {
+            super(msg);
+        }
+
     }
 }
 

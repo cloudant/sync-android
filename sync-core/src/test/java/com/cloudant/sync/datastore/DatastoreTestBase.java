@@ -14,8 +14,8 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.TestUtils;
+
 import org.junit.After;
 import org.junit.Before;
 
@@ -33,7 +33,8 @@ public abstract class DatastoreTestBase {
     public void setUp() throws Exception {
         datastore_manager_dir = TestUtils.createTempTestingDir(this.getClass().getName());
         datastoreManager = new DatastoreManager(this.datastore_manager_dir);
-        datastore = (BasicDatastore)(this.datastoreManager.openDatastore(getClass().getSimpleName()));
+        this.datastore = (BasicDatastore) (this.datastoreManager.openDatastore(getClass().getSimpleName()));
+
     }
 
     @After

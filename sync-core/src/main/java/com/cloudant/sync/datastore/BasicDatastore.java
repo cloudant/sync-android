@@ -18,6 +18,10 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64InputStreamFactory;
+import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
+import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
+import com.cloudant.sync.datastore.migrations.MigrateDatabase6To100;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
@@ -90,36 +94,66 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     private static final String DB_FILE_NAME = "db.sync";
 
-    //Single thread executor to esnure only one tread accesses the db
+    /**
+     * Stores a reference to the encryption key provider so
+     * it can be passed to extensions.
+     */
+    private final KeyProvider keyProvider;
+
+    /**
+     * Queue for all database tasks.
+     */
     private final SQLDatabaseQueue queue;
 
     public BasicDatastore(String dir, String name) throws SQLException, IOException, DatastoreException {
+        this(dir, name, new NullKeyProvider());
+    }
+
+    /**
+     * Constructor for single thread SQLCipher-based datastore.
+     * @param dir The directory where the datastore will be created
+     * @param name The user-defined name of the datastore
+     * @param provider The key provider object that contains the user-defined SQLCipher key
+     * @throws SQLException
+     * @throws IOException
+     */
+    public BasicDatastore(String dir, String name, KeyProvider provider) throws SQLException, IOException, DatastoreException {
         Preconditions.checkNotNull(dir);
         Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(provider);
 
+        this.keyProvider = provider;
         this.datastoreDir = dir;
         this.datastoreName = name;
         this.extensionsDir = FilenameUtils.concat(this.datastoreDir, "extensions");
         final String dbFilename = FilenameUtils.concat(this.datastoreDir, DB_FILE_NAME);
-        queue = new SQLDatabaseQueue(dbFilename);
+        queue = new SQLDatabaseQueue(dbFilename, provider);
+
         int dbVersion = queue.getVersion();
-        if(dbVersion >= 100){
+        // Increment the hundreds position if a schema change means that older
+        // versions of the code will not be able to read the migrated database.
+        if(dbVersion >= 200){
             throw new DatastoreException(String.format("Database version is higher than the version supported " +
                     "by this library, current version %d , highest supported version %d",dbVersion, 99));
         }
-        queue.updateSchema(DatastoreConstants.getSchemaVersion3(), 3);
-        queue.updateSchema(DatastoreConstants.getSchemaVersion4(), 4);
-        queue.updateSchema(DatastoreConstants.getSchemaVersion5(), 5);
-        queue.updateSchema(DatastoreConstants.getSchemaVersion6(), 6);
+        queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion3()), 3);
+        queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion4()), 4);
+        queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion5()), 5);
+        queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion6()), 6);
+        queue.updateSchema(new MigrateDatabase6To100(), 100);
         this.eventBus = new EventBus();
         this.attachmentManager = new AttachmentManager(this);
-
     }
 
     @Override
     public String getDatastoreName() {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         return this.datastoreName;
+    }
+
+    @Override
+    public KeyProvider getKeyProvider() {
+        return this.keyProvider;
     }
 
     @Override
@@ -1692,8 +1726,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     @Override
     public PreparedAttachment prepareAttachment(Attachment att) throws AttachmentException {
-        PreparedAttachment preparedAttachment = new PreparedAttachment(att, this.attachmentManager.attachmentsDir);
-        return preparedAttachment;
+        return this.attachmentManager.prepareAttachment(att);
     }
 
     @Override

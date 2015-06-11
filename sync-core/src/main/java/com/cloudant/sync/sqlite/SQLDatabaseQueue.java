@@ -14,6 +14,10 @@
 
 package com.cloudant.sync.sqlite;
 
+import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
+import com.cloudant.sync.datastore.migrations.Migration;
+
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.concurrent.Callable;
@@ -44,9 +48,18 @@ public class SQLDatabaseQueue {
      * @throws IOException If an problem is encountered creating the DB
      */
     public SQLDatabaseQueue(String filename) throws IOException {
-        this.db = SQLDatabaseFactory.createSQLDatabase(filename);
-        //can directly add to queue no need to check
-        //if it is still running
+        this(filename, new NullKeyProvider());
+    }
+
+    /**
+     * Creates an SQLQueue for the SQLCipher-based database specified.
+     * @param filename The file where the database is located
+     * @param provider The key provider object that contains the user-defined SQLCipher key.
+     *                 Supply a NullKeyProvider to use a non-encrypted database.
+     * @throws IOException If a problem occurs creating the database
+     */
+    public SQLDatabaseQueue(String filename, KeyProvider provider) throws IOException {
+        this.db = SQLDatabaseFactory.createSQLDatabase(filename, provider);
         queue.submit(new Runnable() {
             @Override
             public void run() {
@@ -57,14 +70,14 @@ public class SQLDatabaseQueue {
 
     /**
      * Updates the schema of the database.
-     * @param schema The new Schmea for the database
+     * @param migration Object which performs migration; should not check or set version
      * @param version The version of the schema
      */
-    public void updateSchema(final String[] schema, final int version){
-        this.submit(new SQLQueueCallable<Object>() {
+    public void updateSchema(final Migration migration, final int version){
+        queue.submit(new Callable<Object>() {
             @Override
-            public Object call(SQLDatabase db) throws Exception {
-                SQLDatabaseFactory.updateSchema(db, schema, version);
+            public Object call() throws Exception {
+                SQLDatabaseFactory.updateSchema(db, migration, version);
                 return null;
             }
         }); //fire and forget
