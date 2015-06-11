@@ -15,7 +15,6 @@
 package com.cloudant.sync.datastore.encryption;
 
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.AttachmentException;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.Datastore;
@@ -43,12 +42,8 @@ import org.junit.runners.Parameterized;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringBufferInputStream;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.util.Arrays;
 import java.util.Collection;
