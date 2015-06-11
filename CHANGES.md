@@ -7,10 +7,10 @@
 - [NEW] Added query text search support.  See
   [query documentation](https://github.com/cloudant/sync-android/blob/master/doc/query.md)
   for details.
-- [FIX] Fix issues with database compaction.
-- [FIX] Fixed encoding of `+` characters in query strings.
 - [NEW] Use HttpURLConnection instead of Apache HttpClient to
   significantly reduce dependency footprint.
+- [FIX] Fix issues with database compaction.
+- [FIX] Fixed encoding of `+` characters in query strings.
 - [REMOVED] Removed `oneway` methods from ReplicatorFactory. Users
   should use the method described in the
   [replication documentation](https://github.com/cloudant/sync-android/blob/master/doc/replication.md)
