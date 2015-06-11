@@ -17,14 +17,12 @@ package com.cloudant.sync.datastore;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -56,17 +54,11 @@ public class AttachmentManagerTest {
         SQLDatabase db = mock(SQLDatabase.class);
         when(db.rawQuery(anyString(), any(String[].class))).thenReturn(c);  // use that cursor
 
-        // Mock enough datastore for AttachmentManager
-        BasicDatastore ds = mock(BasicDatastore.class);
-        when(ds.extensionDataFolder(anyString())).thenReturn("blah");
-        when(ds.getKeyProvider()).thenReturn(new NullKeyProvider());
-
         File expected = new File("blah", my_filename);
 
         // Test both true/false pathways (name should be retrieved each time, regardless)
-        AttachmentManager attachmentManager = new AttachmentManager(ds);
-        Assert.assertEquals(expected, attachmentManager.fileFromKey(db, new byte[]{-1, 23}, true));
-        Assert.assertEquals(expected, attachmentManager.fileFromKey(db, new byte[]{-1, 23}, false));
+        Assert.assertEquals(expected, AttachmentManager.fileFromKey(db, new byte[]{-1, 23}, "blah", true));
+        Assert.assertEquals(expected, AttachmentManager.fileFromKey(db, new byte[]{-1, 23}, "blah", false));
 
     }
 
@@ -75,8 +67,6 @@ public class AttachmentManagerTest {
      */
     @Test
     public void testFileForNameGeneratesName() throws AttachmentException, SQLException {
-
-        final String my_filename = "my_filename";
 
         // Force returning no filename
         Cursor c = mock(Cursor.class);
@@ -87,14 +77,8 @@ public class AttachmentManagerTest {
         // Always succeed when generating a filename
         when(db.insert(anyString(), any(ContentValues.class))).thenReturn(10l);  // 10 => success
 
-        // Mock enough datastore for AttachmentManager
-        BasicDatastore ds = mock(BasicDatastore.class);
-        when(ds.extensionDataFolder(anyString())).thenReturn("blah");
-        when(ds.getKeyProvider()).thenReturn(new NullKeyProvider());
-
         // Test
-        AttachmentManager attachmentManager = new AttachmentManager(ds);
-        final File fileFromKey = attachmentManager.fileFromKey(db, new byte[]{-1, 23}, true);
+        final File fileFromKey = AttachmentManager.fileFromKey(db, new byte[]{-1, 23}, "blah", true);
         Assert.assertEquals(new File("blah"), fileFromKey.getParentFile());
         Assert.assertNotNull(fileFromKey.getName());
         Assert.assertTrue(fileFromKey.getName().length() == 40);
@@ -113,17 +97,11 @@ public class AttachmentManagerTest {
         SQLDatabase db = mock(SQLDatabase.class);
         when(db.rawQuery(anyString(), any(String[].class))).thenReturn(c);  // no existing filename
 
-        // Mock enough datastore for AttachmentManager
-        BasicDatastore ds = mock(BasicDatastore.class);
-        when(ds.extensionDataFolder(anyString())).thenReturn("blah");
-        when(ds.getKeyProvider()).thenReturn(new NullKeyProvider());
-
         // Test
 
         // Catch exception so we can verify insert calls
         try {
-            AttachmentManager attachmentManager = new AttachmentManager(ds);
-            attachmentManager.fileFromKey(db, new byte[]{-1, 23}, false);
+            AttachmentManager.fileFromKey(db, new byte[]{-1, 23}, "blah", false);
             Assert.fail("Exception not thrown when name not generated");
         } catch (AttachmentException ex) {
             // We should never try to insert, which indicates generating names
