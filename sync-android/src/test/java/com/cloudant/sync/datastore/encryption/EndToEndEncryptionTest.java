@@ -69,6 +69,10 @@ public class EndToEndEncryptionTest {
             -123, -22, -15, 53, -22, -123, 53, -22, -15, -123, 53, -22, -15, 53, -22,
             -15, -123, -22, -15, 53, -22};
 
+    public static final byte[] WRONG_KEY = new byte[]{-22, -15, 53, -22, -123, 53, -22, -15, -123, 53,
+            -22, -15, -123, 53, -22, -15, 53, -22, -15, -123, -123, 53, -22, -15, 53, -22,
+            -15, -123, -22, -15, 53, -22};
+
     static {
         // Load SQLCipher libraries
         SQLiteDatabase.loadLibs(ProviderTestUtil.getContext());
@@ -206,6 +210,22 @@ public class EndToEndEncryptionTest {
             assertTrue("Unencrypted attachment did not read correctly",
                     IOUtils.contentEquals(new FileInputStream(expectedPlainText), in));
         }
+    }
+
+    /**
+     * Opening a datastore should fail in both the encrypted and unencrypted case, as
+     * supplying the wrong key will result in attempting to decrypt using that key,
+     * which should fail in both cases.
+     */
+    @Test(expected = DatastoreNotCreatedException.class)
+    public void testCannotOpenDatabaseWithWrongKey() throws DatastoreNotCreatedException {
+
+        // First close the datastore, as otherwise DatastoreManager's uniquing just
+        // gives us back the existing instance which has the correct key.
+        datastore.close();
+
+        this.datastoreManager.openDatastore(getClass().getSimpleName(),
+                new SimpleKeyProvider(WRONG_KEY));
     }
 
     /**
