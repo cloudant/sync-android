@@ -1,16 +1,21 @@
-# Unreleased
+# 0.12.0 (2015-06-11)
 
+- [NEW] Encryption of all data is now supported using 256-bit AES:
+  JSON documents, Query indexes and attachments. See
+  [encryption documentation](https://github.com/cloudant/sync-android/blob/master/doc/encryption.md)
+  for details.
 - [NEW] Added query text search support.  See
   [query documentation](https://github.com/cloudant/sync-android/blob/master/doc/query.md)
   for details.
 - [FIX] Fix issues with database compaction.
+- [FIX] Fixed encoding of `+` characters in query strings.
 - [REMOVED] Remove dependency on Apache HttpClient library. The
   built-in HttpURLConnection class is now used instead.
 - [REMOVED] Removed `oneway` methods from ReplicatorFactory. Users
   should use the method described in the
   [replication documentation](https://github.com/cloudant/sync-android/blob/master/doc/replication.md)
   instead.
-
+  
 # 0.11.0 (2015-04-22)
 
 - [FIX] Using MongoDB query as the "gold" standard, query support for
