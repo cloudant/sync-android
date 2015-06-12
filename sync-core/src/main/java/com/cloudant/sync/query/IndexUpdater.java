@@ -22,6 +22,7 @@ import com.cloudant.sync.util.DatabaseUtils;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -232,33 +233,55 @@ class IndexUpdater {
         String arrayFieldName = null; // only record the last, as error if more than one
         for (String fieldName: fieldNames) {
             Object value = ValueExtractor.extractValueForFieldName(fieldName, rev.getBody());
-            if (value != null && value instanceof ArrayList) {
+            if (value != null && value instanceof List) {
                 arrayCount = arrayCount + 1;
                 arrayFieldName = fieldName;
             }
         }
 
         if (arrayCount > 1) {
-            String msg = String.format("Indexing %s in index %s includes >1 array field;",
+            String msg = String.format("Indexing %s in index %s includes > 1 array field; " +
+                                       "Only one array field per index allowed.",
                                        rev.getId(),
                                        indexName);
-            msg = String.format("%s only array field per index allowed", msg);
             logger.log(Level.SEVERE, msg);
             return null;
         }
 
         List<DBParameter> parameters = new ArrayList<DBParameter>();
-        if (arrayCount == 0) {
-            // The are no arrays in the values we are indexing. We just need to index the fields
-            // in the index. _id and _rev are special fields in that they don't appear in the
-            // body, so they need special-casing to get the values.
+        List<Object> arrayFieldValues = null;
+        if (arrayCount == 1) {
+            arrayFieldValues = (List) ValueExtractor.extractValueForFieldName(arrayFieldName,
+                                                                              rev.getBody());
+        }
 
-            List<String> initialIncludedFields = new ArrayList<String>();
-            initialIncludedFields.add("_id");
-            initialIncludedFields.add("_rev");
-            List<Object> initialArgs = new ArrayList<Object>();
-            initialArgs.add(rev.getId());
-            initialArgs.add(rev.getRevision());
+        if (arrayFieldValues != null && arrayFieldValues.size() > 0) {
+            for (Object value: arrayFieldValues) {
+                // For each value in the list we create a row. We put this value at the start
+                // of the INSERT statement along with _id and _rev, followed by the other
+                // fields. _id and _rev are special fields in that they don't appear in the
+                // body, so they need special-casing to get the values.
+                List<String> initialIncludedFields = Arrays.asList("_id",
+                                                                   "_rev",
+                                                                   arrayFieldName);
+                List<Object> initialArgs = Arrays.asList(rev.getId(), rev.getRevision(), value);
+                DBParameter parameter = populateDBParameter(fieldNames,
+                                                            initialIncludedFields,
+                                                            initialArgs,
+                                                            indexName,
+                                                            rev);
+                if (parameter == null) {
+                    return null;
+                }
+                parameters.add(parameter);
+            }
+        } else {
+            // We know that there is no populated list in the values that we are indexing.
+            // We just need to index the fields in the index now. _id and _rev are special
+            // fields because they don't appear in the document body, so they need
+            // special-casing to get the values.
+            List<String> initialIncludedFields = Arrays.asList("_id", "_rev");
+            List<Object> initialArgs = Arrays.<Object>asList(rev.getId(), rev.getRevision());
             DBParameter parameter = populateDBParameter(fieldNames,
                                                         initialIncludedFields,
                                                         initialArgs,
@@ -268,31 +291,6 @@ class IndexUpdater {
                 return null;
             }
             parameters.add(parameter);
-        } else if (arrayFieldName != null) {
-            // We know the value is an array, we found this out in the check above
-            List<Object> arrayFieldValues;
-            arrayFieldValues = (ArrayList) ValueExtractor.extractValueForFieldName(arrayFieldName,
-                                                                                   rev.getBody());
-            for (Object value: arrayFieldValues) {
-                List<String> initialIncludedFields = new ArrayList<String>();
-                initialIncludedFields.add("_id");
-                initialIncludedFields.add("_rev");
-                initialIncludedFields.add(arrayFieldName);
-                List<Object> initialArgs = new ArrayList<Object>();
-                initialArgs.add(rev.getId());
-                initialArgs.add(rev.getRevision());
-                initialArgs.add(value);
-                DBParameter parameter;
-                parameter = populateDBParameter(fieldNames,
-                                                initialIncludedFields,
-                                                initialArgs,
-                                                indexName,
-                                                rev);
-                if (parameter == null) {
-                    return null;
-                }
-                parameters.add(parameter);
-            }
         }
 
         return parameters;
@@ -316,8 +314,8 @@ class IndexUpdater {
             }
 
             Object value = ValueExtractor.extractValueForFieldName(fieldName, rev.getBody());
-
-            if (value != null) {
+            if (value != null && !(value instanceof List && ((List) value).size() == 0)) {
+                // Only include a field with a value or a field with a populated list
                 includeFieldNames.add(fieldName);
                 args.add(value);
             }

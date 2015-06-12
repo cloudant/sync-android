@@ -562,6 +562,122 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @Test
+    public void indexSingleArrayFieldWithEmptyValue() throws Exception {
+        createIndex("basic", Arrays.<Object>asList("name", "car", "pet"));
+
+        assertThat(getIndexSequenceNumber("basic"), is(0l));
+
+        String table = IndexManager.tableNameForIndex("basic");
+        String sql = String.format("SELECT * FROM %s", table);
+        Cursor cursor = null;
+        try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
+            cursor = db.rawQuery(sql, new String[]{});
+            assertThat(cursor.getCount(), is(0));
+        } catch (SQLException e) {
+            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
+        }
+
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.docId = "id123";
+        // body content: { "name" : "mike", "pet" : [] }
+        Map<String, Object> bodyMap = new HashMap<String, Object>();
+        bodyMap.put("name", "mike");
+        bodyMap.put("pet", new ArrayList<Object>());
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        BasicDocumentRevision saved;
+        saved = ds.createDocumentFromRevision(rev);
+
+        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(getIndexSequenceNumber("basic"), is(1l));
+
+        cursor = null;
+        try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
+            cursor = db.rawQuery(sql, new String[]{});
+            Assert.assertEquals(1, cursor.getCount());
+            Assert.assertEquals(5, cursor.getColumnCount());
+            while (cursor.moveToNext()) {
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.getString(0), is("id123"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.getString(1), is(saved.getRevision()));
+                assertThat(cursor.columnName(2), is("name"));
+                assertThat(cursor.getString(2), is("mike"));
+                assertThat(cursor.columnName(3), is("car"));
+                assertThat(cursor.getString(3), is(nullValue()));
+                assertThat(cursor.columnName(4), is("pet"));
+                assertThat(cursor.getString(4), is(nullValue()));
+            }
+        }catch (SQLException e) {
+            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
+        }
+    }
+
+    @Test
+    public void indexSingleArrayFieldInSubDocWithEmptyValue() throws Exception {
+        createIndex("basic", Arrays.<Object>asList("name", "car", "pet.species"));
+
+        assertThat(getIndexSequenceNumber("basic"), is(0l));
+
+        String table = IndexManager.tableNameForIndex("basic");
+        String sql = String.format("SELECT * FROM %s", table);
+        Cursor cursor = null;
+        try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
+            cursor = db.rawQuery(sql, new String[]{});
+            assertThat(cursor.getCount(), is(0));
+        } catch (SQLException e) {
+            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
+        }
+
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.docId = "id123";
+        // body content: { "name" : "mike",  "pet" : { "species" : [] } }
+        Map<String, Object> bodyMap = new HashMap<String, Object>();
+        bodyMap.put("name", "mike");
+        Map<String, Object> pets = new HashMap<String, Object>();
+        pets.put("species", new ArrayList<Object>());
+        bodyMap.put("pet", pets);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        BasicDocumentRevision saved;
+        saved = ds.createDocumentFromRevision(rev);
+
+        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(getIndexSequenceNumber("basic"), is(1l));
+
+        cursor = null;
+        try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
+            cursor = db.rawQuery(sql, new String[]{});
+            Assert.assertEquals(1, cursor.getCount());
+            Assert.assertEquals(5, cursor.getColumnCount());
+            while (cursor.moveToNext()) {
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.getString(0), is("id123"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.getString(1), is(saved.getRevision()));
+                assertThat(cursor.columnName(2), is("name"));
+                assertThat(cursor.getString(2), is("mike"));
+                assertThat(cursor.columnName(3), is("car"));
+                assertThat(cursor.getString(3), is(nullValue()));
+                assertThat(cursor.columnName(4), is("pet.species"));
+                assertThat(cursor.getString(4), is(nullValue()));
+            }
+        }catch (SQLException e) {
+            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
+        }
+    }
+
+    @Test
     public void updateAllIndexes() throws Exception {
         MutableDocumentRevision rev = new MutableDocumentRevision();
         rev.docId = "mike12";
