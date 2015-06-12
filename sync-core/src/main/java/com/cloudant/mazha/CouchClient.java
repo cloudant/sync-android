@@ -42,27 +42,40 @@ import java.util.Set;
 public class CouchClient  {
 
     protected final JSONHelper jsonHelper;
+    private final Map<String, String> customHeaders;
     private CouchURIHelper uriHelper;
 
     public CouchClient(CouchConfig config) {
         this.jsonHelper = new JSONHelper();
         this.uriHelper = new CouchURIHelper(config.getRootUri());
+        this.customHeaders = config.getCustomHeaders();
     }
 
     public URI getRootUri() {
         return this.uriHelper.getRootUri();
     }
 
+    /**
+     * Adds headers from CouchConfig to {@code connection}.
+     * @param connection connection to add headers to.
+     */
+    public void addCustomHeaders(HttpConnection connection) {
+        if (this.customHeaders != null) {
+            connection.requestProperties.putAll(this.customHeaders);
+        }
+    }
+
     // - if 2xx then return stream
     // - map 404 to NoResourceException
-    // - if there's a couch error returned as json, unmarshall and throw
+    // - if there's a couch error returned as json, un-marshall and throw
     // - anything else, just throw the IOException back, use the cause part of the exception?
 
     // it needs to catch eg FileNotFoundException and rethrow to emulate the previous exception handling behaviour
     private InputStream executeToInputStream(HttpConnection connection) throws CouchException {
 
-        // all couchclient requests want to receive application/json responses
+        // all CouchClient requests want to receive application/json responses
         connection.requestProperties.put("Accept", "application/json");
+        this.addCustomHeaders(connection);
         InputStream is = null; // input stream - response from server on success
         InputStream es = null; // error stream - response from server for a 500 etc
         String response = null;
@@ -572,6 +585,7 @@ public class CouchClient  {
             HttpConnection connection = Http.POST(uri, "application/json");
             connection.setRequestBody(payload);
             try {
+                this.addCustomHeaders(connection);
                 is = connection.execute().responseAsInputStream();
                 Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is),
                     new TypeReference<Map<String, MissingRevisions>>() { });
