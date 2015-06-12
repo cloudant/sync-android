@@ -204,6 +204,23 @@ query.put("age", gt12);
 
 See below for supported operators (Selections -> Conditions).
 
+#### Modulo operation in queries
+
+Using the `$mod` operator in queries allows you to select documents based on the value of a field divided by an integer yielding a specific remainder.
+
+To query for documents where `age` divided by 5 has a remainder of  4, do the following:
+
+```java
+{ "age": { "$mod": [ 5, 4 ] } }
+```
+
+A few things to keep in mind when using `$mod` are:
+
+- The list argument to the `$mod` operator must contain two number elements. The first element is the divisor and the second element is the remainder.
+- Division by zero is not allowed so the divisor cannot be zero.
+- The dividend (field value), divisor, and the remainder can be positive or negative.
+- The dividend, divisor, and the remainder can be represented as whole numbers or by using decimal notation.  However internally, prior to performing the modulo arithmetic operation, all three are truncated to their logical whole number representations.  So, for example, the query `{ "age": { "$mod": [ 5.6, 4.2 ] } }` will provide the same result as the query `{ "age": { "$mod": [ 5, 4 ] } }`.
+
 #### Text search
 
 After creating a text index, a text clause may be used as part of a query to perform full text search term matching, phrase matching, and prefix matching.  A text clause can stand on its own as a query or can be part of a compound query (see below).  Text search supports either SQLite [Standard Query Syntax][ftsStandard] or [Enhanced Query Syntax][ftsEnhanced].  This is dependent on which syntax is enabled as part of SQLite FTS.  Typically SQLite FTS on Android comes configured with the SQLite Standard Query Syntax (confirmed during testing on Android API levels 19, 20, and 21).  See [SQLite full text query][ftsQuery] for more details on syntax that is possible with text search.
@@ -557,6 +574,7 @@ Selectors -> Condition -> Objects
 Selectors -> Condition -> Misc
 
 - `$text` in combination with `$search`
+- `$mod`
 
 Selectors -> Condition -> Array
 
@@ -610,7 +628,6 @@ Selectors -> Condition -> Array
 
 Selectors -> Condition -> Misc
 
-- `$mod` (planned)
 - `$regex` (unplanned, waiting on filtering)
 
 
@@ -665,19 +682,19 @@ Here:
     <em>negation-expression</em>
     <strong>{</strong> <em>operator</em> <strong>:</strong> <em>simple-value</em> <strong>}</strong>
     <strong>{</strong> &quot;$regex&quot; <strong>:</strong> <em>Pattern</em> <strong>}</strong>  // not implemented
-    <strong>{</strong> &quot;$mod&quot; <strong>:</strong> <strong>[</strong> <em>divisor, remainder</em> <strong>] }</strong>  // not implemented
+    <strong>{</strong> &quot;$mod&quot; <strong>:</strong> <strong>[</strong> <em>non-zero-number, number</em> <strong>] }</strong>
     <strong>{</strong> &quot;$elemMatch&quot; <strong>: {</strong> <em>many-expressions</em> <strong>} }</strong>  // not implemented
     <strong>{</strong> &quot;$size&quot; <strong>:</strong> <em>positive-integer</em> <strong>}</strong>  // not implemented
     <strong>{</strong> &quot;$all&quot; <strong>:</strong> <em>array-value</em> <strong>}</strong>  // not implemented
-    <strong>{</strong> &quot;$in&quot; <strong>:</strong> <em>array-value</em> <strong>}</strong>  // not implemented
-    <strong>{</strong> &quot;$nin&quot; <strong>:</strong> <em>array-value</em> <strong>}</strong>  // not implemented
+    <strong>{</strong> &quot;$in&quot; <strong>:</strong> <em>array-value</em> <strong>}</strong>
+    <strong>{</strong> &quot;$nin&quot; <strong>:</strong> <em>array-value</em> <strong>}</strong>
     <strong>{</strong> &quot;$exists&quot; <strong>:</strong> <em>boolean</em> <strong>}</strong>
     <strong>{</strong> &quot;$type&quot; <strong>:</strong> <em>type</em> <strong>}</strong>  // not implemented
 
 <em>text-search-expression</em> :=     
     <strong>{</strong> &quot;$text&quot; <strong>:</strong><strong> {</strong> &quot;$search&quot; <strong>:</strong> <em>string-value</em> <strong>}</strong> <strong>}</strong>
 
-<em>operator</em> := &quot;$gt&quot; | &quot;$gte&quot; | &quot;$lt&quot; | &quot;$lte&quot; | &quot;$eq&quot; | &quot;$neq&quot;
+<em>operator</em> := &quot;$gt&quot; | &quot;$gte&quot; | &quot;$lt&quot; | &quot;$lte&quot; | &quot;$eq&quot; | &quot;$ne&quot;
 
 // Obviously List, but easier to express like this
 <em>array-value</em> := <strong>[</strong> simple-value (&quot;,&quot; simple-value)+ <strong>]</strong>
@@ -689,6 +706,10 @@ Here:
 <em>simple-value</em> := <em>String</em> | <em>Number</em>
 
 <em>string-value</em> := <em>String</em>
+
+<em>number</em> := <em>NSNumber</em>
+
+<em>non-zero-number</em> := <em>NSNumber</em>
 
 <em>positive-integer</em> := <em>Integer</em>
 
