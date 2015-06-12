@@ -16,6 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.emptyArray;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -1509,4 +1510,150 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         assertThat(queryResult.documentIds(), contains(expected.toArray()));
     }
 
+    // When querying using $mod operator
+
+    @Test
+    public void worksWhenUsingPositiveDivisorWithMOD() throws Exception {
+        setUpNumericOperationsQueryData();
+        // query - { "score": { "$mod": [ 10, 1 ] } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$mod", Arrays.<Object>asList(10, 1));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("score", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike31", "fred11"));
+    }
+
+    @Test
+    public void worksWhenUsingNegativeDivisorWithMOD() throws Exception {
+        setUpNumericOperationsQueryData();
+        // query - { "score": { "$mod": [ -10, 1 ] } }
+        //
+        // This test should generate the same result as when
+        // using @{ @"score" : @{@"$mod" : @[ @10, @1 ] } }.
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$mod", Arrays.<Object>asList(-10, 1));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("score", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike31", "fred11"));
+    }
+
+    @Test
+    public void worksWhenUsingMODWithOthers() throws Exception {
+        setUpNumericOperationsQueryData();
+        // query - { "name" : "mike", "score": { "$mod": [ 10, 1 ] } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$mod", Arrays.<Object>asList(10, 1));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("name", "mike");
+        query.put("score", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike31"));
+    }
+
+    @Test
+    public void returnsEmptyResultSetWhenMODAppliedToNonNumericField() throws Exception {
+        setUpNumericOperationsQueryData();
+        // query - { "name": { "$mod": [ 10, 1 ] } }
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$mod", Arrays.<Object>asList(10, 1));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("name", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), is(empty()));
+    }
+
+    @Test
+    public void worksWhenRemainderIs0UsingMOD() throws Exception {
+        setUpNumericOperationsQueryData();
+        // query - { "score": { "$mod": [ 5, 0 ] } }
+        //
+        // The score field value will be truncated to the
+        // whole number before modulo arithmetic is applied.
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$mod", Arrays.<Object>asList(5, 0));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("score", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("john15",
+                                                                 "john-15",
+                                                                 "john15.2",
+                                                                 "john15.6",
+                                                                 "john0",
+                                                                 "john0.0",
+                                                                 "john0.6",
+                                                                 "john-0.6"));
+    }
+
+    // The following two tests ensure that we are using truncated division in the mod operator.
+    
+    @Test
+    public void worksWhenRemainderIsNegativeUsingMOD() throws Exception {
+        setUpNumericOperationsQueryData();
+        // query - { "score": { "$mod": [ 10, -5 ] } }
+        //
+        // A negative remainder can only be achieved if the dividend
+        // is negative, which in this case is the value of the score field.
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$mod", Arrays.<Object>asList(10, -5));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("score", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), contains("john-15"));
+    }
+
+    @Test
+    public void worksWhenDivisorAndRemainderAreNegativeUsingMOD() throws Exception {
+        setUpNumericOperationsQueryData();
+        // query - { "score": { "$mod": [ -10, -5 ] } }
+        //
+        // This test should generate the same result as when
+        // using { "score": { "$mod": [ 10, -5 ] } }.
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$mod", Arrays.<Object>asList(-10, -5));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("score", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), contains("john-15"));
+    }
+
+    @Test
+    public void worksWhenRemainderIsNotAWholeNumberUsingMOD() throws Exception {
+        setUpNumericOperationsQueryData();
+        // query - { "score": { "$mod": [ 10, 1.6 ] } }
+        //
+        // The remainder is truncated to the whole number prior to the operation
+        // being performed.  This test should generate the same result as when
+        // using { "score": { "$mod": [ 10, 1 ] } }.
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$mod", Arrays.<Object>asList(10, 1.6));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("score", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike31", "fred11"));
+    }
+
+    @Test
+    public void worksWhenDivisorIsNotAWholeNumberUsingMOD() throws Exception {
+        setUpNumericOperationsQueryData();
+        // query - { "score": { "$mod": [ 5.4, 0 ] } }
+        //
+        // The divisor is truncated to the whole number prior
+        // to the operation being performed.
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$mod", Arrays.<Object>asList(5.4, 0));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("score", op);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("john15",
+                                                                 "john-15",
+                                                                 "john15.2",
+                                                                 "john15.6",
+                                                                 "john0",
+                                                                 "john0.0",
+                                                                 "john0.6",
+                                                                 "john-0.6"));
+    }
+    
 }
