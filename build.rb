@@ -1,14 +1,14 @@
-#!/usr/bin/ruby 
+#!/usr/bin/ruby
 #
 #  -couch <type> couchdb1.6, couchdb2.0, cloudantSAAS, cloudantlocal - default is couchdb1.6
 
 #  -platform <platfrom> java | android default is Java
 #  -D* gets passed into build.
-#  
+#
 #
 
 params = { :d_options => Array.new }
-arg_is_value = false 
+arg_is_value = false
 prev_arg = nil
 
 
@@ -20,20 +20,20 @@ ARGV.each do |arg|
 	 end
 
 	 #process arguments into a hash
-	 unless arg_is_value 
+	 unless arg_is_value
 	 	params[arg[1,arg.length] ] = nil
-	 	$prev_arg = arg[1,arg.length] 
+	 	$prev_arg = arg[1,arg.length]
 	 	arg_is_value = true
 	 else
 	 	params[$prev_arg] = arg
-	 	arg_is_value = false 
+	 	arg_is_value = false
 	 end
 
 end
 
 
 #apply defaults
-params["platform"] = "java" unless params["platform"] 
+params["platform"] = "java" unless params["platform"]
 params["couch"] = "couchdb1.6" unless params["couch"]
 
 #kill any docker container that may be running on the machine.
@@ -45,7 +45,7 @@ puts "Starting docker container #{$couch}"
 
 #cloudant local current runs in a Vagrant box, rather than docker, this box is *always* running on cloudantsync001
 #so we skip the docker set up commands and change the options to enable connection to cloudant local
-if params["couch"] == "cloudantlocal" 
+if params["couch"] == "cloudantlocal"
 
 	#remove options that will clash with cloudant local
 	options_to_remove = Array.new
@@ -63,13 +63,21 @@ if params["couch"] == "cloudantlocal"
 	#add some -d opts to point tests at local instead
 	params[:d_options].push "-Dtest.couch.username=admin"
 	params[:d_options].push "-Dtest.couch.password=pass"
-	params[:d_options].push "-Dtest.couch.host=127.0.0.1"
+
+  #cloudant local needs a different port on Android to Java
+	#android needs to use a special address which maps to
+	#local loopback interface for the machine it is running on
+	if  params["platform"] == "java"
+		params[:d_options].push "-Dtest.couch.host=127.0.0.1"
+  else
+		params[:d_options].push "-Dtest.couch.host=10.0.2.2"
+	end
 	params[:d_options].push "-Dtest.couch.port=8081" #jenkins runs on 8080 this needs to be 8081
 	params[:d_options].push "-Dtest.couch.ignore.auth.headers=true"
 	params[:d_options].push "-Dtest.couch.ignore.compaction=true"
 else
 
-	docker_port = 5984 
+	docker_port = 5984
 	#special case for couchdb2.0 it runs on port 15984 in the docker container rather than 5984
 	docker_port = 15984 if params["couch"] == "couchdb2.0"
 
@@ -83,7 +91,7 @@ end
 
 puts "Performing build"
 #make gradlew executable
-system("chmod a+x ./gradlew ") 
+system("chmod a+x ./gradlew ")
 
 
 #exit
@@ -99,7 +107,7 @@ exitcode = $?
 
 
 unless params["couch"] == "cloudantlocal"
-	puts "Tearing down docker container" 
+	puts "Tearing down docker container"
 	system("docker stop couchdb")
 
 	system("docker rm couchdb")
