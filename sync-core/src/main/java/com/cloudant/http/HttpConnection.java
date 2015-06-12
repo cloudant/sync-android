@@ -23,7 +23,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -140,17 +143,27 @@ public class HttpConnection  {
     public HttpConnection execute() throws IOException {
         System.setProperty("http.keepAlive", "false");
         connection = (HttpURLConnection) url.openConnection();
-        for (String key : requestProperties.keySet()) {
-            connection.setRequestProperty(key, requestProperties.get(key));
-        }
         // always read the result, so we can retrieve the HTTP response code
         connection.setDoInput(true);
         connection.setRequestMethod(requestMethod);
-        if (contentType != null) {
+
+        // Set request headers
+        List<String> lowerCaseExistingHeaders = new ArrayList<String>();
+        for (String key : requestProperties.keySet()) {
+            connection.setRequestProperty(key, requestProperties.get(key));
+            lowerCaseExistingHeaders.add(key.toLowerCase());
+        }
+
+
+        if (contentType != null && !lowerCaseExistingHeaders.contains("content-type")) {
             connection.setRequestProperty("Content-type", contentType);
         }
-        connection.setRequestProperty("User-Agent", userAgent);
-        if (url.getUserInfo() != null) {
+
+        if (!lowerCaseExistingHeaders.contains("user-agent")) {
+            connection.setRequestProperty("User-Agent", userAgent);
+        }
+
+        if (url.getUserInfo() != null && !lowerCaseExistingHeaders.contains("authorization")) {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             OutputStream bos = Base64OutputStreamFactory.get(baos);
             bos.write(url.getUserInfo().getBytes());
@@ -159,6 +172,7 @@ public class HttpConnection  {
             String encodedAuth = baos.toString();
             connection.setRequestProperty("Authorization", String.format("Basic %s", encodedAuth));
         }
+
         if (input != null) {
             connection.setDoOutput(true);
             if (inputLength != -1) {
