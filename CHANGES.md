@@ -1,3 +1,11 @@
+# 0.12.1 (2015-06-12)
+
+- [FIX] Fixed issue where Base64 encoded strings for HTTP basic authentication
+  could contain line breaks.
+- [FIX] Custom headers set by overriding getCouchConfig in Replication classes
+  were not set on HTTP requests
+
+
 # 0.12.0 (2015-06-11)
 
 - [NEW] Encryption of all data is now supported using 256-bit AES:
@@ -15,7 +23,7 @@
   should use the method described in the
   [replication documentation](https://github.com/cloudant/sync-android/blob/master/doc/replication.md)
   instead.
-  
+
 # 0.11.0 (2015-04-22)
 
 - [FIX] Using MongoDB query as the "gold" standard, query support for
@@ -49,7 +57,7 @@
   interface and its implementing classes. See the
   [commit](https://github.com/cloudant/sync-android/commit/e6d4f685cefe9c06a9c9372723d9cc06dbc7e978)
   for more infomation.
-- [FIX] Support CouchDB 2.0/Cloudant Local's array-based 
+- [FIX] Support CouchDB 2.0/Cloudant Local's array-based
   sequence number format to fix replication between the local
   database and these remote servers.
 - [FIX] Fixed issue where the path portion for remote database
@@ -90,9 +98,9 @@
 - [FIX] Fixed issue  where regexp for database names was too restrictive
 - [FIX] Fixed indexmanager bug which prevented fields with certain names being indexed
 - [FIX] Fixed issues where sqlite connections were not being closed correctly
-- [NEW] Added proguard example configuration file 
+- [NEW] Added proguard example configuration file
 
-# 0.7.1 (2014-08-26) 
+# 0.7.1 (2014-08-26)
 
 - [NEW] A new CRUD and Attachments API has been introduced. See
   doc/crud.md for details, along with a cookbook on using the new API.
