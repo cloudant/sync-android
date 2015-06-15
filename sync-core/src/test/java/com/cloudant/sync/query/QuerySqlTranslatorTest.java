@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -808,6 +809,21 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         assertThat(where.placeHolderValues, is(arrayContaining("mike", "fred")));
     }
 
+    @Test
+    public void usesCorrectSQLOperatorsWhenUsingMOD() {
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$mod", Arrays.<Object>asList(2, 1));
+        Map<String, Object> age = new HashMap<String, Object>();
+        age.put("age", op);
+
+        SqlParts where =
+                QuerySqlTranslator.whereSqlForAndClause(Collections.<Object>singletonList(age),
+                                                        indexName);
+        String expected = "\"age\" % ? = CAST(? AS INTEGER)";
+        assertThat(where.sqlWithPlaceHolders, is(expected));
+        assertThat(where.placeHolderValues, is(arrayContaining("2", "1")));
+    }
+
     // When generating query WHERE clauses with $not
 
     @Test
@@ -1011,6 +1027,26 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
                                         ageEq);
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("12", "54", "mike", "30", "42")));
+    }
+
+    @Test
+    public void usesCorrectSQLOperatorsWhenUsingNOTMOD() {
+        Map<String, Object> op = new HashMap<String, Object>();
+        op.put("$mod", Arrays.<Object>asList(2, 1));
+        Map<String, Object> notOp = new HashMap<String, Object>();
+        notOp.put("$not", op);
+        Map<String, Object> age = new HashMap<String, Object>();
+        age.put("age", notOp);
+
+        SqlParts where =
+                QuerySqlTranslator.whereSqlForAndClause(Collections.<Object>singletonList(age),
+                                                        indexName);
+        String expected = String.format("_id NOT IN " +
+                                        "(SELECT _id FROM %s" +
+                                        " WHERE \"age\" %% ? = CAST(? AS INTEGER))",
+                                        indexTable);
+        assertThat(where.sqlWithPlaceHolders, is(expected));
+        assertThat(where.placeHolderValues, is(arrayContaining("2", "1")));
     }
 
     // When generating query SELECT clauses

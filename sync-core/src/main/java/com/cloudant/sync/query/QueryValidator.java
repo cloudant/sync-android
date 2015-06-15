@@ -83,6 +83,15 @@ class QueryValidator {
             // and make
             //     [ { "field1": { "$eq": "mike"} }, ... ]
             predicates = compressMultipleNotOperators(predicates);
+
+            // Here we ensure that all non-whole number arguments included in a $mod
+            // clause are truncated.  This provides for consistent behavior between
+            // the SQL engine and the unindexed matcher.
+            // Take
+            //     [ { "field1": { "$mod" : [ 2.6, 1.7] } }, ... ]
+            // and make
+            //     [ { "field1": { "$mod" : [ 2, 1 ] } }, ... ]
+            predicates = truncateModArguments(predicates);
         }
 
         Map<String, Object> selector = new HashMap<String, Object>();
@@ -329,6 +338,61 @@ class QueryValidator {
         return accumulator;
     }
 
+    @SuppressWarnings("unchecked")
+    private static List<Object> truncateModArguments(List<Object> clause) {
+        List<Object> accumulator = new ArrayList<Object>();
+
+        for (Object fieldClause: clause) {
+            Object predicate;
+            String fieldName;
+            if (fieldClause instanceof Map && !((Map) fieldClause).isEmpty()) {
+                Map<String, Object> fieldClauseMap = (Map<String, Object>) fieldClause;
+                fieldName = (String) fieldClauseMap.keySet().toArray()[0];
+                predicate = fieldClauseMap.get(fieldName);
+            } else {
+                // if this isn't a map, we don't know what to do so add the clause
+                // to the accumulator to be dealt with later as part of the final selector
+                // validation.
+                accumulator.add(fieldClause);
+                continue;
+            }
+
+            // If the clause isn't a special clause (the field name starts with
+            // $, e.g., $and), we need to check whether the clause has a $mod
+            // operator.  If it does, then "truncate" all decimal notation
+            // in the arguments list by casting the list elements as Integer.
+            if (!fieldName.startsWith("$")) {
+                if (predicate instanceof Map) {
+                    // If $mod operator is found as a key and the value is a list
+                    if(((Map) predicate).get(MOD) instanceof List) {
+                        // Step through the list and cast all numbers as integers
+                        List<Object> rawArguments = (List<Object>) ((Map) predicate).get(MOD);
+                        List<Object> arguments = new ArrayList<Object>();
+                        for (Object rawArgument: rawArguments) {
+                            if (rawArgument instanceof Number) {
+                                int argument = ((Number) rawArgument).intValue();
+                                arguments.add(argument);
+                            } else {
+                                // If not a number then this will be caught later during validation.
+                                arguments.add(rawArgument);
+                            }
+                        }
+                        ((Map<String, Object>) predicate).clear();
+                        ((Map<String, Object>) predicate).put(MOD, arguments);
+                    }
+                }
+            } else if (predicate instanceof List) {
+                predicate = truncateModArguments((List<Object>) predicate);
+            }
+
+            Map<String, Object> element = new HashMap<String, Object>();
+            element.put(fieldName, predicate);
+            accumulator.add(element);
+        }
+
+        return accumulator;
+    }
+
     private static boolean validateCompoundOperatorOperand(Object operand) {
         if (!(operand instanceof List)) {
             String msg = String.format("Argument to compound operator is not a List: %s",
@@ -424,14 +488,7 @@ class QueryValidator {
 
     @SuppressWarnings("unchecked")
     private static boolean validateClause(Map<String, Object> clause) {
-        List<String> validOperators = Arrays.asList("$eq",
-                                                    "$lt",
-                                                    "$gt",
-                                                    "$exists",
-                                                    "$not",
-                                                    "$gte",
-                                                    "$lte",
-                                                    "$in");
+        List<String> validOperators = Arrays.asList(EQ, LT, GT, EXISTS, NOT, GTE, LTE, IN, MOD);
         if (clause.size() == 1) {
             String operator = (String) clause.keySet().toArray()[0];
             if (validOperators.contains(operator)) {
@@ -518,11 +575,34 @@ class QueryValidator {
             return validateExistsArgument(predicateValue);
         } else if (operator.equals(SEARCH)) {
             return validateTextSearchArgument(predicateValue);
+        } else if (operator.equals(MOD)) {
+            return validateModArgument(predicateValue);
         } else if (validateNotAFloat(predicateValue)) {
             return (predicateValue instanceof String || predicateValue instanceof Number);
         }
 
         return false;
+    }
+
+    private static boolean validateModArgument(Object modulus) {
+        boolean valid = true;
+
+        // The argument must be a list containing two number elements.  The two elements
+        // a.k.a the divisor and remainder, are treated as integers by the query engine.
+        // The divisor, however, cannot be 0, since division by 0 is not a valid
+        // mathematical operation.  That validation is handled here.
+        if (!(modulus instanceof List) ||
+            ((List)modulus).size() != 2 ||
+            !(((List)modulus).get(0) instanceof Number) ||
+            !(((List)modulus).get(1) instanceof Number) ||
+            ((Number)(((List)modulus).get(0))).intValue() == 0) {
+            valid = false;
+            logger.log(Level.SEVERE, "$mod operator requires a two element List containing " +
+                                     "numbers where the first number, the divisor, is not zero.  " +
+                                     "As in: { \"$mod\" : [ 2, 1 ] }.  Where 2 is the divisor " +
+                                     "and 1 is the remainder.");
+        }
+        return valid;
     }
 
     private static boolean validateExistsArgument(Object exists) {

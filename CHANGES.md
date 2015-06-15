@@ -1,3 +1,7 @@
+# Unreleased
+
+- [NEW] Added query support for the `$mod` operator.
+
 # 0.12.1 (2015-06-12)
 
 - [FIX] Fixed issue where Base64 encoded strings for HTTP basic authentication
@@ -23,6 +27,7 @@
   should use the method described in the
   [replication documentation](https://github.com/cloudant/sync-android/blob/master/doc/replication.md)
   instead.
+- [NEW] Added query support for the `$mod` operator.
 
 # 0.11.0 (2015-04-22)
 

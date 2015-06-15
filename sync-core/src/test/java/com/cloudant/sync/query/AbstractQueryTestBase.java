@@ -327,6 +327,84 @@ public abstract class AbstractQueryTestBase {
                 is("pet"));
     }
 
+    // Used to setup document data testing for queries with mathematical operations.
+    // - When querying using $mod operator
+    public void setUpNumericOperationsQueryData() throws Exception {
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.docId = "mike31";
+        Map<String, Object> bodyMap = new HashMap<String, Object>();
+        bodyMap.put("name", "mike");
+        bodyMap.put("score", 31);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "fred11";
+        bodyMap.clear();
+        bodyMap.put("name", "fred");
+        bodyMap.put("score", 11);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "john15";
+        bodyMap.clear();
+        bodyMap.put("name", "john");
+        bodyMap.put("score", 15);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "john-15";
+        bodyMap.clear();
+        bodyMap.put("name", "john");
+        bodyMap.put("score", -15);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "john15.2";
+        bodyMap.clear();
+        bodyMap.put("name", "john");
+        bodyMap.put("score", 15.2);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "john15.6";
+        bodyMap.clear();
+        bodyMap.put("name", "john");
+        bodyMap.put("score", 15.6);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "john0";
+        bodyMap.clear();
+        bodyMap.put("name", "john");
+        bodyMap.put("score", 0);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "john0.0";
+        bodyMap.clear();
+        bodyMap.put("name", "john");
+        bodyMap.put("score", 0.0);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "john0.6";
+        bodyMap.clear();
+        bodyMap.put("name", "john");
+        bodyMap.put("score", 0.6);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "john-0.6";
+        bodyMap.clear();
+        bodyMap.put("name", "john");
+        bodyMap.put("score", -0.6);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "score"), "name_score"),
+                                    is("name_score"));
+    }
+
     // Used to setup document data testing:
     // - When there is a large result set
     public void setUpLargeResultSetQueryData() throws Exception {
