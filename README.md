@@ -151,6 +151,7 @@ import com.cloudant.sync.datastore.DatastoreNotCreatedException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
+import com.cloudant.sync.datastore.UnsavedFileAttachment;
 
 // Create a DatastoreManager using application internal storage path
 File path = getApplicationContext().getDir("datastores", Context.MODE_PRIVATE);
