@@ -144,11 +144,16 @@ Once the libraries are added to a project, the basics of adding and reading
 a document are:
 
 ```java
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.DatastoreNotCreatedException;
+import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.DocumentException;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
 
 // Create a DatastoreManager using application internal storage path
-File path = getApplicationContext().getDir("datastores");
+File path = getApplicationContext().getDir("datastores", Context.MODE_PRIVATE);
 DatastoreManager manager = new DatastoreManager(path.getAbsolutePath());
 
 Datastore ds = manager.openDatastore("my_datastore");
