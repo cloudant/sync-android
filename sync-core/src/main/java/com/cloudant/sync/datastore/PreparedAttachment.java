@@ -36,18 +36,30 @@ import java.util.logging.Logger;
 public class PreparedAttachment {
 
     private Logger logger = Logger.getLogger(PreparedAttachment.class.getCanonicalName());
+
+    public final Attachment attachment;
+    public final File tempFile;
+    public final byte[] sha1;
+    public final long length;
+    public final long encodedLength;
+
     /**
      * Prepare an attachment by copying it to a temp location and calculating its sha1.
      *
-     * @param attachment The attachment to prepare
-     * @param attachmentsDir The 'BLOB store' or location where attachments are stored for this database
-     * @param attachmentStreamFactory The {@link AttachmentStreamFactory} used for writing attachment
+     * @param attachment              The attachment to prepare
+     * @param attachmentsDir          The 'BLOB store' or location where attachments are stored
+     *                                for this database
+     * @param length                  Length in bytes, before any encoding. This
+     *                                argument is ignored if the attachment is not encoded
+     * @param attachmentStreamFactory The {@link AttachmentStreamFactory} used for writing
+     *                                attachment
      *                                data to disk
      * @throws AttachmentNotSavedException if there was an error copying the attachment or
-     * calculating its SHA1
+     *                                     calculating its SHA1
      */
     public PreparedAttachment(Attachment attachment,
                               String attachmentsDir,
+                              long length,
                               AttachmentStreamFactory attachmentStreamFactory) throws AttachmentException {
         this.attachment = attachment;
         this.tempFile = new File(attachmentsDir, "temp" + UUID.randomUUID());
@@ -81,16 +93,20 @@ public class PreparedAttachment {
             IOUtils.closeQuietly(attachmentInStream);
             IOUtils.closeQuietly(tempFileOutStream);
         }
+        
         //Set attachment length from bytes read in input stream
-        this.length = totalRead;
+        if (this.attachment.encoding == Attachment.Encoding.Plain) {
+            this.length = totalRead;
+            // 0 signals "no encoded length" - this is consistent with couch which does not send
+            // encoded_length if the encoding is "plain"
+            this.encodedLength = 0;
+        } else {
+            // the pre-encoded length is known, so store it
+            this.length = length;
+            this.encodedLength = totalRead;
+        }
+
         this.sha1 = calculateSha1.digest();
     }
 
-    public final Attachment attachment;
-    public final File tempFile;
-    public final byte[] sha1;
-    public final long length;
 }
-
-
-

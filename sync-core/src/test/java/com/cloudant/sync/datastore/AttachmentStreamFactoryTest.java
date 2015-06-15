@@ -54,7 +54,7 @@ public class AttachmentStreamFactoryTest extends BasicDatastoreTestBase {
 
         UnsavedFileAttachment usf = new UnsavedFileAttachment(plainText, "text/plain");
         PreparedAttachment preparedAttachment = new PreparedAttachment(
-                usf, datastore_manager_dir, asf);
+                usf, datastore_manager_dir, 0, asf);
 
         Assert.assertTrue("Writing to unencrypted, un-encoded stream didn't give correct output",
                 IOUtils.contentEquals(
@@ -73,8 +73,8 @@ public class AttachmentStreamFactoryTest extends BasicDatastoreTestBase {
         AttachmentStreamFactory asf = new AttachmentStreamFactory(new NullKeyProvider());
 
         File plainText = f("fixture/EncryptedAttachmentTest_plainText");
-        SavedAttachment savedAttachment = new SavedAttachment("test", 0, 0, null, "text/plain",
-                plainText, Attachment.Encoding.Plain, asf);
+        SavedAttachment savedAttachment = new SavedAttachment(0, "test", null, "text/plain", Attachment.Encoding.Plain, 0, 0, 0,
+                plainText, asf);
 
         Assert.assertTrue("Reading unencrypted, un-encoded stream didn't give correct output",
                 IOUtils.contentEquals(
@@ -97,14 +97,14 @@ public class AttachmentStreamFactoryTest extends BasicDatastoreTestBase {
 
         UnsavedFileAttachment usf = new UnsavedFileAttachment(plainText, "text/plain");
         PreparedAttachment preparedAttachment = new PreparedAttachment(
-                usf, datastore_manager_dir, asf);
+                usf, datastore_manager_dir, 0, asf);
 
         Assert.assertTrue("Writing to unencrypted, unencoded stream didn't give correct output",
                 IOUtils.contentEquals(new FileInputStream(preparedAttachment.tempFile),
                         new FileInputStream(plainText)));
 
-        SavedAttachment savedAttachment = new SavedAttachment("test", 0, 0, null, "text/plain",
-                preparedAttachment.tempFile, Attachment.Encoding.Plain, asf);
+        SavedAttachment savedAttachment = new SavedAttachment(0, "test", null, "text/plain", Attachment.Encoding.Plain, 0, 0, 0,
+                preparedAttachment.tempFile, asf);
 
         Assert.assertTrue("Reading from written unencrypted, unencoded blob didn't give correct output",
                 IOUtils.contentEquals(
@@ -158,8 +158,8 @@ public class AttachmentStreamFactoryTest extends BasicDatastoreTestBase {
         File plainText = f("fixture/EncryptedAttachmentTest_plainText");
         File zippedPlainText = f("fixture/EncryptedAttachmentTest_plainText.gz");
 
-        SavedAttachment savedAttachment = new SavedAttachment("test", 0, 0, null, "text/plain",
-                zippedPlainText, Attachment.Encoding.Gzip, asf);
+        SavedAttachment savedAttachment = new SavedAttachment(0, "test", null, "text/plain", Attachment.Encoding.Gzip, 0, 0, 0,
+                zippedPlainText, asf);
 
         Assert.assertTrue("Reading unencrypted, encoded stream didn't give correct output",
                 IOUtils.contentEquals(
@@ -187,7 +187,7 @@ public class AttachmentStreamFactoryTest extends BasicDatastoreTestBase {
 
         UnsavedFileAttachment usf = new UnsavedFileAttachment(plainText, "text/plain");
         PreparedAttachment preparedAttachment = new PreparedAttachment(
-                usf, datastore_manager_dir, asf);
+                usf, datastore_manager_dir, 0, asf);
 
         // We check content using EncryptedAttachmentInputStream. It seems a bit circular,
         // but the aim of this test is to make sure AttachmentStreamFactory is providing
@@ -215,8 +215,8 @@ public class AttachmentStreamFactoryTest extends BasicDatastoreTestBase {
         File plainText = f("fixture/EncryptedAttachmentTest_plainText");
         File cipherAttachmentBlob = f("fixture/EncryptedAttachmentTest_cipherText_aes128");
 
-        SavedAttachment savedAttachment = new SavedAttachment("test", 0, 0, null, "text/plain",
-                cipherAttachmentBlob, Attachment.Encoding.Plain, asf);
+        SavedAttachment savedAttachment = new SavedAttachment(0, "test", null, "text/plain", Attachment.Encoding.Plain, 0, 0, 0,
+                cipherAttachmentBlob, asf);
 
         Assert.assertTrue("Reading encrypted, un-encoded stream didn't give correct output",
                 IOUtils.contentEquals(
@@ -241,7 +241,7 @@ public class AttachmentStreamFactoryTest extends BasicDatastoreTestBase {
 
         UnsavedFileAttachment usf = new UnsavedFileAttachment(plainText, "text/plain");
         PreparedAttachment preparedAttachment = new PreparedAttachment(
-                usf, datastore_manager_dir, asf);
+                usf, datastore_manager_dir, 0, asf);
 
         Assert.assertTrue("Writing to encrypted stream didn't give correct output",
                 IOUtils.contentEquals(
@@ -250,8 +250,8 @@ public class AttachmentStreamFactoryTest extends BasicDatastoreTestBase {
                                 EncryptionTestConstants.key16Byte),
                         new FileInputStream(plainText)));
 
-        SavedAttachment savedAttachment = new SavedAttachment("test", 0, 0, null, "text/plain",
-                preparedAttachment.tempFile, Attachment.Encoding.Plain, asf);
+        SavedAttachment savedAttachment = new SavedAttachment(0, "test", null, "text/plain", Attachment.Encoding.Plain, 0, 0, 0,
+                preparedAttachment.tempFile, asf);
 
         Assert.assertTrue("Reading from written encrypted, un-encoded blob didn't give correct output",
                 IOUtils.contentEquals(
@@ -284,7 +284,7 @@ public class AttachmentStreamFactoryTest extends BasicDatastoreTestBase {
 
         UnsavedFileAttachment usf = new UnsavedFileAttachment(plainText, "text/plain");
         PreparedAttachment preparedAttachment = new PreparedAttachment(
-                usf, datastore_manager_dir, asf);
+                usf, datastore_manager_dir, 0, asf);
 
         Assert.assertTrue("Writing to encrypted, un-encoded stream didn't give correct output",
                 IOUtils.contentEquals(
@@ -302,8 +302,8 @@ public class AttachmentStreamFactoryTest extends BasicDatastoreTestBase {
         AttachmentStreamFactory asf2 = new AttachmentStreamFactory(
                 EncryptionTestConstants.keyProviderUsingBytesAsKey(otherKey)
         );
-        SavedAttachment savedAttachment = new SavedAttachment("test", 0, 0, null, "text/plain",
-                preparedAttachment.tempFile, Attachment.Encoding.Plain, asf2);
+        SavedAttachment savedAttachment = new SavedAttachment(0, "test", null, "text/plain", Attachment.Encoding.Plain, 0, 0, 0,
+                preparedAttachment.tempFile, asf2);
 
         Assert.assertFalse("Reading with different key shouldn't produce plaintext content",
                 IOUtils.contentEquals(
@@ -365,8 +365,9 @@ public class AttachmentStreamFactoryTest extends BasicDatastoreTestBase {
         File plainText = f("fixture/EncryptedAttachmentTest_plainText");
         File cipherAttachmentBlob = f("fixture/EncryptedAttachmentTest_gzip_cipherText_aes128");
 
-        SavedAttachment savedAttachment = new SavedAttachment("test", 0, 0, null, "text/plain",
-                cipherAttachmentBlob, Attachment.Encoding.Gzip, asf);
+
+        SavedAttachment savedAttachment = new SavedAttachment(0, "test", null, "text/plain", Attachment.Encoding.Gzip, 0, 0, 0,
+                cipherAttachmentBlob, asf);
 
         Assert.assertTrue("Reading encrypted, encoded stream didn't give correct output",
                 IOUtils.contentEquals(

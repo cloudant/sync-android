@@ -46,11 +46,6 @@ public abstract class Attachment implements Comparable<Attachment>{
      * Encoding - Plain or GZIP
      */
     public final Encoding encoding;
-
-    /**
-     * @return Size in bytes, may be -1 if not known (e.g., HTTP URL for new attachment)
-     */
-    public abstract long getSize();
     
     /**
      * Gets contents of attachments as a stream.
