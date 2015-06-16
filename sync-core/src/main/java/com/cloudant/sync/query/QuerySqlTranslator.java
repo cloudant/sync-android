@@ -341,6 +341,27 @@ class QuerySqlTranslator {
         return fieldNames;
     }
 
+    /*
+     * Checks for the existence of an operator in a query clause list
+     */
+    protected static boolean isOperatorFoundInClause(String operator, List<Object> clause) {
+        boolean found = false;
+        for (Object rawTerm : clause){
+            if (rawTerm instanceof Map) {
+                Map term = (Map) rawTerm;
+                if (term.size() == 1 && term.values().toArray()[0] instanceof Map) {
+                    Map predicate = (Map) term.values().toArray()[0];
+                    if (predicate.get(operator) != null) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return found;
+    }
+
     protected static String chooseIndexForAndClause(List<Object> clause,
                                                     Map<String, Object> indexes) {
         if (clause == null || clause.isEmpty()) {
@@ -348,6 +369,13 @@ class QuerySqlTranslator {
         }
 
         if (indexes == null || indexes.isEmpty()) {
+            return null;
+        }
+
+        if (isOperatorFoundInClause(SIZE, clause)) {
+            String msg = String.format("$size operator found in clause %s.  " +
+                                       "Indexes are not used with $size operations.", clause);
+            logger.log(Level.INFO, msg);
             return null;
         }
 

@@ -1261,4 +1261,42 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         assertThat(node, is(nullValue()));
     }
 
+    // When checking for a specific operator in a clause
+
+    @Test
+    public void findsOperatorInClauseList() {
+        Map<String, Object> nameMap = new HashMap<String, Object>();
+        Map<String, Object> nameEqMap = new HashMap<String, Object>();
+        nameEqMap.put("$eq", "mike");
+        nameMap.put("name", nameEqMap);
+        Map<String, Object> petMap = new HashMap<String, Object>();
+        Map<String, Object> petSizeMap = new HashMap<String, Object>();
+        petSizeMap.put("$size", 2);
+        petMap.put("pet", petSizeMap);
+        Map<String, Object> ageMap = new HashMap<String, Object>();
+        Map<String, Object> ageGteMap = new HashMap<String, Object>();
+        ageGteMap.put("$gte", 2);
+        ageMap.put("age", ageGteMap);
+        List<Object> clause = Arrays.<Object>asList(nameMap, petMap, ageMap);
+        assertThat(QuerySqlTranslator.isOperatorFoundInClause("$size", clause), is(true));
+    }
+
+    @Test
+    public void doesNotFindOperatorWhenNotInClauseList() {
+        Map<String, Object> nameMap = new HashMap<String, Object>();
+        Map<String, Object> nameEqMap = new HashMap<String, Object>();
+        nameEqMap.put("$eq", "mike");
+        nameMap.put("name", nameEqMap);
+        Map<String, Object> petMap = new HashMap<String, Object>();
+        Map<String, Object> petEqMap = new HashMap<String, Object>();
+        petEqMap.put("$eq", "cat");
+        petMap.put("pet", petEqMap);
+        Map<String, Object> ageMap = new HashMap<String, Object>();
+        Map<String, Object> ageGteMap = new HashMap<String, Object>();
+        ageGteMap.put("$gte", 2);
+        ageMap.put("age", ageGteMap);
+        List<Object> clause = Arrays.<Object>asList(nameMap, petMap, ageMap);
+        assertThat(QuerySqlTranslator.isOperatorFoundInClause("$size", clause), is(false));
+    }
+
 }
