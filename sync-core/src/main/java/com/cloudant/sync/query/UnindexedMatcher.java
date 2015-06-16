@@ -17,6 +17,7 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import static com.cloudant.sync.query.QueryConstants.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -238,11 +239,17 @@ class UnindexedMatcher {
             Object actual = ValueExtractor.extractValueForFieldName(fieldName, rev);
 
             boolean passed = false;
-            if (operator.equals(MOD)) {
-                // We need to treat a $mod operator as a special case because for
-                // $mod we need to perform modulo arithmetic on the actual value
-                // using the first element in the expected list as the divisor before
-                // comparing the result to the second element in the expected list.
+            List<String> specialCaseOperators = Arrays.asList(MOD, SIZE);
+            if (specialCaseOperators.contains(operator)) {
+                // If an operator like $mod or $size is found we need to treat the
+                // comparison as a special case.
+                //
+                // $mod: perform modulo arithmetic on the actual value using the first
+                //       element in the expected list as the divisor before comparing
+                //       the result to the second element in the expected list.
+                //
+                // $size: check whether the actual value is a list, then compare the
+                //        actual list size with the expected value.
                 passed = valueCompare(actual, operator, expected);
             } else {
                 // Since $in is the same as a series of $eq comparisons -
@@ -291,6 +298,8 @@ class UnindexedMatcher {
             passed = compareGTE(actual, expected);
         } else if (operator.equals(MOD)) {
             passed = compareMOD(actual, expected);
+        } else if (operator.equals(SIZE)) {
+            passed = compareSIZE(actual, expected);
         } else if (operator.equals(EXISTS)) {
             boolean expectedBool = (Boolean) expected;
             boolean exists = (actual != null);
@@ -403,6 +412,21 @@ class UnindexedMatcher {
         int actualRemainder = ((Number) l).intValue() % divisor;
 
         return actualRemainder == expectedRemainder;
+    }
+
+    protected static boolean compareSIZE(Object l, Object r) {
+        // The actual value must be a list and the expected value must be a number in
+        // order to perform a size comparison.
+        if (!(l instanceof List) || !(r instanceof Number)) {
+            return false;
+        }
+
+        // actualSize and expectedSize are compared as Numbers and not integers
+        // because it is valid to assign expectedSize a non-integer number value.
+        Number actualSize = ((List) l).size();
+        Number expectedSize = (Number) r;
+
+        return actualSize.equals(expectedSize);
     }
 
 }
