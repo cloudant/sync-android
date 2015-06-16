@@ -18,7 +18,10 @@ We support version 3.2 and higher (3.2 and 3.3 tested).
 Download the libraries and follow the tutorial at the [SQLCipher website][1]. We've 
 included a summary below.
 
-[1]: https://www.zetetic.net/sqlcipher/sqlcipher-for-android/
+[1]: https://www.zetetic.net/sqlcipher/open-source/
+
+Be sure to download version 3.2 and up; at the time or writing the page linked above
+has 3.3 but the tutorial documentation is still linking to 3.1.
 
 First add the downloaded binaries to the appropriate folders within your app structure:
 
@@ -121,7 +124,43 @@ protected void onCreate(Bundle savedInstanceState) {
     // ...
 ````
 
-## License
+## Known issues
+
+Below we list known issues and gotchas.
+
+### Unexpected type: 5
+
+If you use a version of SQLCipher lower than 3.2, you may see an exception saving documents.
+We've observed this on version 3.1. It seems to be to do with the column type IDs reported
+by SQLite/SQLCipher not matching the constants defined in SQLCipher's Java code.
+
+The exception has the form:
+
+    java.util.concurrent.ExecutionException: java.lang.RuntimeException: Unexpected type: 5
+            at java.util.concurrent.FutureTask.report(FutureTask.java:93)
+            at java.util.concurrent.FutureTask.get(FutureTask.java:163)
+            at com.cloudant.sync.datastore.BasicDatastore.createDocumentFromRevision(BasicDatastore.java:1824)
+            ...
+            at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:903)
+            at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:698)
+     Caused by: java.lang.RuntimeException: Unexpected type: 5
+            at com.cloudant.sync.datastore.BasicDatastore.getFullRevisionFromCurrentCursor(BasicDatastore.java:1709)
+            at com.cloudant.sync.datastore.BasicDatastore.getDocumentInQueue(BasicDatastore.java:284)
+            at com.cloudant.sync.datastore.BasicDatastore.createDocument(BasicDatastore.java:681)
+            at com.cloudant.sync.datastore.BasicDatastore.access$1500(BasicDatastore.java:65)
+            at com.cloudant.sync.datastore.BasicDatastore$23.call(BasicDatastore.java:1816)
+            at com.cloudant.sync.datastore.BasicDatastore$23.call(BasicDatastore.java:1812)
+            at com.cloudant.sync.sqlite.SQLQueueCallable.call(SQLQueueCallable.java:34)
+            at java.util.concurrent.FutureTask.run(FutureTask.java:237)
+            at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1112)
+            at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:587)
+            at java.lang.Thread.run(Thread.java:818)
+
+To fix this, make sure to download 3.2 or higher of SQLCipher's Android library code from
+https://www.zetetic.net/sqlcipher/open-source/. The Android documentation on the SQLCipher
+site links to 3.1 right now.
+
+## Licence
 
 We use [JCE][JCE] library to encrypt the attachments before
 saving to disk. There should be no licencing concerns for using JCE.
