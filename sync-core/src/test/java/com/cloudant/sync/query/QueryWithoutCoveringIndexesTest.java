@@ -15,8 +15,10 @@ package com.cloudant.sync.query;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.runners.Parameterized.Parameters;
 
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
@@ -27,6 +29,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -205,6 +208,194 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
                                                                  "mike72",
                                                                  "fred34",
                                                                  "fred12"));
+    }
+
+    // When executing queries containing $size operator
+
+    @Test
+    public void worksWhenArrayCountMatchesUsingSIZE() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "pet" : { "$size" : 2 } }
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 2);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", sizeOp);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "fred34", "bill34"));
+    }
+
+    @Test
+    public void returnsEmptyResultSetWhenArrayCountDoesNotMatchUsingSIZE() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "pet" : { "$size" : 3 } }
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 3);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", sizeOp);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), is(empty()));
+    }
+
+    @Test
+    public void matchesOnArrayExistenceAndArrayCountEqualOneUsingSIZE() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "pet" : { "$size" : 1 } }
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 1);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", sizeOp);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike24", "fred72"));
+    }
+
+    @Test
+    public void matchesOnArrayExistenceAndArrayCountEqualZeroUsingSIZE() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "pet" : { "$size" : 0 } }
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 0);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", sizeOp);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), contains("fred11"));
+    }
+
+    @Test
+    public void returnsEmptyResultSetWhenArgumentIsNegativeUsingSIZE() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "pet" : { "$size" : -1 } }
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", -1);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", sizeOp);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), is(empty()));
+    }
+
+    @Test
+    public void returnsEmptyResultSetWhenArgumentIsNotAWholeNumberUsingSIZE() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "pet" : { "$size" : 1.6 } }
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 1.6);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", sizeOp);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), is(empty()));
+    }
+
+    @Test
+    public void returnsEmptyResultSetWhenArgumentIsAStringUsingSIZE() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "pet" : { "$size" : "dog" } }
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", "dog");
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", sizeOp);
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), is(empty()));
+    }
+
+    @Test
+    public void returnsNullWhenArgumentIsInvalidUsingSIZE() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "pet" : { "$size" : [1] } }
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", Collections.singletonList(1));
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("pet", sizeOp);
+        assertThat(im.find(query), is(nullValue()));
+    }
+
+    @Test
+    public void performsCompoundANDQueryWithSingleSIZEClause() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "$and" : [ { "pet" : { "$size" : 2 } }, { "name" : "mike" } ] }
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 2);
+        Map<String, Object> pet = new HashMap<String, Object>();
+        pet.put("pet", sizeOp);
+        Map<String, Object> name = new HashMap<String, Object>();
+        name.put("name", "mike");
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("$and", Arrays.<Object>asList(pet, name));
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), contains("mike12"));
+    }
+
+    @Test
+    public void performsCompoundANDQueryOnSameFieldWithSingleSIZEClause() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "$and" : [ { "pet" : { "$size" : 2 } }, { "pet" : "dog" } ] }
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 2);
+        Map<String, Object> pet = new HashMap<String, Object>();
+        pet.put("pet", sizeOp);
+        Map<String, Object> petEq = new HashMap<String, Object>();
+        petEq.put("pet", "dog");
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("$and", Arrays.<Object>asList(pet, petEq));
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "fred34"));
+    }
+
+    @Test
+    public void performsCompoundORQueryWithSingleSIZEClause() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "$or" : [ { "pet" : { "$size" : 1 } }, { "name" : "john" } ] }
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 1);
+        Map<String, Object> pet = new HashMap<String, Object>();
+        pet.put("pet", sizeOp);
+        Map<String, Object> name = new HashMap<String, Object>();
+        name.put("name", "john");
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("$or", Arrays.<Object>asList(pet, name));
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike24",
+                                                                 "fred72",
+                                                                 "john12",
+                                                                 "john44"));
+    }
+
+    @Test
+    public void performsCompoundORQueryWithMultipleSIZEClausesOnSameField() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "$or" : [ { "pet" : { "$size" : 1 } }, { "pet" : { "$size" : 2 } } ] }
+        Map<String, Object> sizeOp1 = new HashMap<String, Object>();
+        sizeOp1.put("$size", 1);
+        Map<String, Object> petOp1 = new HashMap<String, Object>();
+        petOp1.put("pet", sizeOp1);
+        Map<String, Object> sizeOp2 = new HashMap<String, Object>();
+        sizeOp2.put("$size", 2);
+        Map<String, Object> petOp2 = new HashMap<String, Object>();
+        petOp2.put("pet", sizeOp2);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("$or", Arrays.<Object>asList(petOp1, petOp2));
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike24",
+                                                                 "mike12",
+                                                                 "fred34",
+                                                                 "fred72",
+                                                                 "bill34"));
+    }
+
+    @Test
+    public void returnsEmptyForCompoundANDWithMultipleSIZEClausesOnSameField() throws Exception {
+        setUpSizeOperatorQueryData();
+        // query - { "$and" : [ { "pet" : { "$size" : 1 } }, { "pet" : { "$size" : 2 } } ] }
+        Map<String, Object> sizeOp1 = new HashMap<String, Object>();
+        sizeOp1.put("$size", 1);
+        Map<String, Object> petOp1 = new HashMap<String, Object>();
+        petOp1.put("pet", sizeOp1);
+        Map<String, Object> sizeOp2 = new HashMap<String, Object>();
+        sizeOp2.put("$size", 2);
+        Map<String, Object> petOp2 = new HashMap<String, Object>();
+        petOp2.put("pet", sizeOp2);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("$and", Arrays.<Object>asList(petOp1, petOp2));
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), is(empty()));
     }
 
 }

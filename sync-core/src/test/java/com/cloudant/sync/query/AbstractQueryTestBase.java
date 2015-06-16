@@ -26,7 +26,9 @@ import com.cloudant.sync.util.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -469,6 +471,76 @@ public abstract class AbstractQueryTestBase {
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
+    }
+
+    // Used to setup document data testing for queries containing a $size operator:
+    // - When executing queries containing $size operator
+    public void setUpSizeOperatorQueryData() throws Exception {
+        MutableDocumentRevision rev = new MutableDocumentRevision();
+        rev.docId = "mike24";
+        Map<String, Object> bodyMap = new HashMap<String, Object>();
+        bodyMap.put("name", "mike");
+        bodyMap.put("age", 24);
+        bodyMap.put("pet", Collections.singletonList("cat"));
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "mike12";
+        bodyMap.clear();
+        bodyMap.put("name", "mike");
+        bodyMap.put("age", 12);
+        bodyMap.put("pet", Arrays.asList("cat", "dog"));
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "fred34";
+        bodyMap.clear();
+        bodyMap.put("name", "fred");
+        bodyMap.put("age", 34);
+        bodyMap.put("pet", Arrays.asList("cat", "dog"));
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "john44";
+        bodyMap.clear();
+        bodyMap.put("name", "john");
+        bodyMap.put("age", 44);
+        bodyMap.put("pet", "cat");
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "fred72";
+        bodyMap.clear();
+        bodyMap.put("name", "fred");
+        bodyMap.put("age", 72);
+        bodyMap.put("pet", Collections.singletonList("dog"));
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "john12";
+        bodyMap.clear();
+        bodyMap.put("name", "john");
+        bodyMap.put("age", 12);
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "bill34";
+        bodyMap.clear();
+        bodyMap.put("name", "bill");
+        bodyMap.put("age", 34);
+        bodyMap.put("pet", Arrays.asList("cat", "parrot"));
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        rev.docId = "fred11";
+        bodyMap.clear();
+        bodyMap.put("name", "fred");
+        bodyMap.put("age", 11);
+        bodyMap.put("pet", new ArrayList<Object>());
+        rev.body = DocumentBodyFactory.create(bodyMap);
+        ds.createDocumentFromRevision(rev);
+
+        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age"), "basic"), is("basic"));
     }
 
     // Used to setup document data testing for sorting:
