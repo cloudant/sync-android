@@ -39,11 +39,13 @@ android {
         main {
             java.srcDirs = ['src/main/java',
                             "$scriptLocation/../../sync-core/src/main/java",
-                            "$scriptLocation/../../sync-android/src/main/java"]
+                            "$scriptLocation/../../sync-android/src/main/java",
+                            "$scriptLocation/../../sync-android-encryption/src/main/java"]
         }
         androidTest {
             java.srcDirs = ["$scriptLocation/../../sync-core/src/test/java/",
-                            "$scriptLocation/../../sync-android/src/test/java/"
+                            "$scriptLocation/../../sync-android/src/test/java/",
+                            "$scriptLocation/../../sync-android-encryption/src/test/java/"
             ]
         }
     }
@@ -68,7 +70,7 @@ dependencies {
     compile group: 'commons-codec', name: 'commons-codec', version: '1.9'
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
     compile 'com.google.code.findbugs:jsr305:3.0.0' //this is needed for some versions of android
-    compile files('src/main/jniLibs/sqlcipher.jar') //required sqlcipher lib
+    compile files('../../sync-android-encryption/libs/sqlcipher.jar') //required sqlcipher lib
 
     androidTestCompile group:'org.hamcrest', name:'hamcrest-library', version:'1.3'
     androidTestCompile group:'junit', name:'junit', version:'4.11'
