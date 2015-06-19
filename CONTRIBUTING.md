@@ -6,14 +6,14 @@ Cloudant Sync - Android is written in Java and uses
 ## Contributor License Agreement
 
 In order for us to accept pull-requests, the contributor must first complete
-a Contributor License Agreement (CLA). This clarifies the intellectual 
-property license granted with any contribution. It is for your protection as a 
-Contributor as well as the protection of IBM and its customers; it does not 
+a Contributor License Agreement (CLA). This clarifies the intellectual
+property license granted with any contribution. It is for your protection as a
+Contributor as well as the protection of IBM and its customers; it does not
 change your rights to use your own Contributions for any other purpose.
 
 This is a quick process: one option is signing using Preview on a Mac,
 then sending a copy to us via email. Signing this agreement covers both
-[CDTDatastore](https://github.com/cloudant/CDTDatastore) and 
+[CDTDatastore](https://github.com/cloudant/CDTDatastore) and
 [sync-android](https://github.com/cloudant/sync-android).
 
 You can download the CLAs here:
@@ -41,14 +41,14 @@ Adopting the [Google Java Style](https://google-styleguide.googlecode.com/svn/tr
 with the following changes:
 
 ```
-4.2 
+4.2
     Our block indent is +4 characters
 
 4.4
     Our line length is 100 characters.
 
 4.5.2
-    Indent continuation of +4 characters fine, but I think 
+    Indent continuation of +4 characters fine, but I think
     IDEA defaults to 8, which is okay too.
 ```
 
@@ -111,51 +111,68 @@ $ ./gradlew integrationTest
 #### Running integration tests on Android
 
 
-Running the integration tests on android requires the running of a dedicated test app,
-in addition to the requirements for Java SE integration tests. 
+Running the integration tests on Android requires running the tests from an
+Android context. For this there is a Test App in the `AndroidTest` directory.
+The test app project will automatically pull in the source code from the
+sync-core and sync-android modules.
 
 The test application build scripts require a running emulator and the ```ANDROID_HOME```
  environment variable to be set
 
-The minimum requirements for an android emulator:
+The minimum requirements for an Android emulator:
 
 * Minimum API Level 15 (Target API Level is 20)
 * An SD card
 
-This test app can be run via gradle (in the AndroidTest directory of your checkout)
+The tests can be run like any other Android application test suite, through
+Android Studio / IntelliJ Idea or via the command line.
 
+You *must* run the `uploadFixtures` gradle task before running any tests.
+
+Note: you can run the `uploadFixtures` task once per emulator if you don't add any
+test fixtures.
+
+Steps to run the tests:
+
+1.  Start Android emulator
+2. Run the following command from the root of the repo
 
 ```bash
-$ ../gradlew clean installStandardTestDebug waitForTestAppToFinishTests
+$ cd AndroidTest
+$ ../gradlew clean uploadFixtures connectedCheck
 ```
-The app will run all tests on specified by the build variant on first start up, to rerun tests
-you must rerun the gradle build.
+
 
 #### Collecting Test Results
 
-Test Results are displayed via the app, a test report is also available for CI builds.
-The test result report is in the same format as the ANT JUnit task reports. These style reports can be interpreted by 
-Jenkins and other systems.  The reports are located under the ``` build/test-results/ ``` the file name is automatically generated 
-by the build scripts, the base file name is ```testResults_``` it is suffixed with a UUID for that build.
+Test Results are collected in the [usual manner for Android tests](https://developer.android.com/tools/testing/index.html).
+If run via Android Studio / IntelliJ IDEA the results will appear in the UI.
+If you run via the command line the test report will appear in the `build/reports/`
+directory of the app module.
 
 
 #### Testing using remote CouchDB Instance
 
 Certain tests need a running CouchDB instance, by default they use the local
-CouchDB. To run tests with a remote CouchDB, you need set the details of this CouchDB server, including access credentials: add the following to `gradle.properties` in the same folder as
-`build.gradle`:
+CouchDB. To run tests with a remote CouchDB, you need set the details of this
+CouchDB server, including access credentials: add the following to
+`gradle.properties` in the same folder as `build.gradle`:
 
 ```
 systemProp.test.with.specified.couch=[true|false] # default false
-systemProp.test.couch.username=yourUsername 
+systemProp.test.couch.username=yourUsername
 systemProp.test.couch.password=yourPassword
 systemProp.test.couch.host=couchdbHost # default localhost
-systemProptest.couch.port=couchdbPort # default 5984
+systemProp.test.couch.port=couchdbPort # default 5984
 systemProp.test.couch.http=[http|https] # default 5984
 systemProp.test.couch.ignore.compaction=[true|false] # default false
 systemProp.test.couch.auth.headers=[true|false] # default false
 ```
-Note: some tests need to be ignored based on the configuration of the CouchDB instance you are using or if you are running against Cloudant. For example if the compaction endpoint is unavailable eg returns a 403 response, these tests should be disabled. 
+Note: some tests need to be ignored based on the configuration of the CouchDB
+instance you are using or if you are running against Cloudant. For example
+if the compaction endpoint is unavailable eg., returns a 403 response,
+these tests should be disabled. You can add also properties using the -D command
+line switch eg. `-Dtest.with.specified.couch=true`
 
 Your gradle.properties should NEVER be checked into git repo as it contains your CouchDB credentials.
 
@@ -221,4 +238,3 @@ where the SQLite native library lives.
 ```
 -ea -Dsqlite4java.library.path=native
 ```
-
