@@ -89,6 +89,7 @@ public class IndexManager {
 
     /**
      *  Constructs a new IndexManager which indexes documents in 'datastore'
+     *  @param datastore The {@link Datastore} to index
      */
     public IndexManager(Datastore datastore) {
         this.datastore = datastore;

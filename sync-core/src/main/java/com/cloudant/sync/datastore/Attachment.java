@@ -48,7 +48,7 @@ public abstract class Attachment implements Comparable<Attachment>{
     public final Encoding encoding;
 
     /**
-     * Size in bytes, may be -1 if not known (e.g., HTTP URL for new attachment)
+     * @return Size in bytes, may be -1 if not known (e.g., HTTP URL for new attachment)
      */
     public abstract long getSize();
     
@@ -56,6 +56,8 @@ public abstract class Attachment implements Comparable<Attachment>{
      * Gets contents of attachments as a stream.
      *
      * Caller must call close() when done.
+     * @return contents of attachments as a stream
+     * @throws IOException there was an error obtaining the stream, eg from disk or network
      */     
     public abstract InputStream getInputStream() throws IOException;
 

@@ -169,6 +169,9 @@ public class DatastoreManager {
      *
      * @param dbName name of datastore to open
      * @param provider  KeyProvider object; use a NullKeyProvider if database shouldn't be encrypted.
+     *
+     * @throws DatastoreNotCreatedException if the database cannot be opened
+     *
      * @return {@code Datastore} with the given name
      *
      * @see DatastoreManager#getEventBus()
@@ -205,6 +208,8 @@ public class DatastoreManager {
      * <p>If the datastore was successfully deleted, a 
      * {@link com.cloudant.sync.notifications.DatabaseDeleted DatabaseDeleted} 
      * event is posted on the event bus.</p>
+     *
+     * @param dbName Name of database to create
      *
      * @throws IOException if the datastore doesn't exist on disk or there is
      *      a problem deleting the files.

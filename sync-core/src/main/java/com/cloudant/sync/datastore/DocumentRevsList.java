@@ -24,16 +24,17 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
+ * <p>
  * List of <code>DocumentRevs</code>. All the <code>DocumentRevs</code> are for the same document.
  * If the DocumentRevisionTree is a forest, some of the <code>DocumentRevs</code> might from different tree (case 2).
  * If two <code>DocumentRevs</code> are from the same tree, they are different branch of that tree (case 1).
- * <p>
+ * </p>
  *
  * <pre>
- * Case 1: they are from same three.
- *   1 → 2 → 3
- *     \
- *     → 2 → 3*
+ * Case 1: they are from same tree.
+ *   1 → 2  → 3
+ *     |
+ *     → 2* → 3*
  *
  * Case 2: they are from different trees
  *   1  → 2  → 3
@@ -41,17 +42,22 @@ import java.util.List;
  *   1* → 2* → 3*
  * </pre>
  *
+ * <p>
  * The list can be iterated in the order of minimum generation id (min-generation). Each
  * <code>DocumentRevs</code> has a list of revisions ids (aka revision history), and "start".
  * The "start" number is largest generation. So the min-generation is:
+ * </p>
  * <pre>
  *   DocumentRevs.getRevisions().getStart() → DocumentRevs.getRevisions().getIds().size() + 1.
  * </pre>
- * This is very important since it decides which <code>DocumentRevs</code> is inserted to db first.
  * <p>
+ * This is very important since it decides which <code>DocumentRevs</code> is inserted to db first.
+ * </p>
  *
+ * <p>
  * For <code>DocumentRevs</code> with the same "min-generation", the order is un-determined. This is
  * probably the case two document with same id/body are created in different database.
+ * </p>
  */
 public class DocumentRevsList implements Iterable<DocumentRevs> {
 

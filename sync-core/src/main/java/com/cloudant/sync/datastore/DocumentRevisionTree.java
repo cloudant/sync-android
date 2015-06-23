@@ -176,6 +176,7 @@ public class DocumentRevisionTree {
      * the document tree.</p>
      *
      * @param documentRevision the {@code DocumentRevision} to add
+     * @return {@code DocumentRevisionTree} for method chaining
      */
     public DocumentRevisionTree add(BasicDocumentRevision documentRevision) {
         Preconditions.checkArgument(!sequenceMap.containsKey(documentRevision.getSequence()),
@@ -323,6 +324,7 @@ public class DocumentRevisionTree {
     /**
      * <p>Returns the root revision of this document with a given sequence number.
      * </p>
+     * @param sequence a sequence number
      * @return  the root revision of this document with a given sequence number
      */
     public DocumentRevisionNode root(long sequence) {

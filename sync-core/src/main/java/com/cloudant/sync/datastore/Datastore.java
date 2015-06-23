@@ -67,7 +67,7 @@ public interface Datastore {
      *
      * @return the name of this datastore
      */
-    public String getDatastoreName();
+    String getDatastoreName();
 
     /**
      * <p>Returns the encryption KeyProvider of this datastore.</p>
@@ -77,7 +77,7 @@ public interface Datastore {
      *
      * @return the key provider used by this datastore.
      */
-    public KeyProvider getKeyProvider();
+    KeyProvider getKeyProvider();
 
     /**
      * <p>Returns the current winning revision of a document.</p>
@@ -90,7 +90,7 @@ public interface Datastore {
      * @return {@code DocumentRevision} of the document or null if it doesn't exist.
      * @throws com.cloudant.sync.datastore.DocumentNotFoundException When the document specified was not found
      */
-    public BasicDocumentRevision getDocument(String documentId) throws DocumentNotFoundException;
+    BasicDocumentRevision getDocument(String documentId) throws DocumentNotFoundException;
 
     /**
      * <p>Retrieves a given revision of a document.</p>
@@ -108,7 +108,7 @@ public interface Datastore {
      * @return {@code DocumentRevision} of the document or null if it doesn't exist.
      * @throws com.cloudant.sync.datastore.DocumentNotFoundException if the document at the specified revision was not found
      */
-    public BasicDocumentRevision getDocument(String documentId, String revisionId) throws
+    BasicDocumentRevision getDocument(String documentId, String revisionId) throws
             DocumentNotFoundException;
 
     /**
@@ -122,7 +122,7 @@ public interface Datastore {
      * @return {@code true} if specified document's particular revision exists
      *         in the datastore, {@code false} otherwise.
      */
-    public boolean containsDocument(String documentId, String revisionId);
+    boolean containsDocument(String documentId, String revisionId);
 
     /**
      * <p>Returns whether this datastore contains any revisions of a document.
@@ -134,7 +134,7 @@ public interface Datastore {
      * @return {@code true} if specified document exists
      *         in the datastore, {@code false} otherwise.
      */
-    public boolean containsDocument(String documentId);
+    boolean containsDocument(String documentId);
 
     /**
      * <p>Enumerates the current winning revision for all documents in the
@@ -151,7 +151,7 @@ public interface Datastore {
      *                   descending order.
      * @return list of {@code DBObjects}, maximum length {@code limit}.
      */
-    public List<BasicDocumentRevision> getAllDocuments(int offset, int limit, boolean descending);
+    List<BasicDocumentRevision> getAllDocuments(int offset, int limit, boolean descending);
 
     /**
      * <p>Returns the current winning revisions for a set of documents.</p>
@@ -163,7 +163,7 @@ public interface Datastore {
      * @param documentIds list of document id
      * @return list of {@code DocumentRevision} objects.
      */
-    public List<BasicDocumentRevision> getDocumentsWithIds(List<String> documentIds);
+    List<BasicDocumentRevision> getDocumentsWithIds(List<String> documentIds);
 
     /**
      * <p>Retrieves the datastore's current sequence number.</p>
@@ -180,14 +180,14 @@ public interface Datastore {
      *
      * @return the last sequence number
      */
-    public long getLastSequence();
+    long getLastSequence();
 
     /**
      * <p>Return the number of documents in the datastore</p>
      *
      * @return number of non-deleted documents in datastore
      */
-    public int getDocumentCount();
+    int getDocumentCount();
 
     /**
      * <p>Returns a list of changed documents, from {@code since} to
@@ -200,7 +200,7 @@ public interface Datastore {
      * @return list of the documents and last sequence number of the change set
      *      (checkpoint)
      */
-    public Changes changes(long since, int limit);
+    Changes changes(long since, int limit);
 
     /**
      * <p>Returns the EventBus which this Datastore posts
@@ -209,7 +209,7 @@ public interface Datastore {
      *
      * @see <a href="https://code.google.com/p/guava-libraries/wiki/EventBusExplained">Google Guava EventBus documentation</a>
      */
-    public EventBus getEventBus();
+    EventBus getEventBus();
 
     /**
      * <p>Return the directory for specified extensionName</p>
@@ -218,7 +218,7 @@ public interface Datastore {
      *
      * @return the directory for specified extensionName
      */
-    public String extensionDataFolder(String extensionName);
+    String extensionDataFolder(String extensionName);
 
     /**
      * <p>Return {@code @Iterable<String>} over ids to all the Documents with
@@ -234,7 +234,7 @@ public interface Datastore {
      *
      * @see <a href="http://wiki.apache.org/couchdb/Replication_and_conflicts">Replication and conflicts</a>
      */
-    public Iterator<String> getConflictedDocumentIds();
+    Iterator<String> getConflictedDocumentIds();
 
     /**
      * <p>
@@ -253,16 +253,16 @@ public interface Datastore {
      *
      * @see com.cloudant.sync.datastore.ConflictResolver
      */
-    public void resolveConflictsForDocument(String docId, ConflictResolver resolver)
-        throws ConflictException, IOException;
+    void resolveConflictsForDocument(String docId, ConflictResolver resolver)
+        throws ConflictException;
 
     /**
      * Close the datastore
      */
-    public void close();
+    void close();
 
 
-    public List<String> getPossibleAncestorRevisionIDs(String docId,
+    List<String> getPossibleAncestorRevisionIDs(String docId,
                                                        String revId,
                                                        int limit);
 
@@ -278,11 +278,11 @@ public interface Datastore {
      *
      * @param rev the <code>MutableDocumentRevision</code> to be created
      * @return a <code>DocumentRevision</code> - the newly created document
-     * @throws com.cloudant.sync.datastore.AttachmentException if there is a problem saving any new attachments
-     * @throws com.cloudant.sync.datastore.DocumentException if there is a problem creating the document
+     * @throws com.cloudant.sync.datastore.AttachmentException if there was an error saving any new attachments
+     * @throws com.cloudant.sync.datastore.DocumentException if there was an error creating the document
      * @see Datastore#getEventBus()
      */
-    public BasicDocumentRevision createDocumentFromRevision(MutableDocumentRevision rev) throws DocumentException, AttachmentException;
+    BasicDocumentRevision createDocumentFromRevision(MutableDocumentRevision rev) throws DocumentException;
 
     /**
      * <p>Updates a document that exists in the datastore with with body and attachments
@@ -298,12 +298,11 @@ public interface Datastore {
      * @param rev the <code>MutableDocumentRevision</code> to be updated
      * @return a <code>DocumentRevision</code> - the updated document
      * @throws ConflictException <code>rev</code> is not a current revision for this document
-     * @throws com.cloudant.sync.datastore.AttachmentException if there is a problem saving any new attachments
-     * @throws com.cloudant.sync.datastore.DocumentNotFoundException if the document to be updated was not found
      * @throws com.cloudant.sync.datastore.AttachmentException if there was an error saving the attachments
+     * @throws com.cloudant.sync.datastore.DocumentException if there was an error updating the document
      * @see Datastore#getEventBus()
      */
-    public BasicDocumentRevision updateDocumentFromRevision(MutableDocumentRevision rev) throws ConflictException, DocumentNotFoundException, AttachmentException, DocumentException;
+    BasicDocumentRevision updateDocumentFromRevision(MutableDocumentRevision rev) throws DocumentException;
 
     /**
      * <p>Deletes a document from the datastore.</p>
@@ -330,7 +329,7 @@ public interface Datastore {
      * @see Datastore#getEventBus()
      * @see Datastore#resolveConflictsForDocument
      */
-    public BasicDocumentRevision deleteDocumentFromRevision(BasicDocumentRevision rev) throws ConflictException;
+    BasicDocumentRevision deleteDocumentFromRevision(BasicDocumentRevision rev) throws ConflictException;
 
     /**
      * <p>Delete all leaf revisions for the document</p>
@@ -341,18 +340,16 @@ public interface Datastore {
      *
      * @param id the ID of the document to delete leaf nodes for
      * @return a List of a <code>DocumentRevision</code>s - the deleted or "tombstone" documents
-     * @throws ConflictException
      * @throws com.cloudant.sync.datastore.DocumentException if there was an error deleting the document
      * @see Datastore#getEventBus()
      * @see com.cloudant.sync.datastore.Datastore#deleteDocumentFromRevision(BasicDocumentRevision)
      */
-    public List<BasicDocumentRevision> deleteDocument(String id) throws ConflictException,
-            DocumentException;
+    List<BasicDocumentRevision> deleteDocument(String id) throws DocumentException;
 
     /**
      * Compacts the sqlDatabase storage by removing the bodies and attachments of obsolete revisions.
      */
-    public void compact();
+    void compact();
 
 }
 

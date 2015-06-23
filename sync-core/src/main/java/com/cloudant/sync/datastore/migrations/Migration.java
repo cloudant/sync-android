@@ -25,7 +25,10 @@ public interface Migration {
      * Implementors should run all migration steps in this method.
      *
      * Throw an exception if the migration fails.
+     *
+     * @param db The {@link SQLDatabase} to migrate
+     * @throws Exception an exception was thrown during migration
      */
-    public void runMigration(SQLDatabase db) throws Exception;
+    void runMigration(SQLDatabase db) throws Exception;
 
 }

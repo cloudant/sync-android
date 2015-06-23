@@ -157,8 +157,8 @@ public class SQLDatabaseQueue {
     }
 
     /**
-     * Checks if @{link shutdown} has been called
-     * @return true if @{link shutdown} has been called.
+     * Checks if {@link SQLDatabaseQueue#shutdown()} has been called
+     * @return true if {@link SQLDatabaseQueue#shutdown()} has been called.
      */
     public boolean isShutdown() {
         return queue.isShutdown();

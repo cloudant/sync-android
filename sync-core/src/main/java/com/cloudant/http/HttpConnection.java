@@ -138,7 +138,8 @@ public class HttpConnection  {
      * Call {@code responseAsString}, {@code responseAsBytes}, or {@code responseAsInputStream}
      * after {@code execute} if the response body is required.
      * </p>
-     * @throws IOException
+     * @return An {@link HttpConnection} which can be used to obtain the response body
+     * @throws IOException if there was a problem writing data to the server
      */
     public HttpConnection execute() throws IOException {
         System.setProperty("http.keepAlive", "false");
@@ -216,7 +217,7 @@ public class HttpConnection  {
      * <b>Important:</b> you must call <code>execute()</code> before calling this method.
      * </p>
      * @return String of response body data from server, if any
-     * @throws IOException
+     * @throws IOException if there was a problem reading data from the server
      */
     public String responseAsString() throws IOException {
         if (connection == null) {
@@ -236,7 +237,7 @@ public class HttpConnection  {
      * <b>Important:</b> you must call <code>execute()</code> before calling this method.
      * </p>
      * @return Byte array of response body data from server, if any
-     * @throws IOException
+     * @throws IOException if there was a problem reading data from the server
      */
     public byte[] responseAsBytes() throws IOException {
         if (connection == null) {
@@ -256,7 +257,7 @@ public class HttpConnection  {
      * <b>Important:</b> you must call <code>execute()</code> before calling this method.
      * </p>
      * @return InputStream of response body data from server, if any
-     * @throws IOException
+     * @throws IOException if there was a problem reading data from the server
      */
     public InputStream responseAsInputStream() throws IOException {
         if (connection == null) {
@@ -269,7 +270,7 @@ public class HttpConnection  {
     /**
      * Get the underlying HttpURLConnection object, allowing clients to set/get properties not
      * exposed here.
-     * @return HttpURLConnection
+     * @return HttpURLConnection the underlying {@link HttpURLConnection} object
      */
     public HttpURLConnection getConnection() {
         return connection;

@@ -1576,7 +1576,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     @Override
     public void resolveConflictsForDocument(final String docId, final ConflictResolver resolver)
-            throws ConflictException, IOException {
+            throws ConflictException {
 
         // before starting the tx, get the 'new winner' and see if we need to prepare its attachments
 
@@ -1795,7 +1795,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     @Override
     public BasicDocumentRevision createDocumentFromRevision(final MutableDocumentRevision rev)
-            throws DocumentException, AttachmentException {
+            throws DocumentException {
         Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
         Preconditions.checkState(isOpen(), "Datastore is closed");
         final String docId;
@@ -1839,7 +1839,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     @Override
     public BasicDocumentRevision updateDocumentFromRevision(final MutableDocumentRevision rev)
-            throws ConflictException, DocumentNotFoundException, AttachmentException, DocumentException {
+            throws DocumentException {
         final AttachmentManager.PreparedAndSavedAttachments preparedAndSavedAttachments =
                 this.attachmentManager.prepareAttachments(rev.attachments != null ? rev.attachments.values() : null);
 
@@ -1868,7 +1868,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     private BasicDocumentRevision updateDocumentFromRevision(SQLDatabase db,MutableDocumentRevision rev,
                                                              AttachmentManager.PreparedAndSavedAttachments preparedAndSavedAttachments)
-            throws ConflictException, AttachmentNotSavedException, AttachmentException, DocumentNotFoundException, DatastoreException {
+            throws ConflictException, AttachmentException, DocumentNotFoundException, DatastoreException {
         Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
 
             // update document with new body
@@ -1916,7 +1916,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     // delete all leaf nodes
     @Override
     public List<BasicDocumentRevision> deleteDocument(final String id)
-            throws ConflictException, DocumentException  {
+            throws DocumentException  {
         Preconditions.checkNotNull(id, "id can not be null");
         // to return
 

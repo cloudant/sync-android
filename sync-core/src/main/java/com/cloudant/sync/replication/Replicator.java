@@ -58,7 +58,7 @@ public interface Replicator {
      *   second or further time.</li>
      * </ul>
      */
-    public void start();
+    void start();
 
     /**
      * <p>Stops an in-progress replication.</p>
@@ -91,7 +91,7 @@ public interface Replicator {
      * it will immediately move to the {@link Replicator.State#STOPPED} state.
      * </p>
      */
-    public void stop();
+    void stop();
 
     /**
      * <p>Returns the {@link Replicator.State} this replicator is in.</p>
@@ -101,13 +101,15 @@ public interface Replicator {
      * <p>In all states other than {@link Replicator.State#STARTED} and
      * {@link Replicator.State#STOPPING}, the replicator object
      * is idle with no background threads.</p>
+     *
+     * @return the {@link Replicator.State} this replicator is in
      */
-    public State getState();
+    State getState();
 
     /**
      * <p>Describes the state of a {@link Replicator} at a given moment.</p>
      */
-    public enum State {
+    enum State {
         /**
          * The replicator is initialised and is ready to start.
          */
@@ -151,6 +153,6 @@ public interface Replicator {
      *
      * @return EventBus object.
      */
-    public EventBus getEventBus();
+    EventBus getEventBus();
 }
 

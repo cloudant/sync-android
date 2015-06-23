@@ -83,6 +83,8 @@ public class MultipartAttachmentWriter extends InputStream {
 
     /**
      * Construct a <code>MultipartAttachmentWriter</code> with a specific <code>boundary</code>
+     * @param boundary The boundary sequence used to delimit each part. Must not occur anywhere in
+     *                 the data of any part.
      */
     public MultipartAttachmentWriter(String boundary) {
         // pick a boundary
@@ -130,7 +132,7 @@ public class MultipartAttachmentWriter extends InputStream {
      * entire attachment into memory.
      *
      * @param attachment The attachment to be streamed
-     * @throws IOException
+     * @throws IOException if there was an error getting the input stream from the {@code Attachment}
      */
     public void addAttachment(Attachment attachment) throws IOException {
         contentLength += partBoundary.length;
@@ -175,7 +177,7 @@ public class MultipartAttachmentWriter extends InputStream {
      * Read a single byte from the stream.
      * @return The next byte in the stream, expressed as an int in the range [0..255].
      *         If there are no more bytes available, return -1.
-     * @throws java.io.IOException
+     * @throws java.io.IOException if there was an error reading from one of the internal input streams
      */
     public int read() throws java.io.IOException {
         int c;
@@ -195,7 +197,7 @@ public class MultipartAttachmentWriter extends InputStream {
      * Read at most the next <code>bytes.length</code> bytes from the stream.
      * @param bytes A buffer to read the next <i>n</i> bytes into, up to the limit of the length of the buffer, or the number of bytes available, whichever is lower.
      * @return The actual number of bytes read, or -1 to signal the end of the stream has been reached.
-     * @throws java.io.IOException
+     * @throws java.io.IOException if there was an error reading from one of the internal input streams
      */
     @Override
     public int read(byte[] bytes) throws java.io.IOException {
