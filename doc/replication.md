@@ -5,7 +5,7 @@ _This functionality is available in versions 0.3.3 and up._
 Replication is used to synchronise data between the local datastore and a
 remote database, either a CouchDB instance or a Cloudant database. Many
 datastores can replicate with the same remote database, meaning that
-cross-device syncronisation is acheived by setting up replications from each
+cross-device synchronisation is achieved by setting up replications from each
 device to the remote database.
 
 ## Replication Scenarios
@@ -268,7 +268,7 @@ indexManager.updateAllIndexes();
 
 ### Filtered pull replication
 
-[Filtered replication][1] is only supported for pull replication. It requies a
+[Filtered replication][1] is only supported for pull replication. It requires a
 "Filter" object is added to "PullReplication" to describe the
 _Filter Function_ that is used and its query parameters.
 
