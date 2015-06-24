@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 
 /**
  * Internal utility class
- * @param <T>
+ * @param <T> The type of data owned by each node
  */
 public abstract class AbstractTreeNode<T> {
 

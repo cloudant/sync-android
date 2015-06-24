@@ -38,21 +38,21 @@ import java.util.Map;
 public interface DocumentRevision {
 
     /**
-     * <p>Returns the unique identifier of the document.</p>
+     * @return the unique identifier of the document
      */
-    public String getId();
+    String getId();
 
     /**
-     * <p>Returns the revision ID of this document revision.</p>
+     * @return the revision ID of this document revision
      */
-    public String getRevision();
+    String getRevision();
 
     /**
-     * <p>Returns the {@code DocumentBody} of the document.</p>
+     * @return the {@code DocumentBody} of the document
      */
-    public DocumentBody getBody();
+    DocumentBody getBody();
 
     // NB the key is purely for the user's convenience and doesn't have to be the same as the attachment name
-    public Map<String, Attachment> getAttachments();
+    Map<String, Attachment> getAttachments();
 
 }

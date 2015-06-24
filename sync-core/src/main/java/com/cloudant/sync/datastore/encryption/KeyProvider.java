@@ -23,9 +23,7 @@ package com.cloudant.sync.datastore.encryption;
 public interface KeyProvider {
 
     /**
-     * Returns the encryption key used to encrypt datastore data.
-     *
-     * @return
+     * @return the encryption key used to encrypt datastore data
      */
     EncryptionKey getEncryptionKey();
 }

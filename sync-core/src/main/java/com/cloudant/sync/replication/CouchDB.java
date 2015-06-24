@@ -29,30 +29,30 @@ import java.util.Set;
 
 interface CouchDB {
 
-    public String getIdentifier();
+    String getIdentifier();
 
     /**
-     * Returns true if database exists, otherwise false
+     * @return true if database exists, otherwise false
      */
-    public boolean exists();
+    boolean exists();
 
-    public Response create(Object object);
-    public Response update(String id, Object object);
-    public <T> T get(Class<T> classType, String id);
-    public Response delete(String id, String rev);
+    Response create(Object object);
+    Response update(String id, Object object);
+    <T> T get(Class<T> classType, String id);
+    Response delete(String id, String rev);
 
-    public String getCheckpoint(String checkpointId);
-    public void putCheckpoint(String checkpointId, String sequence);
+    String getCheckpoint(String checkpointId);
+    void putCheckpoint(String checkpointId, String sequence);
 
-    public ChangesResult changes(Object lastSequence, int limit);
-    public ChangesResult changes(Replication.Filter filter,Object lastSequence, int limit);
-    public List<DocumentRevs> getRevisions(String documentId,
+    ChangesResult changes(Object lastSequence, int limit);
+    ChangesResult changes(Replication.Filter filter,Object lastSequence, int limit);
+    List<DocumentRevs> getRevisions(String documentId,
                                            Collection<String> revisionIds,
                                            Collection<String> attsSince,
                                            boolean pullAttachmentsInline);
-    public void bulk(List<BasicDocumentRevision> revisions);
-    public void bulkSerializedDocs(List<String> serializedDocs);
-    public List<Response> putMultiparts(List<MultipartAttachmentWriter> multiparts);
-    public Map<String, CouchClient.MissingRevisions> revsDiff(Map<String, Set<String>> revisions);
-    public UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType, String encoding);
+    void bulk(List<BasicDocumentRevision> revisions);
+    void bulkSerializedDocs(List<String> serializedDocs);
+    List<Response> putMultiparts(List<MultipartAttachmentWriter> multiparts);
+    Map<String, CouchClient.MissingRevisions> revsDiff(Map<String, Set<String>> revisions);
+    UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType, String encoding);
 }

@@ -129,8 +129,8 @@ public class BasicDocumentRevision implements DocumentRevision, Comparable<Basic
     }
 
     /**
-     * <p>Returns {@code true} if this revision is the current winner for the
-     * document.</p>
+     * @return {@code true} if this revision is the current winner for the
+     * document.
      */
     public boolean isCurrent(){
         return current;
@@ -144,6 +144,8 @@ public class BasicDocumentRevision implements DocumentRevision, Comparable<Basic
      * one tree, under certain circumstances, such as two documents with the
      * same ID being created in different datastores that are later replicated
      * across.</p>
+     *
+     * @return the sequence number of this revision's parent revision.
      */
     public long getParent() {
         return this.parent;
@@ -170,6 +172,9 @@ public class BasicDocumentRevision implements DocumentRevision, Comparable<Basic
      * <p>This Map includes reserved fields such as {@code _id} and
      * {@code _rev}. Changing the byte array may affect the {@code DocumentRevision},
      * as only a shallow copy is returned.</p>
+     *
+     * @return the JSON body of the document revision as a {@code Map}
+     * object.
      */
     public Map<String,Object> asMap() {
         if(map == null) {
@@ -196,6 +201,9 @@ public class BasicDocumentRevision implements DocumentRevision, Comparable<Basic
      * <p>This byte array includes reserved fields such as {@code _id} and
      * {@code _rev}. Changing the byte array does not affect the document
      * revisions contents.</p>
+     *
+     * @return the JSON body of the document revision as a {@code byte}
+     * array.
      */
     public byte[] asBytes() {
         byte[] result = null;
@@ -206,7 +214,7 @@ public class BasicDocumentRevision implements DocumentRevision, Comparable<Basic
     }
 
     /**
-     * <p>Returns {@code true} if this revision is marked deleted.</p>
+     * @return {@code true} if this revision is marked deleted.
      */
     public boolean isDeleted() {
         return deleted;
@@ -221,6 +229,8 @@ public class BasicDocumentRevision implements DocumentRevision, Comparable<Basic
      *
      * <p>The sequence number is unique across the database, it is updated
      * for every modification to the datastore.</p>
+     *
+     * @return the sequence number of this revision.
      */
     public long getSequence() {
         return sequence;

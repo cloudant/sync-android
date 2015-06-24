@@ -47,16 +47,18 @@ public interface DatastoreExtended extends Datastore {
      * @param docId      The document id for the document
      * @param body       JSON body for the document
      * @return {@code DocumentRevision} of the newly created document
+     * @throws DocumentException if there is an error inserting the local document into the database
      */
-    public LocalDocument insertLocalDocument(String docId, DocumentBody body) throws DocumentException;
+    LocalDocument insertLocalDocument(String docId, DocumentBody body) throws DocumentException;
 
     /**
      * <p>Returns the current winning revision of a local document.</p>
      *
      * @param documentId id of the local document
      * @return {@code LocalDocument} of the document
+     * @throws DocumentNotFoundException if the document ID doesn't exist
      */
-    public LocalDocument getLocalDocument(String documentId) throws DocumentNotFoundException;
+    LocalDocument getLocalDocument(String documentId) throws DocumentNotFoundException;
 
     /**
      * <p>Deletes a local document.</p>
@@ -65,7 +67,7 @@ public interface DatastoreExtended extends Datastore {
      *
      * @throws DocumentNotFoundException if the document ID doesn't exist
      */
-    public void deleteLocalDocument(String documentId) throws DocumentNotFoundException;
+    void deleteLocalDocument(String documentId) throws DocumentNotFoundException;
 
     /**
      * <p>Returns {@code DocumentRevisionTree} of a document.</p>
@@ -76,7 +78,7 @@ public interface DatastoreExtended extends Datastore {
      * @param documentId  id of the document
      * @return {@code DocumentRevisionTree} of the specified document
      */
-    public DocumentRevisionTree getAllRevisionsOfDocument(String documentId);
+    DocumentRevisionTree getAllRevisionsOfDocument(String documentId);
 
     /**
      * <p>Inserts a revision of a document with an existing revision ID and
@@ -119,13 +121,22 @@ public interface DatastoreExtended extends Datastore {
      *            from a remote datastore.
      * @param revisionHistory The history of the revision being inserted,
      *                        including the rev ID of {@code rev}. This list
-     *                        needs to be sorted in ascending order.
-     * @param preparedAttachments Attachments that have already been prepared, this is a
-     *                            Map of String[docId,revId], list of attachments
+     *                        needs to be sorted in ascending order
+     * @param attachments Attachments metadata and optionally data if {@code pullAttachmentsInline} true
+     * @param preparedAttachments Non-empty if {@code pullAttachmentsInline} false.
+     *                            Attachments that have already been prepared, this is a
+     *                            Map of String[docId,revId] → list of attachments
+     * @param pullAttachmentsInline If true, use {@code attachments} metadata and data directly
+     *                              from received JSON to add new attachments for this revision.
+     *                              Else use {@code preparedAttachments} which were previously
+     *                              downloaded and prepared by processOneChangesBatch in
+     *                              BasicPullStrategy
      *
      * @see Datastore#getEventBus()
+     * @throws DocumentException if there was an error inserting the revision or its attachments
+     * into the database
      */
-    public void forceInsert(BasicDocumentRevision rev,
+    void forceInsert(BasicDocumentRevision rev,
                             List<String> revisionHistory,
                             Map<String, Object> attachments,
                             Map<String[],List<PreparedAttachment>> preparedAttachments,
@@ -137,15 +148,19 @@ public interface DatastoreExtended extends Datastore {
      * <p>Equivalent to:</p>
      *
      * <code>
-     *    forceInsert(rev, Arrays.asList(revisionHistory));
+     *    forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
      * </code>
      *
-     * @param rev
-     * @param revisionHistory
+     * @param rev A {@code DocumentRevision} containing the information for a revision
+     *            from a remote datastore.
+     * @param revisionHistory The history of the revision being inserted,
+     *                        including the rev ID of {@code rev}. This list
+     *                        needs to be sorted in ascending order
      *
      * @see DatastoreExtended#forceInsert(BasicDocumentRevision, java.util.List,java.util.Map, java.util.Map, boolean)
+     * @throws DocumentException if there was an error inserting the revision into the database
      */
-    public void forceInsert(BasicDocumentRevision rev, String... revisionHistory) throws
+    void forceInsert(BasicDocumentRevision rev, String... revisionHistory) throws
             DocumentException;
 
     /**
@@ -155,8 +170,10 @@ public interface DatastoreExtended extends Datastore {
      * during replication.</p>
      *
      * @return a unique identifier for the datastore.
+     * @throws DatastoreException if there was an error retrieving the unique identifier from the
+     * database
      */
-    public String getPublicIdentifier() throws DatastoreException;
+    String getPublicIdentifier() throws DatastoreException;
 
     /**
      * <p>Returns the number of documents in the database, including deleted
@@ -164,10 +181,10 @@ public interface DatastoreExtended extends Datastore {
      *
      * @return document count, including deleted docs.
      */
-    public int getDocumentCount();
+    int getDocumentCount();
 
     /**
-     * Returns the subset of given the documentId/revisions that are not stored in the database.
+     * Returns the subset of given the document id/revisions that are not stored in the database.
      *
      * The input revisions is a map, whose key is document id, and value is a list of revisions.
      * An example input could be (in json format):
@@ -186,8 +203,11 @@ public interface DatastoreExtended extends Datastore {
      * The output is in same format.
      *
      * @see <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
+     * @param revisions a Multimap of document id → revision id
+     * @return a Map of document id → collection of revision id: the subset of given the document
+     * id/revisions that are not stored in the database
      */
-    public Map<String, Collection<String>> revsDiff(Multimap<String, String> revisions);
+    Map<String, Collection<String>> revsDiff(Multimap<String, String> revisions);
 
     /**
      * Read attachment stream to a temporary location and calculate sha1,
@@ -197,9 +217,10 @@ public interface DatastoreExtended extends Datastore {
      *
      * @param att Attachment to be prepared, providing data either from a file or a stream
      * @return A prepared attachment, ready to be added to the datastore
-     * @throws AttachmentException
+     * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
+     *                  attachment data.
      */
-    public PreparedAttachment prepareAttachment(Attachment att) throws AttachmentException;
+    PreparedAttachment prepareAttachment(Attachment att) throws AttachmentException;
 
     /**
      * Add attachment to document revision without incrementing revision.
@@ -208,26 +229,33 @@ public interface DatastoreExtended extends Datastore {
      *
      * @param att The attachment to add
      * @param rev The DocumentRevision to add the attachment to
+     * @throws AttachmentException if there was an error inserting the attachment metadata into the
+     * database or if there was an error moving the attachment file on the file system
      */
-    public void addAttachment(PreparedAttachment att, BasicDocumentRevision rev) throws  AttachmentException;
+    void addAttachment(PreparedAttachment att, BasicDocumentRevision rev) throws  AttachmentException;
 
     /**
      * <p>Returns attachment <code>attachmentName</code> for the revision.</p>
      *
      * <p>Used by replicator when pushing attachments</p>
      *
+     * @param rev The revision with which the attachment is associated
+     * @param attachmentName Name of the attachment
      * @return <code>Attachment</code> or null if there is no attachment with that name.
      */
-    public Attachment getAttachment(BasicDocumentRevision rev, String attachmentName);
+    Attachment getAttachment(BasicDocumentRevision rev, String attachmentName);
 
     /**
      * <p>Returns all attachments for the revision.</p>
      *
      * <p>Used by replicator when pulling attachments</p>
      *
+     * @param rev The revision with which the attachments are associated
      * @return List of <code>Attachment</code>
+     * @throws AttachmentException if there was an error reading the attachment metadata from the
+     * database
      */
-    public List<? extends Attachment> attachmentsForRevision(BasicDocumentRevision rev) throws
+    List<? extends Attachment> attachmentsForRevision(BasicDocumentRevision rev) throws
             AttachmentException;
 
 }

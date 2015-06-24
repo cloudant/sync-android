@@ -41,7 +41,10 @@ public class PreparedAttachment {
      *
      * @param attachment The attachment to prepare
      * @param attachmentsDir The 'BLOB store' or location where attachments are stored for this database
-     * @throws AttachmentNotSavedException
+     * @param attachmentStreamFactory The {@link AttachmentStreamFactory} used for writing attachment
+     *                                data to disk
+     * @throws AttachmentNotSavedException if there was an error copying the attachment or
+     * calculating its SHA1
      */
     public PreparedAttachment(Attachment attachment,
                               String attachmentsDir,

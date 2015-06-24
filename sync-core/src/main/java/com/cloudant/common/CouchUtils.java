@@ -49,7 +49,7 @@ public class CouchUtils {
         return true;
     }
 
-    /**
+    /*
      * Parses the _revisions dict from a document into an array of revision ID strings
      */
     public static List<String> parseCouchDBRevisionHistory(Map<String, Object> docProperties) {

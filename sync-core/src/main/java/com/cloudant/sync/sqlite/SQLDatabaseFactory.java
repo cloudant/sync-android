@@ -32,7 +32,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Factory class to create @{link SQLDatabase}, and update schema
+ * Factory class to create {@link SQLDatabase}, and update schema
  */
 public class SQLDatabaseFactory {
 
