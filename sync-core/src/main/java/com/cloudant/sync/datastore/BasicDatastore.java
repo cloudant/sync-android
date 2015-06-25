@@ -513,6 +513,38 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
+    public List<String> getAllDocumentIds() {
+        Preconditions.checkState(this.isOpen(), "Database is closed");
+        try {
+            return queue.submit(new SQLQueueCallable<List<String>>(){
+                @Override
+                public List<String> call(SQLDatabase db) throws Exception {
+                    List<String> docIds = new ArrayList<String>();
+                    String sql = "SELECT docs.docid FROM revs, docs " +
+                                 "WHERE deleted = 0 AND current = 1 AND docs.doc_id = revs.doc_id";
+                    Cursor cursor = null;
+                    try {
+                        cursor = db.rawQuery(sql, new String[]{});
+                        while (cursor.moveToNext()) {
+                            docIds.add(cursor.getString(0));
+                        }
+                    } catch(SQLException sqe) {
+                        throw new DatastoreException(sqe);
+                    } finally {
+                        DatabaseUtils.closeCursorQuietly(cursor);
+                    }
+                    return docIds;
+                }
+            }).get();
+        } catch (InterruptedException e) {
+            logger.log(Level.SEVERE,"Failed to get all document ids",e);
+        } catch (ExecutionException e) {
+            logger.log(Level.SEVERE,"Failed to get all document ids",e);
+        }
+        return null;
+    }
+
+    @Override
     public List<BasicDocumentRevision> getDocumentsWithIds(final List<String> docIds) {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkNotNull(docIds, "Input document id list can not be null");

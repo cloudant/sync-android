@@ -154,6 +154,14 @@ public interface Datastore {
     List<BasicDocumentRevision> getAllDocuments(int offset, int limit, boolean descending);
 
     /**
+     * <p>Enumerates the current winning revision for all documents in the
+     * datastore and return a list of their document identifiers.</p>
+     *
+     * @return list of {@code String}.
+     */
+    public List<String> getAllDocumentIds();
+
+    /**
      * <p>Returns the current winning revisions for a set of documents.</p>
      *
      * <p>If the {@code documentIds} list contains document IDs not present
