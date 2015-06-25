@@ -244,7 +244,7 @@ public class BasicDocumentRevision implements DocumentRevision, Comparable<Basic
 
     @Override
     public String toString() {
-        return "{ id: " + this.id + ", rev: " + this.revision + ", seq: " + sequence + ", parent: " + parent + " }";
+        return "{ id: " + this.id + ", rev: " + this.revision + ", seq: " + sequence + ", parent: " + parent + ", current: " + current + ", deleted " + deleted +" }";
     }
 
     public int getGeneration() {

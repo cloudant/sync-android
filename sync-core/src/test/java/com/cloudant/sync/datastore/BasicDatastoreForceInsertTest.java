@@ -16,18 +16,21 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.CouchUtils;
+import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -96,6 +99,14 @@ public class BasicDatastoreForceInsertTest {
         return builder.build();
     }
 
+    private BasicDocumentRevision createDbObjectDeleted(String rev) {
+        DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
+        builder.setDocId(OBJECT_ID);
+        builder.setRevId(rev);
+        builder.setDeleted(true);
+        builder.setBody(new BasicDocumentBody(JSONUtils.EMPTY_JSON));
+        return builder.build();
+    }
 
     @Test
     public void forceInsert_newRevisionsFromRemoteDB_newRevisionShouldBeInserted() throws Exception {
@@ -283,7 +294,8 @@ public class BasicDatastoreForceInsertTest {
             builder.setBody(bodyOne);
             BasicDocumentRevision newRev = builder.build();
 
-            datastore.forceInsert(newRev, "1-rev", "2-rev", "3-rev", "4-rev", "5-rev", remoteRevisionId6);
+            datastore.forceInsert(newRev, "1-rev", "2-rev", "3-rev", "4-rev", "5-rev",
+                    remoteRevisionId6);
         }
 
         BasicDocumentRevision obj = datastore.getDocument(OBJECT_ID);
@@ -429,10 +441,172 @@ public class BasicDatastoreForceInsertTest {
         assertDocumentHasRevAndBody(OBJECT_ID, "2-c", bodyTwo);
     }
 
+    @Test
+    public void forceInsert_pickWinnerOfConflicts_Simple_7x_last() throws Exception {
+
+        // regression test for pickWinnerOfConflicts:
+        // under previous behaviour this would fail to mark 2-y as current even though 7-x is
+        // deleted, if 7-x is inserted last
+
+        // create a chain of revs 1-x -> 6-x
+        // then add 2-y and 7-x
+
+        BasicDocumentRevision rev1 = createDbObject("1-x", bodyOne);
+        BasicDocumentRevision rev2 = createDbObject("2-x", bodyOne);
+        BasicDocumentRevision rev3 = createDbObject("3-x", bodyOne);
+        BasicDocumentRevision rev4 = createDbObject("4-x", bodyOne);
+        BasicDocumentRevision rev5 = createDbObject("5-x", bodyOne);
+        BasicDocumentRevision rev6 = createDbObject("6-x", bodyOne);
+
+        BasicDocumentRevision rev7 = createDbObjectDeleted("7-x");
+        BasicDocumentRevision rev2_alt = createDbObject("2-y", bodyOne);
+
+        datastore.forceInsert(rev1, "1-x");
+        datastore.forceInsert(rev2, "1-x", "2-x");
+        datastore.forceInsert(rev3, "1-x","2-x","3-x");
+        datastore.forceInsert(rev4, "1-x", "2-x", "3-x", "4-x");
+        datastore.forceInsert(rev5, "1-x", "2-x", "3-x", "4-x", "5-x");
+        datastore.forceInsert(rev6, "1-x", "2-x", "3-x", "4-x", "5-x", "6-x");
+
+        datastore.forceInsert(rev2_alt, "1-x", "2-y");
+        datastore.forceInsert(rev7, "6-x", "7-x");
+
+        Assert.assertEquals(datastore.getDocument(OBJECT_ID).getRevision(), "2-y");
+    }
+
+    @Test
+    public void forceInsert_pickWinnerOfConflicts_Simple_2y_last() throws Exception {
+
+        // this test is the same as the one above but we switch round the last two forceInserts
+        // - this ensure we get the same result regardless of insertion order
+
+        BasicDocumentRevision rev1 = createDbObject("1-x", bodyOne);
+        BasicDocumentRevision rev2 = createDbObject("2-x", bodyOne);
+        BasicDocumentRevision rev3 = createDbObject("3-x", bodyOne);
+        BasicDocumentRevision rev4 = createDbObject("4-x", bodyOne);
+        BasicDocumentRevision rev5 = createDbObject("5-x", bodyOne);
+        BasicDocumentRevision rev6 = createDbObject("6-x", bodyOne);
+
+        BasicDocumentRevision rev7 = createDbObjectDeleted("7-x");
+        BasicDocumentRevision rev2_alt = createDbObject("2-y", bodyOne);
+
+        datastore.forceInsert(rev1, "1-x");
+        datastore.forceInsert(rev2, "1-x", "2-x");
+        datastore.forceInsert(rev3, "1-x","2-x","3-x");
+        datastore.forceInsert(rev4, "1-x", "2-x", "3-x", "4-x");
+        datastore.forceInsert(rev5, "1-x", "2-x", "3-x", "4-x", "5-x");
+        datastore.forceInsert(rev6, "1-x", "2-x", "3-x", "4-x", "5-x", "6-x");
+
+        datastore.forceInsert(rev7, "6-x", "7-x");
+        datastore.forceInsert(rev2_alt, "1-x", "2-y");
+
+        Assert.assertEquals(datastore.getDocument(OBJECT_ID).getRevision(), "2-y");
+    }
+
+    @Test
+    public void forceInsert_pickWinnerOfConflicts_Complex() throws Exception {
+
+        // build a complex tree and delete random leaf nodes
+        // check that after each delete the correct rev is marked as current
+        // ensures that deleted revs are never marked current and that the next eligible leaf in
+        // the tree is always correctly nominated to be current by pickWinnerOfConflicts
+
+        // first build a tree such that there will be leaf nodes in the range of generations between
+        // 2 and maxtree+2
+
+        int maxTree = 10; // deepest tree will have revs from 1..maxTree+1 followed by the conflicted leaf nodes
+        int nConflicts = 3; // number of conflicted leaf nodes
+        char startChar = 'a'; // revids will be x-a, x-b, x-c etc where x is the generation
+        String startRev = String.format("1-%c", startChar);
+        BasicDocumentRevision root = createDbObject(startRev, bodyOne);
+        // make subtree for 1-a, 2-a etc
+        makeSubTree(startRev, String.format("%c", startChar), 1, maxTree+2, nConflicts);
+        // now make subtrees starting at 2-b, 3-c etc, rooted at 1-a, 2-a etc
+        // each subtree is of a constant height ensuring leaf nodes at a variety of generations
+        for(int i=0; i<maxTree-1; i++) {
+            String rootId = String.format("%d-%c", i+1, startChar);
+            makeSubTree(rootId, String.format("%c", startChar+i+1), i+1, i+3, nConflicts);
+        }
+
+        // now go through continually deleting random leafs until they have all been deleted
+
+        Random a = new Random();
+
+        // fetch non-deleted leafs until there are none left
+        List<BasicDocumentRevision> leafs;
+        while((leafs = (datastore.getAllRevisionsOfDocument(OBJECT_ID).leafRevisions(true))).size() != 0) {
+            // getDocument() should never return a deleted document:
+            // under previous behaviour of pickWinnerOfConflicts, this would fail
+            BasicDocumentRevision currentLeaf = datastore.getDocument(OBJECT_ID);
+            Assert.assertFalse("Current revision should not have been marked as deleted. Current leaf: " +
+                    currentLeaf +
+                    ". Current state of all leaf nodes: "+leafs,
+                    currentLeaf.isDeleted());
+
+            // root the new deleted doc at the randomly selected leaf node
+            int random = a.nextInt(leafs.size());
+            BasicDocumentRevision randomLeaf =  leafs.get(random);
+            String newRevId = String.format("%d-%s-deleted", randomLeaf.getGeneration() + 1,
+                    randomLeaf.getRevision());
+            BasicDocumentRevision deleted = createDbObjectDeleted(newRevId);
+            datastore.forceInsert(deleted, randomLeaf.getRevision(), newRevId);
+
+            // we use the same comparator as pickWinnerOfConflicts
+            Collections.sort(leafs, new Comparator<BasicDocumentRevision>() {
+                @Override
+                public int compare(BasicDocumentRevision r1, BasicDocumentRevision r2) {
+                    int generationCompare = r1.getGeneration() - r2.getGeneration();
+                    if (generationCompare != 0) {
+                        return -generationCompare;
+                    } else {
+                        return -r1.getRevision().compareTo(r2.getRevision());
+                    }
+                }
+            });
+            currentLeaf = datastore.getDocument(OBJECT_ID);
+            // check that our view of 'current' agrees with what pickWinnerOfConflicts did
+            Assert.assertEquals(currentLeaf, leafs.get(0));
+            // also check that none of the other leafs are marked current
+            for (BasicDocumentRevision leaf : leafs.subList(1, leafs.size())) {
+                Assert.assertFalse(
+                        "Leaf "+leaf+" should not be marked current. Current state of all leaf nodes: "+leafs,
+                        leaf.isCurrent());
+            }
+        }
+        // check that after all of them are deleted, the winning rev is the deepest leaf node with
+        // the highest sorted revid
+        String expectedRevId = String.format("%d-%d-%c%d-deleted", maxTree + 3, maxTree + 2,
+                startChar, nConflicts - 1);
+        Assert.assertEquals(
+                "RevId should have been highest expected value. Current state of all sorted leaf nodes: "+leafs,
+                expectedRevId,
+                datastore.getDocument(OBJECT_ID).getRevision());
+    }
+
     private void assertDocumentHasRevAndBody(String id, String rev, DocumentBody body) throws Exception {
         BasicDocumentRevision obj = datastore.getDocument(id);
         Assert.assertEquals(rev, obj.getRevision());
         Assert.assertTrue(Arrays.equals(obj.getBody().asBytes(), body.asBytes()));
+    }
+
+    // make a chain of revisions from `start` to `depth` inclusive and then add `conflicts` number
+    // of leaf nodes. the interior nodes are named "1-x" etc (using `id`) and the leaf nodes are
+    // named "12-11-x0" "12-11-x1" etc
+    private void makeSubTree(String root, String id, int start, int depth, int conflicts) throws DocumentException {
+        int i;
+        String lastRevId = root;
+        for (i=start; i<depth-1; i++) {
+            String revId = String.format("%d-%s", i+1, id);
+            BasicDocumentRevision rev = createDbObject(revId, bodyOne);
+            datastore.forceInsert(rev, lastRevId, revId);
+            lastRevId = revId;
+        }
+        // now some leaf nodes of the format "12-11-x0", "12-11-x1" etc
+        for (int j=0; j<conflicts; j++) {
+            String revId = String.format("%d-%s%d", i+1, id, j);
+            BasicDocumentRevision rev = createDbObject(revId, bodyOne);
+            datastore.forceInsert(rev, lastRevId, revId);
+        }
     }
 
 }
