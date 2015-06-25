@@ -2,6 +2,12 @@
 
 - [NEW] Added query support for the `$mod` operator.
 - [NEW] Added query support for the `$size` operator.
+- [NEW] Added CachingKeyProvider, which can be used to improve performance in
+  some situations.
+- [FIXED] Fixed issue where documents with an empty array value would not be
+  indexed
+- [FIXED] Fixed issue where AES encryption keys were not created correctly on
+  android lower than API level 19
 
 # 0.12.1 (2015-06-12)
 
