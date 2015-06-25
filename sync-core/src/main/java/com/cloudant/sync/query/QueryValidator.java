@@ -488,7 +488,16 @@ class QueryValidator {
 
     @SuppressWarnings("unchecked")
     private static boolean validateClause(Map<String, Object> clause) {
-        List<String> validOperators = Arrays.asList(EQ, LT, GT, EXISTS, NOT, GTE, LTE, IN, MOD);
+        List<String> validOperators = Arrays.asList(EQ,
+                                                    LT,
+                                                    GT,
+                                                    EXISTS,
+                                                    NOT,
+                                                    GTE,
+                                                    LTE,
+                                                    IN,
+                                                    MOD,
+                                                    SIZE);
         if (clause.size() == 1) {
             String operator = (String) clause.keySet().toArray()[0];
             if (validOperators.contains(operator)) {

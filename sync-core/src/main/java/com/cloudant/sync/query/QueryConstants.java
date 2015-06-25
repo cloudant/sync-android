@@ -44,6 +44,8 @@ final class QueryConstants {
 
     public static final String MOD = "$mod";
 
+    public static final String SIZE = "$size";
+
     private QueryConstants() {
         throw new AssertionError();
     }

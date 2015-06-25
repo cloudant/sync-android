@@ -28,6 +28,7 @@ import com.cloudant.sync.datastore.DocumentRevisionBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,12 +43,14 @@ public class UnindexedMatcherTest {
         // body content: { "name" : "mike",
         //                 "age" : 31,
         //                 "pets" : [ "white_cat", "black_cat" ],
+        //                 "hobbies" : [],
         //                 "address" : { "number" : "1", "road" : "infinite loop" }
         //               }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 31);
         bodyMap.put("pets", Arrays.asList("white_cat", "black_cat"));
+        bodyMap.put("hobbies", new ArrayList<Object>());
         Map<String, String> addressDetail = new HashMap<String, String>();
         addressDetail.put("number", "1");
         addressDetail.put("road", "infinite loop");
@@ -895,6 +898,102 @@ public class UnindexedMatcherTest {
         selector = QueryValidator.normaliseAndValidateQuery(selector);
         UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
         assertThat(matcher.matches(negRev), is(false));
+    }
+
+    @Test
+    public void matchWhenUsingAPositiveIntegerWithSIZE() {
+        // Selector - { "pets": { "$size":  2 } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 2);
+        selector.put("pets", sizeOp);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void noMatchWhenUsingAPositiveIntegerWithSIZE() {
+        // Selector - { "pets": { "$size":  3 } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 3);
+        selector.put("pets", sizeOp);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void noMatchWhenFieldIsNotAnArrayWithSIZE() {
+        // Selector - { "name": { "$size":  1 } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 1);
+        selector.put("name", sizeOp);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void noMatchWhenUsingANegativeIntegerWithSIZE() {
+        // Selector - { "pets": { "$size":  -2 } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", -2);
+        selector.put("pets", sizeOp);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void matchWhenUsingZeroWithSIZE() {
+        // Selector - { "hobbies": { "$size":  0 } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 0);
+        selector.put("hobbies", sizeOp);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(true));
+    }
+
+    @Test
+    public void noMatchWhenUsingZeroAndFieldMissingWithSIZE() {
+        // Selector - { "books": { "$size":  0 } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 0);
+        selector.put("books", sizeOp);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void noMatchWhenUsingAStringWithSIZE() {
+        // Selector - { "pets": { "$size":  "2" } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", "2");
+        selector.put("pets", sizeOp);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
+    }
+
+    @Test
+    public void noMatchWhenNotUsingAnIntegerWithSIZE() {
+        // Selector - { "pets": { "$size":  2.2 } }
+        Map<String, Object> selector = new HashMap<String, Object>();
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+        sizeOp.put("$size", 2.2);
+        selector.put("pets", sizeOp);
+        selector = QueryValidator.normaliseAndValidateQuery(selector);
+        UnindexedMatcher matcher = UnindexedMatcher.matcherWithSelector(selector);
+        assertThat(matcher.matches(rev), is(false));
     }
 
     @Test

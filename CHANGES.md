@@ -1,6 +1,7 @@
 # Unreleased
 
 - [NEW] Added query support for the `$mod` operator.
+- [NEW] Added query support for the `$size` operator.
 
 # 0.12.1 (2015-06-12)
 

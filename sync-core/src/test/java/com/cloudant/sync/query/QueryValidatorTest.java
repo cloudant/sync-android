@@ -642,4 +642,34 @@ public class QueryValidatorTest {
         assertThat(normalizedQuery, is(nullValue()));
     }
 
+    @Test
+    public void normalizesQueryWithSIZEOperator() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "pet" : { "$size" : 2 } }
+        Map<String, Object> size = new HashMap<String, Object>();
+        size.put("$size", 2);
+        query.put("pet", size);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+
+        // normalized query - { "$and" : [ { "pet" : { "$size" : 2 } } ] }
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        Map<String, Object> exSize = new HashMap<String, Object>();
+        exSize.put("$size", 2);
+        Map<String, Object> exPet = new HashMap<String, Object>();
+        exPet.put("pet", exSize);
+        expected.put("$and", Collections.<Object>singletonList(exPet));
+        assertThat(normalizedQuery, is(expected));
+    }
+
+    @Test
+    public void returnsNullForQueryWhenSIZEArgumentInvalid() {
+        Map<String, Object> query = new HashMap<String, Object>();
+        // query - { "pet" : { "$size" : [2] } }
+        Map<String, Object> size = new HashMap<String, Object>();
+        size.put("$size", Collections.singletonList(2));
+        query.put("pet", size);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+        assertThat(normalizedQuery, is(nullValue()));
+    }
+
 }
