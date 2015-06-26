@@ -119,7 +119,7 @@ from gradle and maven build files.
 
 ## Tested Platforms
 
-The library is Reguarly tested on the following platforms:
+The library is regularly tested on the following platforms:
 
 Android (via emulator):
 
@@ -187,7 +187,7 @@ is described in [the events documentation](https://github.com/cloudant/sync-andr
 Replication is used to synchronise data between the local datastore and a
 remote database, either a CouchDB instance or a Cloudant database. Many
 datastores can replicate with the same remote database, meaning that
-cross-device syncronisation is acheived by setting up replications from each
+cross-device synchronisation is achieved by setting up replications from each
 device the the remote database.
 
 Replication is simple to get started in the common cases:
