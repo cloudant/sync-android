@@ -25,7 +25,6 @@ import com.google.common.base.Joiner;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -207,8 +206,9 @@ public class CouchURIHelper {
                     null // fragment
             );
             String encodedString = uri.toASCIIString().replace("/", "%2F");
-            if (encodedString.startsWith(CouchConstants._design_prefix_encoded)) {
-                // we replaced a the first slash in the design doc URL, which we shouldn't
+            if (encodedString.startsWith(CouchConstants._design_prefix_encoded) ||
+                    encodedString.startsWith(CouchConstants._local_prefix_encoded)) {
+                // we replaced a the first slash in the design or local doc URL, which we shouldn't
                 // so let's put it back
                 return encodedString.replaceFirst("%2F", "/");
             } else {

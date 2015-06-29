@@ -37,5 +37,6 @@ public class CouchConstants {
     public static final String _design_prefix = "_design/";
     public static final String _design_prefix_encoded = "_design%2F";
     public static final String _local_prefix = "_local/";
+    public static final String _local_prefix_encoded = "_local%2F";
 
 }
