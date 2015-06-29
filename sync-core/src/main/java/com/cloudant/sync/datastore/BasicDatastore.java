@@ -499,7 +499,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                                     "WHERE deleted = 0 AND current = 1 AND docs.doc_id = revs.doc_id " +
                                     "ORDER BY docs.doc_id %1$s, revid DESC LIMIT %2$s OFFSET %3$s ",
                             (descending ? "DESC" : "ASC"), limit, offset);
-                    return getRevisionsFromRawQuery(db,sql, new String[]{});
+                    return getRevisionsFromRawQuery(db, sql, new String[]{});
                 }
             }).get();
         } catch (InterruptedException e) {
@@ -1143,7 +1143,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     @Override
     public void forceInsert(BasicDocumentRevision rev, String... revisionHistory) throws DocumentException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
-        this.forceInsert(rev, Arrays.asList(revisionHistory),null, null, false);
+        this.forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
     }
 
     private boolean checkRevisionIsInCorrectOrder(List<String> revisionHistory) {
@@ -1211,7 +1211,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             throws AttachmentException, DocumentNotFoundException, DatastoreException {
         BasicDocumentRevision parent = localRevs.lookup(newRevision.getId(), revisions.get(0));
         Preconditions.checkNotNull(parent, "Parent must not be null");
-        BasicDocumentRevision previousLeaf = (BasicDocumentRevision) localRevs.getCurrentRevision();
+        BasicDocumentRevision previousLeaf = localRevs.getCurrentRevision();
+
 
         // Walk through the remote history in chronological order, matching each revision ID to
         // a local revision. When the list diverges, start creating blank local revisions to fill
@@ -1250,7 +1251,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         options.revId = newRevisionId;
         options.parentSequence = parent.getSequence();
         options.deleted = newRevision.isDeleted();
-        options.current = true;
+        options.current = false; // we'll call pickWinnerOfConflicts to set this if it needs it
         options.data = newRevision.asBytes();
         options.available = true;
         long sequence =  insertRevision(db, options);
@@ -1261,10 +1262,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         // Refresh previous leaf in case it is changed in sqlDb but not in memory
         previousLeaf = getDocumentInQueue(db, previousLeaf.getId(), previousLeaf.getRevision());
 
-        if (previousLeaf.isCurrent()) {
-            // we have a conflicts, and we need to resolve it.
-            pickWinnerOfConflicts(db,localRevs, newLeaf, previousLeaf);
-        }
+        pickWinnerOfConflicts(db,previousLeaf,localRevs);
 
         // copy stubbed attachments forward from last real revision to this revision
         if (attachments != null) {
@@ -1310,7 +1308,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         options.revId = newRevision.getRevision();
         options.parentSequence = parentSequence;
         options.deleted = newRevision.isDeleted();
-        options.current = true;
+        options.current = false; // we'll call pickWinnerOfConflicts to set this if it needs it
         options.data = newRevision.asBytes();
         options.available = !newRevision.isDeleted();
         long sequence = insertRevision(db, options);
@@ -1319,40 +1317,51 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
         // No need to refresh the previousWinner since we are inserting a new tree,
         // and nothing on the old tree should be touched.
-        pickWinnerOfConflicts(db,localRevs, newLeaf, previousWinner);
+        pickWinnerOfConflicts(db,previousWinner,localRevs);
         return sequence;
     }
 
 
-    private void pickWinnerOfConflicts(SQLDatabase db, DocumentRevisionTree objectTree,
-                                       BasicDocumentRevision newLeaf,
-                                       BasicDocumentRevision previousLeaf) {
-        // We are having a conflict, and we are resolving it
-        if (newLeaf.isDeleted() == previousLeaf.isDeleted()) {
-            // If both leafs are deleted or not
-            int previousLeafDepth = objectTree.depth(previousLeaf.getSequence());
-            int newLeafDepth = objectTree.depth(newLeaf.getSequence());
-            if (previousLeafDepth > newLeafDepth) {
-                this.changeDocumentToBeNotCurrent(db,newLeaf.getSequence());
-            } else if (previousLeafDepth < newLeafDepth) {
-                this.changeDocumentToBeNotCurrent(db,previousLeaf.getSequence());
-            } else {
-                // Compare revision hash if both leafs has same depth
-                String previousRevisionHash = previousLeaf.getRevision().substring(2);
-                String newRevisionHash = newLeaf.getRevision().substring(2);
-                if (previousRevisionHash.compareTo(newRevisionHash) > 0) {
-                    this.changeDocumentToBeNotCurrent(db,newLeaf.getSequence());
+    private void pickWinnerOfConflicts(SQLDatabase db, BasicDocumentRevision previousWinner, DocumentRevisionTree objectTree) {
+
+        /*
+         Pick winner and mark the appropriate revision with the 'current' flag set
+         - There can only be one winner in a tree (or set of trees - if there is no common root)
+           at any one time, so if there is a new winner, we only have to mark the old winner as
+           no longer 'current'. This is the 'previousWinner' object
+         - The new winner is determined by:
+           * consider only non-deleted leafs
+           * sort according to the CouchDB sorting algorithm: highest rev wins, if there is a tie
+             then do a lexicographical compare of the revision id strings
+           * we do a reverse sort (highest first) and pick the 1st and mark it 'current'
+           * special case: if all leafs are deleted, then apply sorting and selection criteria
+             above to all leafs
+         */
+
+        // first get all non-deleted leafs
+        List<BasicDocumentRevision> leafs = objectTree.leafRevisions(true);
+        if (leafs.size() == 0) {
+            // all deleted, apply the normal rules to all the leafs
+            leafs = objectTree.leafRevisions();
+        }
+
+        Collections.sort(leafs, new Comparator<BasicDocumentRevision>() {
+            @Override
+            public int compare(BasicDocumentRevision r1, BasicDocumentRevision r2) {
+                int generationCompare = r1.getGeneration() - r2.getGeneration();
+                // note that the return statements have a unary minus since we are reverse sorting
+                if (generationCompare != 0) {
+                    return -generationCompare;
                 } else {
-                    this.changeDocumentToBeNotCurrent(db,previousLeaf.getSequence());
+                    return -r1.getRevision().compareTo(r2.getRevision());
                 }
             }
-        } else {
-            // If only one of the leaf is not deleted, that is the winner
-            if (newLeaf.isDeleted()) {
-                this.changeDocumentToBeNotCurrent(db,newLeaf.getSequence());
-            } else {
-                this.changeDocumentToBeNotCurrent(db,previousLeaf.getSequence());
-            }
+        });
+        // new winner will be at the top of the list
+        BasicDocumentRevision leaf = leafs.get(0);
+        if (previousWinner.getSequence() != leaf.getSequence()) {
+            this.changeDocumentToBeNotCurrent(db, previousWinner.getSequence());
+            this.changeDocumentToBeCurrent(db, leaf.getSequence());
         }
     }
 
@@ -1386,6 +1395,13 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         options.available = true;
         long sequence = insertRevision(db,options);
         return sequence;
+    }
+
+    private void changeDocumentToBeCurrent(SQLDatabase db, long sequence) {
+        ContentValues args = new ContentValues();
+        args.put("current", 1);
+        String[] whereArgs = {Long.toString(sequence)};
+        db.update("revs", args, "sequence=?", whereArgs);
     }
 
     private void changeDocumentToBeNotCurrent(SQLDatabase db, long sequence) {
