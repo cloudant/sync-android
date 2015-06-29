@@ -57,6 +57,16 @@ public class CouchURIHelperTest {
     }
 
     @Test
+    public void _localDocumentURI() throws Exception {
+        final String expected = uriBase + "/db_name/_local/mylocaldoc";
+
+        CouchURIHelper helper = helper(path+"/db_name");
+        URI localDoc = helper.documentUri("_local/mylocaldoc");
+
+        Assert.assertEquals(expected,localDoc.toString());
+    }
+
+    @Test
     public void buildDbUri() throws Exception {
         URI expected = new URI(uriBase + "/db_name");
         URI actual = helper(path+"/db_name").getRootUri();
