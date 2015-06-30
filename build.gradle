@@ -10,7 +10,7 @@ apply plugin: 'java'
 
 allprojects {
     group = 'com.cloudant'
-    version = '0.12.3-SNAPSHOT'
+    version = '0.12.3'
     description = """cloudant-sync"""
 }
 

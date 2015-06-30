@@ -1,3 +1,9 @@
+# 0.12.3 (2015-06-30)
+
+- [FIXED] Fixed issue with the encoding of local document URIs
+- [FIXED] Fixed issue where sync-android would select a different
+  winning revision than CouchDB for the same revision tree.
+
 # 0.12.2 (2015-06-25)
 
 - [NEW] Added query support for the `$mod` operator.
