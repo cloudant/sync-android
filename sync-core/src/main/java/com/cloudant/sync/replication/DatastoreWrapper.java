@@ -115,9 +115,4 @@ class DatastoreWrapper {
         return this.dbCore.prepareAttachment(att);
     }
 
-    protected void addAttachment(PreparedAttachment att, BasicDocumentRevision rev) throws AttachmentException {
-        this.dbCore.addAttachment(att, rev);
-    }
-
-
 }
