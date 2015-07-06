@@ -27,4 +27,8 @@ interface ReplicationStrategy extends Runnable {
 
     String getReplicationId() throws DatastoreException;
 
+    int getDocumentCounter();
+
+    int getBatchCounter();
+
 }

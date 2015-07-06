@@ -131,7 +131,7 @@ public class BasicReplicatorMockTest {
         startAndVerify();
 
         ReplicationStrategyCompleted rsc = new ReplicationStrategyCompleted(mockStrategy);
-        ReplicationCompleted rc = new ReplicationCompleted(replicator);
+        ReplicationCompleted rc = new ReplicationCompleted(replicator, 0, 0);
         
         replicator.complete(rsc);
 
@@ -148,7 +148,7 @@ public class BasicReplicatorMockTest {
         startAndVerify();
 
         ReplicationStrategyCompleted rsc = new ReplicationStrategyCompleted(mockStrategy);
-        ReplicationCompleted rc = new ReplicationCompleted(replicator);
+        ReplicationCompleted rc = new ReplicationCompleted(replicator, 0, 0);
         
         doThrow(new RuntimeException("Mocked error")).when(mockListener).complete(rc);
         
@@ -207,7 +207,7 @@ public class BasicReplicatorMockTest {
         Assert.assertFalse(replicator.strategyThread().isAlive());
 
         ReplicationStrategyCompleted rsc = new ReplicationStrategyCompleted(mockStrategy);
-        ReplicationCompleted rc = new ReplicationCompleted(replicator);
+        ReplicationCompleted rc = new ReplicationCompleted(replicator, 0, 0);
         
         replicator.complete(rsc);
         verify(mockListener).complete(rc);
@@ -252,7 +252,7 @@ public class BasicReplicatorMockTest {
         Assert.assertEquals(Replicator.State.STOPPING, replicator.getState());
 
         ReplicationStrategyCompleted rsc = new ReplicationStrategyCompleted(mockStrategy);
-        ReplicationCompleted rc = new ReplicationCompleted(replicator);
+        ReplicationCompleted rc = new ReplicationCompleted(replicator, 0, 0);
         replicator.complete(rsc);
         Assert.assertEquals(Replicator.State.STOPPED, replicator.getState());
         verify(mockListener).complete(rc);

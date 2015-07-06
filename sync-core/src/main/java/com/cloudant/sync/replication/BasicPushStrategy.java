@@ -106,10 +106,12 @@ class BasicPushStrategy implements ReplicationStrategy {
         this.cancel = true;
     }
 
+    @Override
     public int getDocumentCounter() {
         return this.documentCounter;
     }
 
+    @Override
     public int getBatchCounter() {
         return this.batchCounter;
     }

@@ -56,7 +56,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_nothing_lastSequenceShouldStillBeNull() throws Exception {
-        this.push();
+        this.push(0);
         assertPushReplicationStatus(0, 1, null);
     }
 
@@ -67,7 +67,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         assertPushReplicationStatus(1, 2, "1");
 
         // Test
-        this.push();
+        this.push(0);
         assertPushReplicationStatus(0, 1, "1");
     }
 
@@ -105,7 +105,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         assertPushReplicationStatus(1, 2, "4");
 
         // Another push(), and the last sequence should not be touched
-        this.push();
+        this.push(0);
         assertPushReplicationStatus(0, 1, "4");
     }
 
@@ -134,7 +134,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     private Bar oneDocCreatedAndThenPush() throws Exception {
         Bar bar1 = BarUtils.createBar(datastore, "Tom", 31);
-        this.push();
+        this.push(1);
         Bar bar2 = couchClient.getDocument(bar1.getId(), Bar.class);
         Assert.assertEquals(bar1, bar2);
         return bar1;
@@ -143,7 +143,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     private Bar[] twoDocCreatedAndThenPush() throws Exception {
         Bar bar1 = BarUtils.createBar(datastore, "Tom", 31);
         Bar bar2 = BarUtils.createBar(datastore, "Jerry", 50);
-        this.push();
+        this.push(2);
         Bar bar3 = couchClient.getDocument(bar1.getId(), Bar.class);
         Assert.assertEquals(bar1, bar3);
 
@@ -161,7 +161,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     private Bar oneDocCreatedThenUpdatedAndThenPush() throws Exception {
         Bar bar1 = BarUtils.createBar(datastore, "Tom", 31);
         Bar bar2 = BarUtils.updateBar(datastore, bar1.getId(), "Jerry", 50);
-        this.push();
+        this.push(1);
         Bar bar3 = couchClient.getDocument(bar1.getId(), Bar.class);
         Assert.assertEquals(bar2, bar3);
         return bar1;
@@ -177,14 +177,14 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         Bar bar = oneDocCreatedThenUpdatedAndThenPush();
         BarUtils.deleteBar(datastore, bar.getId());
 
-        this.push();
+        this.push(1);
         try {
             couchClient.getDocument(bar.getId(), Bar.class);
             Assert.fail();
         } catch (NoResourceException e) {}
     }
 
-    private void push() throws Exception {
+    private void push(int expectedDocs) throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
         PushReplication pushReplication = this.createPushReplication();
         this.replicator = new BasicPushStrategy(pushReplication, currentSetting);
@@ -192,6 +192,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         this.replicator.run();
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
+        Assert.assertEquals(expectedDocs, listener.documentsReplicated);
     }
 
     @Test
@@ -205,7 +206,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     private void twoDocsCreatedAndThenPushed() throws Exception {
         Bar bar1 = BarUtils.createBar(datastore, "Tom", 31);
         Bar bar2 = BarUtils.createBar(datastore, "Jerry", 50);
-        this.push();
+        this.push(2);
         Bar bar3 = couchClient.getDocument(bar1.getId(), Bar.class);
         Bar bar4 = couchClient.getDocument(bar2.getId(), Bar.class);
         Assert.assertEquals(bar1, bar3);
@@ -224,7 +225,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         BasicDocumentRevision rev2 = createDbObject("5-x", createDBBody("Jerry"));
         datastore.forceInsert(rev2, "1-a", "2-b", "3-c", "4-d", "5-x");
 
-        this.push();
+        this.push(1);
         // two tree belongs to one doc
         assertPushReplicationStatus(1, 7, "6");
 
@@ -261,7 +262,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         BasicDocumentRevision rev2 = createDbObject("3-z", createDBBody("Jerry"));
         datastore.forceInsert(rev2, "1-x", "2-y", "3-z");
 
-        this.push();
+        this.push(1);
 
         // two tree belongs to one doc, so only one doc is processed
         assertPushReplicationStatus(1, 8, "7");
@@ -283,7 +284,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         rev.docId = id;
         BasicDocumentRevision saved = datastore.createDocumentFromRevision(rev);
 
-        this.push();
+        this.push(1);
         assertPushReplicationStatus(1, 2, "1");
 
         Map<String, Object> m = couchClient.getDocument(id);
@@ -303,7 +304,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         wrapper.putCheckpoint(this.replicator.getReplicationId(), "0");
         System.out.println("Checkpoint: " + wrapper.getCheckpoint(this.replicator.getReplicationId()));
 
-        this.push();
+        this.push(0);
         assertPushReplicationStatus(0, 2, "1");
     }
 

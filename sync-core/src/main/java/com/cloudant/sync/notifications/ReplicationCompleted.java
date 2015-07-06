@@ -28,14 +28,28 @@ import com.cloudant.sync.replication.Replicator;
  */
 public class ReplicationCompleted {
 
-    public ReplicationCompleted(Replicator replicator) {
+    public ReplicationCompleted(Replicator replicator,
+                                int documentsReplicated,
+                                int batchesReplicated) {
         this.replicator = replicator;
+        this.documentsReplicated = documentsReplicated;
+        this.batchesReplicated = batchesReplicated;
     }
     
     /** 
      * The {@code Replicator} issuing the event
      */
     public final Replicator replicator;
+
+    /**
+     * The total number of documents replicated by the {@link #replicator}
+     */
+    public final int documentsReplicated;
+
+    /**
+     * The total number of batches replicated by the {@link #replicator}
+     */
+    public final int batchesReplicated;
     
     @Override
     public boolean equals(Object other) {
