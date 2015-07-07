@@ -1746,25 +1746,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public void addAttachment(final PreparedAttachment att, final BasicDocumentRevision rev) throws AttachmentException {
-
-        try {
-            queue.submit(new SQLQueueCallable<Object>(){
-                @Override
-                public Object call(SQLDatabase db) throws Exception {
-                    attachmentManager.addAttachment(db,att, rev);
-                    return null;
-                }
-            }).get();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-           throw new AttachmentException(e);
-        }
-
-    }
-
-    @Override
     public Attachment getAttachment(final BasicDocumentRevision rev, final String attachmentName) {
         try {
             return queue.submit(new SQLQueueCallable<Attachment>() {

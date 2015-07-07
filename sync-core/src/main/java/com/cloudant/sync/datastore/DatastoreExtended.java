@@ -222,17 +222,6 @@ public interface DatastoreExtended extends Datastore {
      */
     PreparedAttachment prepareAttachment(Attachment att) throws AttachmentException;
 
-    /**
-     * Add attachment to document revision without incrementing revision.
-     *
-     * Used by replicator when receiving new/updated attachments
-     *
-     * @param att The attachment to add
-     * @param rev The DocumentRevision to add the attachment to
-     * @throws AttachmentException if there was an error inserting the attachment metadata into the
-     * database or if there was an error moving the attachment file on the file system
-     */
-    void addAttachment(PreparedAttachment att, BasicDocumentRevision rev) throws  AttachmentException;
 
     /**
      * <p>Returns attachment <code>attachmentName</code> for the revision.</p>
