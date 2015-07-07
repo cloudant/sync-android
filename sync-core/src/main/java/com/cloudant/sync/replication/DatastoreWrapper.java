@@ -111,8 +111,8 @@ class DatastoreWrapper {
         return allDocumentTrees;
     }
 
-    protected PreparedAttachment prepareAttachment(Attachment att) throws AttachmentException {
-        return this.dbCore.prepareAttachment(att);
+    protected PreparedAttachment prepareAttachment(Attachment att, long length, long encodedLength) throws AttachmentException {
+        return this.dbCore.prepareAttachment(att, length, encodedLength);
     }
 
 }

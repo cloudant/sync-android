@@ -210,18 +210,23 @@ public interface DatastoreExtended extends Datastore {
     Map<String, Collection<String>> revsDiff(Multimap<String, String> revisions);
 
     /**
+     * <p>
      * Read attachment stream to a temporary location and calculate sha1,
      * prior to being added to the datastore.
-     *
+     * </p>
+     * <p>
      * Used by replicator when receiving new/updated attachments
+     *</p>
      *
-     * @param att Attachment to be prepared, providing data either from a file or a stream
+     * @param att           Attachment to be prepared, providing data either from a file or a stream
+     * @param length        Size in bytes of attachment as signalled by "length" metadata property
+     * @param encodedLength Size in bytes of attachment, after encoding, as signalled by
+     *                      "encoded_length" metadata property
      * @return A prepared attachment, ready to be added to the datastore
      * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
-     *                  attachment data.
+     *                             attachment data.
      */
-    PreparedAttachment prepareAttachment(Attachment att) throws AttachmentException;
-
+    PreparedAttachment prepareAttachment(Attachment att, long length, long encodedLength) throws AttachmentException;
 
     /**
      * <p>Returns attachment <code>attachmentName</code> for the revision.</p>
