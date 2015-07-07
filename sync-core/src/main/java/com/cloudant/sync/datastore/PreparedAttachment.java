@@ -43,6 +43,8 @@ public class PreparedAttachment {
     public final long length;
     public final long encodedLength;
 
+    private static final int NO_ENCODED_LENGTH = 0;
+
     /**
      * Prepare an attachment by copying it to a temp location and calculating its sha1.
      *
@@ -97,9 +99,8 @@ public class PreparedAttachment {
         //Set attachment length from bytes read in input stream
         if (this.attachment.encoding == Attachment.Encoding.Plain) {
             this.length = totalRead;
-            // 0 signals "no encoded length" - this is consistent with couch which does not send
-            // encoded_length if the encoding is "plain"
-            this.encodedLength = 0;
+            // couch does not send encoded_length if the encoding is "plain"
+            this.encodedLength = NO_ENCODED_LENGTH;
         } else {
             // the pre-encoded length is known, so store it
             this.length = length;
