@@ -26,6 +26,7 @@ import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.query.IndexManager;
+import com.cloudant.sync.util.TestUtils;
 
 import net.sqlcipher.database.SQLiteDatabase;
 import org.apache.commons.codec.DecoderException;

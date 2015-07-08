@@ -12,3 +12,6 @@ build
 out
 local.gradle
 sync-core/fixture
+**/.idea/*
+!**/.idea/codeStyleSettings.xml
+

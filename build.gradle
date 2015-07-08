@@ -18,6 +18,7 @@ dependencies {
     compile project(':sync-core')
     compile project(':sync-javase')
     compile project(':sync-android')
+    compile project(':sync-android-encryption')
 }
 
 subprojects {
