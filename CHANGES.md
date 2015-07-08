@@ -1,3 +1,8 @@
+# Unreleased
+- [BREAKING CHANGE] Moved code for encryption on Android to the
+  `sync-android-encryption` subproject. See the instructions in the [README](https://github.com/cloudant/sync-android/blob/master/README.md)
+  file for how to include `sync-android-encryption` in your project.
+
 # 0.12.3 (2015-06-30)
 
 - [FIXED] Fixed issue with the encoding of local document URIs
@@ -10,9 +15,6 @@
 - [NEW] Added query support for the `$size` operator.
 - [NEW] Added CachingKeyProvider, which can be used to improve performance in
   some situations.
-- [BREAKING CHANGE] Moved code for encryption on Android to the
-  `sync-android-encryption` subproject. See the instructions in the [README](https://github.com/cloudant/sync-android/blob/master/README.md)
-  file for how to include `sync-android-encryption` in your project.
 - [FIXED] Fixed issue where documents with an empty array value would not be
   indexed
 - [FIXED] Fixed issue where AES encryption keys were not created correctly on
