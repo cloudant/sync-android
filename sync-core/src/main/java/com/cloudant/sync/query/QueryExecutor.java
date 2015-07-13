@@ -255,21 +255,26 @@ class QueryExecutor {
             return accumulator;
         } else if (node instanceof SqlQueryNode) {
             SqlQueryNode sqlNode = (SqlQueryNode) node;
-            SqlParts sqlParts = sqlNode.sql;
-
-            List<String> docIds = new ArrayList<String>();
-
-            Cursor cursor = null;
-            try {
-                cursor = db.rawQuery(sqlParts.sqlWithPlaceHolders, sqlParts.placeHolderValues);
-                while (cursor.moveToNext()) {
-                    String docId = cursor.getString(0);
-                    docIds.add(docId);
+            List<String> docIds;
+            if (sqlNode.sql != null) {
+                docIds = new ArrayList<String>();
+                SqlParts sqlParts = sqlNode.sql;
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sqlParts.sqlWithPlaceHolders, sqlParts.placeHolderValues);
+                    while (cursor.moveToNext()) {
+                        String docId = cursor.getString(0);
+                        docIds.add(docId);
+                    }
+                } catch (SQLException e) {
+                    logger.log(Level.SEVERE, "Failed to get a list of doc ids.", e);
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
                 }
-            } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Failed to get a list of doc ids.", e);
-            } finally {
-                DatabaseUtils.closeCursorQuietly(cursor);
+            } else {
+                // No SQL exists so we are now forced to go directly to the
+                // document datastore to retrieve the list of document ids.
+                docIds = datastore.getAllDocumentIds();
             }
 
             return new HashSet<String>(docIds);

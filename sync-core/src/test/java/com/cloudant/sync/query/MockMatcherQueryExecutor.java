@@ -19,6 +19,7 @@ import com.cloudant.sync.util.DatabaseUtils;
 
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -35,8 +36,11 @@ import java.util.concurrent.ExecutorService;
  */
 public class MockMatcherQueryExecutor extends QueryExecutor{
 
+    private final Set<String> docIds;
+
     MockMatcherQueryExecutor(SQLDatabase database, Datastore datastore, ExecutorService queue) {
         super(database, datastore, queue);
+        docIds = new HashSet<String>(datastore.getAllDocumentIds());
     }
 
     // return just a blank node (we don't execute it anyway).
@@ -50,27 +54,6 @@ public class MockMatcherQueryExecutor extends QueryExecutor{
     // just return all doc IDs rather than executing the query nodes
     @Override
     protected Set<String> executeQueryTree(QueryNode node, SQLDatabase db) {
-        Map<String, Object> indexes = IndexManager.listIndexesInDatabase(db);
-
-        Set<String> docIdSet = new HashSet<String>();
-        Set<String> neededFields = new HashSet<String>(Arrays.asList("_id"));
-        String allDocsIndex = QuerySqlTranslator.chooseIndexForFields(neededFields, indexes);
-
-        String tableName = IndexManager.tableNameForIndex(allDocsIndex);
-        String sql = String.format("SELECT _id FROM %s", tableName);
-        Cursor cursor = null;
-        try {
-            cursor = db.rawQuery(sql, new String[]{});
-            while (cursor.moveToNext()) {
-                String docId = cursor.getString(0);
-                docIdSet.add(docId);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
-
-        return docIdSet;
+        return docIds;
     }
 }

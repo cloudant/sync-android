@@ -210,7 +210,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
                                                                  "fred12"));
     }
 
-    // When executing queries containing $size operator
+// When executing queries containing $size operator
 
     @Test
     public void worksWhenArrayCountMatchesUsingSIZE() throws Exception {
@@ -396,6 +396,22 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
         query.put("$and", Arrays.<Object>asList(petOp1, petOp2));
         QueryResult queryResult = im.find(query);
         assertThat(queryResult.documentIds(), is(empty()));
+    }
+
+    @Test
+    public void canQueryWithoutAnyUserDefinedIndexes() throws Exception {
+        setUpWithoutCoveringIndexesQueryData();
+        // query - { "town" : "bristol" }
+        // indexes - No user defined indexes found.  Retrieves
+        //           document ids directly from the datastore.
+        assertThat(im.deleteIndexNamed("basic"), is(true));
+        assertThat(im.deleteIndexNamed("pet"), is(true));
+        assertThat(im.listIndexes().keySet(), is(empty()));
+
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("town", "bristol");
+        QueryResult queryResult = im.find(query);
+        assertThat(queryResult.documentIds(), containsInAnyOrder("mike72", "fred12"));
     }
 
 }

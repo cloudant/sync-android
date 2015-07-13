@@ -2,6 +2,8 @@
 - [BREAKING CHANGE] Moved code for encryption on Android to the
   `sync-android-encryption` subproject. See the instructions in the [README](https://github.com/cloudant/sync-android/blob/master/README.md)
   file for how to include `sync-android-encryption` in your project.
+- [FIX] Fixed issue where at least one index had to be created before a query would execute.  
+  You can now query for documents without the existence of any indexes.
 
 # 0.12.3 (2015-06-30)
 
