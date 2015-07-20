@@ -14,11 +14,15 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.http.HttpConnectionRequestFilter;
+import com.cloudant.http.HttpConnectionResponseFilter;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.sync.datastore.Datastore;
 import com.google.common.base.Preconditions;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * <p>Provides configuration for a push replication.</p>
@@ -46,6 +50,64 @@ public class PushReplication extends Replication {
      */
     public PushReplication() {
         /* Does nothing but we can now document it */
+    }
+
+    /**
+     * Adds request filters to run for every request made by this replication
+     * @param requestFilters the filters to run
+     * @return The current instance of PushReplication
+     */
+    public PushReplication addRequestFilters(List<HttpConnectionRequestFilter> requestFilters){
+        this.requestFilters.addAll(requestFilters);
+        return this;
+    }
+
+    /**
+     * Variable argument version of {@link #addRequestFilters(List)}
+     * @param requestFilters the filters to run
+     * @return The current instance of PushReplication
+     */
+    public PushReplication addRequestFilters(HttpConnectionRequestFilter ... requestFilters){
+        return this.addRequestFilters(Arrays.asList(requestFilters));
+    }
+
+    /**
+     * Variable argument version of {@link #addResponseFilters(List)}
+     * @param responseFilters The filters to run
+     * @return The current instance of PushReplication
+     */
+    public PushReplication addResponseFilters(HttpConnectionResponseFilter ... responseFilters){
+        return this.addResponseFilters(Arrays.asList(responseFilters));
+    }
+
+    /**
+     * Adds response filters to run for every response received from the server for this replication
+     * @param responseFilters The filters to run
+     * @return The current instance of PushReplication
+     */
+    public PushReplication addResponseFilters(List<HttpConnectionResponseFilter> responseFilters) {
+        this.responseFilters.addAll(responseFilters);
+        return this;
+    }
+
+    /**
+     * Sets the data store from which data will be replicated
+     * @param source The source data store
+     * @return The current instance of PushReplication
+     */
+    public PushReplication source(Datastore source){
+        this.source = source;
+        return this;
+    }
+
+    /**
+     * Sets the uri of the target remote database for this replication
+     * @param target The uri of the remot database
+     * @return The current instance of PushReplication
+     */
+    public PushReplication target(URI target){
+        this.target = target;
+        return this;
     }
 
     @Override

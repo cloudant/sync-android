@@ -21,6 +21,8 @@ package com.cloudant.mazha;
 
 import com.cloudant.http.Http;
 import com.cloudant.http.HttpConnection;
+import com.cloudant.http.HttpConnectionRequestFilter;
+import com.cloudant.http.HttpConnectionResponseFilter;
 import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -44,11 +46,15 @@ public class CouchClient  {
     protected final JSONHelper jsonHelper;
     private final Map<String, String> customHeaders;
     private CouchURIHelper uriHelper;
+    private List<HttpConnectionRequestFilter> requestFilters;
+    private List<HttpConnectionResponseFilter> responseFilters;
 
     public CouchClient(CouchConfig config) {
         this.jsonHelper = new JSONHelper();
         this.uriHelper = new CouchURIHelper(config.getRootUri());
         this.customHeaders = config.getCustomHeaders();
+        this.requestFilters = config.getRequestFilters();
+        this.responseFilters = config.getResponseFilters();
     }
 
     public URI getRootUri() {
@@ -76,6 +82,7 @@ public class CouchClient  {
         // all CouchClient requests want to receive application/json responses
         connection.requestProperties.put("Accept", "application/json");
         this.addCustomHeaders(connection);
+        this.addFilters(connection);
         InputStream is = null; // input stream - response from server on success
         InputStream es = null; // error stream - response from server for a 500 etc
         String response = null;
@@ -118,6 +125,16 @@ public class CouchClient  {
                 }
             }
         }
+    }
+
+    private void addFilters(HttpConnection connection) {
+        if(this.responseFilters != null) {
+            connection.responseFilters.addAll(this.responseFilters);
+        }
+        if(this.requestFilters != null) {
+            connection.requestFilters.addAll(this.requestFilters);
+        }
+
     }
 
     private <T> T executeToJsonObject(HttpConnection connection, Class<T> c) throws CouchException {
