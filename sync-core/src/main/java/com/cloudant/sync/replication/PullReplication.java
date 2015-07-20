@@ -76,6 +76,6 @@ public class PullReplication extends Replication {
 
     @Override
     ReplicationStrategy createReplicationStrategy() {
-        return new BasicPullStrategy(this, null, null);
+        return new BasicPullStrategy(this);
     }
 }

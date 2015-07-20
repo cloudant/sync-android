@@ -14,6 +14,15 @@
 
 package com.cloudant.sync.replication;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.DocumentRevs;
@@ -41,8 +50,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Mockito.*;
 
 @Category(RequireRunningCouchDB.class)
 public class BasicPullStrategyMockTest extends ReplicationTestBase {
@@ -127,7 +134,12 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
         PullReplication pullReplication = this.createPullReplication();
-        BasicPullStrategy pullStrategy = new BasicPullStrategy(pullReplication, this.service, null);
+        BasicPullStrategy pullStrategy = new BasicPullStrategy(pullReplication,
+                this.service,
+                BasicPullStrategy.DEFAULT_CHANGES_LIMIT_PER_BATCH,
+                BasicPullStrategy.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                BasicPullStrategy.DEFAULT_INSERT_BATCH_SIZE,
+                BasicPullStrategy.DEFAULT_PULL_ATTACHMENTS_INLINE);
         pullStrategy.sourceDb = mockRemoteDb;
         pullStrategy.getEventBus().register(mockListener);
         service.shutdownNow();

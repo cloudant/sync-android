@@ -310,9 +310,10 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         TestStrategyListener listener = new TestStrategyListener();
         BasicPullStrategy pull = new BasicPullStrategy(this.createPullReplication(),
                 null,
-                new PullConfiguration(PullConfiguration.DEFAULT_CHANGES_LIMIT_PER_BATCH,
-                        PullConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                        PullConfiguration.DEFAULT_INSERT_BATCH_SIZE, pullAttachmentsInline));
+                BasicPullStrategy.DEFAULT_CHANGES_LIMIT_PER_BATCH,
+                BasicPullStrategy.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                BasicPullStrategy.DEFAULT_INSERT_BATCH_SIZE,
+                pullAttachmentsInline);
         pull.getEventBus().register(listener);
 
         Thread t = new Thread(pull);

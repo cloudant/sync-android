@@ -56,12 +56,22 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     private static final Logger logger = Logger.getLogger(BasicPullStrategy.class.getCanonicalName());
     private static final String LOG_TAG = "BasicPullStrategy";
+
+    public static final int DEFAULT_CHANGES_LIMIT_PER_BATCH = 1000;
+    public static final int DEFAULT_MAX_BATCH_COUNTER_PER_RUN = 100;
+    public static final int DEFAULT_INSERT_BATCH_SIZE = 10;
+    public static final boolean DEFAULT_PULL_ATTACHMENTS_INLINE = false;
+
+    final int changeLimitPerBatch;
+    final int batchLimitPerRun;
+    final int insertBatchSize;
+    final boolean pullAttachmentsInline;
+
     CouchDB sourceDb;
     Replication.Filter filter;
     DatastoreWrapper targetDb;
 
     ExecutorService executor;
-    private PullConfiguration config;
 
     int documentCounter = 0;
     int batchCounter = 0;
@@ -81,12 +91,20 @@ class BasicPullStrategy implements ReplicationStrategy {
     private volatile boolean replicationTerminated = false;
 
     public BasicPullStrategy(PullReplication pullReplication) {
-        this(pullReplication, null, null);
+        this(pullReplication,
+                null,
+                DEFAULT_CHANGES_LIMIT_PER_BATCH,
+                DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                DEFAULT_INSERT_BATCH_SIZE,
+                DEFAULT_PULL_ATTACHMENTS_INLINE);
     }
 
     public BasicPullStrategy(PullReplication pullReplication,
                              ExecutorService executorService,
-                             PullConfiguration config) {
+                             int changeLimitPerBatch,
+                             int batchLimitPerRun,
+                             int insertBatchSize,
+                             boolean pullAttachmentsInline ) {
         Preconditions.checkNotNull(pullReplication, "PullReplication must not be null.");
 
         if(executorService == null) {
@@ -94,12 +112,12 @@ class BasicPullStrategy implements ReplicationStrategy {
                     new LinkedBlockingQueue<Runnable>());
         }
 
-        if(config == null) {
-            config = new PullConfiguration();
-        }
+        this.changeLimitPerBatch = changeLimitPerBatch;
+        this.batchLimitPerRun = batchLimitPerRun;
+        this.insertBatchSize = insertBatchSize;
+        this.pullAttachmentsInline = pullAttachmentsInline;
 
         this.executor = executorService;
-        this.config = config;
         this.filter = pullReplication.filter;
 
         CouchConfig couchConfig = pullReplication.getCouchConfig();
@@ -193,7 +211,7 @@ class BasicPullStrategy implements ReplicationStrategy {
         }
 
         this.documentCounter = 0;
-        for (this.batchCounter = 1; this.batchCounter < config.batchLimitPerRun; this.batchCounter++) {
+        for (this.batchCounter = 1; this.batchCounter < this.batchLimitPerRun; this.batchCounter++) {
 
             if (this.cancel) { return; }
 
@@ -233,7 +251,7 @@ class BasicPullStrategy implements ReplicationStrategy {
 
             // This logic depends on the changes in the feed rather than the
             // changes we actually processed.
-            if (changeFeeds.size() < this.config.changeLimitPerBatch) {
+            if (changeFeeds.size() < this.changeLimitPerBatch) {
                 break;
             }
         }
@@ -264,7 +282,7 @@ class BasicPullStrategy implements ReplicationStrategy {
 
         // Process the changes in batches
         List<String> ids = Lists.newArrayList(missingRevisions.keySet());
-        List<List<String>> batches = Lists.partition(ids, this.config.insertBatchSize);
+        List<List<String>> batches = Lists.partition(ids, this.insertBatchSize);
         for (List<String> batch : batches) {
 
             if (this.cancel) { break; }
@@ -284,7 +302,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                     HashMap<String[], List<PreparedAttachment>> atts = new HashMap<String[], List<PreparedAttachment>>();
 
                     // now put together a list of attachments we need to download
-                    if (!config.pullAttachmentsInline) {
+                    if (!this.pullAttachmentsInline) {
                         try {
                             for (DocumentRevs documentRevs : result) {
                                 Map<String, Object> attachments = documentRevs.getAttachments();
@@ -341,7 +359,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                     if (this.cancel)
                         break;
 
-                    this.targetDb.bulkInsert(result, atts, config.pullAttachmentsInline);
+                    this.targetDb.bulkInsert(result, atts, this.pullAttachmentsInline);
                     changesProcessed++;
                 }
             } catch (InterruptedException ex) {
@@ -386,7 +404,7 @@ class BasicPullStrategy implements ReplicationStrategy {
         ChangesResult changeFeeds = this.sourceDb.changes(
                 filter,
                 lastCheckpoint,
-                this.config.changeLimitPerBatch);
+                this.changeLimitPerBatch);
         logger.finer("changes feed: "+JSONUtils.toPrettyJson(changeFeeds));
         return new ChangesResultWrapper(changeFeeds);
     }
@@ -416,7 +434,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                     id,
                     revisions.get(id),
                     possibleAncestors,
-                    config.pullAttachmentsInline));
+                    this.pullAttachmentsInline));
         }
         return tasks;
     }
