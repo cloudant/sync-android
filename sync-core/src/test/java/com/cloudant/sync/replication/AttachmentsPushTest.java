@@ -16,21 +16,13 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentRevisionBuilder;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.util.TestUtils;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -38,16 +30,11 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import static org.hamcrest.CoreMatchers.is;
 
 /**
  * Created by tomblench on 26/03/2014.
@@ -263,10 +250,10 @@ public class AttachmentsPushTest extends ReplicationTestBase {
     private void push() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
         BasicPushStrategy push = new BasicPushStrategy(this.createPushReplication(),
-                new PushConfiguration(PushConfiguration.DEFAULT_CHANGES_LIMIT_PER_BATCH,
-                        PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                        PushConfiguration.DEFAULT_BULK_INSERT_SIZE,
-                        pushAttachmentsInline));
+                BasicPushStrategy.DEFAULT_CHANGES_LIMIT_PER_BATCH,
+                BasicPushStrategy.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                BasicPushStrategy.DEFAULT_BULK_INSERT_SIZE,
+                        pushAttachmentsInline);
         push.eventBus.register(listener);
 
         Thread t = new Thread(push);

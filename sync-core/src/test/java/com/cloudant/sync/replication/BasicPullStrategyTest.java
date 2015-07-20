@@ -43,7 +43,6 @@ import java.util.Map;
 @Category(RequireRunningCouchDB.class)
 public class BasicPullStrategyTest extends ReplicationTestBase {
 
-    PullConfiguration config = null;
     BasicPullStrategy replicator = null;
 
     private Bar getDocument(String id) throws Exception {
@@ -107,13 +106,16 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_twoDocsWithBatchSizeOne_bothDocRevisionsShouldBePulled() throws Exception {
-        this.config = new PullConfiguration(1, PullConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                PullConfiguration.DEFAULT_INSERT_BATCH_SIZE, PullConfiguration.DEFAULT_PULL_ATTACHMENTS_INLINE);
-        Assert.assertEquals(1, this.config.changeLimitPerBatch);
+
 
         Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
         Bar bar2 = BarUtils.createBar(remoteDb, "Jerry", 41);
-        this.pull(2);
+        this.pull(2,
+                null,
+                1,
+                BasicPullStrategy.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                BasicPullStrategy.DEFAULT_INSERT_BATCH_SIZE,
+                BasicPullStrategy.DEFAULT_PULL_ATTACHMENTS_INLINE);
         Bar bar3 = this.getDocument(bar1.getId());
         Assert.assertEquals(bar1, bar3);
         Bar bar4 = this.getDocument(bar2.getId());
@@ -166,7 +168,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     public void pull_localDbError_replicationAbort() throws Exception {
         DatastoreExtended localDb = mock(DatastoreExtended.class);
 
-        BasicPullStrategy replication = new BasicPullStrategy(this.createPullReplication(), null, null);
+        BasicPullStrategy replication = new BasicPullStrategy(this.createPullReplication());
         replication.targetDb = new DatastoreWrapper(localDb);
         replication.getEventBus().register(new TestStrategyListener());
 
@@ -193,17 +195,36 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         this.pull(expectedDocs, null);
     }
 
-    private void pull(int expectedDocs, Replication.Filter filter) throws Exception {
+    private void pull(int expectedDocs,
+                      Replication.Filter filter,
+                      int changeLimitPerBatch,
+                      int batchLimitPerRun,
+                      int insertBatchSize,
+                      boolean pullAttachmentsInline ) throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
         PullReplication pullReplication = this.createPullReplication();
         pullReplication.filter = filter;
 
-        this.replicator = new BasicPullStrategy(pullReplication, null, this.config);
+        this.replicator = new BasicPullStrategy(pullReplication,
+                null,
+                changeLimitPerBatch,
+                batchLimitPerRun,
+                insertBatchSize,
+                pullAttachmentsInline );
+
         this.replicator.getEventBus().register(listener);
         this.replicator.run();
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
         Assert.assertEquals(expectedDocs, listener.documentsReplicated);
+    }
+
+    private void pull(int expectedDocs, Replication.Filter filter) throws Exception {
+        this.pull(expectedDocs,filter,
+                BasicPullStrategy.DEFAULT_CHANGES_LIMIT_PER_BATCH,
+                BasicPullStrategy.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                BasicPullStrategy.DEFAULT_INSERT_BATCH_SIZE,
+                BasicPullStrategy.DEFAULT_PULL_ATTACHMENTS_INLINE);
     }
 
     @Test
