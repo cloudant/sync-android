@@ -30,8 +30,8 @@ import java.util.Map;
 /**
  * <p>Abstract class which provides configuration for a replication.</p>
  *
- * <p>This class is abstract. Concrete class {@link com.cloudant.sync.replication.PushReplication}
- * is used to
+ * <p>This class is abstract. Concrete classes {@link com.cloudant.sync.replication.PushReplication}
+ * and {@link PullReplication} are used to
  * configure pull and push replications respectively.</p>
  *
  * @see com.cloudant.sync.replication.PullReplication
