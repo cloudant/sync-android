@@ -4,6 +4,8 @@
   file for how to include `sync-android-encryption` in your project.
 - [FIX] Fixed issue where at least one index had to be created before a query would execute.  
   You can now query for documents without the existence of any indexes.
+- [NEW] New fields `documentsReplicated` and `batchesReplicated` added
+  to ReplicationCompleted class
 
 # 0.12.3 (2015-06-30)
 

@@ -96,6 +96,8 @@ private class Listener {
 
     private final CountDownLatch latch;
     public ErrorInfo error = null;
+    public int documentsReplicated;
+    public int batchesReplicated;
 
     Listener(CountDownLatch latch) {
         this.latch = latch;
@@ -103,6 +105,8 @@ private class Listener {
 
     @Subscribe
     public void complete(ReplicationCompleted event) {
+        this.documentsReplicated = event.documentsReplicated;
+        this.batchesReplicated = event.batchesReplicated;
         latch.countDown();
     }
 
@@ -143,6 +147,9 @@ replicator.getEventBus().unregister(listener);
 if (replicator.getState() != Replicator.State.COMPLETE) {
     System.out.println("Error replicating TO remote");
     System.out.println(listener.error);
+} else {
+    System.out.println(String.format("Replicated %d documents in %d batches",
+            listener.documentsReplicated, listener.batchesReplicated));
 }
 ```
 

@@ -121,10 +121,12 @@ class BasicPullStrategy implements ReplicationStrategy {
         this.executor.shutdownNow();
     }
 
+    @Override
     public int getDocumentCounter() {
         return this.documentCounter;
     }
 
+    @Override
     public int getBatchCounter() {
         return this.batchCounter;
     }

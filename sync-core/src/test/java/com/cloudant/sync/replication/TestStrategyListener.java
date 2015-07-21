@@ -27,10 +27,14 @@ public class TestStrategyListener {
 
     public boolean errorCalled = false;
     public boolean finishCalled = false;
+    public int documentsReplicated = 0;
+    public int batchesReplicated = 0;
 
     @Subscribe
     public void complete(ReplicationStrategyCompleted rc) {
         finishCalled = true;
+        documentsReplicated = rc.replicationStrategy.getDocumentCounter();
+        batchesReplicated = rc.replicationStrategy.getBatchCounter();
     }
 
     @Subscribe

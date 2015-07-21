@@ -115,7 +115,9 @@ class BasicReplicator implements Replicator {
         }
 
         // Fill in new ReplicationCompleted event with pointer to us
-        ReplicationCompleted rcUs = new ReplicationCompleted(this);
+        ReplicationCompleted rcUs = new ReplicationCompleted(this,
+                rc.replicationStrategy.getDocumentCounter(),
+                rc.replicationStrategy.getBatchCounter());
         eventBus.post(rcUs);        
     }
 
