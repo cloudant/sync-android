@@ -26,7 +26,7 @@ import java.net.URI;
  * <p>A pull replication is <em>from</em> a remote Cloudant or CouchDB database
  * to the device's local datastore.</p>
  */
-public class PullReplication extends Replication {
+public class PullReplication extends Replication<PullReplication> {
 
     /**
      * URI for this replication's remote database.
@@ -46,12 +46,36 @@ public class PullReplication extends Replication {
      */
     public Filter filter;
 
+
+
     /**
      * Constructs a PullReplication object, configured by assigning to the
      * instance's attributes after construction.
      */
     public PullReplication() {
         /* Does nothing but we can now document it */
+    }
+
+
+
+    /**
+     * Sets the database from which to pull data
+     * @param source The uri to the database to replicate with
+     * @return The current instance of PullReplication
+     */
+    public PullReplication source(URI source){
+        this.source = source;
+        return this;
+    }
+
+    /**
+     * Sets the target data store for this replication
+     * @param target The target data store for this repliction
+     * @return The current instance of PullReplication
+     */
+    public PullReplication target(Datastore target){
+        this.target = target;
+        return this;
     }
 
     @Override
@@ -76,6 +100,6 @@ public class PullReplication extends Replication {
 
     @Override
     ReplicationStrategy createReplicationStrategy() {
-        return new BasicPullStrategy(this, null, null);
+        return new BasicPullStrategy(this);
     }
 }

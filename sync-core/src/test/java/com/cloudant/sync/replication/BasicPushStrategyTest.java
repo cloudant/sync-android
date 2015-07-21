@@ -35,18 +35,11 @@ import java.util.Map;
 @Category(RequireRunningCouchDB.class)
 public class BasicPushStrategyTest extends ReplicationTestBase {
 
-    PushConfiguration currentSetting = null;
     BasicPushStrategy replicator;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        currentSetting = createPushReplicationSetting();
-    }
-
-    private PushConfiguration createPushReplicationSetting() {
-        return new PushConfiguration(PushConfiguration.DEFAULT_CHANGES_LIMIT_PER_BATCH,
-                PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN, 1, PushConfiguration.DEFAULT_PUSH_ATTACHMENTS_INLINE);
     }
 
     @After
@@ -72,9 +65,11 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     }
 
     private void assertPushReplicationStatus(int documentCounter, int batchCounter, String lastSequence) throws Exception {
-        Assert.assertEquals("DocumentRevisionTree counter", documentCounter, replicator.getDocumentCounter());
+        Assert.assertEquals("DocumentRevisionTree counter", documentCounter, replicator
+                .getDocumentCounter());
         Assert.assertEquals("Batch counter", batchCounter, replicator.getBatchCounter());
-        Assert.assertEquals("Last sequence", lastSequence, remoteDb.getCheckpoint(this.replicator.getReplicationId()));
+        Assert.assertEquals("Last sequence", lastSequence, remoteDb.getCheckpoint(this.replicator
+                .getReplicationId()));
     }
 
     @Test
@@ -185,9 +180,25 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     }
 
     private void push(int expectedDocs) throws Exception {
+        this.push(expectedDocs,
+                BasicPushStrategy.DEFAULT_CHANGES_LIMIT_PER_BATCH,
+                BasicPushStrategy.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                BasicPushStrategy.DEFAULT_BULK_INSERT_SIZE,
+                BasicPushStrategy.DEFAULT_PUSH_ATTACHMENTS_INLINE);
+    }
+
+    private void push( int expectedDocs,
+                       int changeLimitPerBatch,
+                       int batchLimitPerRun,
+                       int insertBatchSize,
+                       PushAttachmentsInline pushAttachmentsInline) throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
         PushReplication pushReplication = this.createPushReplication();
-        this.replicator = new BasicPushStrategy(pushReplication, currentSetting);
+        this.replicator = new BasicPushStrategy(pushReplication,
+                changeLimitPerBatch,
+                batchLimitPerRun,
+                insertBatchSize,
+                pushAttachmentsInline);
         this.replicator.eventBus.register(listener);
         this.replicator.run();
         Assert.assertTrue(listener.finishCalled);
@@ -197,26 +208,34 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_changeLimitIsOne_batchCounterShouldBeCorrect() throws Exception {
-        currentSetting = new PushConfiguration(1, PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                PushConfiguration.DEFAULT_BULK_INSERT_SIZE, PushConfiguration.DEFAULT_PUSH_ATTACHMENTS_INLINE);
-        twoDocsCreatedAndThenPushed();
+
+        twoDocsCreatedAndThenPushed(1, BasicPushStrategy.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                BasicPushStrategy.DEFAULT_BULK_INSERT_SIZE, BasicPushStrategy.DEFAULT_PUSH_ATTACHMENTS_INLINE);
         assertPushReplicationStatus(2, 3, "2");
     }
 
-    private void twoDocsCreatedAndThenPushed() throws Exception {
+    private void twoDocsCreatedAndThenPushed( int changeLimitPerBatch,
+                                              int batchLimitPerRun,
+                                              int insertBatchSize,
+                                              PushAttachmentsInline pushAttachmentsInline) throws Exception {
         Bar bar1 = BarUtils.createBar(datastore, "Tom", 31);
         Bar bar2 = BarUtils.createBar(datastore, "Jerry", 50);
-        this.push(2);
+        this.push(2, changeLimitPerBatch, batchLimitPerRun, insertBatchSize, pushAttachmentsInline);
         Bar bar3 = couchClient.getDocument(bar1.getId(), Bar.class);
         Bar bar4 = couchClient.getDocument(bar2.getId(), Bar.class);
         Assert.assertEquals(bar1, bar3);
         Assert.assertEquals(bar2, bar4);
     }
 
+    private void twoDocsCreatedAndThenPushed() throws Exception {
+        twoDocsCreatedAndThenPushed(BasicPushStrategy.DEFAULT_CHANGES_LIMIT_PER_BATCH,
+                BasicPushStrategy.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                BasicPushStrategy.DEFAULT_BULK_INSERT_SIZE,
+                BasicPushStrategy.DEFAULT_PUSH_ATTACHMENTS_INLINE);
+    }
+
     @Test
     public void push_twoBranchForSameTree_allBranchesShouldBePushed() throws Exception {
-        currentSetting = new PushConfiguration(1, PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                PushConfiguration.DEFAULT_BULK_INSERT_SIZE, PushConfiguration.DEFAULT_PUSH_ATTACHMENTS_INLINE);
 
         BasicDocumentRevision rev = createDbObject("5-e", createDBBody("Tom"));
         datastore.forceInsert(rev, "1-a", "2-b", "3-c", "4-d", "5-e");
@@ -224,8 +243,11 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         // 5-x will be the winner
         BasicDocumentRevision rev2 = createDbObject("5-x", createDBBody("Jerry"));
         datastore.forceInsert(rev2, "1-a", "2-b", "3-c", "4-d", "5-x");
-
-        this.push(1);
+        this.push(1,
+                1,
+                BasicPushStrategy.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                BasicPushStrategy.DEFAULT_BULK_INSERT_SIZE,
+                BasicPushStrategy.DEFAULT_PUSH_ATTACHMENTS_INLINE);
         // two tree belongs to one doc
         assertPushReplicationStatus(1, 7, "6");
 
@@ -252,8 +274,6 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_twoTrees_allTreeShouldBePushed() throws Exception {
-        currentSetting = new PushConfiguration(1, PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                PushConfiguration.DEFAULT_BULK_INSERT_SIZE, PushConfiguration.DEFAULT_PUSH_ATTACHMENTS_INLINE);
 
         BasicDocumentRevision rev = createDbObject("4-d", createDBBody("Tom"));
         datastore.forceInsert(rev, "1-a", "2-b", "3-c", "4-d");
@@ -262,7 +282,10 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         BasicDocumentRevision rev2 = createDbObject("3-z", createDBBody("Jerry"));
         datastore.forceInsert(rev2, "1-x", "2-y", "3-z");
 
-        this.push(1);
+        this.push(1,
+                1,
+                BasicPushStrategy.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                BasicPushStrategy.DEFAULT_BULK_INSERT_SIZE, BasicPushStrategy.DEFAULT_PUSH_ATTACHMENTS_INLINE);
 
         // two tree belongs to one doc, so only one doc is processed
         assertPushReplicationStatus(1, 8, "7");
@@ -275,8 +298,6 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_documentWithIdInChinese_docBePushed() throws Exception {
-        currentSetting = new PushConfiguration(1, PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                PushConfiguration.DEFAULT_BULK_INSERT_SIZE, PushConfiguration.DEFAULT_PUSH_ATTACHMENTS_INLINE);
 
         String id = "\u738b\u4e1c\u5347";
         MutableDocumentRevision rev = new MutableDocumentRevision();
@@ -284,7 +305,10 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         rev.docId = id;
         BasicDocumentRevision saved = datastore.createDocumentFromRevision(rev);
 
-        this.push(1);
+        this.push(1,
+                1,
+                BasicPushStrategy.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                BasicPushStrategy.DEFAULT_BULK_INSERT_SIZE, BasicPushStrategy.DEFAULT_PUSH_ATTACHMENTS_INLINE);
         assertPushReplicationStatus(1, 2, "1");
 
         Map<String, Object> m = couchClient.getDocument(id);

@@ -26,7 +26,7 @@ import java.net.URI;
  * <p>A push replication is <em>to</em> a remote Cloudant or CouchDB database
  * from the device's local datastore.</p>
  */
-public class PushReplication extends Replication {
+public class PushReplication extends Replication<PushReplication> {
 
     /**
      * URI for this replication's remote database.
@@ -46,6 +46,28 @@ public class PushReplication extends Replication {
      */
     public PushReplication() {
         /* Does nothing but we can now document it */
+    }
+
+    /**
+     * Sets the data store from which data will be replicated
+     *
+     * @param source The source data store
+     * @return The current instance of PushReplication
+     */
+    public PushReplication source(Datastore source) {
+        this.source = source;
+        return this;
+    }
+
+    /**
+     * Sets the uri of the target remote database for this replication
+     *
+     * @param target The uri of the remot database
+     * @return The current instance of PushReplication
+     */
+    public PushReplication target(URI target) {
+        this.target = target;
+        return this;
     }
 
     @Override

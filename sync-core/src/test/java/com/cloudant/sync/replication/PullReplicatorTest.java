@@ -15,12 +15,15 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.mazha.CouchException;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.IOException;
 import java.net.URI;
 
 @Category(RequireRunningCouchDB.class)
@@ -68,5 +71,53 @@ public class PullReplicatorTest extends ReplicationTestBase {
 
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
+    }
+
+    @Test
+    public void testRequestFilters() throws Exception {
+
+        //to test the filters we make an invalid request
+
+        TestReplicationListener listener = new TestReplicationListener();
+        PullReplication pullReplication = createPullReplication();
+        pullReplication.addRequestFilters(new InvalidJSONFilter());
+        Replicator replicator = ReplicatorFactory.oneway(pullReplication);
+        replicator.getEventBus().register(listener);
+        replicator.start();
+
+        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+            Thread.sleep(1000);
+        }
+
+        Assert.assertEquals(Replicator.State.ERROR, replicator.getState());
+        Assert.assertFalse(listener.finishCalled);
+        Assert.assertTrue(listener.errorCalled);
+        Assert.assertTrue(listener.exception instanceof CouchException);
+        CouchException couchException = (CouchException) listener.exception;
+        Assert.assertTrue(couchException.getStatusCode() == 400);
+        Assert.assertEquals(couchException.getReason(), "invalid_json");
+
+    }
+
+    @Test
+    public void testResponseFilters() throws Exception {
+
+        TestReplicationListener listener = new TestReplicationListener();
+        PullReplication pullReplication = createPullReplication();
+        pullReplication.addResponseFilters(new ResponseStreamReaderFilter());
+        Replicator replicator = ReplicatorFactory.oneway(pullReplication);
+        replicator.getEventBus().register(listener);
+        replicator.start();
+
+        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+            Thread.sleep(1000);
+        }
+
+        Assert.assertEquals(Replicator.State.ERROR, replicator.getState());
+        Assert.assertFalse(listener.finishCalled);
+        Assert.assertTrue(listener.errorCalled);
+        Assert.assertTrue(listener.exception instanceof RuntimeException);
+        RuntimeException exception = (RuntimeException)listener.exception;
+        Assert.assertTrue(exception.getCause() instanceof IOException);
     }
 }

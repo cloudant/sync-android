@@ -19,11 +19,10 @@ import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.AttachmentException;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DatastoreExtended;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
-import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
@@ -51,10 +50,19 @@ class BasicPushStrategy implements ReplicationStrategy {
     private static final String LOG_TAG = "BasicPushStrategy";
     private static final Logger logger = Logger.getLogger(BasicPushStrategy.class.getCanonicalName());
 
+    public static final int DEFAULT_CHANGES_LIMIT_PER_BATCH = 500;
+    public static final int DEFAULT_MAX_BATCH_COUNTER_PER_RUN = 100;
+    public static final int DEFAULT_BULK_INSERT_SIZE = 10;
+    // by default push small attachments as inline base64, and larger ones as multipart
+    public static final PushAttachmentsInline DEFAULT_PUSH_ATTACHMENTS_INLINE = PushAttachmentsInline.Small;
+
+    final int changeLimitPerBatch;
+    final int batchLimitPerRun;
+    final int bulkInsertSize;
+    final PushAttachmentsInline pushAttachmentsInline;
+
     CouchDB targetDb;
     DatastoreWrapper sourceDb;
-
-    private final PushConfiguration config;
 
     private int documentCounter = 0;
     private int batchCounter = 0;
@@ -75,23 +83,29 @@ class BasicPushStrategy implements ReplicationStrategy {
 
     private static JSONHelper sJsonHelper = new JSONHelper();
 
+
     public BasicPushStrategy(PushReplication pushReplication) {
-        this(pushReplication, null);
+            this(pushReplication,
+                    DEFAULT_CHANGES_LIMIT_PER_BATCH,
+                    DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
+                    DEFAULT_BULK_INSERT_SIZE,
+                    DEFAULT_PUSH_ATTACHMENTS_INLINE);
     }
 
-    public BasicPushStrategy(PushReplication pushReplication,
-                             PushConfiguration config) {
+    public BasicPushStrategy (PushReplication pushReplication,
+                              int changeLimitPerBatch,
+                              int batchLimitPerRun,
+                              int insertBatchSize,
+                              PushAttachmentsInline pushAttachmentsInline){
         Preconditions.checkNotNull(pushReplication, "PushReplication must not be null.");
-        if(config == null) {
-            config = new PushConfiguration();
-        }
-
         CouchConfig couchConfig = pushReplication.getCouchConfig();
+        this.changeLimitPerBatch = changeLimitPerBatch;
+        this.batchLimitPerRun = batchLimitPerRun;
+        this.bulkInsertSize = insertBatchSize;
+        this.pushAttachmentsInline = pushAttachmentsInline;
 
         this.targetDb = new CouchClientWrapper(couchConfig);
         this.sourceDb = new DatastoreWrapper((DatastoreExtended) pushReplication.source);
-        // Push config is immutable
-        this.config = config;
 
         this.name = String.format("%s [%s]", LOG_TAG, pushReplication.getReplicatorName());
     }
@@ -163,7 +177,7 @@ class BasicPushStrategy implements ReplicationStrategy {
         }
 
         this.documentCounter = 0;
-        for(this.batchCounter = 1 ; this.batchCounter < config.batchLimitPerRun; this.batchCounter ++) {
+        for(this.batchCounter = 1 ; this.batchCounter < this.batchLimitPerRun; this.batchCounter ++) {
 
             if (this.cancel) { return; }
 
@@ -222,7 +236,7 @@ class BasicPushStrategy implements ReplicationStrategy {
         long lastPushSequence = getLastCheckpointSequence();
         logger.fine("Last push sequence from remote database: " + lastPushSequence);
         return this.sourceDb.getDbCore().changes(lastPushSequence,
-                config.changeLimitPerBatch);
+                this.changeLimitPerBatch);
     }
 
     /**
@@ -248,7 +262,7 @@ class BasicPushStrategy implements ReplicationStrategy {
         // at a time to the remote database's _bulk_docs endpoint.
         List<List<BasicDocumentRevision>> batches = Lists.partition(
                 changes.getResults(),
-                config.bulkInsertSize
+                this.bulkInsertSize
         );
         for (List<BasicDocumentRevision> batch : batches) {
 
@@ -328,12 +342,12 @@ class BasicPushStrategy implements ReplicationStrategy {
                 // get the json, and inline any small attachments
                 Map<String, Object> json = RevisionHistoryHelper.revisionHistoryToJson(path,
                         atts,
-                        this.config.pushAttachmentsInline,
+                        this.pushAttachmentsInline,
                         minRevPos);
                 // if there are any large atts we will get a multipart writer, otherwise null
                 MultipartAttachmentWriter mpw = RevisionHistoryHelper.createMultipartWriter(dr,
                         atts,
-                        this.config.pushAttachmentsInline,
+                        this.pushAttachmentsInline,
                         minRevPos);
 
                 // now we will have either a multipart or a plain doc

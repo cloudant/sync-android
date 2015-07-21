@@ -22,6 +22,7 @@ public class TestReplicationListener {
 
     public boolean errorCalled = false;
     public boolean finishCalled = false;
+    public Throwable exception = null;
 
     @Subscribe
     public void complete(ReplicationCompleted rc) {
@@ -31,5 +32,6 @@ public class TestReplicationListener {
     @Subscribe
     public void error(ReplicationErrored re) {
         errorCalled = true;
+        exception = re.errorInfo.getException();
     }
 }

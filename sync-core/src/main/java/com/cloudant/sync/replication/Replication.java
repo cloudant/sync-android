@@ -14,14 +14,16 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.http.HttpConnectionRequestFilter;
+import com.cloudant.http.HttpConnectionResponseFilter;
 import com.cloudant.mazha.CouchConfig;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -29,16 +31,18 @@ import java.util.Map;
 /**
  * <p>Abstract class which provides configuration for a replication.</p>
  *
- * <p>This class is abstract. Concrete classes
- * {@link com.cloudant.sync.replication.PullConfiguration}
- * and {@link com.cloudant.sync.replication.PushReplication} are used to
+ * <p>This class is abstract. Concrete classes {@link com.cloudant.sync.replication.PushReplication}
+ * and {@link PullReplication} are used to
  * configure pull and push replications respectively.</p>
  *
  * @see com.cloudant.sync.replication.PullReplication
  * @see com.cloudant.sync.replication.PushReplication
  * @see ReplicatorFactory#oneway(Replication)
  */
-public abstract class Replication {
+public abstract class Replication< T extends Replication> {
+
+    final List<HttpConnectionRequestFilter> requestFilters;
+    final List<HttpConnectionResponseFilter> responseFilters;
 
     /**
      * <p>Provides the name and parameters for a filter function to be used
@@ -152,7 +156,59 @@ public abstract class Replication {
     }
 
     protected Replication() {
-        /* prevent instances of this class being constructed */
+        requestFilters = new ArrayList<HttpConnectionRequestFilter>();
+        responseFilters = new ArrayList<HttpConnectionResponseFilter>();
+    }
+
+    /**
+     * Adds request filters to run for every request made by this replication
+     * @param requestFilters The filters to run
+     * @return The current instance of PullReplication
+     */
+    public T addRequestFilters(List<HttpConnectionRequestFilter> requestFilters){
+        this.requestFilters.addAll(requestFilters);
+        return (T)this;
+    }
+
+    /**
+     *  Adds response filters to run for every response received from the server for this
+     *  replication
+     * @param responseFilters The filters to run
+     * @return The current instance of PullReplication
+     */
+    public T addResponseFilters(List<HttpConnectionResponseFilter> responseFilters){
+        this.responseFilters.addAll(responseFilters);
+        return (T)this;
+    }
+
+    /**
+     *  Variable argument version of {@link PullReplication#addRequestFilters(List)}
+     * @param requestFilters The filters to run
+     * @return The current instance of PullReplication
+     */
+    public T addRequestFilters(HttpConnectionRequestFilter ... requestFilters){
+        return this.addRequestFilters(Arrays.asList(requestFilters));
+    }
+
+    /**
+     *  Variable argument version of {@link PullReplication#addResponseFilters(List)}
+     * @param responseFilters The filters to run
+     * @return The current instance of PullReplication
+     */
+    public T addResponseFilters(HttpConnectionResponseFilter ... responseFilters){
+        this.addResponseFilters(Arrays.asList(responseFilters));
+        return (T)this;
+    }
+
+    /**
+     *  Creates a {@link Replicator} and calls {@link Replicator#start()}
+     * @return The replicator that is carrying out the replication.
+     */
+    public Replicator start(){
+        this.validate();
+        BasicReplicator replicator =  new BasicReplicator(this);
+        replicator.start();
+        return replicator;
     }
 
     /**
@@ -177,8 +233,11 @@ public abstract class Replication {
      */
     abstract ReplicationStrategy createReplicationStrategy();
 
-    CouchConfig createCouchConfig(URI uri) {
-        return new CouchConfig(uri);
+    final CouchConfig createCouchConfig(URI uri) {
+        CouchConfig config = new CouchConfig(uri);
+        config.setRequestFilters(this.requestFilters);
+        config.setResponseFilters(this.responseFilters);
+        return config;
     }
 
     void checkURI(URI uri) {
