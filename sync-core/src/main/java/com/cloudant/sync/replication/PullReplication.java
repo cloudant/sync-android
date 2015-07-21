@@ -14,15 +14,11 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.http.HttpConnectionRequestFilter;
-import com.cloudant.http.HttpConnectionResponseFilter;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.sync.datastore.Datastore;
 import com.google.common.base.Preconditions;
 
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * <p>Provides configuration for a pull replication.</p>
@@ -30,7 +26,7 @@ import java.util.List;
  * <p>A pull replication is <em>from</em> a remote Cloudant or CouchDB database
  * to the device's local datastore.</p>
  */
-public class PullReplication extends Replication {
+public class PullReplication extends Replication<PullReplication> {
 
     /**
      * URI for this replication's remote database.
@@ -60,45 +56,7 @@ public class PullReplication extends Replication {
         /* Does nothing but we can now document it */
     }
 
-    /**
-     * Adds request filters to run for every request made by this replication
-     * @param requestFilters The filters to run
-     * @return The current instance of PullReplication
-     */
-    public PullReplication addRequestFilters(List<HttpConnectionRequestFilter> requestFilters){
-        this.requestFilters.addAll(requestFilters);
-        return this;
-    }
 
-    /**
-     *  Adds response filters to run for every response received from the server for this
-     *  replication
-     * @param responseFilters The filters to run
-     * @return The current instance of PullReplication
-     */
-    public PullReplication addResponseFilters(List<HttpConnectionResponseFilter> responseFilters){
-        this.responseFilters.addAll(responseFilters);
-        return this;
-    }
-
-    /**
-     *  Variable argument version of {@link PullReplication#addRequestFilters(List)}
-     * @param requestFilters The filters to run
-     * @return The current instance of PullReplication
-     */
-    public PullReplication addRequestFilters(HttpConnectionRequestFilter ... requestFilters){
-        return this.addRequestFilters(Arrays.asList(requestFilters));
-    }
-
-    /**
-     *  Variable argument version of {@link PullReplication#addResponseFilters(List)}
-     * @param responseFilters The filters to run
-     * @return The current instance of PullReplication
-     */
-    public PullReplication addResponseFilters(HttpConnectionResponseFilter ... responseFilters){
-        this.addResponseFilters(Arrays.asList(responseFilters));
-        return this;
-    }
 
     /**
      * Sets the database from which to pull data
