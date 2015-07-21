@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -76,7 +77,7 @@ public class HttpConnection  {
     private HttpURLConnection connection;
 
     // set by the various setRequestBody() methods
-    private InputStream input;
+    private InputStreamGenerator input;
     private long inputLength;
 
     public final HashMap<String, String> requestProperties;
@@ -113,13 +114,25 @@ public class HttpConnection  {
 
     /**
      * Set the String of request body data to be sent to the server.
-     * @param input String of request body data to be sent to the server
+     * @param input String of request body data to be sent to the server.
+     *              The input is assumed to be UTF-8 encoded.
      * @return an {@link HttpConnection} for method chaining 
      */
     public HttpConnection setRequestBody(final String input) {
-        this.input = new ByteArrayInputStream(input.getBytes());
-        // input is in bytes, not characters
-        this.inputLength = input.getBytes().length;
+        try {
+            final byte[] bytes = input.getBytes("UTF-8");
+            // input is in bytes, not characters
+            this.inputLength = bytes.length;
+            this.input = new InputStreamGenerator() {
+                @Override
+                public InputStream getInputStream() {
+                    return new ByteArrayInputStream(bytes);
+                }
+            };
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+
         return this;
     }
 
@@ -129,7 +142,12 @@ public class HttpConnection  {
      * @return an {@link HttpConnection} for method chaining 
      */
     public HttpConnection setRequestBody(final byte[] input) {
-        this.input = new ByteArrayInputStream(input);
+        this.input = new InputStreamGenerator() {
+            @Override
+            public InputStream getInputStream() {
+                return new ByteArrayInputStream(input);
+            }
+        };
         this.inputLength = input.length;
         return this;
     }
@@ -139,7 +157,7 @@ public class HttpConnection  {
      * @param input InputStream of request body data to be sent to the server
      * @return an {@link HttpConnection} for method chaining 
      */
-    public HttpConnection setRequestBody(InputStream input) {
+    public HttpConnection setRequestBody(InputStreamGenerator input) {
         this.input = input;
         // -1 signals inputLength unknown
         this.inputLength = -1;
@@ -152,7 +170,7 @@ public class HttpConnection  {
      * @param inputLength Length of request body data to be sent to the server, in bytes
      * @return an {@link HttpConnection} for method chaining 
      */
-    public HttpConnection setRequestBody(InputStream input, long inputLength) {
+    public HttpConnection setRequestBody(InputStreamGenerator input, long inputLength) {
         this.input = input;
         this.inputLength = inputLength;
         return this;
@@ -228,7 +246,7 @@ public class HttpConnection  {
                     int bufSize = 1024;
                     int nRead = 0;
                     byte[] buf = new byte[bufSize];
-                    InputStream is = input;
+                    InputStream is = input.getInputStream();
                     OutputStream os = connection.getOutputStream();
 
                     while ((nRead = is.read(buf)) >= 0) {
@@ -366,4 +384,10 @@ public class HttpConnection  {
             return defaultUserAgent;
         }
     }
+
+    public interface InputStreamGenerator
+    {
+        InputStream getInputStream();
+    }
+
 }

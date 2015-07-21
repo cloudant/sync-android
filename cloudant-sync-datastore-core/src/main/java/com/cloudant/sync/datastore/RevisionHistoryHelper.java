@@ -203,9 +203,6 @@ public class RevisionHistoryHelper {
                 logger.log(Level.WARNING,"IOException caught when adding multiparts",ioe);
             }
         }
-        if (mpw != null) {
-            mpw.close();
-        }
         return mpw;
     }
 

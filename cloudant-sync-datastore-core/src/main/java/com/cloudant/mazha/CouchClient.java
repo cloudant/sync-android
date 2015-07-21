@@ -19,6 +19,7 @@
 package com.cloudant.mazha;
 
 
+import com.cloudant.common.RetriableTask;
 import com.cloudant.http.Http;
 import com.cloudant.http.HttpConnection;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
@@ -28,6 +29,8 @@ import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +44,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.logging.Logger;
 
 public class CouchClient  {
 
@@ -48,6 +53,7 @@ public class CouchClient  {
     private CouchURIHelper uriHelper;
     private List<HttpConnectionRequestInterceptor> requestInterceptors;
     private List<HttpConnectionResponseInterceptor> responseInterceptors;
+    private final static Logger logger = Logger.getLogger(RetriableTask.class.getCanonicalName());
 
     public CouchClient(CouchConfig config) {
         this.jsonHelper = new JSONHelper();
@@ -68,22 +74,90 @@ public class CouchClient  {
         return this.uriHelper.getRootUri();
     }
 
+    // result of executing an HTTP call:
+    // - stream non-null and exception null: the call was successful, result in stream
+    // - stream null and exception non-null: the call was unsuccessful, details in exception
+    // - fatal: set to true when exception non-null, indicates call should not be retried
+    private class ExecuteResult
+    {
+        private ExecuteResult(InputStream stream,
+                              InputStream errorStream,
+                              int responseCode,
+                              String responseMessage,
+                              Throwable cause,
+                              JSONHelper jsonHelper)
+        {
+            this.responseCode = responseCode;
+            boolean needsCouchException = false;
+            switch(responseCode / 100) {
+                case 1:
+                case 2:
+                    // 1xx and 2xx are OK
+                    // we would not normally expect to see 1xx in a response
+                    // explicitly set these to show we are OK
+                    this.fatal = false;
+                    this.exception = null;
+                    this.stream = stream;
+                    break;
+                case 3:
+                    // 3xx redirection
+                    throw new CouchException("Unexpected redirection (3xx) code encountered", responseCode);
+                case 4:
+                    // 4xx errors normally mean we are not authenticated so we shouldn't retry
+                    this.fatal = true;
+                    if (responseCode == 404) {
+                        this.exception = new NoResourceException(responseMessage, cause);
+                    } else if (responseCode == 409) {
+                        this.exception = new DocumentConflictException(responseMessage);
+                    } else {
+                        needsCouchException = true;
+                    }
+                    break;
+                case 5:
+                    // 5xx errors are transient server errors so we should retry
+                    this.fatal = false;
+                    needsCouchException = true;
+                    break;
+                default:
+                    // couldn't get response code
+                    // something bad happened but we should retry (timeouts, socket closed etc)
+                    this.fatal = false;
+                    needsCouchException = true;
+            }
+            if (needsCouchException) {
+                try {
+                    Map<String, String> json = jsonHelper.fromJson(new InputStreamReader(errorStream),
+                            Map.class);
+                    CouchException ce = new CouchException(responseMessage, cause, responseCode);
+                    ce.setError(json.get("error"));
+                    ce.setReason(json.get("reason"));
+                    this.exception = ce;
+                } catch (Exception e) {
+                    CouchException ce = new CouchException("Error deserializing server response", cause,
+                            responseCode);
+                    this.exception = ce;
+                }
+            }
+        }
+
+        InputStream stream;
+        CouchException exception;
+        int responseCode;
+        boolean fatal;
+    }
+
     // - if 2xx then return stream
     // - map 404 to NoResourceException
     // - if there's a couch error returned as json, un-marshall and throw
     // - anything else, just throw the IOException back, use the cause part of the exception?
 
     // it needs to catch eg FileNotFoundException and rethrow to emulate the previous exception handling behaviour
-    private InputStream executeToInputStream(HttpConnection connection) throws CouchException {
+    private ExecuteResult execute(HttpConnection connection) {
 
-        // all CouchClient requests want to receive application/json responses
-        connection.requestProperties.put("Accept", "application/json");
-        connection.responseInterceptors.addAll(this.responseInterceptors);
-        connection.requestInterceptors.addAll(this.requestInterceptors);
-        InputStream is = null; // input stream - response from server on success
-        InputStream es = null; // error stream - response from server for a 500 etc
-        String response = null;
-        int code = -1;
+        InputStream inputStream = null; // input stream - response from server on success
+        InputStream errorStream = null; // error stream - response from server for a 500 etc
+        String responseMessage = null;
+        int responseCode = -1;
         Throwable cause = null;
 
         // first try to execute our request and get the input stream with the server's response
@@ -91,68 +165,104 @@ public class CouchClient  {
         // responses (eg 404 throws a FileNotFoundException) but we need to map to our own
         // specific exceptions
         try {
-            is = connection.execute().responseAsInputStream();
+            inputStream = connection.execute().responseAsInputStream();
         } catch (IOException ioe) {
             cause = ioe;
         }
 
+        // response code and message will generally be present together or not all
         try {
-            code = connection.getConnection().getResponseCode();
-            response = connection.getConnection().getResponseMessage();
-            // everything ok? return the stream
-            if (code / 100 == 2) { // success [200,299]
-                return is;
-            } else if (code == 404) {
-                throw new NoResourceException(response, cause);
-            } else {
-                es = connection.getConnection().getErrorStream();
-                // TODO what if deserialisation fails?
-                CouchException ex = this.jsonHelper.fromJson(new InputStreamReader(es), CouchException.class);
-                ex.setStatusCode(code);
-                throw ex;
-            }
+            responseCode = connection.getConnection().getResponseCode();
+            responseMessage = connection.getConnection().getResponseMessage();
         } catch (IOException ioe) {
-            throw new CouchException("Error retrieving server response", ioe, code);
+            responseMessage = "Error retrieving server response message";
+        }
+
+        // error stream will be present or null if not applicable
+        errorStream = connection.getConnection().getErrorStream();
+
+        try {
+            ExecuteResult executeResult = new ExecuteResult(inputStream,
+                    errorStream,
+                    responseCode,
+                    responseMessage,
+                    cause,
+                    jsonHelper);
+            return executeResult;
         } finally {
-            if (es != null) {
-                try {
-                    es.close();
-                } catch (IOException ioe) {
-                    ;
-                }
-            }
+            // don't close inputStream as the callee still needs it
+            IOUtils.closeQuietly(errorStream);
         }
     }
 
-    private <T> T executeToJsonObject(HttpConnection connection, Class<T> c) throws CouchException {
-        InputStream is = this.executeToInputStream(connection);
+    // execute HTTP task with retries:
+    // return an InputStream if successful or throw an exception
+    private InputStream executeToInputStreamWithRetry(final Callable<ExecuteResult> task) throws CouchException {
+        int attempts = 10;
+        CouchException lastException= null;
+        while (attempts-- > 0) {
+            ExecuteResult result = null;
+            try {
+                result = task.call();
+            } catch (Exception e) {
+                throw new CouchException("Unexpected exception", e, -1);
+            }
+            lastException = result.exception;
+            if (result.stream != null) {
+                // success - return the inputstream
+                return result.stream;
+            } else if (result.fatal) {
+                // fatal exception - don't attempt any more retries
+                throw result.exception;
+            }
+        }
+        throw lastException;
+    }
+
+    private <T> T executeToJsonObjectWithRetry(final HttpConnection connection,
+                                               Class<T> c) throws CouchException {
+        InputStream is = this.executeToInputStreamWithRetry(connection);
         InputStreamReader isr = new InputStreamReader(is);
-        T json = new JSONHelper().fromJson(isr, c);
-        return json;
+        try {
+            T json = new JSONHelper().fromJson(isr, c);
+            return json;
+        } finally {
+            IOUtils.closeQuietly(is);
+        }
+    }
+
+    private InputStream executeToInputStreamWithRetry(final HttpConnection connection) throws CouchException {
+        // all CouchClient requests want to receive application/json responses
+        connection.requestProperties.put("Accept", "application/json");
+        connection.responseInterceptors.addAll(responseInterceptors);
+        connection.requestInterceptors.addAll(requestInterceptors);
+        InputStream is = this.executeToInputStreamWithRetry(new Callable<ExecuteResult>() {
+            @Override
+            public ExecuteResult call() throws Exception {
+                return execute(connection);
+            }
+        });
+        return is;
     }
 
     public void createDb() {
-        HttpConnection connection = Http.PUT(this.uriHelper.getRootUri(), "application/json");
-        DBOperationResponse res = executeToJsonObject(connection, DBOperationResponse.class);
-        if (!res.getOk()) {
-            throw new ServerException("Response from couch db server: " + res.toString());
-        }
+        HttpConnection connection = Http.PUT(uriHelper.getRootUri(), "application/json");
+        DBOperationResponse res = executeToJsonObjectWithRetry(connection, DBOperationResponse
+                .class);
     }
 
     public void deleteDb() {
         HttpConnection connection = Http.DELETE(this.uriHelper.getRootUri());
-        DBOperationResponse res = executeToJsonObject(connection, DBOperationResponse.class);
-        if (!res.getOk()) {
-            throw new ServerException("Response from couch db server: " + res.toString());
-        }
+        DBOperationResponse res = executeToJsonObjectWithRetry(connection, DBOperationResponse
+                .class);
     }
 
     public CouchDbInfo getDbInfo() {
-        HttpConnection connection = Http.GET(this.uriHelper.getRootUri());
-        return executeToJsonObject(connection, CouchDbInfo.class);
+        HttpConnection connection = Http.GET(uriHelper.getRootUri());
+        return executeToJsonObjectWithRetry(connection, CouchDbInfo.class);
     }
 
-    private Map<String, Object> getDefaultChangeFeeOptions() {
+    private Map<String, Object> getDefaultChangeFeedOptions() {
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("style", "all_docs");
         options.put("feed", "normal");
@@ -168,7 +278,7 @@ public class CouchClient  {
     }
 
     public ChangesResult changes(String filterName, Map<String, String> filterParameters, Object since, Integer limit) {
-        Map<String, Object> options = getDefaultChangeFeeOptions();
+        Map<String, Object> options = getDefaultChangeFeedOptions();
         if(filterName != null) {
             options.put("filter", filterName);
             if(filterParameters != null) {
@@ -184,11 +294,10 @@ public class CouchClient  {
         return this.changes(options);
     }
 
-    public ChangesResult changes(Map<String, Object> options) {
-        Preconditions.checkNotNull(options, "options must not be null");
-        URI changesFeedUri = this.uriHelper.changesUri(options);
+    public ChangesResult changes(final Map<String, Object> options) {
+        URI changesFeedUri = uriHelper.changesUri(options);
         HttpConnection connection = Http.GET(changesFeedUri);
-        return executeToJsonObject(connection, ChangesResult.class);
+        return executeToJsonObjectWithRetry(connection, ChangesResult.class);
     }
 
     // TODO does this still work the same way we expect it to?
@@ -197,7 +306,7 @@ public class CouchClient  {
         URI doc = this.uriHelper.documentUri(id);
         try {
             HttpConnection connection = Http.HEAD(doc);
-            this.executeToInputStream(connection);
+            this.executeToInputStreamWithRetry(connection);
             return true;
         } catch (Exception e) {
             return false;
@@ -210,7 +319,7 @@ public class CouchClient  {
         try {
             HttpConnection connection = Http.POST(this.uriHelper.getRootUri(), "application/json");
             connection.setRequestBody(json);
-            Response res = executeToJsonObject(connection, Response.class);
+            Response res = executeToJsonObjectWithRetry(connection, Response.class);
             if (!res.getOk()) {
                 throw new ServerException(res.toString());
             } else {
@@ -230,9 +339,9 @@ public class CouchClient  {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
-        URI doc = this.uriHelper.documentUri(id, queries);
+        final URI doc = this.uriHelper.documentUri(id, queries);
         HttpConnection connection = Http.GET(doc);
-        return this.executeToInputStream(connection);
+        return executeToInputStreamWithRetry(connection);
     }
 
     public InputStream getAttachmentStream(String id, String rev, String attachmentName, final boolean acceptGzip) {
@@ -240,12 +349,12 @@ public class CouchClient  {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
-        URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
+        final URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
         HttpConnection connection = Http.GET(doc);
         if (acceptGzip) {
             connection.requestProperties.put("Accept-Encoding", "gzip");
         }
-        return this.executeToInputStream(connection);
+        return executeToInputStreamWithRetry(connection);
     }
 
     public void putAttachmentStream(String id, String rev, String attachmentName, String contentType, byte[] attachmentData) {
@@ -256,7 +365,7 @@ public class CouchClient  {
         URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
         HttpConnection connection = Http.PUT(doc, contentType);
         connection.setRequestBody(attachmentData);
-        this.executeToInputStream(connection);
+        this.execute(connection);
     }
 
     /**
@@ -322,19 +431,21 @@ public class CouchClient  {
         });
     }
 
-    public <T> T getDocument(String id, Map<String, Object> options, TypeReference<T> type)  {
+    public <T> T getDocument(final String id, final Map<String, Object> options, final TypeReference<T> type)  {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
         Preconditions.checkNotNull(type, "type must not be null");
 
-        URI doc = this.uriHelper.documentUri(id, options);
-        InputStream is = null;
-        try {
-            HttpConnection connection = Http.GET(doc);
-            is = this.executeToInputStream(connection);
-            return jsonHelper.fromJson(new InputStreamReader(is), type);
-        } finally {
-            closeQuietly(is);
-        }
+                URI doc = uriHelper.documentUri(id, options);
+                InputStream is = null;
+                try {
+                    HttpConnection connection = Http.GET(doc);
+                    is = executeToInputStreamWithRetry(connection);
+                    T returndoc = jsonHelper.fromJson(new InputStreamReader(is), type);
+                    logger.fine("getDocument returning " + returndoc);
+                    return returndoc;
+                } finally {
+                    closeQuietly(is);
+                }
     }
 
     public Map<String, Object> getDocument(String id, String rev) {
@@ -349,7 +460,9 @@ public class CouchClient  {
         InputStream is = null;
         try {
             is = this.getDocumentStream(id, rev);
-            return jsonHelper.fromJson(new InputStreamReader(is), type);
+            T returndoc = jsonHelper.fromJson(new InputStreamReader(is), type);
+            logger.fine("getDocument returning " + returndoc);
+            return returndoc;
         } finally {
             closeQuietly(is);
         }
@@ -385,7 +498,7 @@ public class CouchClient  {
         InputStream is = null;
         try {
             HttpConnection connection = Http.GET(findRevs);
-            is = this.executeToInputStream(connection);
+            is = this.executeToInputStreamWithRetry(connection);
             return jsonHelper.fromJson(new InputStreamReader(is), type);
         } finally {
             closeQuietly(is);
@@ -402,17 +515,10 @@ public class CouchClient  {
 
         String json = jsonHelper.toJson(document);
         URI doc = this.uriHelper.documentUri(id);
-        try {
-            HttpConnection connection = Http.PUT(doc, "application/json");
-            connection.setRequestBody(json);
-            return executeToJsonObject(connection, Response.class);
-        } catch (CouchException e) {
-            if (e.getStatusCode() == 409) {
-                throw new DocumentConflictException(e.toString());
-            } else {
-                throw e;
-            }
-        }
+        HttpConnection connection = Http.PUT(doc, "application/json");
+        connection.setRequestBody(json);
+        Response r = executeToJsonObjectWithRetry(connection, Response.class);
+        return r;
     }
 
     public Response delete(String id, String rev) {
@@ -421,16 +527,8 @@ public class CouchClient  {
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
         URI doc = this.uriHelper.documentUri(id, queries);
-        try {
-            HttpConnection connection = Http.DELETE(doc);
-            return executeToJsonObject(connection, Response.class);
-        } catch (CouchException e) {
-            if (e.getStatusCode() == 409) {
-                throw new DocumentConflictException(e.toString());
-            } else {
-                throw e;
-            }
-        }
+        HttpConnection connection = Http.DELETE(doc);
+        return executeToJsonObjectWithRetry(connection, Response.class);
     }
 
     private void closeQuietly(InputStream is) {
@@ -451,7 +549,7 @@ public class CouchClient  {
                 jsonHelper.toJson(objects));
         HttpConnection connection = Http.POST(uri, "application/json");
         connection.setRequestBody(payload);
-        return this.executeToInputStream(connection);
+        return this.executeToInputStreamWithRetry(connection);
     }
 
     public List<Response> bulk(Object... objects) {
@@ -494,7 +592,7 @@ public class CouchClient  {
         HttpConnection connection = Http.POST(uri, "application/json");
         connection.setRequestBody(payload);
         try {
-            is = this.executeToInputStream(connection);
+            is = this.executeToInputStreamWithRetry(connection);
             return jsonHelper.fromJsonToList(new InputStreamReader(is), new TypeReference<List<Response>>() {});
         }
         finally {
@@ -547,7 +645,7 @@ public class CouchClient  {
         try {
             HttpConnection connection = Http.POST(uri, "application/json");
             connection.setRequestBody(payload);
-            is = executeToInputStream(connection);
+            is = executeToInputStreamWithRetry(connection);
             Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is),
                 new TypeReference<Map<String, MissingRevisions>>() { });
             return diff;
@@ -562,8 +660,8 @@ public class CouchClient  {
         URI uri = this.uriHelper.documentUri(mpw.getId(), options);
         String contentType = "multipart/related;boundary=" + mpw.getBoundary();
         HttpConnection connection = Http.PUT(uri, contentType);
-        connection.setRequestBody(mpw, mpw.getContentLength());
-        return executeToJsonObject(connection, Response.class);
+        connection.setRequestBody(mpw.makeInputStreamGenerator(), mpw.getContentLength());
+        return executeToJsonObjectWithRetry(connection, Response.class);
     }
 
     public static class MissingRevisions {

@@ -31,7 +31,7 @@ public class RetriableTaskTest {
         RetriableTask<Integer> retriableTask = new RetriableTask<Integer>(task);
         Assert.assertTrue(1 == retriableTask.call());
 
-        Assert.assertEquals(3, retriableTask.getTotalRetries());
+        Assert.assertEquals(3, retriableTask.getTotalTries());
         Assert.assertEquals(3, retriableTask.getTriesRemaining());
     }
 
@@ -42,7 +42,7 @@ public class RetriableTaskTest {
         RetriableTask<Integer> retriableTask = new RetriableTask<Integer>(task);
         Assert.assertTrue(1 == retriableTask.call());
 
-        Assert.assertEquals(3, retriableTask.getTotalRetries());
+        Assert.assertEquals(3, retriableTask.getTotalTries());
         Assert.assertEquals(2, retriableTask.getTriesRemaining());
     }
 
@@ -53,7 +53,7 @@ public class RetriableTaskTest {
         RetriableTask<Integer> retriableTask = new RetriableTask<Integer>(task);
         Assert.assertTrue(1 == retriableTask.call());
 
-        Assert.assertEquals(3, retriableTask.getTotalRetries());
+        Assert.assertEquals(3, retriableTask.getTotalTries());
         Assert.assertEquals(1, retriableTask.getTriesRemaining());
     }
 

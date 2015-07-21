@@ -34,4 +34,8 @@ public class OkOpenRevision implements OpenRevision {
     public void setDocumentRevs(DocumentRevs documentRevs) {
         this.documentRevs = documentRevs;
     }
+
+    @Override
+    public String toString() {return documentRevs.toString();}
+
 }

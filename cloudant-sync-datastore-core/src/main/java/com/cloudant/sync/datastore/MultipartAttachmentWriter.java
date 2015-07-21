@@ -14,11 +14,13 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.http.HttpConnection;
 import com.cloudant.sync.util.JSONUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
 /**
@@ -67,9 +69,28 @@ import java.util.ArrayList;
  *
  */
 
-public class MultipartAttachmentWriter extends InputStream {
+public class MultipartAttachmentWriter {
 
-    private int totalWritten = 0;
+    ArrayList<Attachment> attachments;
+    byte[] bodyBytes;
+
+    private String boundary;
+    private byte partBoundary[];
+    private byte trailingBoundary[];
+    private static byte crlf[] = "\r\n".getBytes();
+    private byte contentType[];
+    private int currentComponentIdx;
+
+    private ArrayList<InputStream> components;
+
+    private String id;
+    private String revision;
+
+    private long contentLength;
+
+    // non-null if there was an IOException thrown when calling Attachment.getInputStream()
+    private IOException deferrredException;
+
     /**
      * Construct a <code>MultipartAttachmentWriter</code> with a default <code>boundary</code>
      *
@@ -94,21 +115,24 @@ public class MultipartAttachmentWriter extends InputStream {
 
     // common constructor stuff
     private void setup() {
-        this.partBoundary = ("--"+boundary).getBytes();
-        this.trailingBoundary = ("--"+boundary+"--").getBytes();
+        try {
+            this.partBoundary = ("--" + boundary).getBytes("UTF-8");
+            this.trailingBoundary = ("--" + boundary + "--").getBytes("UTF-8");
+            this.contentType = "content-type: application/json".getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
 
-        components = new ArrayList<InputStream>();
+        attachments = new ArrayList<Attachment>();
 
         // some preamble
         contentLength += partBoundary.length;
         contentLength += 6; // 3 * crlf
         contentLength += contentType.length;
 
-        components.add(new ByteArrayInputStream(partBoundary));
-        components.add(new ByteArrayInputStream(crlf));
-        components.add(new ByteArrayInputStream(contentType));
-        components.add(new ByteArrayInputStream(crlf));
-        components.add(new ByteArrayInputStream(crlf));
+        // although we haven't added it yet, account for the trailing boundary
+        contentLength += 2; // crlf
+        contentLength += trailingBoundary.length;
     }
 
     /**
@@ -117,11 +141,9 @@ public class MultipartAttachmentWriter extends InputStream {
      * @param body The DocumentRevision to be serialised as JSON
      */
     public void setBody(BasicDocumentRevision body) {
-        byte[] bodyBytes = JSONUtils.serializeAsBytes(body.asMap());
-
+        this.bodyBytes = JSONUtils.serializeAsBytes(body.asMap());
         contentLength += bodyBytes.length;
 
-        components.add(new ByteArrayInputStream(bodyBytes));
         this.id = body.getId();
         this.revision = body.getRevision();
     }
@@ -138,96 +160,10 @@ public class MultipartAttachmentWriter extends InputStream {
      * Attachment}
      */
     public void addAttachment(Attachment attachment, long length) throws IOException {
+        this.attachments.add(attachment);
         contentLength += partBoundary.length;
         contentLength += 6; // 3 * crlf
         contentLength += length;
-
-        components.add(new ByteArrayInputStream(crlf));
-        components.add(new ByteArrayInputStream(partBoundary));
-        components.add(new ByteArrayInputStream(crlf));
-        components.add(new ByteArrayInputStream(crlf));
-        components.add(attachment.getInputStream());
-    }
-
-    /**
-     * Add the trailing partBoundary to signify that all of the attachments are present.
-     * This <b>must</b> be called before any client attempts to issue a read.
-     */
-    public void close() {
-        contentLength += trailingBoundary.length;
-        contentLength += 2; // crlf
-
-        components.add(new ByteArrayInputStream(crlf));
-        components.add(new ByteArrayInputStream(trailingBoundary));
-        currentComponentIdx = 0;
-    }
-
-    private String boundary;
-    private byte partBoundary[];
-    private byte trailingBoundary[];
-    private static byte crlf[] = "\r\n".getBytes();
-    private static byte contentType[] = "content-type: application/json".getBytes();
-    private int currentComponentIdx;
-
-    private ArrayList<InputStream> components;
-
-    private String id;
-    private String revision;
-
-    private long contentLength;
-
-    /**
-     * Read a single byte from the stream.
-     * @return The next byte in the stream, expressed as an int in the range [0..255].
-     *         If there are no more bytes available, return -1.
-     * @throws java.io.IOException if there was an error reading from one of the internal input streams
-     */
-    public int read() throws java.io.IOException {
-        int c;
-        do {
-            c = components.get(currentComponentIdx).read();
-            if (c != -1) {
-                return c;
-            } else {
-                ++currentComponentIdx;
-            }
-        } while (currentComponentIdx < components.size());
-        // we got through all the components, end of stream
-        return -1;
-    }
-
-    /**
-     * Read at most the next <code>bytes.length</code> bytes from the stream.
-     * @param bytes A buffer to read the next <i>n</i> bytes into, up to the limit of the length of the buffer, or the number of bytes available, whichever is lower.
-     * @return The actual number of bytes read, or -1 to signal the end of the stream has been reached.
-     * @throws java.io.IOException if there was an error reading from one of the internal input streams
-     */
-    @Override
-    public int read(byte[] bytes) throws java.io.IOException {
-        int amountRead = 0;
-        int currentOffset = 0;
-        int howMuch = 0;
-        do {
-            InputStream currentComponent = components.get(currentComponentIdx);
-            // try to read enough bytes to fill the rest of the bytes array
-            howMuch = bytes.length - currentOffset;
-            if (howMuch <= 0) {
-                break;
-            }
-            int read = currentComponent.read(bytes, currentOffset, howMuch);
-            if (read <= 0) {
-                currentComponentIdx++;
-                continue;
-            }
-            amountRead += read;
-            currentOffset += howMuch;
-            totalWritten += amountRead;
-        } while (currentComponentIdx < components.size());
-
-        // signal EOF if we don't have any more
-        int retnum =  amountRead > 0 ? amountRead : -1;
-        return retnum;
-
     }
 
     /**
@@ -272,6 +208,119 @@ public class MultipartAttachmentWriter extends InputStream {
 
     @Override
     public String toString() {
-        return "Multipart/related with "+components.size()+" components";
+        return "Multipart/related with "+attachments.size()+" attachments";
+    }
+
+    private void makeComponents() {
+        components = new ArrayList<InputStream>();
+
+        // preamble
+        components.add(new ByteArrayInputStream(partBoundary));
+        components.add(new ByteArrayInputStream(crlf));
+        components.add(new ByteArrayInputStream(contentType));
+        components.add(new ByteArrayInputStream(crlf));
+        components.add(new ByteArrayInputStream(crlf));
+
+        // body
+        components.add(new ByteArrayInputStream(bodyBytes));
+
+        // each attachment
+        for (Attachment a : attachments) {
+            try {
+                components.add(new ByteArrayInputStream(crlf));
+                components.add(new ByteArrayInputStream(partBoundary));
+                components.add(new ByteArrayInputStream(crlf));
+                components.add(new ByteArrayInputStream(crlf));
+                components.add(a.getInputStream());
+            } catch (IOException ioe) {
+                deferrredException = ioe;
+            }
+        }
+        // close
+        components.add(new ByteArrayInputStream(crlf));
+        components.add(new ByteArrayInputStream(trailingBoundary));
+    }
+
+    public HttpConnection.InputStreamGenerator makeInputStreamGenerator() {
+        return new HttpConnection.InputStreamGenerator() {
+            @Override
+            public InputStream getInputStream() {
+                return makeInputStream();
+            }
+        };
+    }
+
+    public InputStream makeInputStream() {
+
+        this.deferrredException = null;
+        currentComponentIdx = 0;
+        this.makeComponents();
+
+        return new InputStream() {
+            @Override
+            /**
+             * Read a single byte from the stream.
+             * @return The next byte in the stream, expressed as an int in the range [0..255].
+             *         If there are no more bytes available, return -1.
+             * @throws java.io.IOException if there was an error reading from one of the internal input streams
+             *
+             */
+            public int read() throws java.io.IOException {
+                int c;
+                do {
+                    c = components.get(currentComponentIdx).read();
+                    if (c != -1) {
+                        return c;
+                    } else {
+                        ++currentComponentIdx;
+                    }
+                } while (currentComponentIdx < components.size());
+                // we got through all the components, end of stream
+                return -1;
+            }
+
+            /**
+             * Read at most the next <code>bytes.length</code> bytes from the stream.
+             *
+             * @param bytes A buffer to read the next <i>n</i> bytes into, up to the
+             *              limit of the length of the buffer, or the number of bytes
+             *              available, whichever is lower.
+             * @return The actual number of bytes read, or -1 to signal the end of the
+             * stream has been reached.
+             * @throws java.io.IOException if there was an error reading from one of the
+             *                             internal input streams
+             */
+            @Override
+            public int read(byte[] bytes) throws java.io.IOException {
+                if (deferrredException != null) {
+                    // there was an exception caught when calling Attachment.getInputStream()
+                    // - throw it now
+                    throw deferrredException;
+                }
+                int amountRead = 0;
+                int currentOffset = 0;
+                int howMuch = 0;
+                do {
+                    InputStream currentComponent = components.get(currentComponentIdx);
+                    // try to read enough bytes to fill the rest of the bytes array
+                    howMuch = bytes.length - currentOffset;
+                    if (howMuch <= 0) {
+                        break;
+                    }
+                    int read = currentComponent.read(bytes, currentOffset, howMuch);
+                    if (read <= 0) {
+                        currentComponentIdx++;
+                        continue;
+                    }
+                    amountRead += read;
+                    currentOffset += howMuch;
+                } while (currentComponentIdx < components.size());
+
+                // signal EOF if we don't have any more
+                int retnum = amountRead > 0 ? amountRead : -1;
+                return retnum;
+
+            }
+        };
     }
 }
