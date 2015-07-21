@@ -128,13 +128,12 @@ public class CouchClient  {
     }
 
     private void addFilters(HttpConnection connection) {
-        if(this.responseFilters != null) {
+        if (this.responseFilters != null) {
             connection.responseFilters.addAll(this.responseFilters);
         }
-        if(this.requestFilters != null) {
+        if (this.requestFilters != null) {
             connection.requestFilters.addAll(this.requestFilters);
         }
-
     }
 
     private <T> T executeToJsonObject(HttpConnection connection, Class<T> c) throws CouchException {
