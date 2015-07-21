@@ -101,7 +101,6 @@ public class PullReplicatorTest extends ReplicationTestBase {
 
     @Test
     public void testResponseFilters() throws Exception {
-        //to test the filters we make an invalid request
 
         TestReplicationListener listener = new TestReplicationListener();
         PullReplication pullReplication = createPullReplication();

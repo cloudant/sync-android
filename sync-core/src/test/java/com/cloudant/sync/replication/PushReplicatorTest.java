@@ -139,7 +139,6 @@ public class PushReplicatorTest extends ReplicationTestBase {
 
     @Test
     public void testResponseFilters() throws Exception {
-        //to test the filters we make an invalid request
 
         TestReplicationListener listener = new TestReplicationListener();
         PushReplication pushReplication = createPushReplication();
