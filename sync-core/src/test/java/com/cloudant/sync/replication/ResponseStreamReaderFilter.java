@@ -21,7 +21,8 @@ import com.cloudant.http.HttpConnectionResponseFilter;
 import java.io.IOException;
 
 /**
- * Created by Rhys Short on 20/07/15.
+ * This response filter reads the data stream from the server in order to
+ * force and IO error when Jackson attempts to read the stream to handle the content.
  */
 public class ResponseStreamReaderFilter implements HttpConnectionResponseFilter {
     @Override

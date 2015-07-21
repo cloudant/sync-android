@@ -19,7 +19,8 @@ import com.cloudant.http.HttpConnectionFilterContext;
 import com.cloudant.http.HttpConnectionRequestFilter;
 
 /**
- * Created by Rhys Short on 20/07/15.
+ * This request filter replaces the request body with an invalid json body. To cause
+ * server side errors, 400: Invalid Json response to be returned.
  */
 public class InvalidJSONFilter implements HttpConnectionRequestFilter {
     @Override
