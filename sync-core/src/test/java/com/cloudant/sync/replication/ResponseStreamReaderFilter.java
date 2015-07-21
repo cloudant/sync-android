@@ -22,7 +22,7 @@ import java.io.IOException;
 
 /**
  * This response filter reads the data stream from the server in order to
- * force and IO error when Jackson attempts to read the stream to handle the content.
+ * force an IO error when Jackson attempts to read the stream to handle the content.
  */
 public class ResponseStreamReaderFilter implements HttpConnectionResponseFilter {
     @Override
