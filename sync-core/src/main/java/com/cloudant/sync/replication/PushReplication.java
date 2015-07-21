@@ -26,7 +26,7 @@ import java.net.URI;
  * <p>A push replication is <em>to</em> a remote Cloudant or CouchDB database
  * from the device's local datastore.</p>
  */
-public class PushReplication extends Replication {
+public class PushReplication extends Replication<PushReplication> {
 
     /**
      * URI for this replication's remote database.
