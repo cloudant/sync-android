@@ -48,6 +48,28 @@ public class PushReplication extends Replication {
         /* Does nothing but we can now document it */
     }
 
+    /**
+     * Sets the data store from which data will be replicated
+     *
+     * @param source The source data store
+     * @return The current instance of PushReplication
+     */
+    public PushReplication source(Datastore source) {
+        this.source = source;
+        return this;
+    }
+
+    /**
+     * Sets the uri of the target remote database for this replication
+     *
+     * @param target The uri of the remot database
+     * @return The current instance of PushReplication
+     */
+    public PushReplication target(URI target) {
+        this.target = target;
+        return this;
+    }
+
     @Override
     void validate() {
         Preconditions.checkNotNull(this.target);
