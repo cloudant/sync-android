@@ -238,18 +238,10 @@ class TasksModel {
         // Set up the new replicator objects
         URI uri = this.createServerURI();
 
-        PushReplication push = new PushReplication();
-        push.source = mDatastore;
-        push.target = uri;
+        mPullReplicator = ReplicatorBuilder.pull().to(mDatastore).from(uri).build();
+        mPushReplicator = ReplicatorBuilder.push().from(mDatastore).to(uri).build();
 
-        mPushReplicator = ReplicatorFactory.oneway(push);
         mPushReplicator.getEventBus().register(this);
-
-        PullReplication pull = new PullReplication();
-        pull.source = uri;
-        pull.target = mDatastore;
-
-        mPullReplicator = ReplicatorFactory.oneway(pull);
         mPullReplicator.getEventBus().register(this);
 
         Log.d(LOG_TAG, "Set up replicators for URI:" + uri.toString());
