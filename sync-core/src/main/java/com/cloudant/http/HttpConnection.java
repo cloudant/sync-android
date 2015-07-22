@@ -50,13 +50,12 @@ import java.util.logging.Logger;
  *
  * <pre>
  * HttpConnection hc = new HttpConnection("POST", "application/json", new URL("http://somewhere"));
- * hc.setUsername("user");
- * hc.setPassword("pass");
  * hc.requestProperties.put("x-some-header", "some-value");
  * hc.setRequestBody("{\"hello\": \"world\"});
  * String result = hc.execute().responseAsString();
  * // get the underlying HttpURLConnection if you need to do something a bit more advanced:
  * int response = hc.getConnection().getResponseCode();
+ * hc.disconnect();
  * </pre>
  *
  * <p>
@@ -105,48 +104,58 @@ public class HttpConnection  {
      * Sets the number of times this request can be retried.
      * This method <strong>must</strong> be called before {@link #execute()}
      * @param numberOfRetries the number of times this request can be retried.
+     * @return an {@link HttpConnection} for method chaining 
      */
-    public void setNumberOfRetries(int numberOfRetries){
+    public HttpConnection setNumberOfRetries(int numberOfRetries){
         this.numberOfRetries = numberOfRetries;
+        return this;
     }
 
     /**
      * Set the String of request body data to be sent to the server.
      * @param input String of request body data to be sent to the server
+     * @return an {@link HttpConnection} for method chaining 
      */
-    public void setRequestBody(final String input) {
+    public HttpConnection setRequestBody(final String input) {
         this.input = new ByteArrayInputStream(input.getBytes());
         // input is in bytes, not characters
         this.inputLength = input.getBytes().length;
+        return this;
     }
 
     /**
      * Set the byte array of request body data to be sent to the server.
      * @param input byte array of request body data to be sent to the server
+     * @return an {@link HttpConnection} for method chaining 
      */
-    public void setRequestBody(final byte[] input) {
+    public HttpConnection setRequestBody(final byte[] input) {
         this.input = new ByteArrayInputStream(input);
         this.inputLength = input.length;
+        return this;
     }
 
     /**
      * Set the InputStream of request body data to be sent to the server.
      * @param input InputStream of request body data to be sent to the server
+     * @return an {@link HttpConnection} for method chaining 
      */
-    public void setRequestBody(InputStream input) {
+    public HttpConnection setRequestBody(InputStream input) {
         this.input = input;
         // -1 signals inputLength unknown
         this.inputLength = -1;
+        return this;
     }
 
     /**
      * Set the InputStream of request body data, of known length, to be sent to the server.
      * @param input InputStream of request body data to be sent to the server
      * @param inputLength Length of request body data to be sent to the server, in bytes
+     * @return an {@link HttpConnection} for method chaining 
      */
-    public void setRequestBody(InputStream input, long inputLength) {
+    public HttpConnection setRequestBody(InputStream input, long inputLength) {
         this.input = input;
         this.inputLength = inputLength;
+        return this;
     }
 
     /**
@@ -262,6 +271,7 @@ public class HttpConnection  {
         InputStream is = connection.getInputStream();
         String string = IOUtils.toString(is);
         is.close();
+        connection.disconnect();
         return string;
     }
 
@@ -282,6 +292,7 @@ public class HttpConnection  {
         InputStream is = connection.getInputStream();
         byte[] bytes = IOUtils.toByteArray(is);
         is.close();
+        connection.disconnect();
         return bytes;
     }
 
@@ -312,6 +323,15 @@ public class HttpConnection  {
         return connection;
     }
 
+    /**
+     * Disconnect the underlying HttpURLConnection. Equivalent to calling:
+     * <code>
+     * getConnection.disconnect()
+     * </code>
+     */
+    public void disconnect() {
+        connection.disconnect();
+    }
 
     private static String getUserAgent() {
         String userAgent;
