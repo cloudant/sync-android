@@ -18,12 +18,8 @@
 
 package com.cloudant.mazha;
 
-import com.google.common.base.Strings;
-
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,75 +32,12 @@ public class CouchConfig {
     // a reverse proxy
     private URI rootUri;
 
-    // Timeout to wait for a response, in milliseconds. Defaults to 0 (no timeout).
-	private int socketTimeout = 30000;
-
-    // Timeout to establish a connection, in milliseconds. Defaults to 0 (no timeout).
-    private int connectionTimeout = 30000;
-
-    // Max connections.
-    private int maxConnections = 5;
-
-    private int bufferSize = 1024 * 8;
-
-    private boolean staleConnectionCheckingEnabled = Boolean.FALSE;
-
-    private boolean handleRedirectEnabled = Boolean.FALSE;
-
     // Optional custom headers
     private Map<String, String> customHeaders;
-
-    public boolean isStaleConnectionCheckingEnabled() {
-        return staleConnectionCheckingEnabled;
-    }
-
-    public void setStaleConnectionCheckingEnabled(boolean staleConnectionCheckingEnabled) {
-        this.staleConnectionCheckingEnabled = staleConnectionCheckingEnabled;
-    }
-
-    public boolean isHandleRedirectEnabled() {
-        return handleRedirectEnabled;
-    }
-
-    public void setHandleRedirectEnabled(boolean handleRedirectEnabled) {
-        this.handleRedirectEnabled = handleRedirectEnabled;
-    }
-
-    public int getBufferSize() {
-        return bufferSize;
-    }
-
-    public void setBufferSize(int bufferSize) {
-        this.bufferSize = bufferSize;
-    }
 
     public CouchConfig(URI rootUri) {
         this.rootUri = rootUri;
     }
-
-	public int getSocketTimeout() {
-		return socketTimeout;
-	}
-
-	public int getConnectionTimeout() {
-		return connectionTimeout;
-	}
-
-	public int getMaxConnections() {
-		return maxConnections;
-	}
-
-	public void setSocketTimeout(int socketTimeout) {
-		this.socketTimeout = socketTimeout;
-	}
-
-	public void setConnectionTimeout(int connectionTimeout) {
-		this.connectionTimeout = connectionTimeout;
-	}
-
-	public void setMaxConnections(int maxConnections) {
-		this.maxConnections = maxConnections;
-	}
 
     public Map<String, String> getCustomHeaders() {
         return customHeaders;
