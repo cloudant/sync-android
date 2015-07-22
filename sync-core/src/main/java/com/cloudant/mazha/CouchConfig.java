@@ -18,6 +18,9 @@
 
 package com.cloudant.mazha;
 
+import com.cloudant.http.HttpConnectionRequestFilter;
+import com.cloudant.http.HttpConnectionResponseFilter;
+
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
@@ -34,6 +37,9 @@ public class CouchConfig {
 
     // Optional custom headers
     private Map<String, String> customHeaders;
+
+    private List<HttpConnectionRequestFilter> requestFilters;
+    private List<HttpConnectionResponseFilter> responseFilters;
 
     public CouchConfig(URI rootUri) {
         this.rootUri = rootUri;
@@ -52,6 +58,22 @@ public class CouchConfig {
             }
         }
         this.customHeaders = customHeaders;
+    }
+
+    public List<HttpConnectionRequestFilter> getRequestFilters() {
+        return requestFilters;
+    }
+
+    public void setRequestFilters(List<HttpConnectionRequestFilter> requestFilters) {
+        this.requestFilters = requestFilters;
+    }
+
+    public List<HttpConnectionResponseFilter> getResponseFilters() {
+        return responseFilters;
+    }
+
+    public void setResponseFilters(List<HttpConnectionResponseFilter> responseFilters) {
+        this.responseFilters = responseFilters;
     }
 
     public URI getRootUri() {

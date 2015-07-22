@@ -22,9 +22,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.IOException;
-import java.net.URI;
-
 @Category(RequireRunningCouchDB.class)
 public class PushReplicatorTest extends ReplicationTestBase {
 
@@ -109,5 +106,30 @@ public class PushReplicatorTest extends ReplicationTestBase {
             Assert.fail("replicator did not stop before all docs were pushed");
         }
 
+    }
+
+    @Test
+    public void testRequestFilters() throws Exception {
+
+        //to test the filters we make an invalid request
+
+        FilterCallCounter filterCallCounter = new FilterCallCounter();
+        TestReplicationListener listener = new TestReplicationListener();
+        PushReplication pushReplication = createPushReplication();
+        pushReplication.requestFilters.add(filterCallCounter);
+        runReplicationUntilComplete(pushReplication);
+        Assert.assertTrue(filterCallCounter.filterRequestTimesCalled >= 1);
+
+    }
+
+    @Test
+    public void testResponseFilters() throws Exception {
+
+        FilterCallCounter filterCallCounter = new FilterCallCounter();
+        TestReplicationListener listener = new TestReplicationListener();
+        PushReplication pushReplication = createPushReplication();
+        pushReplication.responseFilters.add(filterCallCounter);
+        runReplicationUntilComplete(pushReplication);
+        Assert.assertTrue(filterCallCounter.filterResponseTimesCalled >= 1);
     }
 }

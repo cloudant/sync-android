@@ -21,6 +21,8 @@ package com.cloudant.mazha;
 
 import com.cloudant.http.Http;
 import com.cloudant.http.HttpConnection;
+import com.cloudant.http.HttpConnectionRequestFilter;
+import com.cloudant.http.HttpConnectionResponseFilter;
 import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -32,6 +34,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -44,11 +47,23 @@ public class CouchClient  {
     protected final JSONHelper jsonHelper;
     private final Map<String, String> customHeaders;
     private CouchURIHelper uriHelper;
+    private List<HttpConnectionRequestFilter> requestFilters;
+    private List<HttpConnectionResponseFilter> responseFilters;
 
     public CouchClient(CouchConfig config) {
         this.jsonHelper = new JSONHelper();
         this.uriHelper = new CouchURIHelper(config.getRootUri());
         this.customHeaders = config.getCustomHeaders();
+        this.requestFilters = new ArrayList<HttpConnectionRequestFilter>();
+        this.responseFilters = new ArrayList<HttpConnectionResponseFilter>();
+
+        if(config.getRequestFilters() != null) {
+            this.requestFilters.addAll(config.getRequestFilters());
+        }
+
+        if(config.getResponseFilters() != null) {
+            this.responseFilters.addAll(config.getResponseFilters());
+        }
     }
 
     public URI getRootUri() {
@@ -76,6 +91,8 @@ public class CouchClient  {
         // all CouchClient requests want to receive application/json responses
         connection.requestProperties.put("Accept", "application/json");
         this.addCustomHeaders(connection);
+        connection.responseFilters.addAll(this.responseFilters);
+        connection.requestFilters.addAll(this.requestFilters);
         InputStream is = null; // input stream - response from server on success
         InputStream es = null; // error stream - response from server for a 500 etc
         String response = null;

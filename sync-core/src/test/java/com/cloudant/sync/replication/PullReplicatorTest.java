@@ -15,6 +15,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,4 +70,26 @@ public class PullReplicatorTest extends ReplicationTestBase {
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
     }
+
+    @Test
+    public void testRequestFilters() throws Exception {
+
+        FilterCallCounter filterCallCounter = new FilterCallCounter();
+        PullReplication pullReplication = createPullReplication();
+        pullReplication.requestFilters.add(filterCallCounter);
+        runReplicationUntilComplete(pullReplication);
+        Assert.assertTrue(filterCallCounter.filterRequestTimesCalled >= 1);
+
+    }
+
+    @Test
+    public void testResponseFilters() throws Exception {
+
+        FilterCallCounter filterCallCounter = new FilterCallCounter();
+        PullReplication pullReplication = createPullReplication();
+        pullReplication.responseFilters.add(filterCallCounter);
+        runReplicationUntilComplete(pullReplication);
+        Assert.assertTrue(filterCallCounter.filterResponseTimesCalled >= 1);
+    }
+
 }

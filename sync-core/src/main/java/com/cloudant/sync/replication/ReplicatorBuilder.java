@@ -14,9 +14,14 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.http.HttpConnectionRequestFilter;
+import com.cloudant.http.HttpConnectionResponseFilter;
 import com.cloudant.sync.datastore.Datastore;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A Builder to create a {@link Replicator Object}
@@ -26,6 +31,10 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
     private T target;
     private S source;
+    private List<HttpConnectionRequestFilter> requestFilters = new ArrayList
+            <HttpConnectionRequestFilter>();
+    private List<HttpConnectionResponseFilter> responseFilters = new ArrayList
+            <HttpConnectionResponseFilter>();
 
     /**
      * A Push Replication Builder
@@ -64,6 +73,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
             PullReplication pullReplication = new PullReplication();
             pullReplication.source = super.source;
             pullReplication.target = super.target;
+            pullReplication.responseFilters.addAll(super.responseFilters);
+            pullReplication.requestFilters.addAll(super.requestFilters);
             //convert the new filter to the old one.
             //this is to avoid invasive changes for now.
             Replication.Filter filter = new Replication.Filter(this.pullPullFilter.getName(),
@@ -94,6 +105,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
      */
     public E to(T target) {
         this.target = target;
+        //noinspection unchecked
         return (E) this;
     }
 
@@ -105,6 +117,47 @@ public abstract class ReplicatorBuilder<S, T, E> {
      */
     public E from(S source) {
         this.source = source;
+        //noinspection unchecked
+        return (E) this;
+    }
+
+    /**
+     * Variable argument version of {@link #addRequestFilters(List)}
+     * @param filters The request filters to add.
+     * @return The current instance of {@link ReplicatorBuilder}
+     */
+    public E addRequestFilters(HttpConnectionRequestFilter ... filters){
+        return addRequestFilters(Arrays.asList(filters));
+    }
+
+    /**
+     * Adds filters to the list of request filters to use for each request made by this replication.
+     * @param filters The request filters to add.
+     * @return The current instance of {@link ReplicatorBuilder}
+     */
+    public E addRequestFilters(List<HttpConnectionRequestFilter> filters){
+        this.requestFilters.addAll(filters);
+        //noinspection unchecked
+        return (E)this;
+    }
+
+    /**
+     * Variable argument version of {@link #addResponseFilters(List)}
+     * @param filters The response filters to add.
+     * @return The current instance of {@link ReplicatorBuilder}
+     */
+    public E addResponseFilters(HttpConnectionResponseFilter ... filters){
+        return addResponseFilters(Arrays.asList(filters));
+    }
+
+    /**
+     * Adds filters to the list of response filters to use for each response received by this replication.
+     * @param filters The response filters to add.
+     * @return The current instance of {@link ReplicatorBuilder}
+     */
+    public E addResponseFilters(List<HttpConnectionResponseFilter> filters){
+        this.responseFilters.addAll(filters);
+        //noinspection unchecked
         return (E) this;
     }
 
