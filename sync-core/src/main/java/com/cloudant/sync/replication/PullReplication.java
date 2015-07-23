@@ -25,7 +25,9 @@ import java.net.URI;
  *
  * <p>A pull replication is <em>from</em> a remote Cloudant or CouchDB database
  * to the device's local datastore.</p>
+ * @deprecated Use {@link ReplicatorBuilder} instead.
  */
+@Deprecated
 public class PullReplication extends Replication {
 
     /**
