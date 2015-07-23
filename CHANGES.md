@@ -9,6 +9,10 @@
   You can now query for documents without the existence of any indexes.
 - [NEW] New fields `documentsReplicated` and `batchesReplicated` added
   to ReplicationCompleted class
+- [NEW] New `ReplicatorBuilder` API. This should be used to create replications in the future.
+- [NEW] HTTP Interceptor API. See [Http Interceptors](https://github.com/cloudant/sync-android/blob/master/doc/interceptors.md) for details.
+- [DEPRECATED] Deprecated the  following classes: `ReplicatorFactory`, `Replication`,
+  `PullReplication` and `PushReplication`.
 
 # 0.12.3 (2015-06-30)
 
