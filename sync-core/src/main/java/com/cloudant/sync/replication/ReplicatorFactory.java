@@ -14,14 +14,11 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.sync.datastore.Datastore;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-
 /**
  * <p>Factory for {@link Replicator} objects.</p>
+ * @deprecated Use {@link ReplicatorBuilder} instead
  */
+@Deprecated
 public final class ReplicatorFactory {
 
     private ReplicatorFactory() {

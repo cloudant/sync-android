@@ -25,7 +25,9 @@ import java.net.URI;
  *
  * <p>A push replication is <em>to</em> a remote Cloudant or CouchDB database
  * from the device's local datastore.</p>
+ * @deprecated Use {@link ReplicatorBuilder} instead.
  */
+@Deprecated
 public class PushReplication extends Replication {
 
     /**

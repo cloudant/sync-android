@@ -20,7 +20,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,10 +33,12 @@ import java.util.Map;
  * and {@link com.cloudant.sync.replication.PushReplication} are used to
  * configure pull and push replications respectively.</p>
  *
+ * @deprecated Use {@link ReplicatorBuilder} instead
  * @see com.cloudant.sync.replication.PullReplication
  * @see com.cloudant.sync.replication.PushReplication
  * @see ReplicatorFactory#oneway(Replication)
  */
+@Deprecated
 public abstract class Replication {
 
     /**
@@ -61,11 +62,12 @@ public abstract class Replication {
      * map.put("name", "john");
      * Filter filter = new Filter("doc/filterName", map);
      * </pre>
-     *
+     *@deprecated Use {@link PullFilter} instead
      * @see com.cloudant.sync.replication.PullReplication
      * @see <a href="http://docs.couchdb.org/en/1.4.x/replication.html#controlling-which-documents-to-replicate">Controlling documents replicated</a>
      * @see <a href="http://docs.couchdb.org/en/1.4.x/ddocs.html#filterfun">Filter functions CouchDB docs</a>
      */
+    @Deprecated
     public static class Filter {
 
         /**
