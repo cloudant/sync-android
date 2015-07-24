@@ -169,7 +169,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     @Test
     public void getDocumentInputStream_id_success() {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
-        InputStream is = client.getDocumentStream(res.getId());
+        InputStream is = client.getDocumentStream(res.getId(), res.getRev());
         try {
             Map<String, Object> doc = client.jsonHelper.fromJson(new InputStreamReader(is));
             assertHelloWorldMapObject(res, doc);
@@ -196,7 +196,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
 
     @Test(expected = NoResourceException.class)
     public void getDocumentInputStream_idNotExist_exception() {
-        client.getDocumentStream("id_not_exist");
+        client.getDocumentStream("id_not_exist", "1-no_such_rev");
     }
 
     @Test(expected = NoResourceException.class)
@@ -352,13 +352,6 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     public void delete_revNotExist_exception() {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
         client.delete(res.getId(), "1-some_rev_not_exist");
-    }
-
-    @Test(expected = NoResourceException.class)
-    public void getDocument_docDeleted_exception() {
-        Response res = ClientTestUtils.createHelloWorldDoc(client);
-        Response res2 = client.delete(res.getId(), res.getRev());
-        client.getDocumentStream(res2.getId());
     }
 
     @Test

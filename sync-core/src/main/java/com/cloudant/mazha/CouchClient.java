@@ -221,13 +221,6 @@ public class CouchClient  {
         }
     }
 
-    public InputStream getDocumentStream(String id) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        URI doc = this.uriHelper.documentUri(id);
-        HttpConnection connection = Http.GET(doc);
-        return this.executeToInputStream(connection);
-    }
-
     public InputStream getDocumentStream(String id, String rev) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
@@ -238,51 +231,17 @@ public class CouchClient  {
         return this.executeToInputStream(connection);
     }
 
-    public InputStream getAttachmentStream(String id, String attachmentName) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        URI doc = this.uriHelper.attachmentUri(id, attachmentName);
-        HttpConnection connection = Http.GET(doc);
-        connection.requestProperties.put("Accept-Encoding", "gzip");
-        return this.executeToInputStream(connection);
-    }
-
-    public InputStream getAttachmentStreamUncompressed(String id, String attachmentName) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        URI doc = this.uriHelper.attachmentUri(id, attachmentName);
-        HttpConnection connection = Http.GET(doc);
-        return this.executeToInputStream(connection);
-    }
-
-    public InputStream getAttachmentStream(String id, String rev, String attachmentName) {
+    public InputStream getAttachmentStream(String id, String rev, String attachmentName, final boolean acceptGzip) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
         URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
         HttpConnection connection = Http.GET(doc);
-        connection.requestProperties.put("Accept-Encoding", "gzip");
+        if (acceptGzip) {
+            connection.requestProperties.put("Accept-Encoding", "gzip");
+        }
         return this.executeToInputStream(connection);
-    }
-
-    public InputStream getAttachmentStreamUncompressed(String id, String rev, String attachmentName) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
-        Map<String, Object> queries = new HashMap<String, Object>();
-        queries.put("rev", rev);
-        URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
-        HttpConnection connection = Http.GET(doc);
-        return this.executeToInputStream(connection);
-    }
-
-    public void putAttachmentStream(String id, String rev, String attachmentName, String attachmentString) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
-        Map<String, Object> queries = new HashMap<String, Object>();
-        queries.put("rev", rev);
-        URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
-        HttpConnection connection = Http.PUT(doc, "application/json");
-        connection.setRequestBody(attachmentString);
-        this.executeToInputStream(connection);
     }
 
     public void putAttachmentStream(String id, String rev, String attachmentName, String contentType, byte[] attachmentData) {

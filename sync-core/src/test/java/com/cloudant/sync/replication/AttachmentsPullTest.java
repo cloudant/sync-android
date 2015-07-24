@@ -239,7 +239,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
 
         id = res.getId();
         rev = res.getRev();
-        remoteDb.getCouchClient().putAttachmentStream(id, rev, attachmentName, attachmentData);
+        remoteDb.getCouchClient().putAttachmentStream(id, rev, attachmentName, "text/plain", attachmentData.getBytes());
 
         // putting attachment will have updated the rev
         bar = remoteDb.get(BarWithAttachments.class, res.getId());
@@ -299,7 +299,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
 
         Response res = remoteDb.update(id, bar);
         rev = res.getRev();
-        remoteDb.getCouchClient().putAttachmentStream(id, rev, attachmentName, attachmentData2);
+        remoteDb.getCouchClient().putAttachmentStream(id, rev, attachmentName, "text/plain", attachmentData2.getBytes());
 
         // putting attachment will have updated the rev
         bar = remoteDb.get(Bar.class, res.getId());
