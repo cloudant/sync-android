@@ -53,7 +53,7 @@ public class CouchDbInfo {
 	private int diskFormatVersion;
 
     @JsonProperty("data_size")
-    private int dataSize;
+    private long dataSize;
 
 	public String getDbName() {
 		return dbName;
@@ -91,10 +91,10 @@ public class CouchDbInfo {
 		return diskFormatVersion;
 	}
 
-    public int getDataSize() {
+    public long getDataSize() {
         return dataSize;
     }
-    public void setDataSize(int dataSize) {
+    public void setDataSize(long dataSize) {
         this.dataSize = dataSize;
     }
 
