@@ -109,27 +109,25 @@ public class PushReplicatorTest extends ReplicationTestBase {
     }
 
     @Test
-    public void testRequestFilters() throws Exception {
+    public void testRequestInterceptors() throws Exception {
 
-        //to test the filters we make an invalid request
+        //to test the interceptors we count if the interceptor gets called
 
-        FilterCallCounter filterCallCounter = new FilterCallCounter();
-        TestReplicationListener listener = new TestReplicationListener();
+        InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
         PushReplication pushReplication = createPushReplication();
-        pushReplication.requestFilters.add(filterCallCounter);
+        pushReplication.requestInterceptors.add(interceptorCallCounter);
         runReplicationUntilComplete(pushReplication);
-        Assert.assertTrue(filterCallCounter.filterRequestTimesCalled >= 1);
+        Assert.assertTrue(interceptorCallCounter.interceptorRequestTimesCalled >= 1);
 
     }
 
     @Test
-    public void testResponseFilters() throws Exception {
+    public void testResponseInterceptors() throws Exception {
 
-        FilterCallCounter filterCallCounter = new FilterCallCounter();
-        TestReplicationListener listener = new TestReplicationListener();
+        InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
         PushReplication pushReplication = createPushReplication();
-        pushReplication.responseFilters.add(filterCallCounter);
+        pushReplication.responseInterceptors.add(interceptorCallCounter);
         runReplicationUntilComplete(pushReplication);
-        Assert.assertTrue(filterCallCounter.filterResponseTimesCalled >= 1);
+        Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
     }
 }

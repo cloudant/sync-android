@@ -14,8 +14,8 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.http.HttpConnectionRequestFilter;
-import com.cloudant.http.HttpConnectionResponseFilter;
+import com.cloudant.http.HttpConnectionRequestInterceptor;
+import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.mazha.CouchConfig;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -43,10 +43,10 @@ import java.util.Map;
 @Deprecated
 public abstract class Replication {
 
-    final List<HttpConnectionRequestFilter> requestFilters = new ArrayList
-            <HttpConnectionRequestFilter>();
-    final List<HttpConnectionResponseFilter> responseFilters = new ArrayList
-            <HttpConnectionResponseFilter>();
+    final List<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList
+            <HttpConnectionRequestInterceptor>();
+    final List<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList
+            <HttpConnectionResponseInterceptor>();
 
 
     /**
@@ -189,8 +189,8 @@ public abstract class Replication {
 
     final CouchConfig createCouchConfig(URI uri) {
         CouchConfig config = new CouchConfig(uri);
-        config.setResponseFilters(responseFilters);
-        config.setRequestFilters(requestFilters);
+        config.setResponseInterceptors(responseInterceptors);
+        config.setRequestInterceptors(requestInterceptors);
         return config;
     }
 

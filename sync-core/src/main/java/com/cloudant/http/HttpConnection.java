@@ -83,8 +83,8 @@ public class HttpConnection  {
 
     private static String userAgent = getUserAgent();
 
-    public final List<HttpConnectionRequestFilter> requestFilters;
-    public final List<HttpConnectionResponseFilter> responseFilters;
+    public final List<HttpConnectionRequestInterceptor> requestInterceptors;
+    public final List<HttpConnectionResponseInterceptor> responseInterceptors;
 
     private int numberOfRetries = 10;
 
@@ -96,8 +96,8 @@ public class HttpConnection  {
         this.url = url;
         this.contentType = contentType;
         this.requestProperties = new HashMap<String, String>();
-        this.requestFilters = new LinkedList<HttpConnectionRequestFilter>();
-        this.responseFilters = new LinkedList<HttpConnectionResponseFilter>();
+        this.requestInterceptors = new LinkedList<HttpConnectionRequestInterceptor>();
+        this.responseInterceptors = new LinkedList<HttpConnectionResponseInterceptor>();
     }
 
     /**
@@ -200,10 +200,10 @@ public class HttpConnection  {
                     connection.setRequestProperty("Content-type", contentType);
                 }
 
-                HttpConnectionFilterContext currentContext = new HttpConnectionFilterContext(this);
+                HttpConnectionInterceptorContext currentContext = new HttpConnectionInterceptorContext(this);
 
-                for (HttpConnectionRequestFilter requestFilter : requestFilters) {
-                    currentContext = requestFilter.filterRequest(currentContext);
+                for (HttpConnectionRequestInterceptor requestInterceptor : requestInterceptors) {
+                    currentContext = requestInterceptor.interceptRequest(currentContext);
                 }
 
                 if (input != null) {
@@ -239,11 +239,11 @@ public class HttpConnection  {
                     // see http://stackoverflow.com/questions/19860436
                 }
 
-                for (HttpConnectionResponseFilter responseFilter : responseFilters) {
-                    currentContext = responseFilter.filterResponse(currentContext);
+                for (HttpConnectionResponseInterceptor responseInterceptor : responseInterceptors) {
+                    currentContext = responseInterceptor.interceptResponse(currentContext);
                 }
 
-                // retry flag is set from the final step in the response filterRequest pipeline
+                // retry flag is set from the final step in the response interceptRequest pipeline
                 retry = currentContext.replayRequest;
 
                 if (n == 0) {

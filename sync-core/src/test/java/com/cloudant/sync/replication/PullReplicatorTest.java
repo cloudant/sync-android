@@ -72,24 +72,24 @@ public class PullReplicatorTest extends ReplicationTestBase {
     }
 
     @Test
-    public void testRequestFilters() throws Exception {
+    public void testRequestInterceptors() throws Exception {
 
-        FilterCallCounter filterCallCounter = new FilterCallCounter();
+        InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
         PullReplication pullReplication = createPullReplication();
-        pullReplication.requestFilters.add(filterCallCounter);
+        pullReplication.requestInterceptors.add(interceptorCallCounter);
         runReplicationUntilComplete(pullReplication);
-        Assert.assertTrue(filterCallCounter.filterRequestTimesCalled >= 1);
+        Assert.assertTrue(interceptorCallCounter.interceptorRequestTimesCalled >= 1);
 
     }
 
     @Test
-    public void testResponseFilters() throws Exception {
+    public void testResponseInterceptors() throws Exception {
 
-        FilterCallCounter filterCallCounter = new FilterCallCounter();
+        InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
         PullReplication pullReplication = createPullReplication();
-        pullReplication.responseFilters.add(filterCallCounter);
+        pullReplication.responseInterceptors.add(interceptorCallCounter);
         runReplicationUntilComplete(pullReplication);
-        Assert.assertTrue(filterCallCounter.filterResponseTimesCalled >= 1);
+        Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
     }
 
 }

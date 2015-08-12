@@ -15,9 +15,9 @@
 package com.cloudant.http;
 
 /**
- A Response Filter is run after the response is obtained from the
+ A Response Interceptor is run after the response is obtained from the
  server but before the output stream is returned to the original client. The Response
- Filter enables two main behaviours:
+ Interceptor enables two main behaviours:
 <ul>
   <li>Modifying the response for every request</li>
 
@@ -25,12 +25,12 @@ package com.cloudant.http;
  response.</li>
  </ul>
 
- Filters are executed in a pipeline and modify the context in a serial fashion.
+ Interceptors are executed in a pipeline and modify the context in a serial fashion.
  */
-public interface HttpConnectionResponseFilter {
+public interface HttpConnectionResponseInterceptor {
 
     /**
-     * Filter the response
+     * Intercept the response
      *
      * This method <strong>must not</strong> do any of the following
      * <ul>
@@ -40,5 +40,5 @@ public interface HttpConnectionResponseFilter {
      * @param context Input context
      * @return Output context
      */
-    HttpConnectionFilterContext filterResponse(HttpConnectionFilterContext context);
+    HttpConnectionInterceptorContext interceptResponse(HttpConnectionInterceptorContext context);
 }
