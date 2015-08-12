@@ -33,8 +33,8 @@ public class PushReplication extends Replication {
     /**
      * URI for this replication's remote database.
      *
-     * Include username and password in the URL, or supply an Authorization header using
-     * setCustomHeaders() in CouchConfig.
+     * Include username and password in the URL, or supply an Authorization header using an
+     * HttpConnectionRequestInterceptor
      */
     public URI target;
     /**

@@ -22,9 +22,8 @@ import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 
 import java.net.URI;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class CouchConfig {
 
@@ -35,29 +34,13 @@ public class CouchConfig {
     // a reverse proxy
     private URI rootUri;
 
-    // Optional custom headers
-    private Map<String, String> customHeaders;
-
-    private List<HttpConnectionRequestInterceptor> requestInterceptors;
-    private List<HttpConnectionResponseInterceptor> responseInterceptors;
+    private List<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList
+            <HttpConnectionRequestInterceptor>();
+    private List<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList
+            <HttpConnectionResponseInterceptor>();
 
     public CouchConfig(URI rootUri) {
         this.rootUri = rootUri;
-    }
-
-    public Map<String, String> getCustomHeaders() {
-        return customHeaders;
-    }
-
-    public void setCustomHeaders(Map<String, String> customHeaders) {
-        List<String> prohibitedHeaders = Arrays.asList("www-authenticate", "host", "connection",
-                "content-type", "accept", "content-length");
-        for (Map.Entry<String, String> header : customHeaders.entrySet()) {
-            if (prohibitedHeaders.contains(header.getKey().toLowerCase())) {
-                throw new IllegalArgumentException("Bad optional HTTP header: " + header);
-            }
-        }
-        this.customHeaders = customHeaders;
     }
 
     public List<HttpConnectionRequestInterceptor> getRequestInterceptors() {

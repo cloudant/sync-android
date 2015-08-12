@@ -42,6 +42,20 @@ Replicator replicator = ReplicatorBuilder.pull()
 replicator.start();
 ```
 
+## Adding Custom Request Headers
+
+Request Interceptors can be used to add custom HTTP headers by
+accessing the underlying `HttpUrlconnection`, as in this example:
+
+```java
+@Override
+public HttpConnectionInterceptorContext interceptRequest
+(HttpConnectionInterceptorContext context) {
+    HttpURLConnection connection = context.connection.getConnection();
+    connection.setRequestProperty("x-my-header", "value");
+    return context;
+}
+```
 
 ## Things to Avoid
 
