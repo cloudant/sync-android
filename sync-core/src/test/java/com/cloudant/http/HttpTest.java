@@ -137,14 +137,14 @@ public class HttpTest extends CouchTestBase {
 
         Assume.assumeFalse(IGNORE_AUTH_HEADERS);
 
-        CookieFilter filter = new CookieFilter(System.getProperty("test.couch.username"),
+        CookieInterceptor interceptor = new CookieInterceptor(System.getProperty("test.couch.username"),
                 System.getProperty("test.couch.password"));
 
         CouchConfig config = getCouchConfig("cookie_test");
         HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
                 "application/json");
-        conn.responseFilters.add(filter);
-        conn.requestFilters.add(filter);
+        conn.responseInterceptors.add(interceptor);
+        conn.requestInterceptors.add(interceptor);
         ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
 
         // nothing read from stream

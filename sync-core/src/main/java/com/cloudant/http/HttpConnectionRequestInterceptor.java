@@ -21,19 +21,19 @@ import java.net.HttpURLConnection;
 
 /**
 
- A Request Filter is run before the request is made to the server. It can use headers to add support
+ A Request Interceptor is run before the request is made to the server. It can use headers to add support
  for other authentication methods, for example cookie authentication. See
- {@link CookieFilter#filterRequest(HttpConnectionFilterContext)} for an example.
+ {@link CookieInterceptor#interceptRequest(HttpConnectionInterceptorContext)} for an example.
 
 
- Filters are executed in a pipeline and modify the context in a serial fashion.
+ Interceptors are executed in a pipeline and modify the context in a serial fashion.
  */
 
 
-public interface HttpConnectionRequestFilter {
+public interface HttpConnectionRequestInterceptor {
 
     /**
-     * Filter the request.
+     * Intercept the request.
      * This method <strong>must not</strong> do any of the following:
      * <ul>
      *     <li>Return null</li>
@@ -43,6 +43,6 @@ public interface HttpConnectionRequestFilter {
      * @param context Input context
      * @return Output context
      */
-    HttpConnectionFilterContext filterRequest(HttpConnectionFilterContext context);
+    HttpConnectionInterceptorContext interceptRequest(HttpConnectionInterceptorContext context);
 
 }

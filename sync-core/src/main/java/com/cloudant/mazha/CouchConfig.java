@@ -18,8 +18,8 @@
 
 package com.cloudant.mazha;
 
-import com.cloudant.http.HttpConnectionRequestFilter;
-import com.cloudant.http.HttpConnectionResponseFilter;
+import com.cloudant.http.HttpConnectionRequestInterceptor;
+import com.cloudant.http.HttpConnectionResponseInterceptor;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -38,8 +38,8 @@ public class CouchConfig {
     // Optional custom headers
     private Map<String, String> customHeaders;
 
-    private List<HttpConnectionRequestFilter> requestFilters;
-    private List<HttpConnectionResponseFilter> responseFilters;
+    private List<HttpConnectionRequestInterceptor> requestInterceptors;
+    private List<HttpConnectionResponseInterceptor> responseInterceptors;
 
     public CouchConfig(URI rootUri) {
         this.rootUri = rootUri;
@@ -60,20 +60,21 @@ public class CouchConfig {
         this.customHeaders = customHeaders;
     }
 
-    public List<HttpConnectionRequestFilter> getRequestFilters() {
-        return requestFilters;
+    public List<HttpConnectionRequestInterceptor> getRequestInterceptors() {
+        return requestInterceptors;
     }
 
-    public void setRequestFilters(List<HttpConnectionRequestFilter> requestFilters) {
-        this.requestFilters = requestFilters;
+    public void setRequestInterceptors(List<HttpConnectionRequestInterceptor> requestInterceptors) {
+        this.requestInterceptors = requestInterceptors;
     }
 
-    public List<HttpConnectionResponseFilter> getResponseFilters() {
-        return responseFilters;
+    public List<HttpConnectionResponseInterceptor> getResponseInterceptors() {
+        return responseInterceptors;
     }
 
-    public void setResponseFilters(List<HttpConnectionResponseFilter> responseFilters) {
-        this.responseFilters = responseFilters;
+    public void setResponseInterceptors(List<HttpConnectionResponseInterceptor>
+                                                responseInterceptors) {
+        this.responseInterceptors = responseInterceptors;
     }
 
     public URI getRootUri() {

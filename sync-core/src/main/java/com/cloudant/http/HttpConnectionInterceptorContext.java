@@ -16,7 +16,7 @@ package com.cloudant.http;
 /**
  * Created by tomblench on 30/03/15.
  */
-public class HttpConnectionFilterContext {
+public class HttpConnectionInterceptorContext {
 
     public boolean replayRequest;
     public final HttpConnection connection;
@@ -25,7 +25,7 @@ public class HttpConnectionFilterContext {
      * Constructor
      * @param connection HttpConnection
      */
-    public HttpConnectionFilterContext (HttpConnection connection) {
+    public HttpConnectionInterceptorContext(HttpConnection connection) {
         this.replayRequest = false;
         this.connection = connection;
     }
@@ -34,7 +34,7 @@ public class HttpConnectionFilterContext {
      * Shallow copy constructor
      * @param other Context to copy
      */
-    public HttpConnectionFilterContext (HttpConnectionFilterContext other) {
+    public HttpConnectionInterceptorContext(HttpConnectionInterceptorContext other) {
         this.replayRequest = other.replayRequest;
         this.connection = other.connection;
 

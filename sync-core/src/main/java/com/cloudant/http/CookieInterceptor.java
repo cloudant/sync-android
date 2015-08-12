@@ -32,37 +32,37 @@ import java.util.logging.Logger;
  * Adds cookie authentication support to http requests.
  *
  * It does this by adding the cookie header for CouchDB
- * using request filtering pipeline in {@link HttpConnection}.
+ * using request interceptor pipeline in {@link HttpConnection}.
  *
  * If a response has a response code of 401, it will fetch a cookie from
  * the server using provided credentials and tell {@link HttpConnection} to reply
- * the request by setting {@link HttpConnectionFilterContext#replayRequest} property to true.
+ * the request by setting {@link HttpConnectionInterceptorContext#replayRequest} property to true.
  *
  * If the request to get the cookie for use in future request fails with a 401 status code
  * (or any status that indicates client error) cookie authentication will not be attempted again.
  *
  *
  */
-public  class CookieFilter implements HttpConnectionRequestFilter, HttpConnectionResponseFilter {
+public  class CookieInterceptor implements HttpConnectionRequestInterceptor, HttpConnectionResponseInterceptor {
 
-    private final static Logger logger = Logger.getLogger(CookieFilter.class.getCanonicalName());
+    private final static Logger logger = Logger.getLogger(CookieInterceptor.class.getCanonicalName());
     final String sessionRequestBody;
     private String cookie = null;
     private boolean shouldAttemptCookieRequest = true;
     private final String username;
 
     /**
-     * Constructs a cookie filter.
+     * Constructs a cookie interceptor.
      * @param username The username to use when getting the cookie
      * @param password The password to use when getting the cookie
      */
-    public CookieFilter(String username, String password){
+    public CookieInterceptor(String username, String password){
         this.sessionRequestBody = String.format("name=%s&password=%s",username,password);
         this.username = username;
     }
 
     @Override
-    public HttpConnectionFilterContext filterRequest(HttpConnectionFilterContext context) {
+    public HttpConnectionInterceptorContext interceptRequest(HttpConnectionInterceptorContext context) {
 
         HttpURLConnection connection = context.connection.getConnection();
 
@@ -77,7 +77,7 @@ public  class CookieFilter implements HttpConnectionRequestFilter, HttpConnectio
     }
 
     @Override
-    public HttpConnectionFilterContext filterResponse(HttpConnectionFilterContext context) {
+    public HttpConnectionInterceptorContext interceptResponse(HttpConnectionInterceptorContext context) {
         HttpURLConnection connection = context.connection.getConnection();
         try {
             if (context.connection.getConnection().getResponseCode() == 401) {
@@ -121,7 +121,7 @@ public  class CookieFilter implements HttpConnectionRequestFilter, HttpConnectio
             } else if(responseCode == 401){
                 shouldAttemptCookieRequest  = false;
                 logger.severe("Credentials are incorrect, cookie authentication will not be" +
-                        " attempted again by this filter object");
+                        " attempted again by this interceptor object");
             } else if (responseCode / 100 == 5){
                 logger.log(Level.SEVERE,
                         "Failed to get cookie from server, response code %s, cookie auth",
