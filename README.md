@@ -214,7 +214,7 @@ URI uri = new URI("https://apikey:apipasswd@username.cloudant.com/my_database");
 Datastore ds = manager.openDatastore("my_datastore");
 
 // Replicate from the local to remote database
-Replicator replicator = ReplicatorFactory.oneway(ds, uri);
+Replicator replicator = ReplicatorBuilder.push().from(ds).to(uri).build();
 
 // Fire-and-forget (there are easy ways to monitor the state too)
 replicator.start();
