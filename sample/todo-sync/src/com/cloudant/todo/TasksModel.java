@@ -14,22 +14,6 @@
 
 package com.cloudant.todo;
 
-import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.sync.datastore.DatastoreNotCreatedException;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
-import com.cloudant.sync.notifications.ReplicationCompleted;
-import com.cloudant.sync.notifications.ReplicationErrored;
-import com.cloudant.sync.replication.PullReplication;
-import com.cloudant.sync.replication.PushReplication;
-import com.cloudant.sync.replication.Replicator;
-import com.cloudant.sync.replication.ReplicatorFactory;
-import com.google.common.eventbus.Subscribe;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
@@ -37,13 +21,25 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import java.io.IOException;
-import java.lang.RuntimeException;
-import java.util.ArrayList;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.ConflictException;
+import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.DatastoreManager;
+import com.cloudant.sync.datastore.DatastoreNotCreatedException;
+import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.DocumentException;
+import com.cloudant.sync.datastore.MutableDocumentRevision;
+import com.cloudant.sync.notifications.ReplicationCompleted;
+import com.cloudant.sync.notifications.ReplicationErrored;
+import com.cloudant.sync.replication.Replicator;
+import com.cloudant.sync.replication.ReplicatorBuilder;
+import com.google.common.eventbus.Subscribe;
+
 import java.io.File;
-import java.util.List;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
