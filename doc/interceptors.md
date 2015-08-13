@@ -1,7 +1,7 @@
 HTTP Interceptors
 =====
 
-With the release of sync-android version TBD a new HTTP Interceptor API was introduced.
+With the release of sync-android version 0.13.0 a new HTTP Interceptor API was introduced.
 HTTP Interceptors allow the developer to modify the HTTP requests and responses during
 the replication process.
 
@@ -15,7 +15,7 @@ your class:
 - To modify the outgoing request, `HTTPConnectionRequestInterceptor`.
 - To examine the incoming response, `HTTPConnectionResponseInterceptor`.
 
-For an example of how to implement a interceptor, see  the `CookieInterceptor` class. 
+For an example of how to implement a interceptor, see  the `CookieInterceptor` class.
 
 In order to add an HTTP Interceptor to a replication, you call the `addRequestInterceptors`
 or `addResponseInterceptors` on the `ReplicatorBuilder` class.

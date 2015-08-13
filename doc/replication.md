@@ -287,7 +287,8 @@ Replicator replicator = ReplicatorBuilder.pull()
 
 ### Deprecated APIs
 
-The following classes are still supported but deprecated. They will be soon removed from the library.
+The following classes are still supported but are deprecated in version 0.13.0.
+They will be soon removed from the library.
 
 ```java
 ReplicatorFactory

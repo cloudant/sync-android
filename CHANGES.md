@@ -1,4 +1,4 @@
-# Unreleased
+# 0.13.0 (2015-08-13)
 - [BREAKING CHANGE] Moved code for encryption on Android to the
   `sync-android-encryption` subproject. See the instructions in the [README](https://github.com/cloudant/sync-android/blob/master/README.md)
   file for how to include `sync-android-encryption` in your project.
