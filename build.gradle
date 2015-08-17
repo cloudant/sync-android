@@ -15,10 +15,10 @@ allprojects {
 }
 
 dependencies {
-    compile project(':sync-core')
-    compile project(':sync-javase')
-    compile project(':sync-android')
-    compile project(':sync-android-encryption')
+    compile project(':cloudant-sync-datastore-core')
+    compile project(':cloudant-sync-datastore-javase')
+    compile project(':cloudant-sync-datastore-android')
+    compile project(':cloudant-sync-datastore-android-encryption')
 }
 
 subprojects {
