@@ -14,8 +14,8 @@ dependencies {
     testCompile 'commons-validator:commons-validator:1.4.0'
 
     // will probably test on java se, but it doesn't hurt to have android in too
-    testCompile project(':sync-javase')
-    testCompile project(':sync-android')
+    testCompile project(':cloudant-sync-datastore-javase')
+    testCompile project(':cloudant-sync-datastore-android')
 
 }
 
@@ -77,9 +77,6 @@ publishing {
         mavenJava(MavenPublication) {
 
             from components.java
-
-            groupId 'com.cloudant'
-            artifactId 'cloudant-sync-datastore-core'
 
             pom.withXml {
                 Node rootNode = asNode()

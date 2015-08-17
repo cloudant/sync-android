@@ -1,5 +1,5 @@
 dependencies {
-    compile project(':sync-android')
+    compile project(':cloudant-sync-datastore-android')
 
     compile files('libs/sqlcipher.jar')
 
@@ -38,9 +38,6 @@ publishing {
         mavenJava(MavenPublication) {
 
             from components.java
-
-            groupId 'com.cloudant'
-            artifactId 'cloudant-sync-datastore-android-encryption'
 
             pom.withXml {
                 Node rootNode = asNode()
