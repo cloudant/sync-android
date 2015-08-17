@@ -58,15 +58,15 @@ repositories {
 
 dependencies {
     // Other dependencies
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-core', version:'0.13.0'
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-core', version:'0.13.1'
     // include this if you're targeting Android. If you also want datastore encryption
     // you will need to include cloudant-sync-datastore-android-encryption as well (see below).
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.13.0'
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.13.1'
     // include this if you're targeting Android and want datastore encryption. You will also need
     // cloudant-sync-datastore-android (see above).
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android-encryption', version:'0.13.0'
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android-encryption', version:'0.13.1'
     // include this if you're targeting Java SE
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-javase', version:'0.13.0'
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-javase', version:'0.13.1'
 }
 ```
 
@@ -96,7 +96,7 @@ It's a similar story in maven, add the repo and the dependency:
     <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-core</artifactId>
-      <version>0.13.0</version>
+      <version>0.13.1</version>
       <scope>compile</scope>
     </dependency>
     <!-- include this if you're targeting Android. If you also want datastore encryption
@@ -104,7 +104,7 @@ It's a similar story in maven, add the repo and the dependency:
     <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-android</artifactId>
-      <version>0.13.0</version>
+      <version>0.13.1</version>
       <scope>compile</scope>
     </dependency>
     <!-- include this if you're targeting Android and want datastore encryption. You will also need
@@ -112,14 +112,14 @@ It's a similar story in maven, add the repo and the dependency:
     <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-android-encryption</artifactId>
-      <version>0.13.0</version>
+      <version>0.13.1</version>
       <scope>compile</scope>
     </dependency>
     <!-- include this if you're targeting Java SE -->
     <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-javase</artifactId>
-      <version>0.13.0</version>
+      <version>0.13.1</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
