@@ -21,7 +21,9 @@ import com.cloudant.sync.datastore.Datastore;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A Builder to create a {@link Replicator Object}
@@ -75,11 +77,17 @@ public abstract class ReplicatorBuilder<S, T, E> {
             pullReplication.target = super.target;
             pullReplication.responseInterceptors.addAll(super.responseInterceptors);
             pullReplication.requestInterceptors.addAll(super.requestInterceptors);
-            //convert the new filter to the old one.
-            //this is to avoid invasive changes for now.
-            Replication.Filter filter = new Replication.Filter(this.pullPullFilter.getName(),
-                    this.pullPullFilter.getParameters());
-            pullReplication.filter = filter;
+
+            if(this.pullPullFilter != null) {
+                //convert the new filter to the old one.
+                //this is to avoid invasive changes for now.
+                Map<String,String> filterParams = this.pullPullFilter.getParameters();
+                filterParams = filterParams == null ? Collections.EMPTY_MAP : filterParams;
+
+                Replication.Filter filter = new Replication.Filter(this.pullPullFilter.getName(),
+                        filterParams);
+                pullReplication.filter = filter;
+            }
 
             return new BasicReplicator(pullReplication);
         }

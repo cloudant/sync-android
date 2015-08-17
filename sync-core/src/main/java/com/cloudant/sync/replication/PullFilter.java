@@ -18,6 +18,7 @@ import com.google.common.base.Joiner;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -93,7 +94,7 @@ public class PullFilter {
      */
     public PullFilter(String filterName, Map<String, String> parameters) {
         this.name = filterName;
-        Map<String, String> internalParams = Collections.emptyMap();
+        Map<String, String> internalParams = new HashMap<String, String>();
         internalParams.putAll(parameters);
         this.parameters = Collections.unmodifiableMap(internalParams);
     }

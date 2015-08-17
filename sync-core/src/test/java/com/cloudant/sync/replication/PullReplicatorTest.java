@@ -23,6 +23,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 @Category(RequireRunningCouchDB.class)
 public class PullReplicatorTest extends ReplicationTestBase {
@@ -91,5 +93,56 @@ public class PullReplicatorTest extends ReplicationTestBase {
         runReplicationUntilComplete(pullReplication);
         Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
     }
+
+    @Test
+    public void testPullReplicationCreatedSuccessfullyWithoutFilter() throws Exception {
+
+        Replicator replicator = ReplicatorBuilder.pull()
+                .from(this.source)
+                .to(this.datastore)
+                .build();
+
+        Assert.assertNotNull(replicator);
+    }
+
+    @Test
+    public void testPullReplicationCreatedSuccessfullyWithFilter() throws Exception {
+
+        Replicator replicator = ReplicatorBuilder.pull()
+                .from(this.source)
+                .to(this.datastore)
+                .filter(new PullFilter("a_filter"))
+                .build();
+
+        Assert.assertNotNull(replicator);
+    }
+
+    @Test
+    public void testPullReplicationCreatedSuccessfullyWithFilterAndParams() throws Exception {
+
+        Map<String,String> params = new HashMap<String,String>();
+        params.put("a","parameter");
+        Replicator replicator = ReplicatorBuilder.pull()
+                .from(this.source)
+                .to(this.datastore)
+                .filter(new PullFilter("a_filter",params))
+                .build();
+
+        Assert.assertNotNull(replicator);
+    }
+
+    @Test
+    public void testPullReplicationCreatedSuccessfullyWithFilterAndEmptyParams() throws Exception {
+
+        Map<String,String> params = new HashMap<String,String>();
+        Replicator replicator = ReplicatorBuilder.pull()
+                .from(this.source)
+                .to(this.datastore)
+                .filter(new PullFilter("a_filter",params))
+                .build();
+
+        Assert.assertNotNull(replicator);
+    }
+
 
 }
