@@ -1,4 +1,4 @@
-include 'sync-core'
-include 'sync-android'
-include 'sync-android-encryption'
-include 'sync-javase'
+include 'cloudant-sync-datastore-core'
+include 'cloudant-sync-datastore-android'
+include 'cloudant-sync-datastore-android-encryption'
+include 'cloudant-sync-datastore-javase'
