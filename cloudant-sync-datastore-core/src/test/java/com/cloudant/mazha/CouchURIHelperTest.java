@@ -84,10 +84,10 @@ public class CouchURIHelperTest {
 
     @Test
     public void buildChangesUri_options_optionsEncoded() throws Exception {
-        URI expected = new URI(uriBase + "/test/_changes?limit=100&since=%22[]");
+        URI expected = new URI(uriBase + "/test/_changes?limit=100&since=%22%5B%5D%22");
 
         Map<String, Object> options = new HashMap<String, Object>();
-        options.put("since", "\"[]");
+        options.put("since", "\"[]\"");
         options.put("limit", 100);
         URI actual = helper(path+"/test").changesUri(options);
         Assert.assertEquals(expected, actual);
@@ -144,8 +144,15 @@ public class CouchURIHelperTest {
     }
 
     @Test
+    public void buildDocumentUri_colonInDocumentId() throws Exception {
+        URI expected = new URI(uriBase + "/test/:this:has:colons:");
+        URI actual = helper(path+"/test").documentUri(":this:has:colons:");
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
     public void buildDocumentUri_options_optionsEncoded() throws Exception {
-        URI expected = new URI(uriBase + "/test/path1%2Fpath2?detail=true&revs=[1-2]");
+        URI expected = new URI(uriBase + "/test/path1%2Fpath2?detail=true&revs=%5B1-2%5D");
 
         Map<String, Object> options = new TreeMap<String, Object>();
         options.put("revs", "[1-2]");
@@ -156,7 +163,7 @@ public class CouchURIHelperTest {
 
     @Test
     public void buildDocumentUri_options_encodeSeparators() throws Exception {
-        URI expected = new URI(uriBase + "/test/path1%2Fpath2?d%26etail%3D=%26%3D%3Dds%26&revs=[1-2]");
+        URI expected = new URI(uriBase + "/test/path1%2Fpath2?d%26etail%3D=%26%3D%3Dds%26&revs=%5B1-2%5D");
 
         TreeMap<String, Object> options = new TreeMap<String, Object>();
         options.put("revs", "[1-2]");
@@ -181,7 +188,7 @@ public class CouchURIHelperTest {
     // correctly escaped in the document part of the url
     @Test
     public void buildVeryEscapedUri() throws Exception {
-        URI expected = new URI(uriBase + "/SDF@%23%25$%23)KLDfdffdg%C3%A9/%2FSF@%23%25$%23)DFGKLDfdffdg%C3%A9%2Fpath2?detail=/SDF@%23%25$%23)%C3%A9&revs=[1-2]");
+        URI expected = new URI(uriBase + "/SDF@%23%25$%23)KLDfdffdg%C3%A9/%2FSF@%23%25$%23)DFGKLDfdffdg%C3%A9%2Fpath2?detail=/SDF@%23%25$%23)%C3%A9&revs=%5B1-2%5D");
 
         Map<String, Object> options = new TreeMap<String, Object>();
         options.put("revs", "[1-2]");

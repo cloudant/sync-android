@@ -22,8 +22,10 @@ import com.cloudant.common.CouchConstants;
 import com.cloudant.mazha.json.JSONHelper;
 import com.google.common.base.Joiner;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -188,24 +190,9 @@ public class CouchURIHelper {
      * @return The encoded Document or Attachment ID, eg "a%2Fdocument"
      */
     String encodeId(String in) {
-        // The only way to URL-encode in the Java library is to call the URI
-        // constructor passing in the parts of the URL to encode. This makes
-        // sense as the different parts of the URL require different encoding
-        // methods (e.g., reserved chars changes by URI part).
-        // It's unclear to me whether we need to use toASCIIString or whether
-        // the characters in the "other" set are okay in URIs constructed
-        // using new URI(uri).
-        // We then have to encode the "/" manually, as we know it needs
-        // encoding in this context.
         try {
-            URI uri = new URI(
-                    null, // scheme
-                    null, // authority
-                    in, // path
-                    null, // query
-                    null // fragment
-            );
-            String encodedString = uri.toASCIIString().replace("/", "%2F");
+            String encodedString = HierarchicalUriComponents.encodeUriComponent(in, "UTF-8",
+                    HierarchicalUriComponents.Type.PATH_SEGMENT);
             if (encodedString.startsWith(CouchConstants._design_prefix_encoded) ||
                     encodedString.startsWith(CouchConstants._local_prefix_encoded)) {
                 // we replaced a the first slash in the design or local doc URL, which we shouldn't
@@ -214,10 +201,10 @@ public class CouchURIHelper {
             } else {
                 return encodedString;
             }
-        } catch (URISyntaxException e) {
+        } catch (UnsupportedEncodingException uee) {
             throw new RuntimeException(
-                    "Couldn't encode path component " + in,
-                    e);
+                    "Couldn't encode ID " + in,
+                    uee);
         }
     }
 
@@ -228,22 +215,13 @@ public class CouchURIHelper {
         // As this is to escape individual parameters, we need to
         // escape & and =.
         try {
-            URI uri = new URI(
-                    null, // scheme
-                    null, // authority
-                    null, // path
-                    in, // query
-                    null // fragment
-            );
-            return uri.toASCIIString()
-                    .replace("&", "%26")
-                    .replace("=", "%3D")  // encode qs separators
-                    .replace("+", "%2B")
-                    .substring(1);  // remove leading ?
-        } catch (URISyntaxException e) {
+            String encodedString = HierarchicalUriComponents.encodeUriComponent(in, "UTF-8",
+                    HierarchicalUriComponents.Type.QUERY_PARAM);
+            return encodedString;
+        } catch (UnsupportedEncodingException uee) {
             throw new RuntimeException(
                     "Couldn't encode query parameter " + in,
-                    e);
+                    uee);
         }
     }
 
