@@ -244,6 +244,21 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     }
 
     @Test
+    public void pull_documentIdColons_success() throws Exception {
+        String id = ":this:has:colons:";
+        Bar bar = BarUtils.createBar(this.remoteDb, id, "Tom", 21);
+        Assert.assertEquals(id, bar.getId());
+        this.pull(1);
+        {
+            Bar bar2 = this.getDocument(bar.getId());
+            Assert.assertEquals(bar.getId(), bar2.getId());
+            Assert.assertEquals(bar.getRevision(), bar2.getRevision());
+            Assert.assertEquals("Tom", bar2.getName());
+            Assert.assertTrue(21 == bar2.getAge());
+        }
+    }
+
+    @Test
     public void pull_oneDocOneRevResetCheckpoint_revisionShouldNotBePulled() throws Exception {
         oneDocCreatedAndThenPulled();
         Assert.assertEquals(1, replicator.getDocumentCounter());
