@@ -191,8 +191,8 @@ public class CouchURIHelper {
      */
     String encodeId(String in) {
         try {
-            String encodedString = HierarchicalUriComponents.encodeUriComponent(in, Charset
-                    .defaultCharset().toString(), HierarchicalUriComponents.Type.PATH_SEGMENT);
+            String encodedString = HierarchicalUriComponents.encodeUriComponent(in, "UTF-8",
+                    HierarchicalUriComponents.Type.PATH_SEGMENT);
             if (encodedString.startsWith(CouchConstants._design_prefix_encoded) ||
                     encodedString.startsWith(CouchConstants._local_prefix_encoded)) {
                 // we replaced a the first slash in the design or local doc URL, which we shouldn't
@@ -215,8 +215,8 @@ public class CouchURIHelper {
         // As this is to escape individual parameters, we need to
         // escape & and =.
         try {
-            String encodedString = HierarchicalUriComponents.encodeUriComponent(in, Charset
-                    .defaultCharset().toString(), HierarchicalUriComponents.Type.QUERY_PARAM);
+            String encodedString = HierarchicalUriComponents.encodeUriComponent(in, "UTF-8",
+                    HierarchicalUriComponents.Type.QUERY_PARAM);
             return encodedString;
         } catch (UnsupportedEncodingException uee) {
             throw new RuntimeException(

@@ -16,9 +16,9 @@
  */
 
 /**
- * Code based on commit 0f7fc125698b523eb56093f75c3191cf4b5551b8 of HierarchicalUriComponents.java
- * from The Spring Framework http://projects.spring.io/spring-framework
- * see https://raw.githubusercontent.com/spring-projects/spring-framework/master/spring-web/src/main/java/org/springframework/web/util/HierarchicalUriComponents.java
+ * Code based on commit a0b231d36d7baf295a91e052cd2eb02a37a16a80 of HierarchicalUriComponents.java
+ * from The Spring Framework http://projects.spring.io/spring-framework version 4.1.7
+ * see https://raw.githubusercontent.com/spring-projects/spring-framework/v4.1.7.RELEASE/spring-web/src/main/java/org/springframework/web/util/HierarchicalUriComponents.java
  */
 
 package com.cloudant.mazha;
