@@ -185,7 +185,7 @@ MutableDocumentRevision update = saved.mutableCopy();  // BasicDocumentRevision 
 UnsavedFileAttachment att1 = new UnsavedFileAttachment(new File("/path/to/image.jpg"),
                                                        "image/jpeg");
 update.attachments.put(att1.name, att1);
-BasicDocumentRevision updated = ds.createDocumentFromRevision(update);
+BasicDocumentRevision updated = ds.updateDocumentFromRevision(update);
 
 // Read a document
 BasicDocumentRevision aRevision = ds.getDocument(updated.getId());
