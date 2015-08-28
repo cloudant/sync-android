@@ -1,3 +1,5 @@
+# Unreleased
+- [FIXED] Issue where document IDs containing colons were not properly encoded during replication
 # 0.13.1 (2015-08-17)
 - [FIXED] Fix issue where the `ReplictorBuilder` would crash the application
 when creating a pull replication if `PullFilter` is `null`.
