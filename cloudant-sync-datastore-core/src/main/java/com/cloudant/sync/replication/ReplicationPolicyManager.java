@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class ReplicationPolicyManager {
+public class ReplicationPolicyManager {
 
     private final List<Replicator> replicators = new ArrayList<Replicator>();
     private ReplicationListener replicationListener;
@@ -82,10 +82,6 @@ public abstract class ReplicationPolicyManager {
     public ReplicationPolicyManager() {
         replicationListener = new ReplicationListener();
     }
-
-    public abstract void start();
-
-    public abstract void stop();
 
     protected void startReplications() {
         synchronized (replicators) {

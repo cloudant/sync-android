@@ -43,7 +43,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
 
     /**
      * Check that when the {@link ReplicationPolicyManager} is setup with a single
-     * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called,
+     * {@link Replicator}, when the replication policy is started
      * the {@link Replicator#start()} method is called on the {@link Replicator}.
      */
     @Test
@@ -51,16 +51,16 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         Replicator mockReplicator = mock(Replicator.class);
         EventBus mockEventBus = mock(EventBus.class);
         when(mockReplicator.getEventBus()).thenReturn(mockEventBus);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator);
         verify(mockReplicator, never()).start();
-        rpm.start();
+        replicationPolicy.start();
         verify(mockReplicator, times(1)).start();
     }
 
     /**
      * Check that when the {@link ReplicationPolicyManager} is setup with multiple
-     * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called,
+     * {@link Replicator}s, when the replication policy is started
      * the {@link Replicator#start()} method is called on each {@link Replicator}.
      */
     @Test
@@ -72,12 +72,12 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         when(mockReplicator1.getEventBus()).thenReturn(mockEventBus);
         when(mockReplicator2.getEventBus()).thenReturn(mockEventBus);
         when(mockReplicator3.getEventBus()).thenReturn(mockEventBus);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
         verify(mockReplicator1, never()).start();
         verify(mockReplicator2, never()).start();
         verify(mockReplicator3, never()).start();
-        rpm.start();
+        replicationPolicy.start();
         verify(mockReplicator1, times(1)).start();
         verify(mockReplicator2, times(1)).start();
         verify(mockReplicator3, times(1)).start();
@@ -85,7 +85,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
 
     /**
      * Check that when the {@link ReplicationPolicyManager} is setup with a single
-     * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called,
+     * {@link Replicator}, when the replication policy is started
      * more than once before the {@link Replicator} has completed replication,
      * the {@link Replicator#start()} method is called only once the {@link Replicator}.
      */
@@ -94,17 +94,17 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         Replicator mockReplicator = mock(Replicator.class);
         EventBus mockEventBus = mock(EventBus.class);
         when(mockReplicator.getEventBus()).thenReturn(mockEventBus);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator);
         verify(mockReplicator, never()).start();
-        rpm.start();
-        rpm.start();
+        replicationPolicy.start();
+        replicationPolicy.start();
         verify(mockReplicator, times(1)).start();
     }
 
     /**
      * Check that when the {@link ReplicationPolicyManager} is setup with multiple
-     * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called,
+     * {@link Replicator}s, when the replication policy is started
      * more than once before {@link Replicator} has completed replication,
      * the {@link Replicator#start()} method is called only once on each {@link Replicator}.
      */
@@ -117,13 +117,13 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         when(mockReplicator1.getEventBus()).thenReturn(mockEventBus);
         when(mockReplicator2.getEventBus()).thenReturn(mockEventBus);
         when(mockReplicator3.getEventBus()).thenReturn(mockEventBus);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
         verify(mockReplicator1, never()).start();
         verify(mockReplicator2, never()).start();
         verify(mockReplicator3, never()).start();
-        rpm.start();
-        rpm.start();
+        replicationPolicy.start();
+        replicationPolicy.start();
         verify(mockReplicator1, times(1)).start();
         verify(mockReplicator2, times(1)).start();
         verify(mockReplicator3, times(1)).start();
@@ -131,7 +131,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
 
     /**
      * Check that when the {@link ReplicationPolicyManager} is setup with a single
-     * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called,
+     * {@link Replicator}, when the replication policy is started
      * the {@link Replicator#start()} method is called on the {@link Replicator}.
      */
     @Test
@@ -139,17 +139,17 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         Replicator mockReplicator = mock(Replicator.class);
         EventBus mockEventBus = mock(EventBus.class);
         when(mockReplicator.getEventBus()).thenReturn(mockEventBus);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator);
         verify(mockReplicator, never()).start();
-        rpm.start();
-        rpm.stop();
+        replicationPolicy.start();
+        replicationPolicy.stop();
         verify(mockReplicator, times(1)).stop();
     }
 
     /**
      * Check that when the {@link ReplicationPolicyManager} is setup with multiple
-     * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called,
+     * {@link Replicator}s, when the replication policy is started
      * more than once before {@link Replicator} has completed replication,
      * the {@link Replicator#start()} method is called only once on each {@link Replicator}.
      */
@@ -162,13 +162,13 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         when(mockReplicator1.getEventBus()).thenReturn(mockEventBus);
         when(mockReplicator2.getEventBus()).thenReturn(mockEventBus);
         when(mockReplicator3.getEventBus()).thenReturn(mockEventBus);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
         verify(mockReplicator1, never()).start();
         verify(mockReplicator2, never()).start();
         verify(mockReplicator3, never()).start();
-        rpm.start();
-        rpm.stop();
+        replicationPolicy.start();
+        replicationPolicy.stop();
         verify(mockReplicator1, times(1)).stop();
         verify(mockReplicator2, times(1)).stop();
         verify(mockReplicator3, times(1)).stop();
@@ -176,7 +176,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
 
     /**
      * Check that when the {@link ReplicationPolicyManager} is setup with a single
-     * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called for a
+     * {@link Replicator}, when the replication policy is started for a
      * second time after the replicator is explicitly stopped, the {@link Replicator#start()} method
      * is called a second time on the {@link Replicator}.
      */
@@ -185,18 +185,18 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         Replicator mockReplicator = mock(Replicator.class);
         EventBus mockEventBus = mock(EventBus.class);
         when(mockReplicator.getEventBus()).thenReturn(mockEventBus);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator);
         verify(mockReplicator, never()).start();
-        rpm.start();
-        rpm.stop();
-        rpm.start();
+        replicationPolicy.start();
+        replicationPolicy.stop();
+        replicationPolicy.start();
         verify(mockReplicator, times(2)).start();
     }
 
     /**
      * Check that when the {@link ReplicationPolicyManager} is setup with multiple
-     * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called for a
+     * {@link Replicator}s, when the replication policy is started for a
      * second time after the replicator is explicitly stopped, the {@link Replicator#start()} method
      * is called a second time on the {@link Replicator}.
      */
@@ -209,14 +209,14 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         when(mockReplicator1.getEventBus()).thenReturn(mockEventBus);
         when(mockReplicator2.getEventBus()).thenReturn(mockEventBus);
         when(mockReplicator3.getEventBus()).thenReturn(mockEventBus);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
         verify(mockReplicator1, never()).start();
         verify(mockReplicator2, never()).start();
         verify(mockReplicator3, never()).start();
-        rpm.start();
-        rpm.stop();
-        rpm.start();
+        replicationPolicy.start();
+        replicationPolicy.stop();
+        replicationPolicy.start();
         verify(mockReplicator1, times(2)).start();
         verify(mockReplicator2, times(2)).start();
         verify(mockReplicator3, times(2)).start();
@@ -224,7 +224,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
 
     /**
      * Check that when the {@link ReplicationPolicyManager} is setup with a single
-     * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called for a
+     * {@link Replicator}, when the replication policy is started for a
      * second time after the replicator completed normally, the {@link Replicator#start()} method
      * is called a second time on the {@link Replicator}.
      */
@@ -233,18 +233,18 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         Replicator mockReplicator = mock(Replicator.class);
         EventBus mockEventBus = new EventBus();
         when(mockReplicator.getEventBus()).thenReturn(mockEventBus);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator);
         verify(mockReplicator, never()).start();
-        rpm.start();
+        replicationPolicy.start();
         mockEventBus.post(new ReplicationCompleted(mockReplicator, 1, 1));
-        rpm.start();
+        replicationPolicy.start();
         verify(mockReplicator, times(2)).start();
     }
 
     /**
      * Check that when the {@link ReplicationPolicyManager} is setup with multiple
-     * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called for a
+     * {@link Replicator}s, when the replication policy is started for a
      * second time after each replicator completed normally, the {@link Replicator#start()} method
      * is called a second time on the {@link Replicator}s.
      */
@@ -259,16 +259,16 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         when(mockReplicator1.getEventBus()).thenReturn(mockEventBus1);
         when(mockReplicator2.getEventBus()).thenReturn(mockEventBus2);
         when(mockReplicator3.getEventBus()).thenReturn(mockEventBus3);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
         verify(mockReplicator1, never()).start();
         verify(mockReplicator2, never()).start();
         verify(mockReplicator3, never()).start();
-        rpm.start();
+        replicationPolicy.start();
         mockEventBus1.post(new ReplicationCompleted(mockReplicator1, 1, 1));
         mockEventBus2.post(new ReplicationCompleted(mockReplicator2, 1, 1));
         mockEventBus3.post(new ReplicationCompleted(mockReplicator3, 1, 1));
-        rpm.start();
+        replicationPolicy.start();
         verify(mockReplicator1, times(2)).start();
         verify(mockReplicator2, times(2)).start();
         verify(mockReplicator3, times(2)).start();
@@ -292,15 +292,15 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         when(mockReplicator1.getEventBus()).thenReturn(mockEventBus1);
         when(mockReplicator2.getEventBus()).thenReturn(mockEventBus2);
         when(mockReplicator3.getEventBus()).thenReturn(mockEventBus3);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
         verify(mockReplicator1, never()).start();
         verify(mockReplicator2, never()).start();
         verify(mockReplicator3, never()).start();
-        rpm.start();
+        replicationPolicy.start();
         mockEventBus1.post(new ReplicationCompleted(mockReplicator1, 1, 1));
         mockEventBus3.post(new ReplicationCompleted(mockReplicator3, 1, 1));
-        rpm.start();
+        replicationPolicy.start();
         verify(mockReplicator1, times(2)).start();
         verify(mockReplicator2, times(1)).start();
         verify(mockReplicator3, times(2)).start();
@@ -309,7 +309,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
 
     /**
      * Check that when the {@link ReplicationPolicyManager} is setup with a single
-     * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called for a
+     * {@link Replicator}, when the replication policy is started for a
      * second time after the replicator errored, the {@link Replicator#start()} method
      * is called a second time on the {@link Replicator}.
      */
@@ -318,18 +318,18 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         Replicator mockReplicator = mock(Replicator.class);
         EventBus mockEventBus = new EventBus();
         when(mockReplicator.getEventBus()).thenReturn(mockEventBus);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator);
         verify(mockReplicator, never()).start();
-        rpm.start();
+        replicationPolicy.start();
         mockEventBus.post(new ReplicationErrored(mockReplicator, null));
-        rpm.start();
+        replicationPolicy.start();
         verify(mockReplicator, times(2)).start();
     }
 
     /**
      * Check that when the {@link ReplicationPolicyManager} is setup with multiple
-     * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called for a
+     * {@link Replicator}s, when the replication policy is started for a
      * second time after each replicator errored, the {@link Replicator#start()} method
      * is called a second time on the {@link Replicator}s.
      */
@@ -344,16 +344,16 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         when(mockReplicator1.getEventBus()).thenReturn(mockEventBus1);
         when(mockReplicator2.getEventBus()).thenReturn(mockEventBus2);
         when(mockReplicator3.getEventBus()).thenReturn(mockEventBus3);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
         verify(mockReplicator1, never()).start();
         verify(mockReplicator2, never()).start();
         verify(mockReplicator3, never()).start();
-        rpm.start();
+        replicationPolicy.start();
         mockEventBus1.post(new ReplicationErrored(mockReplicator1, null));
         mockEventBus2.post(new ReplicationErrored(mockReplicator2, null));
         mockEventBus3.post(new ReplicationErrored(mockReplicator3, null));
-        rpm.start();
+        replicationPolicy.start();
         verify(mockReplicator1, times(2)).start();
         verify(mockReplicator2, times(2)).start();
         verify(mockReplicator3, times(2)).start();
@@ -378,15 +378,15 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         when(mockReplicator1.getEventBus()).thenReturn(mockEventBus1);
         when(mockReplicator2.getEventBus()).thenReturn(mockEventBus2);
         when(mockReplicator3.getEventBus()).thenReturn(mockEventBus3);
-        ReplicationPolicyManager rpm = new TestPolicy();
-        rpm.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
+        TestPolicy replicationPolicy = new TestPolicy();
+        replicationPolicy.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
         verify(mockReplicator1, never()).start();
         verify(mockReplicator2, never()).start();
         verify(mockReplicator3, never()).start();
-        rpm.start();
+        replicationPolicy.start();
         mockEventBus1.post(new ReplicationErrored(mockReplicator1, null));
         mockEventBus2.post(new ReplicationErrored(mockReplicator2, null));
-        rpm.start();
+        replicationPolicy.start();
         verify(mockReplicator1, times(2)).start();
         verify(mockReplicator2, times(2)).start();
         verify(mockReplicator3, times(1)).start();
@@ -401,12 +401,10 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
             super();
         }
 
-        @Override
         public void start() {
             startReplications();
         }
 
-        @Override
         public void stop() {
             stopReplications();
         }

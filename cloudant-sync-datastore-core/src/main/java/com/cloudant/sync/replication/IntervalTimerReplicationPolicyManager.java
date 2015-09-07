@@ -18,13 +18,11 @@ public class IntervalTimerReplicationPolicyManager extends ReplicationPolicyMana
         timer = new Timer();
     }
 
-    @Override
     public void start() {
         // Schedule first replication immediately, then every intervalInSeconds seconds.
         timer.schedule(new IntervalTimerTask(), 0, intervalInSeconds * 1000);
     }
 
-    @Override
     public void stop() {
         stopReplications();
         timer.cancel();
