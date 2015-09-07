@@ -154,5 +154,7 @@ public interface Replicator {
      * @return EventBus object.
      */
     EventBus getEventBus();
+
+    int getId();
 }
 
