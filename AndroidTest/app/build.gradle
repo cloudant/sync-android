@@ -64,14 +64,14 @@ dependencies {
     // since our test harness is a standard android app which will run our tests,
     // we include the dependencies necessary for build and test here
 
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.1.1'
-    compile group: 'com.google.guava', name: 'guava', version: '15.0'
-    compile group: 'commons-io', name: 'commons-io', version: '2.4'
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.9'
-    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.1.1'
+    compile 'com.google.guava:guava:15.0'
+    compile 'commons-io:commons-io:2.4'
+    compile 'commons-codec:commons-codec:1.9'
+    compile 'org.apache.commons:commons-lang3:3.3.2'
     compile 'com.google.code.findbugs:jsr305:3.0.0' //this is needed for some versions of android
     compile files('../../cloudant-sync-datastore-android-encryption/libs/sqlcipher.jar') //required sqlcipher lib
-
+    compile files('../../cloudant-sync-datastore-android/libs/android-support-v4.jar')
     androidTestCompile group:'org.hamcrest', name:'hamcrest-library', version:'1.3'
     androidTestCompile group:'junit', name:'junit', version:'4.11'
     androidTestCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5'
@@ -82,14 +82,10 @@ dependencies {
     androidTestCompile('com.android.support.test:runner:0.2'){
         exclude group:'junit'
     }
-
-    androidTestCompile ('org.objenesis:objenesis:2.1'){
+    androidTestCompile('org.objenesis:objenesis:2.1') {
         // the current version of objenesis which mockito depends on is buggy on android, so force a newer version
         force true
     }
-
-
-
 }
 
 repositories {
