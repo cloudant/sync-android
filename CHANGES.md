@@ -1,3 +1,7 @@
+# Unreleased
+- [NEW] Added replication policies, allowing users to easily create policies such as "Replicate
+   every 2 hours, only when on Wifi". See the [Replication Policies User Guide](REPLICATION_POLICIES.md).
+
 # 0.13.2 (2015-08-28)
 - [FIXED] Issue where document IDs containing colons were not properly encoded during replication
 

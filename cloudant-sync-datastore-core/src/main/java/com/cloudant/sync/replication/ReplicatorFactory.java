@@ -41,4 +41,8 @@ public final class ReplicatorFactory {
     public static Replicator oneway(Replication replication) {
         return new BasicReplicator(replication);
     }
+
+    public static Replicator oneway(Replication replication, int id) {
+        return new BasicReplicator(replication, id);
+    }
 }
