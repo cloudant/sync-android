@@ -32,7 +32,8 @@ This abstract class is a child of `ReplicationService` and requires you to imple
 * `protected abstract int getUnboundIntervalInSeconds();` This method should return the interval (in seconds) you wish to have between replications when components are not bound to the Service.
 * `protected abstract boolean startReplicationOnBind();` This should return `true` if you wish to have replications triggered immediately when a component binds to the Service.
 
-Note that internally this uses `AlarmManager.setInexactRepeating()` to schedule the repetition of the replications at the given intervals in a battery efficient way, this means the intervals between replications will not be exact.
+Note that internally this uses [android.app.AlarmManager.setInexactRepeating()](http://developer.android.com/reference/android/app/AlarmManager.html#setInexactRepeating(int, long, long, android.app.PendingIntent)) 
+to schedule the repetition of the replications at the given intervals in a battery efficient way, this means the intervals between replications will not be exact.
 
 ###PeriodicReplicationReceiver
 This uses a `WakefulBroadcastReceiver` to trigger periodic replications at the intervals specified by your
