@@ -33,6 +33,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
     private T target;
     private S source;
+    private int id = BasicReplicator.NULL_ID;
     private List<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList
             <HttpConnectionRequestInterceptor>();
     private List<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList
@@ -53,8 +54,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             PushReplication pushReplication = new PushReplication();
             pushReplication.source = super.source;
             pushReplication.target = super.target;
-            return new BasicReplicator(pushReplication);
-
+            return new BasicReplicator(pushReplication, super.id);
         }
     }
 
@@ -89,7 +89,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
                 pullReplication.filter = filter;
             }
 
-            return new BasicReplicator(pullReplication);
+            return new BasicReplicator(pullReplication, super.id);
         }
 
         /**
@@ -125,6 +125,12 @@ public abstract class ReplicatorBuilder<S, T, E> {
      */
     public E from(S source) {
         this.source = source;
+        //noinspection unchecked
+        return (E) this;
+    }
+
+    public E withId(int id) {
+        this.id = id;
         //noinspection unchecked
         return (E) this;
     }
