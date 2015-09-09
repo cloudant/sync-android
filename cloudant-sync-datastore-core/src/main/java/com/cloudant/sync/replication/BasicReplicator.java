@@ -34,8 +34,7 @@ class BasicReplicator implements Replicator {
     private final EventBus eventBus = new EventBus();
 
     public BasicReplicator(Replication replication) {
-        this.replication = replication;
-        this.state = State.PENDING;
+        this(replication, NULL_ID);
     }
 
     public BasicReplicator(Replication replication, int id) {
