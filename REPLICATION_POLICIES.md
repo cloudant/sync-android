@@ -77,7 +77,7 @@ This is done by extending the `PeriodicReplicationReceiver` so that the Broadcas
 network connectivity.  When we detect that the device has connected to Wifi we start our PeriodicReplicationService
 by sending it the command `PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION` and when the device disconnects
 from Wifi we stop the periodic replications by sending `PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION` to the
-Service. Other Intent actions received by the broadcast receiver are passed to parent class so that periodic alarms and
+Service. Other `Intent` actions received by the broadcast receiver are passed to parent class so that periodic alarms and
 resetting of the periodic replications after reboot are handled correctly.
 
 
