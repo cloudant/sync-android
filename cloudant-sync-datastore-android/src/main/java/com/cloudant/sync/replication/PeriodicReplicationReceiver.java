@@ -30,17 +30,19 @@ public class PeriodicReplicationReceiver<T extends PeriodicReplicationService> e
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        int command = PeriodicReplicationService.COMMAND_NONE;
-        if (ALARM_ACTION.equals(intent.getAction())) {
-            command = PeriodicReplicationService.COMMAND_START_REPLICATION;
-        } else if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
-            command = PeriodicReplicationService.COMMAND_DEVICE_REBOOTED;
-        }
+        if (intent != null) {
+            int command = PeriodicReplicationService.COMMAND_NONE;
+            if (ALARM_ACTION.equals(intent.getAction())) {
+                command = PeriodicReplicationService.COMMAND_START_REPLICATION;
+            } else if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+                command = PeriodicReplicationService.COMMAND_DEVICE_REBOOTED;
+            }
 
-        if (command != PeriodicReplicationService.COMMAND_NONE) {
-            Intent serviceIntent = new Intent(context.getApplicationContext(), clazz);
-            serviceIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, command);
-            startWakefulService(context, serviceIntent);
+            if (command != PeriodicReplicationService.COMMAND_NONE) {
+                Intent serviceIntent = new Intent(context.getApplicationContext(), clazz);
+                serviceIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, command);
+                startWakefulService(context, serviceIntent);
+            }
         }
     }
 }
