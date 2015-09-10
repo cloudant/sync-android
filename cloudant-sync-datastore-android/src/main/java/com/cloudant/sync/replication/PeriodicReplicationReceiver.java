@@ -5,15 +5,15 @@ import android.content.Intent;
 import android.support.v4.content.WakefulBroadcastReceiver;
 
 /**
- * This class implements a {@link WakefulBroadcastReceiver} that handles events related to
+ * <p>This class implements a {@link WakefulBroadcastReceiver} that handles events related to
  * periodic replication.  It responds to reboot of the device to trigger the resetting of
  * the {@link android.app.AlarmManager} used to trigger periodic replication, and it
  * handles the periodic alarms sent by the {@link android.app.AlarmManager} to trigger
- * the periodic replications.
+ * the periodic replications.</p>
  *
- * The resetting of periodic alarms after reboot and the handling of the periodic alarms
+ * <p>The resetting of periodic alarms after reboot and the handling of the periodic alarms
  * are delegated to the {@link PeriodicReplicationService} associated with this
- * {@link android.content.BroadcastReceiver}.
+ * {@link android.content.BroadcastReceiver}.</p>
  *
  * @param <T> The {@link PeriodicReplicationService} component triggered by this
  * {@link android.content.BroadcastReceiver}
