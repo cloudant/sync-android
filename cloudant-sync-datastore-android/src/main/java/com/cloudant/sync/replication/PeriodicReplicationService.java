@@ -24,12 +24,14 @@ import android.util.Log;
  *           the intervals when replication is required and handles resetting of alarms after
  *           reboot of the device.
  */
-public abstract class PeriodicReplicationService<T extends PeriodicReplicationReceiver> extends ReplicationService {
+public abstract class PeriodicReplicationService<T extends PeriodicReplicationReceiver>
+    extends ReplicationService {
 
     private static final String PREFERENCES_FILE_NAME = "com.cloudant.preferences";
     private static final String PREFERENCE_ALARM_DUE_ELAPSED_TIME = "alarmDueElapsed";
     private static final String PREFERENCE_ALARM_DUE_CLOCK_TIME = "alarmDueClock";
-    private static final String PREFERENCE_PERIODIC_REPLICATION_ENABLED = "periodicReplicationsActive";
+    private static final String PREFERENCE_PERIODIC_REPLICATION_ENABLED
+        = "periodicReplicationsActive";
 
     private static final int MILLISECONDS_IN_SECOND = 1000;
 
@@ -139,7 +141,9 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
             PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
 
             alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                getNextAlarmDueElapsedTime(), getIntervalInSeconds() * MILLISECONDS_IN_SECOND, pendingAlarmIntent);
+                getNextAlarmDueElapsedTime(),
+                getIntervalInSeconds() * MILLISECONDS_IN_SECOND,
+                pendingAlarmIntent);
         } else {
             Log.i(TAG, "Attempted to start an already running alarm manager");
         }
@@ -179,8 +183,10 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      */
     protected void setNextAlarmDue(long intervalMillis) {
         SharedPreferences.Editor editor = mPrefs.edit();
-        editor.putLong(PREFERENCE_ALARM_DUE_ELAPSED_TIME, SystemClock.elapsedRealtime() + intervalMillis);
-        editor.putLong(PREFERENCE_ALARM_DUE_CLOCK_TIME, System.currentTimeMillis() + intervalMillis);
+        editor.putLong(PREFERENCE_ALARM_DUE_ELAPSED_TIME,
+            SystemClock.elapsedRealtime() + intervalMillis);
+        editor.putLong(PREFERENCE_ALARM_DUE_CLOCK_TIME,
+            System.currentTimeMillis() + intervalMillis);
         editor.apply();
     }
 
@@ -260,16 +266,20 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      */
     protected void updateAlarmTimeOnBind() {
         long dueTime = getNextAlarmDueElapsedTime();
-        long newDueTime = dueTime - (getUnboundIntervalInSeconds() * MILLISECONDS_IN_SECOND) + (getBoundIntervalInSeconds() * MILLISECONDS_IN_SECOND) - SystemClock.elapsedRealtime();
+        long newDueTime = dueTime - (getUnboundIntervalInSeconds() * MILLISECONDS_IN_SECOND)
+            + (getBoundIntervalInSeconds() * MILLISECONDS_IN_SECOND)
+            - SystemClock.elapsedRealtime();
         setNextAlarmDue(newDueTime);
     }
 
-    /** Update the SharedPreferences to store the time the next alarm is due at using the 
+    /** Update the SharedPreferences to store the time the next alarm is due at using the
      *  unbound time interval between replications.
      */
     protected void updateAlarmTimeOnUnbind() {
         long dueTime = getNextAlarmDueElapsedTime();
-        long newDueTime = dueTime - (getBoundIntervalInSeconds() * MILLISECONDS_IN_SECOND) + (getUnboundIntervalInSeconds() * MILLISECONDS_IN_SECOND) - SystemClock.elapsedRealtime();
+        long newDueTime = dueTime - (getBoundIntervalInSeconds() * MILLISECONDS_IN_SECOND)
+            + (getUnboundIntervalInSeconds() * MILLISECONDS_IN_SECOND)
+            - SystemClock.elapsedRealtime();
         setNextAlarmDue(newDueTime);
     }
 
