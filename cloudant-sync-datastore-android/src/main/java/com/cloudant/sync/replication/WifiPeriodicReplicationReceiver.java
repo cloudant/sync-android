@@ -52,7 +52,8 @@ import android.net.NetworkInfo;
  * {@link android.content.BroadcastReceiver}
  */
 
-public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicationService> extends PeriodicReplicationReceiver {
+public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicationService>
+    extends PeriodicReplicationReceiver {
 
     protected WifiPeriodicReplicationReceiver(Class<T> clazz) {
         super(clazz);
