@@ -6,6 +6,7 @@ import com.google.common.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,14 +30,14 @@ public abstract class ReplicationPolicyManager {
         Set<Replicator> replicatorsInProgress;
 
         ReplicationListener() {
-            replicatorsInProgress = new HashSet<Replicator>();
+            replicatorsInProgress = Collections.synchronizedSet(new HashSet<Replicator>());
         }
 
-        synchronized void add(Replicator replicator) {
+        void add(Replicator replicator) {
             replicatorsInProgress.add(replicator);
         }
 
-        synchronized void remove(Replicator replicator) {
+        void remove(Replicator replicator) {
             if (replicatorsInProgress.remove(replicator)) {
                 replicator.getEventBus().unregister(this);
             }
@@ -63,9 +64,11 @@ public abstract class ReplicationPolicyManager {
         }
 
         public void finishedReplication(Replicator replicator) {
-            remove(replicator);
-            if (replicatorsInProgress.size() == 0 && mReplicationsCompletedListener != null) {
-                mReplicationsCompletedListener.allReplicationsCompleted();
+            synchronized (replicator) {
+                remove(replicator);
+                if (replicatorsInProgress.size() == 0 && mReplicationsCompletedListener != null) {
+                    mReplicationsCompletedListener.allReplicationsCompleted();
+                }
             }
         }
     }
