@@ -181,7 +181,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     }
 
     /** Stop and restart periodic replication. */
-    protected void restartPeriodicReplications() {
+    final protected void restartPeriodicReplications() {
         stopPeriodicReplication();
         startPeriodicReplication();
     }
@@ -195,7 +195,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * useless.
      * @param intervalMillis The time interval in milliseconds until the next alarm.
      */
-    protected void setNextAlarmDue(long intervalMillis) {
+    private void setNextAlarmDue(long intervalMillis) {
         SharedPreferences.Editor editor = mPrefs.edit();
         editor.putLong(PREFERENCE_ALARM_DUE_ELAPSED_TIME,
             SystemClock.elapsedRealtime() + intervalMillis);
@@ -208,7 +208,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * @return The SharedPreferences value indicating the time since the device was booted,
      * at which the next periodic replication should begin.
      */
-    protected long getNextAlarmDueElapsedTime() {
+    private long getNextAlarmDueElapsedTime() {
         return mPrefs.getLong(PREFERENCE_ALARM_DUE_ELAPSED_TIME, 0);
     }
 
@@ -216,7 +216,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * @return The SharedPreferences value indicating the wall clock time at which the next
      * periodic replication should begin.
      */
-    protected long getNextAlarmDueClockTime() {
+    private long getNextAlarmDueClockTime() {
         return mPrefs.getLong(PREFERENCE_ALARM_DUE_CLOCK_TIME, 0);
     }
 
@@ -224,7 +224,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * Set a flag in SharedPreferences to indicate whether periodic replications are enabled.
      * @param running true to indicate that periodic replications are enabled, otherwise false.
      */
-    protected void setPeriodicReplicationEnabled(boolean running) {
+    private void setPeriodicReplicationEnabled(boolean running) {
         SharedPreferences.Editor editor = mPrefs.edit();
         editor.putBoolean(PREFERENCE_PERIODIC_REPLICATION_ENABLED, running);
         editor.apply();
@@ -234,7 +234,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * @return The value of the flag stored in SharedPreferences indicating whether periodic
      * replications are currently enabled.
      */
-    protected boolean isPeriodicReplicationEnabled() {
+    private boolean isPeriodicReplicationEnabled() {
         return mPrefs.getBoolean(PREFERENCE_PERIODIC_REPLICATION_ENABLED, false);
     }
 
@@ -243,7 +243,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * After a reboot, the AlarmManager must be setup again so that periodic replications will
      * occur following reboot.
      */
-    protected void resetAlarmDueTimesOnReboot() {
+    private void resetAlarmDueTimesOnReboot() {
         // As the device has been rebooted, we use clock time rather than elapsed time since
         // booting to set the interval for the first alarm as the elapsed time since boot will
         // have been reset.
@@ -272,7 +272,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * @return The interval (in seconds) between replications depending on whether a component is
      * bound to the service or not.
      */
-    protected int getIntervalInSeconds() {
+    private int getIntervalInSeconds() {
         if (mBound) {
             return getBoundIntervalInSeconds();
         } else {
@@ -283,7 +283,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     /** Update the SharedPreferences to store the time the next alarm is due at using the
      *  bound time interval between replications.
      */
-    protected void updateAlarmTimeOnBind() {
+    private void updateAlarmTimeOnBind() {
         long dueTime = getNextAlarmDueElapsedTime();
         long newDueTime = dueTime - (getUnboundIntervalInSeconds() * MILLISECONDS_IN_SECOND)
             + (getBoundIntervalInSeconds() * MILLISECONDS_IN_SECOND)
@@ -294,7 +294,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     /** Update the SharedPreferences to store the time the next alarm is due at using the
      *  unbound time interval between replications.
      */
-    protected void updateAlarmTimeOnUnbind() {
+    private void updateAlarmTimeOnUnbind() {
         long dueTime = getNextAlarmDueElapsedTime();
         long newDueTime = dueTime - (getBoundIntervalInSeconds() * MILLISECONDS_IN_SECOND)
             + (getUnboundIntervalInSeconds() * MILLISECONDS_IN_SECOND)
