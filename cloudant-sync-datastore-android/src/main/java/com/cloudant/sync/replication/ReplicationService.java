@@ -21,7 +21,8 @@ import java.util.Set;
  * The replications run in a {@link Service} so that they can properly manage the
  * lifecycle and handle being killed or restarted by the operating system
  */
-public abstract class ReplicationService extends Service implements ReplicationPolicyManager.ReplicationsCompletedListener {
+public abstract class ReplicationService extends Service
+        implements ReplicationPolicyManager.ReplicationsCompletedListener {
 
     public static final String EXTRA_INTENT = "intent";
     public static final String EXTRA_COMMAND = "command";
@@ -68,7 +69,8 @@ public abstract class ReplicationService extends Service implements ReplicationP
         void replicationErrored(int id);
     }
 
-    /** A simple {@link com.cloudant.sync.replication.ReplicationService.ReplicationCompleteListener}
+    /**
+     * A simple {@link com.cloudant.sync.replication.ReplicationService.ReplicationCompleteListener}
      * to save clients having to override every method if they are only interested in a subset of
      * the events.
      */
@@ -155,7 +157,8 @@ public abstract class ReplicationService extends Service implements ReplicationP
             mReplicationPolicyManager.setReplicationsCompletedListener(this);
             mReplicationPolicyManager.start();
         } else {
-            throw new RuntimeException("No replications setup. Please return Replicators from getReplicators()");
+            throw new RuntimeException(
+                    "No replications setup. Please return Replicators from getReplicators()");
         }
     }
 
@@ -214,7 +217,8 @@ public abstract class ReplicationService extends Service implements ReplicationP
                 // It's safest to assume we could be transferring a large amount of data in a
                 // replication, so we want a high performance WiFi connection even though it
                 // requires more power.
-                mWifiLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "ReplicationService");
+                mWifiLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+                        "ReplicationService");
             }
             if(!mWifiLock.isHeld()){
                 mWifiLock.acquire();
