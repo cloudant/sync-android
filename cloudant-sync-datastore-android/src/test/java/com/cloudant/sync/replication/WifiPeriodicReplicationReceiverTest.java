@@ -178,7 +178,7 @@ public class WifiPeriodicReplicationReceiverTest extends AndroidTestCase {
      * {@link ReplicationService} associated with
      * {@link WifiPeriodicReplicationReceiver} containing the extra
      * {@link ReplicationService#EXTRA_COMMAND} with the value
-     * {@link PeriodicReplicationService#COMMAND_START_PERIODIC_REPLICATION}.
+     * {@link PeriodicReplicationService#COMMAND_STOP_PERIODIC_REPLICATION}.
      */
     public void testConnectedToMobileNetwork() {
         Intent intent = new Intent(ConnectivityManager.CONNECTIVITY_ACTION);
