@@ -6,18 +6,20 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
 /**
- * This class extends {@link PeriodicReplicationReceiver} so that periodic replications are only
+ * <p>This class extends {@link PeriodicReplicationReceiver} so that periodic replications are only
  * started when the device is connected to a WiFi network and are stopped when the device
- * disconnects from a WiFi network.
+ * disconnects from a WiFi network.</p>
  *
- * This uses the standard Android broadcasts to detect connectivity change and then trigger the
- * periodic replications.
+ * <p>This uses the standard Android broadcasts to detect connectivity change and then trigger the
+ * periodic replications.</p>
  *
- * To use this, you should create a subclass of this class whose default constructor calls
- * the constructor of this class passing in the name of the concrete {@link PeriodicReplicationService}
- * you are using - e.g.:
+ * <p>To use this, you should create a subclass of this class whose default constructor calls
+ * the constructor of this class passing in the name of the concrete
+ * {@link PeriodicReplicationService}
+ * you are using - e.g.:</p>
  * <pre>
- * public class MyWifiPeriodicReplicationReceiver extends WifiPeriodicReplicationReceiver<MyReplicationService> {
+ * public class MyWifiPeriodicReplicationReceiver
+ *     extends WifiPeriodicReplicationReceiver<MyReplicationService> {
  *
  *     public MyWifiPeriodicReplicationReceiver() {
  *         super(MyReplicationService.class);
@@ -26,8 +28,8 @@ import android.net.NetworkInfo;
  * }
  * </pre>
  *
- * You should then add your subclass to the {@code AndroidManifest.xml} as a child of the {@code application} tag
- * and add {@link android.content.IntentFilter}s as follows:
+ * <p>You should then add your subclass to the {@code AndroidManifest.xml} as a child of the {@code
+ * application} tag and add {@link android.content.IntentFilter}s as follows:</p>
  * <pre>
  * &lt;receiver android:name=".MyWifiPeriodicReplicationReceiver" android:exported="false"&gt;
  *     &lt;intent-filter&gt;
@@ -38,7 +40,7 @@ import android.net.NetworkInfo;
  * &lt;/receiver&gt;
  * </pre>
  *
- * You must then add the following permissions to your {@code AndroidManifest.xml} file:
+ * <p>You must then add the following permissions to your {@code AndroidManifest.xml} file:</p>
  * <pre>
  * &lt;uses-permission android:name="android.permission.INTERNET" /&gt;
  * &lt;uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /&gt;
