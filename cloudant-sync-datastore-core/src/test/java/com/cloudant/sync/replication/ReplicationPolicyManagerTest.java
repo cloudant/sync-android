@@ -42,7 +42,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
-     * Check that when the {@link }ReplicationPolicyManager} is setup with a single
+     * Check that when the {@link ReplicationPolicyManager} is setup with a single
      * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called,
      * the {@link Replicator#start()} method is called on the {@link Replicator}.
      */
@@ -59,7 +59,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
-     * Check that when the {@link }ReplicationPolicyManager} is setup with multiple
+     * Check that when the {@link ReplicationPolicyManager} is setup with multiple
      * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called,
      * the {@link Replicator#start()} method is called on each {@link Replicator}.
      */
@@ -84,7 +84,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
-     * Check that when the {@link }ReplicationPolicyManager} is setup with a single
+     * Check that when the {@link ReplicationPolicyManager} is setup with a single
      * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called,
      * more than once before the {@link Replicator} has completed replication,
      * the {@link Replicator#start()} method is called only once the {@link Replicator}.
@@ -103,7 +103,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
-     * Check that when the {@link }ReplicationPolicyManager} is setup with multiple
+     * Check that when the {@link ReplicationPolicyManager} is setup with multiple
      * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called,
      * more than once before {@link Replicator} has completed replication,
      * the {@link Replicator#start()} method is called only once on each {@link Replicator}.
@@ -130,7 +130,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
-     * Check that when the {@link }ReplicationPolicyManager} is setup with a single
+     * Check that when the {@link ReplicationPolicyManager} is setup with a single
      * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called,
      * the {@link Replicator#start()} method is called on the {@link Replicator}.
      */
@@ -148,7 +148,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
-     * Check that when the {@link }ReplicationPolicyManager} is setup with multiple
+     * Check that when the {@link ReplicationPolicyManager} is setup with multiple
      * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called,
      * more than once before {@link Replicator} has completed replication,
      * the {@link Replicator#start()} method is called only once on each {@link Replicator}.
@@ -175,7 +175,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
-     * Check that when the {@link }ReplicationPolicyManager} is setup with a single
+     * Check that when the {@link ReplicationPolicyManager} is setup with a single
      * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called for a
      * second time after the replicator is explicitly stopped, the {@link Replicator#start()} method
      * is called a second time on the {@link Replicator}.
@@ -195,7 +195,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
-     * Check that when the {@link }ReplicationPolicyManager} is setup with multiple
+     * Check that when the {@link ReplicationPolicyManager} is setup with multiple
      * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called for a
      * second time after the replicator is explicitly stopped, the {@link Replicator#start()} method
      * is called a second time on the {@link Replicator}.
@@ -223,7 +223,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
-     * Check that when the {@link }ReplicationPolicyManager} is setup with a single
+     * Check that when the {@link ReplicationPolicyManager} is setup with a single
      * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called for a
      * second time after the replicator completed normally, the {@link Replicator#start()} method
      * is called a second time on the {@link Replicator}.
@@ -243,7 +243,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
-     * Check that when the {@link }ReplicationPolicyManager} is setup with multiple
+     * Check that when the {@link ReplicationPolicyManager} is setup with multiple
      * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called for a
      * second time after each replicator completed normally, the {@link Replicator#start()} method
      * is called a second time on the {@link Replicator}s.
@@ -275,7 +275,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
-     * Check that when the {@link }ReplicationPolicyManager} is setup with a single
+     * Check that when the {@link ReplicationPolicyManager} is setup with a single
      * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called for a
      * second time after the replicator errored, the {@link Replicator#start()} method
      * is called a second time on the {@link Replicator}.
@@ -295,7 +295,7 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
-     * Check that when the {@link }ReplicationPolicyManager} is setup with multiple
+     * Check that when the {@link ReplicationPolicyManager} is setup with multiple
      * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called for a
      * second time after each replicator errored, the {@link Replicator#start()} method
      * is called a second time on the {@link Replicator}s.
