@@ -4,7 +4,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /**
- * This is a sample replication policy that invokes replications at regular intervals.
+ * This replication policy invokes replications at regular intervals.
  * This is not suitable for use on Android because the timer task is likely to be killed
  * by the operating system and this does not handle the case where the device is asleep.
  */
