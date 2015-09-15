@@ -275,6 +275,39 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
     }
 
     /**
+     * Check that when the {@link ReplicationPolicyManager} is setup with multiple
+     * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called for a
+     * second time after some replicators have completed normally and one is still in progress, the
+     * {@link Replicator#start()} method is only called a second time on the {@link Replicator}s
+     * that completed normally the first time and not on the one that is still in progress.
+     */
+    @Test
+    public void testRestartCompletedAndInProgressReplicators() {
+        Replicator mockReplicator1 = mock(Replicator.class);
+        Replicator mockReplicator2 = mock(Replicator.class);
+        Replicator mockReplicator3 = mock(Replicator.class);
+        EventBus mockEventBus1 = new EventBus();
+        EventBus mockEventBus2 = new EventBus();
+        EventBus mockEventBus3 = new EventBus();
+        when(mockReplicator1.getEventBus()).thenReturn(mockEventBus1);
+        when(mockReplicator2.getEventBus()).thenReturn(mockEventBus2);
+        when(mockReplicator3.getEventBus()).thenReturn(mockEventBus3);
+        ReplicationPolicyManager rpm = new TestPolicy();
+        rpm.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
+        verify(mockReplicator1, never()).start();
+        verify(mockReplicator2, never()).start();
+        verify(mockReplicator3, never()).start();
+        rpm.start();
+        mockEventBus1.post(new ReplicationCompleted(mockReplicator1, 1, 1));
+        mockEventBus3.post(new ReplicationCompleted(mockReplicator3, 1, 1));
+        rpm.start();
+        verify(mockReplicator1, times(2)).start();
+        verify(mockReplicator2, times(1)).start();
+        verify(mockReplicator3, times(2)).start();
+    }
+
+
+    /**
      * Check that when the {@link ReplicationPolicyManager} is setup with a single
      * {@link Replicator}, when {@link ReplicationPolicyManager#start()} is called for a
      * second time after the replicator errored, the {@link Replicator#start()} method
@@ -324,6 +357,39 @@ public class ReplicationPolicyManagerTest extends ReplicationTestBase {
         verify(mockReplicator1, times(2)).start();
         verify(mockReplicator2, times(2)).start();
         verify(mockReplicator3, times(2)).start();
+    }
+
+    /**
+     * Check that when the {@link ReplicationPolicyManager} is setup with multiple
+     * {@link Replicator}s, when {@link ReplicationPolicyManager#start()} is called for a
+     * second time after some replicators errored and one has not completed, the
+     * {@link Replicator#start()} method is only called a second time on the
+     * {@link Replicator}s that did error the first time and not on the one that is still in
+     * progress.
+     */
+    @Test
+    public void testRestartErroredAndInProgressReplicators() {
+        Replicator mockReplicator1 = mock(Replicator.class);
+        Replicator mockReplicator2 = mock(Replicator.class);
+        Replicator mockReplicator3 = mock(Replicator.class);
+        EventBus mockEventBus1 = new EventBus();
+        EventBus mockEventBus2 = new EventBus();
+        EventBus mockEventBus3 = new EventBus();
+        when(mockReplicator1.getEventBus()).thenReturn(mockEventBus1);
+        when(mockReplicator2.getEventBus()).thenReturn(mockEventBus2);
+        when(mockReplicator3.getEventBus()).thenReturn(mockEventBus3);
+        ReplicationPolicyManager rpm = new TestPolicy();
+        rpm.addReplicators(mockReplicator1, mockReplicator2, mockReplicator3);
+        verify(mockReplicator1, never()).start();
+        verify(mockReplicator2, never()).start();
+        verify(mockReplicator3, never()).start();
+        rpm.start();
+        mockEventBus1.post(new ReplicationErrored(mockReplicator1, null));
+        mockEventBus2.post(new ReplicationErrored(mockReplicator2, null));
+        rpm.start();
+        verify(mockReplicator1, times(2)).start();
+        verify(mockReplicator2, times(2)).start();
+        verify(mockReplicator3, times(1)).start();
     }
 
     /** A trivial policy where when you call {@link TestPolicy#start()} it calls
