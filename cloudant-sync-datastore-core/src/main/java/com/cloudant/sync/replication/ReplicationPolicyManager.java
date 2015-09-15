@@ -64,7 +64,7 @@ public abstract class ReplicationPolicyManager {
         }
 
         public void finishedReplication(Replicator replicator) {
-            synchronized (replicator) {
+            synchronized (replicatorsInProgress) {
                 remove(replicator);
                 if (replicatorsInProgress.size() == 0 && mReplicationsCompletedListener != null) {
                     mReplicationsCompletedListener.allReplicationsCompleted();
