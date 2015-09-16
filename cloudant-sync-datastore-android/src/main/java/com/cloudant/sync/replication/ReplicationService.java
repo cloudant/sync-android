@@ -103,22 +103,24 @@ public abstract class ReplicationService extends Service
 
         @Override
         public void handleMessage(Message msg) {
-            // Process the commands passed in msg.arg2.
-            switch (msg.arg2) {
-                case COMMAND_START_REPLICATION:
-                    startReplications();
-                    notifyTestOperationComplete();
-                    break;
-                case COMMAND_STOP_REPLICATION:
-                    stopReplications();
-                    notifyTestOperationComplete();
-                    break;
+            try {
+                // Process the commands passed in msg.arg2.
+                switch (msg.arg2) {
+                    case COMMAND_START_REPLICATION:
+                        startReplications();
+                        notifyTestOperationComplete();
+                        break;
+                    case COMMAND_STOP_REPLICATION:
+                        stopReplications();
+                        notifyTestOperationComplete();
+                        break;
+                }
+            } finally {
+                // Get the Intent used to start the service and release the WakeLock if there is one.
+                // Calling completeWakefulIntent is safe even if there is no wakelock held.
+                Intent intent = msg.getData().getParcelable(EXTRA_INTENT);
+                WakefulBroadcastReceiver.completeWakefulIntent(intent);
             }
-
-            // Get the Intent used to start the service and release the WakeLock if there is one.
-            // Calling completeWakefulIntent is safe even if there is no wakelock held.
-            Intent intent = msg.getData().getParcelable(EXTRA_INTENT);
-            WakefulBroadcastReceiver.completeWakefulIntent(intent);
         }
     }
 
