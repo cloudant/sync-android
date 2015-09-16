@@ -152,19 +152,10 @@ public abstract class ReplicationService extends Service
 
         if (replicators != null && replicators.length > 0) {
             if (mReplicationPolicyManager == null) {
-                mReplicationPolicyManager = new ReplicationPolicyManager() {
-                    @Override
-                    public void start() {
-                    }
-
-                    @Override
-                    public void stop() {
-                    }
-                };
+                mReplicationPolicyManager = new ReplicationPolicyManager();
             }
             mReplicationPolicyManager.addReplicators(replicators);
             mReplicationPolicyManager.setReplicationsCompletedListener(this);
-            mReplicationPolicyManager.start();
         } else {
             throw new RuntimeException(
                     "No replications setup. Please return Replicators from getReplicators()");
