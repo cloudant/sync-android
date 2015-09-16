@@ -13,7 +13,7 @@ import java.util.Set;
 
 public abstract class ReplicationPolicyManager {
 
-    private List<Replicator> replicators;
+    private final List<Replicator> replicators = new ArrayList<Replicator>();
     private ReplicationListener replicationListener;
     private ReplicationsCompletedListener mReplicationsCompletedListener;
 
@@ -74,7 +74,6 @@ public abstract class ReplicationPolicyManager {
     }
 
     public ReplicationPolicyManager() {
-        replicators = new ArrayList<Replicator>();
         replicationListener = new ReplicationListener();
     }
 
@@ -106,9 +105,6 @@ public abstract class ReplicationPolicyManager {
 
     public void addReplicators(Replicator... replicators) {
         synchronized (this.replicators) {
-            if (this.replicators == null) {
-                this.replicators = new ArrayList<Replicator>();
-            }
             this.replicators.addAll(Arrays.asList(replicators));
         }
     }
