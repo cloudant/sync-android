@@ -34,7 +34,13 @@ public abstract class ReplicationService extends Service
     private ReplicationPolicyManager mReplicationPolicyManager;
 
     private Set<ReplicationCompleteListener> mListeners;
-    private WifiManager.WifiLock mWifiLock;
+
+    // It's safest to assume we could be transferring a large amount of data in a
+    // replication, so we want a high performance WiFi connection even though it
+    // requires more power.
+    private final WifiManager.WifiLock mWifiLock =
+            ((WifiManager) getSystemService(Context.WIFI_SERVICE)).
+                    createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "ReplicationService");
 
     private TestOperationCompleteListener mTestOperationCompleteListener;
 
@@ -213,19 +219,20 @@ public abstract class ReplicationService extends Service
         if (mReplicationPolicyManager != null) {
             // Make sure we've got a WiFi lock so that the wifi isn't switched off while we're
             // trying to replicate.
-            if (mWifiLock == null) {
-                WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-
-                // It's safest to assume we could be transferring a large amount of data in a
-                // replication, so we want a high performance WiFi connection even though it
-                // requires more power.
-                mWifiLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,
-                        "ReplicationService");
-            }
-            if(!mWifiLock.isHeld()){
-                mWifiLock.acquire();
+            synchronized (mWifiLock) {
+                if (!mWifiLock.isHeld()) {
+                    mWifiLock.acquire();
+                }
             }
             mReplicationPolicyManager.startReplications();
+        }
+    }
+
+    private void releaseWifiLockIfHeld() {
+        synchronized (mWifiLock) {
+            if (mWifiLock.isHeld()) {
+                mWifiLock.release();
+            }
         }
     }
 
@@ -235,9 +242,7 @@ public abstract class ReplicationService extends Service
     protected void stopReplications() {
         if (mReplicationPolicyManager != null) {
             mReplicationPolicyManager.stopReplications();
-            if (mWifiLock != null && mWifiLock.isHeld()) {
-                mWifiLock.release();
-            }
+            releaseWifiLockIfHeld();
         }
         stopSelf();
     }
@@ -249,9 +254,7 @@ public abstract class ReplicationService extends Service
                 listener.allReplicationsComplete();
             }
         }
-        if (mWifiLock != null && mWifiLock.isHeld()) {
-            mWifiLock.release();
-        }
+        releaseWifiLockIfHeld();
         stopSelf();
         notifyTestOperationComplete();
     }
