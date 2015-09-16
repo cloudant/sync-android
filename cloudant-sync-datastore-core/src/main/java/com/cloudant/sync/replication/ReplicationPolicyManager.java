@@ -83,28 +83,34 @@ public abstract class ReplicationPolicyManager {
     public abstract void stop();
 
     protected void startReplications() {
-        for (Replicator replicator : replicators) {
-            if (!replicationListener.inProgress(replicator)) {
-                replicationListener.add(replicator);
-                replicator.getEventBus().register(replicationListener);
+        synchronized (replicators) {
+            for (Replicator replicator : replicators) {
+                if (!replicationListener.inProgress(replicator)) {
+                    replicationListener.add(replicator);
+                    replicator.getEventBus().register(replicationListener);
 
-                replicator.start();
+                    replicator.start();
+                }
             }
         }
     }
 
     protected void stopReplications() {
-        for (Replicator replicator : replicators) {
-            replicationListener.remove(replicator);
-            replicator.stop();
+        synchronized (replicators) {
+            for (Replicator replicator : replicators) {
+                replicationListener.remove(replicator);
+                replicator.stop();
+            }
         }
     }
 
     public void addReplicators(Replicator... replicators) {
-        if (this.replicators == null) {
-            this.replicators = new ArrayList<Replicator>();
+        synchronized (this.replicators) {
+            if (this.replicators == null) {
+                this.replicators = new ArrayList<Replicator>();
+            }
+            this.replicators.addAll(Arrays.asList(replicators));
         }
-        this.replicators.addAll(Arrays.asList(replicators));
     }
 
     public void setReplicationsCompletedListener(ReplicationsCompletedListener listener) {
