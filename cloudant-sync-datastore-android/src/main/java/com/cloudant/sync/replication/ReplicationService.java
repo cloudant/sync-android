@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.v4.content.WakefulBroadcastReceiver;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,7 +34,7 @@ public abstract class ReplicationService extends Service
     private Handler mServiceHandler;
     private ReplicationPolicyManager mReplicationPolicyManager;
 
-    private Set<ReplicationCompleteListener> mListeners;
+    private final Set<ReplicationCompleteListener> mListeners = Collections.synchronizedSet(new HashSet<ReplicationCompleteListener>());
 
     // It's safest to assume we could be transferring a large amount of data in a
     // replication, so we want a high performance WiFi connection even though it
@@ -249,7 +250,7 @@ public abstract class ReplicationService extends Service
 
     @Override
     public void allReplicationsCompleted() {
-        if (mListeners != null) {
+        synchronized (mListeners) {
             for (ReplicationCompleteListener listener : mListeners) {
                 listener.allReplicationsComplete();
             }
@@ -261,7 +262,7 @@ public abstract class ReplicationService extends Service
 
     @Override
     public void replicationCompleted(int id) {
-        if (mListeners != null) {
+        synchronized (mListeners) {
             for (ReplicationCompleteListener listener : mListeners) {
                 listener.replicationComplete(id);
             }
@@ -270,7 +271,7 @@ public abstract class ReplicationService extends Service
 
     @Override
     public void replicationErrored(int id) {
-        if (mListeners != null) {
+        synchronized (mListeners) {
             for (ReplicationCompleteListener listener : mListeners) {
                 listener.replicationErrored(id);
             }
@@ -283,9 +284,6 @@ public abstract class ReplicationService extends Service
      * @param listener The listener to add.
      */
     public void addListener(ReplicationCompleteListener listener) {
-        if (mListeners == null) {
-            mListeners = new HashSet<ReplicationCompleteListener>();
-        }
         mListeners.add(listener);
     }
 
@@ -295,9 +293,7 @@ public abstract class ReplicationService extends Service
      * @param listener The listener to remove.
      */
     public void removeListener(ReplicationCompleteListener listener) {
-        if (mListeners != null) {
-            mListeners.remove(listener);
-        }
+        mListeners.remove(listener);
     }
 
     /**
