@@ -30,21 +30,27 @@ public abstract class ReplicationPolicyManager {
         Set<Replicator> replicatorsInProgress;
 
         ReplicationListener() {
-            replicatorsInProgress = Collections.synchronizedSet(new HashSet<Replicator>());
+            replicatorsInProgress = new HashSet<Replicator>();
         }
 
         void add(Replicator replicator) {
-            replicatorsInProgress.add(replicator);
+            synchronized (replicatorsInProgress) {
+                replicatorsInProgress.add(replicator);
+            }
         }
 
         void remove(Replicator replicator) {
-            if (replicatorsInProgress.remove(replicator)) {
-                replicator.getEventBus().unregister(this);
+            synchronized (replicatorsInProgress) {
+                if (replicatorsInProgress.remove(replicator)) {
+                    replicator.getEventBus().unregister(this);
+                }
             }
         }
 
         boolean inProgress(Replicator replicator) {
-            return replicatorsInProgress.contains(replicator);
+            synchronized (replicatorsInProgress) {
+                return replicatorsInProgress.contains(replicator);
+            }
         }
 
         @Subscribe
