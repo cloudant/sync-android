@@ -35,17 +35,17 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     /* We store the elapsed time since booting at which the next alarm is due in SharedPreferences
      * using this key. This is used to adjust alarm times when components bind to or unbind from
      * this Service. */
-    private static final String PREFERENCE_ALARM_DUE_ELAPSED_TIME = "alarmDueElapsed";
+    private static final String PREFERENCE_ALARM_DUE_ELAPSED_TIME = "com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed";
 
     /* We store the wall-clock time at which the next alarm is due in SharedPreferences
      * using this key. This is used to set the initial alarm after a reboot. */
-    private static final String PREFERENCE_ALARM_DUE_CLOCK_TIME = "alarmDueClock";
+    private static final String PREFERENCE_ALARM_DUE_CLOCK_TIME = "com.cloudant.sync.replication.PeriodicReplicationService.alarmDueClock";
 
     /* We store a flag indicating whether periodic replications are enabled in SharedPreferences
      * using this key. We have to store the flag persistently as the service may be stopped and
      * started by the operating system. */
     private static final String PREFERENCE_PERIODIC_REPLICATION_ENABLED
-        = "periodicReplicationsActive";
+        = "com.cloudant.sync.replication.PeriodicReplicationService.periodicReplicationsActive";
 
     private static final int MILLISECONDS_IN_SECOND = 1000;
 
