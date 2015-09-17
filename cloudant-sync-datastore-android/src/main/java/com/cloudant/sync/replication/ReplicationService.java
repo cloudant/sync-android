@@ -34,7 +34,7 @@ public abstract class ReplicationService extends Service
     private Handler mServiceHandler;
     private ReplicationPolicyManager mReplicationPolicyManager;
 
-    private final Set<ReplicationCompleteListener> mListeners = Collections.synchronizedSet(new HashSet<ReplicationCompleteListener>());
+    private final Set<ReplicationCompleteListener> mListeners = new HashSet<ReplicationCompleteListener>();
 
     // It's safest to assume we could be transferring a large amount of data in a
     // replication, so we want a high performance WiFi connection even though it
@@ -275,7 +275,9 @@ public abstract class ReplicationService extends Service
      * @param listener The listener to add.
      */
     public void addListener(ReplicationCompleteListener listener) {
-        mListeners.add(listener);
+        synchronized (mListeners) {
+            mListeners.add(listener);
+        }
     }
 
     /**
@@ -284,7 +286,9 @@ public abstract class ReplicationService extends Service
      * @param listener The listener to remove.
      */
     public void removeListener(ReplicationCompleteListener listener) {
-        mListeners.remove(listener);
+        synchronized (mListeners) {
+            mListeners.remove(listener);
+        }
     }
 
     /**
