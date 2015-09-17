@@ -34,6 +34,11 @@ public abstract class ReplicationService extends Service
     private Handler mServiceHandler;
     private ReplicationPolicyManager mReplicationPolicyManager;
 
+    /**
+     * Stores the set of {@link ReplicationCompleteListener}s listening for replication complete
+     * events. Note that all modifications or iterations over mListeners should be protected by
+     * synchronization on the mListeners object.
+     */
     private final Set<ReplicationCompleteListener> mListeners = new HashSet<ReplicationCompleteListener>();
 
     // It's safest to assume we could be transferring a large amount of data in a
