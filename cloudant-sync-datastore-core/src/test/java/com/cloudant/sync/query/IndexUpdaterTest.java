@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 @RunWith(Parameterized.class)
 public class IndexUpdaterTest extends AbstractIndexTestBase {
@@ -146,18 +147,27 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
 
-        final int nDocs = 20;
-        final int nThreads = 20;
+        final int nDocs = 50;
+        final int nThreads = 8;
+        final int nUpdates = 10; // update index after how many docs?
 
         // populate nDocs documents per thread, across nThreads simultaneously
         // and update index after each insert
 
+        final CountDownLatch latch = new CountDownLatch(nThreads);
+
         class PopulateThread extends Thread {
             @Override
             public void run() {
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    Assert.fail(e.toString());
+                }
                 for (int i = 0; i < nDocs; i++) {
                     MutableDocumentRevision rev = new MutableDocumentRevision();
                     rev.docId = String.format("id_%d_%s",i,Thread.currentThread().getName());
+                    System.out.println("creating "+rev.docId);
                     Map<String, Object> bodyMap = new HashMap<String, Object>();
                     if (i % 2 == 0) {
                         bodyMap.put("name", "mike");
@@ -165,13 +175,15 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                         bodyMap.put("name", "tom");
                     }
                     rev.body = DocumentBodyFactory.create(bodyMap);
-                    BasicDocumentRevision saved;
                     try {
                         ds.createDocumentFromRevision(rev);
                     } catch (DocumentException de) {
                         Assert.fail("Exception thrown when creating revision " + de);
                     }
-                    IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue());
+                    // batch up index updates
+                    if (i % nUpdates == 0) {
+                        IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue());
+                    }
                 }
             }
         }
@@ -184,10 +196,15 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }
         for (Thread t : threads) {
             t.start();
+            // try to get all threads to start simultaneously
+            latch.countDown();
         }
         for (Thread t : threads) {
             t.join();
         }
+
+        // catch any missing index updates
+        IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue());
 
         // now the "basic" index should be up to date, check the sequence number
         // and the values in the index
