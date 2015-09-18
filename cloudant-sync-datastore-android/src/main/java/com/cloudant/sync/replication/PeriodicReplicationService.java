@@ -101,7 +101,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     }
 
     @Override
-    public IBinder onBind(Intent intent) {
+    public synchronized IBinder onBind(Intent intent) {
         mBound = true;
         if (isPeriodicReplicationEnabled()) {
             updateAlarmTimeOnBind();
@@ -113,7 +113,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     }
 
     @Override
-    public boolean onUnbind(Intent intent) {
+    public synchronized boolean onUnbind(Intent intent) {
         super.onUnbind(intent);
         mBound = false;
         if (isPeriodicReplicationEnabled()) {
@@ -125,7 +125,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     }
 
     @Override
-    public void onRebind(Intent intent) {
+    public synchronized void onRebind(Intent intent) {
         super.onRebind(intent);
         mBound = true;
         if (isPeriodicReplicationEnabled()) {
@@ -143,7 +143,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     }
 
     /** Start periodic replications. */
-    public void startPeriodicReplication() {
+    public synchronized void startPeriodicReplication() {
         if (!isPeriodicReplicationEnabled()) {
             setPeriodicReplicationEnabled(true);
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
@@ -164,7 +164,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     }
 
     /** Stop replications currently in progress and cancel future scheduled replications. */
-    public void stopPeriodicReplication() {
+    public synchronized void stopPeriodicReplication() {
         if (isPeriodicReplicationEnabled()) {
             setPeriodicReplicationEnabled(false);
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
