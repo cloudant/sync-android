@@ -159,6 +159,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         class PopulateThread extends Thread {
             @Override
             public void run() {
+                // try to get all threads to start simultaneously
+                latch.countDown();
                 try {
                     latch.await();
                 } catch (InterruptedException e) {
@@ -167,7 +169,6 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                 for (int i = 0; i < nDocs; i++) {
                     MutableDocumentRevision rev = new MutableDocumentRevision();
                     rev.docId = String.format("id_%d_%s",i,Thread.currentThread().getName());
-                    System.out.println("creating "+rev.docId);
                     Map<String, Object> bodyMap = new HashMap<String, Object>();
                     if (i % 2 == 0) {
                         bodyMap.put("name", "mike");
@@ -196,8 +197,6 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }
         for (Thread t : threads) {
             t.start();
-            // try to get all threads to start simultaneously
-            latch.countDown();
         }
         for (Thread t : threads) {
             t.join();
