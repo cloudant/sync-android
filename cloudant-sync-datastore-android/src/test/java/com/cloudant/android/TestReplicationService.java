@@ -51,6 +51,7 @@ public class TestReplicationService extends PeriodicReplicationService {
                 Log.e(TAG, "Unable to open Datastore", dnce);
             }
 
+            // Set some arbitrary URI. Our tests use mocks, so we're not going to communicate with it anyway.
             URI uri = new URI("https://test.cloudant.com");
             Replicator pullReplicator = ReplicatorBuilder.pull().from(uri).to(datastore).withId(0).build();
             return new Replicator[] {pullReplicator};
