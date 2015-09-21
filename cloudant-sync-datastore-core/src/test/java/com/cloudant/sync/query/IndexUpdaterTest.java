@@ -152,7 +152,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         final int nUpdates = 10; // update index after how many docs?
 
         // populate nDocs documents per thread, across nThreads simultaneously
-        // and update index after each insert
+        // and update index in batches (update occurs every nUpdates docs)
 
         final CountDownLatch latch = new CountDownLatch(nThreads);
 
@@ -182,7 +182,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                         Assert.fail("Exception thrown when creating revision " + de);
                     }
                     // batch up index updates
-                    if (i % nUpdates == 0) {
+                    if (i % nUpdates == nUpdates-1) {
                         IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue());
                     }
                 }
@@ -202,7 +202,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             t.join();
         }
 
-        // catch any missing index updates
+        // catch any missing index updates (needed where nDocs % nUpdates != 0)
         IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue());
 
         // now the "basic" index should be up to date, check the sequence number
