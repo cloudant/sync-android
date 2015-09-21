@@ -234,8 +234,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                 }
             }
             // check that the number of values on the name field is correct
-            assertThat(mikes, is(nDocs*nThreads/2));
-            assertThat(toms, is(nDocs*nThreads/2));
+            assertThat(mikes, is(nDocs/2*nThreads + nDocs%2*nThreads));
+            assertThat(toms, is(nDocs/2*nThreads));
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
