@@ -87,10 +87,13 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         service.onCreate();
         final CountDownLatch latch = new CountDownLatch(1);
 
-        service.setTestCompletionListener(new PeriodicReplicationService.TestOperationCompleteListener() {
+        service.setOperationStartedListener(new PeriodicReplicationService
+                .OperationStartedListener() {
             @Override
-            public void operationComplete() {
-                latch.countDown();
+            public void operationStarted(int operationId) {
+                if (operationId == PeriodicReplicationService.COMMAND_DEVICE_REBOOTED) {
+                    latch.countDown();
+                }
             }
         });
 
@@ -107,7 +110,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
                 Math.abs(SystemClock.elapsedRealtime() - prefsValues.get(0)) < ALARM_TOLERANCE_MS);
             assertEquals("alarmDueClock", prefsKeys.get(1));
             assertTrue("Alarm clock time not within " + ALARM_TOLERANCE_MS + "ms of current time",
-                Math.abs(System.currentTimeMillis() - prefsValues.get(1)) < ALARM_TOLERANCE_MS);
+                    Math.abs(System.currentTimeMillis() - prefsValues.get(1)) < ALARM_TOLERANCE_MS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -128,10 +131,13 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         long timeReturned = System.currentTimeMillis() + ((1000 * service.getUnboundIntervalInSeconds()) / 2);
         when(mMockPreferences.getLong("alarmDueClock", 0)).thenReturn(timeReturned);
 
-        service.setTestCompletionListener(new PeriodicReplicationService.TestOperationCompleteListener() {
+        service.setOperationStartedListener(new PeriodicReplicationService
+                .OperationStartedListener() {
             @Override
-            public void operationComplete() {
-                latch.countDown();
+            public void operationStarted(int operationId) {
+                if (operationId == PeriodicReplicationService.COMMAND_DEVICE_REBOOTED) {
+                    latch.countDown();
+                }
             }
         });
 
@@ -162,10 +168,13 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         long timeReturned = System.currentTimeMillis() + ((1000 * service.getUnboundIntervalInSeconds()) * 10);
         when(mMockPreferences.getLong("alarmDueClock", 0)).thenReturn(timeReturned);
 
-        service.setTestCompletionListener(new PeriodicReplicationService.TestOperationCompleteListener() {
+        service.setOperationStartedListener(new PeriodicReplicationService
+                .OperationStartedListener() {
             @Override
-            public void operationComplete() {
-                latch.countDown();
+            public void operationStarted(int operationId) {
+                if (operationId == PeriodicReplicationService.COMMAND_DEVICE_REBOOTED) {
+                    latch.countDown();
+                }
             }
         });
 
@@ -207,10 +216,13 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         when(mMockContext.getSystemService(Context.ALARM_SERVICE)).thenReturn(mMockAlarmManager);
         when(mMockPreferences.getLong("alarmDueElapsed", 0)).thenReturn(timeReturned);
 
-        service.setTestCompletionListener(new PeriodicReplicationService.TestOperationCompleteListener() {
+        service.setOperationStartedListener(new PeriodicReplicationService
+                .OperationStartedListener() {
             @Override
-            public void operationComplete() {
-                latch.countDown();
+            public void operationStarted(int operationId) {
+                if (operationId == PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION) {
+                    latch.countDown();
+                }
             }
         });
 
@@ -256,10 +268,13 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
 
         when(mMockPreferences.getBoolean("periodicReplicationsActive", false)).thenReturn(true);
 
-        service.setTestCompletionListener(new PeriodicReplicationService.TestOperationCompleteListener() {
+        service.setOperationStartedListener(new PeriodicReplicationService
+                .OperationStartedListener() {
             @Override
-            public void operationComplete() {
-                latch.countDown();
+            public void operationStarted(int operationId) {
+                if (operationId == PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION) {
+                    latch.countDown();
+                }
             }
         });
 
@@ -288,10 +303,13 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         when(mMockContext.getSystemService(Context.ALARM_SERVICE)).thenReturn(mMockAlarmManager);
         when(mMockPreferences.getLong("alarmDueElapsed", 0)).thenReturn(timeReturned);
 
-        service.setTestCompletionListener(new PeriodicReplicationService.TestOperationCompleteListener() {
+        service.setOperationStartedListener(new PeriodicReplicationService
+                .OperationStartedListener() {
             @Override
-            public void operationComplete() {
-                latch.countDown();
+            public void operationStarted(int operationId) {
+                if (operationId == PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION) {
+                    latch.countDown();
+                }
             }
         });
 
@@ -329,10 +347,13 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         when(mMockContext.getSystemService(Context.ALARM_SERVICE)).thenReturn(mMockAlarmManager);
         when(mMockPreferences.getLong("alarmDueElapsed", 0)).thenReturn(timeReturned);
 
-        service.setTestCompletionListener(new PeriodicReplicationService.TestOperationCompleteListener() {
+        service.setOperationStartedListener(new PeriodicReplicationService
+                .OperationStartedListener() {
             @Override
-            public void operationComplete() {
-                latch.countDown();
+            public void operationStarted(int operationId) {
+                if (operationId == PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION) {
+                    latch.countDown();
+                }
             }
         });
 
@@ -362,10 +383,13 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         when(mMockContext.getSystemService(Context.WIFI_SERVICE)).thenReturn(mMockWifiManager);
         when(mMockWifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "ReplicationService")).thenReturn(mMockWifiLock);
 
-        service.setTestCompletionListener(new PeriodicReplicationService.TestOperationCompleteListener() {
+        service.setOperationStartedListener(new PeriodicReplicationService
+                .OperationStartedListener() {
             @Override
-            public void operationComplete() {
-                latch.countDown();
+            public void operationStarted(int operationId) {
+                if (operationId == PeriodicReplicationService.COMMAND_START_REPLICATION) {
+                    latch.countDown();
+                }
             }
         });
 
@@ -405,10 +429,16 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         when(mMockWifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "ReplicationService")).thenReturn(mMockWifiLock);
         when(mMockWifiLock.isHeld()).thenReturn(true);
 
-        service.setTestCompletionListener(new PeriodicReplicationService.TestOperationCompleteListener() {
+        service.setOperationStartedListener(new PeriodicReplicationService
+                .OperationStartedListener() {
             @Override
-            public void operationComplete() {
-                latch.countDown();
+            public void operationStarted(int operationId) {
+                if (operationId == PeriodicReplicationService.COMMAND_START_REPLICATION && latch.getCount() == 2) {
+                    latch.countDown();
+                }
+                else if (operationId == PeriodicReplicationService.COMMAND_STOP_REPLICATION && latch.getCount() == 1) {
+                    latch.countDown();
+                }
             }
         });
 
