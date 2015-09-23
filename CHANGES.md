@@ -1,3 +1,7 @@
+# 0.13.3 (2015-08-23)
+- [FIXED] Issue where the `ReplicatorBuilder` would not handle HTTP interceptors
+  correctly for push replications.
+
 # 0.13.2 (2015-08-28)
 - [FIXED] Issue where document IDs containing colons were not properly encoded during replication
 
