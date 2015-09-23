@@ -1,3 +1,9 @@
+# Unreleased
+- [BREAKING CHANGE] Removed `setCustomHeaders` from `CouchConfig`. See
+  [Http Interceptors](https://github.com/cloudant/sync-android/blob/master/doc/interceptors.md)
+  for a code sample which shows how to add custom request headers
+  using an HTTP Request Interceptor.
+
 # 0.13.3 (2015-08-23)
 - [FIXED] Issue where the `ReplicatorBuilder` would not handle HTTP interceptors
   correctly for push replications.
