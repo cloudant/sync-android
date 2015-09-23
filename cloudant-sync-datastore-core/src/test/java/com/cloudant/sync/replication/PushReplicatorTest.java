@@ -130,4 +130,32 @@ public class PushReplicatorTest extends ReplicationTestBase {
         runReplicationUntilComplete(pushReplication);
         Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
     }
+
+    @Test
+    public void testRequestInterceptorsThroughBuilder() throws Exception {
+        InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
+
+        TestReplicationListener listener = new TestReplicationListener();
+        Replicator replicator = ReplicatorBuilder.push()
+                .from(this.datastore)
+                .to(this.remoteDb.couchClient.getRootUri())
+                .addRequestInterceptors(interceptorCallCounter)
+                .addResponseInterceptors(interceptorCallCounter)
+                .build();
+        replicator.getEventBus().register(listener);
+        replicator.start();
+
+        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+            Thread.sleep(50);
+        }
+
+        Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
+        Assert.assertFalse(listener.errorCalled);
+        Assert.assertTrue(listener.finishCalled);
+
+        //check that the response and request interceptors have been called.
+        Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
+        Assert.assertTrue(interceptorCallCounter.interceptorRequestTimesCalled >= 1);
+
+    }
 }

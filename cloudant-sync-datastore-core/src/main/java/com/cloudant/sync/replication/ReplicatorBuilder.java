@@ -53,6 +53,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
             PushReplication pushReplication = new PushReplication();
             pushReplication.source = super.source;
             pushReplication.target = super.target;
+            pushReplication.responseInterceptors.addAll(super.responseInterceptors);
+            pushReplication.requestInterceptors.addAll(super.requestInterceptors);
             return new BasicReplicator(pushReplication);
 
         }
