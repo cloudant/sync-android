@@ -264,6 +264,18 @@ back to full health.
 Learn more about this essential process in the
 [conflicts documentation](https://github.com/cloudant/sync-android/blob/master/doc/conflicts.md).
 
+## Known Issues
+
+Some users on certain older versions of Android have reported the
+following exception:
+
+`java.lang.NoClassDefFoundError: javax/annotation/Nullable`
+
+To fix this issue, add the following dependency to your application's
+`build.gradle`:
+
+`compile 'com.google.code.findbugs:jsr305:3.0.0'`
+
 ## Contributors
 
 See [CONTRIBUTORS](CONTRIBUTORS).
