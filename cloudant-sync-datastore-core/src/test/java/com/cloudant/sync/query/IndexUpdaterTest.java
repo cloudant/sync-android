@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.nullValue;
 
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -39,6 +40,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 @RunWith(Parameterized.class)
 public class IndexUpdaterTest extends AbstractIndexTestBase {
@@ -118,6 +120,122 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                 assertThat(cursor.columnName(2), is("name"));
                 assertThat(cursor.getString(2), is("mike"));
             }
+        }catch (SQLException e) {
+            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
+        }
+    }
+
+
+    @Test
+    public void updateOneFieldIndexMultithreaded() throws Exception {
+        createIndex("basic", Arrays.<Object>asList("name"));
+
+        assertThat(getIndexSequenceNumber("basic"), is(0l));
+
+        String table = IndexManager.tableNameForIndex("basic");
+        String sql = String.format("SELECT * FROM %s", table);
+        Cursor cursor = null;
+        try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
+            cursor = db.rawQuery(sql, new String[]{});
+            assertThat(cursor.getCount(), is(0));
+        } catch (SQLException e) {
+            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
+        }
+
+        final int nDocs = 50;
+        final int nThreads = 8;
+        final int nUpdates = 10; // update index after how many docs?
+
+        // populate nDocs documents per thread, across nThreads simultaneously
+        // and update index in batches (update occurs every nUpdates docs)
+
+        final CountDownLatch latch = new CountDownLatch(nThreads);
+
+        class PopulateThread extends Thread {
+            @Override
+            public void run() {
+                // try to get all threads to start simultaneously
+                latch.countDown();
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    Assert.fail(e.toString());
+                }
+                for (int i = 0; i < nDocs; i++) {
+                    MutableDocumentRevision rev = new MutableDocumentRevision();
+                    rev.docId = String.format("id_%d_%s",i,Thread.currentThread().getName());
+                    Map<String, Object> bodyMap = new HashMap<String, Object>();
+                    if (i % 2 == 0) {
+                        bodyMap.put("name", "mike");
+                    } else {
+                        bodyMap.put("name", "tom");
+                    }
+                    rev.body = DocumentBodyFactory.create(bodyMap);
+                    try {
+                        ds.createDocumentFromRevision(rev);
+                    } catch (DocumentException de) {
+                        Assert.fail("Exception thrown when creating revision " + de);
+                    }
+                    // batch up index updates
+                    if (i % nUpdates == nUpdates-1) {
+                        IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue());
+                    }
+                }
+            }
+        }
+
+        List<Thread> threads = new ArrayList<Thread>();
+
+        // Create, start and wait for the threads to complete
+        for (int i = 0; i < nThreads; i++) {
+            threads.add(new PopulateThread());
+        }
+        for (Thread t : threads) {
+            t.start();
+        }
+        for (Thread t : threads) {
+            t.join();
+        }
+
+        // catch any missing index updates (needed where nDocs % nUpdates != 0)
+        IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue());
+
+        // now the "basic" index should be up to date, check the sequence number
+        // and the values in the index
+
+        assertThat(getIndexSequenceNumber("basic"), is((long)nDocs*nThreads));
+
+        int mikes = 0;
+        int toms = 0;
+
+        cursor = null;
+        try {
+            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
+            cursor = db.rawQuery(sql, new String[]{});
+            assertThat(cursor.getCount(), is(nDocs*nThreads));
+            assertThat(cursor.getColumnCount(), is(3));
+            while (cursor.moveToNext()) {
+                assertThat(cursor.columnName(0), is("_id"));
+                assertThat(cursor.columnName(1), is("_rev"));
+                assertThat(cursor.columnName(2), is("name"));
+                int docNum = Integer.valueOf(cursor.getString(0).split("_")[1]);
+                // even document numbers should have name==mike, odd name==tom
+                if (docNum % 2 == 0) {
+                    assertThat(cursor.getString(2), is("mike"));
+                    mikes++;
+                } else {
+                    assertThat(cursor.getString(2), is("tom"));
+                    toms++;
+                }
+            }
+            // check that the number of values on the name field is correct
+            assertThat(mikes, is(nDocs/2*nThreads + nDocs%2*nThreads));
+            assertThat(toms, is(nDocs/2*nThreads));
         }catch (SQLException e) {
             Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
         } finally {
