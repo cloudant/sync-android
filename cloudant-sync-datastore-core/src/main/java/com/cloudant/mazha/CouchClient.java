@@ -547,15 +547,10 @@ public class CouchClient  {
         try {
             HttpConnection connection = Http.POST(uri, "application/json");
             connection.setRequestBody(payload);
-            try {
-                is = connection.execute().responseAsInputStream();
-                Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is),
-                    new TypeReference<Map<String, MissingRevisions>>() { });
-                return diff;
-            } catch (IOException ioe) {
-                // return empty map
-                return new HashMap<String, MissingRevisions>();
-            }
+            is = executeToInputStream(connection);
+            Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is),
+                new TypeReference<Map<String, MissingRevisions>>() { });
+            return diff;
         } finally {
             closeQuietly(is);
         }
