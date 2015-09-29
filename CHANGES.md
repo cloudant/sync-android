@@ -4,6 +4,11 @@
   for a code sample which shows how to add custom request headers
   using an HTTP Request Interceptor.
 
+# 0.13.4 (2015-08-23)
+- [FIXED] Issue where HTTP Interceptors would not be executed for `_revs_diff`
+requests.
+
+
 # 0.13.3 (2015-08-23)
 - [FIXED] Issue where the `ReplicatorBuilder` would not handle HTTP interceptors
   correctly for push replications.
