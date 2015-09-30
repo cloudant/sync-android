@@ -28,6 +28,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -93,14 +94,14 @@ public class MultipartAttachmentWriterTests {
             Attachment att0 = new UnsavedStreamAttachment(new ByteArrayInputStream(bytes), name, "text/plain");
             mpw.addAttachment(att0, bytes.length);
         }
-        mpw.close();
+        InputStream is = mpw.makeInputStream();
 
         int amountRead = 0;
         int totalRead = 0;
 
         do {
             byte buf[] = new byte[chunkSize];
-            amountRead = mpw.read(buf);
+            amountRead = is.read(buf);
             if (amountRead > 0) {
                 totalRead += amountRead;
                 System.out.print(new String(buf, 0, amountRead));
@@ -123,7 +124,7 @@ public class MultipartAttachmentWriterTests {
         File f = TestUtils.loadFixture("fixture/bonsai-boston.jpg");
         Attachment att0 = new UnsavedFileAttachment(f, "image/jpeg");
         mpw.addAttachment(att0, f.length());
-        mpw.close();
+        InputStream is = mpw.makeInputStream();
 
         int amountRead = 0;
         int totalRead = 0;
@@ -132,7 +133,7 @@ public class MultipartAttachmentWriterTests {
 
         do {
             byte buf[] = new byte[chunkSize];
-            amountRead = mpw.read(buf);
+            amountRead = is.read(buf);
             if (amountRead > 0) {
                 bos.write(buf, 0, amountRead);
                 totalRead += amountRead;

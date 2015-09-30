@@ -56,20 +56,20 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     }
 
 
-    private void createDatastore() throws Exception {
+    protected void createDatastore() throws Exception {
         datastoreManagerPath = TestUtils.createTempTestingDir(this.getClass().getName());
         datastoreManager = new DatastoreManager(this.datastoreManagerPath);
         datastore = (DatastoreExtended) datastoreManager.openDatastore(getClass().getSimpleName());
         datastoreWrapper = new DatastoreWrapper(datastore);
     }
 
-    private void createRemoteDB() {
+    protected void createRemoteDB() {
         remoteDb = new CouchClientWrapper(super.getCouchConfig(getDbName()));
         remoteDb.createDatabase();
         couchClient = remoteDb.getCouchClient();
     }
 
-    private void cleanUpTempFiles() {
+    protected void cleanUpTempFiles() {
         TestUtils.deleteTempTestingDir(datastoreManagerPath);
         CouchClientWrapperDbUtils.deleteDbQuietly(remoteDb);
     }
@@ -81,7 +81,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         return dbName.replaceAll(regex, replacement).toLowerCase();
     }
 
-    PullReplication createPullReplication() throws URISyntaxException {
+    protected PullReplication createPullReplication() throws URISyntaxException {
         PullReplication pullReplication = new PullReplication();
         CouchConfig couchConfig = this.getCouchConfig(this.getDbName());
         pullReplication.source = couchConfig.getRootUri();
@@ -89,7 +89,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         return pullReplication;
     }
 
-    PushReplication createPushReplication() throws URISyntaxException {
+    protected PushReplication createPushReplication() throws URISyntaxException {
         PushReplication pushReplication = new PushReplication();
         CouchConfig couchConfig = this.getCouchConfig(this.getDbName());
         pushReplication.target = couchConfig.getRootUri();

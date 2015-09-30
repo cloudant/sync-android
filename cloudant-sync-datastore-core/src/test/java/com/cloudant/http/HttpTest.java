@@ -23,6 +23,7 @@ import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
 
@@ -52,12 +53,17 @@ public class HttpTest extends CouchTestBase {
         CouchConfig config = getCouchConfig("no_such_database");
         HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
                 "application/json");
-        ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
+        final ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
 
         // nothing read from stream
         Assert.assertEquals(bis.available(), data.getBytes().length);
 
-        conn.setRequestBody(bis);
+        conn.setRequestBody(new HttpConnection.InputStreamGenerator() {
+            @Override
+            public InputStream getInputStream() {
+                return bis;
+            }
+        });
         boolean thrown = false;
         try {
             conn.execute();
@@ -82,12 +88,17 @@ public class HttpTest extends CouchTestBase {
         client.createDb();
         HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
                 "application/json");
-        ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
+        final ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
 
         // nothing read from stream
         Assert.assertEquals(bis.available(), data.getBytes().length);
 
-        conn.setRequestBody(bis);
+        conn.setRequestBody(new HttpConnection.InputStreamGenerator() {
+            @Override
+            public InputStream getInputStream() {
+                return bis;
+            }
+        });
         conn.execute();
 
         // stream was read to end
@@ -106,12 +117,17 @@ public class HttpTest extends CouchTestBase {
         client.createDb();
         HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
                 "application/json");
-        ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
+        final ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
 
         // nothing read from stream
         Assert.assertEquals(bis.available(), data.getBytes().length);
 
-        conn.setRequestBody(bis);
+        conn.setRequestBody(new HttpConnection.InputStreamGenerator() {
+            @Override
+            public InputStream getInputStream() {
+                return bis;
+            }
+        });
         try {
             conn.responseAsString();
             Assert.fail("IOException not thrown as expected");
@@ -145,12 +161,17 @@ public class HttpTest extends CouchTestBase {
                 "application/json");
         conn.responseInterceptors.add(interceptor);
         conn.requestInterceptors.add(interceptor);
-        ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
+        final ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
 
         // nothing read from stream
         Assert.assertEquals(bis.available(), data.getBytes().length);
 
-        conn.setRequestBody(bis);
+        conn.setRequestBody(new HttpConnection.InputStreamGenerator() {
+            @Override
+            public InputStream getInputStream() {
+                return bis;
+            }
+        });
         conn.execute();
 
         // stream was read to end

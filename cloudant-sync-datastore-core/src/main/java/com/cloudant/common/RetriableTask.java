@@ -24,36 +24,34 @@ package com.cloudant.common;
 import com.google.common.base.Preconditions;
 
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class RetriableTask<T> implements Callable<T> {
 
-    private final static String LOG_TAG = "RetriableTask";
     private final static Logger logger = Logger.getLogger(RetriableTask.class.getCanonicalName());
 
     private final Callable<T> task;
-    public static final int DEFAULT_NUMBER_OF_RETRIES = 3;
+    public static final int DEFAULT_TRIES = 3;
     public static final long DEFAULT_WAIT_TIME = 1000;
 
-    private int totalRetries; // total number of tries
+    private int totalTries; // total number of tries
     private int triesRemaining; // number left
     private long timeToWait; // wait interval
 
     public RetriableTask(Callable<T> task) {
-        this(DEFAULT_NUMBER_OF_RETRIES, DEFAULT_WAIT_TIME, task);
+        this(DEFAULT_TRIES, DEFAULT_WAIT_TIME, task);
         Preconditions.checkNotNull(task, "Task must not be null");
     }
 
-    public RetriableTask(int totalRetries, long timeToWait, Callable<T> task) {
-        this.totalRetries = totalRetries;
-        this.triesRemaining = totalRetries;
+    public RetriableTask(int totalTries, long timeToWait, Callable<T> task) {
+        this.totalTries = totalTries;
+        this.triesRemaining = totalTries;
         this.timeToWait = timeToWait;
         this.task = task;
     }
 
-    public int getTotalRetries() {
-        return this.totalRetries;
+    public int getTotalTries() {
+        return this.totalTries;
     }
 
     public int getTriesRemaining() {
@@ -62,26 +60,25 @@ public class RetriableTask<T> implements Callable<T> {
 
     @Override
     public T call() throws Exception {
-        while (true) {
+        Exception lastException = null; // remember the exception we caught from the last try
+        do {
             try {
-                logger.fine("Retry #: " + triesRemaining + "," + task.toString());
+                logger.fine(String.format("%d tries remaining for task %s", triesRemaining, task));
                 T t = task.call();
-                if(triesRemaining < 3) {
-                    logger.fine("Success after retry: " + triesRemaining + ", " + task.toString());
-                }
                 return t;
+            } catch (RetryException re) {
+                // if task.call() throws a RetryException this means we should exit early and not
+                // attempt any more retries - so just re-throw the exception
+                throw re;
             } catch (InterruptedException e) {
                 throw e;
             } catch (Exception e) {
-                triesRemaining--;
-                if (triesRemaining == 0) {
-                    throw new RetryException(totalRetries +
-                            " attempts to retry failed at " + timeToWait +
-                            "ms interval", e);
-                }
-                logger.log(Level.FINE,"Retry later: " + triesRemaining + ", " + task.toString(), e);
+                lastException = e;
                 Thread.sleep(timeToWait);
             }
-        }
+        } while (--triesRemaining > 0);
+        // if we got here, we ran out of retries
+        throw new RetryException(String.format("Failed after %d attempts for task %s",
+                totalTries, task), lastException);
     }
 }

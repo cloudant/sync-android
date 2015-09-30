@@ -19,9 +19,9 @@
 package com.cloudant.mazha;
 
 
-public class DocumentConflictException extends RuntimeException {
+public class DocumentConflictException extends CouchException {
 	
 	public DocumentConflictException(String message) {
-		super(message);
+		super(message, 409);
 	}
 }

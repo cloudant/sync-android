@@ -48,25 +48,50 @@ tasks.withType(Test) {
 
 test {
     useJUnit {
-        excludeCategories 'com.cloudant.common.SystemTest', 'com.cloudant.common.RequireRunningCouchDB', 'com.cloudant.common.PerformanceTest'
+        excludeCategories \
+        'com.cloudant.common.SystemTest', \
+        'com.cloudant.common.RequireRunningCouchDB', \
+        'com.cloudant.common.PerformanceTest', \
+        'com.cloudant.common.RequireRunningProxy'
     }
 }
 
 task integrationTest(type: Test, dependsOn: testClasses) {
     useJUnit {
-        excludeCategories 'com.cloudant.common.SystemTest', 'com.cloudant.common.PerformanceTest'
+        excludeCategories \
+        'com.cloudant.common.SystemTest', \
+        'com.cloudant.common.PerformanceTest', \
+        'com.cloudant.common.RequireRunningProxy'
     }
 }
 
+
 task performanceTest(type: Test, dependsOn: testClasses) {
     useJUnit {
-        includeCategories 'com.cloudant.common.PerformanceTest'
+        includeCategories
+        'com.cloudant.common.PerformanceTest'
     }
 }
 
 task systemTest(type: Test, dependsOn: testClasses) {
-    // Run all tests
+    // Run all tests except unreliable network test (which requires a proxy)
+    useJUnit {
+        excludeCategories
+        'com.cloudant.common.RequireRunningProxy'
+    }
 }
+
+task unreliableNetworkTest(type: Test, dependsOn: testClasses) {
+    systemProperty "test.with.specified.couch", true
+    systemProperty "test.couch.port", 8000
+    systemProperty "test.couch.proxy.admin.port", 8474
+    systemProperty "test.couch.proxy.target.port", 5984    
+    // ensure proxy is running!
+    filter {        
+        includeTestsMatching "com.cloudant.sync.replication.Unreliable*.*"
+    }
+}
+
 
 //
 // Publishing
