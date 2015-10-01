@@ -34,8 +34,9 @@ Both Services allow other application components to bind to them. This allows co
 replication is complete and also allows the rate of any periodic replication required by the application to be varied
 depending on whether there are components bound to the service or not. For example, it may be desirable to have an app that
 triggers replications every 24 hours in the background when the app is not actively being used, but when the app is being
-used and a particular `Activity` is displayed it may be desirable to replicate every few minutes and then update the
-`Activity` to show the data when replication has completed.
+used and a particular [`Activity`](http://developer.android.com/reference/android/app/Activity.html)
+is displayed it may be desirable to replicate every few minutes and then update the
+[`Activity`](http://developer.android.com/reference/android/app/Activity.html) to show the data when replication has completed.
 
 #### ReplicationService
 
@@ -257,9 +258,12 @@ We must also request the following permissions so that our periodic replications
 
 #### Binding to the Service
 
-Lets assume we have an `Activity` that displays our data to the user. While this `Activity` is displayed we want our more frequent updates (every 5 minutes), and we want to know when replication has completed so we can refresh the Activity's UI with the new data. Note that the `Activity` must be running in the same process as the [`Service`](http://developer.android.com/reference/android/app/Service.html), which is the default on Android.
+Lets assume we have an [`Activity`](http://developer.android.com/reference/android/app/Activity.html)
+that displays our data to the user. While this [`Activity`](http://developer.android.com/reference/android/app/Activity.html)
+is displayed we want our more frequent updates (every 5 minutes), and we want to know when replication has completed so we can refresh the Activity's UI with the new data. Note that the [`Activity`](http://developer.android.com/reference/android/app/Activity.html)
+must be running in the same process as the [`Service`](http://developer.android.com/reference/android/app/Service.html), which is the default on Android.
 
-First we add some fields to our `Activity`:
+First we add some fields to our [`Activity`](http://developer.android.com/reference/android/app/Activity.html):
 ```java
 // Add a handler to allow us to post UI updates on the main thread.
 private final Handler mHandler = new Handler(Looper.getMainLooper());
@@ -271,7 +275,9 @@ private ReplicationService mReplicationService;
 private boolean mIsBound;
 ```
 
-Now we add a `ServiceConnection` to our `Activity` to allow us to handle binding and unbinding from our `MyReplicationService`. This enables us to get a reference to the service when we bind to it and add a listener for `replicationComplete` to the [`Service`](http://developer.android.com/reference/android/app/Service.html):
+Now we add a [`ServiceConnection`](http://developer.android.com/reference/android/content/ServiceConnection.html)
+to our [`Activity`](http://developer.android.com/reference/android/app/Activity.html)
+to allow us to handle binding and unbinding from our `MyReplicationService`. This enables us to get a reference to the service when we bind to it and add a listener for `replicationComplete` to the [`Service`](http://developer.android.com/reference/android/app/Service.html):
 
 ```java
 private ServiceConnection mConnection = new ServiceConnection() {
@@ -305,7 +311,8 @@ private ServiceConnection mConnection = new ServiceConnection() {
     }
 };
 ```
-We now bind to the service in `Activity.onStart()` and unbind in `Activity.onStop()`:
+We now bind to the service in [`Activity.onStart()`](http://developer.android.com/reference/android/app/Activity.html#onStart())
+and unbind in [`Activity.onStop()`](http://developer.android.com/reference/android/app/Activity.html#onStop()):
 
 ```java
 @Override
