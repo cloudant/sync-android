@@ -64,11 +64,11 @@ the periodic replications after a reboot of the device. You must add the followi
 To control the replication service you start the service passing an Extra in the `Intent` used to start the service whose
 key is `ReplicationService.EXTRA_COMMAND`, and whose value is one of:
 
-* `ReplicationService.COMMAND_START_REPLICATION` This is used to start the replicators.
-* `ReplicationService.COMMAND_STOP_REPLICATION` This is used to stop replicators in progress.
-* `PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION` This only applies if you're using the `PeriodicReplicationService`. This starts the periodic replications.
-* `PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION` This only applies if you're using the `PeriodicReplicationService`. This stops the periodic replications.
-* `PeriodicReplicationService.COMMAND_DEVICE_REBOOTED` This only applies if you're using the `PeriodicReplicationService`. This resets the periodic replications after the device has rebooted. This will be automatically called if your subclass of `PeriodicReplicationReceiver` calls through to the `onReceive()` method of `PeriodicReplicationReceiver`.
+* `ReplicationService.COMMAND_START_REPLICATION` This starts the replicators.
+* `ReplicationService.COMMAND_STOP_REPLICATION` This stops replicators in progress.
+* `PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION` This starts the periodic replications when you are using the `PeriodicReplicationService`.
+* `PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION` This stops the periodic replications when you are using the `PeriodicReplicationService`.
+* `PeriodicReplicationService.COMMAND_DEVICE_REBOOTED` This resets the periodic replications aafter the device has rebooted when you are using the `PeriodicReplicationService`. This will be automatically called if your subclass of `PeriodicReplicationReceiver` calls through to the `onReceive()` method of `PeriodicReplicationReceiver`.
 
 For example, from a subclass of `PeriodicReplicationReceiver`, you might call:
 
