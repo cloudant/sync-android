@@ -43,7 +43,7 @@ to schedule the repetition of the replications at the given intervals in a batte
 
 #### PeriodicReplicationReceiver
 
-This uses a `WakefulBroadcastReceiver` to trigger periodic replications at the intervals specified by your
+`PeriodicReplicationReceiver` uses a `WakefulBroadcastReceiver` to trigger periodic replications at the intervals specified by your
 `PeriodicReplicationService`. This means your application does not have to keep running to trigger replications at the
 intervals you require, but will be restarted at the time a replication is required. This class also handles resetting of
 the periodic replications after a reboot of the device. You must add the following `intent-filter`s to your
