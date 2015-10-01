@@ -61,7 +61,9 @@ to schedule the repetition of the replications at the given intervals in a batte
 to trigger periodic replications at the intervals specified by your
 `PeriodicReplicationService`. This means your application does not have to keep running to trigger replications at the
 intervals you require, but will be restarted at the time a replication is required. This class also handles resetting of
-the periodic replications after a reboot of the device. You must add the following `intent-filter`s to your
+the periodic replications after a reboot of the device. You must add the following
+[`<action>`](http://developer.android.com/guide/topics/manifest/action-element.html) elements to the
+[`<intent-filter>`](http://developer.android.com/guide/topics/manifest/intent-filter-element.html) of the 
 `PeriodicReplicationReceiver`'s entry in the `AndroidManifest.xml` to enable periodic replication:
 
 ```xml
