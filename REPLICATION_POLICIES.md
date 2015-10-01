@@ -1,12 +1,16 @@
+# Replication Policies
+
 Replication policies work quite differently on Android from Java. Please see the relevant section of this guide 
 for [Android](#android-replication-policies) or [Java](#java-replication-policies).
 
-# Android replication policies
+## Android replication policies
+
 Replication policies on Android run in a `Service` to allow them to run independently of your main application and to allow
 them to be restarted if they are killed by the operating system.  To use replication policies, you need to subclass
 one of the existing replication Service components and implement the specifics of your required replications.
 
-##Creating your service
+### Creating your service
+
 There are two options when creating your service. 
 
 1. If you don't require periodic replications, you should create a subclass of `ReplicationService`.
@@ -21,11 +25,13 @@ triggers replications every 24 hours in the background when the app is not activ
 used and a particular `Activity` is displayed it may be desirable to replicate every few minutes and then update the
 `Activity` to show the data when replication has completed.
 
-###ReplicationService
+#### ReplicationService
+
 `ReplicationService` is an abstract class and your subclass must implement the following abstract method:
 * `protected abstract Replicator[] getReplicators(Context context);` This method should return an array of `Replicator` objects that define the replications you want to invoke.
 
-###PeriodicReplicationService
+#### PeriodicReplicationService
+
 This abstract class is a child of `ReplicationService` and requires you to implement the following abstract methods:
 * `protected abstract Replicator[] getReplicators(Context context);` This method should return an array of `Replicator` objects that define the replications you want to invoke.
 * `protected abstract int getBoundIntervalInSeconds();` This method should return the interval (in seconds) you wish to have between replications when components are bound to the Service.
@@ -35,7 +41,8 @@ This abstract class is a child of `ReplicationService` and requires you to imple
 Note that internally this uses [android.app.AlarmManager.setInexactRepeating()](http://developer.android.com/reference/android/app/AlarmManager.html#setInexactRepeating(int, long, long, android.app.PendingIntent)) 
 to schedule the repetition of the replications at the given intervals in a battery efficient way, this means the intervals between replications will not be exact.
 
-###PeriodicReplicationReceiver
+#### PeriodicReplicationReceiver
+
 This uses a `WakefulBroadcastReceiver` to trigger periodic replications at the intervals specified by your
 `PeriodicReplicationService`. This means your application does not have to keep running to trigger replications at the
 intervals you require, but will be restarted at the time a replication is required. This class also handles resetting of
@@ -47,7 +54,8 @@ the periodic replications after a reboot of the device. You must add the followi
 <action android:name="android.intent.action.BOOT_COMPLETED" />
 ```
 
-##Controlling the replication service
+### Controlling the replication service
+
 To control the replication service you start the service passing an Extra in the `Intent` used to start the service whose
 key is `ReplicationService.EXTRA_COMMAND`, and whose value is one of:
 
@@ -70,7 +78,8 @@ If you want to start replications from anywhere other than a `PeriodicReplicatio
 `startWakefulService(context, intent);` with `startService(intent);` in the above example and do any `WakeLock`
 management you require yourself.
 
-###WifiPeriodicReplicationReceiver
+#### WifiPeriodicReplicationReceiver
+
 This class is an example of how to extend `PeriodicReplicationReceiver` to add logic that triggers periodic replications
 only when our device is connected to Wifi and stops periodic replications when we disconnect from Wifi.
 This is done by extending the `PeriodicReplicationReceiver` so that the BroadcastReceiver responds to changes in
@@ -81,7 +90,7 @@ Service. Other `Intent` actions received by the broadcast receiver are passed to
 resetting of the periodic replications after reboot are handled correctly.
 
 
-##Example
+### Example
 
 Lets assume we wish to configure a replication policy as follows:
 
@@ -95,7 +104,8 @@ Lets assume we wish to configure a replication policy as follows:
 To demonstrate how we configure this policy, we'll use the `WifiPeriodicReplicationReceiver` to trigger our replications
 when the device is connected to Wifi.
 
-###BroadcastReceiver
+#### BroadcastReceiver
+
 Our subclass of `WifiPeriodicReplicationReceiver` is very simple and only needs to configure the name of the subclass of `PeriodicReplicationService` that we want our `BroadcastReceiver` to interact with by creating a default constructor that
 passes it to the superclass's constructor. We'll be calling our service `MyReplicationService`, so our `BroadcastReceiver` looks like:
 
@@ -109,7 +119,8 @@ public class MyWifiPeriodicReplicationReceiver extends WifiPeriodicReplicationRe
 }
 ```
 
-###Service
+#### Service
+
 Our service must configure the name of our `BroadcastReceiver` (i.e. `MyWifiPeriodicReplicationReceiver`) and does this
 in the default constructor by passing the class's name to the superclass constructor. This allows the super class to invoke
 `MyWifiPeriodicReplicationReceiver` when the periodic replications are due. We must also implement the abstract methods:
@@ -177,7 +188,8 @@ public class MyReplicationService extends PeriodicReplicationService {
 
 Note that we set IDs on the replications so that these IDs can be used to identify the replication that has completed or errored.
 
-###AndroidManifest.xml
+#### AndroidManifest.xml
+
 Now, we need to make sure our `AndroidManifest.xml` is updated to contain the `BroadcastReceiver` and `Service` we've created. We need to also ensure the `BroadcastReceiver` has the correct `intent-filter` settings.
 
 Our `BroadcastReceiver` needs to know when the connectivity of the device has changed, when a periodic replication is due
@@ -213,7 +225,8 @@ We must also request the following permissions so that our periodic replications
 <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 ```
 
-###Binding to the Service
+#### Binding to the Service
+
 Lets assume we have an `Activity` that displays our data to the user. While this `Activity` is displayed we want our more frequent updates (every 5 minutes), and we want to know when replication has completed so we can refresh the Activity's UI with the new data. Note that the `Activity` must be running in the same process as the `Service`, which is the default on Android.
 
 First we add some fields to our `Activity`:
@@ -282,7 +295,7 @@ protected void onStop() {
 }
 ```
 
-# Java replication policies
+## Java replication policies
 
 On Java, replication policies are much simpler than on Android.  To implement a replication policy it is necessary to create
 a subclass of `ReplicationPolicyManager` and call `startReplications()` when your chosen conditions for replications to take
