@@ -3,6 +3,15 @@
 Replication policies work quite differently on Android from Java. Please see the relevant section of this guide 
 for [Android](#android-replication-policies) or [Java](#java-replication-policies).
 
+## Java replication policies
+
+On Java, replication policies are much simpler than on Android.  To implement a replication policy it is necessary to create
+a subclass of `ReplicationPolicyManager` and call `startReplications()` when your chosen conditions for replications to take
+place are met and call `stopReplications()` when you want replications to be stopped.  The `ReplicationPolicyManager` will
+ensure that if replications are currently in progress they are not restarted.  See the
+`IntervalTimerReplicationPolicyManager` class, which is an example of a policy where replications are triggered at regular
+intervals.
+
 ## Android replication policies
 
 Replication policies on Android run in a [`Service`](http://developer.android.com/reference/android/app/Service.html)
@@ -315,13 +324,4 @@ protected void onStop() {
     }
 }
 ```
-
-## Java replication policies
-
-On Java, replication policies are much simpler than on Android.  To implement a replication policy it is necessary to create
-a subclass of `ReplicationPolicyManager` and call `startReplications()` when your chosen conditions for replications to take
-place are met and call `stopReplications()` when you want replications to be stopped.  The `ReplicationPolicyManager` will
-ensure that if replications are currently in progress they are not restarted.  See the
-`IntervalTimerReplicationPolicyManager` class, which is an example of a policy where replications are triggered at regular
-intervals.
 
