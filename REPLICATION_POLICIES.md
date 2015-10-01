@@ -28,15 +28,15 @@ used and a particular `Activity` is displayed it may be desirable to replicate e
 #### ReplicationService
 
 `ReplicationService` is an abstract class and your subclass must implement the following abstract method:
-* `protected abstract Replicator[] getReplicators(Context context);` This method should return an array of `Replicator` objects that define the replications you want to invoke.
+* `protected abstract Replicator[] getReplicators(Context context)` This method should return an array of `Replicator` objects that define the replications you want to invoke.
 
 #### PeriodicReplicationService
 
 This abstract class is a child of `ReplicationService` and requires you to implement the following abstract methods:
-* `protected abstract Replicator[] getReplicators(Context context);` This method should return an array of `Replicator` objects that define the replications you want to invoke.
-* `protected abstract int getBoundIntervalInSeconds();` This method should return the interval (in seconds) you wish to have between replications when components are bound to the Service.
-* `protected abstract int getUnboundIntervalInSeconds();` This method should return the interval (in seconds) you wish to have between replications when components are not bound to the Service.
-* `protected abstract boolean startReplicationOnBind();` This should return `true` if you wish to have replications triggered immediately when a component binds to the Service.
+* `protected abstract Replicator[] getReplicators(Context context)` This method should return an array of `Replicator` objects that define the replications you want to invoke.
+* `protected abstract int getBoundIntervalInSeconds()` This method should return the interval (in seconds) you wish to have between replications when components are bound to the Service.
+* `protected abstract int getUnboundIntervalInSeconds()` This method should return the interval (in seconds) you wish to have between replications when components are not bound to the Service.
+* `protected abstract boolean startReplicationOnBind()` This should return `true` if you wish to have replications triggered immediately when a component binds to the Service.
 
 Note that internally this uses [android.app.AlarmManager.setInexactRepeating()](http://developer.android.com/reference/android/app/AlarmManager.html#setInexactRepeating(int, long, long, android.app.PendingIntent)) 
 to schedule the repetition of the replications at the given intervals in a battery efficient way, this means the intervals between replications will not be exact.
@@ -75,7 +75,7 @@ startWakefulService(context, intent);
 Note the use of `startWakefulService()` which gets a `WakeLock` to ensure the device does not go to sleep while your replication is in progress.
 
 If you want to start replications from anywhere other than a `PeriodicReplicationReceiver` you would need to replace
-`startWakefulService(context, intent);` with `startService(intent);` in the above example and do any `WakeLock`
+`startWakefulService(context, intent)` with `startService(intent)` in the above example and do any `WakeLock`
 management you require yourself.
 
 #### WifiPeriodicReplicationReceiver
@@ -143,7 +143,7 @@ public class MyReplicationService extends PeriodicReplicationService {
     @Override
     protected Replicator[] getReplicators(Context context) {
         try {
-            URI uri = new URI("https", "my_api_key:my_api_secret", "myaccount.cloudant.com", 443, "/" + "mydb", null, null);;
+            URI uri = new URI("https", "my_api_key:my_api_secret", "myaccount.cloudant.com", 443, "/" + "mydb", null, null);
 
             File path = context.getApplicationContext().getDir(
                 DATASTORE_MANGER_DIR,
@@ -181,7 +181,7 @@ public class MyReplicationService extends PeriodicReplicationService {
     @Override
     protected boolean startReplicationOnBind() {
         // Trigger replications when a client binds to the service only if we're on WiFi.
-        return WifiPeriodicReplicationReceiver.isConnectedToWifi(this);;
+        return WifiPeriodicReplicationReceiver.isConnectedToWifi(this);
     }
 }
 ```
