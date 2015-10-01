@@ -5,7 +5,8 @@ for [Android](#android-replication-policies) or [Java](#java-replication-policie
 
 ## Android replication policies
 
-Replication policies on Android run in a `Service` to allow them to run independently of your main application and to allow
+Replication policies on Android run in a [`Service`](http://developer.android.com/reference/android/app/Service.html)
+to allow them to run independently of your main application and to allow
 them to be restarted if they are killed by the operating system.  To use replication policies, you need to subclass
 one of the existing replication Service components and implement the specifics of your required replications.
 
@@ -16,7 +17,9 @@ There are two options when creating your service:
 1. If you don't require periodic replications, create a subclass of `ReplicationService`.
 2. If you want your replications to repeat at (roughly) fixed time intervals, as well as possibly adding other criteria that
 are required for replication, create a subclass of `PeriodicReplicationService`. This class takes care of the
-scheduling of periodic alarms to trigger the replications. This also requires you to implement a `BroadcastReceiver` that is a subclass of `PeriodicReplicationReceiver`. 
+scheduling of periodic alarms to trigger the replications. This also requires you to implement a
+[`BroadcastReceiver`](http://developer.android.com/reference/android/content/BroadcastReceiver.html)
+that is a subclass of `PeriodicReplicationReceiver`. 
 
 Both Services allow other application components to bind to them. This allows components to be notified when
 replication is complete and also allows the rate of any periodic replication required by the application to be varied
@@ -43,7 +46,9 @@ to schedule the repetition of the replications at the given intervals in a batte
 
 #### PeriodicReplicationReceiver
 
-`PeriodicReplicationReceiver` uses a `WakefulBroadcastReceiver` to trigger periodic replications at the intervals specified by your
+`PeriodicReplicationReceiver` uses a 
+[`WakefulBroadcastReceiver`](http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html)
+to trigger periodic replications at the intervals specified by your
 `PeriodicReplicationService`. This means your application does not have to keep running to trigger replications at the
 intervals you require, but will be restarted at the time a replication is required. This class also handles resetting of
 the periodic replications after a reboot of the device. You must add the following `intent-filter`s to your
@@ -72,21 +77,25 @@ Intent intent = new Intent(context.getApplicationContext(), MyReplicationService
 intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION);
 startWakefulService(context, intent);
 ```
-Note the use of `startWakefulService()` which gets a `WakeLock` to ensure the device does not go to sleep while your replication is in progress.
+Note the use of `startWakefulService()` which gets a [`WakeLock`](http://developer.android.com/reference/android/os/PowerManager.WakeLock.html)
+to ensure the device does not go to sleep while your replication is in progress.
 
 If you want to start replications from anywhere other than a `PeriodicReplicationReceiver` you would need to replace
-`startWakefulService(context, intent)` with `startService(intent)` in the above example and do any `WakeLock`
+`startWakefulService(context, intent)` with `startService(intent)` in the above example and do any
+[`WakeLock`](http://developer.android.com/reference/android/os/PowerManager.WakeLock.html)
 management you require yourself.
 
 #### WifiPeriodicReplicationReceiver
 
 This class is an example of how to extend `PeriodicReplicationReceiver` to add logic that triggers periodic replications
 only when our device is connected to Wifi and stops periodic replications when we disconnect from Wifi.
-This is done by extending the `PeriodicReplicationReceiver` so that the BroadcastReceiver responds to changes in
+This is done by extending the `PeriodicReplicationReceiver` so that the 
+[`BroadcastReceiver`](http://developer.android.com/reference/android/content/BroadcastReceiver.html) responds to changes in
 network connectivity.  When we detect that the device has connected to Wifi we start our PeriodicReplicationService
 by sending it the command `PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION` and when the device disconnects
 from Wifi we stop the periodic replications by sending `PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION` to the
-Service. Other `Intent` actions received by the broadcast receiver are passed to parent class so that periodic alarms and
+[`Service`](http://developer.android.com/reference/android/app/Service.html).
+ Other `Intent` actions received by the broadcast receiver are passed to parent class so that periodic alarms and
 resetting of the periodic replications after reboot are handled correctly.
 
 
@@ -106,8 +115,11 @@ when the device is connected to Wifi.
 
 #### BroadcastReceiver
 
-Our subclass of `WifiPeriodicReplicationReceiver` is very simple and only needs to configure the name of the subclass of `PeriodicReplicationService` that we want our `BroadcastReceiver` to interact with by creating a default constructor that
-passes it to the superclass's constructor. We'll be calling our service `MyReplicationService`, so our `BroadcastReceiver` looks like:
+Our subclass of `WifiPeriodicReplicationReceiver` is very simple and only needs to configure the name of the
+subclass of `PeriodicReplicationService` that we want our [`BroadcastReceiver`](http://developer.android.com/reference/android/content/BroadcastReceiver.html)
+to interact with by creating a default constructor that
+passes it to the superclass's constructor. We'll be calling our service `MyReplicationService`, so our 
+[`BroadcastReceiver`](http://developer.android.com/reference/android/content/BroadcastReceiver.html) looks like:
 
 ```java 
 public class MyWifiPeriodicReplicationReceiver extends WifiPeriodicReplicationReceiver<MyReplicationService> {
@@ -121,7 +133,8 @@ public class MyWifiPeriodicReplicationReceiver extends WifiPeriodicReplicationRe
 
 #### Service
 
-Our service must configure the name of our `BroadcastReceiver` (i.e. `MyWifiPeriodicReplicationReceiver`) and does this
+Our service must configure the name of our [`BroadcastReceiver`](http://developer.android.com/reference/android/content/BroadcastReceiver.html)
+(i.e. `MyWifiPeriodicReplicationReceiver`) and does this
 in the default constructor by passing the class's name to the superclass constructor. This allows the super class to invoke
 `MyWifiPeriodicReplicationReceiver` when the periodic replications are due. We must also implement the abstract methods:
 
@@ -190,10 +203,17 @@ Note that we set IDs on the replications so that these IDs can be used to identi
 
 #### AndroidManifest.xml
 
-Now, we need to make sure our `AndroidManifest.xml` is updated to contain the `BroadcastReceiver` and `Service` we've created. We need to also ensure the `BroadcastReceiver` has the correct `intent-filter` settings.
+Now, we need to make sure our `AndroidManifest.xml` is updated to contain the 
+[`BroadcastReceiver`](http://developer.android.com/reference/android/content/BroadcastReceiver.html) and 
+[`Service`](http://developer.android.com/reference/android/app/Service.html) we've created. We need
+to also ensure the [`BroadcastReceiver`](http://developer.android.com/reference/android/content/BroadcastReceiver.html)
+has the correct `intent-filter` settings.
 
-Our `BroadcastReceiver` needs to know when the connectivity of the device has changed, when a periodic replication is due
-and when the device has rebooted. We also don't want other apps to invoke our BroadcastReceiver so we set `android:exported="false"`, so we add the following to our manifest file:
+Our [`BroadcastReceiver`](http://developer.android.com/reference/android/content/BroadcastReceiver.html)
+needs to know when the connectivity of the device has changed, when a periodic replication is due
+and when the device has rebooted. We also don't want other apps to invoke our 
+[`BroadcastReceiver`](http://developer.android.com/reference/android/content/BroadcastReceiver.html)
+so we set `android:exported="false"`, so we add the following to our manifest file:
 
 ```xml
 <receiver android:name=".MyBackgroundWifiIntervalReplicationPolicyManager" android:exported="false">
@@ -227,7 +247,7 @@ We must also request the following permissions so that our periodic replications
 
 #### Binding to the Service
 
-Lets assume we have an `Activity` that displays our data to the user. While this `Activity` is displayed we want our more frequent updates (every 5 minutes), and we want to know when replication has completed so we can refresh the Activity's UI with the new data. Note that the `Activity` must be running in the same process as the `Service`, which is the default on Android.
+Lets assume we have an `Activity` that displays our data to the user. While this `Activity` is displayed we want our more frequent updates (every 5 minutes), and we want to know when replication has completed so we can refresh the Activity's UI with the new data. Note that the `Activity` must be running in the same process as the [`Service`](http://developer.android.com/reference/android/app/Service.html), which is the default on Android.
 
 First we add some fields to our `Activity`:
 ```java
@@ -241,7 +261,7 @@ private ReplicationService mReplicationService;
 private boolean mIsBound;
 ```
 
-Now we add a `ServiceConnection` to our `Activity` to allow us to handle binding and unbinding from our `MyReplicationService`. This enables us to get a reference to the service when we bind to it and add a listener for `replicationComplete` to the `Service`:
+Now we add a `ServiceConnection` to our `Activity` to allow us to handle binding and unbinding from our `MyReplicationService`. This enables us to get a reference to the service when we bind to it and add a listener for `replicationComplete` to the [`Service`](http://developer.android.com/reference/android/app/Service.html):
 
 ```java
 private ServiceConnection mConnection = new ServiceConnection() {
