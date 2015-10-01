@@ -87,7 +87,8 @@ management you require yourself.
 
 #### WifiPeriodicReplicationReceiver
 
-This class is an example of how to extend `PeriodicReplicationReceiver` to add logic that triggers periodic replications
+[`WifiPeriodicReplicationReceiver`](cloudant-sync-datastore-android/src/main/java/com/cloudant/sync/replication/WifiPeriodicReplicationReceiver.java)
+is an example of how to extend `PeriodicReplicationReceiver` to add logic that triggers periodic replications
 only when our device is connected to Wifi and stops periodic replications when we disconnect from Wifi.
 This is done by extending the `PeriodicReplicationReceiver` so that the 
 [`BroadcastReceiver`](http://developer.android.com/reference/android/content/BroadcastReceiver.html) responds to changes in
