@@ -11,7 +11,7 @@ one of the existing replication Service components and implement the specifics o
 
 ### Creating your service
 
-There are two options when creating your service. 
+There are two options when creating your service:
 
 1. If you don't require periodic replications, you should create a subclass of `ReplicationService`.
 2. If you want your replications to repeat at (roughly) fixed time intervals, as well as possibly adding other criteria that
