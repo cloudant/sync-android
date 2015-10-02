@@ -73,15 +73,12 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
             switch (msg.arg2) {
                 case COMMAND_START_PERIODIC_REPLICATION:
                     startPeriodicReplication();
-                    notifyTestOperationComplete();
                     break;
                 case COMMAND_STOP_PERIODIC_REPLICATION:
                     stopPeriodicReplication();
-                    notifyTestOperationComplete();
                     break;
                 case COMMAND_DEVICE_REBOOTED:
                     resetAlarmDueTimesOnReboot();
-                    notifyTestOperationComplete();
                     break;
             }
 

@@ -48,15 +48,13 @@ public abstract class ReplicationService extends Service
             ((WifiManager) getSystemService(Context.WIFI_SERVICE)).
                     createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "ReplicationService");
 
-    private TestOperationCompleteListener mTestOperationCompleteListener;
+    private OperationStartedListener mOperationStartedListener;
 
     private final IBinder mBinder = new LocalBinder();
 
-    /** This should only be used in automated tests to indicate that an operation has completed. */
-    interface TestOperationCompleteListener {
-        /** Callback to indicate that an operation has completed. This should only be used in
-         * automated tests. */
-        void operationComplete();
+    interface OperationStartedListener {
+        /** Callback to indicate that an operation has started. */
+        void operationStarted(int operationId);
     }
 
     public interface ReplicationCompleteListener {
@@ -120,11 +118,9 @@ public abstract class ReplicationService extends Service
                 switch (msg.arg2) {
                     case COMMAND_START_REPLICATION:
                         startReplications();
-                        notifyTestOperationComplete();
                         break;
                     case COMMAND_STOP_REPLICATION:
                         stopReplications();
-                        notifyTestOperationComplete();
                         break;
                 }
             } finally {
@@ -132,6 +128,8 @@ public abstract class ReplicationService extends Service
                 // Calling completeWakefulIntent is safe even if there is no wakelock held.
                 Intent intent = msg.getData().getParcelable(EXTRA_INTENT);
                 WakefulBroadcastReceiver.completeWakefulIntent(intent);
+
+                notifyOperationStarted(msg.arg2);
             }
         }
     }
@@ -253,7 +251,6 @@ public abstract class ReplicationService extends Service
         }
         releaseWifiLockIfHeld();
         stopSelf();
-        notifyTestOperationComplete();
     }
 
     @Override
@@ -297,20 +294,19 @@ public abstract class ReplicationService extends Service
     }
 
     /**
-     * Set a listener to be notified when an operation is completed. <b>This should only be used
-     * in automated tests.</b>
+     * Set a listener to be notified when an operation has started.
      * @param listener The listener to add
      */
-    void setTestCompletionListener(TestOperationCompleteListener listener) {
-        mTestOperationCompleteListener = listener;
+    public void setOperationStartedListener(OperationStartedListener listener) {
+        mOperationStartedListener = listener;
     }
 
     /**
-     * Invoke the callback used to notify automated tests that the operation is complete.
+     * Invoke the callback used to notify listeners that the operation has started.
      */
-    void notifyTestOperationComplete() {
-        if (mTestOperationCompleteListener != null) {
-            mTestOperationCompleteListener.operationComplete();
+    void notifyOperationStarted(int operationId) {
+        if (mOperationStartedListener != null) {
+            mOperationStartedListener.operationStarted(operationId);
         }
     }
 
