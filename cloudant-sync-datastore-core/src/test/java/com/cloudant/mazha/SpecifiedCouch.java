@@ -14,29 +14,26 @@
 
 package com.cloudant.mazha;
 
+import static com.cloudant.common.TestOptions.COOKIE_AUTH;
+import static com.cloudant.common.TestOptions.COUCH_HOST;
+import static com.cloudant.common.TestOptions.COUCH_PASSWORD;
+import static com.cloudant.common.TestOptions.COUCH_PORT;
+import static com.cloudant.common.TestOptions.COUCH_URI;
+import static com.cloudant.common.TestOptions.COUCH_USERNAME;
+import static com.cloudant.common.TestOptions.HTTP_PROTOCOL;
+
+import com.cloudant.http.CookieInterceptor;
+import com.cloudant.http.HttpConnectionRequestInterceptor;
+import com.cloudant.http.HttpConnectionResponseInterceptor;
+
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 /**
  * Created by Rhys Short on 30/01/15.
  */
 public class SpecifiedCouch {
-
-    private static String COUCH_HOST;
-    private static String COUCH_USERNAME;
-    private static String COUCH_PASSWORD;
-    private static String COUCH_PORT;
-    private static String HTTP_PROTOCOL;
-
-
-    static {
-        COUCH_USERNAME = System.getProperty("test.couch.username");
-        COUCH_PASSWORD = System.getProperty("test.couch.password");
-        COUCH_HOST  = System.getProperty("test.couch.host","localhost");
-        COUCH_PORT = System.getProperty("test.couch.port","5984");
-        HTTP_PROTOCOL = System.getProperty("test.couch.http","http"); //should either be http or https
-
-    }
 
     private SpecifiedCouch() {
         //empty
@@ -45,13 +42,31 @@ public class SpecifiedCouch {
     public static CouchConfig defaultConfig(String dbName){
         try {
             String uriString;
-            if (COUCH_USERNAME == null || COUCH_PASSWORD == null){
-                uriString = String.format("%s://%s:%s/%s",HTTP_PROTOCOL,COUCH_HOST,COUCH_PORT,dbName);
-            } else {
-                uriString = String.format("%s://%s:%s@%s:%s/%s",HTTP_PROTOCOL,COUCH_USERNAME,COUCH_PASSWORD,COUCH_HOST,COUCH_PORT,dbName);
-            }
-            return new CouchConfig(new URI(uriString));
 
+            // if full URI specified, then we don't need to build it up from components
+            if (COUCH_URI != null) {
+                uriString = String.format("%s/%s", COUCH_URI, dbName);
+            }
+            // otherwise build the URI up, but skip username/password from URL if they aren't there
+            // or we are doing cookie auth
+            else {
+                if (COOKIE_AUTH || COUCH_USERNAME == null || COUCH_PASSWORD == null) {
+                    uriString = String.format("%s://%s:%s/%s", HTTP_PROTOCOL, COUCH_HOST, COUCH_PORT, dbName);
+                } else {
+                    uriString = String.format("%s://%s:%s@%s:%s/%s", HTTP_PROTOCOL, COUCH_USERNAME, COUCH_PASSWORD, COUCH_HOST, COUCH_PORT, dbName);
+                }
+            }
+            CouchConfig config = new CouchConfig(new URI(uriString));
+            if (COOKIE_AUTH) {
+                ArrayList<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
+                ArrayList<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList<HttpConnectionResponseInterceptor>();
+                CookieInterceptor cookieInterceptor = new CookieInterceptor(COUCH_USERNAME, COUCH_PASSWORD);
+                requestInterceptors.add(cookieInterceptor);
+                responseInterceptors.add(cookieInterceptor);
+                config.setRequestInterceptors(requestInterceptors);
+                config.setResponseInterceptors(responseInterceptors);
+            }
+            return config;
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);
         }

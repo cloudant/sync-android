@@ -16,12 +16,14 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64OutputStreamFactory;
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.common.TestOptions;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.replication.ReplicationTestBase;
 import com.cloudant.sync.util.TestUtils;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -101,6 +103,9 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
     @Test
     public void buildRevisionFromMapValidMapWithAttachmentsDataExcluded() throws Exception {
 
+        Assume.assumeFalse("Not running test as 'buildRevisionFromMap' can't retrieve the " +
+                "attachment with cookie authentication enabled", TestOptions.COOKIE_AUTH);
+
         //lets the get the attachment encoded
 
         File file = TestUtils.loadFixture("fixture/bonsai-boston.jpg");
@@ -150,6 +155,9 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
 
     @Test
     public void buildRevisionFromMapValidMapWithAttachmentsDataExcludedNonWinningRev() throws Exception {
+
+        Assume.assumeFalse("Not running test as 'buildRevisionFromMap' can't retrieve the " +
+                "attachment with cookie authentication enabled", TestOptions.COOKIE_AUTH);
 
         //lets the get the attachment encoded
 
@@ -205,6 +213,9 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
 
     @Test
     public void buildRevisionFromMapValidMapWithTextAttachmentsDataExcluded() throws Exception {
+
+        Assume.assumeFalse("Not running test as 'buildRevisionFromMap' can't retrieve the " +
+                "attachment with cookie authentication enabled", TestOptions.COOKIE_AUTH);
 
         //lets the get the attachment encoded
 

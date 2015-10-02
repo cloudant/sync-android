@@ -86,6 +86,8 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         CouchConfig couchConfig = this.getCouchConfig(this.getDbName());
         pullReplication.source = couchConfig.getRootUri();
         pullReplication.target = this.datastore;
+        pullReplication.requestInterceptors.addAll(couchConfig.getRequestInterceptors());
+        pullReplication.responseInterceptors.addAll(couchConfig.getResponseInterceptors());
         return pullReplication;
     }
 
@@ -94,6 +96,8 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         CouchConfig couchConfig = this.getCouchConfig(this.getDbName());
         pushReplication.target = couchConfig.getRootUri();
         pushReplication.source = this.datastore;
+        pushReplication.requestInterceptors.addAll(couchConfig.getRequestInterceptors());
+        pushReplication.responseInterceptors.addAll(couchConfig.getResponseInterceptors());
         return pushReplication;
     }
 

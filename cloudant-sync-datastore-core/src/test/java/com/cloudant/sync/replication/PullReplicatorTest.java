@@ -15,9 +15,13 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.common.TestOptions;
+import com.cloudant.http.CookieInterceptor;
 
+import org.apache.http.cookie.Cookie;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -146,15 +150,22 @@ public class PullReplicatorTest extends ReplicationTestBase {
 
     @Test
     public void testRequestInterceptorsThroughBuilder() throws Exception {
+
         InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
 
         TestReplicationListener listener = new TestReplicationListener();
-        Replicator replicator = ReplicatorBuilder.pull()
+        ReplicatorBuilder replicatorBuilder = ReplicatorBuilder.pull()
                 .to(this.datastore)
                 .from(this.remoteDb.couchClient.getRootUri())
                 .addRequestInterceptors(interceptorCallCounter)
-                .addResponseInterceptors(interceptorCallCounter)
-                .build();
+                .addResponseInterceptors(interceptorCallCounter);
+        if (TestOptions.COOKIE_AUTH) {
+            CookieInterceptor ci = new CookieInterceptor(TestOptions.COUCH_USERNAME, TestOptions.COUCH_PASSWORD);
+            replicatorBuilder.addRequestInterceptors(ci);
+            replicatorBuilder.addResponseInterceptors(ci);
+        }
+        Replicator replicator = replicatorBuilder.build();
+
         replicator.getEventBus().register(listener);
         replicator.start();
 

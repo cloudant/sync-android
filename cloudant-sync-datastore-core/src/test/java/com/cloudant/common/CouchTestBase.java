@@ -50,18 +50,13 @@ public abstract class CouchTestBase {
         }
     }
 
-    private static final Boolean SPECIFIED_COUCH = Boolean.valueOf(
-            System.getProperty("test.with.specified.couch",Boolean.FALSE.toString()));
 
-    public static final Boolean IGNORE_COMPACTION = Boolean.valueOf(
-            System.getProperty("test.couch.ignore.compaction",Boolean.FALSE.toString()));
-
-    public static final Boolean IGNORE_AUTH_HEADERS = Boolean.valueOf(
-            System.getProperty("test.couch.ignore.auth.headers",Boolean.TRUE.toString()));
 
     public CouchConfig getCouchConfig(String db) {
 
-        if (SPECIFIED_COUCH) {
+        // setting COUCH_URI implies SPECIFIED_COUCH but means we are giving the full URI rather
+        // than the component parts
+        if (TestOptions.COUCH_URI != null || TestOptions.SPECIFIED_COUCH) {
             return SpecifiedCouch.defaultConfig(db);
         }
         else {

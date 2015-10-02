@@ -15,6 +15,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.common.TestOptions;
 import com.cloudant.mazha.ClientTestUtils;
 import com.cloudant.mazha.CouchClientTestBase;
 import com.cloudant.mazha.CouchDbInfo;
@@ -51,7 +52,10 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
     public void replicationFromCompactedDB() throws Exception{
         // if the test case is running against Cloudant, this test should not execute since
         // Cloudant returns 403 - Forbidden when attempting to call _compact
-        Assume.assumeTrue(!CouchClientTestBase.IGNORE_COMPACTION);
+        Assume.assumeFalse(TestOptions.IGNORE_COMPACTION);
+        // skip test if we are doing cookie auth, we don't have the interceptor chain to do it
+        // when we call ClientTestUtils.executeHttpPostRequest
+        Assume.assumeFalse(TestOptions.COOKIE_AUTH);
 
         String documentName;
         Bar bar = BarUtils.createBar(remoteDb, "Bob", 12);
@@ -72,7 +76,7 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
 
         URI postURI = new URI(couchClient.getRootUri().toString() + "/_compact");
 
-        Assert.assertEquals(ClientTestUtils.executeHttpPostRequest(postURI, ""), 202);
+        Assert.assertEquals(202, ClientTestUtils.executeHttpPostRequest(postURI, ""));
         CouchDbInfo info = couchClient.getDbInfo();
 
         while(info.isCompactRunning()) {
