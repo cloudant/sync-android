@@ -365,7 +365,7 @@ public class CouchClient  {
         URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
         HttpConnection connection = Http.PUT(doc, contentType);
         connection.setRequestBody(attachmentData);
-        this.execute(connection);
+        this.executeToInputStreamWithRetry(connection);
     }
 
     /**
