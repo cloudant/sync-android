@@ -12,6 +12,7 @@ package com.cloudant.http;
 
 import com.cloudant.common.CouchTestBase;
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.common.TestOptions;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.json.JSONHelper;
@@ -151,10 +152,9 @@ public class HttpTest extends CouchTestBase {
     @Test
     public void testCookieAuthWithoutRetry() throws IOException {
 
-        Assume.assumeFalse(IGNORE_AUTH_HEADERS);
+        Assume.assumeFalse(TestOptions.IGNORE_AUTH_HEADERS);
 
-        CookieInterceptor interceptor = new CookieInterceptor(System.getProperty("test.couch.username"),
-                System.getProperty("test.couch.password"));
+        CookieInterceptor interceptor = new CookieInterceptor(TestOptions.COUCH_USERNAME, TestOptions.COUCH_PASSWORD);
 
         CouchConfig config = getCouchConfig("cookie_test");
         HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),

@@ -153,26 +153,29 @@ directory of the app module.
 
 #### Testing using remote CouchDB Instance
 
-Certain tests need a running CouchDB instance, by default they use the local
-CouchDB. To run tests with a remote CouchDB, you need set the details of this
-CouchDB server, including access credentials: add the following to
-`gradle.properties` in the same folder as `build.gradle`:
+Certain tests need a running CouchDB instance, by default they use the
+local CouchDB.
+
+To run tests with a remote CouchDB, you need set the details of this
+CouchDB server, including access credentials. This can be done by
+adding options to a file named `gradle.properties` in the same folder
+as `build.gradle`, eg:
 
 ```
-systemProp.test.with.specified.couch=[true|false] # default false
 systemProp.test.couch.username=yourUsername
-systemProp.test.couch.password=yourPassword
-systemProp.test.couch.host=couchdbHost # default localhost
-systemProp.test.couch.port=couchdbPort # default 5984
-systemProp.test.couch.http=[http|https] # default 5984
-systemProp.test.couch.ignore.compaction=[true|false] # default false
-systemProp.test.couch.auth.headers=[true|false] # default false
+...
 ```
+
+Consult the [list of test options](#test-options) for details of all
+options available.
+
+It is also possible to pass in these options from the gradle command
+line by using the -D switch eg. `-Dtest.couch.username=yourUsername`
+
 Note: some tests need to be ignored based on the configuration of the CouchDB
 instance you are using or if you are running against Cloudant. For example
 if the compaction endpoint is unavailable eg., returns a 403 response,
-these tests should be disabled. You can add also properties using the -D command
-line switch eg. `-Dtest.with.specified.couch=true`
+these tests should be disabled.
 
 Your gradle.properties should NEVER be checked into git repo as it contains your CouchDB credentials.
 
@@ -238,3 +241,82 @@ where the SQLite native library lives.
 ```
 -ea -Dsqlite4java.library.path=native
 ```
+
+## Test Options
+
+### Options which describe how to access the remote CouchDB/Cloudant server
+
+`test.couch.uri`
+
+If specified, tests will run against an instance described by this
+URI.
+
+This will over-ride any of the other `test.couch` options given.  This
+URI can include all of the components necessary including username and
+password for basic auth.
+
+It is not necessary to set `test.with.specified.couch` to true in
+order to use this option.
+
+`test.with.specified.couch`
+
+If true, tests will run against an instance described by
+`test.couch.username`, `test.couch.password`, `test.couch.host`,
+`test.couch.port`, `test.couch.http` with default values supplied as
+appropriate.
+
+If false, tests will run against a local couch instance on the default
+port over http.
+
+`test.couch.username`
+
+If specified, tests will use this username to access the instance with
+basic auth.
+
+Alternatively, if `test.couch.use.cookies` is true, tests will use
+this username to refresh cookies.
+
+`test.couch.password`
+
+If specified, tests will use this password to access the instance with
+basic auth.
+
+Alternatively, if `test.couch.use.cookies` is true, tests will use
+this password to refresh cookies.
+
+`test.couch.host`
+
+If specified, tests will use this hostname or IP address to access the
+instance.
+
+Otherwise, a default value of "localhost" is used.
+
+`test.couch.port`
+
+If specified, tests will use this port to access the instance.
+
+Otherwise, a default value of 5984 is used.
+
+`test.couch.http`
+
+If specified, tests will use this protocol to access the
+instance. Valid values are "http" and "https".
+
+Otherwise, a default value of "http" is used.
+
+`test.couch.use.cookies`
+
+If true, use cookie authentication (via the HTTP interceptors) instead
+of basic authentication to access the instance.
+
+### Options which control whether we should ignore certain tests
+
+`test.couch.ignore.compaction`
+
+If true, do not run tests which expect a /_compact endpoint to
+exist. The Cloudant service does not expose this endpoint as
+compaction is performed automatically.
+
+`test.couch.ignore.auth.headers`
+
+If true, do not run tests like testCookieAuthWithoutRetry.
