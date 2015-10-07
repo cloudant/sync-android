@@ -19,7 +19,7 @@ import android.net.NetworkInfo;
  * you are using - e.g.:</p>
  * <pre>
  * public class MyWifiPeriodicReplicationReceiver
- *     extends WifiPeriodicReplicationReceiver<MyReplicationService> {
+ *     extends WifiPeriodicReplicationReceiver&lt;MyReplicationService&gt; {
  *
  *     public MyWifiPeriodicReplicationReceiver() {
  *         super(MyReplicationService.class);
