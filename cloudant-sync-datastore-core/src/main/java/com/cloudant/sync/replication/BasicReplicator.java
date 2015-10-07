@@ -22,9 +22,11 @@ import com.google.common.eventbus.Subscribe;
 
 class BasicReplicator implements Replicator {
 
+    public static final int NULL_ID = -1;
     protected final Replication replication;
     protected Thread strategyThread;
     protected ReplicationStrategy strategy;
+    protected int id = NULL_ID;
 
     // Writes need synchronising.
     private State state = null;
@@ -32,8 +34,13 @@ class BasicReplicator implements Replicator {
     private final EventBus eventBus = new EventBus();
 
     public BasicReplicator(Replication replication) {
+        this(replication, NULL_ID);
+    }
+
+    public BasicReplicator(Replication replication, int id) {
         this.replication = replication;
         this.state = State.PENDING;
+        this.id = id;
     }
 
     // method exists to be override for test purpose
@@ -145,5 +152,9 @@ class BasicReplicator implements Replicator {
      */
     public EventBus getEventBus() {
         return eventBus;
+    }
+
+    public int getId() {
+        return id;
     }
 }

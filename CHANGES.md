@@ -3,6 +3,8 @@
   [Http Interceptors](https://github.com/cloudant/sync-android/blob/master/doc/interceptors.md)
   for a code sample which shows how to add custom request headers
   using an HTTP Request Interceptor.
+- [NEW] Added replication policies, allowing users to easily create policies such as "Replicate
+   every 2 hours, only when on Wifi". See the [Replication Policies User Guide](REPLICATION_POLICIES.md).
 
 # 0.13.4 (2015-09-29)
 - [FIXED] Issue where HTTP Interceptors would not be executed for `_revs_diff`
