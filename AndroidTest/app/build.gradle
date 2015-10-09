@@ -53,8 +53,12 @@ android {
                 // TODO should these tests be skipped by marking them @RequiresDevice
                 exclude '**/ReplicationServiceTest*'
                 // some of these tests fail as follows:
-                // java.lang.OutOfMemoryError: Failed to allocate a 8204 byte allocation with 4194304 free bytes and 8MB until OOM; failed due to fragmentation (required continguous free 12288 bytes where largest contiguous free 8192 bytes)
-                exclude '**/KeyManagerTests/**'
+                // java.lang.OutOfMemoryError: Failed to allocate a
+                // 8204 byte allocation with 4194304 free bytes and
+                // 8MB until OOM; failed due to fragmentation
+                // (required continguous free 12288 bytes where
+                // largest contiguous free 8192 bytes)
+                exclude '**/KeyManagerTests*'
             }
         }
     }
