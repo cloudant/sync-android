@@ -43,10 +43,16 @@ android {
                             "$scriptLocation/../../cloudant-sync-datastore-android-encryption/src/main/java"]
         }
         androidTest {
-            java.srcDirs = ["$scriptLocation/../../cloudant-sync-datastore-core/src/test/java/",
-                            "$scriptLocation/../../cloudant-sync-datastore-android/src/test/java/",
-                            "$scriptLocation/../../cloudant-sync-datastore-android-encryption/src/test/java/"
-            ]
+            java {
+                srcDirs = ["$scriptLocation/../../cloudant-sync-datastore-core/src/test/java/",
+                           "$scriptLocation/../../cloudant-sync-datastore-android/src/test/java/",
+                           "$scriptLocation/../../cloudant-sync-datastore-android-encryption/src/test/java/"
+                           ]
+                // we would exclude these via categories but it doesn't like the android runner respects them
+                exclude '**/Unreliable*Test*'
+                // TODO should these tests be skipped by marking them @RequiresDevice
+                exclude '**/ReplicationServiceTest*'
+            }
         }
     }
 
