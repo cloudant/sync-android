@@ -52,10 +52,10 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
     public void replicationFromCompactedDB() throws Exception{
         // if the test case is running against Cloudant, this test should not execute since
         // Cloudant returns 403 - Forbidden when attempting to call _compact
-        Assume.assumeFalse(TestOptions.IGNORE_COMPACTION);
+        if(TestOptions.IGNORE_COMPACTION){return;}
         // skip test if we are doing cookie auth, we don't have the interceptor chain to do it
         // when we call ClientTestUtils.executeHttpPostRequest
-        Assume.assumeFalse(TestOptions.COOKIE_AUTH);
+        if(TestOptions.COOKIE_AUTH){return;}
 
         String documentName;
         Bar bar = BarUtils.createBar(remoteDb, "Bob", 12);

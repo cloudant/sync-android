@@ -56,6 +56,11 @@ android {
         exclude 'META-INF/NOTICE.txt'
 
     }
+
+    adbOptions {
+        timeOutInMs 30*1000 // 30 seconds in ms.
+    }
+
 }
 
 dependencies {
