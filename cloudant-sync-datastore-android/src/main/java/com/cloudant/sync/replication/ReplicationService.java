@@ -13,7 +13,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.v4.content.WakefulBroadcastReceiver;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -44,9 +43,7 @@ public abstract class ReplicationService extends Service
     // It's safest to assume we could be transferring a large amount of data in a
     // replication, so we want a high performance WiFi connection even though it
     // requires more power.
-    private final WifiManager.WifiLock mWifiLock =
-            ((WifiManager) getSystemService(Context.WIFI_SERVICE)).
-                    createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "ReplicationService");
+    private WifiManager.WifiLock mWifiLock;
 
     private OperationStartedListener mOperationStartedListener;
 
@@ -142,6 +139,12 @@ public abstract class ReplicationService extends Service
     public void onCreate() {
         super.onCreate();
 
+        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        if (wifiManager != null) {
+            mWifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+                "ReplicationService");
+        }
+
         // Create a background priority thread to so we don't block the process's main thread.
         HandlerThread thread = new HandlerThread("ServiceStartArguments",
             android.os.Process.THREAD_PRIORITY_BACKGROUND);
@@ -214,9 +217,11 @@ public abstract class ReplicationService extends Service
         if (mReplicationPolicyManager != null) {
             // Make sure we've got a WiFi lock so that the wifi isn't switched off while we're
             // trying to replicate.
-            synchronized (mWifiLock) {
-                if (!mWifiLock.isHeld()) {
-                    mWifiLock.acquire();
+            if (mWifiLock != null) {
+                synchronized (mWifiLock) {
+                    if (!mWifiLock.isHeld()) {
+                        mWifiLock.acquire();
+                    }
                 }
             }
             mReplicationPolicyManager.startReplications();
@@ -224,9 +229,11 @@ public abstract class ReplicationService extends Service
     }
 
     private void releaseWifiLockIfHeld() {
-        synchronized (mWifiLock) {
-            if (mWifiLock.isHeld()) {
-                mWifiLock.release();
+        if (mWifiLock != null) {
+            synchronized (mWifiLock) {
+                if (mWifiLock.isHeld()) {
+                    mWifiLock.release();
+                }
             }
         }
     }

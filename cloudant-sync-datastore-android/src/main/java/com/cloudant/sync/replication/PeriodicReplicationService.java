@@ -259,10 +259,11 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
         long initialInterval = getNextAlarmDueClockTime() - System.currentTimeMillis();
         if (initialInterval < 0) {
             initialInterval = 0;
+            setNextAlarmDue(initialInterval);
         } else if (initialInterval > getIntervalInSeconds() * MILLISECONDS_IN_SECOND) {
             initialInterval = getIntervalInSeconds() * MILLISECONDS_IN_SECOND;
+            setNextAlarmDue(initialInterval);
         }
-        setNextAlarmDue(initialInterval);
     }
 
     /**
