@@ -105,10 +105,10 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
             verify(mMockPreferencesEditor, times(2)).putLong(captorPrefKeys.capture(), captorPrefValues.capture());
             List<String> prefsKeys = captorPrefKeys.getAllValues();
             List<Long> prefsValues = captorPrefValues.getAllValues();
-            assertEquals("alarmDueElapsed", prefsKeys.get(0));
+            assertEquals("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed", prefsKeys.get(0));
             assertTrue("Alarm elapsed time not within " + ALARM_TOLERANCE_MS + "ms of current time",
                 Math.abs(SystemClock.elapsedRealtime() - prefsValues.get(0)) < ALARM_TOLERANCE_MS);
-            assertEquals("alarmDueClock", prefsKeys.get(1));
+            assertEquals("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueClock", prefsKeys.get(1));
             assertTrue("Alarm clock time not within " + ALARM_TOLERANCE_MS + "ms of current time",
                     Math.abs(System.currentTimeMillis() - prefsValues.get(1)) < ALARM_TOLERANCE_MS);
         } catch (InterruptedException e) {
@@ -129,7 +129,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         final CountDownLatch latch = new CountDownLatch(1);
 
         long timeReturned = System.currentTimeMillis() + ((1000 * service.getUnboundIntervalInSeconds()) / 2);
-        when(mMockPreferences.getLong("alarmDueClock", 0)).thenReturn(timeReturned);
+        when(mMockPreferences.getLong("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueClock", 0)).thenReturn(timeReturned);
 
         service.setOperationStartedListener(new PeriodicReplicationService
                 .OperationStartedListener() {
@@ -166,7 +166,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         final CountDownLatch latch = new CountDownLatch(1);
 
         long timeReturned = System.currentTimeMillis() + ((1000 * service.getUnboundIntervalInSeconds()) * 10);
-        when(mMockPreferences.getLong("alarmDueClock", 0)).thenReturn(timeReturned);
+        when(mMockPreferences.getLong("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueClock", 0)).thenReturn(timeReturned);
 
         service.setOperationStartedListener(new PeriodicReplicationService
                 .OperationStartedListener() {
@@ -186,12 +186,12 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
             verify(mMockPreferencesEditor, times(2)).putLong(captorPrefKeys.capture(), captorPrefValues.capture());
             List<String> prefsKeys = captorPrefKeys.getAllValues();
             List<Long> prefsValues = captorPrefValues.getAllValues();
-            assertEquals("alarmDueElapsed", prefsKeys.get(0));
+            assertEquals("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed", prefsKeys.get(0));
             long expectedElapsedTime = SystemClock.elapsedRealtime() + (1000 * service.getUnboundIntervalInSeconds());
             long expectedRealTime = System.currentTimeMillis() + (1000 * service.getUnboundIntervalInSeconds());
             assertTrue("Alarm elapsed time not within " + ALARM_TOLERANCE_MS + "ms of expected time",
                 Math.abs(expectedElapsedTime - prefsValues.get(0)) < ALARM_TOLERANCE_MS);
-            assertEquals("alarmDueClock", prefsKeys.get(1));
+            assertEquals("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueClock", prefsKeys.get(1));
             assertTrue("Alarm clock time not within " + ALARM_TOLERANCE_MS + "ms of expected time",
                 Math.abs(expectedRealTime - prefsValues.get(1)) < ALARM_TOLERANCE_MS);
         } catch (InterruptedException e) {
@@ -212,9 +212,9 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         final CountDownLatch latch = new CountDownLatch(1);
 
         long timeReturned = SystemClock.elapsedRealtime();
-        when(mMockPreferences.getBoolean("periodicReplicationsActive", false)).thenReturn(false);
+        when(mMockPreferences.getBoolean("com.cloudant.sync.replication.PeriodicReplicationService.periodicReplicationsActive", false)).thenReturn(false);
         when(mMockContext.getSystemService(Context.ALARM_SERVICE)).thenReturn(mMockAlarmManager);
-        when(mMockPreferences.getLong("alarmDueElapsed", 0)).thenReturn(timeReturned);
+        when(mMockPreferences.getLong("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed", 0)).thenReturn(timeReturned);
 
         service.setOperationStartedListener(new PeriodicReplicationService
                 .OperationStartedListener() {
@@ -234,7 +234,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
             verify(mMockPreferencesEditor, times(1)).putBoolean(captorPrefKeys.capture(), captorPrefValues.capture());
             String prefsKey = captorPrefKeys.getValue();
             Boolean prefsValue = captorPrefValues.getValue();
-            assertEquals("periodicReplicationsActive", prefsKey);
+            assertEquals("com.cloudant.sync.replication.PeriodicReplicationService.periodicReplicationsActive", prefsKey);
             assertTrue("Alarm manager should be set in running state", prefsValue);
 
 
@@ -266,7 +266,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         service.onCreate();
         final CountDownLatch latch = new CountDownLatch(1);
 
-        when(mMockPreferences.getBoolean("periodicReplicationsActive", false)).thenReturn(true);
+        when(mMockPreferences.getBoolean("com.cloudant.sync.replication.PeriodicReplicationService.periodicReplicationsActive", false)).thenReturn(true);
 
         service.setOperationStartedListener(new PeriodicReplicationService
                 .OperationStartedListener() {
@@ -299,9 +299,9 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         final CountDownLatch latch = new CountDownLatch(1);
 
         long timeReturned = SystemClock.elapsedRealtime();
-        when(mMockPreferences.getBoolean("periodicReplicationsActive", false)).thenReturn(true);
+        when(mMockPreferences.getBoolean("com.cloudant.sync.replication.PeriodicReplicationService.periodicReplicationsActive", false)).thenReturn(true);
         when(mMockContext.getSystemService(Context.ALARM_SERVICE)).thenReturn(mMockAlarmManager);
-        when(mMockPreferences.getLong("alarmDueElapsed", 0)).thenReturn(timeReturned);
+        when(mMockPreferences.getLong("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed", 0)).thenReturn(timeReturned);
 
         service.setOperationStartedListener(new PeriodicReplicationService
                 .OperationStartedListener() {
@@ -321,7 +321,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
             verify(mMockPreferencesEditor, times(1)).putBoolean(captorPrefKeys.capture(), captorPrefValues.capture());
             String prefsKey = captorPrefKeys.getValue();
             Boolean prefsValue = captorPrefValues.getValue();
-            assertEquals("periodicReplicationsActive", prefsKey);
+            assertEquals("com.cloudant.sync.replication.PeriodicReplicationService.periodicReplicationsActive", prefsKey);
             assertFalse("Alarm manager should be set in stopped state", prefsValue);
 
             verify(mMockAlarmManager, times(1)).cancel(Mockito.any(PendingIntent.class));
@@ -343,9 +343,9 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         final CountDownLatch latch = new CountDownLatch(1);
 
         long timeReturned = SystemClock.elapsedRealtime();
-        when(mMockPreferences.getBoolean("periodicReplicationsActive", false)).thenReturn(false);
+        when(mMockPreferences.getBoolean("com.cloudant.sync.replication.PeriodicReplicationService.periodicReplicationsActive", false)).thenReturn(false);
         when(mMockContext.getSystemService(Context.ALARM_SERVICE)).thenReturn(mMockAlarmManager);
-        when(mMockPreferences.getLong("alarmDueElapsed", 0)).thenReturn(timeReturned);
+        when(mMockPreferences.getLong("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed", 0)).thenReturn(timeReturned);
 
         service.setOperationStartedListener(new PeriodicReplicationService
                 .OperationStartedListener() {
@@ -377,11 +377,12 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         Intent intent = new Intent(mMockContext, TestReplicationService.class);
         intent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, PeriodicReplicationService.COMMAND_START_REPLICATION);
         service.setReplicationPolicyManager(mMockReplicationPolicyManager);
-        service.onCreate();
-        final CountDownLatch latch = new CountDownLatch(1);
 
         when(mMockContext.getSystemService(Context.WIFI_SERVICE)).thenReturn(mMockWifiManager);
         when(mMockWifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "ReplicationService")).thenReturn(mMockWifiLock);
+
+        service.onCreate();
+        final CountDownLatch latch = new CountDownLatch(1);
 
         service.setOperationStartedListener(new PeriodicReplicationService
                 .OperationStartedListener() {
@@ -403,10 +404,10 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
             verify(mMockPreferencesEditor, times(2)).putLong(captorPrefKeys.capture(), captorPrefValues.capture());
             List<String> prefsKeys = captorPrefKeys.getAllValues();
             List<Long> prefsValues = captorPrefValues.getAllValues();
-            assertEquals("alarmDueElapsed", prefsKeys.get(0));
+            assertEquals("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed", prefsKeys.get(0));
             assertTrue("Alarm elapsed time not within " + ALARM_TOLERANCE_MS + "ms of current time",
                 Math.abs(SystemClock.elapsedRealtime() + (service.getUnboundIntervalInSeconds() * 1000) - prefsValues.get(0)) < ALARM_TOLERANCE_MS);
-            assertEquals("alarmDueClock", prefsKeys.get(1));
+            assertEquals("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueClock", prefsKeys.get(1));
             assertTrue("Alarm clock time not within " + ALARM_TOLERANCE_MS + "ms of current time",
                 Math.abs(System.currentTimeMillis() + (service.getUnboundIntervalInSeconds() * 1000) - prefsValues.get(1)) < ALARM_TOLERANCE_MS);
         } catch (InterruptedException e) {
@@ -422,12 +423,13 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
     public void testOnStartCommandStopReplication() {
         PeriodicReplicationService service = new TestReplicationService(mMockContext);
         service.setReplicationPolicyManager(mMockReplicationPolicyManager);
-        service.onCreate();
-        final CountDownLatch latch = new CountDownLatch(2);
 
         when(mMockContext.getSystemService(Context.WIFI_SERVICE)).thenReturn(mMockWifiManager);
         when(mMockWifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "ReplicationService")).thenReturn(mMockWifiLock);
         when(mMockWifiLock.isHeld()).thenReturn(true);
+
+        service.onCreate();
+        final CountDownLatch latch = new CountDownLatch(2);
 
         service.setOperationStartedListener(new PeriodicReplicationService
                 .OperationStartedListener() {
