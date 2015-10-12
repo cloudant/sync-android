@@ -50,8 +50,6 @@ android {
                            ]
                 // we would exclude these via categories but it doesn't like the android runner respects them
                 exclude '**/Unreliable*Test*'
-                // TODO should these tests be skipped by marking them @RequiresDevice
-                exclude '**/ReplicationServiceTest*'
                 // some of these tests fail as follows:
                 // java.lang.OutOfMemoryError: Failed to allocate a
                 // 8204 byte allocation with 4194304 free bytes and
