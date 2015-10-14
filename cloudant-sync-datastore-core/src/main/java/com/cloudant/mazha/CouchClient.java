@@ -25,6 +25,7 @@ import com.cloudant.http.HttpConnection;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.mazha.json.JSONHelper;
+import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
@@ -541,7 +542,7 @@ public class CouchClient  {
         }
     }
 
-    InputStream bulkInputStream(List<?> objects) {
+    private InputStream bulkPostInputStream(List<?> objects) {
         Preconditions.checkNotNull(objects, "Object list must not be null.");
         String newEditsVal = "\"new_edits\": false, ";
         URI uri = this.uriHelper.bulkDocsUri();
@@ -552,14 +553,14 @@ public class CouchClient  {
         return this.executeToInputStreamWithRetry(connection);
     }
 
-    public List<Response> bulk(Object... objects) {
-        return bulk(Arrays.asList(objects));
+    public List<Response> bulkPost(Object... objects) {
+        return bulkPost(Arrays.asList(objects));
     }
 
-    public List<Response> bulk(List<?> objects) {
+    public List<Response> bulkPost(List<?> objects) {
         InputStream is = null;
         try {
-            is = bulkInputStream(objects);
+            is = bulkPostInputStream(objects);
             return jsonHelper.fromJsonToList(new InputStreamReader(is), new TypeReference<List<Response>>() {});
         } finally {
             closeQuietly(is);
@@ -573,8 +574,8 @@ public class CouchClient  {
      * @param serializedDocs array of JSON documents
      * @return list of Response
      */
-    public List<Response> bulkSerializedDocs(String... serializedDocs) {
-        return bulkSerializedDocs(Arrays.asList(serializedDocs));
+    public List<Response> bulkPostSerializedDocs(String... serializedDocs) {
+        return bulkPostSerializedDocs(Arrays.asList(serializedDocs));
     }
 
     /**
@@ -584,7 +585,7 @@ public class CouchClient  {
      * @param serializedDocs list of JSON documents
      * @return list of Response
      */
-    public List<Response> bulkSerializedDocs(List<String> serializedDocs) {
+    public List<Response> bulkPostSerializedDocs(List<String> serializedDocs) {
         Preconditions.checkNotNull(serializedDocs, "Serialized doc list must not be null.");
         String payload = createBulkSerializedDocsPayload(serializedDocs);
         URI uri = this.uriHelper.bulkDocsUri();
@@ -668,5 +669,13 @@ public class CouchClient  {
         public Set<String> possible_ancestors;
         public Set<String> missing;
     }
+
+    public Iterable<DocumentRevsList> bulkGet(List<BulkGetRequest> request) {
+        // not implemented yet
+        // the idea here is to provide an iterator which will pull more data from the
+        // response stream each time next() is called
+        return null;
+    }
+
 
 }

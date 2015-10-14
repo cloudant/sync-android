@@ -182,7 +182,7 @@ public class BarUtils {
         Map<String, Object> docToUpdate2 = updateDocumentWithRevisionHistory(db.getCouchClient(), bar.getId(), rev2Star, revs2, "Jerry");
         Map<String, Object> docToUpdate3 = updateDocumentWithRevisionHistory(db.getCouchClient(), bar.getId(), rev2StarStar, revs3, "Alex");
 
-        List<Response> responses = db.getCouchClient().bulk(docToUpdate1, docToUpdate2, docToUpdate3);
+        List<Response> responses = db.getCouchClient().bulkPost(docToUpdate1, docToUpdate2, docToUpdate3);
 
         Assert.assertThat("Responses list", responses.size(), is(equalTo(0)));
 

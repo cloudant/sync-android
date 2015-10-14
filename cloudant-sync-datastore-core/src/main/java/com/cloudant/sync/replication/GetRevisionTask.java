@@ -18,8 +18,7 @@ import com.cloudant.common.RetriableTask;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.google.common.base.Preconditions;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
@@ -57,55 +56,50 @@ import java.util.logging.Logger;
  *         { "rev": "26-30722da17ad35cf1860f126dba391d67" }
  *       ]
  */
-class GetRevisionTask implements Callable<DocumentRevsList> {
+class GetRevisionTask implements Callable<Iterable<DocumentRevsList>> {
 
     private static final String LOG_TAG = "GetRevisionTask";
     private static final Logger logger = Logger.getLogger(GetRevisionTask.class.getCanonicalName());
 
-    private String documentId;
-    private Collection<String> openRevisions;
-    private Collection<String> attsSince;
-    private boolean pullAttachmentsInline;
     CouchDB sourceDb;
+    List<BulkGetRequest> requests;
+    private boolean pullAttachmentsInline;
 
-    public static Callable<DocumentRevsList> createGetRevisionTask(CouchDB sourceDb,
-                                                                   String docId,
-                                                                   Collection<String> openRevisions,
-                                                                   Collection<String> attsSince,
+    public static Callable<Iterable<DocumentRevsList>> createGetRevisionTask(CouchDB sourceDb,
+                                                                   List<BulkGetRequest> requests,
                                                                    boolean pullAttachmentsInline) {
-        GetRevisionTask task = new GetRevisionTask(sourceDb, docId, openRevisions, attsSince, pullAttachmentsInline);
-        return new RetriableTask<DocumentRevsList>(task);
+        GetRevisionTask task = new GetRevisionTask(sourceDb, requests, pullAttachmentsInline);
+        return new RetriableTask<Iterable<DocumentRevsList>>(task);
     }
 
    public GetRevisionTask(CouchDB sourceDb,
-                          String docId, Collection<String> openRevisions,
-                          Collection<String> attsSince,
+                          List<BulkGetRequest> requests,
                           boolean pullAttachmentsInline) {
-        Preconditions.checkNotNull(docId, "docId cannot be null");
-        Preconditions.checkNotNull(openRevisions, "revId cannot be null");
-        Preconditions.checkNotNull(sourceDb, "sourceDb cannot be null");
+       Preconditions.checkNotNull(sourceDb, "sourceDb cannot be null");
+       Preconditions.checkNotNull(requests, "requests cannot be null");
+       for(BulkGetRequest request : requests) {
+           Preconditions.checkNotNull(request.id, "id cannot be null");
+           Preconditions.checkNotNull(request.revs, "revs cannot be null");
+       }
 
-        this.documentId = docId;
-        this.openRevisions = openRevisions;
-        this.sourceDb = sourceDb;
-        this.attsSince = attsSince;
-        this.pullAttachmentsInline = pullAttachmentsInline;
+       this.sourceDb = sourceDb;
+       this.requests = requests;
+       this.pullAttachmentsInline = pullAttachmentsInline;
     }
 
     @Override
-    public DocumentRevsList call() throws Exception {
-        logger.finer("Fetching document: " + this.documentId);
-        return new DocumentRevsList(this.sourceDb.getRevisions(documentId,
-                openRevisions,
-                attsSince,
-                pullAttachmentsInline));
+    public Iterable<DocumentRevsList> call() throws Exception {
+        Iterable<DocumentRevsList> revs = this.sourceDb.bulkGetRevisions(requests,
+                pullAttachmentsInline);
+        return revs;
     }
 
     @Override
     public String toString() {
-        StringBuilder s = new StringBuilder("GetRevisionTask: ")
-                .append("{ documentId : \"").append(this.documentId).append("\", ")
-                .append("openRevisions : ").append(Arrays.asList(this.openRevisions)).append(" }");
-        return s.toString();
+        return "GetRevisionTask{" +
+                "sourceDb=" + sourceDb +
+                ", requests=" + requests +
+                ", pullAttachmentsInline=" + pullAttachmentsInline +
+                '}';
     }
 }

@@ -69,18 +69,24 @@ public class GetRevisionTaskTest {
         ArrayList<String> revIds = new ArrayList<String>();
         revIds.add(revId);
         ArrayList<String> attsSince = new ArrayList<String>();
+        // bulk get returns a list of lists...
+        List<DocumentRevsList> drll = new ArrayList<DocumentRevsList>();
+        drll.add(new DocumentRevsList(documentRevs));
+
+        List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
+        requests.add(new BulkGetRequest(docId, revIds, attsSince));
 
         // stubs
-        when(sourceDB.getRevisions(docId, revIds, attsSince, pullAttachmentsInline)).thenReturn(documentRevs);
+        when(sourceDB.bulkGetRevisions(requests, pullAttachmentsInline)).thenReturn(drll);
 
         // exec
-        GetRevisionTask task = new GetRevisionTask(sourceDB, docId, revIds, attsSince, pullAttachmentsInline);
-        DocumentRevsList actualDocumentRevs = task.call();
+        GetRevisionTask task = new GetRevisionTask(sourceDB, requests, pullAttachmentsInline);
+        Iterable<DocumentRevsList> actualDocumentRevs = task.call();
 
         // verify
-        verify(sourceDB).getRevisions(docId, revIds, attsSince, pullAttachmentsInline);
+        verify(sourceDB).bulkGetRevisions(requests, pullAttachmentsInline);
 
-        Assert.assertEquals(expected, actualDocumentRevs.get(0).getRevisions().getIds());
+        Assert.assertEquals(expected, actualDocumentRevs.iterator().next().get(0).getRevisions().getIds());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -94,11 +100,14 @@ public class GetRevisionTaskTest {
         revIds.add(revId);
         ArrayList<String> attsSince = new ArrayList<String>();
 
+        List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
+        requests.add(new BulkGetRequest(docId, revIds, attsSince));
+
         // stubs
-        when(sourceDB.getRevisions(docId, revIds, attsSince, pullAttachmentsInline)).thenThrow(IllegalArgumentException.class);
+        when(sourceDB.bulkGetRevisions(requests, pullAttachmentsInline)).thenThrow(IllegalArgumentException.class);
 
         //exec
-        GetRevisionTask task = new GetRevisionTask(sourceDB, docId, revIds, attsSince, pullAttachmentsInline);
+        GetRevisionTask task = new GetRevisionTask(sourceDB, requests, pullAttachmentsInline);
         task.call();
     }
 
@@ -108,14 +117,17 @@ public class GetRevisionTaskTest {
         ArrayList<String> revIds = new ArrayList<String>();
         revIds.add("revId");
         ArrayList<String> attsSince = new ArrayList<String>();
-        new GetRevisionTask(sourceDB, null, revIds, attsSince, pullAttachmentsInline);
+        List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
+        requests.add(new BulkGetRequest(null, revIds, attsSince));
+        new GetRevisionTask(sourceDB, requests, pullAttachmentsInline);
     }
 
     @Test(expected = NullPointerException.class)
     public void test_null_revId() {
         CouchDB sourceDB = mock(CouchDB.class);
-        // The cast is to get rid of a compiler warning
-        new GetRevisionTask(sourceDB, "devId", null, null, pullAttachmentsInline);
+        List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
+        requests.add(new BulkGetRequest("docId", null, null));
+        new GetRevisionTask(sourceDB, requests, pullAttachmentsInline);
     }
 
     @Test(expected = NullPointerException.class)
@@ -123,6 +135,8 @@ public class GetRevisionTaskTest {
         ArrayList<String> revIds = new ArrayList<String>();
         revIds.add("revId");
         ArrayList<String> attsSince = new ArrayList<String>();
-        new GetRevisionTask(null, "docId", revIds, attsSince, pullAttachmentsInline);
+        List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
+        requests.add(new BulkGetRequest("docId", revIds, attsSince));
+        new GetRevisionTask(null, requests, pullAttachmentsInline);
     }
 }

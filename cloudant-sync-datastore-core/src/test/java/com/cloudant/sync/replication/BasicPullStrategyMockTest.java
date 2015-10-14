@@ -20,6 +20,7 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.OkOpenRevision;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.mazha.json.JSONHelper;
+import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.util.TestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.eventbus.Subscribe;
@@ -170,29 +171,26 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 JSONHelper jsonHelper = new JSONHelper();
-                FileReader fr = new FileReader(TestUtils.loadFixture("fixture/testReplicationDocWithEmptyId_changes.json"));
+                FileReader fr = new FileReader(TestUtils.loadFixture
+                        ("fixture/testReplicationDocWithEmptyId_changes.json"));
                 return jsonHelper.fromJson(fr, ChangesResult.class);
             }
         });
         when(mockRemoteDb.exists()).thenReturn(true);
-        Collection<String> revs = new ArrayList<String>();
-        revs.add("1-bd42b942b8b672f0289cf3cd1f67044c");
-        when(mockRemoteDb.getRevisions("", revs, new HashSet<String>(), false)).then(new Answer<Object>() {
+        when(mockRemoteDb.bulkGetRevisions((List<BulkGetRequest>)anyObject(), eq(false))).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-
-                return loadOpenRevsResponseFromFixture("testReplicationDocWithEmptyId_open_revs_1.json");
-
-            }
-        });
-        revs = new ArrayList<String>();
-        revs.add("1-13d33701a0954729ad029adf8fdc5a04");
-        when(mockRemoteDb.getRevisions("4d3b3f01362649d79b31d9092799a7e0", revs, new HashSet<String>(),false)).then(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-
-                return loadOpenRevsResponseFromFixture("fixture/testReplicationDocWithEmptyId_open_revs_2.json");
-
+                List<BulkGetRequest> requests = ((List<BulkGetRequest>)invocation.getArguments()[0]);
+                System.out.println(requests.get(0).id);
+                if (requests.get(0).id.equals("")) {
+                    // well this will never get called with "" because empty ids get skipped - should we fail?
+                    return loadOpenRevsResponseFromFixture("fixture/testReplicationDocWithEmptyId_open_revs_1.json");
+                }
+                else if (requests.get(0).id.equals("4d3b3f01362649d79b31d9092799a7e0")) {
+                    return loadOpenRevsResponseFromFixture("fixture/testReplicationDocWithEmptyId_open_revs_2.json");
+                }
+                System.out.println("This shouldn't happen");
+                return null;
             }
         });
 
@@ -220,7 +218,7 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         }
     }
 
-    private List<DocumentRevs> loadOpenRevsResponseFromFixture(String fixturePath) throws Exception{
+    private Iterable<DocumentRevsList> loadOpenRevsResponseFromFixture(String fixturePath) throws Exception{
         JSONHelper helper = new JSONHelper();
         FileReader fileReader = new FileReader(TestUtils.loadFixture(fixturePath));
         List<OpenRevision> openRevs = helper.fromJson(fileReader,
@@ -235,7 +233,9 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
             }
         }
 
-        return documentRevs;
+        ArrayList<DocumentRevsList> revsList = new ArrayList<DocumentRevsList>();
+        revsList.add(new DocumentRevsList(documentRevs));
+        return revsList;
     }
 
 }

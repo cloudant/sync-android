@@ -115,7 +115,7 @@ public class ClientTestUtils {
                 "Jerry");
         Map<String, Object> docToUpdate3 = updateDocumentWithRevisionHistory(client, res.getId(), rev2StarStar, revs3, "Alex");
 
-        List<Response> responses = client.bulk(docToUpdate1, docToUpdate2, docToUpdate3);
+        List<Response> responses = client.bulkPost(docToUpdate1, docToUpdate2, docToUpdate3);
 
         Assert.assertThat("Responses list", responses.size(), is(equalTo(0)));
 
@@ -155,7 +155,7 @@ public class ClientTestUtils {
         Map<String, Object> revs2 = getRevisionHistory(rev2Star, rev1Star);
 
         Map<String, Object> docToUpdate2 = updateDocumentWithRevisionHistory(client, res.getId(), rev2Star, revs2, "Jerry");
-        List<Response> responses = client.bulk(docToUpdate1, docToUpdate2);
+        List<Response> responses = client.bulkPost(docToUpdate1, docToUpdate2);
 
         Assert.assertThat("Responses list", responses.size(), is(equalTo(0)));
         return new String[]{rev3, rev2Star};

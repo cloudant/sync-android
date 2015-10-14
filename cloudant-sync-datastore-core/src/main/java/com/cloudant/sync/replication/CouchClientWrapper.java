@@ -24,13 +24,12 @@ import com.cloudant.mazha.OpenRevision;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -123,6 +122,34 @@ public class CouchClientWrapper implements CouchDB {
         }
     }
 
+    public Iterable<DocumentRevsList> bulkGetRevisions(List<BulkGetRequest> requests,
+                                           boolean pullAttachmentsInline) {
+        // for now, we don't have the code to support bulk on the server
+        boolean serverSupportsBulk = false;
+        if (serverSupportsBulk) {
+            List<com.cloudant.mazha.BulkGetRequest> splitRequests = new ArrayList<com.cloudant.mazha.BulkGetRequest>();
+            // split the requests out
+            for (BulkGetRequest request : requests) {
+                for (String rev : request.revs) {
+                    com.cloudant.mazha.BulkGetRequest splitRequest = new com.cloudant.mazha.BulkGetRequest();
+                    splitRequest.id = request.id;
+                    splitRequest.rev = rev;
+                    splitRequest.atts_since = request.atts_since;
+                    splitRequests.add(splitRequest);
+                }
+            }
+            return couchClient.bulkGet(splitRequests);
+        } else {
+            // a list of lists, because this is a bulk request
+            List<DocumentRevsList> returnDocs = new ArrayList<DocumentRevsList>();
+            for (BulkGetRequest request : requests) {
+                returnDocs.add(new DocumentRevsList(getRevisions(request.id, request.revs, request
+                        .atts_since, pullAttachmentsInline)));
+            }
+            return returnDocs;
+        }
+    }
+
     /**
      * For each open revision, there should be a response of <code>DocumentRevs</code> returned.
      *
@@ -205,7 +232,7 @@ public class CouchClientWrapper implements CouchDB {
             allObjs.add(obj.asMap());
         }
 
-        List<Response> responses = couchClient.bulk(allObjs);
+        List<Response> responses = couchClient.bulkPost(allObjs);
         for (Response r : responses) {
             logger.info(String.format("Response: %s",r));
         }
@@ -218,7 +245,7 @@ public class CouchClientWrapper implements CouchDB {
             return;
         }
 
-        List<Response> responses = couchClient.bulkSerializedDocs(serializedDocs);
+        List<Response> responses = couchClient.bulkPostSerializedDocs(serializedDocs);
         if(responses != null && responses.size() > 0) {
             logger.severe(String.format("Unknown bulk API error: %s for input: %s",responses,serializedDocs));
             throw new RuntimeException("Unknown bulk api error");

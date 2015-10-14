@@ -19,6 +19,7 @@ import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 
@@ -55,4 +56,8 @@ interface CouchDB {
     List<Response> putMultiparts(List<MultipartAttachmentWriter> multiparts);
     Map<String, CouchClient.MissingRevisions> revsDiff(Map<String, Set<String>> revisions);
     UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType, String encoding);
+
+    Iterable<DocumentRevsList> bulkGetRevisions(List<BulkGetRequest> requests,
+                                                   boolean pullAttachmentsInline);
+
 }

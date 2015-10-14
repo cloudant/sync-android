@@ -269,14 +269,16 @@ class BasicPullStrategy implements ReplicationStrategy {
 
             if (this.cancel) { break; }
 
-            List<Callable<DocumentRevsList>> tasks = createTasks(batch, missingRevisions);
+            Callable<Iterable<DocumentRevsList>> tasks = createTask(batch, missingRevisions);
             try {
-                List<Future<DocumentRevsList>> futures = executor.invokeAll(tasks);
-                for(Future<DocumentRevsList> future : futures) {
-                    DocumentRevsList result = future.get();
+                Future<Iterable<DocumentRevsList>> future = executor.submit(tasks);
 
+                Iterable<DocumentRevsList> result = future.get();
+                for (DocumentRevsList revsList : result) {
                     // We promise not to insert documents after cancel is set
-                    if (this.cancel) { break; }
+                    if (this.cancel) {
+                        break;
+                    }
 
                     // attachments, keyed by docId and revId, so that
                     // we can add the attachments to the correct leaf
@@ -286,14 +288,14 @@ class BasicPullStrategy implements ReplicationStrategy {
                     // now put together a list of attachments we need to download
                     if (!config.pullAttachmentsInline) {
                         try {
-                            for (DocumentRevs documentRevs : result) {
+                            for (DocumentRevs documentRevs : revsList) {
                                 Map<String, Object> attachments = documentRevs.getAttachments();
                                 // keep track of attachments we are going to prepare
                                 ArrayList<PreparedAttachment> preparedAtts = new ArrayList<PreparedAttachment>();
                                 atts.put(new String[]{documentRevs.getId(), documentRevs.getRev()}, preparedAtts);
 
                                 for (String attachmentName : attachments.keySet()) {
-                                    Map attachmentMetadata = (Map)attachments.get(attachmentName);
+                                    Map attachmentMetadata = (Map) attachments.get(attachmentName);
                                     int revpos = (Integer) attachmentMetadata.get("revpos");
                                     String contentType = (String) attachmentMetadata.get("content_type");
                                     String encoding = (String) attachmentMetadata.get("encoding");
@@ -313,13 +315,13 @@ class BasicPullStrategy implements ReplicationStrategy {
                                         String revId = String.valueOf(revpos) + "-" + revs.getIds().get(offset);
                                         try {
                                             BasicDocumentRevision dr = this.targetDb.getDbCore().getDocument(documentRevs.getId(), revId);
-                                                Attachment a = this.targetDb.getDbCore()
-                                                        .getAttachment(dr, attachmentName);
-                                                if (a != null) {
-                                                    // skip attachment, already got it
-                                                    continue;
-                                                }
-                                        } catch (DocumentNotFoundException e){
+                                            Attachment a = this.targetDb.getDbCore()
+                                                    .getAttachment(dr, attachmentName);
+                                            if (a != null) {
+                                                // skip attachment, already got it
+                                                continue;
+                                            }
+                                        } catch (DocumentNotFoundException e) {
                                             //do nothing, we may not have the document yet
                                         }
                                     }
@@ -341,9 +343,10 @@ class BasicPullStrategy implements ReplicationStrategy {
                     if (this.cancel)
                         break;
 
-                    this.targetDb.bulkInsert(result, atts, config.pullAttachmentsInline);
+                    this.targetDb.bulkInsert(revsList, atts, config.pullAttachmentsInline);
                     changesProcessed++;
                 }
+
             } catch (InterruptedException ex) {
                 // invokeAll() or future.get() was interrupted, expected on
                 // cancelling as shutdownNow is called in setCancel()
@@ -391,11 +394,11 @@ class BasicPullStrategy implements ReplicationStrategy {
         return new ChangesResultWrapper(changeFeeds);
     }
 
-    public List<Callable<DocumentRevsList>> createTasks(List<String> ids,
+    public Callable<Iterable<DocumentRevsList>> createTask(List<String> ids,
                                                         Map<String, Collection<String>> revisions) {
 
 
-        List<Callable<DocumentRevsList>> tasks = new ArrayList<Callable<DocumentRevsList>>();
+        List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
         for(String id : ids) {
             //skip any document with an empty id
             if(id.isEmpty()){
@@ -412,13 +415,12 @@ class BasicPullStrategy implements ReplicationStrategy {
                     possibleAncestors.addAll(thesePossibleAncestors);
                 }
             }
-            tasks.add(GetRevisionTask.createGetRevisionTask(this.sourceDb,
+            requests.add(new BulkGetRequest(
                     id,
-                    revisions.get(id),
-                    possibleAncestors,
-                    config.pullAttachmentsInline));
+                    new ArrayList<String>(revisions.get(id)),
+                    new ArrayList<String>(possibleAncestors)));
         }
-        return tasks;
+        return GetRevisionTask.createGetRevisionTask(this.sourceDb, requests, config.pullAttachmentsInline);
     }
     
     @Override
