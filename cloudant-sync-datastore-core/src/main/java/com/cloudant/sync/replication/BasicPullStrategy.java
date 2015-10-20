@@ -44,11 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -60,7 +55,6 @@ class BasicPullStrategy implements ReplicationStrategy {
     Replication.Filter filter;
     DatastoreWrapper targetDb;
 
-    ExecutorService executor;
     private PullConfiguration config;
 
     int documentCounter = 0;
@@ -81,24 +75,18 @@ class BasicPullStrategy implements ReplicationStrategy {
     private volatile boolean replicationTerminated = false;
 
     public BasicPullStrategy(PullReplication pullReplication) {
-        this(pullReplication, null, null);
+        this(pullReplication, null);
     }
 
     public BasicPullStrategy(PullReplication pullReplication,
-                             ExecutorService executorService,
                              PullConfiguration config) {
         Preconditions.checkNotNull(pullReplication, "PullReplication must not be null.");
 
-        if(executorService == null) {
-            executorService = new ThreadPoolExecutor(4, 4, 1, TimeUnit.MINUTES,
-                    new LinkedBlockingQueue<Runnable>());
-        }
 
         if(config == null) {
             config = new PullConfiguration();
         }
 
-        this.executor = executorService;
         this.config = config;
         this.filter = pullReplication.filter;
 
@@ -117,8 +105,7 @@ class BasicPullStrategy implements ReplicationStrategy {
     public void setCancel() {
         this.cancel = true;
 
-        // Don't process further tasks to hasten shutdown
-        this.executor.shutdownNow();
+
     }
 
     @Override
@@ -151,17 +138,6 @@ class BasicPullStrategy implements ReplicationStrategy {
         } catch (Throwable e) {
             logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.batchCounter),e);
             errorInfo = new ErrorInfo(e);
-        } finally {
-            this.executor.shutdownNow();
-        }
-
-        // Give the in-flight HTTP requests time to complete. It's not vital
-        // for correctness that we do this, but nice to give the remote server
-        // some breathing room.
-        try {
-            this.executor.awaitTermination(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            // do nothing
         }
 
         replicationTerminated = true;
@@ -271,9 +247,8 @@ class BasicPullStrategy implements ReplicationStrategy {
 
             Callable<Iterable<DocumentRevsList>> tasks = createTask(batch, missingRevisions);
             try {
-                Future<Iterable<DocumentRevsList>> future = executor.submit(tasks);
+                Iterable<DocumentRevsList> result = tasks.call();
 
-                Iterable<DocumentRevsList> result = future.get();
                 for (DocumentRevsList revsList : result) {
                     // We promise not to insert documents after cancel is set
                     if (this.cancel) {
@@ -355,6 +330,8 @@ class BasicPullStrategy implements ReplicationStrategy {
                 } else {
                     throw ex;
                 }
+            } catch (Exception e) {
+                throw new ExecutionException(e);
             }
         }
 

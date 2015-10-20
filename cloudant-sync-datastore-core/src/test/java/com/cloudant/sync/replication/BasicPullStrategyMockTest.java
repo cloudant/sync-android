@@ -48,22 +48,6 @@ import static org.mockito.Mockito.*;
 @Category(RequireRunningCouchDB.class)
 public class BasicPullStrategyMockTest extends ReplicationTestBase {
 
-    ExecutorService service = null;
-
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-        service = new ThreadPoolExecutor(4, 4, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>());
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        if(service != null) {
-            service.shutdown();
-        }
-        super.tearDown();
-    }
-
     @Test
     public void call_remoteDbNotExists_errorCallback() throws
             Exception {
@@ -128,10 +112,9 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
         PullReplication pullReplication = this.createPullReplication();
-        BasicPullStrategy pullStrategy = new BasicPullStrategy(pullReplication, this.service, null);
+        BasicPullStrategy pullStrategy = new BasicPullStrategy(pullReplication, null);
         pullStrategy.sourceDb = mockRemoteDb;
         pullStrategy.getEventBus().register(mockListener);
-        service.shutdownNow();
         when(mockRemoteDb.exists()).thenReturn(true);
 
         // Exec
@@ -181,15 +164,14 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 List<BulkGetRequest> requests = ((List<BulkGetRequest>)invocation.getArguments()[0]);
-                System.out.println(requests.get(0).id);
                 if (requests.get(0).id.equals("")) {
-                    // well this will never get called with "" because empty ids get skipped - should we fail?
-                    return loadOpenRevsResponseFromFixture("fixture/testReplicationDocWithEmptyId_open_revs_1.json");
+                    Assert.fail("Unexpected request ID with empty string encountered in bulkGetRevisions");
                 }
                 else if (requests.get(0).id.equals("4d3b3f01362649d79b31d9092799a7e0")) {
                     return loadOpenRevsResponseFromFixture("fixture/testReplicationDocWithEmptyId_open_revs_2.json");
                 }
-                System.out.println("This shouldn't happen");
+                Assert.fail("Unexpected request ID " + requests.get(0).id + " encountered in " +
+                        "bulkGetRevisions");
                 return null;
             }
         });

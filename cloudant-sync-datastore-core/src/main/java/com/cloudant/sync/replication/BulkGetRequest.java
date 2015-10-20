@@ -37,4 +37,13 @@ public class BulkGetRequest {
         this.id = id;
         this.revs = revs;
     }
+
+    @Override
+    public String toString() {
+        return "BulkGetRequest{" +
+                "id='" + id + '\'' +
+                ", revs=" + revs +
+                ", atts_since=" + atts_since +
+                '}';
+    }
 }

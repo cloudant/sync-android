@@ -166,7 +166,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     public void pull_localDbError_replicationAbort() throws Exception {
         DatastoreExtended localDb = mock(DatastoreExtended.class);
 
-        BasicPullStrategy replication = new BasicPullStrategy(this.createPullReplication(), null, null);
+        BasicPullStrategy replication = new BasicPullStrategy(this.createPullReplication(), null);
         replication.targetDb = new DatastoreWrapper(localDb);
         replication.getEventBus().register(new TestStrategyListener());
 
@@ -198,7 +198,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         PullReplication pullReplication = this.createPullReplication();
         pullReplication.filter = filter;
 
-        this.replicator = new BasicPullStrategy(pullReplication, null, this.config);
+        this.replicator = new BasicPullStrategy(pullReplication, this.config);
         this.replicator.getEventBus().register(listener);
         this.replicator.run();
         Assert.assertTrue(listener.finishCalled);
