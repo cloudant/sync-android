@@ -37,7 +37,7 @@ import java.util.Map;
  */
 
 
-@Category({RequireRunningCouchDB.class, RequireRunningProxy.class})
+@Category(RequireRunningProxy.class)
 public class UnreliableNetworkPushTest extends ProxyTestBase {
 
 

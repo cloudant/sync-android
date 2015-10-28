@@ -36,7 +36,7 @@ import java.util.Map;
  * Created by tomblench on 15/07/15.
  */
 
-@Category({RequireRunningCouchDB.class, RequireRunningProxy.class})
+@Category(RequireRunningProxy.class)
 public class UnreliableNetworkPullTest extends ProxyTestBase {
 
     String jsonAddToxic = "{\"enabled\" :true, \"timeout\":50, \"sometimesToxic\": true, \"toxicity\" :0.5}";

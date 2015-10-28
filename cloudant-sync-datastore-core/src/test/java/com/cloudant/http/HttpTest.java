@@ -152,7 +152,7 @@ public class HttpTest extends CouchTestBase {
     @Test
     public void testCookieAuthWithoutRetry() throws IOException {
 
-        Assume.assumeFalse(TestOptions.IGNORE_AUTH_HEADERS);
+        if(TestOptions.IGNORE_AUTH_HEADERS){return;}
 
         CookieInterceptor interceptor = new CookieInterceptor(TestOptions.COUCH_USERNAME, TestOptions.COUCH_PASSWORD);
 

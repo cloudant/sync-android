@@ -43,10 +43,21 @@ android {
                             "$scriptLocation/../../cloudant-sync-datastore-android-encryption/src/main/java"]
         }
         androidTest {
-            java.srcDirs = ["$scriptLocation/../../cloudant-sync-datastore-core/src/test/java/",
-                            "$scriptLocation/../../cloudant-sync-datastore-android/src/test/java/",
-                            "$scriptLocation/../../cloudant-sync-datastore-android-encryption/src/test/java/"
-            ]
+            java {
+                srcDirs = ["$scriptLocation/../../cloudant-sync-datastore-core/src/test/java/",
+                           "$scriptLocation/../../cloudant-sync-datastore-android/src/test/java/",
+                           "$scriptLocation/../../cloudant-sync-datastore-android-encryption/src/test/java/"
+                           ]
+                // we would exclude these via categories but it doesn't like the android runner respects them
+                exclude '**/Unreliable*Test*'
+                // some of these tests fail as follows:
+                // java.lang.OutOfMemoryError: Failed to allocate a
+                // 8204 byte allocation with 4194304 free bytes and
+                // 8MB until OOM; failed due to fragmentation
+                // (required continguous free 12288 bytes where
+                // largest contiguous free 8192 bytes)
+                exclude '**/KeyManagerTests*'
+            }
         }
     }
 
@@ -56,6 +67,11 @@ android {
         exclude 'META-INF/NOTICE.txt'
 
     }
+
+    adbOptions {
+        timeOutInMs 30*1000 // 30 seconds in ms.
+    }
+
 }
 
 dependencies {
