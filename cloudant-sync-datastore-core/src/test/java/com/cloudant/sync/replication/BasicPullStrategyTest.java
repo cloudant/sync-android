@@ -16,11 +16,17 @@ package com.cloudant.sync.replication;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.startsWith;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.AnimalDb;
+import com.cloudant.mazha.ChangesResult;
+import com.cloudant.mazha.ClientTestUtils;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
@@ -33,7 +39,10 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -379,4 +388,33 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     }
 
+    @Test
+    public void pull_changesNewerThanOpenRevs() throws Exception {
+        // upload some docs
+        Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
+
+        // capture 'real' changes feed
+        final ChangesResult changesResult = remoteDb.changes(null, 1000);
+
+        // upload some more docs
+        Bar bar2 = BarUtils.updateBar(remoteDb, bar1.getId(), "Jerry", 41);
+
+        // compact away the first rev
+        URI postURI = new URI(couchClient.getRootUri().toString() + "/_compact");
+        Assert.assertEquals(202, ClientTestUtils.executeHttpPostRequest(postURI, ""));
+
+        // replicate...
+        TestStrategyListener listener = new TestStrategyListener();
+        PullReplication pullReplication = this.createPullReplication();
+        this.replicator = new BasicPullStrategy(pullReplication, null, this.config);
+        this.replicator.getEventBus().register(listener);
+        // inject our mocked changesresult via a 'spy'
+        this.replicator.sourceDb = spy(this.replicator.sourceDb);
+        doReturn(changesResult).when(this.replicator.sourceDb).changes((Replication.Filter)
+                anyObject(), anyObject(), anyInt());
+        // do the actual replication
+        this.replicator.run();
+
+        // TODO asserts
+    }
 }
