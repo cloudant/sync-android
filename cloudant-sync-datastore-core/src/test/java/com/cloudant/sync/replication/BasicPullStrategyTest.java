@@ -413,7 +413,6 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         final ChangesResult changesResult2 = remoteDb.changes(null, 1000);
 
         // compact away the first rev
-        System.out.println("compact");
         URI postURI = new URI(couchClient.getRootUri().toString() + "/_compact");
         Assert.assertEquals(202, ClientTestUtils.executeHttpPostRequest(postURI, ""));
 
@@ -423,9 +422,6 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
             Thread.sleep(1000);
             info = couchClient.getDbInfo();
         };
-
-
-        System.out.println("done compact");
 
         // set up replication...
         PullReplication pullReplication = this.createPullReplication();
@@ -440,16 +436,12 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
                 changes((Replication.Filter)
                         anyObject(), anyObject(), anyInt());
         // do the actual replication
-        System.out.println("running....");
         customReplicator.run();
-        System.out.println("done....");
 
         // assert latest doc retrieved
         Map m = datastore.getDocument(bar1.getId()).asMap();
-        System.out.println(m);
         Assert.assertEquals(41, m.get("age"));
         Assert.assertEquals("Jerry", m.get("name"));
-        System.out.println("done asserts");
     }
 
     private class ChangesResultAnswer implements Answer {
