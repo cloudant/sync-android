@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.common.RetriableTask;
 import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.DocumentRevs;
@@ -179,6 +180,36 @@ class BasicPullStrategy implements ReplicationStrategy {
         
     }
 
+    // Inner class used to fetch and process a batch of changes. See comment in replicate() for
+    // more details.
+    private class BatchProcessor implements Callable<BatchProcessor> {
+
+        ChangesResultWrapper changeFeeds;
+        int batchChangesProcessed;
+
+        public BatchProcessor call() throws ExecutionException, InterruptedException, DocumentException, DatastoreException {
+
+            if (cancel) {return this;}
+
+            changeFeeds = nextBatch();
+            batchChangesProcessed = 0;
+
+            // So we can check whether all changes were processed during
+            // a log analysis.
+            String msg = String.format(
+                    "Batch %s contains %s changes",
+                    batchCounter,
+                    changeFeeds.size()
+            );
+            logger.info(msg);
+
+            if (changeFeeds.size() > 0) {
+                batchChangesProcessed = processOneChangesBatch(changeFeeds);
+            }
+            return this;
+        }
+    }
+
     private void replicate()
             throws DatabaseNotFoundException, ExecutionException, InterruptedException, DocumentException, DatastoreException {
         logger.info("Pull replication started");
@@ -204,36 +235,48 @@ class BasicPullStrategy implements ReplicationStrategy {
             );
             logger.info(msg);
             long batchStartTime = System.currentTimeMillis();
+            BatchProcessor batchProcessor = new BatchProcessor();
 
-            ChangesResultWrapper changeFeeds = this.nextBatch();
-            int batchChangesProcessed = 0;
-
-            // So we can check whether all changes were processed during
-            // a log analysis.
-            msg = String.format(
-                    "Batch %s contains %s changes",
-                    this.batchCounter,
-                    changeFeeds.size()
-            );
-            logger.info(msg);
-
-            if (changeFeeds.size() > 0) {
-                batchChangesProcessed = processOneChangesBatch(changeFeeds);
-                documentCounter += batchChangesProcessed;
+            // Call the BatchProcessor to fetch the next batch from the changes feed and then process
+            // them. Retry this in case the changes feed is inconsistent with the revisions available.
+            // See BasicPullStrategyTest#pull_changesNewerThanOpenRevs for more explanation of this
+            // scenario.
+            //
+            // Essentially the BatchProcessor is just a wrapper for the Callable#call method and so
+            // we can access changeFeeds and batchChangesProcessed fields after successful execution
+            //
+            // Note that it is OK to call nextBatch() repeatedly for each retry without missing any
+            // batches - this is because we know that the checkpoint has not been updated.
+            //
+            // Since RetriableTask#call can throw Exception, we have to re-throw the exceptions we
+            // are expecting, plus wrapping and throwing any that we aren't.
+            try {
+                new RetriableTask<BatchProcessor>(batchProcessor).call();
+            } catch (ExecutionException e) {
+                throw e;
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (DocumentException e) {
+                throw e;
+            } catch (DatastoreException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
 
             long batchEndTime = System.currentTimeMillis();
+            documentCounter += batchProcessor.batchChangesProcessed;
             msg =  String.format(
                     "Batch %s completed in %sms (batch was %s changes)",
                     this.batchCounter,
                     batchEndTime-batchStartTime,
-                    batchChangesProcessed
+                    batchProcessor.batchChangesProcessed
             );
             logger.info(msg);
 
             // This logic depends on the changes in the feed rather than the
             // changes we actually processed.
-            if (changeFeeds.size() < this.config.changeLimitPerBatch) {
+            if (batchProcessor.changeFeeds.size() < this.config.changeLimitPerBatch) {
                 break;
             }
         }
