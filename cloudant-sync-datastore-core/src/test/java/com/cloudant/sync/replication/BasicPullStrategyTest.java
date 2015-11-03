@@ -428,10 +428,8 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         System.out.println("done compact");
 
         // set up replication...
-        //TestStrategyListener listener = new TestStrategyListener();
         PullReplication pullReplication = this.createPullReplication();
         BasicPullStrategy customReplicator = new BasicPullStrategy(pullReplication, null, this.config);
-        //customReplicator.getEventBus().register(listener);
 
         // inject our mocked changesresult via a 'spy'
         // ChangesResultAnswer returns the 'wrong' answer first and the 'right' after every
