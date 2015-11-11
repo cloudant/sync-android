@@ -137,7 +137,7 @@ public class CouchClientWrapper implements CouchDB {
                 splitRequests.add(splitRequest);
             }
         }
-        return couchClient.bulkGet(splitRequests);
+        return couchClient.bulkGetDocWithOpenRevisions(splitRequests);
     }
 
     /**

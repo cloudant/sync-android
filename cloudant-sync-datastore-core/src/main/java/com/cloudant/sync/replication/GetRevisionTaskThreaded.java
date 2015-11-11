@@ -26,8 +26,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
- * GetRevisionTask handles calling getting the revision tree for a given docId and open
- * revisions as a Callable.
+ * Handles calling CouchClient.getDocWithOpenRevisions() for a batch of revisions IDs, with
+ * multiple simultaneous HTTP threads, returning the results back in a manner which can be iterated
+ * over (to avoid deserialising the entire result into memory).
+ * 
+ * For each revision ID, gets the revision tree for a given document ID and lists of open revision IDs
+ * and "atts_since" (revision IDs for which we know we have attachments)
  *
  * The document id and open revisions are from one row of change feeds. For example, for the
  * following change feed:
@@ -71,6 +75,8 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
     private final List<BulkGetRequest> requests;
     private final boolean pullAttachmentsInline;
 
+    int threads = 4; // TODO - config?
+
     // members used to handle responses:
 
     LinkedBlockingQueue<DocumentRevsList> responses;
@@ -89,11 +95,12 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
         this.sourceDb = sourceDb;
         this.requests = requests;
         this.pullAttachmentsInline = pullAttachmentsInline;
-        this.executorService = new ThreadPoolExecutor(4, 4, 1, TimeUnit.MINUTES,
+        this.executorService = new ThreadPoolExecutor(threads, threads, 1, TimeUnit.MINUTES,
                 new LinkedBlockingQueue<Runnable>());
-        this.responses = new LinkedBlockingQueue<DocumentRevsList>();
+        // limit the size of the response queue, so we don't produce thousands of results before
+        // they have been consumed
+        this.responses = new LinkedBlockingQueue<DocumentRevsList>(threads);
         this.requestsOutstanding = new AtomicInteger(requests.size());
-
 
         // we make the request at construction time...
         for (final BulkGetRequest request : requests) {

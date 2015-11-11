@@ -419,6 +419,13 @@ public class CouchClient  {
         });
     }
 
+    public Iterable<DocumentRevsList> bulkGetDocWithOpenRevisions(List<BulkGetRequest> request) {
+        // not implemented yet
+        // the idea here is to provide an iterator which will pull more data from the
+        // response stream each time next() is called
+        return null;
+    }
+
     public Map<String, Object> getDocument(String id) {
         return this.getDocument(id, new HashMap<String, Object>(), JSONHelper.STRING_MAP_TYPE_DEF);
     }
@@ -668,13 +675,6 @@ public class CouchClient  {
     public static class MissingRevisions {
         public Set<String> possible_ancestors;
         public Set<String> missing;
-    }
-
-    public Iterable<DocumentRevsList> bulkGet(List<BulkGetRequest> request) {
-        // not implemented yet
-        // the idea here is to provide an iterator which will pull more data from the
-        // response stream each time next() is called
-        return null;
     }
 
 
