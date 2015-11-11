@@ -107,9 +107,15 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
             executorService.execute(new Runnable() {
                 @Override
                 public void run() {
-                    responses.add(new DocumentRevsList(GetRevisionTaskThreaded.this.sourceDb.getRevisions
-                            (request.id, request.revs, request.atts_since, GetRevisionTaskThreaded.this
-                                    .pullAttachmentsInline)));
+                    try {
+                        System.out.println("offer "+request);
+                        boolean offered = responses.offer(new DocumentRevsList(GetRevisionTaskThreaded.this.sourceDb.getRevisions
+                                (request.id, request.revs, request.atts_since, GetRevisionTaskThreaded.this
+                                        .pullAttachmentsInline)), 10, TimeUnit.MINUTES);
+                        // TODO - what if offer fails?
+                    } catch (InterruptedException ie) {
+                        ; // TODO
+                    }
                 }
             });
         }
