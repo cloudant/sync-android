@@ -92,4 +92,9 @@ public class DocumentRevsList implements Iterable<DocumentRevs> {
     public DocumentRevs get(int index) {
         return this.documentRevsList.get(index);
     }
+
+    @Override
+    public String toString() {
+        return documentRevsList.toString();
+    }
 }

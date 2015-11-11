@@ -115,39 +115,29 @@ public class CouchClientWrapper implements CouchDB {
 
     @Override
     public ChangesResult changes(Replication.Filter filter, Object lastSequence, int limit) {
-        if(filter == null) {
+        if (filter == null) {
             return couchClient.changes(lastSequence, limit);
         } else {
             return couchClient.changes(filter.name, filter.parameters, lastSequence, limit);
         }
     }
 
+    @Override
     public Iterable<DocumentRevsList> bulkGetRevisions(List<BulkGetRequest> requests,
-                                           boolean pullAttachmentsInline) {
-        // for now, we don't have the code to support bulk on the server
-        boolean serverSupportsBulk = false;
-        if (serverSupportsBulk) {
-            List<com.cloudant.mazha.BulkGetRequest> splitRequests = new ArrayList<com.cloudant.mazha.BulkGetRequest>();
-            // split the requests out
-            for (BulkGetRequest request : requests) {
-                for (String rev : request.revs) {
-                    com.cloudant.mazha.BulkGetRequest splitRequest = new com.cloudant.mazha.BulkGetRequest();
-                    splitRequest.id = request.id;
-                    splitRequest.rev = rev;
-                    splitRequest.atts_since = request.atts_since;
-                    splitRequests.add(splitRequest);
-                }
+                                                       boolean pullAttachmentsInline) {
+        List<com.cloudant.mazha.BulkGetRequest> splitRequests = new ArrayList<com.cloudant.mazha.BulkGetRequest>();
+
+        // split the requests out
+        for (BulkGetRequest request : requests) {
+            for (String rev : request.revs) {
+                com.cloudant.mazha.BulkGetRequest splitRequest = new com.cloudant.mazha.BulkGetRequest();
+                splitRequest.id = request.id;
+                splitRequest.rev = rev;
+                splitRequest.atts_since = request.atts_since;
+                splitRequests.add(splitRequest);
             }
-            return couchClient.bulkGet(splitRequests);
-        } else {
-            // a list of lists, because this is a bulk request
-            List<DocumentRevsList> returnDocs = new ArrayList<DocumentRevsList>();
-            for (BulkGetRequest request : requests) {
-                returnDocs.add(new DocumentRevsList(getRevisions(request.id, request.revs, request
-                        .atts_since, pullAttachmentsInline)));
-            }
-            return returnDocs;
         }
+        return couchClient.bulkGet(splitRequests);
     }
 
     /**

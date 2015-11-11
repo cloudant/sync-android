@@ -15,14 +15,10 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.mazha.DocumentRevs;
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.junit.runners.Parameterized;
 
 import static org.mockito.Mockito.mock;
@@ -80,8 +76,7 @@ public class GetRevisionTaskTest {
         when(sourceDB.bulkGetRevisions(requests, pullAttachmentsInline)).thenReturn(drll);
 
         // exec
-        GetRevisionTask task = new GetRevisionTask(sourceDB, requests, pullAttachmentsInline);
-        Iterable<DocumentRevsList> actualDocumentRevs = task.call();
+        Iterable<DocumentRevsList> actualDocumentRevs = new GetRevisionTaskThreaded(sourceDB, requests, pullAttachmentsInline);
 
         // verify
         verify(sourceDB).bulkGetRevisions(requests, pullAttachmentsInline);
@@ -107,8 +102,7 @@ public class GetRevisionTaskTest {
         when(sourceDB.bulkGetRevisions(requests, pullAttachmentsInline)).thenThrow(IllegalArgumentException.class);
 
         //exec
-        GetRevisionTask task = new GetRevisionTask(sourceDB, requests, pullAttachmentsInline);
-        task.call();
+        new GetRevisionTaskThreaded(sourceDB, requests, pullAttachmentsInline);
     }
 
     @Test(expected = NullPointerException.class)
@@ -119,7 +113,7 @@ public class GetRevisionTaskTest {
         ArrayList<String> attsSince = new ArrayList<String>();
         List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
         requests.add(new BulkGetRequest(null, revIds, attsSince));
-        new GetRevisionTask(sourceDB, requests, pullAttachmentsInline);
+        new GetRevisionTaskThreaded(sourceDB, requests, pullAttachmentsInline);
     }
 
     @Test(expected = NullPointerException.class)
@@ -127,7 +121,7 @@ public class GetRevisionTaskTest {
         CouchDB sourceDB = mock(CouchDB.class);
         List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
         requests.add(new BulkGetRequest("docId", null, null));
-        new GetRevisionTask(sourceDB, requests, pullAttachmentsInline);
+        new GetRevisionTaskThreaded(sourceDB, requests, pullAttachmentsInline);
     }
 
     @Test(expected = NullPointerException.class)
@@ -137,6 +131,6 @@ public class GetRevisionTaskTest {
         ArrayList<String> attsSince = new ArrayList<String>();
         List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
         requests.add(new BulkGetRequest("docId", revIds, attsSince));
-        new GetRevisionTask(null, requests, pullAttachmentsInline);
+        new GetRevisionTaskThreaded(null, requests, pullAttachmentsInline);
     }
 }

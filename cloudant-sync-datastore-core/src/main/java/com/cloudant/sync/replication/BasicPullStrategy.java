@@ -42,8 +42,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,6 +54,7 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     private static final Logger logger = Logger.getLogger(BasicPullStrategy.class.getCanonicalName());
     private static final String LOG_TAG = "BasicPullStrategy";
+    private final ExecutorService executor;
     CouchDB sourceDb;
     Replication.Filter filter;
     DatastoreWrapper targetDb;
@@ -75,18 +79,30 @@ class BasicPullStrategy implements ReplicationStrategy {
     private volatile boolean replicationTerminated = false;
 
     public BasicPullStrategy(PullReplication pullReplication) {
-        this(pullReplication, null);
+        this(pullReplication, null, null);
     }
 
     public BasicPullStrategy(PullReplication pullReplication,
                              PullConfiguration config) {
+        this(pullReplication, null, config);
+    }
+
+    public BasicPullStrategy(PullReplication pullReplication,
+                             ExecutorService executorService,
+                             PullConfiguration config) {
         Preconditions.checkNotNull(pullReplication, "PullReplication must not be null.");
 
+        // TODO pass this executor service down to the GetRevisionTask
+        if(executorService == null) {
+            executorService = new ThreadPoolExecutor(4, 4, 1, TimeUnit.MINUTES,
+                    new LinkedBlockingQueue<Runnable>());
+        }
 
         if(config == null) {
             config = new PullConfiguration();
         }
 
+        this.executor = executorService;
         this.config = config;
         this.filter = pullReplication.filter;
 
@@ -105,7 +121,8 @@ class BasicPullStrategy implements ReplicationStrategy {
     public void setCancel() {
         this.cancel = true;
 
-
+        // Don't process further tasks to hasten shutdown
+        this.executor.shutdownNow();
     }
 
     @Override
@@ -245,9 +262,8 @@ class BasicPullStrategy implements ReplicationStrategy {
 
             if (this.cancel) { break; }
 
-            Callable<Iterable<DocumentRevsList>> tasks = createTask(batch, missingRevisions);
             try {
-                Iterable<DocumentRevsList> result = tasks.call();
+                Iterable<DocumentRevsList> result = createTask(batch, missingRevisions);
 
                 for (DocumentRevsList revsList : result) {
                     // We promise not to insert documents after cancel is set
@@ -258,7 +274,8 @@ class BasicPullStrategy implements ReplicationStrategy {
                     // attachments, keyed by docId and revId, so that
                     // we can add the attachments to the correct leaf
                     // nodes
-                    HashMap<String[], List<PreparedAttachment>> atts = new HashMap<String[], List<PreparedAttachment>>();
+                    HashMap<String[], List<PreparedAttachment>> atts = new HashMap<String[],
+                            List<PreparedAttachment>>();
 
                     // now put together a list of attachments we need to download
                     if (!config.pullAttachmentsInline) {
@@ -266,19 +283,24 @@ class BasicPullStrategy implements ReplicationStrategy {
                             for (DocumentRevs documentRevs : revsList) {
                                 Map<String, Object> attachments = documentRevs.getAttachments();
                                 // keep track of attachments we are going to prepare
-                                ArrayList<PreparedAttachment> preparedAtts = new ArrayList<PreparedAttachment>();
-                                atts.put(new String[]{documentRevs.getId(), documentRevs.getRev()}, preparedAtts);
+                                ArrayList<PreparedAttachment> preparedAtts = new
+                                        ArrayList<PreparedAttachment>();
+                                atts.put(new String[]{documentRevs.getId(), documentRevs.getRev()
+                                }, preparedAtts);
 
                                 for (String attachmentName : attachments.keySet()) {
                                     Map attachmentMetadata = (Map) attachments.get(attachmentName);
                                     int revpos = (Integer) attachmentMetadata.get("revpos");
-                                    String contentType = (String) attachmentMetadata.get("content_type");
+                                    String contentType = (String) attachmentMetadata.get
+                                            ("content_type");
                                     String encoding = (String) attachmentMetadata.get("encoding");
                                     long length = (Integer) attachmentMetadata.get("length");
-                                    long encodedLength = 0; // encodedLength can default to 0 if it's not encoded
+                                    long encodedLength = 0; // encodedLength can default to 0 if
+                                    // it's not encoded
                                     if (Attachment.getEncodingFromString(encoding) != Attachment
                                             .Encoding.Plain) {
-                                        encodedLength = (Integer) attachmentMetadata.get("encoded_length");
+                                        encodedLength = (Integer) attachmentMetadata.get
+                                                ("encoded_length");
                                     }
 
                                     // do we already have the attachment @ this revpos?
@@ -287,9 +309,11 @@ class BasicPullStrategy implements ReplicationStrategy {
                                     DocumentRevs.Revisions revs = documentRevs.getRevisions();
                                     int offset = revs.getStart() - revpos;
                                     if (offset >= 0 && offset < revs.getIds().size()) {
-                                        String revId = String.valueOf(revpos) + "-" + revs.getIds().get(offset);
+                                        String revId = String.valueOf(revpos) + "-" + revs.getIds
+                                                ().get(offset);
                                         try {
-                                            BasicDocumentRevision dr = this.targetDb.getDbCore().getDocument(documentRevs.getId(), revId);
+                                            BasicDocumentRevision dr = this.targetDb.getDbCore()
+                                                    .getDocument(documentRevs.getId(), revId);
                                             Attachment a = this.targetDb.getDbCore()
                                                     .getAttachment(dr, attachmentName);
                                             if (a != null) {
@@ -300,10 +324,15 @@ class BasicPullStrategy implements ReplicationStrategy {
                                             //do nothing, we may not have the document yet
                                         }
                                     }
-                                    UnsavedStreamAttachment usa = this.sourceDb.getAttachmentStream(documentRevs.getId(), documentRevs.getRev(), attachmentName, contentType, encoding);
+                                    UnsavedStreamAttachment usa = this.sourceDb
+                                            .getAttachmentStream(documentRevs.getId(),
+                                                    documentRevs.getRev(), attachmentName,
+                                                    contentType, encoding);
 
-                                    // by preparing the attachment here, it is downloaded outside of the database transaction
-                                    preparedAtts.add(this.targetDb.prepareAttachment(usa, length, encodedLength));
+                                    // by preparing the attachment here, it is downloaded outside
+                                    // of the database transaction
+                                    preparedAtts.add(this.targetDb.prepareAttachment(usa, length,
+                                            encodedLength));
                                 }
                             }
                         } catch (Exception e) {
@@ -320,15 +349,6 @@ class BasicPullStrategy implements ReplicationStrategy {
 
                     this.targetDb.bulkInsert(revsList, atts, config.pullAttachmentsInline);
                     changesProcessed++;
-                }
-
-            } catch (InterruptedException ex) {
-                // invokeAll() or future.get() was interrupted, expected on
-                // cancelling as shutdownNow is called in setCancel()
-                if (this.cancel) {
-                    break;
-                } else {
-                    throw ex;
                 }
             } catch (Exception e) {
                 throw new ExecutionException(e);
@@ -371,19 +391,23 @@ class BasicPullStrategy implements ReplicationStrategy {
         return new ChangesResultWrapper(changeFeeds);
     }
 
-    public Callable<Iterable<DocumentRevsList>> createTask(List<String> ids,
+    public Iterable<DocumentRevsList> createTask(List<String> ids,
                                                         Map<String, Collection<String>> revisions) {
 
+        boolean bulkSupported = false;
 
         List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
-        for(String id : ids) {
+
+        for (String id : ids) {
             //skip any document with an empty id
-            if(id.isEmpty()){
+            if (id.isEmpty()) {
                 logger.info("Found document with empty ID in change feed, skipping");
                 continue;
             }
             // get list for atts_since (these are possible ancestors we have, it's ok to be eager
-            // and get all revision IDs higher up in the tree even if they're not our ancestors and
+
+            // and get all revision IDs higher up in the tree even if they're not our
+            // ancestors and
             // belong to a different subtree)
             HashSet<String> possibleAncestors = new HashSet<String>();
             for (String revId : revisions.get(id)) {
@@ -397,7 +421,12 @@ class BasicPullStrategy implements ReplicationStrategy {
                     new ArrayList<String>(revisions.get(id)),
                     new ArrayList<String>(possibleAncestors)));
         }
-        return GetRevisionTask.createGetRevisionTask(this.sourceDb, requests, config.pullAttachmentsInline);
+
+        if (bulkSupported) {
+            return new GetRevisionTaskBulk(this.sourceDb, requests, config.pullAttachmentsInline);
+        } else {
+            return new GetRevisionTaskThreaded(this.sourceDb, requests, config.pullAttachmentsInline);
+        }
     }
     
     @Override

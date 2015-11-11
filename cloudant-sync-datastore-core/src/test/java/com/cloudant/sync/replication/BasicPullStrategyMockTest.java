@@ -160,7 +160,7 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
             }
         });
         when(mockRemoteDb.exists()).thenReturn(true);
-        when(mockRemoteDb.bulkGetRevisions((List<BulkGetRequest>)anyObject(), eq(false))).then(new Answer<Object>() {
+        when(mockRemoteDb.bulkGetRevisions((List<BulkGetRequest>) anyObject(), eq(false))).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 List<BulkGetRequest> requests = ((List<BulkGetRequest>)invocation.getArguments()[0]);
@@ -183,7 +183,7 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         pullStrategy.run();
 
         //should have 1 document
-        Assert.assertEquals(this.datastore.getDocumentCount(), 1);
+        Assert.assertEquals(1, this.datastore.getDocumentCount());
         //make sure the correct events were fired
         verify(mockListener).complete(any(ReplicationStrategyCompleted.class));
         verify(mockListener,never()).error(any(ReplicationStrategyErrored.class));
