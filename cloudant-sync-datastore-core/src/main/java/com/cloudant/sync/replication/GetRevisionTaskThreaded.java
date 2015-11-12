@@ -114,12 +114,15 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
                 @Override
                 public void run() {
                     try {
-                        boolean offered = responses.offer(new DocumentRevsList(GetRevisionTaskThreaded.this.sourceDb.getRevisions
-                                (request.id, request.revs, request.atts_since, GetRevisionTaskThreaded.this
+                        boolean offered = responses.offer(new DocumentRevsList
+                                (GetRevisionTaskThreaded.this.sourceDb.getRevisions
+                                (request.id, request.revs, request.atts_since,
+                                        GetRevisionTaskThreaded.this
                                         .pullAttachmentsInline)), 10, TimeUnit.MINUTES);
                         // we need to tell the iterator things went wrong :(
                         if (!offered) {
-                            exception = new RuntimeException("offer() failed; response was not consumed within time limit");
+                            exception = new RuntimeException("offer() failed; response was not " +
+                                    "consumed within time limit");
                         }
                     } catch (Exception e) {
                         exception = new RuntimeException(e);
