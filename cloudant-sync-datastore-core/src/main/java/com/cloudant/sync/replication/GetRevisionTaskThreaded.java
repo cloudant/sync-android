@@ -82,6 +82,8 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
     LinkedBlockingQueue<DocumentRevsList> responses;
     AtomicInteger requestsOutstanding;
 
+    private RuntimeException exception;
+
     public GetRevisionTaskThreaded(CouchDB sourceDb,
                                    List<BulkGetRequest> requests,
                                    boolean pullAttachmentsInline) {
@@ -104,17 +106,23 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
 
         // we make the request at construction time...
         for (final BulkGetRequest request : requests) {
+            if (exception != null) {
+                // we already encountered an exception, no point stacking up any more requests
+                return;
+            }
             executorService.execute(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        System.out.println("offer "+request);
                         boolean offered = responses.offer(new DocumentRevsList(GetRevisionTaskThreaded.this.sourceDb.getRevisions
                                 (request.id, request.revs, request.atts_since, GetRevisionTaskThreaded.this
                                         .pullAttachmentsInline)), 10, TimeUnit.MINUTES);
-                        // TODO - what if offer fails?
-                    } catch (InterruptedException ie) {
-                        ; // TODO
+                        // we need to tell the iterator things went wrong :(
+                        if (!offered) {
+                            exception = new RuntimeException("offer() failed; response was not consumed within time limit");
+                        }
+                    } catch (Exception e) {
+                        exception = new RuntimeException(e);
                     }
                 }
             });
@@ -139,33 +147,38 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
 
         @Override
         public boolean hasNext() {
-            System.out.println(requestsOutstanding.get());
+            // can't advance iterator as there was a problem in execute()
+            if (exception != null) {
+                throw exception;
+            }
+
             boolean next = requestsOutstanding.get() != 0;
+
+            // if we have returned all of our results, we can shut down the executor
             if (!next) {
-                System.out.println("tearing down...");
                 executorService.shutdown();
                 try {
                     executorService.awaitTermination(5, TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
                     ;
                 }
-                System.out.println("done");
             }
-            System.out.println("next? "+next);
+
             return next;
         }
 
         @Override
         public DocumentRevsList next() {
-            System.out.println("next!");
+            // can't advance iterator as there was a problem in execute()
+            if (exception != null) {
+                throw exception;
+            }
+
             try {
                 requestsOutstanding.decrementAndGet();
-                System.out.println("Getting next...");
-                DocumentRevsList s= responses.take();
-                System.out.println("Got next: "+s);
-                return s;
+                return responses.take();
             } catch (InterruptedException e) {
-                return null;
+                throw new RuntimeException(e);
             }
         }
 
