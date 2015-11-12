@@ -19,6 +19,10 @@ import com.google.common.base.Preconditions;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -71,18 +75,19 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
     // members used to make requests:
 
     private final ThreadPoolExecutor executorService;
+    private final ExecutorCompletionService<DocumentRevsList> completionService;
     private final CouchDB sourceDb;
     private final List<BulkGetRequest> requests;
     private final boolean pullAttachmentsInline;
+
+    private boolean iteratorValid = true;
 
     int threads = 4; // TODO - config?
 
     // members used to handle responses:
 
-    LinkedBlockingQueue<DocumentRevsList> responses;
+    LinkedBlockingQueue<Future<DocumentRevsList>> responses;
     AtomicInteger requestsOutstanding;
-
-    private RuntimeException exception;
 
     public GetRevisionTaskThreaded(CouchDB sourceDb,
                                    List<BulkGetRequest> requests,
@@ -101,32 +106,37 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
                 new LinkedBlockingQueue<Runnable>());
         // limit the size of the response queue, so we don't produce thousands of results before
         // they have been consumed
-        this.responses = new LinkedBlockingQueue<DocumentRevsList>(threads);
+        this.responses = new LinkedBlockingQueue<Future<DocumentRevsList>>(threads) {
+            // from javadoc of ExecutorCompletionService:
+            // "This queue is treated as unbounded -- failed attempted Queue.add operations for completed taskes cause them not to be retrievable"
+            // so we make add() behave like offer() so we can block until the queue has capacity
+            @Override
+            public boolean add(Future<DocumentRevsList> documentRevsListFuture) {
+                boolean offerResult;
+                try {
+                    offerResult = offer(documentRevsListFuture, 5, TimeUnit.MINUTES);
+                } catch (InterruptedException ie) {
+                    throw new RuntimeException("Offer interrupted", ie);
+                }
+                if (!offerResult) {
+                    throw new RuntimeException("Offer timed out");
+                }
+                return true;
+            }
+        };
+        this.completionService = new ExecutorCompletionService<DocumentRevsList>(executorService, responses);
         this.requestsOutstanding = new AtomicInteger(requests.size());
 
         // we make the request at construction time...
         for (final BulkGetRequest request : requests) {
-            if (exception != null) {
-                // we already encountered an exception, no point stacking up any more requests
-                return;
-            }
-            executorService.execute(new Runnable() {
+
+            completionService.submit(new Callable<DocumentRevsList>() {
                 @Override
-                public void run() {
-                    try {
-                        boolean offered = responses.offer(new DocumentRevsList
-                                (GetRevisionTaskThreaded.this.sourceDb.getRevisions
-                                (request.id, request.revs, request.atts_since,
-                                        GetRevisionTaskThreaded.this
-                                        .pullAttachmentsInline)), 10, TimeUnit.MINUTES);
-                        // we need to tell the iterator things went wrong :(
-                        if (!offered) {
-                            exception = new RuntimeException("offer() failed; response was not " +
-                                    "consumed within time limit");
-                        }
-                    } catch (Exception e) {
-                        exception = new RuntimeException(e);
-                    }
+                public DocumentRevsList call() throws Exception {
+                    return new DocumentRevsList(GetRevisionTaskThreaded.this.sourceDb.getRevisions
+                            (request.id, request.revs, request.atts_since,
+                                    GetRevisionTaskThreaded.this
+                                            .pullAttachmentsInline));
                 }
             });
         }
@@ -150,15 +160,16 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
 
         @Override
         public boolean hasNext() {
-            // can't advance iterator as there was a problem in execute()
-            if (exception != null) {
-                throw exception;
+            // can't advance iterator as there was a problem in call()
+            if (!iteratorValid) {
+                return false;
             }
 
             boolean next = requestsOutstanding.get() != 0;
 
             // if we have returned all of our results, we can shut down the executor
             if (!next) {
+                iteratorValid = false;
                 executorService.shutdown();
                 try {
                     executorService.awaitTermination(5, TimeUnit.SECONDS);
@@ -172,16 +183,21 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
 
         @Override
         public DocumentRevsList next() {
-            // can't advance iterator as there was a problem in execute()
-            if (exception != null) {
-                throw exception;
+            // can't advance iterator as there was a problem in call()
+            if (!iteratorValid) {
+                return null;
             }
 
             try {
                 requestsOutstanding.decrementAndGet();
-                return responses.take();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                return completionService.take().get();
+            } catch (InterruptedException ie) {
+                iteratorValid = false;
+                throw new RuntimeException(ie);
+            } catch (ExecutionException ee) {
+                iteratorValid = false;
+                throw new RuntimeException("Problem getting response from queue because the " +
+                        "original request threw an exception: ", ee.getCause());
             }
         }
 

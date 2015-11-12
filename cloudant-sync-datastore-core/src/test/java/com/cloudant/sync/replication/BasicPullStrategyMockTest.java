@@ -20,7 +20,6 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.OkOpenRevision;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.mazha.json.JSONHelper;
-import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.util.TestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.eventbus.Subscribe;
@@ -38,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -136,7 +134,7 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         final BasicPullStrategy pullStrategy = new BasicPullStrategy(createPullReplication());
         pullStrategy.sourceDb = mockRemoteDb;
         pullStrategy.getEventBus().register(mockListener);
-        
+
         when(mockRemoteDb.exists()).thenReturn(true);
         pullStrategy.setCancel();
         pullStrategy.run();
@@ -160,19 +158,28 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
             }
         });
         when(mockRemoteDb.exists()).thenReturn(true);
-        when(mockRemoteDb.bulkGetRevisions((List<BulkGetRequest>) anyObject(), eq(false))).then(new Answer<Object>() {
+        Collection<String> revs = new ArrayList<String>();
+        revs.add("1-bd42b942b8b672f0289cf3cd1f67044c");
+        when(mockRemoteDb.getRevisions("", revs, new HashSet<String>(), false)).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                List<BulkGetRequest> requests = ((List<BulkGetRequest>)invocation.getArguments()[0]);
-                if (requests.get(0).id.equals("")) {
-                    Assert.fail("Unexpected request ID with empty string encountered in bulkGetRevisions");
-                }
-                else if (requests.get(0).id.equals("4d3b3f01362649d79b31d9092799a7e0")) {
-                    return loadOpenRevsResponseFromFixture("fixture/testReplicationDocWithEmptyId_open_revs_2.json");
-                }
-                Assert.fail("Unexpected request ID " + requests.get(0).id + " encountered in " +
-                        "bulkGetRevisions");
-                return null;
+
+                return loadOpenRevsResponseFromFixture("testReplicationDocWithEmptyId_open_revs_1" +
+                        ".json");
+
+            }
+        });
+        revs = new ArrayList<String>();
+        revs.add("1-13d33701a0954729ad029adf8fdc5a04");
+        when(mockRemoteDb.getRevisions("4d3b3f01362649d79b31d9092799a7e0", revs, new ArrayList
+                        <String>(),
+                false)).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+
+                return loadOpenRevsResponseFromFixture
+                        ("fixture/testReplicationDocWithEmptyId_open_revs_2.json");
+
             }
         });
 
@@ -183,12 +190,12 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         pullStrategy.run();
 
         //should have 1 document
-        Assert.assertEquals(1, this.datastore.getDocumentCount());
+        Assert.assertEquals(this.datastore.getDocumentCount(), 1);
         //make sure the correct events were fired
         verify(mockListener).complete(any(ReplicationStrategyCompleted.class));
         verify(mockListener,never()).error(any(ReplicationStrategyErrored.class));
     }
-    
+
     public class StrategyListener {
 
         @Subscribe
@@ -200,7 +207,7 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         }
     }
 
-    private Iterable<DocumentRevsList> loadOpenRevsResponseFromFixture(String fixturePath) throws Exception{
+    private List<DocumentRevs> loadOpenRevsResponseFromFixture(String fixturePath) throws Exception{
         JSONHelper helper = new JSONHelper();
         FileReader fileReader = new FileReader(TestUtils.loadFixture(fixturePath));
         List<OpenRevision> openRevs = helper.fromJson(fileReader,
@@ -215,9 +222,7 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
             }
         }
 
-        ArrayList<DocumentRevsList> revsList = new ArrayList<DocumentRevsList>();
-        revsList.add(new DocumentRevsList(documentRevs));
-        return revsList;
+        return documentRevs;
     }
 
 }

@@ -65,26 +65,25 @@ public class GetRevisionTaskTest {
         ArrayList<String> revIds = new ArrayList<String>();
         revIds.add(revId);
         ArrayList<String> attsSince = new ArrayList<String>();
-        // bulk get returns a list of lists...
-        List<DocumentRevsList> drll = new ArrayList<DocumentRevsList>();
-        drll.add(new DocumentRevsList(documentRevs));
 
         List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
         requests.add(new BulkGetRequest(docId, revIds, attsSince));
 
         // stubs
-        when(sourceDB.bulkGetRevisions(requests, pullAttachmentsInline)).thenReturn(drll);
+        when(sourceDB.getRevisions(docId, revIds, attsSince, pullAttachmentsInline)).thenReturn(documentRevs);
 
         // exec
-        Iterable<DocumentRevsList> actualDocumentRevs = new GetRevisionTaskThreaded(sourceDB, requests, pullAttachmentsInline);
+        Iterable<DocumentRevsList> actualDocumentRevs = new GetRevisionTaskThreaded(sourceDB,
+                requests, pullAttachmentsInline);
+
+        // pulling out of the iterator will ensure the executed tasks are put onto the result queue
+        Assert.assertEquals(expected, actualDocumentRevs.iterator().next().get(0).getRevisions()
+                .getIds());
 
         // verify
-        verify(sourceDB).bulkGetRevisions(requests, pullAttachmentsInline);
-
-        Assert.assertEquals(expected, actualDocumentRevs.iterator().next().get(0).getRevisions().getIds());
+        verify(sourceDB).getRevisions(docId, revIds, attsSince, pullAttachmentsInline);
     }
 
-    @Test(expected = IllegalArgumentException.class)
     public void test_exceptions_propagate()
         throws Exception {
         CouchDB sourceDB = mock(CouchDB.class);
@@ -99,10 +98,23 @@ public class GetRevisionTaskTest {
         requests.add(new BulkGetRequest(docId, revIds, attsSince));
 
         // stubs
-        when(sourceDB.bulkGetRevisions(requests, pullAttachmentsInline)).thenThrow(IllegalArgumentException.class);
+        when(sourceDB.getRevisions(docId, revIds, attsSince, pullAttachmentsInline)).thenThrow(IllegalArgumentException.class);
 
         //exec
-        new GetRevisionTaskThreaded(sourceDB, requests, pullAttachmentsInline);
+        try {
+            Iterable<DocumentRevsList> actualDocumentRevs = new GetRevisionTaskThreaded(sourceDB, requests, pullAttachmentsInline);
+
+            // pull all the results from the iterator
+            for (DocumentRevsList revs : actualDocumentRevs) {
+            }
+            Assert.fail("Expected exception to be thrown");
+        } catch (Exception e){
+            // although our stub threw an IllegalArgumentException, we expect next() to have wrapped
+            // this up in a RuntimeException.
+            Assert.assertTrue(e.getClass().equals(RuntimeException.class));
+            Assert.assertTrue(e.getCause().getClass().equals(IllegalArgumentException.class));
+        }
+
     }
 
     @Test(expected = NullPointerException.class)
