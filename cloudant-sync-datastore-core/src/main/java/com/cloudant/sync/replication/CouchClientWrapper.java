@@ -137,7 +137,7 @@ public class CouchClientWrapper implements CouchDB {
                 splitRequests.add(splitRequest);
             }
         }
-        return couchClient.bulkGetDocWithOpenRevisions(splitRequests);
+        return couchClient.bulkReadDocsWithOpenRevisions(splitRequests);
     }
 
     /**
@@ -213,8 +213,8 @@ public class CouchClientWrapper implements CouchDB {
     }
 
     @Override
-    public void bulk(List<BasicDocumentRevision> revisions) {
-        logger.entering("com.cloudant.sync.replication.CouchClientWrapper","bulk",revisions);
+    public void bulkCreateDocs(List<BasicDocumentRevision> revisions) {
+        logger.entering("com.cloudant.sync.replication.CouchClientWrapper","bulkCreateDocs",revisions);
 
         List<Map> allObjs = new ArrayList<Map>();
         for (BasicDocumentRevision obj : revisions) {
@@ -222,23 +222,23 @@ public class CouchClientWrapper implements CouchDB {
             allObjs.add(obj.asMap());
         }
 
-        List<Response> responses = couchClient.bulkPost(allObjs);
+        List<Response> responses = couchClient.bulkCreateDocs(allObjs);
         for (Response r : responses) {
             logger.info(String.format("Response: %s",r));
         }
     }
 
     @Override
-    public void bulkSerializedDocs(List<String> serializedDocs) {
-        logger.entering("com.cloudant.sync.replication.CouchClientWrapper","bulkSerializedDocs",serializedDocs);
+    public void bulkCreateSerializedDocs(List<String> serializedDocs) {
+        logger.entering("com.cloudant.sync.replication.CouchClientWrapper","bulkCreateSerializedDocs",serializedDocs);
         if(serializedDocs.size() <= 0) {
             return;
         }
 
-        List<Response> responses = couchClient.bulkPostSerializedDocs(serializedDocs);
+        List<Response> responses = couchClient.bulkCreateSerializedDocs(serializedDocs);
         if(responses != null && responses.size() > 0) {
-            logger.severe(String.format("Unknown bulk API error: %s for input: %s",responses,serializedDocs));
-            throw new RuntimeException("Unknown bulk api error");
+            logger.severe(String.format("Unknown bulkCreateDocs API error: %s for input: %s",responses,serializedDocs));
+            throw new RuntimeException("Unknown bulkCreateDocs api error");
         }
     }
 

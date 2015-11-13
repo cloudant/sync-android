@@ -419,7 +419,7 @@ public class CouchClient  {
         });
     }
 
-    public Iterable<DocumentRevsList> bulkGetDocWithOpenRevisions(List<BulkGetRequest> request) {
+    public Iterable<DocumentRevsList> bulkReadDocsWithOpenRevisions(List<BulkGetRequest> request) {
         // not implemented yet
         // the idea here is to provide an iterator which will pull more data from the
         // response stream each time next() is called
@@ -549,7 +549,7 @@ public class CouchClient  {
         }
     }
 
-    private InputStream bulkPostInputStream(List<?> objects) {
+    private InputStream bulkCreateDocsInputStream(List<?> objects) {
         Preconditions.checkNotNull(objects, "Object list must not be null.");
         String newEditsVal = "\"new_edits\": false, ";
         URI uri = this.uriHelper.bulkDocsUri();
@@ -560,14 +560,14 @@ public class CouchClient  {
         return this.executeToInputStreamWithRetry(connection);
     }
 
-    public List<Response> bulkPost(Object... objects) {
-        return bulkPost(Arrays.asList(objects));
+    public List<Response> bulkCreateDocs(Object... objects) {
+        return bulkCreateDocs(Arrays.asList(objects));
     }
 
-    public List<Response> bulkPost(List<?> objects) {
+    public List<Response> bulkCreateDocs(List<?> objects) {
         InputStream is = null;
         try {
-            is = bulkPostInputStream(objects);
+            is = bulkCreateDocsInputStream(objects);
             return jsonHelper.fromJsonToList(new InputStreamReader(is), new TypeReference<List<Response>>() {});
         } finally {
             closeQuietly(is);
@@ -581,8 +581,8 @@ public class CouchClient  {
      * @param serializedDocs array of JSON documents
      * @return list of Response
      */
-    public List<Response> bulkPostSerializedDocs(String... serializedDocs) {
-        return bulkPostSerializedDocs(Arrays.asList(serializedDocs));
+    public List<Response> bulkCreateSerializedDocs(String... serializedDocs) {
+        return bulkCreateSerializedDocs(Arrays.asList(serializedDocs));
     }
 
     /**
@@ -592,9 +592,9 @@ public class CouchClient  {
      * @param serializedDocs list of JSON documents
      * @return list of Response
      */
-    public List<Response> bulkPostSerializedDocs(List<String> serializedDocs) {
+    public List<Response> bulkCreateSerializedDocs(List<String> serializedDocs) {
         Preconditions.checkNotNull(serializedDocs, "Serialized doc list must not be null.");
-        String payload = createBulkSerializedDocsPayload(serializedDocs);
+        String payload = generateBulkSerializedDocsPayload(serializedDocs);
         URI uri = this.uriHelper.bulkDocsUri();
         InputStream is = null;
         HttpConnection connection = Http.POST(uri, "application/json");
@@ -608,7 +608,7 @@ public class CouchClient  {
         }
     }
 
-    private String createBulkSerializedDocsPayload(List<String> serializedDocs) {
+    private String generateBulkSerializedDocsPayload(List<String> serializedDocs) {
         String newEditsVal = "\"new_edits\": false, ";
         StringBuilder sb = new StringBuilder("[");
         for(String doc : serializedDocs) {

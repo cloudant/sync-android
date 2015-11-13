@@ -87,7 +87,7 @@ public class ClientTestUtils {
     }
 
     /**
-     * Create a conflicts to specified document using bulk api. The document is specified by <code>Response</code>,
+     * Create a conflicts to specified document using bulkCreateDocs api. The document is specified by <code>Response</code>,
      * which usually is the response back from <code>ClientTestUtils.createHelloWorldDoc</code>
      *
      * And, the document tree looks like this:
@@ -115,7 +115,7 @@ public class ClientTestUtils {
                 "Jerry");
         Map<String, Object> docToUpdate3 = updateDocumentWithRevisionHistory(client, res.getId(), rev2StarStar, revs3, "Alex");
 
-        List<Response> responses = client.bulkPost(docToUpdate1, docToUpdate2, docToUpdate3);
+        List<Response> responses = client.bulkCreateDocs(docToUpdate1, docToUpdate2, docToUpdate3);
 
         Assert.assertThat("Responses list", responses.size(), is(equalTo(0)));
 
@@ -129,7 +129,7 @@ public class ClientTestUtils {
     }
 
     /**
-     * Create a conflicts with separate roots to a specified document using bulk api. The document is
+     * Create a conflicts with separate roots to a specified document using bulkCreateDocs api. The document is
      * specified by <code>Response</code> which usually is the response back from <code>ClientTestUtils.createHelloWorldDoc</code>
      *
      * And, the document tree (or forest) looks like this:
@@ -155,7 +155,7 @@ public class ClientTestUtils {
         Map<String, Object> revs2 = getRevisionHistory(rev2Star, rev1Star);
 
         Map<String, Object> docToUpdate2 = updateDocumentWithRevisionHistory(client, res.getId(), rev2Star, revs2, "Jerry");
-        List<Response> responses = client.bulkPost(docToUpdate1, docToUpdate2);
+        List<Response> responses = client.bulkCreateDocs(docToUpdate1, docToUpdate2);
 
         Assert.assertThat("Responses list", responses.size(), is(equalTo(0)));
         return new String[]{rev3, rev2Star};

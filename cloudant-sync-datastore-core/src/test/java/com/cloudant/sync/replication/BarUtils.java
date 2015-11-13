@@ -18,15 +18,12 @@ import com.cloudant.common.CouchConstants;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
-import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.util.CouchUtils;
 import org.junit.Assert;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -153,7 +150,7 @@ public class BarUtils {
     }
 
     /**
-     * Create a conflicts to specified document using bulk api. The document is specified by <code>Response</code>,
+     * Create a conflicts to specified document using bulkCreateDocs api. The document is specified by <code>Response</code>,
      * which usually is the response back from <code>ClientTestUtils.createHelloWorldDoc</code>
      *
      * And, the document tree looks like this:
@@ -182,7 +179,8 @@ public class BarUtils {
         Map<String, Object> docToUpdate2 = updateDocumentWithRevisionHistory(db.getCouchClient(), bar.getId(), rev2Star, revs2, "Jerry");
         Map<String, Object> docToUpdate3 = updateDocumentWithRevisionHistory(db.getCouchClient(), bar.getId(), rev2StarStar, revs3, "Alex");
 
-        List<Response> responses = db.getCouchClient().bulkPost(docToUpdate1, docToUpdate2, docToUpdate3);
+        List<Response> responses = db.getCouchClient().bulkCreateDocs(docToUpdate1, docToUpdate2,
+                docToUpdate3);
 
         Assert.assertThat("Responses list", responses.size(), is(equalTo(0)));
 

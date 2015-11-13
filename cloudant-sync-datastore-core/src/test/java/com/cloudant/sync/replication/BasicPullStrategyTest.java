@@ -216,7 +216,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
             bar1.setName("Jerry");
             bar1.setAge(100);
 
-            List<Response> responses = client.bulkPost(Arrays.asList(new Object[]{bar1}));
+            List<Response> responses = client.bulkCreateDocs(Arrays.asList(new Object[]{bar1}));
             Assert.assertEquals(0, responses.size());
         }
         this.pull(1);

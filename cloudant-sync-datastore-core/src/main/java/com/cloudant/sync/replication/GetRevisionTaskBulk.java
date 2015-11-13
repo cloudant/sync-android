@@ -21,7 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Handles calling CouchClient.bulkGetDocWithOpenRevisions(), returning the results back in a
+ * Handles calling CouchClient.bulkReadDocsWithOpenRevisions(), returning the results back in a
  * manner which can be iterated over (to avoid deserialising the entire result into memory)
  *
  * For each revision ID, gets the revision tree for a given document ID and lists of open revision IDs
