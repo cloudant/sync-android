@@ -51,8 +51,8 @@ interface CouchDB {
                                            Collection<String> revisionIds,
                                            Collection<String> attsSince,
                                            boolean pullAttachmentsInline);
-    void bulk(List<BasicDocumentRevision> revisions);
-    void bulkSerializedDocs(List<String> serializedDocs);
+    void bulkCreateDocs(List<BasicDocumentRevision> revisions);
+    void bulkCreateSerializedDocs(List<String> serializedDocs);
     List<Response> putMultiparts(List<MultipartAttachmentWriter> multiparts);
     Map<String, CouchClient.MissingRevisions> revsDiff(Map<String, Set<String>> revisions);
     UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType, String encoding);

@@ -25,14 +25,12 @@ import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.TestUtils;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.validator.routines.InetAddressValidator;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -268,7 +266,7 @@ public class CouchClientWrapperTest extends CouchTestBase {
 
         List<BasicDocumentRevision> objects = createTwoDBObjects(remoteDb, objectId1, objectId2);
 
-        remoteDb.bulk(objects);
+        remoteDb.bulkCreateDocs(objects);
 
         Map<String, Object> obj1 = remoteDb.get(Map.class, objectId1);
         Assert.assertNotNull(obj1);
