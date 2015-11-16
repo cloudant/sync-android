@@ -43,10 +43,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,7 +50,6 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     private static final Logger logger = Logger.getLogger(BasicPullStrategy.class.getCanonicalName());
     private static final String LOG_TAG = "BasicPullStrategy";
-    private final ExecutorService executor;
     CouchDB sourceDb;
     Replication.Filter filter;
     DatastoreWrapper targetDb;
@@ -79,30 +74,18 @@ class BasicPullStrategy implements ReplicationStrategy {
     private volatile boolean replicationTerminated = false;
 
     public BasicPullStrategy(PullReplication pullReplication) {
-        this(pullReplication, null, null);
+        this(pullReplication, null);
     }
 
     public BasicPullStrategy(PullReplication pullReplication,
                              PullConfiguration config) {
-        this(pullReplication, null, config);
-    }
 
-    public BasicPullStrategy(PullReplication pullReplication,
-                             ExecutorService executorService,
-                             PullConfiguration config) {
         Preconditions.checkNotNull(pullReplication, "PullReplication must not be null.");
-
-        // TODO pass this executor service down to the GetRevisionTask
-        if(executorService == null) {
-            executorService = new ThreadPoolExecutor(4, 4, 1, TimeUnit.MINUTES,
-                    new LinkedBlockingQueue<Runnable>());
-        }
 
         if(config == null) {
             config = new PullConfiguration();
         }
 
-        this.executor = executorService;
         this.config = config;
         this.filter = pullReplication.filter;
 
@@ -120,9 +103,6 @@ class BasicPullStrategy implements ReplicationStrategy {
     @Override
     public void setCancel() {
         this.cancel = true;
-
-        // Don't process further tasks to hasten shutdown
-        this.executor.shutdownNow();
     }
 
     @Override
