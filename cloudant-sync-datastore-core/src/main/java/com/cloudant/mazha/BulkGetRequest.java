@@ -21,7 +21,7 @@ import java.util.List;
  */
 
 /**
- * Represents a bulkCreateDocs GET request for documents
+ * Represents a bulk GET request for documents
  *
  * This is in the format which the _bulk_get endpoint understands, where &lt;doc id, rev id&gt;
  * pairs are given. If multiple rev ids are required, then the doc id needs to be repeated across

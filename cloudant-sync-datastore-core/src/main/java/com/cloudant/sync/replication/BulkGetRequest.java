@@ -21,7 +21,7 @@ import java.util.List;
  */
 
 /**
- * Represents a bulkCreateDocs GET request for documents
+ * Represents a bulk GET request for documents
  *
  * This is in the format which the replicator understands, (also the format used for querying docs
  * with open_revs and for the _revs_diff endpoint) where a list of rev ids is given for each
