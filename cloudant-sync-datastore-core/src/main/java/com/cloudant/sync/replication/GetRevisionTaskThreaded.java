@@ -19,12 +19,14 @@ import com.google.common.base.Preconditions;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -74,7 +76,7 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
 
     // members used to make requests:
 
-    private final ThreadPoolExecutor executorService;
+    private final ExecutorService executorService;
     private final ExecutorCompletionService<DocumentRevsList> completionService;
     private final CouchDB sourceDb;
     private final List<BulkGetRequest> requests;
@@ -102,8 +104,7 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
         this.sourceDb = sourceDb;
         this.requests = requests;
         this.pullAttachmentsInline = pullAttachmentsInline;
-        this.executorService = new ThreadPoolExecutor(threads, threads, 1, TimeUnit.MINUTES,
-                new LinkedBlockingQueue<Runnable>());
+        this.executorService = Executors.newFixedThreadPool(threads);
         // limit the size of the response queue, so we don't produce thousands of results before
         // they have been consumed
         this.responses = new LinkedBlockingQueue<Future<DocumentRevsList>>(threads) {
@@ -185,7 +186,7 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
         public DocumentRevsList next() {
             // can't advance iterator as there was a problem in call()
             if (!iteratorValid) {
-                return null;
+                throw new NoSuchElementException("Iterator has been invalidated");
             }
 
             try {
