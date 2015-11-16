@@ -71,7 +71,6 @@ import java.util.logging.Logger;
  */
 class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
 
-    // TODO logging
     private static final Logger logger = Logger.getLogger(GetRevisionTaskThreaded.class.getCanonicalName());
 
     // members used to make requests:
@@ -84,12 +83,17 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
 
     private boolean iteratorValid = true;
 
-    int threads = 4; // TODO - config?
+    // this should be a sensible number of threads but we may make this configurable in future
+    int threads = 4;
 
     // members used to handle responses:
 
     LinkedBlockingQueue<Future<DocumentRevsList>> responses;
     AtomicInteger requestsOutstanding;
+
+    // timeouts for poll() and offer():
+    int responseTimeout = 5;
+    TimeUnit responseTimeoutUnits = TimeUnit.MINUTES;
 
     public GetRevisionTaskThreaded(CouchDB sourceDb,
                                    List<BulkGetRequest> requests,
@@ -115,7 +119,8 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
             public boolean add(Future<DocumentRevsList> documentRevsListFuture) {
                 boolean offerResult;
                 try {
-                    offerResult = offer(documentRevsListFuture, 5, TimeUnit.MINUTES);
+                    offerResult = offer(documentRevsListFuture, responseTimeout,
+                            responseTimeoutUnits);
                 } catch (InterruptedException ie) {
                     throw new RuntimeException("Offer interrupted", ie);
                 }
@@ -125,7 +130,8 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
                 return true;
             }
         };
-        this.completionService = new ExecutorCompletionService<DocumentRevsList>(executorService, responses);
+        this.completionService = new ExecutorCompletionService<DocumentRevsList>(executorService,
+                responses);
         this.requestsOutstanding = new AtomicInteger(requests.size());
 
         // we make the request at construction time...
@@ -136,8 +142,7 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
                 public DocumentRevsList call() throws Exception {
                     return new DocumentRevsList(GetRevisionTaskThreaded.this.sourceDb.getRevisions
                             (request.id, request.revs, request.atts_since,
-                                    GetRevisionTaskThreaded.this
-                                            .pullAttachmentsInline));
+                                    GetRevisionTaskThreaded.this.pullAttachmentsInline));
                 }
             });
         }
@@ -190,8 +195,13 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
             }
 
             try {
+                Future<DocumentRevsList> pollResult = completionService.poll(responseTimeout,
+                        responseTimeoutUnits);
+                if (pollResult == null) {
+                    throw new NoSuchElementException("Poll timed out");
+                }
                 requestsOutstanding.decrementAndGet();
-                return completionService.take().get();
+                return pollResult.get();
             } catch (InterruptedException ie) {
                 iteratorValid = false;
                 throw new RuntimeException(ie);
