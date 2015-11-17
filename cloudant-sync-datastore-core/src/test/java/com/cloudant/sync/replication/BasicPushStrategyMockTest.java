@@ -22,12 +22,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentMatcher;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.mockito.Mockito.*;
 
@@ -105,7 +102,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
         pushStrategy.run();
 
         // Verify
-        verify(mockRemoteDb).bulkSerializedDocs(argThat(new ArgumentMatcher<List>() {
+        verify(mockRemoteDb).bulkCreateSerializedDocs(argThat(new ArgumentMatcher<List>() {
             @Override
             public boolean matches(Object argument) {
                 Assert.assertTrue(argument instanceof List);

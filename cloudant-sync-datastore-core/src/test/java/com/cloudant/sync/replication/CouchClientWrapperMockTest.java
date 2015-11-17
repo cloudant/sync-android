@@ -94,9 +94,9 @@ public class CouchClientWrapperMockTest {
     public void bulkSerializedDocs() {
         List<String> docs = new ArrayList<String>();
         docs.add("{}");
-        wrapper.bulkSerializedDocs(docs);
+        wrapper.bulkCreateSerializedDocs(docs);
 
-        verify(mockedClient).bulkSerializedDocs(docs);
+        verify(mockedClient).bulkCreateSerializedDocs(docs);
     }
 
     @Test(expected = RuntimeException.class)
@@ -105,9 +105,9 @@ public class CouchClientWrapperMockTest {
         List<String> docs = new ArrayList<String>();
         docs.add("{}");
 
-        when(mockedClient.bulkSerializedDocs(anyList())).thenReturn(Arrays.asList(new Response()));
+        when(mockedClient.bulkCreateSerializedDocs(anyList())).thenReturn(Arrays.asList(new Response()));
 
         // exec
-        wrapper.bulkSerializedDocs(docs);
+        wrapper.bulkCreateSerializedDocs(docs);
     }
 }

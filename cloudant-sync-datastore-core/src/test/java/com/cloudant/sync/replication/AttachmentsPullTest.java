@@ -309,7 +309,6 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     private void pull() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
         BasicPullStrategy pull = new BasicPullStrategy(this.createPullReplication(),
-                null,
                 new PullConfiguration(PullConfiguration.DEFAULT_CHANGES_LIMIT_PER_BATCH,
                         PullConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
                         PullConfiguration.DEFAULT_INSERT_BATCH_SIZE, pullAttachmentsInline));

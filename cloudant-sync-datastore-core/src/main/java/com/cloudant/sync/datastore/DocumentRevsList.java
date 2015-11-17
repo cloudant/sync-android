@@ -67,7 +67,7 @@ public class DocumentRevsList implements Iterable<DocumentRevs> {
         Preconditions.checkNotNull(list, "DocumentRevs list must not be null");
         this.documentRevsList = new ArrayList<DocumentRevs>(list);
 
-        // Order of the list decides which DocumentRevs is inserted first in bulk update.
+        // Order of the list decides which DocumentRevs is inserted first in bulkCreateDocs update.
         Collections.sort(this.documentRevsList, new Comparator<DocumentRevs>() {
             @Override
             public int compare(DocumentRevs o1, DocumentRevs o2) {
@@ -91,5 +91,10 @@ public class DocumentRevsList implements Iterable<DocumentRevs> {
 
     public DocumentRevs get(int index) {
         return this.documentRevsList.get(index);
+    }
+
+    @Override
+    public String toString() {
+        return documentRevsList.toString();
     }
 }

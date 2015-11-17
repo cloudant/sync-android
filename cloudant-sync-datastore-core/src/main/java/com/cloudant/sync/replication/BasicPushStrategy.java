@@ -23,7 +23,6 @@ import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
-import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
@@ -264,7 +263,7 @@ class BasicPushStrategy implements ReplicationStrategy {
 
             if (!this.cancel) {
                 this.targetDb.putMultiparts(multiparts);
-                this.targetDb.bulkSerializedDocs(serialisedMissingRevs);
+                this.targetDb.bulkCreateSerializedDocs(serialisedMissingRevs);
                 changesProcessed += docMissingRevs.size();
             }
         }
