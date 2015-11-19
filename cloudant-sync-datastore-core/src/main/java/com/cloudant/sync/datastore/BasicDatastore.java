@@ -18,6 +18,7 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64InputStreamFactory;
+import com.cloudant.sync.datastore.callables.GetAllDocumentIdsCallable;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
@@ -516,26 +517,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     public List<String> getAllDocumentIds() {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         try {
-            return queue.submit(new SQLQueueCallable<List<String>>(){
-                @Override
-                public List<String> call(SQLDatabase db) throws Exception {
-                    List<String> docIds = new ArrayList<String>();
-                    String sql = "SELECT docs.docid FROM revs, docs " +
-                                 "WHERE deleted = 0 AND current = 1 AND docs.doc_id = revs.doc_id";
-                    Cursor cursor = null;
-                    try {
-                        cursor = db.rawQuery(sql, new String[]{});
-                        while (cursor.moveToNext()) {
-                            docIds.add(cursor.getString(0));
-                        }
-                    } catch(SQLException sqe) {
-                        throw new DatastoreException(sqe);
-                    } finally {
-                        DatabaseUtils.closeCursorQuietly(cursor);
-                    }
-                    return docIds;
-                }
-            }).get();
+            return queue.submit(new GetAllDocumentIdsCallable()).get();
         } catch (InterruptedException e) {
             logger.log(Level.SEVERE,"Failed to get all document ids",e);
         } catch (ExecutionException e) {
