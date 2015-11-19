@@ -133,11 +133,13 @@ public class CouchClientWrapper implements CouchDB {
                 com.cloudant.mazha.BulkGetRequest splitRequest = new com.cloudant.mazha.BulkGetRequest();
                 splitRequest.id = request.id;
                 splitRequest.rev = rev;
-                splitRequest.atts_since = request.atts_since;
+                if (pullAttachmentsInline) {
+                    splitRequest.atts_since = request.atts_since;
+                }
                 splitRequests.add(splitRequest);
             }
         }
-        return couchClient.bulkReadDocsWithOpenRevisions(splitRequests);
+        return couchClient.bulkReadDocsWithOpenRevisions(splitRequests, pullAttachmentsInline);
     }
 
     /**
@@ -214,7 +216,8 @@ public class CouchClientWrapper implements CouchDB {
 
     @Override
     public void bulkCreateDocs(List<BasicDocumentRevision> revisions) {
-        logger.entering("com.cloudant.sync.replication.CouchClientWrapper","bulkCreateDocs",revisions);
+        logger.entering("com.cloudant.sync.replication.CouchClientWrapper", "bulkCreateDocs",
+                revisions);
 
         List<Map> allObjs = new ArrayList<Map>();
         for (BasicDocumentRevision obj : revisions) {
@@ -265,6 +268,11 @@ public class CouchClientWrapper implements CouchDB {
         Attachment.Encoding encoding = Attachment.getEncodingFromString(encodingStr);
         UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is, attachmentName, contentType, encoding);
         return usa;
+    }
+
+    @Override
+    public boolean isBulkSupported() {
+        return this.couchClient.isBulkSupported();
     }
 
 }

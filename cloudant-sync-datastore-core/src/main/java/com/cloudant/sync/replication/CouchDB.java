@@ -59,5 +59,6 @@ interface CouchDB {
 
     Iterable<DocumentRevsList> bulkGetRevisions(List<BulkGetRequest> requests,
                                                    boolean pullAttachmentsInline);
+    boolean isBulkSupported();
 
 }
