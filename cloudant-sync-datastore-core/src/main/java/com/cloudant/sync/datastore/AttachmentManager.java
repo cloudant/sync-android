@@ -103,6 +103,13 @@ class AttachmentManager {
         this.attachmentStreamFactory = new AttachmentStreamFactory(datastore.getKeyProvider());
     }
 
+    public void addAttachmentsToRevision(SQLDatabase db, List<PreparedAttachment> attachments, BasicDocumentRevision rev) throws  AttachmentNotSavedException {
+        for (PreparedAttachment a : attachments) {
+            // go thru prepared attachments and add them
+            this.addAttachment(db, a, rev);
+        }
+    }
+
     public void addAttachment(SQLDatabase db, PreparedAttachment a, BasicDocumentRevision rev) throws  AttachmentNotSavedException {
 
         // do it this way to only go thru inputstream once
@@ -264,32 +271,6 @@ class AttachmentManager {
         return list;
     }
 
-    protected void setAttachments(SQLDatabase db,BasicDocumentRevision rev,
-                                  List<PreparedAttachment> newAttachments,
-                                  List<SavedAttachment> existingAttachments)
-            throws AttachmentNotSavedException, DatastoreException {
-
-        // set attachments for revision:
-        // * prepared attachments are added
-        // * copy existing attachments forward to the next revision
-
-        try {
-            for (PreparedAttachment a : newAttachments) {
-                // go thru prepared attachments and add them
-                this.addAttachment(db,a, rev);
-            }
-            for (SavedAttachment a : existingAttachments) {
-                // go thru existing (from previous rev) and new (from another document) saved attachments
-                // and add them (the effect on existing attachments is to copy them forward to this revision)
-                long parentSequence = a.seq;
-                long newSequence = rev.getSequence();
-                this.copyAttachment(db,parentSequence, newSequence, a.name);
-            }
-        } catch (SQLException sqe) {
-            throw new DatastoreException("SQLException setting attachment for rev"+rev, sqe);
-        }
-    }
-
     protected Attachment getAttachment(SQLDatabase db, BasicDocumentRevision rev, String attachmentName) throws AttachmentException {
         Cursor c = null;
         try {
@@ -374,6 +355,21 @@ class AttachmentManager {
         }
     }
 
+    public void copyAttachmentsToRevision(SQLDatabase db, List<SavedAttachment> attachments, BasicDocumentRevision rev)
+            throws DatastoreException {
+        try {
+            for (SavedAttachment a : attachments) {
+                // go thru existing (from previous rev) and new (from another document) saved attachments
+                // and add them (the effect on existing attachments is to copy them forward to this revision)
+                long parentSequence = a.seq;
+                long newSequence = rev.getSequence();
+                this.copyAttachment(db,parentSequence, newSequence, a.name);
+            }
+        } catch (SQLException sqe) {
+            throw new DatastoreException("SQLException setting attachment for rev"+rev, sqe);
+        }
+    }
+
     /**
      * Copy a single attachment for a given revision to a new revision.
      *
@@ -389,26 +385,6 @@ class AttachmentManager {
                     new String[]{filename, String.valueOf(parentSequence)});
             copyCursorValuesToNewSequence(db,c, newSequence);
         }finally{
-            DatabaseUtils.closeCursorQuietly(c);
-        }
-    }
-
-    /**
-     * Copy all attachments for a given revision to a new revision.
-     *
-     * @param db database to use
-     * @param parentSequence identifies sequence number of revision to copy attachment data from
-     * @param newSequence identifies sequence number of revision to copy attachment data to
-     */
-    protected void copyAttachments(SQLDatabase db, long parentSequence, long newSequence) throws DatastoreException {
-        Cursor c = null;
-        try {
-             c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
-                    new String[]{String.valueOf(parentSequence)});
-            copyCursorValuesToNewSequence(db, c, newSequence);
-        } catch (SQLException e){
-            throw new DatastoreException("Failed to copy attachments", e);
-        }finally {
             DatabaseUtils.closeCursorQuietly(c);
         }
     }

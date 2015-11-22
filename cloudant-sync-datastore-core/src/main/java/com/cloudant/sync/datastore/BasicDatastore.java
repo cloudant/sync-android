@@ -1108,10 +1108,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                                     try {
                                         BasicDocumentRevision doc = getDocumentInQueue(db, id, rev);
                                         if (doc != null) {
-                                            for (PreparedAttachment att : preparedAttachments.get
-                                                    (key)) {
-                                                attachmentManager.addAttachment(db, att, doc);
-                                            }
+                                            attachmentManager.addAttachmentsToRevision(db,
+                                                    preparedAttachments.get(key), doc);
                                         }
                                     } catch (DocumentNotFoundException e){
                                         //safe to continue, previously getDocumentInQueue could return
@@ -1836,11 +1834,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 public BasicDocumentRevision call(SQLDatabase db) throws Exception {
                         // save document with body
                         BasicDocumentRevision saved = createDocument(db,docId, rev.body);
-                        // set attachments
-                        attachmentManager.setAttachments(db,
-                                saved,
-                                preparedNewAttachments,
-                                existingAttachments);
+                        attachmentManager.addAttachmentsToRevision(db, preparedNewAttachments, saved);
+                        attachmentManager.copyAttachmentsToRevision(db, existingAttachments, saved);
                         // now re-fetch the revision with updated attachments
                         BasicDocumentRevision updatedWithAttachments = getDocumentInQueue(db,
                                 saved.getId(), saved.getRevision());
@@ -1905,11 +1900,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
             // update document with new body
             BasicDocumentRevision updated = updateDocument(db,rev.docId, rev.sourceRevisionId, rev.body, true, false);
-            // set attachments
-            this.attachmentManager.setAttachments(db,
-                    updated,
-                    preparedNewAttachments,
-                    existingAttachments);
+            attachmentManager.addAttachmentsToRevision(db, preparedNewAttachments, updated);
+            attachmentManager.copyAttachmentsToRevision(db, existingAttachments, updated);
             // now re-fetch the revision with updated attachments
             BasicDocumentRevision updatedWithAttachments = this.getDocumentInQueue(db, updated.getId(), updated.getRevision());
             return updatedWithAttachments;
