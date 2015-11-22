@@ -179,16 +179,6 @@ class AttachmentManager {
 
     }
 
-    class PreparedAndSavedAttachments
-    {
-        List<SavedAttachment> savedAttachments = new ArrayList<SavedAttachment>();
-        List<PreparedAttachment> preparedAttachments = new ArrayList<PreparedAttachment>();
-
-        public boolean isEmpty() {
-            return savedAttachments.isEmpty() && preparedAttachments.isEmpty();
-        }
-    }
-
     /**
      * Creates a PreparedAttachment from {@code attachment}, preparing it for insertion into
      * the datastore.
@@ -223,27 +213,13 @@ class AttachmentManager {
         return pa;
     }
 
-    // take a set of attachments, and:
-    // * if attachment is saved, add it to the saved list
-    // * if attachment is not saved, prepare it, and add it to the prepared list
-    // this way, the attachments are sifted through ready to be added in the database for a given revision
-    protected PreparedAndSavedAttachments prepareAttachments(Collection<? extends Attachment> attachments) throws AttachmentException {
-        // Ensure we have at least an empty attachments array
-        attachments = attachments != null ? attachments : new ArrayList<Attachment>();
-        // Actually a list of prepared or saved attachments
-        PreparedAndSavedAttachments preparedAndSavedAttachments = new PreparedAndSavedAttachments();
-        preparedAndSavedAttachments.preparedAttachments = this.prepareNewAttachments(this.findNewAttachments(attachments));
-        preparedAndSavedAttachments.savedAttachments = this.findExistingAttachments(attachments);
-        return preparedAndSavedAttachments;
-    }
-
     /**
      * Return a list of the existing attachments in the list passed in.
      *
      * @param attachments Attachments to search.
      * @return List of attachments which already exist in the attachment store, or an empty list if none.
      */
-    private List<SavedAttachment> findExistingAttachments(Collection<? extends Attachment> attachments) {
+    protected List<SavedAttachment> findExistingAttachments(Collection<? extends Attachment> attachments) {
         ArrayList<SavedAttachment> list = new ArrayList<SavedAttachment>();
         for (Attachment a : attachments) {
             if (a instanceof SavedAttachment) {
@@ -259,7 +235,7 @@ class AttachmentManager {
      * @param attachments Attachments to search.
      * @return List of attachments which need adding to the attachment store, or an empty list if none.
      */
-    private List<Attachment> findNewAttachments(Collection<? extends Attachment> attachments) {
+    protected List<Attachment> findNewAttachments(Collection<? extends Attachment> attachments) {
         ArrayList<Attachment> list = new ArrayList<Attachment>();
         for (Attachment a : attachments) {
             if (!(a instanceof SavedAttachment)) {
@@ -278,7 +254,7 @@ class AttachmentManager {
      * @param attachments List of attachments to prepare.
      * @return Attachments prepared for inserting into attachment store.
      */
-    private List<PreparedAttachment> prepareNewAttachments(List<Attachment> attachments)
+    protected List<PreparedAttachment> prepareAttachments(List<Attachment> attachments)
         throws AttachmentException {
         ArrayList<PreparedAttachment> list = new ArrayList<PreparedAttachment>();
         for (Attachment a : attachments) {
