@@ -643,7 +643,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return null;
     }
 
-    private BasicDocumentRevision createDocument(SQLDatabase db,String docId, final DocumentBody body)
+    private BasicDocumentRevision createDocumentBody(SQLDatabase db, String docId, final DocumentBody body)
             throws AttachmentException, ConflictException, DatastoreException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         CouchUtils.validateDocumentId(docId);
@@ -1832,10 +1832,12 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             created = queue.submitTransaction(new SQLQueueCallable<BasicDocumentRevision>(){
                 @Override
                 public BasicDocumentRevision call(SQLDatabase db) throws Exception {
-                        // save document with body
-                        BasicDocumentRevision saved = createDocument(db,docId, rev.body);
+
+                        // Save document with new JSON body, add new attachments and copy over existing attachments
+                        BasicDocumentRevision saved = createDocumentBody(db, docId, rev.body);
                         attachmentManager.addAttachmentsToRevision(db, preparedNewAttachments, saved);
                         attachmentManager.copyAttachmentsToRevision(db, existingAttachments, saved);
+
                         // now re-fetch the revision with updated attachments
                         BasicDocumentRevision updatedWithAttachments = getDocumentInQueue(db,
                                 saved.getId(), saved.getRevision());
