@@ -227,11 +227,9 @@ class AttachmentManager {
     // * if attachment is not saved, prepare it, and add it to the prepared list
     // this way, the attachments are sifted through ready to be added in the database for a given revision
     protected PreparedAndSavedAttachments prepareAttachments(Collection<? extends Attachment> attachments) throws AttachmentException {
-        if (attachments == null || attachments.size() == 0) {
-            // nothing to do
-            return null;
-        }
-        // actually a list of prepared or saved attachments
+        // Ensure we have at least an empty attachments array
+        attachments = attachments != null ? attachments : new ArrayList<Attachment>();
+        // Actually a list of prepared or saved attachments
         PreparedAndSavedAttachments preparedAndSavedAttachments = new PreparedAndSavedAttachments();
         preparedAndSavedAttachments.preparedAttachments = this.prepareNewAttachments(this.findNewAttachments(attachments));
         preparedAndSavedAttachments.savedAttachments = this.findExistingAttachments(attachments);
