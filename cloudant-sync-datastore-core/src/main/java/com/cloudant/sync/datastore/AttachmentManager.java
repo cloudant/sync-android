@@ -78,23 +78,23 @@ class AttachmentManager {
     /**
      * Name of database mapping key to filename.
      */
-    public static final String ATTACHMENTS_KEY_FILENAME = "attachments_key_filename";
+    private static final String ATTACHMENTS_KEY_FILENAME = "attachments_key_filename";
     /**
      * SQL statement to look up filename for key.
      */
-    public static final String SQL_FILENAME_LOOKUP_QUERY = String.format(
+    private static final String SQL_FILENAME_LOOKUP_QUERY = String.format(
             "SELECT filename FROM %1$s WHERE key=?", ATTACHMENTS_KEY_FILENAME);
     /**
      * SQL statement to return all key,filename mappings.
      */
-    public static final String SQL_ATTACHMENTS_SELECT_KEYS_FILENAMES = String.format(
+    private static final String SQL_ATTACHMENTS_SELECT_KEYS_FILENAMES = String.format(
             "SELECT key,filename FROM %1$s", ATTACHMENTS_KEY_FILENAME);
     /**
      * Random number generator used to generate filenames.
      */
     private static final Random filenameRandom = new Random();
 
-    public final String attachmentsDir;
+    private final String attachmentsDir;
 
     private final AttachmentStreamFactory attachmentStreamFactory;
 
