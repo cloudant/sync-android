@@ -748,9 +748,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     private BasicDocumentRevision updateDocumentBody(SQLDatabase db, String docId,
                                                      String prevRevId,
-                                                     final DocumentBody body,
-                                                     boolean validateBody,
-                                                     boolean copyAttachments)
+                                                     final DocumentBody body)
             throws ConflictException, AttachmentException, DocumentNotFoundException, DatastoreException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
@@ -758,9 +756,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(prevRevId),
                 "Input previous revision id can not be empty");
         Preconditions.checkNotNull(body, "Input document body can not be null");
-        if (validateBody) {
-            this.validateDBBody(body);
-        }
+
+        this.validateDBBody(body);
         CouchUtils.validateRevisionId(prevRevId);
 
         BasicDocumentRevision preRevision = this.getDocumentInQueue(db, docId, prevRevId);
@@ -770,7 +767,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
 
         this.setCurrent(db, preRevision, false);
-        String newRevisionId = this.insertNewWinnerRevision(db, body, preRevision, copyAttachments);
+        String newRevisionId = this.insertNewWinnerRevision(db, body, preRevision);
         return this.getDocumentInQueue(db, preRevision.getId(), newRevisionId);
     }
 
@@ -894,13 +891,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
-    private long insertRevisionAndCopyAttachments(SQLDatabase db,InsertRevisionOptions options) throws AttachmentException, DatastoreException {
-        long newSequence = insertRevision(db,options);
-        //always copy attachments
-        this.attachmentManager.copyAttachments(db,options.parentSequence, newSequence);
-        // inserted revision and copied attachments, so we are done
-        return newSequence;
-    }
 
     private long insertRevision(SQLDatabase db,InsertRevisionOptions options) {
 
@@ -1692,8 +1682,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     private String insertNewWinnerRevision(SQLDatabase db,DocumentBody newWinner,
-                                           BasicDocumentRevision oldWinner,
-                                           boolean copyAttachments)
+                                           BasicDocumentRevision oldWinner)
             throws AttachmentException, DatastoreException {
         String newRevisionId = CouchUtils.generateNextRevisionId(oldWinner.getRevision());
 
@@ -1706,11 +1695,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         options.data = newWinner.asBytes();
         options.available = true;
 
-        if( copyAttachments){
-            this.insertRevisionAndCopyAttachments(db,options);
-        } else {
-            this.insertRevision(db, options);
-        }
+        this.insertRevision(db, options);
 
         return newRevisionId;
     }
@@ -1900,9 +1885,10 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             throws ConflictException, AttachmentException, DocumentNotFoundException, DatastoreException {
         Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
 
-            BasicDocumentRevision updated = updateDocumentBody(db,rev.docId, rev.sourceRevisionId, rev.body, true, false);
+            BasicDocumentRevision updated = updateDocumentBody(db, rev.docId, rev.sourceRevisionId, rev.body);
             attachmentManager.addAttachmentsToRevision(db, preparedNewAttachments, updated);
             attachmentManager.copyAttachmentsToRevision(db, existingAttachments, updated);
+        
             // now re-fetch the revision with updated attachments
             BasicDocumentRevision updatedWithAttachments = this.getDocumentInQueue(db, updated.getId(), updated.getRevision());
             return updatedWithAttachments;
