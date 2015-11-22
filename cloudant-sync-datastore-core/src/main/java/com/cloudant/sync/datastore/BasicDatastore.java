@@ -1853,6 +1853,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     @Override
     public BasicDocumentRevision updateDocumentFromRevision(final MutableDocumentRevision rev)
             throws DocumentException {
+        // Prepare attachments with copy/download/retrieve attachments into the temp folder
         final AttachmentManager.PreparedAndSavedAttachments preparedAndSavedAttachments =
                 this.attachmentManager.prepareAttachments(rev.attachments != null ? rev.attachments.values() : null);
 

@@ -227,24 +227,66 @@ class AttachmentManager {
     // * if attachment is not saved, prepare it, and add it to the prepared list
     // this way, the attachments are sifted through ready to be added in the database for a given revision
     protected PreparedAndSavedAttachments prepareAttachments(Collection<? extends Attachment> attachments) throws AttachmentException {
-        // actually a list of prepared or saved attachments
-        PreparedAndSavedAttachments preparedAndSavedAttachments = new PreparedAndSavedAttachments();
-
         if (attachments == null || attachments.size() == 0) {
             // nothing to do
             return null;
         }
+        // actually a list of prepared or saved attachments
+        PreparedAndSavedAttachments preparedAndSavedAttachments = new PreparedAndSavedAttachments();
+        preparedAndSavedAttachments.preparedAttachments = this.prepareNewAttachments(this.findNewAttachments(attachments));
+        preparedAndSavedAttachments.savedAttachments = this.findExistingAttachments(attachments);
+        return preparedAndSavedAttachments;
+    }
 
+    /**
+     * Return a list of the existing attachments in the list passed in.
+     *
+     * @param attachments Attachments to search.
+     * @return List of attachments which already exist in the attachment store, or an empty list if none.
+     */
+    private List<SavedAttachment> findExistingAttachments(Collection<? extends Attachment> attachments) {
+        ArrayList<SavedAttachment> list = new ArrayList<SavedAttachment>();
         for (Attachment a : attachments) {
-            if (!(a instanceof SavedAttachment)) {
-                PreparedAttachment pa = this.prepareAttachment(a);
-                preparedAndSavedAttachments.preparedAttachments.add(pa);
-            } else {
-                preparedAndSavedAttachments.savedAttachments.add((SavedAttachment)a);
+            if (a instanceof SavedAttachment) {
+                list.add((SavedAttachment)a);
             }
         }
+        return list;
+    }
 
-        return preparedAndSavedAttachments;
+    /**
+     * Return a list of the new attachments in the list passed in.
+     *
+     * @param attachments Attachments to search.
+     * @return List of attachments which need adding to the attachment store, or an empty list if none.
+     */
+    private List<Attachment> findNewAttachments(Collection<? extends Attachment> attachments) {
+        ArrayList<Attachment> list = new ArrayList<Attachment>();
+        for (Attachment a : attachments) {
+            if (!(a instanceof SavedAttachment)) {
+                list.add(a);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Download each attachment in {@code attachments} to a temporary location, and
+     * return a list of attachments suitable for passing to {@code setAttachments}.
+     *
+     * Typically {@code attachments} is found via a call to {@see findNewAttachments}.
+     *
+     * @param attachments List of attachments to prepare.
+     * @return Attachments prepared for inserting into attachment store.
+     */
+    private List<PreparedAttachment> prepareNewAttachments(List<Attachment> attachments)
+        throws AttachmentException {
+        ArrayList<PreparedAttachment> list = new ArrayList<PreparedAttachment>();
+        for (Attachment a : attachments) {
+            PreparedAttachment pa = this.prepareAttachment(a);
+            list.add(pa);
+        }
+        return list;
     }
 
     protected void setAttachments(SQLDatabase db,BasicDocumentRevision rev, PreparedAndSavedAttachments preparedAndSavedAttachments) throws AttachmentNotSavedException, DatastoreException {
