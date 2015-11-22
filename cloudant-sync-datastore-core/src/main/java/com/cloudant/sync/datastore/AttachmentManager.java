@@ -197,7 +197,8 @@ class AttachmentManager {
      * @return PreparedAttachment, which can be used in addAttachment methods
      * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
      *                  attachment data.
-     */    protected PreparedAttachment prepareAttachment(Attachment attachment) throws AttachmentException {
+     */
+    protected PreparedAttachment prepareAttachment(Attachment attachment) throws AttachmentException {
         if (attachment.encoding != Attachment.Encoding.Plain) {
             throw new AttachmentNotSavedException("Encoded attachments can only be prepared if the value of \"length\" is known");
         }
@@ -287,23 +288,21 @@ class AttachmentManager {
         return list;
     }
 
-    protected void setAttachments(SQLDatabase db,BasicDocumentRevision rev, PreparedAndSavedAttachments preparedAndSavedAttachments) throws AttachmentNotSavedException, DatastoreException {
+    protected void setAttachments(SQLDatabase db,BasicDocumentRevision rev,
+                                  List<PreparedAttachment> newAttachments,
+                                  List<SavedAttachment> existingAttachments)
+            throws AttachmentNotSavedException, DatastoreException {
 
         // set attachments for revision:
         // * prepared attachments are added
         // * copy existing attachments forward to the next revision
 
-        if (preparedAndSavedAttachments == null || preparedAndSavedAttachments.isEmpty()) {
-            // nothing to do
-            return;
-        }
-
         try {
-            for (PreparedAttachment a : preparedAndSavedAttachments.preparedAttachments) {
+            for (PreparedAttachment a : newAttachments) {
                 // go thru prepared attachments and add them
                 this.addAttachment(db,a, rev);
             }
-            for (SavedAttachment a : preparedAndSavedAttachments.savedAttachments) {
+            for (SavedAttachment a : existingAttachments) {
                 // go thru existing (from previous rev) and new (from another document) saved attachments
                 // and add them (the effect on existing attachments is to copy them forward to this revision)
                 long parentSequence = a.seq;

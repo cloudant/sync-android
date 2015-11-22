@@ -1825,7 +1825,10 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                         // save document with body
                         BasicDocumentRevision saved = createDocument(db,docId, rev.body);
                         // set attachments
-                        attachmentManager.setAttachments(db,saved, preparedAndSavedAttachments);
+                        attachmentManager.setAttachments(db,
+                                saved,
+                                preparedAndSavedAttachments.preparedAttachments,
+                                preparedAndSavedAttachments.savedAttachments);
                         // now re-fetch the revision with updated attachments
                         BasicDocumentRevision updatedWithAttachments = getDocumentInQueue(db,
                                 saved.getId(), saved.getRevision());
@@ -1850,6 +1853,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     @Override
     public BasicDocumentRevision updateDocumentFromRevision(final MutableDocumentRevision rev)
             throws DocumentException {
+
         // Prepare attachments with copy/download/retrieve attachments into the temp folder
         final AttachmentManager.PreparedAndSavedAttachments preparedAndSavedAttachments =
                 this.attachmentManager.prepareAttachments(rev.attachments != null ? rev.attachments.values() : null);
@@ -1885,7 +1889,10 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             // update document with new body
             BasicDocumentRevision updated = updateDocument(db,rev.docId, rev.sourceRevisionId, rev.body, true, false);
             // set attachments
-            this.attachmentManager.setAttachments(db,updated, preparedAndSavedAttachments);
+            this.attachmentManager.setAttachments(db,
+                    updated,
+                    preparedAndSavedAttachments.preparedAttachments,
+                    preparedAndSavedAttachments.savedAttachments);
             // now re-fetch the revision with updated attachments
             BasicDocumentRevision updatedWithAttachments = this.getDocumentInQueue(db, updated.getId(), updated.getRevision());
             return updatedWithAttachments;
