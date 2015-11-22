@@ -1630,12 +1630,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                         return null;
                     }
 
-                    AttachmentManager.PreparedAndSavedAttachments preparedAndSavedAttachments = null;
-                    if (newWinner.getClass() == MutableDocumentRevision.class) {
-                        preparedAndSavedAttachments = attachmentManager.prepareAttachments(
-                                newWinner.getAttachments() != null ? newWinner.getAttachments().values() : null);
-                    }
-
                         // if it's BasicDocumentRev:
                         // - keep the winner, delete the rest
                         // if it's MutableDocumentRev:
@@ -1670,6 +1664,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
                         // if it's MutableDocumentRev: graft the new revision on
                         if (newWinner.getClass() == MutableDocumentRevision.class) {
+                            AttachmentManager.PreparedAndSavedAttachments preparedAndSavedAttachments = null;
+                            preparedAndSavedAttachments = attachmentManager.prepareAttachments(
+                                    newWinner.getAttachments() != null ? newWinner.getAttachments().values() : null);
                             updateDocumentFromRevision(db,(MutableDocumentRevision) newWinner,
                                     preparedAndSavedAttachments);
                         }
