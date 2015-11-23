@@ -19,6 +19,7 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64InputStreamFactory;
 import com.cloudant.sync.datastore.callables.GetAllDocumentIdsCallable;
+import com.cloudant.sync.datastore.callables.GetPossibleAncestorRevisionIdsCallable;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
@@ -558,46 +559,12 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                                                        final String revId,
                                                        final int limit) {
         try {
-            return queue.submit(new SQLQueueCallable<List<String>>(){
-                @Override
-                public List<String> call(SQLDatabase db) throws Exception {
-                    return getPossibleAncestorRevisionIDsInQueue(db, docId, revId, limit);
-                }
-            }).get();
+            return queue.submit(new GetPossibleAncestorRevisionIdsCallable(docId, revId, limit)).get();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (ExecutionException e) {
            throw new RuntimeException(e);
         }
-    }
-
-    private List<String> getPossibleAncestorRevisionIDsInQueue(SQLDatabase db, String docId,
-                                                               String revId, int limit) throws DatastoreException {
-        int generation = CouchUtils.generationFromRevId(revId);
-        if (generation <= 1)
-            return null;
-
-        String sql = "SELECT revid FROM revs, docs WHERE docs.docid=?"+
-                " and revs.deleted=0 and revs.json not null and revs.doc_id = docs.doc_id"+
-                " ORDER BY revs.sequence DESC";
-        ArrayList<String> ids = new ArrayList<String>();
-        Cursor c = null;
-        try {
-            c = db.rawQuery(sql, new String[]{docId});
-            while (c.moveToNext() && limit > 0) {
-                String ancestorRevId = c.getString(0);
-                int ancestorGeneration = CouchUtils.generationFromRevId(ancestorRevId);
-                if (ancestorGeneration < generation) {
-                    ids.add(ancestorRevId);
-                    limit--;
-                }
-            }
-        } catch(SQLException sqe) {
-           throw new DatastoreException(sqe);
-        } finally {
-            DatabaseUtils.closeCursorQuietly(c);
-        }
-        return ids;
     }
 
     private List<BasicDocumentRevision> sortDocumentsAccordingToIdList(List<String> docIds,
