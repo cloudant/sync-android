@@ -78,29 +78,36 @@ class AttachmentManager {
     /**
      * Name of database mapping key to filename.
      */
-    public static final String ATTACHMENTS_KEY_FILENAME = "attachments_key_filename";
+    private static final String ATTACHMENTS_KEY_FILENAME = "attachments_key_filename";
     /**
      * SQL statement to look up filename for key.
      */
-    public static final String SQL_FILENAME_LOOKUP_QUERY = String.format(
+    private static final String SQL_FILENAME_LOOKUP_QUERY = String.format(
             "SELECT filename FROM %1$s WHERE key=?", ATTACHMENTS_KEY_FILENAME);
     /**
      * SQL statement to return all key,filename mappings.
      */
-    public static final String SQL_ATTACHMENTS_SELECT_KEYS_FILENAMES = String.format(
+    private static final String SQL_ATTACHMENTS_SELECT_KEYS_FILENAMES = String.format(
             "SELECT key,filename FROM %1$s", ATTACHMENTS_KEY_FILENAME);
     /**
      * Random number generator used to generate filenames.
      */
     private static final Random filenameRandom = new Random();
 
-    public final String attachmentsDir;
+    private final String attachmentsDir;
 
     private final AttachmentStreamFactory attachmentStreamFactory;
 
     public AttachmentManager(BasicDatastore datastore) {
         this.attachmentsDir = datastore.extensionDataFolder(EXTENSION_NAME);
         this.attachmentStreamFactory = new AttachmentStreamFactory(datastore.getKeyProvider());
+    }
+
+    public void addAttachmentsToRevision(SQLDatabase db, List<PreparedAttachment> attachments, BasicDocumentRevision rev) throws  AttachmentNotSavedException {
+        for (PreparedAttachment a : attachments) {
+            // go thru prepared attachments and add them
+            this.addAttachment(db, a, rev);
+        }
     }
 
     public void addAttachment(SQLDatabase db, PreparedAttachment a, BasicDocumentRevision rev) throws  AttachmentNotSavedException {
@@ -179,16 +186,6 @@ class AttachmentManager {
 
     }
 
-    class PreparedAndSavedAttachments
-    {
-        List<SavedAttachment> savedAttachments = new ArrayList<SavedAttachment>();
-        List<PreparedAttachment> preparedAttachments = new ArrayList<PreparedAttachment>();
-
-        public boolean isEmpty() {
-            return savedAttachments.isEmpty() && preparedAttachments.isEmpty();
-        }
-    }
-
     /**
      * Creates a PreparedAttachment from {@code attachment}, preparing it for insertion into
      * the datastore.
@@ -197,7 +194,8 @@ class AttachmentManager {
      * @return PreparedAttachment, which can be used in addAttachment methods
      * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
      *                  attachment data.
-     */    protected PreparedAttachment prepareAttachment(Attachment attachment) throws AttachmentException {
+     */
+    protected PreparedAttachment prepareAttachment(Attachment attachment) throws AttachmentException {
         if (attachment.encoding != Attachment.Encoding.Plain) {
             throw new AttachmentNotSavedException("Encoded attachments can only be prepared if the value of \"length\" is known");
         }
@@ -222,57 +220,55 @@ class AttachmentManager {
         return pa;
     }
 
-    // take a set of attachments, and:
-    // * if attachment is saved, add it to the saved list
-    // * if attachment is not saved, prepare it, and add it to the prepared list
-    // this way, the attachments are sifted through ready to be added in the database for a given revision
-    protected PreparedAndSavedAttachments prepareAttachments(Collection<? extends Attachment> attachments) throws AttachmentException {
-        // actually a list of prepared or saved attachments
-        PreparedAndSavedAttachments preparedAndSavedAttachments = new PreparedAndSavedAttachments();
-
-        if (attachments == null || attachments.size() == 0) {
-            // nothing to do
-            return null;
-        }
-
+    /**
+     * Return a list of the existing attachments in the list passed in.
+     *
+     * @param attachments Attachments to search.
+     * @return List of attachments which already exist in the attachment store, or an empty list if none.
+     */
+    protected List<SavedAttachment> findExistingAttachments(Collection<? extends Attachment> attachments) {
+        ArrayList<SavedAttachment> list = new ArrayList<SavedAttachment>();
         for (Attachment a : attachments) {
-            if (!(a instanceof SavedAttachment)) {
-                PreparedAttachment pa = this.prepareAttachment(a);
-                preparedAndSavedAttachments.preparedAttachments.add(pa);
-            } else {
-                preparedAndSavedAttachments.savedAttachments.add((SavedAttachment)a);
+            if (a instanceof SavedAttachment) {
+                list.add((SavedAttachment)a);
             }
         }
-
-        return preparedAndSavedAttachments;
+        return list;
     }
 
-    protected void setAttachments(SQLDatabase db,BasicDocumentRevision rev, PreparedAndSavedAttachments preparedAndSavedAttachments) throws AttachmentNotSavedException, DatastoreException {
-
-        // set attachments for revision:
-        // * prepared attachments are added
-        // * copy existing attachments forward to the next revision
-
-        if (preparedAndSavedAttachments == null || preparedAndSavedAttachments.isEmpty()) {
-            // nothing to do
-            return;
-        }
-
-        try {
-            for (PreparedAttachment a : preparedAndSavedAttachments.preparedAttachments) {
-                // go thru prepared attachments and add them
-                this.addAttachment(db,a, rev);
+    /**
+     * Return a list of the new attachments in the list passed in.
+     *
+     * @param attachments Attachments to search.
+     * @return List of attachments which need adding to the attachment store, or an empty list if none.
+     */
+    protected List<Attachment> findNewAttachments(Collection<? extends Attachment> attachments) {
+        ArrayList<Attachment> list = new ArrayList<Attachment>();
+        for (Attachment a : attachments) {
+            if (!(a instanceof SavedAttachment)) {
+                list.add(a);
             }
-            for (SavedAttachment a : preparedAndSavedAttachments.savedAttachments) {
-                // go thru existing (from previous rev) and new (from another document) saved attachments
-                // and add them (the effect on existing attachments is to copy them forward to this revision)
-                long parentSequence = a.seq;
-                long newSequence = rev.getSequence();
-                this.copyAttachment(db,parentSequence, newSequence, a.name);
-            }
-        } catch (SQLException sqe) {
-            throw new DatastoreException("SQLException setting attachment for rev"+rev, sqe);
         }
+        return list;
+    }
+
+    /**
+     * Download each attachment in {@code attachments} to a temporary location, and
+     * return a list of attachments suitable for passing to {@code setAttachments}.
+     *
+     * Typically {@code attachments} is found via a call to {@see findNewAttachments}.
+     *
+     * @param attachments List of attachments to prepare.
+     * @return Attachments prepared for inserting into attachment store.
+     */
+    protected List<PreparedAttachment> prepareAttachments(List<Attachment> attachments)
+        throws AttachmentException {
+        ArrayList<PreparedAttachment> list = new ArrayList<PreparedAttachment>();
+        for (Attachment a : attachments) {
+            PreparedAttachment pa = this.prepareAttachment(a);
+            list.add(pa);
+        }
+        return list;
     }
 
     protected Attachment getAttachment(SQLDatabase db, BasicDocumentRevision rev, String attachmentName) throws AttachmentException {
@@ -359,6 +355,21 @@ class AttachmentManager {
         }
     }
 
+    public void copyAttachmentsToRevision(SQLDatabase db, List<SavedAttachment> attachments, BasicDocumentRevision rev)
+            throws DatastoreException {
+        try {
+            for (SavedAttachment a : attachments) {
+                // go thru existing (from previous rev) and new (from another document) saved attachments
+                // and add them (the effect on existing attachments is to copy them forward to this revision)
+                long parentSequence = a.seq;
+                long newSequence = rev.getSequence();
+                this.copyAttachment(db,parentSequence, newSequence, a.name);
+            }
+        } catch (SQLException sqe) {
+            throw new DatastoreException("SQLException setting attachment for rev"+rev, sqe);
+        }
+    }
+
     /**
      * Copy a single attachment for a given revision to a new revision.
      *
@@ -374,26 +385,6 @@ class AttachmentManager {
                     new String[]{filename, String.valueOf(parentSequence)});
             copyCursorValuesToNewSequence(db,c, newSequence);
         }finally{
-            DatabaseUtils.closeCursorQuietly(c);
-        }
-    }
-
-    /**
-     * Copy all attachments for a given revision to a new revision.
-     *
-     * @param db database to use
-     * @param parentSequence identifies sequence number of revision to copy attachment data from
-     * @param newSequence identifies sequence number of revision to copy attachment data to
-     */
-    protected void copyAttachments(SQLDatabase db, long parentSequence, long newSequence) throws DatastoreException {
-        Cursor c = null;
-        try {
-             c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
-                    new String[]{String.valueOf(parentSequence)});
-            copyCursorValuesToNewSequence(db, c, newSequence);
-        } catch (SQLException e){
-            throw new DatastoreException("Failed to copy attachments", e);
-        }finally {
             DatabaseUtils.closeCursorQuietly(c);
         }
     }
