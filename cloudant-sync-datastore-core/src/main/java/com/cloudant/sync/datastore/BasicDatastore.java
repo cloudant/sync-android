@@ -746,11 +746,11 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return null;
     }
 
-    private BasicDocumentRevision updateDocument(SQLDatabase db,String docId,
-                                                 String prevRevId,
-                                                 final DocumentBody body,
-                                                 boolean validateBody,
-                                                 boolean copyAttachments)
+    private BasicDocumentRevision updateDocumentBody(SQLDatabase db, String docId,
+                                                     String prevRevId,
+                                                     final DocumentBody body,
+                                                     boolean validateBody,
+                                                     boolean copyAttachments)
             throws ConflictException, AttachmentException, DocumentNotFoundException, DatastoreException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
@@ -1900,8 +1900,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             throws ConflictException, AttachmentException, DocumentNotFoundException, DatastoreException {
         Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
 
-            // update document with new body
-            BasicDocumentRevision updated = updateDocument(db,rev.docId, rev.sourceRevisionId, rev.body, true, false);
+            BasicDocumentRevision updated = updateDocumentBody(db,rev.docId, rev.sourceRevisionId, rev.body, true, false);
             attachmentManager.addAttachmentsToRevision(db, preparedNewAttachments, updated);
             attachmentManager.copyAttachmentsToRevision(db, existingAttachments, updated);
             // now re-fetch the revision with updated attachments
