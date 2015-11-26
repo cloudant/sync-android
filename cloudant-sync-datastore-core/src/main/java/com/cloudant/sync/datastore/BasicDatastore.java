@@ -20,6 +20,7 @@ package com.cloudant.sync.datastore;
 import com.cloudant.android.Base64InputStreamFactory;
 import com.cloudant.sync.datastore.callables.GetAllDocumentIdsCallable;
 import com.cloudant.sync.datastore.callables.GetPossibleAncestorRevisionIdsCallable;
+import com.cloudant.sync.datastore.callables.InsertRevisionCallable;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
@@ -625,7 +626,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         // if it does not exist:
         // * normal insert logic for a new document
 
-        InsertRevisionOptions options = new InsertRevisionOptions();
+        InsertRevisionCallable callable = new InsertRevisionCallable();
         BasicDocumentRevision potentialParent = null;
 
         try {
@@ -643,24 +644,24 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             }
             // if we got here, parent rev was deleted
             this.setCurrent(db, potentialParent, false);
-            options.revId = CouchUtils.generateNextRevisionId(potentialParent.getRevision());
-            options.docNumericId = potentialParent.getInternalNumericId();
-            options.parentSequence = potentialParent.getSequence();
+            callable.revId = CouchUtils.generateNextRevisionId(potentialParent.getRevision());
+            callable.docNumericId = potentialParent.getInternalNumericId();
+            callable.parentSequence = potentialParent.getSequence();
         } else {
             // otherwise we are doing a normal create document
             long docNumericId = insertDocumentID(db,docId);
-            options.revId = CouchUtils.getFirstRevisionId();
-            options.docNumericId = docNumericId;
-            options.parentSequence = -1l;
+            callable.revId = CouchUtils.getFirstRevisionId();
+            callable.docNumericId = docNumericId;
+            callable.parentSequence = -1l;
         }
-        options.deleted = false;
-        options.current = true;
-        options.data = body.asBytes();
-        options.available = true;
-        insertRevision(db, options);
+        callable.deleted = false;
+        callable.current = true;
+        callable.data = body.asBytes();
+        callable.available = true;
+        callable.call(db);
 
         try {
-            BasicDocumentRevision doc =  getDocumentInQueue(db, docId, options.revId);
+            BasicDocumentRevision doc =  getDocumentInQueue(db, docId, callable.revId);
             logger.finer("New document created: " + doc.toString());
             return doc;
         } catch (DocumentNotFoundException e){
@@ -780,15 +781,15 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         // revision must have the same flag as it previous revision.
         // Deletion of non-winner leaf revision is mainly used when resolving
         // conflicts.
-        InsertRevisionOptions options = new InsertRevisionOptions();
-        options.docNumericId = prevRevision.getInternalNumericId();
-        options.revId = newRevisionId;
-        options.parentSequence = prevRevision.getSequence();
-        options.deleted = true;
-        options.current = prevRevision.isCurrent();
-        options.data = JSONUtils.EMPTY_JSON;
-        options.available = false;
-        insertRevision(db, options);
+        InsertRevisionCallable callable = new InsertRevisionCallable();
+        callable.docNumericId = prevRevision.getInternalNumericId();
+        callable.revId = newRevisionId;
+        callable.parentSequence = prevRevision.getSequence();
+        callable.deleted = true;
+        callable.current = prevRevision.isCurrent();
+        callable.data = JSONUtils.EMPTY_JSON;
+        callable.available = false;
+        callable.call(db);
 
 
         try {
@@ -832,68 +833,17 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return db.insert("docs", args);
     }
 
-    private  class InsertRevisionOptions {
-        // doc_id in revs table
-        public long docNumericId;
-        public String revId;
-        public long parentSequence;
-        // is revision deleted?
-        public boolean deleted;
-        // is revision current? ("winning")
-        public boolean current;
-        public byte[] data;
-        public boolean available;
-
-
-        @Override
-        public String toString() {
-            return "InsertRevisionOptions{" +
-                    ", docNumericId=" + docNumericId +
-                    ", revId='" + revId + '\'' +
-                    ", parentSequence=" + parentSequence +
-                    ", deleted=" + deleted +
-                    ", current=" + current +
-                    ", available=" + available +
-                    '}';
-        }
-    }
-
-
-    private long insertRevision(SQLDatabase db,InsertRevisionOptions options) {
-
-        long newSequence;
-            ContentValues args = new ContentValues();
-            args.put("doc_id", options.docNumericId);
-            args.put("revid", options.revId);
-            // parent field is a foreign key
-            if (options.parentSequence > 0) {
-                args.put("parent", options.parentSequence);
-            }
-            args.put("current", options.current);
-            args.put("deleted", options.deleted);
-            args.put("available", options.available);
-            args.put("json", options.data);
-            logger.fine("New revision inserted: " + options.docNumericId + ", " + options.revId);
-            newSequence = db.insert("revs", args);
-            if (newSequence < 0) {
-                throw new IllegalStateException("Unknown error inserting new updated doc, please check log");
-            }
-
-
-        return newSequence;
-    }
-
     private long insertStubRevision(SQLDatabase db, long docNumericId, String revId, long parentSequence) throws AttachmentException {
         // don't copy attachments
-        InsertRevisionOptions options = new InsertRevisionOptions();
-        options.docNumericId = docNumericId;
-        options.revId = revId;
-        options.parentSequence = parentSequence;
-        options.deleted = false;
-        options.current = false;
-        options.data = JSONUtils.EMPTY_JSON;
-        options.available = false;
-        return insertRevision(db, options);
+        InsertRevisionCallable callable = new InsertRevisionCallable();
+        callable.docNumericId = docNumericId;
+        callable.revId = revId;
+        callable.parentSequence = parentSequence;
+        callable.deleted = false;
+        callable.current = false;
+        callable.data = JSONUtils.EMPTY_JSON;
+        callable.available = false;
+        return callable.call(db);
     }
 
     private LocalDocument doGetLocalDocument(SQLDatabase db, String docId)
@@ -1215,15 +1165,15 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         String newRevisionId = revisions.get(revisions.size() - 1);
         this.changeDocumentToBeNotCurrent(db,parent.getSequence());
         // don't copy over attachments
-        InsertRevisionOptions options = new InsertRevisionOptions();
-        options.docNumericId = docNumericID;
-        options.revId = newRevisionId;
-        options.parentSequence = parent.getSequence();
-        options.deleted = newRevision.isDeleted();
-        options.current = false; // we'll call pickWinnerOfConflicts to set this if it needs it
-        options.data = newRevision.asBytes();
-        options.available = true;
-        long sequence =  insertRevision(db, options);
+        InsertRevisionCallable callable = new InsertRevisionCallable();
+        callable.docNumericId = docNumericID;
+        callable.revId = newRevisionId;
+        callable.parentSequence = parent.getSequence();
+        callable.deleted = newRevision.isDeleted();
+        callable.current = false; // we'll call pickWinnerOfConflicts to set this if it needs it
+        callable.data = newRevision.asBytes();
+        callable.available = true;
+        long sequence = callable.call(db);
 
         BasicDocumentRevision newLeaf = getDocumentInQueue(db, newRevision.getId(), newRevisionId);
         localRevs.add(newLeaf);
@@ -1272,15 +1222,15 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             localRevs.add(newNode);
         }
         // don't copy attachments
-        InsertRevisionOptions options = new InsertRevisionOptions();
-        options.docNumericId = docNumericID;
-        options.revId = newRevision.getRevision();
-        options.parentSequence = parentSequence;
-        options.deleted = newRevision.isDeleted();
-        options.current = false; // we'll call pickWinnerOfConflicts to set this if it needs it
-        options.data = newRevision.asBytes();
-        options.available = !newRevision.isDeleted();
-        long sequence = insertRevision(db, options);
+        InsertRevisionCallable callable = new InsertRevisionCallable();
+        callable.docNumericId = docNumericID;
+        callable.revId = newRevision.getRevision();
+        callable.parentSequence = parentSequence;
+        callable.deleted = newRevision.isDeleted();
+        callable.current = false; // we'll call pickWinnerOfConflicts to set this if it needs it
+        callable.data = newRevision.asBytes();
+        callable.available = !newRevision.isDeleted();
+        long sequence = callable.call(db);
         BasicDocumentRevision newLeaf = getDocumentInQueue(db, newRevision.getId(), newRevision.getRevision());
         localRevs.add(newLeaf);
 
@@ -1354,15 +1304,15 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             parentSequence = insertStubRevision(db,docNumericID, revHistory.get(i), parentSequence);
         }
         // Insert the leaf node (don't copy attachments)
-        InsertRevisionOptions options = new InsertRevisionOptions();
-        options.docNumericId = docNumericID;
-        options.revId = revHistory.get(revHistory.size() - 1);
-        options.parentSequence = parentSequence;
-        options.deleted = rev.isDeleted();
-        options.current = true;
-        options.data = rev.getBody().asBytes();
-        options.available = true;
-        long sequence = insertRevision(db,options);
+        InsertRevisionCallable callable = new InsertRevisionCallable();
+        callable.docNumericId = docNumericID;
+        callable.revId = revHistory.get(revHistory.size() - 1);
+        callable.parentSequence = parentSequence;
+        callable.deleted = rev.isDeleted();
+        callable.current = true;
+        callable.data = rev.getBody().asBytes();
+        callable.available = true;
+        long sequence = callable.call(db);
         return sequence;
     }
 
@@ -1653,16 +1603,15 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             throws AttachmentException, DatastoreException {
         String newRevisionId = CouchUtils.generateNextRevisionId(oldWinner.getRevision());
 
-        InsertRevisionOptions options = new InsertRevisionOptions();
-        options.docNumericId = oldWinner.getInternalNumericId();
-        options.revId = newRevisionId;
-        options.parentSequence = oldWinner.getSequence();
-        options.deleted = false;
-        options.current = true;
-        options.data = newWinner.asBytes();
-        options.available = true;
-
-        this.insertRevision(db, options);
+        InsertRevisionCallable callable = new InsertRevisionCallable();
+        callable.docNumericId = oldWinner.getInternalNumericId();
+        callable.revId = newRevisionId;
+        callable.parentSequence = oldWinner.getSequence();
+        callable.deleted = false;
+        callable.current = true;
+        callable.data = newWinner.asBytes();
+        callable.available = true;
+        callable.call(db);
 
         return newRevisionId;
     }
