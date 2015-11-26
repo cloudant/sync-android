@@ -47,7 +47,6 @@ import java.util.logging.Logger;
  */
 class AttachmentManager {
 
-    private static final String EXTENSION_NAME = "com.cloudant.attachments";
     private static final Logger logger = Logger.getLogger(AttachmentManager.class.getCanonicalName());
 
     private static final String SQL_ATTACHMENTS_SELECT = "SELECT sequence, " +
@@ -94,23 +93,19 @@ class AttachmentManager {
      */
     private static final Random filenameRandom = new Random();
 
-    private final String attachmentsDir;
-
-    private final AttachmentStreamFactory attachmentStreamFactory;
-
-    public AttachmentManager(BasicDatastore datastore) {
-        this.attachmentsDir = datastore.extensionDataFolder(EXTENSION_NAME);
-        this.attachmentStreamFactory = new AttachmentStreamFactory(datastore.getKeyProvider());
-    }
-
-    public void addAttachmentsToRevision(SQLDatabase db, List<PreparedAttachment> attachments, BasicDocumentRevision rev) throws  AttachmentNotSavedException {
+    public static void addAttachmentsToRevision(SQLDatabase db, String attachmentsDir,
+                                                BasicDocumentRevision rev,
+                                                List<PreparedAttachment> attachments)
+            throws  AttachmentNotSavedException {
         for (PreparedAttachment a : attachments) {
             // go thru prepared attachments and add them
-            this.addAttachment(db, a, rev);
+            AttachmentManager.addAttachment(db, attachmentsDir, rev, a);
         }
     }
 
-    public void addAttachment(SQLDatabase db, PreparedAttachment a, BasicDocumentRevision rev) throws  AttachmentNotSavedException {
+    public static void addAttachment(SQLDatabase db, String attachmentsDir,
+                                     BasicDocumentRevision rev, PreparedAttachment a)
+            throws  AttachmentNotSavedException {
 
         // do it this way to only go thru inputstream once
         // * write to temp location using copyinputstreamtofile
@@ -190,21 +185,27 @@ class AttachmentManager {
      * Creates a PreparedAttachment from {@code attachment}, preparing it for insertion into
      * the datastore.
      *
+     *
+     * @param attachmentStreamFactory
      * @param attachment Attachment to prepare for insertion into datastore
      * @return PreparedAttachment, which can be used in addAttachment methods
      * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
      *                  attachment data.
      */
-    protected PreparedAttachment prepareAttachment(Attachment attachment) throws AttachmentException {
+    protected static PreparedAttachment prepareAttachment(String attachmentsDir,
+                                                          AttachmentStreamFactory attachmentStreamFactory,
+                                                          Attachment attachment)
+            throws AttachmentException {
         if (attachment.encoding != Attachment.Encoding.Plain) {
             throw new AttachmentNotSavedException("Encoded attachments can only be prepared if the value of \"length\" is known");
         }
-        return new PreparedAttachment(attachment, this.attachmentsDir, 0, attachmentStreamFactory);
+        return new PreparedAttachment(attachment, attachmentsDir, 0, attachmentStreamFactory);
     }
 
     // prepare an attachment and check validity of length and encodedLength metadata
-    protected PreparedAttachment prepareAttachment(Attachment attachment, long length, long encodedLength) throws AttachmentException {
-        PreparedAttachment pa = new PreparedAttachment(attachment, this.attachmentsDir, length, attachmentStreamFactory);
+    protected static PreparedAttachment prepareAttachment(String attachmentsDir,
+                                                          AttachmentStreamFactory attachmentStreamFactory, Attachment attachment, long length, long encodedLength) throws AttachmentException {
+        PreparedAttachment pa = new PreparedAttachment(attachment, attachmentsDir, length, attachmentStreamFactory);
         // check the length on disk is correct:
         // - plain encoding, length on disk is signalled by the "length" metadata property
         // - all other encodings, length on disk is signalled by the "encoded_length" metadata property
@@ -226,7 +227,8 @@ class AttachmentManager {
      * @param attachments Attachments to search.
      * @return List of attachments which already exist in the attachment store, or an empty list if none.
      */
-    protected List<SavedAttachment> findExistingAttachments(Collection<? extends Attachment> attachments) {
+    protected static List<SavedAttachment> findExistingAttachments(
+            Collection<? extends Attachment> attachments) {
         ArrayList<SavedAttachment> list = new ArrayList<SavedAttachment>();
         for (Attachment a : attachments) {
             if (a instanceof SavedAttachment) {
@@ -242,7 +244,7 @@ class AttachmentManager {
      * @param attachments Attachments to search.
      * @return List of attachments which need adding to the attachment store, or an empty list if none.
      */
-    protected List<Attachment> findNewAttachments(Collection<? extends Attachment> attachments) {
+    protected static List<Attachment> findNewAttachments(Collection<? extends Attachment> attachments) {
         ArrayList<Attachment> list = new ArrayList<Attachment>();
         for (Attachment a : attachments) {
             if (!(a instanceof SavedAttachment)) {
@@ -261,17 +263,22 @@ class AttachmentManager {
      * @param attachments List of attachments to prepare.
      * @return Attachments prepared for inserting into attachment store.
      */
-    protected List<PreparedAttachment> prepareAttachments(List<Attachment> attachments)
+    protected static List<PreparedAttachment> prepareAttachments(String attachmentsDir,
+                                                                 AttachmentStreamFactory attachmentStreamFactory,
+                                                                 List<Attachment> attachments)
         throws AttachmentException {
         ArrayList<PreparedAttachment> list = new ArrayList<PreparedAttachment>();
         for (Attachment a : attachments) {
-            PreparedAttachment pa = this.prepareAttachment(a);
+            PreparedAttachment pa = AttachmentManager.prepareAttachment(attachmentsDir, attachmentStreamFactory, a);
             list.add(pa);
         }
         return list;
     }
 
-    protected Attachment getAttachment(SQLDatabase db, BasicDocumentRevision rev, String attachmentName) throws AttachmentException {
+    protected static Attachment getAttachment(SQLDatabase db, String attachmentsDir,
+                                              AttachmentStreamFactory attachmentStreamFactory,
+                                              BasicDocumentRevision rev, String attachmentName)
+            throws AttachmentException {
         Cursor c = null;
         try {
              c = db.rawQuery(SQL_ATTACHMENTS_SELECT,
@@ -303,7 +310,10 @@ class AttachmentManager {
         }
     }
 
-    protected List<? extends Attachment> attachmentsForRevision(SQLDatabase db, long sequence) throws AttachmentException {
+    protected static List<? extends Attachment> attachmentsForRevision(SQLDatabase db, String attachmentsDir,
+                                                                       AttachmentStreamFactory attachmentStreamFactory,
+                                                                       long sequence)
+            throws AttachmentException {
         Cursor c = null;
         try {
             LinkedList<SavedAttachment> atts = new LinkedList<SavedAttachment>();
@@ -332,7 +342,7 @@ class AttachmentManager {
         }
     }
 
-    private void copyCursorValuesToNewSequence(SQLDatabase db, Cursor c, long newSequence) {
+    private static void copyCursorValuesToNewSequence(SQLDatabase db, Cursor c, long newSequence) {
         while (c.moveToNext()) {
             String filename = c.getString(1);
             byte[] key = c.getBlob(2);
@@ -355,7 +365,8 @@ class AttachmentManager {
         }
     }
 
-    public void copyAttachmentsToRevision(SQLDatabase db, List<SavedAttachment> attachments, BasicDocumentRevision rev)
+    public static void copyAttachmentsToRevision(SQLDatabase db, List<SavedAttachment> attachments,
+                                                 BasicDocumentRevision rev)
             throws DatastoreException {
         try {
             for (SavedAttachment a : attachments) {
@@ -363,7 +374,7 @@ class AttachmentManager {
                 // and add them (the effect on existing attachments is to copy them forward to this revision)
                 long parentSequence = a.seq;
                 long newSequence = rev.getSequence();
-                this.copyAttachment(db,parentSequence, newSequence, a.name);
+                AttachmentManager.copyAttachment(db,parentSequence, newSequence, a.name);
             }
         } catch (SQLException sqe) {
             throw new DatastoreException("SQLException setting attachment for rev"+rev, sqe);
@@ -378,7 +389,8 @@ class AttachmentManager {
      * @param newSequence identifies sequence number of revision to copy attachment data to
      * @param filename filename of attachment to copy
      */
-    protected void copyAttachment(SQLDatabase db, long parentSequence, long newSequence, String filename) throws SQLException {
+    protected static void copyAttachment(SQLDatabase db, long parentSequence, long newSequence,
+                                         String filename) throws SQLException {
         Cursor c = null;
         try{
             c = db.rawQuery(SQL_ATTACHMENTS_SELECT,
@@ -393,7 +405,7 @@ class AttachmentManager {
      * Called by BasicDatastore on the execution queue, this needs have the db passed ot it
      * @param db database to purge attachments from
      */
-    protected void purgeAttachments(SQLDatabase db) {
+    protected static void purgeAttachments(SQLDatabase db, String attachmentsDir) {
         // it's easier to deal with Strings since java doesn't know how to compare byte[]s
         Set<String> currentKeys = new HashSet<String>();
         Cursor c = null;
@@ -476,7 +488,8 @@ class AttachmentManager {
      * @throws AttachmentException if a mapping doesn't exist and {@code allowCreateName} is
      *          false or if the name generation process fails.
      */
-    static File fileFromKey(SQLDatabase db, byte[] key, String attachmentsDir, boolean allowCreateName)
+    static File fileFromKey(SQLDatabase db, byte[] key, String attachmentsDir,
+                            boolean allowCreateName)
             throws AttachmentException {
 
         String keyString = keyToString(key);
