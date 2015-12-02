@@ -43,7 +43,9 @@ import java.util.logging.Logger;
  * attachments for documents from disk. It handles both disk read/write and managing the
  * attachment related tables in the datastore's database.
  *
- * Attachments are stored on disk in an extension directory, {@code EXTENSION_NAME}.
+ * Attachments are stored on disk, in the folder specified by the {@code attachmentsDir}
+ * parameter to each method. AttachmentManager assumes it has sole control of this directory.
+ * For example, purging and compaction may delete non-attachment files.
  */
 class AttachmentManager {
 
