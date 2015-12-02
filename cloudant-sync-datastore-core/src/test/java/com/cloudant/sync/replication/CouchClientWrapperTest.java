@@ -57,7 +57,8 @@ public class CouchClientWrapperTest extends CouchTestBase {
 
     @Before
     public void setup() throws IOException {
-        remoteDb = new CouchClientWrapper(super.getCouchConfig(CLOUDANT_TEST_DB_NAME));
+        remoteDb = new CouchClientWrapper(super.getCouchConfig(CLOUDANT_TEST_DB_NAME + System
+                .currentTimeMillis()));
         bodyOne = DocumentBodyFactory.create(FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile)));
         bodyTwo = DocumentBodyFactory.create(FileUtils.readFileToByteArray(TestUtils.loadFixture(documentTwoFile)));
 
