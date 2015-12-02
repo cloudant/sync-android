@@ -91,7 +91,7 @@ public class CouchClientWrapperTest extends CouchTestBase {
     @Test
     public void getIdentifier() {
         String identifier = remoteDb.getIdentifier();
-        Pattern couchDbId = Pattern.compile("http(s)?://.+/couch_client_wrapper_test");
+        Pattern couchDbId = Pattern.compile("http(s)?://.+/couch_client_wrapper_test.+");
         Assert.assertTrue(couchDbId.matcher(identifier).matches());
     }
 
