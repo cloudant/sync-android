@@ -90,7 +90,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     private final String datastoreName;
     private final EventBus eventBus;
-    private final AttachmentManager attachmentManager;
 
     final String datastoreDir;
     final String extensionsDir;
@@ -107,6 +106,18 @@ class BasicDatastore implements Datastore, DatastoreExtended {
      * Queue for all database tasks.
      */
     private final SQLDatabaseQueue queue;
+
+    /** Name used to get storage folder for attachments */
+    private static final String ATTACHMENTS_EXTENSION_NAME = "com.cloudant.attachments";
+
+    /** Directory where attachments are stored for this datastore */
+    private final String attachmentsDir;
+
+    /**
+     * Creates streams used for encrypting and encoding (gzip etc.) attachments when
+     * reading to and from disk.
+     */
+    private final AttachmentStreamFactory attachmentStreamFactory;
 
     public BasicDatastore(String dir, String name) throws SQLException, IOException, DatastoreException {
         this(dir, name, new NullKeyProvider());
@@ -145,7 +156,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion6()), 6);
         queue.updateSchema(new MigrateDatabase6To100(), 100);
         this.eventBus = new EventBus();
-        this.attachmentManager = new AttachmentManager(this);
+
+        this.attachmentsDir = this.extensionDataFolder(ATTACHMENTS_EXTENSION_NAME);
+        this.attachmentStreamFactory = new AttachmentStreamFactory(this.getKeyProvider());
     }
 
     @Override
@@ -283,7 +296,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             cursor = db.rawQuery(sql, args);
             if (cursor.moveToFirst()) {
                 long sequence = cursor.getLong(3);
-                List<? extends Attachment> atts = attachmentManager.attachmentsForRevision(db,sequence);
+                List<? extends Attachment> atts = AttachmentManager.attachmentsForRevision(db,
+                        this.attachmentsDir, this.attachmentStreamFactory, sequence);
                 return getFullRevisionFromCurrentCursor(cursor, atts);
             } else {
                 throw new DocumentNotFoundException(id,rev);
@@ -349,7 +363,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             cursor = db.rawQuery(sql, args);
             while (cursor.moveToNext()) {
                 long sequence = cursor.getLong(3);
-                List<? extends Attachment> atts = attachmentManager.attachmentsForRevision(db,sequence);
+                List<? extends Attachment> atts = AttachmentManager.attachmentsForRevision(db,
+                        this.attachmentsDir, this.attachmentStreamFactory, sequence);
                 BasicDocumentRevision rev = getFullRevisionFromCurrentCursor(cursor, atts);
                 logger.finer("Rev: " + rev);
                 tree.add(rev);
@@ -876,7 +891,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             cursor = db.rawQuery(sql, args);
             while (cursor.moveToNext()) {
                 long sequence = cursor.getLong(3);
-                List<? extends Attachment> atts = attachmentManager.attachmentsForRevision(db,sequence);
+                List<? extends Attachment> atts = AttachmentManager.attachmentsForRevision(db,
+                        this.attachmentsDir, this.attachmentStreamFactory, sequence);
                 BasicDocumentRevision row = getFullRevisionFromCurrentCursor(cursor, atts);
                 result.add(row);
             }
@@ -994,8 +1010,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                                 UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is,
                                         att, type);
                                 try {
-                                    PreparedAttachment pa = attachmentManager.prepareAttachment(usa);
-                                    attachmentManager.addAttachment(db, pa, rev);
+                                    PreparedAttachment pa = AttachmentManager.prepareAttachment(
+                                            attachmentsDir, attachmentStreamFactory, usa);
+                                    AttachmentManager.addAttachment(db, attachmentsDir, rev, pa);
                                 } catch (Exception e) {
                                     logger.log(Level.SEVERE, "There was a problem adding the " +
                                                     "attachment "
@@ -1015,8 +1032,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                                     try {
                                         BasicDocumentRevision doc = getDocumentInQueue(db, id, rev);
                                         if (doc != null) {
-                                            attachmentManager.addAttachmentsToRevision(db,
-                                                    preparedAttachments.get(key), doc);
+                                            AttachmentManager.addAttachmentsToRevision(db,
+                                                    attachmentsDir, doc, preparedAttachments.get(key));
                                         }
                                     } catch (DocumentNotFoundException e){
                                         //safe to continue, previously getDocumentInQueue could return
@@ -1189,7 +1206,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 Boolean stub = ((Map<String, Boolean>) attachments.get(att)).get("stub");
                 if (stub != null && stub.booleanValue()) {
                     try {
-                        this.attachmentManager.copyAttachment(db,previousLeaf.getSequence(), sequence, att);
+                        AttachmentManager.copyAttachment(db,previousLeaf.getSequence(), sequence, att);
                     } catch (SQLException sqe) {
                         logger.log(Level.SEVERE, "Error copying stubbed attachments", sqe);
                         throw new DatastoreException("Error copying stubbed attachments",sqe);
@@ -1342,7 +1359,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                     int i = db.update("revs", args, "current=0", null);
 
                     logger.finer("Deleting old attachments...");
-                    attachmentManager.purgeAttachments(db);
+                    AttachmentManager.purgeAttachments(db, attachmentsDir);
                     logger.finer("Vacuuming SQLite database...");
                     db.compactDatabase();
                     return null;
@@ -1574,8 +1591,12 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                             // we can copy over because they exist in the attachment store already and
                             // which are new, that we need to prepare for insertion.
                             Collection<Attachment> attachments = newWinner.getAttachments() != null ? newWinner.getAttachments().values() : new ArrayList<Attachment>();
-                            final List<PreparedAttachment> preparedNewAttachments = attachmentManager.prepareAttachments(attachmentManager.findNewAttachments(attachments));
-                            final List<SavedAttachment> existingAttachments = attachmentManager.findExistingAttachments(attachments);
+                            final List<PreparedAttachment> preparedNewAttachments =
+                                    AttachmentManager.prepareAttachments(attachmentsDir,
+                                            attachmentStreamFactory,
+                                            AttachmentManager.findNewAttachments(attachments));
+                            final List<SavedAttachment> existingAttachments =
+                                    AttachmentManager.findExistingAttachments(attachments);
 
                             updateDocumentFromRevision(db, (MutableDocumentRevision) newWinner,
                                     preparedNewAttachments,
@@ -1659,7 +1680,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     // this is just a facade into attachmentManager.PrepareAttachment for the sake of DatastoreWrapper
     @Override
     public PreparedAttachment prepareAttachment(Attachment att, long length, long encodedLength) throws AttachmentException {
-        PreparedAttachment pa = attachmentManager.prepareAttachment(att, length, encodedLength);
+        PreparedAttachment pa = AttachmentManager.prepareAttachment(attachmentsDir,
+                attachmentStreamFactory, att, length, encodedLength);
         return pa;
     }
     
@@ -1669,7 +1691,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             return queue.submit(new SQLQueueCallable<Attachment>() {
                 @Override
                 public Attachment call(SQLDatabase db) throws Exception {
-                    return attachmentManager.getAttachment(db,rev, attachmentName);
+                    return AttachmentManager.getAttachment(db, attachmentsDir,
+                            attachmentStreamFactory, rev, attachmentName);
                 }
             }).get();
         } catch (InterruptedException e) {
@@ -1688,7 +1711,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
                 @Override
                 public List<? extends Attachment> call(SQLDatabase db) throws Exception {
-                    return attachmentManager.attachmentsForRevision(db,rev.getSequence());
+                    return AttachmentManager.attachmentsForRevision(db, attachmentsDir,
+                            attachmentStreamFactory, rev.getSequence());
                 }
             }).get();
         } catch (InterruptedException e) {
@@ -1725,8 +1749,12 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         // we can copy over because they exist in the attachment store already and
         // which are new, that we need to prepare for insertion.
         Collection<Attachment> attachments = rev.attachments != null ? rev.attachments.values() : new ArrayList<Attachment>();
-        final List<PreparedAttachment> preparedNewAttachments = attachmentManager.prepareAttachments(attachmentManager.findNewAttachments(attachments));
-        final List<SavedAttachment> existingAttachments = attachmentManager.findExistingAttachments(attachments);
+        final List<PreparedAttachment> preparedNewAttachments =
+                AttachmentManager.prepareAttachments(attachmentsDir,
+                        attachmentStreamFactory,
+                        AttachmentManager.findNewAttachments(attachments));
+        final List<SavedAttachment> existingAttachments =
+                AttachmentManager.findExistingAttachments(attachments);
 
         BasicDocumentRevision created = null;
         try {
@@ -1736,8 +1764,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
                         // Save document with new JSON body, add new attachments and copy over existing attachments
                         BasicDocumentRevision saved = createDocumentBody(db, docId, rev.body);
-                        attachmentManager.addAttachmentsToRevision(db, preparedNewAttachments, saved);
-                        attachmentManager.copyAttachmentsToRevision(db, existingAttachments, saved);
+                        AttachmentManager.addAttachmentsToRevision(db, attachmentsDir, saved, preparedNewAttachments);
+                        AttachmentManager.copyAttachmentsToRevision(db, existingAttachments, saved);
 
                         // now re-fetch the revision with updated attachments
                         BasicDocumentRevision updatedWithAttachments = getDocumentInQueue(db,
@@ -1768,8 +1796,12 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         // we can copy over because they exist in the attachment store already and
         // which are new, that we need to prepare for insertion.
         Collection<Attachment> attachments = rev.getAttachments() != null ? rev.getAttachments().values() : new ArrayList<Attachment>();
-        final List<PreparedAttachment> preparedNewAttachments = attachmentManager.prepareAttachments(attachmentManager.findNewAttachments(attachments));
-        final List<SavedAttachment> existingAttachments = attachmentManager.findExistingAttachments(attachments);
+        final List<PreparedAttachment> preparedNewAttachments =
+                AttachmentManager.prepareAttachments(attachmentsDir,
+                        attachmentStreamFactory,
+                        AttachmentManager.findNewAttachments(attachments));
+        final List<SavedAttachment> existingAttachments =
+                AttachmentManager.findExistingAttachments(attachments);
 
         try {
             BasicDocumentRevision revision = queue.submitTransaction(new SQLQueueCallable<BasicDocumentRevision>(){
@@ -1802,8 +1834,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
 
             BasicDocumentRevision updated = updateDocumentBody(db, rev.docId, rev.sourceRevisionId, rev.body);
-            attachmentManager.addAttachmentsToRevision(db, preparedNewAttachments, updated);
-            attachmentManager.copyAttachmentsToRevision(db, existingAttachments, updated);
+            AttachmentManager.addAttachmentsToRevision(db, attachmentsDir, updated, preparedNewAttachments);
+
+            AttachmentManager.copyAttachmentsToRevision(db, existingAttachments, updated);
         
             // now re-fetch the revision with updated attachments
             BasicDocumentRevision updatedWithAttachments = this.getDocumentInQueue(db, updated.getId(), updated.getRevision());
