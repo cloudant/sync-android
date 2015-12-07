@@ -67,8 +67,8 @@ class BasicPullStrategy implements ReplicationStrategy {
     
     private final EventBus eventBus = new EventBus();
 
-    // is _bulk_get endpoint supported?
-    private boolean bulkSupported = false;
+    // Is _bulk_get endpoint supported?
+    private boolean useBulkGet = false;
 
     /**
      * Flag is set when the replication process is complete. The thread
@@ -129,7 +129,7 @@ class BasicPullStrategy implements ReplicationStrategy {
         ErrorInfo errorInfo = null;
 
         try {
-            this.bulkSupported = sourceDb.isBulkSupported();
+            this.useBulkGet = sourceDb.isBulkSupported();
             replicate();
 
         } catch (ExecutionException ex) {
@@ -375,7 +375,7 @@ class BasicPullStrategy implements ReplicationStrategy {
     }
 
     public Iterable<DocumentRevsList> createTask(List<String> ids,
-                                                        Map<String, Collection<String>> revisions) {
+                                                 Map<String, Collection<String>> revisions) {
 
         List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
 
@@ -403,7 +403,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                     new ArrayList<String>(possibleAncestors)));
         }
 
-        if (bulkSupported) {
+        if (useBulkGet) {
             return new GetRevisionTaskBulk(this.sourceDb, requests, config.pullAttachmentsInline);
         } else {
             return new GetRevisionTaskThreaded(this.sourceDb, requests, config.pullAttachmentsInline);

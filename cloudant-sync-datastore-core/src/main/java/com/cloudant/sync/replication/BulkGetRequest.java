@@ -57,7 +57,6 @@ public class BulkGetRequest {
         }
         return !(atts_since != null ? !atts_since.equals(that.atts_since) : that.atts_since !=
                 null);
-
     }
 
     @Override

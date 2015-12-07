@@ -419,7 +419,20 @@ public class CouchClient  {
         });
     }
 
-    public Iterable<DocumentRevsList> bulkReadDocsWithOpenRevisions(List<BulkGetRequest> request, boolean pullAttachmentsInline) {
+    /**
+     * <p>
+     * Return an iterator representing the result of calling the _bulk_docs endpoint.
+     * </p>
+     * <p>
+     * Each time the iterator is advanced, a DocumentRevsList is returned, which represents the
+     * leaf nodes and their ancestries for a given document id.
+     * </p>
+     * @param request A request for 1 or more (id,rev) pairs.
+     * @param pullAttachmentsInline If true, retrieve attachments as inline base64
+     * @return An iterator representing the result of calling the _bulk_docs endpoint.
+     */
+    public Iterable<DocumentRevsList> bulkReadDocsWithOpenRevisions(List<BulkGetRequest> request,
+                                                                    boolean pullAttachmentsInline) {
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("revs", true);
 
@@ -435,13 +448,13 @@ public class CouchClient  {
         jsonRequest.put("docs", request);
         // build request
         connection.setRequestBody(jsonHelper.toJson(jsonRequest));
-        // deserialise reponse
+        // deserialise response
         BulkGetResponse response = executeToJsonObjectWithRetry(connection, BulkGetResponse.class);
 
         Map<String,ArrayList<DocumentRevs>> revsMap = new HashMap<String,ArrayList<DocumentRevs>>();
 
         // merge results back in, so there is one list of DocumentRevs per id
-        for (BulkGetResponse.Result result: response.results) {
+        for (BulkGetResponse.Result result : response.results) {
             for (BulkGetResponse.Doc doc : result.docs) {
                 if (doc.ok != null) {
                     String id = doc.ok.getId();
