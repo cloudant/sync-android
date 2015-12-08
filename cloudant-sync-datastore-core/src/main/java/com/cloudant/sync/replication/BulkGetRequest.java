@@ -39,6 +39,35 @@ public class BulkGetRequest {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        BulkGetRequest that = (BulkGetRequest) o;
+
+        if (id != null ? !id.equals(that.id) : that.id != null) {
+            return false;
+        }
+        if (revs != null ? !revs.equals(that.revs) : that.revs != null) {
+            return false;
+        }
+        return !(atts_since != null ? !atts_since.equals(that.atts_since) : that.atts_since !=
+                null);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (revs != null ? revs.hashCode() : 0);
+        result = 31 * result + (atts_since != null ? atts_since.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "BulkGetRequest{" +
                 "id='" + id + '\'' +

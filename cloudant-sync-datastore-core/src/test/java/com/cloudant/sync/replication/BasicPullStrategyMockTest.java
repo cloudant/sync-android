@@ -20,6 +20,7 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.OkOpenRevision;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.mazha.json.JSONHelper;
+import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.util.TestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.eventbus.Subscribe;
@@ -35,6 +36,7 @@ import org.mockito.stubbing.Answer;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -160,17 +162,44 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         when(mockRemoteDb.exists()).thenReturn(true);
         Collection<String> revs = new ArrayList<String>();
         revs.add("1-bd42b942b8b672f0289cf3cd1f67044c");
+
+        // TODO we could assert on these empty string ones not being called
+        // bulkGetRevisions flavour of mock
+        when(mockRemoteDb.bulkGetRevisions(Collections.singletonList(new BulkGetRequest("", new
+                ArrayList<String>(revs), new ArrayList<String>())), false)).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                return loadBulkRevsResponseFromFixture("fixture/testReplicationDocWithEmptyId_open_revs_1" +
+                        ".json");
+
+            }
+        });
+
+        // 'normal' getRevisions flavour of mock
         when(mockRemoteDb.getRevisions("", revs, new HashSet<String>(), false)).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
 
-                return loadOpenRevsResponseFromFixture("testReplicationDocWithEmptyId_open_revs_1" +
+                return loadOpenRevsResponseFromFixture("fixture/testReplicationDocWithEmptyId_open_revs_1" +
                         ".json");
 
             }
         });
         revs = new ArrayList<String>();
         revs.add("1-13d33701a0954729ad029adf8fdc5a04");
+
+        // bulkGetRevisions flavour of mock
+        when(mockRemoteDb.bulkGetRevisions(Collections.singletonList(new BulkGetRequest("4d3b3f01362649d79b31d9092799a7e0", new
+                ArrayList<String>(revs), new ArrayList<String>())), false)).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                return loadBulkRevsResponseFromFixture("fixture/testReplicationDocWithEmptyId_open_revs_2" +
+                        ".json");
+
+            }
+        });
+
+        // 'normal' getRevisions flavour of mock
         when(mockRemoteDb.getRevisions("4d3b3f01362649d79b31d9092799a7e0", revs, new ArrayList
                         <String>(),
                 false)).then(new Answer<Object>() {
@@ -205,6 +234,14 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         @Subscribe
         public void error(ReplicationStrategyErrored re) {
         }
+    }
+
+    private Iterable<DocumentRevsList> loadBulkRevsResponseFromFixture(String fixturePath) throws Exception {
+        // adapt response from loadOpenRevsResponseFromFixture to look like it came from a bulk response:
+        // one revslist presented inside a list of length 1
+        List<DocumentRevs> revs = loadOpenRevsResponseFromFixture(fixturePath);
+        DocumentRevsList revsList = new DocumentRevsList(revs);
+        return Collections.singleton(revsList);
     }
 
     private List<DocumentRevs> loadOpenRevsResponseFromFixture(String fixturePath) throws Exception{

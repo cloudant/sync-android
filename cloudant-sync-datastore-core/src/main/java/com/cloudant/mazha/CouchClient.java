@@ -419,11 +419,60 @@ public class CouchClient  {
         });
     }
 
-    public Iterable<DocumentRevsList> bulkReadDocsWithOpenRevisions(List<BulkGetRequest> request) {
-        // not implemented yet
-        // the idea here is to provide an iterator which will pull more data from the
-        // response stream each time next() is called
-        return null;
+    /**
+     * <p>
+     * Return an iterator representing the result of calling the _bulk_docs endpoint.
+     * </p>
+     * <p>
+     * Each time the iterator is advanced, a DocumentRevsList is returned, which represents the
+     * leaf nodes and their ancestries for a given document id.
+     * </p>
+     * @param request A request for 1 or more (id,rev) pairs.
+     * @param pullAttachmentsInline If true, retrieve attachments as inline base64
+     * @return An iterator representing the result of calling the _bulk_docs endpoint.
+     */
+    public Iterable<DocumentRevsList> bulkReadDocsWithOpenRevisions(List<BulkGetRequest> request,
+                                                                    boolean pullAttachmentsInline) {
+        Map<String, Object> options = new HashMap<String, Object>();
+        options.put("revs", true);
+
+        if (pullAttachmentsInline) {
+            options.put("attachments", true);
+        } else {
+            options.put("attachments", false);
+            options.put("att_encoding_info", true);
+        }
+        URI bulkGet = this.uriHelper.documentUri("_bulk_get", options);
+        HttpConnection connection = Http.POST(bulkGet, "application/json");
+        Map<String, List<BulkGetRequest>> jsonRequest = new HashMap<String, List<BulkGetRequest>>();
+        jsonRequest.put("docs", request);
+        // build request
+        connection.setRequestBody(jsonHelper.toJson(jsonRequest));
+        // deserialise response
+        BulkGetResponse response = executeToJsonObjectWithRetry(connection, BulkGetResponse.class);
+
+        Map<String,ArrayList<DocumentRevs>> revsMap = new HashMap<String,ArrayList<DocumentRevs>>();
+
+        // merge results back in, so there is one list of DocumentRevs per id
+        for (BulkGetResponse.Result result : response.results) {
+            for (BulkGetResponse.Doc doc : result.docs) {
+                if (doc.ok != null) {
+                    String id = doc.ok.getId();
+                    if (!revsMap.containsKey(id)) {
+                        revsMap.put(id, new ArrayList<DocumentRevs>());
+                    }
+                    revsMap.get(id).add(doc.ok);
+                }
+            }
+        }
+
+        List<DocumentRevsList> allRevs = new ArrayList<DocumentRevsList>();
+
+        // flatten out revsMap hash so that there is one entry in our return array for each id
+        for (ArrayList<DocumentRevs> value : revsMap.values()) {
+            allRevs.add(new DocumentRevsList(value));
+        }
+        return allRevs;
     }
 
     public Map<String, Object> getDocument(String id) {
@@ -492,7 +541,8 @@ public class CouchClient  {
      *
      */
     public DocumentRevs getDocRevisions(String id, String rev) {
-        return getDocRevisions(id, rev, new TypeReference<DocumentRevs>() {});
+        return getDocRevisions(id, rev, new TypeReference<DocumentRevs>() {
+        });
     }
 
     public <T> T getDocRevisions(String id, String rev, TypeReference<T> type) {
@@ -670,6 +720,22 @@ public class CouchClient  {
         HttpConnection connection = Http.PUT(uri, contentType);
         connection.setRequestBody(mpw.makeInputStreamGenerator(), mpw.getContentLength());
         return executeToJsonObjectWithRetry(connection, Response.class);
+    }
+
+    public boolean isBulkSupported() {
+        URI bulkGet = this.uriHelper.documentUri("_bulk_get");
+        HttpConnection connection = Http.GET(bulkGet);
+        ExecuteResult result = this.execute(connection);
+        switch (result.responseCode) {
+            case 404:
+                // not found: _bulk_get not supported
+                return false;
+            case 405:
+                // method not allowed: this endpoint exists, we called with the wrong method
+                return true;
+            default:
+                throw(result.exception);
+        }
     }
 
     public static class MissingRevisions {
