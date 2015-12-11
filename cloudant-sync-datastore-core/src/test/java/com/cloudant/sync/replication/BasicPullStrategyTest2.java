@@ -54,15 +54,15 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
     public void replicate_fullTest() throws Exception {
 
         createBatchOneTestData();
-        sync();
+        pull();
         assertDataSynced();
 
         createBatchTwoTestData();
-        sync();
+        pull();
         assertDataSynced();
 
         deleteSomeData();
-        sync();
+        pull();
         assertDataDeleted();
     }
 
@@ -102,17 +102,6 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
             BasicDocumentRevision obj = datastore.getDocument(bar.getId(), bar.getRevision());
             Assert.assertNotNull(obj);
         }
-    }
-
-    private void sync() throws Exception {
-        TestStrategyListener listener = new TestStrategyListener();
-
-        BasicPullStrategy replicator = new BasicPullStrategy(this.createPullReplication());
-        replicator.getEventBus().register(listener);
-
-        Executors.newSingleThreadExecutor().submit(replicator).get();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
     }
 
     /**

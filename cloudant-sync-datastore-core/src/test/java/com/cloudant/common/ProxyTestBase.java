@@ -15,10 +15,7 @@
 package com.cloudant.common;
 
 import com.cloudant.http.Http;
-import com.cloudant.mazha.CouchConfig;
-import com.cloudant.mazha.SpecifiedCouch;
 import com.cloudant.sync.replication.ReplicationTestBase;
-import com.cloudant.sync.util.Misc;
 
 import java.net.URL;
 

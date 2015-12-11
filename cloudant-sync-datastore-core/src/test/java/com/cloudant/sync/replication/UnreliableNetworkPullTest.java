@@ -50,10 +50,7 @@ public class UnreliableNetworkPullTest extends ProxyTestBase {
             createRemoteDocument("doc" + i);
         }
         this.addToxic();
-        BasicPullStrategy pull = new BasicPullStrategy(this.createPullReplication());
-        Thread t = new Thread(pull);
-        t.start();
-        t.join();
+        super.pull();
         Assert.assertEquals(nDocs, this.datastore.getAllDocumentIds().size());
         // TODO a number of extra document updates and pulls to ensure checkpointing is correct
     }

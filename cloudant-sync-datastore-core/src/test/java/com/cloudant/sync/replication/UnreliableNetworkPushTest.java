@@ -50,11 +50,8 @@ public class UnreliableNetworkPushTest extends ProxyTestBase {
         for (int i=0; i<nDocs; i++) {
             createLocalDocument("doc" + i);
         }
-        BasicPushStrategy push = new BasicPushStrategy(this.createPushReplication());
-        Thread t = new Thread(push);
-        t.start();
-        t.join();
-        Assert.assertEquals(nDocs, push.getDocumentCounter());
+        PushResult result = super.push();
+        Assert.assertEquals(nDocs, result.pushStrategy.getDocumentCounter());
         for (int i=0; i<nDocs; i++) {
             try {
                 Map<String, Object> doc = this.remoteDb.get(Map.class, "doc" + i);

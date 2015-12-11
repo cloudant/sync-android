@@ -77,25 +77,7 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
 
         // replicate with compacted database
 
-        PullReplication pull = createPullReplication();
-        replicator = (BasicReplicator) ReplicatorFactory.oneway(pull);
-
-        TestReplicationListener listener = new TestReplicationListener();
-        Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
-        replicator.getEventBus().register(listener);
-        replicator.start();
-        Assert.assertEquals(Replicator.State.STARTED, replicator.getState());
-
-        while (replicator.getState() != Replicator.State.COMPLETE || replicator.getState() ==
-                Replicator.State.ERROR) {
-            Thread.sleep(1000);
-        }
-
-        Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
-        Assert.assertEquals(1, datastore.getDocumentCount());
-
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
+        super.pull();
 
         // compare remote revisions with local revisions
         String dbURI = couchClient.getRootUri().toASCIIString();
@@ -133,22 +115,7 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
         }
 
         // push the changes to the remote
-        PushReplication push = createPushReplication();
-        replicator = (BasicReplicator) ReplicatorFactory.oneway(push);
-        replicator.getEventBus().register(listener);
-        replicator.start();
-        Assert.assertEquals(Replicator.State.STARTED, replicator.getState());
-
-        while (replicator.getState() != Replicator.State.COMPLETE) {
-            Thread.sleep(1000);
-        }
-
-        Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
-        ;
-
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
-
+        super.push();
 
         //compare local revs to remote
         remoteRevs = ClientTestUtils.getRemoteRevisionIDs(getURI);

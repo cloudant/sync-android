@@ -17,7 +17,6 @@ package com.cloudant.common;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.SpecifiedCouch;
 import com.cloudant.sync.util.Misc;
-import com.google.common.base.Strings;
 
 import java.lang.reflect.Field;
 import java.net.URI;
@@ -77,8 +76,7 @@ public abstract class CouchTestBase {
             // we use String.format rather than the multi-arg URI constructor to avoid database
             // names being (double) escaped
             String urlString = String.format("http://%s:5984/%s", host, databasePath);
-            CouchConfig config = new CouchConfig(new URI(urlString));
-            return config;
+            return new CouchConfig(new URI(urlString));
         } catch (URISyntaxException use) {
             use.printStackTrace();
             return null;

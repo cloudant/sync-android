@@ -34,15 +34,12 @@ import java.util.Map;
 public class PullReplicatorTest extends ReplicationTestBase {
 
     URI source;
-    BasicReplicator replicator;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
         source = getCouchConfig(getDbName()).getRootUri();
 
-        PullReplication pull = createPullReplication();
-        replicator = (BasicReplicator)ReplicatorFactory.oneway(pull);
         prepareTwoDocumentsInRemoteDB();
     }
 
@@ -60,6 +57,8 @@ public class PullReplicatorTest extends ReplicationTestBase {
 
     @Test
     public void start_StartedThenComplete() throws InterruptedException {
+        Replicator replicator = super.getPullBuilder().build();
+
         TestReplicationListener listener = new TestReplicationListener();
         Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
         replicator.getEventBus().register(listener);
@@ -81,9 +80,10 @@ public class PullReplicatorTest extends ReplicationTestBase {
     public void testRequestInterceptors() throws Exception {
 
         InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
-        PullReplication pullReplication = createPullReplication();
-        pullReplication.requestInterceptors.add(interceptorCallCounter);
-        runReplicationUntilComplete(pullReplication);
+        Replicator replicator = super.getPullBuilder()
+                .addRequestInterceptors(interceptorCallCounter).build();
+
+        runReplicationUntilComplete(replicator);
         Assert.assertTrue(interceptorCallCounter.interceptorRequestTimesCalled >= 1);
 
     }
@@ -92,9 +92,10 @@ public class PullReplicatorTest extends ReplicationTestBase {
     public void testResponseInterceptors() throws Exception {
 
         InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
-        PullReplication pullReplication = createPullReplication();
-        pullReplication.responseInterceptors.add(interceptorCallCounter);
-        runReplicationUntilComplete(pullReplication);
+        Replicator replicator = super.getPullBuilder()
+                .addResponseInterceptors(interceptorCallCounter).build();
+
+        runReplicationUntilComplete(replicator);
         Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
     }
 
@@ -183,5 +184,29 @@ public class PullReplicatorTest extends ReplicationTestBase {
 
     }
 
+    @Test
+    public void replicatorCanBeReused() throws Exception {
+        ReplicatorBuilder replicatorBuilder = super.getPullBuilder();
+        Replicator replicator = replicatorBuilder.build();
+        ReplicationStrategy replicationStrategy = ((BasicReplicator)replicator).strategy;
+        replicator.start();
+        // replicate 2 docs created at test setup
+        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+            Thread.sleep(50);
+        }
+        // check document counter has been incremented
+        Assert.assertEquals(2, replicationStrategy.getDocumentCounter());
+        Bar bar3 = BarUtils.createBar(remoteDb, "Test", 52);
+        couchClient.create(bar3);
+        replicator.start();
+        ReplicationStrategy replicationStrategy2 = ((BasicReplicator)replicator).strategy;
+        // replicate 3rd doc
+        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+            Thread.sleep(50);
+        }
+        // check document counter has been reset since last replication and incremented
+        Assert.assertEquals(1, replicationStrategy2.getDocumentCounter());
+        Assert.assertEquals(3, this.datastore.getDocumentCount());
+    }
 
 }

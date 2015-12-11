@@ -21,7 +21,7 @@ import com.google.common.eventbus.EventBus;
  * {@link com.cloudant.sync.datastore.Datastore} and a remote Cloudant or
  * CouchDB database.</p>
  *
- * <p>Create instances using the {@link ReplicatorFactory} class.</p>
+ * <p>Create instances using the {@link ReplicatorBuilder} class.</p>
  *
  * <p>The replicator is thread safe.</p>
  */

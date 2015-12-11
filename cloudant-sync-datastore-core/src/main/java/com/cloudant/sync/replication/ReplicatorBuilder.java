@@ -44,6 +44,14 @@ public abstract class ReplicatorBuilder<S, T, E> {
      */
     public static class Push extends ReplicatorBuilder<Datastore, URI, Push> {
 
+        private int changeLimitPerBatch = 500;
+
+        private int batchLimitPerRun = 100;
+
+        private int bulkInsertSize = 10;
+
+        private PushAttachmentsInline pushAttachmentsInline = PushAttachmentsInline.Small;
+
         @Override
         public Replicator build() {
 
@@ -51,12 +59,61 @@ public abstract class ReplicatorBuilder<S, T, E> {
                 throw new IllegalStateException("Source and target cannot be null");
             }
 
-            PushReplication pushReplication = new PushReplication();
-            pushReplication.source = super.source;
-            pushReplication.target = super.target;
-            pushReplication.responseInterceptors.addAll(super.responseInterceptors);
-            pushReplication.requestInterceptors.addAll(super.requestInterceptors);
-            return new BasicReplicator(pushReplication, super.id);
+            BasicPushStrategy pushStrategy = new BasicPushStrategy(super.source,
+                    super.target,
+                    super.requestInterceptors,
+                    super.responseInterceptors);
+
+            pushStrategy.changeLimitPerBatch = changeLimitPerBatch;
+            pushStrategy.batchLimitPerRun = batchLimitPerRun;
+            pushStrategy.bulkInsertSize = bulkInsertSize;
+            pushStrategy.pushAttachmentsInline = pushAttachmentsInline;
+
+            return new BasicReplicator(pushStrategy, super.id);
+        }
+
+        /**
+         * Sets the number of changes to fetch from the _changes feed per batch
+         *
+         * @param changeLimitPerBatch The number of changes to fetch from the _changes feed per batch
+         * @return This instance of {@link ReplicatorBuilder}
+         */
+        public Push changeLimitPerBatch(int changeLimitPerBatch) {
+            this.changeLimitPerBatch = changeLimitPerBatch;
+            return this;
+        }
+
+        /**
+         * Sets the number of batches to push in one replication run
+         *
+         * @param batchLimitPerRun The number of batches to push in one replication run
+         * @return This instance of {@link ReplicatorBuilder}
+         */
+        public Push batchLimitPerRun(int batchLimitPerRun) {
+            this.batchLimitPerRun = batchLimitPerRun;
+            return this;
+        }
+
+        /**
+         * Sets the number of documents to bulk insert into the CouchDB instance at a time
+         *
+         * @param bulkInsertSize The number of documents to bulk insert into the CouchDB instance at a time
+         * @return This instance of {@link ReplicatorBuilder}
+         */
+        public Push bulkInsertSize(int bulkInsertSize) {
+            this.bulkInsertSize = bulkInsertSize;
+            return this;
+        }
+
+        /**
+         * Sets the strategy to decide whether to push attachments inline or separately
+         *
+         * @param pushAttachmentsInline The strategy to decide whether to push attachments inline or separately
+         * @return This instance of {@link ReplicatorBuilder}
+         */
+        public Push pushAttachmentsInline(PushAttachmentsInline pushAttachmentsInline) {
+            this.pushAttachmentsInline = pushAttachmentsInline;
+            return this;
         }
     }
 
@@ -67,6 +124,14 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
         private PullFilter pullPullFilter = null;
 
+        private int changeLimitPerBatch = 1000;
+
+        private int batchLimitPerRun = 100;
+
+        private int insertBatchSize = 10;
+
+        private boolean pullAttachmentsInline = false;
+
         @Override
         public Replicator build() {
 
@@ -74,24 +139,18 @@ public abstract class ReplicatorBuilder<S, T, E> {
                 throw new IllegalStateException("Source and target cannot be null");
             }
 
-            PullReplication pullReplication = new PullReplication();
-            pullReplication.source = super.source;
-            pullReplication.target = super.target;
-            pullReplication.responseInterceptors.addAll(super.responseInterceptors);
-            pullReplication.requestInterceptors.addAll(super.requestInterceptors);
+            BasicPullStrategy pullStrategy = new BasicPullStrategy(super.source,
+                    super.target,
+                    pullPullFilter,
+                    super.requestInterceptors,
+                    super.responseInterceptors);
 
-            if(this.pullPullFilter != null) {
-                //convert the new filter to the old one.
-                //this is to avoid invasive changes for now.
-                Map<String,String> filterParams = this.pullPullFilter.getParameters();
-                filterParams = filterParams == null ? Collections.EMPTY_MAP : filterParams;
+            pullStrategy.changeLimitPerBatch = changeLimitPerBatch;
+            pullStrategy.batchLimitPerRun = batchLimitPerRun;
+            pullStrategy.insertBatchSize = insertBatchSize;
+            pullStrategy.pullAttachmentsInline = pullAttachmentsInline;
 
-                Replication.Filter filter = new Replication.Filter(this.pullPullFilter.getName(),
-                        filterParams);
-                pullReplication.filter = filter;
-            }
-
-            return new BasicReplicator(pullReplication, super.id);
+            return new BasicReplicator(pullStrategy, super.id);
         }
 
         /**
@@ -102,6 +161,50 @@ public abstract class ReplicatorBuilder<S, T, E> {
          */
         public Pull filter(PullFilter pullPullFilter) {
             this.pullPullFilter = pullPullFilter;
+            return this;
+        }
+
+        /**
+         * Sets the number of changes to fetch from the _changes feed per batch
+         *
+         * @param changeLimitPerBatch The number of changes to fetch from the _changes feed per batch
+         * @return This instance of {@link ReplicatorBuilder}
+         */
+        public Pull changeLimitPerBatch(int changeLimitPerBatch) {
+            this.changeLimitPerBatch = changeLimitPerBatch;
+            return this;
+        }
+
+        /**
+         * Sets the number of batches to pull in one replication run
+         *
+         * @param batchLimitPerRun The number of batches to pull in one replication run
+         * @return This instance of {@link ReplicatorBuilder}
+         */
+        public Pull batchLimitPerRun(int batchLimitPerRun) {
+            this.batchLimitPerRun = batchLimitPerRun;
+            return this;
+        }
+
+        /**
+         * Sets the number of documents to insert into the SQLite database in one transaction
+         *
+         * @param insertBatchSize The number of documents to insert into the SQLite database in one transaction
+         * @return This instance of {@link ReplicatorBuilder}
+         */
+        public Pull insertBatchSize(int insertBatchSize) {
+            this.insertBatchSize = insertBatchSize;
+            return this;
+        }
+
+        /**
+         * Sets whether to pull attachments inline or separately
+         *
+         * @param pullAttachmentsInline Whether to pull attachments inline or separately
+         * @return This instance of {@link ReplicatorBuilder}
+         */
+        public Pull pullAttachmentsInline(boolean pullAttachmentsInline) {
+            this.pullAttachmentsInline = pullAttachmentsInline;
             return this;
         }
     }

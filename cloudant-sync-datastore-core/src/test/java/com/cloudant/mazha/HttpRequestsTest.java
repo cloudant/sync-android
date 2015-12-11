@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.common.TestOptions;
 import com.cloudant.http.HttpConnectionInterceptorContext;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.google.common.base.Strings;
@@ -61,6 +62,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
     public void customHeader() throws Exception {
         CouchConfig customCouchConfig = getCouchConfig(testDb);
         ArrayList<HttpConnectionRequestInterceptor> customInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
+        customInterceptors.addAll(customCouchConfig.getRequestInterceptors());
         // add interceptor to set header
         customInterceptors.add(makeHeaderInterceptor("x-good-header", "test"));
         // add interceptor to check that the header has been set
@@ -72,7 +74,9 @@ public class HttpRequestsTest extends CouchClientTestBase {
             }
         });
         customCouchConfig.setRequestInterceptors(customInterceptors);
-        CouchClient customClient = new CouchClient(customCouchConfig);
+        CouchClient customClient = new CouchClient(customCouchConfig.getRootUri(),
+                customCouchConfig.getRequestInterceptors(),
+                customCouchConfig.getResponseInterceptors());
         CouchDbInfo dbInfo = customClient.getDbInfo();
         Assert.assertNotNull(dbInfo);
         Assert.assertTrue(dbInfo.getDbName().contains(testDb));
@@ -89,7 +93,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
         // in admin party mode)
         org.junit.Assume.assumeTrue("Test skipped because Basic Auth credentials are required to " +
                         "access this server",
-                Strings.isNullOrEmpty(couchConfig.getRootUri().getUserInfo()));
+                !TestOptions.COOKIE_AUTH && Strings.isNullOrEmpty(couchConfig.getRootUri().getUserInfo()));
         URI root = couchConfig.getRootUri();
 
         // copy the basic test url but add user:foo, pass:bar as credentials
@@ -104,7 +108,9 @@ public class HttpRequestsTest extends CouchClientTestBase {
 
         // first we check that foo/bar is unauthorized
         try {
-            CouchClient customClient = new CouchClient(customCouchConfig);
+            CouchClient customClient = new CouchClient(customCouchConfig.getRootUri(),
+                    customCouchConfig.getRequestInterceptors(),
+                    customCouchConfig.getResponseInterceptors());
             customClient.getDbInfo();
             Assert.fail("Expected CouchException to be thrown");
         } catch (CouchException ce) {
@@ -115,7 +121,9 @@ public class HttpRequestsTest extends CouchClientTestBase {
         ArrayList<HttpConnectionRequestInterceptor> customInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
         customInterceptors.add(makeHeaderInterceptor("Authorization", "test"));
         customCouchConfig.setRequestInterceptors(customInterceptors);
-        CouchClient clientAuthHeader = new CouchClient(customCouchConfig);
+        CouchClient clientAuthHeader = new CouchClient(customCouchConfig.getRootUri(),
+                customCouchConfig.getRequestInterceptors(),
+                customCouchConfig.getResponseInterceptors());
         CouchDbInfo dbInfo = clientAuthHeader.getDbInfo();
         Assert.assertNotNull(dbInfo);
         Assert.assertTrue(dbInfo.getDbName().contains(testDb));
@@ -133,7 +141,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
         // in admin party mode)
         org.junit.Assume.assumeTrue("Test skipped because Basic Auth credentials are required to " +
                         "access this server",
-                Strings.isNullOrEmpty(customCouchConfig.getRootUri().getUserInfo()));
+                TestOptions.COOKIE_AUTH && Strings.isNullOrEmpty(customCouchConfig.getRootUri().getUserInfo()));
 
         try {
             String authString = "foo:bar";
@@ -142,7 +150,9 @@ public class HttpRequestsTest extends CouchClientTestBase {
             ArrayList<HttpConnectionRequestInterceptor> customInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
             customInterceptors.add(makeHeaderInterceptor("Authorization", authHeaderValue));
             customCouchConfig.setRequestInterceptors(customInterceptors);
-            CouchClient customClient = new CouchClient(customCouchConfig);
+            CouchClient customClient = new CouchClient(customCouchConfig.getRootUri(),
+                    customCouchConfig.getRequestInterceptors(),
+                    customCouchConfig.getResponseInterceptors());
             customClient.getDbInfo();
             Assert.fail("Expected CouchException to be thrown");
         } catch (CouchException ce) {

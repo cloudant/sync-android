@@ -81,34 +81,31 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
     // check that we can correctly push after compaction
     @Test
     public void replicate_compactedTest() throws Exception {
-        BasicPushStrategy push = push();
 
         populateSomeDataInLocalDatastore();
-        waitForPushToFinish(push);
+        super.push();
 
         datastore.deleteDocument(id1);
         datastore.compact();
 
-        waitForPushToFinish(push);
+        super.push();
     }
 
     @Test
     public void replicate_fullTest() throws Exception {
 
-        BasicPushStrategy push = push();
-        BasicPullStrategy pull = pull();
-        
+
         populateSomeDataInLocalDatastore();
-        waitForPushToFinish(push);
-        Assert.assertEquals("8", remoteDb.getCheckpoint(push.getReplicationId()));
+        PushResult result = super.push();
+        Assert.assertEquals("8", remoteDb.getCheckpoint(result.pushStrategy.getReplicationId()));
 
         updateDataInLocalDatastore();
         updateDataInRemoteDatabase();
 
-        waitForPushToFinish(push);
-        Assert.assertEquals("12", remoteDb.getCheckpoint(push.getReplicationId()));
+        PushResult result2 = super.push();
+        Assert.assertEquals("12", remoteDb.getCheckpoint(result2.pushStrategy.getReplicationId()));
 
-        waitForPullToFinish(pull);
+        super.pull();
 
         // After sync, all doc should be following:
 
@@ -205,10 +202,6 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         Assert.assertNotNull(response);
     }
 
-    private BasicPushStrategy push() throws Exception {
-        return new BasicPushStrategy(this.createPushReplication());
-    }
-
     private void waitForPushToFinish(BasicPushStrategy push) throws Exception{
         TestStrategyListener listener = new TestStrategyListener();
         push.eventBus.register(listener);
@@ -218,10 +211,6 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
         push.eventBus.unregister(listener);
-    }
-
-    private BasicPullStrategy pull() throws Exception {
-        return new BasicPullStrategy(this.createPullReplication());
     }
 
     private void waitForPullToFinish(BasicPullStrategy pull) throws Exception {

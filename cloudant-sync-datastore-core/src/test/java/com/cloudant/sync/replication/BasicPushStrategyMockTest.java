@@ -31,13 +31,17 @@ import static org.mockito.Mockito.*;
 @Category(RequireRunningCouchDB.class)
 public class BasicPushStrategyMockTest extends ReplicationTestBase {
 
+    // NB these tests call super.getPushStrategy() and then just overwrite the targetDb with a mock
+    // database. Possibly a more pure approach would be to mock the entire strategy, but we still
+    // want the eventBus to operate and fire events.
+
     @Test
     public void push_dbNotExist_errorCallback() throws
             Exception {
         // Prepare
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
-        BasicPushStrategy pushStrategy = new BasicPushStrategy(this.createPushReplication());
+        BasicPushStrategy pushStrategy = super.getPushStrategy();
         pushStrategy.targetDb = mockRemoteDb;
         pushStrategy.eventBus.register(mockListener);
         when(mockRemoteDb.exists()).thenReturn(false);
@@ -61,7 +65,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
         // Prepare
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
-        BasicPushStrategy pushStrategy = new BasicPushStrategy(this.createPushReplication());
+        BasicPushStrategy pushStrategy = super.getPushStrategy();
         pushStrategy.targetDb = mockRemoteDb;
         pushStrategy.eventBus.register(mockListener);
 
@@ -88,7 +92,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
         //Prepare
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
-        BasicPushStrategy pushStrategy = new BasicPushStrategy(this.createPushReplication());
+        BasicPushStrategy pushStrategy = super.getPushStrategy();
         pushStrategy.targetDb = mockRemoteDb;
         pushStrategy.eventBus.register(mockListener);
         
@@ -125,7 +129,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
-        final BasicPushStrategy pushStrategy = new BasicPushStrategy(this.createPushReplication());
+        BasicPushStrategy pushStrategy = super.getPushStrategy();
         pushStrategy.eventBus.register(mockListener);
         when(mockRemoteDb.exists()).thenReturn(true);
 

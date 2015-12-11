@@ -14,9 +14,10 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.http.HttpConnectionRequestInterceptor;
+import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.CouchClient;
-import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.CouchException;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.OkOpenRevision;
@@ -31,6 +32,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,8 +53,10 @@ public class CouchClientWrapper implements CouchDB {
         this.couchClient = client;
     }
 
-    public CouchClientWrapper(CouchConfig config) {
-        this(new CouchClient(config));
+    public CouchClientWrapper(URI rootUri,
+                              List<HttpConnectionRequestInterceptor> requestInterceptors,
+                              List<HttpConnectionResponseInterceptor> responseInterceptors) {
+        this(new CouchClient(rootUri, requestInterceptors, responseInterceptors));
     }
 
     public CouchClient getCouchClient() {
@@ -114,11 +118,11 @@ public class CouchClientWrapper implements CouchDB {
     }
 
     @Override
-    public ChangesResult changes(Replication.Filter filter, Object lastSequence, int limit) {
+    public ChangesResult changes(PullFilter filter, Object lastSequence, int limit) {
         if (filter == null) {
             return couchClient.changes(lastSequence, limit);
         } else {
-            return couchClient.changes(filter.name, filter.parameters, lastSequence, limit);
+            return couchClient.changes(filter.getName(), filter.getParameters(), lastSequence, limit);
         }
     }
 
