@@ -27,6 +27,7 @@ import org.junit.Assert;
 import org.junit.Before;
 
 import java.net.URISyntaxException;
+import java.util.logging.Filter;
 
 public abstract class ReplicationTestBase extends CouchTestBase {
 
@@ -39,6 +40,8 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     protected CouchClientWrapper remoteDb = null;
     protected CouchClient couchClient = null;
+
+    protected CouchConfig couchConfig = null;
 
     private long dbSuffix = System.currentTimeMillis();
 
@@ -64,7 +67,11 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     }
 
     protected void createRemoteDB() {
-        remoteDb = new CouchClientWrapper(super.getCouchConfig(getDbName()));
+        couchConfig = super.getCouchConfig(getDbName());
+        remoteDb = new CouchClientWrapper(new CouchClient(
+                couchConfig.getRootUri(),
+                couchConfig.getRequestInterceptors(),
+                couchConfig.getResponseInterceptors()));
         remoteDb.createDatabase();
         couchClient = remoteDb.getCouchClient();
     }
@@ -81,30 +88,8 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         return dbName.replaceAll(regex, replacement).toLowerCase();
     }
 
-    protected PullReplication createPullReplication() throws URISyntaxException {
-        PullReplication pullReplication = new PullReplication();
-        CouchConfig couchConfig = this.getCouchConfig(this.getDbName());
-        pullReplication.source = couchConfig.getRootUri();
-        pullReplication.target = this.datastore;
-        pullReplication.requestInterceptors.addAll(couchConfig.getRequestInterceptors());
-        pullReplication.responseInterceptors.addAll(couchConfig.getResponseInterceptors());
-        return pullReplication;
-    }
-
-    protected PushReplication createPushReplication() throws URISyntaxException {
-        PushReplication pushReplication = new PushReplication();
-        CouchConfig couchConfig = this.getCouchConfig(this.getDbName());
-        pushReplication.target = couchConfig.getRootUri();
-        pushReplication.source = this.datastore;
-        pushReplication.requestInterceptors.addAll(couchConfig.getRequestInterceptors());
-        pushReplication.responseInterceptors.addAll(couchConfig.getResponseInterceptors());
-        return pushReplication;
-    }
-
-
-    protected void runReplicationUntilComplete(Replication replication) throws Exception {
+    protected void runReplicationUntilComplete(Replicator replicator) throws Exception {
         TestReplicationListener listener = new TestReplicationListener();
-        Replicator replicator = ReplicatorFactory.oneway(replication);
         replicator.getEventBus().register(listener);
         replicator.start();
 
@@ -116,4 +101,92 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         Assert.assertFalse(listener.errorCalled);
         Assert.assertTrue(listener.finishCalled);
     }
+
+    protected ReplicatorBuilder.Push getPushBuilder() {
+        return ReplicatorBuilder.push().
+                from(this.datastore).
+                to(this.couchConfig.getRootUri()).
+                addRequestInterceptors(couchConfig.getRequestInterceptors()).
+                addResponseInterceptors(couchConfig.getResponseInterceptors());
+    }
+
+    protected ReplicatorBuilder.Pull getPullBuilder() {
+        return ReplicatorBuilder.pull().
+                to(this.datastore).
+                from(this.couchConfig.getRootUri()).
+                addRequestInterceptors(couchConfig.getRequestInterceptors()).
+                addResponseInterceptors(couchConfig.getResponseInterceptors());
+    }
+
+    protected ReplicatorBuilder.Pull getPullBuilder(PullFilter filter) {
+        return ReplicatorBuilder.pull().
+                to(this.datastore).
+                from(this.couchConfig.getRootUri()).
+                addRequestInterceptors(couchConfig.getRequestInterceptors()).
+                addResponseInterceptors(couchConfig.getResponseInterceptors()).
+                filter(filter);
+    }
+
+    protected BasicPushStrategy getPushStrategy() {
+        return (BasicPushStrategy)((BasicReplicator)this.getPushBuilder().build()).strategy;
+    }
+
+    protected BasicPullStrategy getPullStrategy() {
+        return (BasicPullStrategy)((BasicReplicator)this.getPullBuilder().build()).strategy;
+    }
+
+    protected BasicPullStrategy getPullStrategy(PullFilter filter) {
+        return (BasicPullStrategy)((BasicReplicator)this.getPullBuilder(filter).build()).strategy;
+    }
+
+    protected PushResult push() throws Exception {
+        TestStrategyListener listener = new TestStrategyListener();
+        BasicPushStrategy replicator = this.getPushStrategy();
+        replicator.getEventBus().register(listener);
+        replicator.run();
+        Assert.assertTrue(listener.finishCalled);
+        Assert.assertFalse(listener.errorCalled);
+        return new PushResult(replicator, listener);
+    }
+
+    protected PullResult pull() throws Exception {
+        TestStrategyListener listener = new TestStrategyListener();
+        BasicPullStrategy replicator = this.getPullStrategy();
+        replicator.getEventBus().register(listener);
+        replicator.run();
+        Assert.assertTrue(listener.finishCalled);
+        Assert.assertFalse(listener.errorCalled);
+        return new PullResult(replicator, listener);
+    }
+
+    protected PullResult pull(PullFilter filter) throws Exception {
+        TestStrategyListener listener = new TestStrategyListener();
+        BasicPullStrategy replicator = this.getPullStrategy(filter);
+        replicator.getEventBus().register(listener);
+        replicator.run();
+        Assert.assertTrue(listener.finishCalled);
+        Assert.assertFalse(listener.errorCalled);
+        return new PullResult(replicator, listener);
+    }
+
+    protected class PushResult {
+        public PushResult(BasicPushStrategy pushStrategy, TestStrategyListener listener) {
+            this.pushStrategy = pushStrategy;
+            this.listener = listener;
+        }
+
+        BasicPushStrategy pushStrategy;
+        TestStrategyListener listener;
+    }
+
+    protected class PullResult {
+        public PullResult(BasicPullStrategy pullStrategy, TestStrategyListener listener) {
+            this.pullStrategy = pullStrategy;
+            this.listener = listener;
+        }
+
+        BasicPullStrategy pullStrategy;
+        TestStrategyListener listener;
+    }
+
 }

@@ -23,7 +23,6 @@ import com.google.common.eventbus.Subscribe;
 class BasicReplicator implements Replicator {
 
     public static final int NULL_ID = -1;
-    protected final Replication replication;
     protected Thread strategyThread;
     protected ReplicationStrategy strategy;
     protected int id = NULL_ID;
@@ -33,19 +32,14 @@ class BasicReplicator implements Replicator {
 
     private final EventBus eventBus = new EventBus();
 
-    public BasicReplicator(Replication replication) {
-        this(replication, NULL_ID);
+    public BasicReplicator(ReplicationStrategy strategy) {
+        this(strategy, NULL_ID);
     }
 
-    public BasicReplicator(Replication replication, int id) {
-        this.replication = replication;
-        this.state = State.PENDING;
+    public BasicReplicator(ReplicationStrategy strategy, int id) {
+        this.strategy = strategy;
         this.id = id;
-    }
-
-    // method exists to be override for test purpose
-    protected ReplicationStrategy getReplicationStrategy() {
-        return this.replication.createReplicationStrategy();
+        this.state = State.PENDING;
     }
 
     @Override
@@ -60,12 +54,7 @@ class BasicReplicator implements Replicator {
             case COMPLETE:
             case STOPPED:
             case ERROR:
-                Preconditions.checkArgument(
-                        this.strategy == null || this.strategy.isReplicationTerminated(),
-                        "strategy must be null or not running"
-                );
 
-                this.strategy = this.getReplicationStrategy();
                 this.strategy.getEventBus().register(this);
                 this.strategyThread = new Thread(this.strategy);
                 this.strategyThread.start();

@@ -52,7 +52,8 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     @Test
     public void createDb_validDbName_dbMustBeCreated() {
         String dbName = "mazha_test_createdb"+System.currentTimeMillis();
-        CouchClient customClient = new CouchClient(getCouchConfig(dbName));
+        CouchConfig config = getCouchConfig(dbName);
+        CouchClient customClient = new CouchClient(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
         ClientTestUtils.deleteQuietly(customClient);
 
         customClient.createDb();
@@ -66,7 +67,8 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     public void createDb_invalidDBNmae_exception() {
         // Couch does not like capital character in db name
         String dbName = "mazha_test_INVALID_DB_NAME";
-        CouchClient customClient = new CouchClient(getCouchConfig(dbName));
+        CouchConfig config = getCouchConfig(dbName);
+        CouchClient customClient = new CouchClient(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
         customClient.createDb();
     }
 
@@ -80,7 +82,8 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     @Test
     public void deleteDb_dbMustBeDeleted() {
         String dbName = "mazha_test_deletedb"+System.currentTimeMillis();
-        CouchClient customClient = new CouchClient(getCouchConfig(dbName));
+        CouchConfig config = getCouchConfig(dbName);
+        CouchClient customClient = new CouchClient(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
         ClientTestUtils.deleteQuietly(client);
 
         customClient.createDb();
@@ -93,7 +96,8 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     @Test(expected = NoResourceException.class)
     public void deleteDb_dbNotExist_exception() {
         String dbName = "mazha_test_deletedb_not_exist";
-        CouchClient customClient = new CouchClient(getCouchConfig(dbName));
+        CouchConfig config = getCouchConfig(dbName);
+        CouchClient customClient = new CouchClient(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
         Preconditions.checkArgument(!isDbExist(dbName), "%s must not exist", dbName);
         customClient.deleteDb();
     }
@@ -107,14 +111,16 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     @Test(expected = CouchException.class)
     public void getDbInfo_invalidDbName_exception() {
         String dbName = "mazha_test_A";
-        CouchClient customClient = new CouchClient(getCouchConfig(dbName));
+        CouchConfig config = getCouchConfig(dbName);
+        CouchClient customClient = new CouchClient(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
         customClient.getDbInfo();
     }
 
     @Test(expected = NoResourceException.class)
     public void getDbInfo_dbNotExist_exception() {
         String dbName = "mazha_test_getdbinfo_dbnotexist";
-        CouchClient customClient = new CouchClient(getCouchConfig(dbName));
+        CouchConfig config = getCouchConfig(dbName);
+        CouchClient customClient = new CouchClient(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
         Preconditions.checkArgument(!isDbExist(dbName), "%s must not exist", dbName);
         customClient.getDbInfo();
     }
@@ -437,8 +443,9 @@ public class CouchClientBasicTest extends CouchClientTestBase {
 
     private boolean isDbExist(String dbName) {
         try {
-            CouchClient c = new CouchClient(getCouchConfig(dbName));
-            c.getDbInfo();
+            CouchConfig config = getCouchConfig(dbName);
+            CouchClient customClient = new CouchClient(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
+            customClient.getDbInfo();
             return true;
         } catch (CouchException ce) {
             return false;

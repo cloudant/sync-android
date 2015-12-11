@@ -30,7 +30,8 @@ public abstract class CouchClientTestBase extends CouchTestBase {
     public CouchClientTestBase() {
         testDb = "mazha-test"+System.currentTimeMillis();
         couchConfig = getCouchConfig(testDb);
-        client = new CouchClient(couchConfig);
+        client = new CouchClient(couchConfig.getRootUri(), couchConfig.getRequestInterceptors(),
+                couchConfig.getResponseInterceptors());
         jsonHelper = new JSONHelper();
     }
 

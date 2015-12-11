@@ -260,20 +260,4 @@ public class AttachmentsPushTest extends ReplicationTestBase {
 
     }
 
-    private void push() throws Exception {
-        TestStrategyListener listener = new TestStrategyListener();
-        BasicPushStrategy push = new BasicPushStrategy(this.createPushReplication(),
-                new PushConfiguration(PushConfiguration.DEFAULT_CHANGES_LIMIT_PER_BATCH,
-                        PushConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                        PushConfiguration.DEFAULT_BULK_INSERT_SIZE,
-                        pushAttachmentsInline));
-        push.eventBus.register(listener);
-
-        Thread t = new Thread(push);
-        t.start();
-        t.join();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
-    }
-
 }

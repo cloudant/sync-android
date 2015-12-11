@@ -34,15 +34,12 @@ import java.util.Map;
 public class PullReplicatorTest extends ReplicationTestBase {
 
     URI source;
-    BasicReplicator replicator;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
         source = getCouchConfig(getDbName()).getRootUri();
 
-        PullReplication pull = createPullReplication();
-        replicator = (BasicReplicator)ReplicatorFactory.oneway(pull);
         prepareTwoDocumentsInRemoteDB();
     }
 
@@ -60,6 +57,8 @@ public class PullReplicatorTest extends ReplicationTestBase {
 
     @Test
     public void start_StartedThenComplete() throws InterruptedException {
+        Replicator replicator = super.getPullBuilder().build();
+
         TestReplicationListener listener = new TestReplicationListener();
         Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
         replicator.getEventBus().register(listener);
@@ -81,9 +80,13 @@ public class PullReplicatorTest extends ReplicationTestBase {
     public void testRequestInterceptors() throws Exception {
 
         InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
-        PullReplication pullReplication = createPullReplication();
-        pullReplication.requestInterceptors.add(interceptorCallCounter);
-        runReplicationUntilComplete(pullReplication);
+        Replicator replicator = ReplicatorBuilder.pull()
+                .from(this.source)
+                .to(this.datastore)
+                .addRequestInterceptors(interceptorCallCounter)
+                .build();
+
+        runReplicationUntilComplete(replicator);
         Assert.assertTrue(interceptorCallCounter.interceptorRequestTimesCalled >= 1);
 
     }
@@ -92,9 +95,12 @@ public class PullReplicatorTest extends ReplicationTestBase {
     public void testResponseInterceptors() throws Exception {
 
         InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
-        PullReplication pullReplication = createPullReplication();
-        pullReplication.responseInterceptors.add(interceptorCallCounter);
-        runReplicationUntilComplete(pullReplication);
+        Replicator replicator = ReplicatorBuilder.pull()
+                .from(this.source)
+                .to(this.datastore)
+                .addResponseInterceptors(interceptorCallCounter)
+                .build();
+        runReplicationUntilComplete(replicator);
         Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
     }
 

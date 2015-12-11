@@ -46,7 +46,6 @@ public class BasicReplicatorMockTest {
         when(mockStrategy.getEventBus()).thenReturn(new EventBus());
         mockListener = mock(Listener.class);
         replicator = new TestReplicator(
-                this.createPullReplication(this.uri, this.mockDatastore),
                 mockStrategy);
 
         // mockStrategy always needs to be ready to start
@@ -307,16 +306,8 @@ public class BasicReplicatorMockTest {
 
     public class TestReplicator extends BasicReplicator {
 
-        final ReplicationStrategy strategy;
-
-        public TestReplicator(PullReplication replication, ReplicationStrategy strategy) {
-            super(replication);
-            this.strategy = strategy;
-        }
-
-        @Override
-        protected ReplicationStrategy getReplicationStrategy() {
-            return this.strategy;
+        public TestReplicator(ReplicationStrategy strategy) {
+            super(strategy);
         }
 
         Thread strategyThread() {
@@ -363,14 +354,11 @@ public class BasicReplicatorMockTest {
             throws URISyntaxException, InterruptedException {
         Listener listener = new Listener();
 
-        URI uri = new URI("http://127.0.0.1:5984/db1");
-        DatastoreExtended mockDatastore = mock(DatastoreExtended.class);
         ReplicationStrategy mockStrategy = mock(ReplicationStrategy.class);
         when(mockStrategy.isReplicationTerminated()).thenReturn(true);
         when(mockStrategy.getEventBus()).thenReturn(new EventBus());
 
-        PullReplication pull = createPullReplication(uri, mockDatastore);
-        TestReplicator replicator = new TestReplicator(pull, mockStrategy);
+        TestReplicator replicator = new TestReplicator(mockStrategy);
         replicator.getEventBus().register(listener);
         replicator.start();
 
@@ -390,14 +378,11 @@ public class BasicReplicatorMockTest {
             throws URISyntaxException, InterruptedException {
         Listener listener = new Listener();
 
-        URI uri = new URI("http://127.0.0.1:5984/db1");
-        DatastoreExtended mockDatastore = mock(DatastoreExtended.class);
         ReplicationStrategy mockStrategy = mock(ReplicationStrategy.class);
         when(mockStrategy.isReplicationTerminated()).thenReturn(true);
         when(mockStrategy.getEventBus()).thenReturn(new EventBus());
 
-        PullReplication pull = createPullReplication(uri, mockDatastore);
-        TestReplicator replicator = new TestReplicator(pull, mockStrategy);
+        TestReplicator replicator = new TestReplicator(mockStrategy);
         replicator.getEventBus().register(listener);
         replicator.start();
 
@@ -411,10 +396,5 @@ public class BasicReplicatorMockTest {
         replicator.complete(new ReplicationStrategyCompleted(mockStrategy));
     }
 
-    private PullReplication createPullReplication(URI uri, DatastoreExtended mockDatastore) {
-        PullReplication pull = new PullReplication();
-        pull.target = mockDatastore;
-        pull.source = uri;
-        return pull;
-    }
+
 }

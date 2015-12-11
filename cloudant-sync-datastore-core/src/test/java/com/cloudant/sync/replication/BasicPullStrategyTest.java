@@ -43,9 +43,6 @@ import java.util.Map;
 @Category(RequireRunningCouchDB.class)
 public class BasicPullStrategyTest extends ReplicationTestBase {
 
-    PullConfiguration config = null;
-    BasicPullStrategy replicator = null;
-
     private Bar getDocument(String id) throws Exception {
         BasicDocumentRevision rev = this.datastore.getDocument(id);
         Bar bar = new Bar();
@@ -57,23 +54,46 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         return bar;
     }
 
+    private List<String> findRevisionOfLeafs(DocumentRevisionTree docTree) {
+        List<String> leafRevs = new ArrayList<String>();
+        for(DocumentRevisionTree.DocumentRevisionNode obj : docTree.leafs()) {
+            leafRevs.add(obj.getData().getRevision());
+        }
+        return leafRevs;
+    }
+
+    // we use this utility method rather than ReplicationTestBase.pull() because some
+    // methods want to make assertions on the BasicPullStrategy after running the replication
+    private void pull(BasicPullStrategy replicator, int expectedDocs) throws Exception {
+        TestStrategyListener listener = new TestStrategyListener();
+        replicator.getEventBus().register(listener);
+        replicator.run();
+        Assert.assertTrue(listener.finishCalled);
+        Assert.assertFalse(listener.errorCalled);
+        Assert.assertEquals(expectedDocs, listener.documentsReplicated);
+    }
+
     @Test
     public void pull_nothing_na() throws Exception {
-        this.pull(0);
+        BasicPullStrategy replicator = super.getPullStrategy();
+
+        this.pull(replicator, 0);
         Assert.assertEquals(0, replicator.getDocumentCounter());
         Assert.assertEquals(1, replicator.getBatchCounter());
     }
 
     @Test
     public void pull_oneDocOneRev_revisionShouldBePulled() throws Exception {
-        oneDocCreatedAndThenPulled();
+        BasicPullStrategy replicator = super.getPullStrategy();
+
+        oneDocCreatedAndThenPulled(replicator);
         Assert.assertEquals(1, replicator.getDocumentCounter());
         Assert.assertEquals(1, replicator.getBatchCounter());
     }
 
-    private Bar oneDocCreatedAndThenPulled() throws Exception {
+    private Bar oneDocCreatedAndThenPulled(BasicPullStrategy replicator) throws Exception {
         Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
-        this.pull(1);
+        this.pull(replicator, 1);
         Bar bar2 = this.getDocument(bar1.getId());
         Assert.assertEquals(bar1, bar2);
         return bar1;
@@ -81,9 +101,11 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_oneDocTwoRevs_bothRevisionsShouldBePulled() throws Exception {
+        BasicPullStrategy replicator = super.getPullStrategy();
+
         Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
         Bar bar2 = BarUtils.updateBar(remoteDb, bar1.getId(), "Jerry", 41);
-        this.pull(1);
+        this.pull(replicator, 1);
         Bar bar3 = this.getDocument(bar1.getId());
         Assert.assertEquals(bar2, bar3);
         Assert.assertThat(bar3.getRevision(), startsWith("2-"));
@@ -93,9 +115,11 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_twoDocs_bothDocRevisionsShouldBePulled() throws Exception {
+        BasicPullStrategy replicator = super.getPullStrategy();
+
         Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
         Bar bar2 = BarUtils.createBar(remoteDb, "Jerry", 41);
-        this.pull(2);
+        this.pull(replicator, 2);
         Bar bar3 = this.getDocument(bar1.getId());
         Assert.assertEquals(bar1, bar3);
         Bar bar4 = this.getDocument(bar2.getId());
@@ -107,13 +131,12 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_twoDocsWithBatchSizeOne_bothDocRevisionsShouldBePulled() throws Exception {
-        this.config = new PullConfiguration(1, PullConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                PullConfiguration.DEFAULT_INSERT_BATCH_SIZE, PullConfiguration.DEFAULT_PULL_ATTACHMENTS_INLINE);
-        Assert.assertEquals(1, this.config.changeLimitPerBatch);
+        // build our own pull strategy, set changes limit per batch to 1
+        BasicPullStrategy replicator = (BasicPullStrategy)((BasicReplicator)super.getPullBuilder().changeLimitPerBatch(1).build()).strategy;
 
         Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
         Bar bar2 = BarUtils.createBar(remoteDb, "Jerry", 41);
-        this.pull(2);
+        this.pull(replicator, 2);
         Bar bar3 = this.getDocument(bar1.getId());
         Assert.assertEquals(bar1, bar3);
         Bar bar4 = this.getDocument(bar2.getId());
@@ -125,10 +148,12 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_oneDocUpdatedAfterPull_newRevisionShouldBePulled() throws Exception {
-        Bar bar1 = oneDocCreatedAndThenPulled();
+        BasicPullStrategy replicator = super.getPullStrategy();
+
+        Bar bar1 = oneDocCreatedAndThenPulled(replicator);
 
         Bar bar3 = BarUtils.updateBar(remoteDb, bar1.getId(), "Jerry", 41);
-        this.pull(1);
+        this.pull(replicator, 1);
         Bar bar4 = this.getDocument(bar1.getId());
         Assert.assertEquals(bar3, bar4);
 
@@ -138,9 +163,11 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_oneDocDeleted_newRevisionShouldBePull() throws Exception {
-        Bar bar1 = oneDocCreatedAndThenPulled();
+        BasicPullStrategy replicator = super.getPullStrategy();
+
+        Bar bar1 = oneDocCreatedAndThenPulled(replicator);
         Response res = BarUtils.deleteBar(remoteDb, bar1.getId());
-        this.pull(1);
+        this.pull(replicator, 1);
         BasicDocumentRevision object = datastore.getDocument(res.getId(), res.getRev());
         Assert.assertNotNull(object);
         Assert.assertTrue(object.isDeleted());
@@ -148,10 +175,12 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_oneDocThreeLeafs_allLeafsShouldBePullCorrectly() throws Exception {
+        BasicPullStrategy replicator = super.getPullStrategy();
+
         Bar bar1 = BarUtils.createBar(remoteDb, "NoName", 31);
         String[] openRevs = BarUtils.createThreeLeafs(remoteDb, bar1.getId());
 
-        this.pull(1);
+        this.pull(replicator, 1);
 
         DocumentRevisionTree docTree = datastore.getAllRevisionsOfDocument(bar1.getId());
         Assert.assertEquals(3, docTree.leafs().size());
@@ -166,7 +195,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     public void pull_localDbError_replicationAbort() throws Exception {
         DatastoreExtended localDb = mock(DatastoreExtended.class);
 
-        BasicPullStrategy replication = new BasicPullStrategy(this.createPullReplication(), null);
+        BasicPullStrategy replication = super.getPullStrategy();
         replication.targetDb = new DatastoreWrapper(localDb);
         replication.getEventBus().register(new TestStrategyListener());
 
@@ -181,35 +210,12 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     }
 
-    private List<String> findRevisionOfLeafs(DocumentRevisionTree docTree) {
-        List<String> leafRevs = new ArrayList<String>();
-        for(DocumentRevisionTree.DocumentRevisionNode obj : docTree.leafs()) {
-            leafRevs.add(obj.getData().getRevision());
-        }
-        return leafRevs;
-    }
-
-    private void pull(int expectedDocs) throws Exception {
-        this.pull(expectedDocs, null);
-    }
-
-    private void pull(int expectedDocs, Replication.Filter filter) throws Exception {
-        TestStrategyListener listener = new TestStrategyListener();
-        PullReplication pullReplication = this.createPullReplication();
-        pullReplication.filter = filter;
-
-        this.replicator = new BasicPullStrategy(pullReplication, this.config);
-        this.replicator.getEventBus().register(listener);
-        this.replicator.run();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
-        Assert.assertEquals(expectedDocs, listener.documentsReplicated);
-    }
-
     @Test
     public void pull_twoTreeBothHasOneRevision_success() throws Exception {
+        BasicPullStrategy replicator = super.getPullStrategy();
+
         CouchClient client = remoteDb.getCouchClient();
-        Bar bar = oneDocCreatedAndThenPulled();
+        Bar bar = oneDocCreatedAndThenPulled(replicator);
         {
             Bar bar1 = this.getDocument(bar.getId());
             bar1.setRevision("1-zzz");
@@ -219,7 +225,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
             List<Response> responses = client.bulkCreateDocs(Arrays.asList(new Object[]{bar1}));
             Assert.assertEquals(0, responses.size());
         }
-        this.pull(1);
+        this.pull(replicator, 1);
         {
             Bar bar2 = this.getDocument(bar.getId());
             Assert.assertEquals("1-zzz", bar2.getRevision());
@@ -230,10 +236,12 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_documentIdInChinese_success() throws Exception {
+        BasicPullStrategy replicator = super.getPullStrategy();
+
         String id = "\u738b\u4e1c\u5347";
         Bar bar = BarUtils.createBar(this.remoteDb, id, "Tom", 21);
         Assert.assertEquals(id, bar.getId());
-        this.pull(1);
+        this.pull(replicator, 1);
         {
             Bar bar2 = this.getDocument(bar.getId());
             Assert.assertEquals(bar.getId(), bar2.getId());
@@ -245,10 +253,12 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_documentIdColons_success() throws Exception {
+        BasicPullStrategy replicator = super.getPullStrategy();
+
         String id = ":this:has:colons:";
         Bar bar = BarUtils.createBar(this.remoteDb, id, "Tom", 21);
         Assert.assertEquals(id, bar.getId());
-        this.pull(1);
+        this.pull(replicator, 1);
         {
             Bar bar2 = this.getDocument(bar.getId());
             Assert.assertEquals(bar.getId(), bar2.getId());
@@ -260,13 +270,15 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_oneDocOneRevResetCheckpoint_revisionShouldNotBePulled() throws Exception {
-        oneDocCreatedAndThenPulled();
+        BasicPullStrategy replicator = super.getPullStrategy();
+
+        oneDocCreatedAndThenPulled(replicator);
         Assert.assertEquals(1, replicator.getDocumentCounter());
         Assert.assertEquals(1, replicator.getBatchCounter());
 
         resetCheckpoint();
 
-        this.pull(0);
+        this.pull(replicator, 0);
         Assert.assertEquals(0, replicator.getDocumentCounter());
         Assert.assertEquals(1, replicator.getBatchCounter());
     }
@@ -278,11 +290,13 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_filterBirdFromAnimalDb_twoDocShouldBePulled() throws Exception {
+        PullFilter filter = new PullFilter("animal/bird");
+        BasicPullStrategy replicator = super.getPullStrategy(filter);
+
         Assert.assertEquals(0, datastore.getDocumentCount());
 
         AnimalDb.populate(remoteDb.couchClient);
-        Replication.Filter filter = new Replication.Filter("animal/bird");
-        this.pull(2, filter);
+        this.pull(replicator, 2);
 
         Assert.assertEquals(2, datastore.getDocumentCount());
         String[] birds = {"snipe", "kookaburra"};
@@ -294,12 +308,14 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     @Test
     public void pull_filterMammalFromAnimalDbUsingParameterizedFilter_eightDocShouldBePulled()
             throws Exception {
+        PullFilter filter = new PullFilter("animal/by_class",
+                ImmutableMap.of("class", "mammal"));
+        BasicPullStrategy replicator = super.getPullStrategy(filter);
+
         Assert.assertEquals(0, datastore.getDocumentCount());
 
         AnimalDb.populate(remoteDb.couchClient);
-        Replication.Filter filter = new Replication.Filter("animal/by_class",
-                ImmutableMap.of("class", "mammal"));
-        this.pull(8, filter);
+        this.pull(replicator, 8);
 
         Assert.assertEquals(8, datastore.getDocumentCount());
         String[] mammals = {"aardvark", "badger", "elephant", "giraffe", "lemur", "llama", "panda", "zebra"};
@@ -311,12 +327,14 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     @Test
     public void pull_filterSmallFromAnimalDbUsingIntegerFilter_eightDocShouldBePulled()
             throws Exception {
+        PullFilter filter = new PullFilter("animal/small",
+                ImmutableMap.of("max_length", "2"));
+        BasicPullStrategy replicator = super.getPullStrategy(filter);
+
         Assert.assertEquals(0, datastore.getDocumentCount());
 
         AnimalDb.populate(remoteDb.couchClient);
-        Replication.Filter filter = new Replication.Filter("animal/small",
-                ImmutableMap.of("max_length", "2"));
-        this.pull(6, filter);
+        this.pull(replicator, 6);
 
         Assert.assertEquals(6, datastore.getDocumentCount());
         String[] mammals = {"badger", "kookaburra", "lemur", "llama", "panda", "snipe"};
@@ -328,12 +346,14 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     @Test
     public void pull_filterSmallFromAnimalDbUsingNullFilter_eightDocShouldBePulled()
             throws Exception {
+        PullFilter filter = new PullFilter("animal/by_chinese_name",
+                ImmutableMap.of("chinese_name", "\u718a\u732b"));
+        BasicPullStrategy replicator = super.getPullStrategy(filter);
+
         Assert.assertEquals(0, datastore.getDocumentCount());
 
         AnimalDb.populate(remoteDb.couchClient);
-        Replication.Filter filter = new Replication.Filter("animal/by_chinese_name",
-                ImmutableMap.of("chinese_name", "\u718a\u732b"));
-        this.pull(1, filter);
+        this.pull(replicator, 1);
 
         Assert.assertEquals(1, datastore.getDocumentCount());
         String[] mammals = {"panda"};
@@ -345,12 +365,14 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     @Test
     public void pull_emptyFilterKey_noDocReturned()
             throws Exception {
+        PullFilter filter = new PullFilter("animal/by_chinese_name",
+                ImmutableMap.of("", "\u718a\u732b"));
+        BasicPullStrategy replicator = super.getPullStrategy(filter);
+
         Assert.assertEquals(0, datastore.getDocumentCount());
 
         AnimalDb.populate(remoteDb.couchClient);
-        Replication.Filter filter = new Replication.Filter("animal/by_chinese_name",
-                ImmutableMap.of("", "\u718a\u732b"));
-        this.pull(0, filter);
+        this.pull(replicator, 0);
 
         Assert.assertEquals(0, datastore.getDocumentCount());
     }
@@ -358,6 +380,8 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
     @Test
     public void pull_indexesUpdated()
             throws Exception {
+        BasicPullStrategy replicator = super.getPullStrategy();
+
         Assert.assertEquals(0, datastore.getDocumentCount());
 
         IndexManager im = new IndexManager(datastore);
@@ -365,7 +389,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
             im.ensureIndexed(Arrays.<Object>asList("diet"), "diet");
 
             AnimalDb.populateWithoutFilter(remoteDb.couchClient);
-            this.pull(10);
+            this.pull(replicator, 10);
 
             Assert.assertEquals(10, datastore.getDocumentCount());
 

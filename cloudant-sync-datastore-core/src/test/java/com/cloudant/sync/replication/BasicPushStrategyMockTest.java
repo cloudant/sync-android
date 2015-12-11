@@ -37,7 +37,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
         // Prepare
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
-        BasicPushStrategy pushStrategy = new BasicPushStrategy(this.createPushReplication());
+        BasicPushStrategy pushStrategy = super.getPushStrategy();
         pushStrategy.targetDb = mockRemoteDb;
         pushStrategy.eventBus.register(mockListener);
         when(mockRemoteDb.exists()).thenReturn(false);
@@ -61,7 +61,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
         // Prepare
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
-        BasicPushStrategy pushStrategy = new BasicPushStrategy(this.createPushReplication());
+        BasicPushStrategy pushStrategy = super.getPushStrategy();
         pushStrategy.targetDb = mockRemoteDb;
         pushStrategy.eventBus.register(mockListener);
 
@@ -88,7 +88,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
         //Prepare
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
-        BasicPushStrategy pushStrategy = new BasicPushStrategy(this.createPushReplication());
+        BasicPushStrategy pushStrategy = super.getPushStrategy();
         pushStrategy.targetDb = mockRemoteDb;
         pushStrategy.eventBus.register(mockListener);
         
@@ -125,7 +125,7 @@ public class BasicPushStrategyMockTest extends ReplicationTestBase {
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
-        final BasicPushStrategy pushStrategy = new BasicPushStrategy(this.createPushReplication());
+        BasicPushStrategy pushStrategy = super.getPushStrategy();
         pushStrategy.eventBus.register(mockListener);
         when(mockRemoteDb.exists()).thenReturn(true);
 

@@ -18,7 +18,6 @@ import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.json.JSONHelper;
 
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -85,7 +84,8 @@ public class HttpTest extends CouchTestBase {
     @Test
     public void testWriteToServerOk() throws IOException {
         CouchConfig config = getCouchConfig("httptest"+System.currentTimeMillis());
-        CouchClient client = new CouchClient(config);
+        CouchClient client = new CouchClient(config.getRootUri(), config.getRequestInterceptors()
+                , config.getResponseInterceptors());
         client.createDb();
         HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
                 "application/json");
@@ -114,7 +114,8 @@ public class HttpTest extends CouchTestBase {
     @Test
     public void testReadBeforeExecute() throws IOException {
         CouchConfig config = getCouchConfig("httptest"+System.currentTimeMillis());
-        CouchClient client = new CouchClient(config);
+        CouchClient client = new CouchClient(config.getRootUri(), config.getRequestInterceptors()
+                , config.getResponseInterceptors());
         client.createDb();
         HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
                 "application/json");

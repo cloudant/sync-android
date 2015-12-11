@@ -109,7 +109,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         Assert.assertNotNull("Attachment is null", a);
         Assert.assertEquals(bigAttachmentName, a.name);
         try {
-            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new FileInputStream(TestUtils.loadFixture("fixture/"+bigAttachmentName)), a.getInputStream()));
+            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new FileInputStream(TestUtils.loadFixture("fixture/" + bigAttachmentName)), a.getInputStream()));
         } catch (IOException ioe) {
             Assert.fail("Exception thrown " + ioe);
         }
@@ -306,21 +306,17 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         rev = bar.getRevision();
     }
 
-    private void pull() throws Exception {
+    // override so we can have custom value for pullAttachmentsInline
+    @Override
+    protected PullResult pull() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        BasicPullStrategy pull = new BasicPullStrategy(this.createPullReplication(),
-                new PullConfiguration(PullConfiguration.DEFAULT_CHANGES_LIMIT_PER_BATCH,
-                        PullConfiguration.DEFAULT_MAX_BATCH_COUNTER_PER_RUN,
-                        PullConfiguration.DEFAULT_INSERT_BATCH_SIZE, pullAttachmentsInline));
-        pull.getEventBus().register(listener);
-
-        Thread t = new Thread(pull);
-        t.start();
-        t.join();
+        BasicReplicator pull = (BasicReplicator)getPullBuilder().pullAttachmentsInline(pullAttachmentsInline).build();
+        pull.strategy.getEventBus().register(listener);
+        pull.start();
+        pull.strategyThread.join();
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
+        return new PullResult((BasicPullStrategy)pull.strategy, listener);
     }
-
-
 
 }

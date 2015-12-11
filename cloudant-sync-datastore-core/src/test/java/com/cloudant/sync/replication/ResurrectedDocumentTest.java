@@ -67,27 +67,6 @@ public class ResurrectedDocumentTest extends ReplicationTestBase {
 
         push();
     }
-    private void push() throws Exception {
-        TestStrategyListener listener = new TestStrategyListener();
-        BasicPushStrategy push = new BasicPushStrategy(this.createPushReplication());
-        push.eventBus.register(listener);
 
-        Thread t = new Thread(push);
-        t.start();
-        t.join();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
-    }
 
-    private void pull() throws Exception {
-        TestStrategyListener listener = new TestStrategyListener();
-        BasicPullStrategy pull = new BasicPullStrategy(this.createPullReplication());
-        pull.getEventBus().register(listener);
-
-        Thread t = new Thread(pull);
-        t.start();
-        t.join();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
-    }
 }

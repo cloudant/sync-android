@@ -54,28 +54,4 @@ public class DesignDocsReplicateTest extends ReplicationTestBase {
         Assert.assertEquals(11, couchClient.getDbInfo().getDocCount());
     }
 
-    private void pull() throws Exception {
-        TestStrategyListener listener = new TestStrategyListener();
-        BasicPullStrategy pull = new BasicPullStrategy(this.createPullReplication());
-        pull.getEventBus().register(listener);
-
-        Thread t = new Thread(pull);
-        t.start();
-        t.join();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
-    }
-
-    private void push() throws Exception {
-        TestStrategyListener listener = new TestStrategyListener();
-        BasicPushStrategy pull = new BasicPushStrategy(this.createPushReplication());
-        pull.getEventBus().register(listener);
-
-        Thread t = new Thread(pull);
-        t.start();
-        t.join();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
-    }
-
 }

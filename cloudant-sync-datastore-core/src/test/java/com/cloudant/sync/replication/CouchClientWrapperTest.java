@@ -57,8 +57,9 @@ public class CouchClientWrapperTest extends CouchTestBase {
 
     @Before
     public void setup() throws IOException {
-        remoteDb = new CouchClientWrapper(super.getCouchConfig(CLOUDANT_TEST_DB_NAME + System
-                .currentTimeMillis()));
+        CouchConfig config = super.getCouchConfig(CLOUDANT_TEST_DB_NAME + System
+                .currentTimeMillis());
+        remoteDb = new CouchClientWrapper(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
         bodyOne = DocumentBodyFactory.create(FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile)));
         bodyTwo = DocumentBodyFactory.create(FileUtils.readFileToByteArray(TestUtils.loadFixture(documentTwoFile)));
 
@@ -78,8 +79,8 @@ public class CouchClientWrapperTest extends CouchTestBase {
 
     @Test
     public void exists_dbExists_false() {
-        CouchClientWrapper couchClientWrapper = new CouchClientWrapper(
-                super.getCouchConfig("db_not_exists"));
+        CouchConfig config = super.getCouchConfig("db_not_exists");
+        CouchClientWrapper couchClientWrapper = new CouchClientWrapper(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
         Assert.assertFalse(couchClientWrapper.exists());
     }
 
@@ -305,7 +306,8 @@ public class CouchClientWrapperTest extends CouchTestBase {
     @Test
     public void accessAndUpdateRemoteDbWithSlashInName() throws Exception {
         //do a little set up for this specific test
-        remoteDb = new CouchClientWrapper(super.getCouchConfig("myslash%2Fencoded_db"));
+        CouchConfig config = super.getCouchConfig("myslash%2Fencoded_db");
+        remoteDb = new CouchClientWrapper(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
         CouchClientWrapperDbUtils.deleteDbQuietly(remoteDb);
         remoteDb.createDatabase();
         Bar bar1 = new Bar();

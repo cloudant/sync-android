@@ -56,18 +56,20 @@ public class CouchClient  {
     private List<HttpConnectionResponseInterceptor> responseInterceptors;
     private final static Logger logger = Logger.getLogger(RetriableTask.class.getCanonicalName());
 
-    public CouchClient(CouchConfig config) {
+    public CouchClient(URI rootUri,
+                       List<HttpConnectionRequestInterceptor> requestInterceptors,
+                       List<HttpConnectionResponseInterceptor> responseInterceptors) {
         this.jsonHelper = new JSONHelper();
-        this.uriHelper = new CouchURIHelper(config.getRootUri());
+        this.uriHelper = new CouchURIHelper(rootUri);
         this.requestInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
         this.responseInterceptors = new ArrayList<HttpConnectionResponseInterceptor>();
 
-        if(config.getRequestInterceptors() != null) {
-            this.requestInterceptors.addAll(config.getRequestInterceptors());
+        if(requestInterceptors != null) {
+            this.requestInterceptors.addAll(requestInterceptors);
         }
 
-        if(config.getResponseInterceptors() != null) {
-            this.responseInterceptors.addAll(config.getResponseInterceptors());
+        if(responseInterceptors != null) {
+            this.responseInterceptors.addAll(responseInterceptors);
         }
     }
 

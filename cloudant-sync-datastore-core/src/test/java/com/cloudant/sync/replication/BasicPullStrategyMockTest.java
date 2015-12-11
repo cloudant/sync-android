@@ -55,9 +55,8 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
-        PullReplication pullReplication = createPullReplication();
+        BasicPullStrategy pullStrategy = super.getPullStrategy();
 
-        BasicPullStrategy pullStrategy = new BasicPullStrategy(pullReplication);
         pullStrategy.sourceDb = mockRemoteDb;
         pullStrategy.getEventBus().register(mockListener);
 
@@ -83,7 +82,7 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
-        BasicPullStrategy pullStrategy = new BasicPullStrategy(createPullReplication());
+        BasicPullStrategy pullStrategy = super.getPullStrategy();
         pullStrategy.sourceDb = mockRemoteDb;
         pullStrategy.getEventBus().register(mockListener);
 
@@ -111,8 +110,7 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
-        PullReplication pullReplication = this.createPullReplication();
-        BasicPullStrategy pullStrategy = new BasicPullStrategy(pullReplication, null);
+        BasicPullStrategy pullStrategy = super.getPullStrategy();
         pullStrategy.sourceDb = mockRemoteDb;
         pullStrategy.getEventBus().register(mockListener);
         when(mockRemoteDb.exists()).thenReturn(true);
@@ -133,7 +131,7 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         StrategyListener mockListener = mock(StrategyListener.class);
         CouchDB mockRemoteDb = mock(CouchDB.class);
 
-        final BasicPullStrategy pullStrategy = new BasicPullStrategy(createPullReplication());
+        BasicPullStrategy pullStrategy = super.getPullStrategy();
         pullStrategy.sourceDb = mockRemoteDb;
         pullStrategy.getEventBus().register(mockListener);
 
@@ -213,7 +211,7 @@ public class BasicPullStrategyMockTest extends ReplicationTestBase {
         });
 
         StrategyListener mockListener = mock(StrategyListener.class);
-        final BasicPullStrategy pullStrategy = new BasicPullStrategy(createPullReplication());
+        BasicPullStrategy pullStrategy = super.getPullStrategy();
         pullStrategy.sourceDb = mockRemoteDb;
         pullStrategy.getEventBus().register(mockListener);
         pullStrategy.run();

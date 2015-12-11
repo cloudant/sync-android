@@ -26,32 +26,6 @@ import java.net.URISyntaxException;
 import static org.mockito.Mockito.mock;
 
 public class ReplicatorFactoryTest {
-
-    URI uri;
-    Datastore mockDatastore;
-
-    @Before
-    public void setUp() throws Exception {
-        mockDatastore = mock(DatastoreExtended.class);
-        uri = new URI("http://127.0.0.1:5984/test");
-    }
-
-    @Test
-    public void oneway_datastoreAndURI_pullReplicatorReturned() {
-        PullReplication pull = new PullReplication();
-        pull.target = this.mockDatastore;
-        pull.source = this.uri;
-        Replicator replicator = ReplicatorFactory.oneway(pull);
-        Assert.assertTrue(replicator instanceof BasicReplicator);
-    }
-
-    @Test
-    public void oneway_datastoreAndURI_pushReplicatorReturned() {
-        PushReplication push = new PushReplication();
-        push.target = this.uri;
-        push.source = this.mockDatastore;
-        Replicator replicator = ReplicatorFactory.oneway(push);
-        Assert.assertTrue(replicator instanceof BasicReplicator);
-    }
+/* TODO REMOVE */
 
 }

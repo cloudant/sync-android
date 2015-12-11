@@ -14,10 +14,13 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.http.HttpConnectionRequestInterceptor;
+import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.mazha.ChangesResult;
-import com.cloudant.mazha.CouchConfig;
+import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.Attachment;
+import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
@@ -36,6 +39,7 @@ import com.google.common.eventbus.EventBus;
 import org.apache.commons.codec.binary.Hex;
 
 import java.io.ByteArrayInputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -51,10 +55,8 @@ class BasicPullStrategy implements ReplicationStrategy {
     private static final Logger logger = Logger.getLogger(BasicPullStrategy.class.getCanonicalName());
     private static final String LOG_TAG = "BasicPullStrategy";
     CouchDB sourceDb;
-    Replication.Filter filter;
+    PullFilter filter;
     DatastoreWrapper targetDb;
-
-    private PullConfiguration config;
 
     int documentCounter = 0;
     int batchCounter = 0;
@@ -76,26 +78,32 @@ class BasicPullStrategy implements ReplicationStrategy {
      */
     private volatile boolean replicationTerminated = false;
 
-    public BasicPullStrategy(PullReplication pullReplication) {
-        this(pullReplication, null);
-    }
 
-    public BasicPullStrategy(PullReplication pullReplication,
-                             PullConfiguration config) {
 
-        Preconditions.checkNotNull(pullReplication, "PullReplication must not be null.");
 
-        if(config == null) {
-            config = new PullConfiguration();
-        }
 
-        this.config = config;
-        this.filter = pullReplication.filter;
+    public int changeLimitPerBatch = 1000;
 
-        CouchConfig couchConfig = pullReplication.getCouchConfig();
-        this.sourceDb = new CouchClientWrapper(couchConfig);
-        this.targetDb = new DatastoreWrapper((DatastoreExtended) pullReplication.target);
-        this.name = String.format("%s [%s]", LOG_TAG, pullReplication.getReplicatorName());
+    public int batchLimitPerRun = 100;
+
+    public int insertBatchSize = 10;
+
+    public boolean pullAttachmentsInline = false;
+
+
+    public BasicPullStrategy(URI source,
+                             Datastore target,
+                             PullFilter filter,
+                             List<HttpConnectionRequestInterceptor> requestInterceptors,
+                             List<HttpConnectionResponseInterceptor> responseInterceptors)
+    {
+
+
+        this.filter = filter;
+
+        this.sourceDb = new CouchClientWrapper(new CouchClient(source, requestInterceptors, responseInterceptors));
+        this.targetDb = new DatastoreWrapper((DatastoreExtended) target);
+        this.name = String.format("%s [%s]", LOG_TAG, "TODO");
     }
 
     @Override
@@ -169,7 +177,7 @@ class BasicPullStrategy implements ReplicationStrategy {
         }
 
         this.documentCounter = 0;
-        for (this.batchCounter = 1; this.batchCounter < config.batchLimitPerRun; this.batchCounter++) {
+        for (this.batchCounter = 1; this.batchCounter < this.batchLimitPerRun; this.batchCounter++) {
 
             if (this.cancel) { return; }
 
@@ -209,7 +217,7 @@ class BasicPullStrategy implements ReplicationStrategy {
 
             // This logic depends on the changes in the feed rather than the
             // changes we actually processed.
-            if (changeFeeds.size() < this.config.changeLimitPerBatch) {
+            if (changeFeeds.size() < this.changeLimitPerBatch) {
                 break;
             }
         }
@@ -240,7 +248,7 @@ class BasicPullStrategy implements ReplicationStrategy {
 
         // Process the changes in batches
         List<String> ids = Lists.newArrayList(missingRevisions.keySet());
-        List<List<String>> batches = Lists.partition(ids, this.config.insertBatchSize);
+        List<List<String>> batches = Lists.partition(ids, this.insertBatchSize);
         for (List<String> batch : batches) {
 
             if (this.cancel) { break; }
@@ -261,7 +269,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                             List<PreparedAttachment>>();
 
                     // now put together a list of attachments we need to download
-                    if (!config.pullAttachmentsInline) {
+                    if (!this.pullAttachmentsInline) {
                         try {
                             for (DocumentRevs documentRevs : revsList) {
                                 Map<String, Object> attachments = documentRevs.getAttachments();
@@ -330,7 +338,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                     if (this.cancel)
                         break;
 
-                    this.targetDb.bulkInsert(revsList, atts, config.pullAttachmentsInline);
+                    this.targetDb.bulkInsert(revsList, atts, this.pullAttachmentsInline);
                     changesProcessed++;
                 }
             } catch (Exception e) {
@@ -367,9 +375,9 @@ class BasicPullStrategy implements ReplicationStrategy {
         final Object lastCheckpoint = this.targetDb.getCheckpoint(this.getReplicationId());
         logger.fine("last checkpoint "+lastCheckpoint);
         ChangesResult changeFeeds = this.sourceDb.changes(
-                filter,
+                this.filter,
                 lastCheckpoint,
-                this.config.changeLimitPerBatch);
+                this.changeLimitPerBatch);
         logger.finer("changes feed: "+JSONUtils.toPrettyJson(changeFeeds));
         return new ChangesResultWrapper(changeFeeds);
     }
@@ -404,9 +412,9 @@ class BasicPullStrategy implements ReplicationStrategy {
         }
 
         if (useBulkGet) {
-            return new GetRevisionTaskBulk(this.sourceDb, requests, config.pullAttachmentsInline);
+            return new GetRevisionTaskBulk(this.sourceDb, requests, this.pullAttachmentsInline);
         } else {
-            return new GetRevisionTaskThreaded(this.sourceDb, requests, config.pullAttachmentsInline);
+            return new GetRevisionTaskThreaded(this.sourceDb, requests, this.pullAttachmentsInline);
         }
     }
     

@@ -72,7 +72,9 @@ public class HttpRequestsTest extends CouchClientTestBase {
             }
         });
         customCouchConfig.setRequestInterceptors(customInterceptors);
-        CouchClient customClient = new CouchClient(customCouchConfig);
+        CouchClient customClient = new CouchClient(customCouchConfig.getRootUri(),
+                customCouchConfig.getRequestInterceptors(), customCouchConfig
+                .getResponseInterceptors());
         CouchDbInfo dbInfo = customClient.getDbInfo();
         Assert.assertNotNull(dbInfo);
         Assert.assertTrue(dbInfo.getDbName().contains(testDb));
@@ -104,7 +106,9 @@ public class HttpRequestsTest extends CouchClientTestBase {
 
         // first we check that foo/bar is unauthorized
         try {
-            CouchClient customClient = new CouchClient(customCouchConfig);
+            CouchClient customClient = new CouchClient(customCouchConfig.getRootUri(),
+                    customCouchConfig.getRequestInterceptors(), customCouchConfig
+                    .getResponseInterceptors());
             customClient.getDbInfo();
             Assert.fail("Expected CouchException to be thrown");
         } catch (CouchException ce) {
@@ -115,7 +119,9 @@ public class HttpRequestsTest extends CouchClientTestBase {
         ArrayList<HttpConnectionRequestInterceptor> customInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
         customInterceptors.add(makeHeaderInterceptor("Authorization", "test"));
         customCouchConfig.setRequestInterceptors(customInterceptors);
-        CouchClient clientAuthHeader = new CouchClient(customCouchConfig);
+        CouchClient clientAuthHeader = new CouchClient(customCouchConfig.getRootUri(),
+                customCouchConfig.getRequestInterceptors(), customCouchConfig
+                .getResponseInterceptors());
         CouchDbInfo dbInfo = clientAuthHeader.getDbInfo();
         Assert.assertNotNull(dbInfo);
         Assert.assertTrue(dbInfo.getDbName().contains(testDb));
@@ -142,7 +148,9 @@ public class HttpRequestsTest extends CouchClientTestBase {
             ArrayList<HttpConnectionRequestInterceptor> customInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
             customInterceptors.add(makeHeaderInterceptor("Authorization", authHeaderValue));
             customCouchConfig.setRequestInterceptors(customInterceptors);
-            CouchClient customClient = new CouchClient(customCouchConfig);
+            CouchClient customClient = new CouchClient(customCouchConfig.getRootUri(),
+                    customCouchConfig.getRequestInterceptors(), customCouchConfig
+                    .getResponseInterceptors());
             customClient.getDbInfo();
             Assert.fail("Expected CouchException to be thrown");
         } catch (CouchException ce) {

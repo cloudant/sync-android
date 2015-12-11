@@ -27,17 +27,6 @@ import org.junit.experimental.categories.Category;
 @Category(RequireRunningCouchDB.class)
 public class PushReplicatorTest extends ReplicationTestBase {
 
-    BasicReplicator replicator;
-
-    @Before
-    public void setUp() throws Exception {
-
-        super.setUp();
-
-        PushReplication push = this.createPushReplication();
-        replicator = (BasicReplicator) ReplicatorFactory.oneway(push);
-    }
-
     private void prepareTwoDocumentsInLocalDB() throws Exception {
         Bar bar1 = BarUtils.createBar(datastore, "Tom", 31);
         Bar bar2 = BarUtils.createBar(datastore, "Jerry", 52);
@@ -51,6 +40,8 @@ public class PushReplicatorTest extends ReplicationTestBase {
     @Test
     public void start_StartedThenComplete() throws Exception {
         prepareTwoDocumentsInLocalDB();
+
+        BasicReplicator replicator = (BasicReplicator)super.getPushBuilder().build();
 
         TestReplicationListener listener = new TestReplicationListener();
         Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
@@ -76,6 +67,8 @@ public class PushReplicatorTest extends ReplicationTestBase {
         for (int i = 0; i < count; i++) {
             BarUtils.createBar(datastore, "docnum", i);
         }
+
+        BasicReplicator replicator = (BasicReplicator)super.getPushBuilder().build();
 
         TestReplicationListener listener = new TestReplicationListener();
         Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
@@ -114,10 +107,11 @@ public class PushReplicatorTest extends ReplicationTestBase {
     public void testRequestInterceptors() throws Exception {
 
         //to test the interceptors we count if the interceptor gets called
-
         InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
-        PushReplication pushReplication = createPushReplication();
-        pushReplication.requestInterceptors.add(interceptorCallCounter);
+        Replicator pushReplication = ReplicatorBuilder.push()
+                .from(this.datastore)
+                .to(this.remoteDb.couchClient.getRootUri())
+                .addRequestInterceptors(interceptorCallCounter).build();
         runReplicationUntilComplete(pushReplication);
         Assert.assertTrue(interceptorCallCounter.interceptorRequestTimesCalled >= 1);
 
@@ -126,44 +120,14 @@ public class PushReplicatorTest extends ReplicationTestBase {
     @Test
     public void testResponseInterceptors() throws Exception {
 
+        //to test the interceptors we count if the interceptor gets called
         InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
-        PushReplication pushReplication = createPushReplication();
-        pushReplication.responseInterceptors.add(interceptorCallCounter);
+        Replicator pushReplication = ReplicatorBuilder.push()
+                .from(this.datastore)
+                .to(this.remoteDb.couchClient.getRootUri())
+                .addResponseInterceptors(interceptorCallCounter).build();
         runReplicationUntilComplete(pushReplication);
         Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
     }
 
-    @Test
-    public void testRequestInterceptorsThroughBuilder() throws Exception {
-        InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
-
-        TestReplicationListener listener = new TestReplicationListener();
-        ReplicatorBuilder replicatorBuilder = ReplicatorBuilder.push()
-                .from(this.datastore)
-                .to(this.remoteDb.couchClient.getRootUri())
-                .addRequestInterceptors(interceptorCallCounter)
-                .addResponseInterceptors(interceptorCallCounter);
-        if (TestOptions.COOKIE_AUTH) {
-            CookieInterceptor ci = new CookieInterceptor(TestOptions.COUCH_USERNAME, TestOptions.COUCH_PASSWORD);
-            replicatorBuilder.addRequestInterceptors(ci);
-            replicatorBuilder.addResponseInterceptors(ci);
-        }
-        Replicator replicator = replicatorBuilder.build();
-
-        replicator.getEventBus().register(listener);
-        replicator.start();
-
-        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
-            Thread.sleep(50);
-        }
-
-        Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
-        Assert.assertFalse(listener.errorCalled);
-        Assert.assertTrue(listener.finishCalled);
-
-        //check that the response and request interceptors have been called.
-        Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
-        Assert.assertTrue(interceptorCallCounter.interceptorRequestTimesCalled >= 1);
-
-    }
 }
