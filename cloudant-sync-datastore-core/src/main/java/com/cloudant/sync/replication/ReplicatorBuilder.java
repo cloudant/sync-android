@@ -189,6 +189,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
         /**
          * Sets the number of documents to insert into the SQLite database in one transaction
+         *
          * @param insertBatchSize The number of documents to insert into the SQLite database in one transaction
          * @return This instance of {@link ReplicatorBuilder}
          */
@@ -198,8 +199,9 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         * TODO
-         * @param pullAttachmentsInline
+         * Sets whether to pull attachments inline or separately
+         *
+         * @param pullAttachmentsInline Whether to pull attachments inline or separately
          * @return This instance of {@link ReplicatorBuilder}
          */
         public Pull pullAttachmentsInline(boolean pullAttachmentsInline) {
