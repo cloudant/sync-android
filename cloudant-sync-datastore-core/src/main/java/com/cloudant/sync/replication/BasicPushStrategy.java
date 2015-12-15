@@ -75,9 +75,6 @@ class BasicPushStrategy implements ReplicationStrategy {
 
     private static JSONHelper sJsonHelper = new JSONHelper();
 
-
-
-
     public int changeLimitPerBatch = 500;
 
     public int batchLimitPerRun = 100;
@@ -86,17 +83,14 @@ class BasicPushStrategy implements ReplicationStrategy {
 
     public PushAttachmentsInline pushAttachmentsInline = PushAttachmentsInline.Small;
 
-
-
     public BasicPushStrategy(Datastore source,
                              URI target,
                              List<HttpConnectionRequestInterceptor> requestInterceptors,
                              List<HttpConnectionResponseInterceptor> responseInterceptors) {
-
         this.sourceDb = new DatastoreWrapper((DatastoreExtended) source);
         this.targetDb = new CouchClientWrapper(new CouchClient(target, requestInterceptors, responseInterceptors));
-
-        this.name = String.format("%s [%s]", LOG_TAG, "TODO");
+        String replicatorName = String.format("%s <-- %s ", target, source.getDatastoreName());
+        this.name = String.format("%s [%s]", LOG_TAG, replicatorName);
     }
 
     @Override

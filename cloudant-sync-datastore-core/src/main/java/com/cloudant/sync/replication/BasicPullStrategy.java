@@ -78,10 +78,6 @@ class BasicPullStrategy implements ReplicationStrategy {
      */
     private volatile boolean replicationTerminated = false;
 
-
-
-
-
     public int changeLimitPerBatch = 1000;
 
     public int batchLimitPerRun = 100;
@@ -89,21 +85,23 @@ class BasicPullStrategy implements ReplicationStrategy {
     public int insertBatchSize = 10;
 
     public boolean pullAttachmentsInline = false;
-
-
+    
     public BasicPullStrategy(URI source,
                              Datastore target,
                              PullFilter filter,
                              List<HttpConnectionRequestInterceptor> requestInterceptors,
                              List<HttpConnectionResponseInterceptor> responseInterceptors)
     {
-
-
         this.filter = filter;
-
         this.sourceDb = new CouchClientWrapper(new CouchClient(source, requestInterceptors, responseInterceptors));
         this.targetDb = new DatastoreWrapper((DatastoreExtended) target);
-        this.name = String.format("%s [%s]", LOG_TAG, "TODO");
+        String replicatorName;
+        if(filter == null) {
+            replicatorName = String.format("%s <-- %s ", target.getDatastoreName(), source);
+        } else {
+            replicatorName = String.format("%s <-- %s (%s)", target.getDatastoreName(), source, filter.getName());
+        }
+        this.name = String.format("%s [%s]", LOG_TAG, replicatorName);
     }
 
     @Override
