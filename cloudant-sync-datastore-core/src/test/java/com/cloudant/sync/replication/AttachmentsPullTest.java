@@ -312,8 +312,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         TestStrategyListener listener = new TestStrategyListener();
         BasicReplicator pull = (BasicReplicator)getPullBuilder().pullAttachmentsInline(pullAttachmentsInline).build();
         pull.strategy.getEventBus().register(listener);
-        pull.start();
-        pull.strategyThread.join();
+        pull.strategy.run();
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
         return new PullResult((BasicPullStrategy)pull.strategy, listener);
