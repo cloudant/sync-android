@@ -31,6 +31,10 @@ import static org.mockito.Mockito.*;
 @Category(RequireRunningCouchDB.class)
 public class BasicPushStrategyMockTest extends ReplicationTestBase {
 
+    // NB these tests call super.getPushStrategy() and then just overwrite the targetDb with a mock
+    // database. Possibly a more pure approach would be to mock the entire strategy, but we still
+    // want the eventBus to operate and fire events.
+
     @Test
     public void push_dbNotExist_errorCallback() throws
             Exception {

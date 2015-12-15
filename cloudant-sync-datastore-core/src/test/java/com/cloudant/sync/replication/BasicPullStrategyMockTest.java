@@ -48,6 +48,10 @@ import static org.mockito.Mockito.*;
 @Category(RequireRunningCouchDB.class)
 public class BasicPullStrategyMockTest extends ReplicationTestBase {
 
+    // NB these tests call super.getPullStrategy() and then just overwrite the sourceDb with a mock
+    // database. Possibly a more pure approach would be to mock the entire strategy, but we still
+    // want the eventBus to operate and fire events.
+
     @Test
     public void call_remoteDbNotExists_errorCallback() throws
             Exception {
