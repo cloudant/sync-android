@@ -85,7 +85,7 @@ class BasicPullStrategy implements ReplicationStrategy {
     public int insertBatchSize = 10;
 
     public boolean pullAttachmentsInline = false;
-    
+
     public BasicPullStrategy(URI source,
                              Datastore target,
                              PullFilter filter,

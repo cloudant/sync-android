@@ -73,9 +73,10 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         * TODO
-         * @param changeLimitPerBatch
-         * @return
+         * Sets the number of changes to fetch from the _changes feed per batch
+         *
+         * @param changeLimitPerBatch The number of changes to fetch from the _changes feed per batch
+         * @return This instance of {@link ReplicatorBuilder}
          */
         public Push changeLimitPerBatch(int changeLimitPerBatch) {
             this.changeLimitPerBatch = changeLimitPerBatch;
@@ -83,9 +84,10 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         * TODO
-         * @param batchLimitPerRun
-         * @return
+         * Sets the number of batches to push in one replication run - which is equivalent to
+         * changeLimitPerBatch * batchLimitPerRun documents
+         * @param batchLimitPerRun The number of batches to push in one replication run
+         * @return This instance of {@link ReplicatorBuilder}
          */
         public Push batchLimitPerRun(int batchLimitPerRun) {
             this.batchLimitPerRun = batchLimitPerRun;
@@ -93,9 +95,10 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         * TODO
-         * @param bulkInsertSize
-         * @return
+         * Sets the number of documents to bulk insert into the CouchDB instance at a time
+         *
+         * @param bulkInsertSize The number of documents to bulk insert into the CouchDB instance at a time
+         * @return This instance of {@link ReplicatorBuilder}
          */
         public Push bulkInsertSize(int bulkInsertSize) {
             this.bulkInsertSize = bulkInsertSize;
@@ -103,9 +106,10 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         * TODO
-         * @param pushAttachmentsInline
-         * @return
+         * Sets the strategy to decide whether to push attachments inline or separately
+         *
+         * @param pushAttachmentsInline The strategy to decide whether to push attachments inline or separately
+         * @return This instance of {@link ReplicatorBuilder}
          */
         public Push pushAttachmentsInline(PushAttachmentsInline pushAttachmentsInline) {
             this.pushAttachmentsInline = pushAttachmentsInline;
@@ -161,9 +165,10 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         * TODO
-         * @param changeLimitPerBatch
-         * @return
+         * Sets the number of changes to fetch from the _changes feed per batch
+         *
+         * @param changeLimitPerBatch The number of changes to fetch from the _changes feed per batch
+         * @return This instance of {@link ReplicatorBuilder}
          */
         public Pull changeLimitPerBatch(int changeLimitPerBatch) {
             this.changeLimitPerBatch = changeLimitPerBatch;
@@ -171,9 +176,11 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         * TODO
-         * @param batchLimitPerRun
-         * @return
+         * Sets the number of batches to pull in one replication run - which is equivalent to
+         * changeLimitPerBatch * batchLimitPerRun documents
+         *
+         * @param batchLimitPerRun The number of batches to pull in one replication run
+         * @return This instance of {@link ReplicatorBuilder}
          */
         public Pull batchLimitPerRun(int batchLimitPerRun) {
             this.batchLimitPerRun = batchLimitPerRun;
@@ -181,9 +188,9 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         * TODO
-         * @param insertBatchSize
-         * @return
+         * Sets the number of documents to insert into the SQLite database in one transaction
+         * @param insertBatchSize The number of documents to insert into the SQLite database in one transaction
+         * @return This instance of {@link ReplicatorBuilder}
          */
         public Pull insertBatchSize(int insertBatchSize) {
             this.insertBatchSize = insertBatchSize;
@@ -193,7 +200,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
         /**
          * TODO
          * @param pullAttachmentsInline
-         * @return
+         * @return This instance of {@link ReplicatorBuilder}
          */
         public Pull pullAttachmentsInline(boolean pullAttachmentsInline) {
             this.pullAttachmentsInline = pullAttachmentsInline;
