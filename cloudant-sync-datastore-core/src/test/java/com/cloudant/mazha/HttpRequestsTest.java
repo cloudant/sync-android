@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.common.TestOptions;
 import com.cloudant.http.HttpConnectionInterceptorContext;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.google.common.base.Strings;
@@ -61,6 +62,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
     public void customHeader() throws Exception {
         CouchConfig customCouchConfig = getCouchConfig(testDb);
         ArrayList<HttpConnectionRequestInterceptor> customInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
+        customInterceptors.addAll(customCouchConfig.getRequestInterceptors());
         // add interceptor to set header
         customInterceptors.add(makeHeaderInterceptor("x-good-header", "test"));
         // add interceptor to check that the header has been set
@@ -91,7 +93,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
         // in admin party mode)
         org.junit.Assume.assumeTrue("Test skipped because Basic Auth credentials are required to " +
                         "access this server",
-                Strings.isNullOrEmpty(couchConfig.getRootUri().getUserInfo()));
+                !TestOptions.COOKIE_AUTH && Strings.isNullOrEmpty(couchConfig.getRootUri().getUserInfo()));
         URI root = couchConfig.getRootUri();
 
         // copy the basic test url but add user:foo, pass:bar as credentials
@@ -139,7 +141,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
         // in admin party mode)
         org.junit.Assume.assumeTrue("Test skipped because Basic Auth credentials are required to " +
                         "access this server",
-                Strings.isNullOrEmpty(customCouchConfig.getRootUri().getUserInfo()));
+                TestOptions.COOKIE_AUTH && Strings.isNullOrEmpty(customCouchConfig.getRootUri().getUserInfo()));
 
         try {
             String authString = "foo:bar";

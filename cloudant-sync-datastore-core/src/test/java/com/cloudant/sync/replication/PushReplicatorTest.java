@@ -108,10 +108,9 @@ public class PushReplicatorTest extends ReplicationTestBase {
 
         //to test the interceptors we count if the interceptor gets called
         InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
-        Replicator pushReplication = ReplicatorBuilder.push()
-                .from(this.datastore)
-                .to(this.remoteDb.couchClient.getRootUri())
+        Replicator pushReplication = super.getPushBuilder()
                 .addRequestInterceptors(interceptorCallCounter).build();
+
         runReplicationUntilComplete(pushReplication);
         Assert.assertTrue(interceptorCallCounter.interceptorRequestTimesCalled >= 1);
 
@@ -122,10 +121,9 @@ public class PushReplicatorTest extends ReplicationTestBase {
 
         //to test the interceptors we count if the interceptor gets called
         InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
-        Replicator pushReplication = ReplicatorBuilder.push()
-                .from(this.datastore)
-                .to(this.remoteDb.couchClient.getRootUri())
+        Replicator pushReplication = super.getPushBuilder()
                 .addResponseInterceptors(interceptorCallCounter).build();
+
         runReplicationUntilComplete(pushReplication);
         Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
     }

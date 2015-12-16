@@ -727,6 +727,8 @@ public class CouchClient  {
     public boolean isBulkSupported() {
         URI bulkGet = this.uriHelper.documentUri("_bulk_get");
         HttpConnection connection = Http.GET(bulkGet);
+        connection.responseInterceptors.addAll(responseInterceptors);
+        connection.requestInterceptors.addAll(requestInterceptors);
         ExecuteResult result = this.execute(connection);
         switch (result.responseCode) {
             case 404:

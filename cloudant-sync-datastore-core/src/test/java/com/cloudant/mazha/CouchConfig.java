@@ -43,6 +43,14 @@ public class CouchConfig {
         this.rootUri = rootUri;
     }
 
+    public CouchConfig(URI rootUri,
+                       List<HttpConnectionRequestInterceptor> requestInterceptors,
+                       List<HttpConnectionResponseInterceptor> responseInterceptors) {
+        this.rootUri = rootUri;
+        this.requestInterceptors = requestInterceptors;
+        this.responseInterceptors = responseInterceptors;
+    }
+
     public List<HttpConnectionRequestInterceptor> getRequestInterceptors() {
         return requestInterceptors;
     }

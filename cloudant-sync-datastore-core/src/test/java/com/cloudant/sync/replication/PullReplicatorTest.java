@@ -80,11 +80,8 @@ public class PullReplicatorTest extends ReplicationTestBase {
     public void testRequestInterceptors() throws Exception {
 
         InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
-        Replicator replicator = ReplicatorBuilder.pull()
-                .from(this.source)
-                .to(this.datastore)
-                .addRequestInterceptors(interceptorCallCounter)
-                .build();
+        Replicator replicator = super.getPullBuilder()
+                .addRequestInterceptors(interceptorCallCounter).build();
 
         runReplicationUntilComplete(replicator);
         Assert.assertTrue(interceptorCallCounter.interceptorRequestTimesCalled >= 1);
@@ -95,11 +92,9 @@ public class PullReplicatorTest extends ReplicationTestBase {
     public void testResponseInterceptors() throws Exception {
 
         InterceptorCallCounter interceptorCallCounter = new InterceptorCallCounter();
-        Replicator replicator = ReplicatorBuilder.pull()
-                .from(this.source)
-                .to(this.datastore)
-                .addResponseInterceptors(interceptorCallCounter)
-                .build();
+        Replicator replicator = super.getPullBuilder()
+                .addResponseInterceptors(interceptorCallCounter).build();
+
         runReplicationUntilComplete(replicator);
         Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
     }
