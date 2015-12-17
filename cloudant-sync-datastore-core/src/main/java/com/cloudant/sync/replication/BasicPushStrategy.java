@@ -50,28 +50,36 @@ import java.util.logging.Logger;
 
 class BasicPushStrategy implements ReplicationStrategy {
 
+    // internal state which gets reset each time run() is called
+    private class State {
+        // Flag to stop the replication thread.
+        // Volatile as might be set from another thread.
+        private volatile boolean cancel = false;
+
+        /**
+         * Flag is set when the replication process is complete. The thread
+         * may live on because the listener's callback is executed on the thread.
+         */
+        private volatile boolean replicationTerminated = false;
+
+        private int documentCounter = 0;
+
+        private int batchCounter = 0;
+    }
+
+    private State state;
+
     private static final String LOG_TAG = "BasicPushStrategy";
+
     private static final Logger logger = Logger.getLogger(BasicPushStrategy.class.getCanonicalName());
 
     CouchDB targetDb;
-    DatastoreWrapper sourceDb;
 
-    private int documentCounter = 0;
-    private int batchCounter = 0;
+    DatastoreWrapper sourceDb;
 
     private final String name;
 
-    // Flag to stop the replication thread.
-    // Volatile as might be set from another thread.
-    private volatile boolean cancel;
-
     public final EventBus eventBus = new EventBus();
-    
-    /**
-     * Flag is set when the replication process is complete. The thread
-     * may live on because the listener's callback is executed on the thread.
-     */
-    private volatile boolean replicationTerminated = false;
 
     private static JSONHelper sJsonHelper = new JSONHelper();
 
@@ -95,22 +103,38 @@ class BasicPushStrategy implements ReplicationStrategy {
 
     @Override
     public boolean isReplicationTerminated() {
-        return replicationTerminated;
+        if (state != null) {
+            return state.replicationTerminated;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public void setCancel() {
-        this.cancel = true;
+        // if we have been cancelled before run(), we have to create the internal state
+        if (this.state == null) {
+            this.state = new State();
+        }
+        this.state.cancel = true;
     }
 
     @Override
     public int getDocumentCounter() {
-        return this.documentCounter;
+        if (state != null) {
+            return this.state.documentCounter;
+        } else {
+            return 0;
+        }
     }
 
     @Override
     public int getBatchCounter() {
-        return this.batchCounter;
+        if (state != null) {
+            return this.state.batchCounter;
+        } else {
+            return 0;
+        }
     }
 
     /**
@@ -121,6 +145,16 @@ class BasicPushStrategy implements ReplicationStrategy {
     @Override
     public void run() {
 
+        if (this.state != null && this.state.cancel) {
+            // we were already cancelled, don't run, but still post completion
+            this.state.documentCounter = 0;
+            this.state.batchCounter = 0;
+            runComplete(null);
+            return;
+        }
+        // reset internal state
+        this.state = new State();
+
         ErrorInfo errorInfo = null;
 
         try {
@@ -128,14 +162,18 @@ class BasicPushStrategy implements ReplicationStrategy {
             replicate();
 
         } catch (Throwable e) {
-            logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.batchCounter),e);
+            logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.state.batchCounter),e);
             errorInfo = new ErrorInfo(e);
         }
 
-        replicationTerminated = true;
+        runComplete(errorInfo);
+    }
+
+    private void runComplete(ErrorInfo errorInfo) {
+        state.replicationTerminated = true;
 
         String msg = "Push replication terminated via ";
-        msg += this.cancel? "cancel." : "completion.";
+        msg += this.state.cancel? "cancel." : "completion.";
 
         // notify complete/errored on eventbus
         logger.info(msg + " Posting on EventBus.");
@@ -152,22 +190,22 @@ class BasicPushStrategy implements ReplicationStrategy {
         long startTime = System.currentTimeMillis();
 
         // We were cancelled before we started
-        if (this.cancel) { return; }
+        if (this.state.cancel) { return; }
 
         if(!this.targetDb.exists()) {
             throw new DatabaseNotFoundException(
                     "Database not found: " + this.targetDb.getIdentifier());
         }
 
-        this.documentCounter = 0;
-        for(this.batchCounter = 1 ; this.batchCounter < this.batchLimitPerRun; this.batchCounter ++) {
+        this.state.documentCounter = 0;
+        for(this.state.batchCounter = 1 ; this.state.batchCounter < this.batchLimitPerRun; this.state.batchCounter ++) {
 
-            if (this.cancel) { return; }
+            if (this.state.cancel) { return; }
 
             String msg = String.format(
                 "Batch %s started (completed %s changes so far)",
-                this.batchCounter,
-                this.documentCounter
+                this.state.batchCounter,
+                this.state.documentCounter
             );
             logger.info(msg);
             long batchStartTime = System.currentTimeMillis();
@@ -179,20 +217,20 @@ class BasicPushStrategy implements ReplicationStrategy {
             // a log analysis.
             msg = String.format(
                     "Batch %s contains %s changes",
-                    this.batchCounter,
+                    this.state.batchCounter,
                     changes.size()
             );
             logger.info(msg);
 
             if (changes.size() > 0) {
                 changesProcessed = processOneChangesBatch(changes);
-                this.documentCounter += changesProcessed;
+                this.state.documentCounter += changesProcessed;
             }
 
             long batchEndTime = System.currentTimeMillis();
             msg =  String.format(
                     "Batch %s completed in %sms (processed %s changes)",
-                    this.batchCounter,
+                    this.state.batchCounter,
                     batchEndTime-batchStartTime,
                     changesProcessed
             );
@@ -210,7 +248,7 @@ class BasicPushStrategy implements ReplicationStrategy {
         String msg =  String.format(
             "Push completed in %sms (%s total changes processed)",
             deltaTime,
-            this.documentCounter
+            this.state.documentCounter
         );
         logger.info(msg);
     }
@@ -248,7 +286,7 @@ class BasicPushStrategy implements ReplicationStrategy {
         );
         for (List<BasicDocumentRevision> batch : batches) {
 
-            if (this.cancel) { break; }
+            if (this.state.cancel) { break; }
 
             Map<String, DocumentRevisionTree> allTrees = this.sourceDb.getDocumentTrees(batch);
             Map<String, Set<String>> docOpenRevs = this.openRevisions(allTrees);
@@ -258,14 +296,14 @@ class BasicPushStrategy implements ReplicationStrategy {
             List<String> serialisedMissingRevs = itemsToPush.serializedDocs;
             List<MultipartAttachmentWriter> multiparts = itemsToPush.multiparts;
 
-            if (!this.cancel) {
+            if (!this.state.cancel) {
                 this.targetDb.putMultiparts(multiparts);
                 this.targetDb.bulkCreateSerializedDocs(serialisedMissingRevs);
                 changesProcessed += docMissingRevs.size();
             }
         }
 
-        if (!this.cancel) {
+        if (!this.state.cancel) {
             try {
                 this.putCheckpoint(String.valueOf(changes.getLastSequence()));
             } catch (DatastoreException e){

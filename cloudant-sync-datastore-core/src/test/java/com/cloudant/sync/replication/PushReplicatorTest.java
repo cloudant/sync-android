@@ -128,4 +128,30 @@ public class PushReplicatorTest extends ReplicationTestBase {
         Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
     }
 
+    @Test
+    public void replicatorCanBeReused() throws Exception {
+        prepareTwoDocumentsInLocalDB();
+        ReplicatorBuilder replicatorBuilder = super.getPushBuilder();
+        Replicator replicator = replicatorBuilder.build();
+        ReplicationStrategy replicationStrategy = ((BasicReplicator)replicator).strategy;
+        replicator.start();
+        // replicate 2 docs created above
+        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+            Thread.sleep(50);
+        }
+        // check document counter has been incremented
+        Assert.assertEquals(2, replicationStrategy.getDocumentCounter());
+        Bar bar3 = BarUtils.createBar(datastore, "Test", 52);
+        replicator.start();
+        ReplicationStrategy replicationStrategy2 = ((BasicReplicator)replicator).strategy;
+        // replicate 3rd doc
+        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+            Thread.sleep(50);
+        }
+        // check document counter has been reset since last replication and incremented
+        Assert.assertEquals(1, replicationStrategy2.getDocumentCounter());
+        Assert.assertEquals(3, remoteDb.couchClient.getDbInfo().getDocCount());
+    }
+
+
 }

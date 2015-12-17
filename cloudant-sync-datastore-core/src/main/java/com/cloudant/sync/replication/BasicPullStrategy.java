@@ -52,31 +52,41 @@ import java.util.logging.Logger;
 
 class BasicPullStrategy implements ReplicationStrategy {
 
-    private static final Logger logger = Logger.getLogger(BasicPullStrategy.class.getCanonicalName());
-    private static final String LOG_TAG = "BasicPullStrategy";
-    CouchDB sourceDb;
-    PullFilter filter;
-    DatastoreWrapper targetDb;
+    // internal state which gets reset each time run() is called
+    private class State {
+        // Flag to stop the replication thread.
+        // Volatile as might be set from another thread.
+        private volatile boolean cancel = false;
 
-    int documentCounter = 0;
-    int batchCounter = 0;
+        /**
+         * Flag is set when the replication process is complete. The thread
+         * may live on because the listener's callback is executed on the thread.
+         */
+        private volatile boolean replicationTerminated = false;
+
+        int documentCounter = 0;
+
+        int batchCounter = 0;
+    }
+
+    private State state;
+
+    private static final Logger logger = Logger.getLogger(BasicPullStrategy.class.getCanonicalName());
+
+    private static final String LOG_TAG = "BasicPullStrategy";
+
+    CouchDB sourceDb;
+
+    PullFilter filter;
+
+    DatastoreWrapper targetDb;
 
     private final String name;
 
-    // Flag to stop the replication thread.
-    // Volatile as might be set from another thread.
-    private volatile boolean cancel = false;
-    
     private final EventBus eventBus = new EventBus();
 
     // Is _bulk_get endpoint supported?
     private boolean useBulkGet = false;
-
-    /**
-     * Flag is set when the replication process is complete. The thread
-     * may live on because the listener's callback is executed on the thread.
-     */
-    private volatile boolean replicationTerminated = false;
 
     public int changeLimitPerBatch = 1000;
 
@@ -105,22 +115,38 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     @Override
     public boolean isReplicationTerminated() {
-        return replicationTerminated;
+        if (this.state != null) {
+            return state.replicationTerminated;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public void setCancel() {
-        this.cancel = true;
+        // if we have been cancelled before run(), we have to create the internal state
+        if (this.state == null) {
+            this.state = new State();
+        }
+        this.state.cancel = true;
     }
 
     @Override
     public int getDocumentCounter() {
-        return this.documentCounter;
+        if (this.state != null) {
+            return this.state.documentCounter;
+        } else {
+            return 0;
+        }
     }
 
     @Override
     public int getBatchCounter() {
-        return this.batchCounter;
+        if (this.state != null) {
+            return this.state.batchCounter;
+        } else {
+            return 0;
+        }
     }
 
     /**
@@ -131,6 +157,16 @@ class BasicPullStrategy implements ReplicationStrategy {
     @Override
     public void run() {
 
+        if (this.state != null && this.state.cancel) {
+            // we were already cancelled, don't run, but still post completion
+            this.state.documentCounter = 0;
+            this.state.batchCounter = 0;
+            runComplete(null);
+            return;
+        }
+        // reset internal state
+        this.state = new State();
+
         ErrorInfo errorInfo = null;
 
         try {
@@ -138,17 +174,21 @@ class BasicPullStrategy implements ReplicationStrategy {
             replicate();
 
         } catch (ExecutionException ex) {
-            logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.batchCounter),ex);
+            logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.state.batchCounter),ex);
             errorInfo = new ErrorInfo(ex.getCause());
         } catch (Throwable e) {
-            logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.batchCounter),e);
+            logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.state.batchCounter),e);
             errorInfo = new ErrorInfo(e);
         }
 
-        replicationTerminated = true;
+        runComplete(errorInfo);
+    }
+
+    private void runComplete(ErrorInfo errorInfo) {
+        state.replicationTerminated = true;
 
         String msg = "Pull replication terminated via ";
-        msg += this.cancel? "cancel." : "completion.";
+        msg += this.state.cancel? "cancel." : "completion.";
 
         // notify complete/errored on eventbus
         logger.info(msg + " Posting on EventBus.");
@@ -157,7 +197,6 @@ class BasicPullStrategy implements ReplicationStrategy {
         } else {
             eventBus.post(new ReplicationStrategyErrored(this, errorInfo));
         }
-        
     }
 
     private void replicate()
@@ -166,22 +205,22 @@ class BasicPullStrategy implements ReplicationStrategy {
         long startTime = System.currentTimeMillis();
 
         // We were cancelled before we started
-        if (this.cancel) { return; }
+        if (this.state.cancel) { return; }
 
         if(!this.sourceDb.exists()) {
             throw new DatabaseNotFoundException(
                     "Database not found " + this.sourceDb.getIdentifier());
         }
 
-        this.documentCounter = 0;
-        for (this.batchCounter = 1; this.batchCounter < this.batchLimitPerRun; this.batchCounter++) {
+        this.state.documentCounter = 0;
+        for (this.state.batchCounter = 1; this.state.batchCounter < this.batchLimitPerRun; this.state.batchCounter++) {
 
-            if (this.cancel) { return; }
+            if (this.state.cancel) { return; }
 
             String msg = String.format(
                     "Batch %s started (completed %s changes so far)",
-                    this.batchCounter,
-                    this.documentCounter
+                    this.state.batchCounter,
+                    this.state.documentCounter
             );
             logger.info(msg);
             long batchStartTime = System.currentTimeMillis();
@@ -193,20 +232,20 @@ class BasicPullStrategy implements ReplicationStrategy {
             // a log analysis.
             msg = String.format(
                     "Batch %s contains %s changes",
-                    this.batchCounter,
+                    this.state.batchCounter,
                     changeFeeds.size()
             );
             logger.info(msg);
 
             if (changeFeeds.size() > 0) {
                 batchChangesProcessed = processOneChangesBatch(changeFeeds);
-                documentCounter += batchChangesProcessed;
+                state.documentCounter += batchChangesProcessed;
             }
 
             long batchEndTime = System.currentTimeMillis();
             msg =  String.format(
                     "Batch %s completed in %sms (batch was %s changes)",
-                    this.batchCounter,
+                    this.state.batchCounter,
                     batchEndTime-batchStartTime,
                     batchChangesProcessed
             );
@@ -224,7 +263,7 @@ class BasicPullStrategy implements ReplicationStrategy {
         String msg =  String.format(
             "Pull completed in %sms (%s total changes processed)",
             deltaTime,
-            this.documentCounter
+            this.state.documentCounter
         );
         logger.info(msg);
     }
@@ -248,14 +287,14 @@ class BasicPullStrategy implements ReplicationStrategy {
         List<List<String>> batches = Lists.partition(ids, this.insertBatchSize);
         for (List<String> batch : batches) {
 
-            if (this.cancel) { break; }
+            if (this.state.cancel) { break; }
 
             try {
                 Iterable<DocumentRevsList> result = createTask(batch, missingRevisions);
 
                 for (DocumentRevsList revsList : result) {
                     // We promise not to insert documents after cancel is set
-                    if (this.cancel) {
+                    if (this.state.cancel) {
                         break;
                     }
 
@@ -328,11 +367,11 @@ class BasicPullStrategy implements ReplicationStrategy {
                                     "There was a problem downloading an attachment to the" +
                                             " datastore, terminating replication",
                                     e);
-                            this.cancel = true;
+                            this.state.cancel = true;
                         }
                     }
 
-                    if (this.cancel)
+                    if (this.state.cancel)
                         break;
 
                     this.targetDb.bulkInsert(revsList, atts, this.pullAttachmentsInline);
@@ -343,7 +382,7 @@ class BasicPullStrategy implements ReplicationStrategy {
             }
         }
 
-        if (!this.cancel) {
+        if (!this.state.cancel) {
             try {
                 this.targetDb.putCheckpoint(this.getReplicationId(), changeFeeds.getLastSeq());
             } catch (DatastoreException e){
