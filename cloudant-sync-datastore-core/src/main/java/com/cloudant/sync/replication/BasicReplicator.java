@@ -54,11 +54,12 @@ class BasicReplicator implements Replicator {
             case COMPLETE:
             case STOPPED:
             case ERROR:
-
+                // pending -> started: start replication for the first time
+                // complete/stopped/error -> started: (re)start replication for nth time
+                // we assume register() is idempotent
                 this.strategy.getEventBus().register(this);
                 this.strategyThread = new Thread(this.strategy);
                 this.strategyThread.start();
-
                 this.state = State.STARTED;
                 break;
         }
