@@ -215,11 +215,10 @@ class BasicPushStrategy implements ReplicationStrategy {
         logger.info(msg);
     }
 
-    private Changes getNextBatch() throws ExecutionException, InterruptedException , DatastoreException{
+    private Changes getNextBatch() throws ExecutionException, InterruptedException, DatastoreException {
         long lastPushSequence = getLastCheckpointSequence();
         logger.fine("Last push sequence from remote database: " + lastPushSequence);
-        return this.sourceDb.getDbCore().changes(lastPushSequence,
-                this.changeLimitPerBatch);
+        return this.sourceDb.getDbCore().changes(lastPushSequence, this.changeLimitPerBatch);
     }
 
     /**

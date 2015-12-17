@@ -90,8 +90,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                              Datastore target,
                              PullFilter filter,
                              List<HttpConnectionRequestInterceptor> requestInterceptors,
-                             List<HttpConnectionResponseInterceptor> responseInterceptors)
-    {
+                             List<HttpConnectionResponseInterceptor> responseInterceptors) {
         this.filter = filter;
         this.sourceDb = new CouchClientWrapper(new CouchClient(source, requestInterceptors, responseInterceptors));
         this.targetDb = new DatastoreWrapper((DatastoreExtended) target);
