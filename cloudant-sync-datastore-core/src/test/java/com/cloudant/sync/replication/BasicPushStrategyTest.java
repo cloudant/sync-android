@@ -51,11 +51,15 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     private void assertPushReplicationStatus(BasicPushStrategy replicator, int documentCounter,
                                              int batchCounter, String lastSequence) throws
             Exception {
-        Assert.assertEquals("DocumentRevisionTree counter", documentCounter, replicator
-                .getDocumentCounter());
-        Assert.assertEquals("Batch counter", batchCounter, replicator.getBatchCounter());
-        Assert.assertEquals("Last sequence", lastSequence, remoteDb.getCheckpoint(replicator
-                .getReplicationId()));
+        Assert.assertEquals("DocumentRevisionTree counter",
+                documentCounter,
+                replicator.getDocumentCounter());
+        Assert.assertEquals("Batch counter",
+                batchCounter,
+                replicator.getBatchCounter());
+        Assert.assertEquals("Last sequence",
+                lastSequence,
+                remoteDb.getCheckpoint(replicator.getReplicationId()));
     }
 
     public DocumentBody createDBBody(String name) {
