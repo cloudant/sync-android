@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
- *
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software distributed under the
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language governing permissions
@@ -59,9 +59,12 @@ public class CouchClientWrapperTest extends CouchTestBase {
     public void setup() throws IOException {
         CouchConfig config = super.getCouchConfig(CLOUDANT_TEST_DB_NAME + System
                 .currentTimeMillis());
-        remoteDb = new CouchClientWrapper(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
-        bodyOne = DocumentBodyFactory.create(FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile)));
-        bodyTwo = DocumentBodyFactory.create(FileUtils.readFileToByteArray(TestUtils.loadFixture(documentTwoFile)));
+        remoteDb = new CouchClientWrapper(config.getRootUri(), config.getRequestInterceptors(),
+                config.getResponseInterceptors());
+        bodyOne = DocumentBodyFactory.create(FileUtils.readFileToByteArray(TestUtils.loadFixture
+                (documentOneFile)));
+        bodyTwo = DocumentBodyFactory.create(FileUtils.readFileToByteArray(TestUtils.loadFixture
+                (documentTwoFile)));
 
         CouchClientWrapperDbUtils.deleteDbQuietly(remoteDb);
         remoteDb.createDatabase();
@@ -80,7 +83,8 @@ public class CouchClientWrapperTest extends CouchTestBase {
     @Test
     public void exists_dbExists_false() {
         CouchConfig config = super.getCouchConfig("db_not_exists");
-        CouchClientWrapper couchClientWrapper = new CouchClientWrapper(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
+        CouchClientWrapper couchClientWrapper = new CouchClientWrapper(config.getRootUri(),
+                config.getRequestInterceptors(), config.getResponseInterceptors());
         Assert.assertFalse(couchClientWrapper.exists());
     }
 
@@ -166,12 +170,12 @@ public class CouchClientWrapperTest extends CouchTestBase {
 
         Response res3 = db.update(bar2.getId(), bar2);
         Assert.assertNotNull(res3);
-        return new Response[]{ res1, res2 };
+        return new Response[]{res1, res2};
     }
 
     private List<String> findIdOfChangedDocs(ChangesResult changes1) {
         List<String> changedDocIds = new ArrayList<String>();
-        for(ChangesResult.Row row : changes1.getResults()) {
+        for (ChangesResult.Row row : changes1.getResults()) {
             changedDocIds.add(row.getId());
         }
         return changedDocIds;
@@ -187,14 +191,16 @@ public class CouchClientWrapperTest extends CouchTestBase {
         ArrayList<String> attsSince = new ArrayList<String>();
         revIds.add(responses[2].getRev());
 
-        List<DocumentRevs> documentRevs = remoteDb.getRevisions(responses[0].getId(), revIds, attsSince, pullAttachmentsInline);
+        List<DocumentRevs> documentRevs = remoteDb.getRevisions(responses[0].getId(), revIds,
+                attsSince, pullAttachmentsInline);
 
         Assert.assertNotNull(documentRevs);
         Assert.assertEquals(1, documentRevs.size());
         Assert.assertEquals(3, documentRevs.get(0).getRevisions().getIds().size());
         Assert.assertEquals(3, documentRevs.get(0).getRevisions().getStart());
         Assert.assertEquals(responses[2].getRev(), documentRevs.get(0).getRev());
-        Assert.assertThat(documentRevs.get(0).getRevisions().getIds(), hasItems(findRevisionIds(responses)));
+        Assert.assertThat(documentRevs.get(0).getRevisions().getIds(), hasItems(findRevisionIds
+                (responses)));
     }
 
     private String[] findRevisionIds(Response[] responses) {
@@ -216,7 +222,7 @@ public class CouchClientWrapperTest extends CouchTestBase {
         Assert.assertEquals(res1.getId(), res3.getId());
         Bar bar3 = db.get(Bar.class, res1.getId());
         Assert.assertNotNull(bar3);
-        return new Response[] { res1, res2, res3};
+        return new Response[]{res1, res2, res3};
     }
 
     @Test
@@ -229,7 +235,8 @@ public class CouchClientWrapperTest extends CouchTestBase {
         ArrayList<String> attsSince = new ArrayList<String>();
         revIds.add(responses[3].getRev());
 
-        List<DocumentRevs> documentRevs = remoteDb.getRevisions(responses[0].getId(), revIds, attsSince, pullAttachmentsInline);
+        List<DocumentRevs> documentRevs = remoteDb.getRevisions(responses[0].getId(), revIds,
+                attsSince, pullAttachmentsInline);
 
         Assert.assertEquals(1, documentRevs.size());
         Assert.assertTrue(documentRevs.get(0).getDeleted());
@@ -256,7 +263,8 @@ public class CouchClientWrapperTest extends CouchTestBase {
         try {
             Bar bar4 = remoteDb.get(Bar.class, res1.getId());
             Assert.fail();
-        } catch (NoResourceException e) {}
+        } catch (NoResourceException e) {
+        }
         return new Response[]{res1, res2, res3, res4};
     }
 
@@ -281,7 +289,8 @@ public class CouchClientWrapperTest extends CouchTestBase {
         Assert.assertEquals(objects.get(1).getRevision(), obj2.get("_rev"));
     }
 
-    public List<BasicDocumentRevision> createTwoDBObjects(CouchClientWrapper remoteDb, String id1, String id2) {
+    public List<BasicDocumentRevision> createTwoDBObjects(CouchClientWrapper remoteDb, String
+            id1, String id2) {
         List<BasicDocumentRevision> objects = new ArrayList<BasicDocumentRevision>();
 
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
@@ -307,7 +316,8 @@ public class CouchClientWrapperTest extends CouchTestBase {
     public void accessAndUpdateRemoteDbWithSlashInName() throws Exception {
         //do a little set up for this specific test
         CouchConfig config = super.getCouchConfig("myslash%2Fencoded_db");
-        remoteDb = new CouchClientWrapper(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
+        remoteDb = new CouchClientWrapper(config.getRootUri(), config.getRequestInterceptors(),
+                config.getResponseInterceptors());
         CouchClientWrapperDbUtils.deleteDbQuietly(remoteDb);
         remoteDb.createDatabase();
         Bar bar1 = new Bar();
