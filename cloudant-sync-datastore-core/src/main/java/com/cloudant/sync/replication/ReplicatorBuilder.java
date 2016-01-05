@@ -84,8 +84,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         * Sets the number of batches to push in one replication run - which is equivalent to
-         * changeLimitPerBatch * batchLimitPerRun documents
+         * Sets the number of batches to push in one replication run
+         *
          * @param batchLimitPerRun The number of batches to push in one replication run
          * @return This instance of {@link ReplicatorBuilder}
          */
@@ -176,8 +176,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         * Sets the number of batches to pull in one replication run - which is equivalent to
-         * changeLimitPerBatch * batchLimitPerRun documents
+         * Sets the number of batches to pull in one replication run
          *
          * @param batchLimitPerRun The number of batches to pull in one replication run
          * @return This instance of {@link ReplicatorBuilder}
