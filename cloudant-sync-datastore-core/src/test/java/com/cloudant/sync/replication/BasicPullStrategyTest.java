@@ -16,12 +16,20 @@ package com.cloudant.sync.replication;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.startsWith;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.AnimalDb;
+import com.cloudant.mazha.ChangesResult;
+import com.cloudant.mazha.ClientTestUtils;
 import com.cloudant.mazha.CouchClient;
+import com.cloudant.mazha.CouchDbInfo;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DatastoreExtended;
@@ -33,7 +41,10 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -379,4 +390,78 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
 
     }
 
+    @Test
+    public void pull_changesNewerThanOpenRevs() throws Exception {
+        // test for regressions against the following scenario:
+        // - changes feed tells us that 1-rev is a new rev we don't have
+        // - on remote db, 2-rev gets added and becomes the new leaf
+        // - compact() is called and 1-rev is compacted away
+        // - we try to pull 1-rev but it is no longer there
+        // the solution to this is to re-fetch the changes feed at the same checkpoint and continue
+        // replication - in the hope that the changes feed now reflects the revs available
+
+        // upload some docs
+        Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
+
+        // capture 'real' changes feed - after first rev
+        final ChangesResult changesResult1 = remoteDb.changes(null, 1000);
+
+        // upload some more docs
+        Bar bar2 = BarUtils.updateBar(remoteDb, bar1.getId(), "Jerry", 41);
+
+        // capture 'real' changes feed - after second rev
+        final ChangesResult changesResult2 = remoteDb.changes(null, 1000);
+
+        // compact away the first rev
+        URI postURI = new URI(couchClient.getRootUri().toString() + "/_compact");
+        Assert.assertEquals(202, ClientTestUtils.executeHttpPostRequest(postURI, ""));
+
+        CouchDbInfo info = couchClient.getDbInfo();
+
+        while(info.isCompactRunning()) {
+            Thread.sleep(1000);
+            info = couchClient.getDbInfo();
+        };
+
+        // set up replication...
+        PullReplication pullReplication = this.createPullReplication();
+        BasicPullStrategy customReplicator = new BasicPullStrategy(pullReplication, null, this.config);
+
+        // inject our mocked changesresult via a 'spy'
+        // ChangesResultAnswer returns the 'wrong' answer first and the 'right' after every
+        // invocation after that
+        customReplicator.sourceDb = spy(customReplicator.sourceDb);
+        doAnswer(new ChangesResultAnswer(changesResult1, changesResult2))
+                .when(customReplicator.sourceDb).
+                changes((Replication.Filter)
+                        anyObject(), anyObject(), anyInt());
+        // do the actual replication
+        customReplicator.run();
+
+        // assert latest doc retrieved
+        Map m = datastore.getDocument(bar1.getId()).asMap();
+        Assert.assertEquals(41, m.get("age"));
+        Assert.assertEquals("Jerry", m.get("name"));
+    }
+
+    private class ChangesResultAnswer implements Answer {
+        private ChangesResult changesResult1;
+        private ChangesResult changesResult2;
+        private int invocations;
+
+        public ChangesResultAnswer(ChangesResult changesResult1,
+                                   ChangesResult changesResult2) {
+            this.changesResult1 = changesResult1;
+            this.changesResult2 = changesResult2;
+            this.invocations = 0;
+        }
+
+        public Object answer(InvocationOnMock invocation) {
+            if (invocations++ == 0) {
+                return changesResult1;
+            } else {
+                return changesResult2;
+            }
+        }
+    }
 }
