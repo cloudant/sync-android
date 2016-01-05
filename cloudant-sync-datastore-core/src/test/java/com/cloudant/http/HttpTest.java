@@ -83,7 +83,7 @@ public class HttpTest extends CouchTestBase {
      */
     @Test
     public void testWriteToServerOk() throws IOException {
-        CouchConfig config = getCouchConfig("httptest"+System.currentTimeMillis());
+        CouchConfig config = getCouchConfig("httptest" + System.currentTimeMillis());
         CouchClient client = new CouchClient(config.getRootUri(), config.getRequestInterceptors()
                 , config.getResponseInterceptors());
         client.createDb();
@@ -113,7 +113,7 @@ public class HttpTest extends CouchTestBase {
      */
     @Test
     public void testReadBeforeExecute() throws IOException {
-        CouchConfig config = getCouchConfig("httptest"+System.currentTimeMillis());
+        CouchConfig config = getCouchConfig("httptest" + System.currentTimeMillis());
         CouchClient client = new CouchClient(config.getRootUri(), config.getRequestInterceptors()
                 , config.getResponseInterceptors());
         client.createDb();
@@ -153,9 +153,12 @@ public class HttpTest extends CouchTestBase {
     @Test
     public void testCookieAuthWithoutRetry() throws IOException {
 
-        if(TestOptions.IGNORE_AUTH_HEADERS){return;}
+        if (TestOptions.IGNORE_AUTH_HEADERS) {
+            return;
+        }
 
-        CookieInterceptor interceptor = new CookieInterceptor(TestOptions.COUCH_USERNAME, TestOptions.COUCH_PASSWORD);
+        CookieInterceptor interceptor = new CookieInterceptor(TestOptions.COUCH_USERNAME,
+                TestOptions.COUCH_PASSWORD);
 
         CouchConfig config = getCouchConfig("cookie_test");
         HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
@@ -181,11 +184,11 @@ public class HttpTest extends CouchTestBase {
 
         //check the json
         JSONHelper helper = new JSONHelper();
-        Map<String,Object> jsonRes = helper.fromJson(new InputStreamReader(conn.getConnection()
+        Map<String, Object> jsonRes = helper.fromJson(new InputStreamReader(conn.getConnection()
                 .getInputStream()));
 
         Assert.assertTrue(jsonRes.containsKey("ok"));
-        Assert.assertTrue((Boolean)jsonRes.get("ok"));
+        Assert.assertTrue((Boolean) jsonRes.get("ok"));
         Assert.assertTrue(jsonRes.containsKey("id"));
         Assert.assertTrue(jsonRes.containsKey("rev"));
 

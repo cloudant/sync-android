@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2014 Cloudant, Inc. All rights reserved.
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
- *
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software distributed under the
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language governing permissions
@@ -62,7 +62,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     public boolean pullAttachmentsInline;
 
     @Test
-    public void pullRevisionsWithAttachments() throws Exception{
+    public void pullRevisionsWithAttachments() throws Exception {
         createRevisionAndAttachment();
         try {
             pull();
@@ -74,11 +74,13 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         Assert.assertNotNull("Attachment is null", a);
         Assert.assertEquals(attachmentName, a.name);
         try {
-            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new ByteArrayInputStream(attachmentData.getBytes()), a.getInputStream()));
+            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new
+                    ByteArrayInputStream(attachmentData.getBytes()), a.getInputStream()));
         } catch (IOException ioe) {
             Assert.fail("Exception thrown " + ioe);
         }
-        // update revision and attachment on remote (same id) - this tests the other code path of updating the sequence on the rev
+        // update revision and attachment on remote (same id) - this tests the other code path of
+        // updating the sequence on the rev
         updateRevisionAndAttachment();
         try {
             pull();
@@ -90,7 +92,8 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         Assert.assertNotNull("Attachment is null", a2);
         Assert.assertEquals(attachmentName, a2.name);
         try {
-            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new ByteArrayInputStream(attachmentData2.getBytes()), a2.getInputStream()));
+            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new
+                    ByteArrayInputStream(attachmentData2.getBytes()), a2.getInputStream()));
         } catch (IOException ioe) {
             Assert.fail("Exception thrown " + ioe);
         }
@@ -109,7 +112,8 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         Assert.assertNotNull("Attachment is null", a);
         Assert.assertEquals(bigAttachmentName, a.name);
         try {
-            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new FileInputStream(TestUtils.loadFixture("fixture/" + bigAttachmentName)), a.getInputStream()));
+            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new FileInputStream
+                    (TestUtils.loadFixture("fixture/" + bigAttachmentName)), a.getInputStream()));
         } catch (IOException ioe) {
             Assert.fail("Exception thrown " + ioe);
         }
@@ -132,7 +136,8 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         // get the 1 and only file at the known location and look at the first 2 bytes
         // if it was saved uncompressed (pulled inline) will be first 2 bytes of text
         // if it was saved compressed (pulled separately) will be magic bytes of gzip file
-        File attachments = new File(this.datastoreManagerPath + "/AttachmentsPullTest/extensions/com.cloudant.attachments");
+        File attachments = new File(this.datastoreManagerPath +
+                "/AttachmentsPullTest/extensions/com.cloudant.attachments");
         int count = attachments.listFiles().length;
         Assert.assertEquals("Did not find 1 file in blob store", 1, count);
         File attFile = attachments.listFiles()[0];
@@ -153,7 +158,9 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         }
         fis.close();
         try {
-            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new FileInputStream(TestUtils.loadFixture("fixture/"+ bigTextAttachmentName)), a.getInputStream()));
+            Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new FileInputStream
+                    (TestUtils.loadFixture("fixture/" + bigTextAttachmentName)), a.getInputStream
+                    ()));
         } catch (IOException ioe) {
             Assert.fail("Exception thrown " + ioe);
         }
@@ -202,7 +209,6 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     }
 
 
-
     private void updateRevision() {
         BarWithAttachments bar = remoteDb.get(BarWithAttachments.class, id);
 
@@ -239,7 +245,8 @@ public class AttachmentsPullTest extends ReplicationTestBase {
 
         id = res.getId();
         rev = res.getRev();
-        remoteDb.getCouchClient().putAttachmentStream(id, rev, attachmentName, "text/plain", attachmentData.getBytes());
+        remoteDb.getCouchClient().putAttachmentStream(id, rev, attachmentName, "text/plain",
+                attachmentData.getBytes());
 
         // putting attachment will have updated the rev
         bar = remoteDb.get(BarWithAttachments.class, res.getId());
@@ -254,14 +261,15 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         Response res = remoteDb.create(bar);
         bar = remoteDb.get(Bar.class, res.getId());
 
-        File f = TestUtils.loadFixture("fixture/"+bigAttachmentName);
+        File f = TestUtils.loadFixture("fixture/" + bigAttachmentName);
         FileInputStream fis = new FileInputStream(f);
-        byte[] data = new byte[(int)f.length()];
+        byte[] data = new byte[(int) f.length()];
         fis.read(data);
 
         id = res.getId();
         rev = res.getRev();
-        remoteDb.getCouchClient().putAttachmentStream(id, rev, bigAttachmentName, "image/jpeg", data);
+        remoteDb.getCouchClient().putAttachmentStream(id, rev, bigAttachmentName, "image/jpeg",
+                data);
 
         // putting attachment will have updated the rev
         bar = remoteDb.get(Bar.class, res.getId());
@@ -276,14 +284,15 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         Response res = remoteDb.create(bar);
         bar = remoteDb.get(Bar.class, res.getId());
 
-        File f = TestUtils.loadFixture("fixture/"+bigTextAttachmentName);
+        File f = TestUtils.loadFixture("fixture/" + bigTextAttachmentName);
         FileInputStream fis = new FileInputStream(f);
-        byte[] data = new byte[(int)f.length()];
+        byte[] data = new byte[(int) f.length()];
         fis.read(data);
 
         id = res.getId();
         rev = res.getRev();
-        remoteDb.getCouchClient().putAttachmentStream(id, rev, bigTextAttachmentName, "text/plain", data);
+        remoteDb.getCouchClient().putAttachmentStream(id, rev, bigTextAttachmentName,
+                "text/plain", data);
 
         // putting attachment will have updated the rev
         bar = remoteDb.get(Bar.class, res.getId());
@@ -299,7 +308,8 @@ public class AttachmentsPullTest extends ReplicationTestBase {
 
         Response res = remoteDb.update(id, bar);
         rev = res.getRev();
-        remoteDb.getCouchClient().putAttachmentStream(id, rev, attachmentName, "text/plain", attachmentData2.getBytes());
+        remoteDb.getCouchClient().putAttachmentStream(id, rev, attachmentName, "text/plain",
+                attachmentData2.getBytes());
 
         // putting attachment will have updated the rev
         bar = remoteDb.get(Bar.class, res.getId());
@@ -310,12 +320,13 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     @Override
     protected PullResult pull() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        BasicReplicator pull = (BasicReplicator)getPullBuilder().pullAttachmentsInline(pullAttachmentsInline).build();
+        BasicReplicator pull = (BasicReplicator) getPullBuilder().pullAttachmentsInline
+                (pullAttachmentsInline).build();
         pull.strategy.getEventBus().register(listener);
         pull.strategy.run();
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
-        return new PullResult((BasicPullStrategy)pull.strategy, listener);
+        return new PullResult((BasicPullStrategy) pull.strategy, listener);
     }
 
 }
