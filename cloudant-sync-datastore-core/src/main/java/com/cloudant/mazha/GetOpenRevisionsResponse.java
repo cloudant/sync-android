@@ -25,9 +25,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * <p>
  * Convenience class to access the response of GET document request with open revision options. An example response
  * is following:
- * <p/>
+ * </p>
+ * <pre>
+ * {@code 
  * [{
  *     "ok" : {
  *         "_id" : "c3fe5bfdee767fa3d51717bb8b2a9349",
@@ -62,7 +65,8 @@ import java.util.Map;
  * {
  *     "missing" : "2-a63239adb4844666a48e070b64c1f965bad"
  * }]
- * <p/>
+ * }
+ * </pre>
  *
  * The response firstly is convert to a <code>List</code> of <code>Map</code>, which could be used to construct
  * and <code>GetOpenRevisionsResponse</code> object.

@@ -198,9 +198,7 @@ def getProjectDocSources(project) {
     // Get the projects from the dependencies
     def dependentProjects = projectDependencies*.dependencyProject
     // Recurse
-    if (dependentProjects.size > 0) {
     dependentProjects.each { dependentProjects += getProjectDocSources(it) }
-    }
     // Finally add the original project
     dependentProjects.add(project)
     // Return without duplicates
