@@ -92,49 +92,22 @@ task unreliableNetworkTest(type: Test, dependsOn: testClasses) {
     }
 }
 
-
-//
-// Publishing
-//
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-
-            from components.java
-
-            pom.withXml {
-                Node rootNode = asNode()
-
-                rootNode.appendNode('name', 'Cloudant Sync Datastore Android: core components')
-                rootNode.appendNode('description', 'A JSON document datastore that syncs')
-                rootNode.appendNode('url', 'https://cloudant.com/')
-                rootNode.appendNode('packaging', 'jar')
-
-                Node scmNode = rootNode.appendNode('scm')
-                scmNode.appendNode('url', 'https://github.com/cloudant/sync-android')
-                scmNode.appendNode('connection', 'https://github.com/cloudant/sync-android.git')
-
-                Node licencesNode = rootNode.appendNode('licenses')
-                Node licenceNode = licencesNode.appendNode('license')
-                licenceNode.appendNode('name', 'The Apache Software License, Version 2.0')
-                licenceNode.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
-                licenceNode.appendNode('distribution', 'repo')
-            }
-        }
-    }
-
-    repositories {
-        maven {
-            url "$buildDir/repo"
-        }
-    }
-}
-
 //for Ant filter for "processResources" task
 import org.apache.tools.ant.filters.ReplaceTokens
 processResources {
     filter ReplaceTokens, tokens: [
         "version": project.version
     ]
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            //augment the pom with additional information
+            pom.project {
+                name "cloudant-sync-datastore-core"
+                description 'Cloudant Sync Datastore Core Package'
+            }
+        }
+    }
 }

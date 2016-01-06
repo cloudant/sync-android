@@ -17,42 +17,15 @@ tasks.withType(Test) {
     systemProperty "sqlite4java.library.path", "../native"
 }
 
-//
-// Publishing
-//
+uploadArchives {
+    repositories {
+        mavenDeployer {
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            
-            from components.java
-            
-            pom.withXml {
-                Node rootNode = asNode()
-                
-                rootNode.appendNode('name', 'Cloudant Sync Datastore Android: Java SE components')
-                rootNode.appendNode('description', 'A JSON document datastore that syncs')
-                rootNode.appendNode('url', 'https://cloudant.com/')
-                rootNode.appendNode('packaging', 'jar')
-                
-                Node scmNode = rootNode.appendNode('scm')
-                scmNode.appendNode('url', 'https://github.com/cloudant/sync-android')
-                scmNode.appendNode('connection', 'https://github.com/cloudant/sync-android.git')
-                
-                Node licencesNode = rootNode.appendNode('licenses')
-                Node licenceNode = licencesNode.appendNode('license')
-                licenceNode.appendNode('name', 'The Apache Software License, Version 2.0')
-                licenceNode.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
-                licenceNode.appendNode('distribution', 'repo')
+            //augment the pom with additional information
+            pom.project {
+                name "cloudant-sync-datastore-javase"
+                description 'Cloudant Sync Datastore for Java SE'
             }
         }
     }
-
-    repositories {
-        maven {
-            url "$buildDir/repo"
-        }
-    }
 }
-
-
