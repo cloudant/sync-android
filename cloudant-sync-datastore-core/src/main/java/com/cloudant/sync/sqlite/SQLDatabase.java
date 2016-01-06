@@ -102,13 +102,11 @@ public abstract class SQLDatabase {
      * For SQLite database, this is to call:
      *
      *         this.execSQL("VACUUM");
-     *
-     * @throws java.sql.SQLException
      */
     public abstract void compactDatabase();
 
     /**
-     * Gets the database version, and SQLDatabase's version is defined as:</p>
+     * <p>Gets the database version, and SQLDatabase's version is defined as:</p>
      *
      * <pre>    PRAGMA user_version;</pre>
      *

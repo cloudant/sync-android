@@ -30,13 +30,7 @@ import java.util.logging.Logger;
 
 
 /**
- * Very simple implementation of SQLDatabase backed by sqlite4java. This is mainly used for testing.
- *
- * Since sqlite4java's SQLiteConnection does not really support multi-threading, as a matter of face, the
- * SQLiteConnection can only be used by the thread create/open it, ThreadLocal<SQLiteConnection> is created, so that
- * each thread (if there is any) is using their own connection.
- *
- * All the connection are closed when displose() is called.
+ * Implementation of SQLDatabase backed by sqlite4java.
  */
 public class SQLiteWrapper extends SQLDatabase {
 

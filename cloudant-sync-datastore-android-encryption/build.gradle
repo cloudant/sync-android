@@ -29,40 +29,16 @@ test {
      exclude '**/**'
 }
 
-//
-// Publishing
-//
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-
-            from components.java
-
-            pom.withXml {
-                Node rootNode = asNode()
-
-                rootNode.appendNode('name', 'Cloudant Sync Datastore Android: Android Encryption components')
-                rootNode.appendNode('description', 'A JSON document datastore that syncs')
-                rootNode.appendNode('url', 'https://cloudant.com/')
-                rootNode.appendNode('packaging', 'jar')
-
-                Node scmNode = rootNode.appendNode('scm')
-                scmNode.appendNode('url', 'https://github.com/cloudant/sync-android')
-                scmNode.appendNode('connection', 'https://github.com/cloudant/sync-android.git')
-
-                Node licencesNode = rootNode.appendNode('licenses')
-                Node licenceNode = licencesNode.appendNode('license')
-                licenceNode.appendNode('name', 'The Apache Software License, Version 2.0')
-                licenceNode.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
-                licenceNode.appendNode('distribution', 'repo')
-            }
-        }
-    }
-
+uploadArchives {
     repositories {
-        maven {
-            url "$buildDir/repo"
+        mavenDeployer {
+
+            //augment the pom with additional information
+            pom.project {
+                name "cloudant-sync-datastore-android-encryption"
+                description 'Cloudant Sync Datastore for Android: Local Datastore Encryption'
+                inceptionYear '2015'
+            }
         }
     }
 }

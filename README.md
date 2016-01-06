@@ -32,8 +32,8 @@ line.
 
 ## Using in your project
 
-Using the library in your project should be as simple as adding it as
-a dependency via [maven][maven] or [gradle][gradle].
+The library is published via Maven Central and using it in your project should
+be as simple as adding it as a dependency via [maven][maven] or [gradle][gradle].
 
 [maven]: http://maven.apache.org/
 [gradle]: http://www.gradle.org/
@@ -52,21 +52,17 @@ Add the maven repo and a compile time dependency on the datastore jar:
 ```groovy
 repositories {
     mavenLocal()
-    maven { url "http://cloudant.github.io/cloudant-sync-eap/repository/" }
     mavenCentral()
 }
 
 dependencies {
-    // Other dependencies
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-core', version:'0.14.0'
     // include this if you're targeting Android. If you also want datastore encryption
-    // you will need to include cloudant-sync-datastore-android-encryption as well (see below).
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'0.14.0'
-    // include this if you're targeting Android and want datastore encryption. You will also need
-    // cloudant-sync-datastore-android (see above).
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android-encryption', version:'0.14.0'
+    // you will need to include cloudant-sync-datastore-android-encryption instead (see below).
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'latest.release'
+    // include this if you're targeting Android and want datastore encryption.
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android-encryption', version:'latest.release'
     // include this if you're targeting Java SE
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-javase', version:'0.14.0'
+    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-javase', version:'latest.release'
 }
 ```
 
@@ -84,42 +80,30 @@ It's a similar story in maven, add the repo and the dependency:
 
   <repositories>
     ...
-    <repository>
-      <id>cloudant-sync-eap</id>
-      <name>Cloudant Sync EAP</name>
-      <url>http://cloudant.github.io/cloudant-sync-eap/repository/</url>
-    </repository>
   </repositories>
 
   <dependencies>
     ...
-    <dependency>
-      <groupId>com.cloudant</groupId>
-      <artifactId>cloudant-sync-datastore-core</artifactId>
-      <version>0.14.0</version>
-      <scope>compile</scope>
-    </dependency>
-    <!-- include this if you're targeting Android. If you also want datastore encryption
-         you will need to include cloudant-sync-datastore-android-encryption as well (see below). -->
+    <!-- include this if you're targeting Android. If you want datastore encryption
+         you will need to include cloudant-sync-datastore-android-encryption instead (see below). -->
     <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-android</artifactId>
-      <version>0.14.0</version>
+      <version>latest.release</version>
       <scope>compile</scope>
     </dependency>
-    <!-- include this if you're targeting Android and want datastore encryption. You will also need
-         cloudant-sync-datastore-android (see above). -->
+    <!-- include this if you're targeting Android and want datastore encryption. -->
     <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-android-encryption</artifactId>
-      <version>0.14.0</version>
+      <version>latest.release</version>
       <scope>compile</scope>
     </dependency>
     <!-- include this if you're targeting Java SE -->
     <dependency>
       <groupId>com.cloudant</groupId>
       <artifactId>cloudant-sync-datastore-javase</artifactId>
-      <version>0.14.0</version>
+      <version>latest.release</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>

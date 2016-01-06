@@ -3,6 +3,8 @@
 // ************ //
 
 apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 //
 // General settings
@@ -14,6 +16,9 @@ allprojects {
     description = """cloudant-sync"""
 }
 
+
+//if the version says "snapshot" anywhere assume it is not a release
+ext.isReleaseVersion = !version.toUpperCase(Locale.ENGLISH).contains("SNAPSHOT")
 dependencies {
     compile project(':cloudant-sync-datastore-core')
     compile project(':cloudant-sync-datastore-javase')
@@ -52,18 +57,6 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url "http://cloudant.github.io/cloudant-sync-eap/repository/" }
-    }
-
-    // local.gradle defines ghpages, so we want to publish somewhere specific for release
-    if (project.hasProperty('ghpages')) {
-        publishing {
-            repositories {
-                maven {
-                    url "$ghpages/repository"
-                }
-            }
-        }
     }
 
     //
@@ -74,43 +67,140 @@ subprojects {
         configurations.testCompile.each { File file -> println file.name }
     }
 
-}
+    //
+    // *** DOCS AND PUBLISHING ***
+    //
 
-//
-// *** DOCS AND PUBLISHING ***
-//
+    // see http://issues.gradle.org/browse/GRADLE-1876
+    // run javadoc over union of all projects
+    gradle.projectsEvaluated {
+        javadoc {
 
-// see http://issues.gradle.org/browse/GRADLE-1876
-// run javadoc over union of all projects
-task docs(type: Javadoc) {
+            options.encoding = "UTF-8"
+            options.docEncoding = "UTF-8"
+            options.charSet = "UTF-8"
 
-    options.encoding = "UTF-8"
-    options.docEncoding = "UTF-8"
-    options.charSet = "UTF-8"
+            options.showFromPublic()
+            title = "sync-android ${version} API"
 
-    options.showFromPublic()
-    title = "sync-android ${version} API"
-    source subprojects.collect {project -> project.sourceSets.main.allJava.matching{exclude "**/*sql*/**", "**/common/**", "**/android/**", "**/mazha/**" }}
-    classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
-    destinationDir = new File(projectDir, 'build/docs')
-}
-
-// tasks below require the ghpages variable to be set
-if (project.hasProperty('ghpages')) {
-    task publishDocsVersioned(type: Sync, dependsOn: docs) {
-        from "build/docs"
-        into "$ghpages/docs/${rootProject.version}"
+            // For the subprojects we include all the javadoc from dependencies on other subprojects
+            // this produces a more standalone javadoc jar for each published artifact.
+            source getProjectDocSources(project).collect() { dsp ->
+                        dsp.sourceSets.main.allJava
+            }
+        }
     }
 
-    task publishDocsLatest(type: Sync, dependsOn: docs) {
-        from "build/docs"
-        into "$ghpages/docs/latest"
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from new File(buildDir, 'docs')
     }
 
-    // Publish docs and maven artifacts to GH repo
-    task publishAll(dependsOn: [publishDocsVersioned, publishDocsLatest, subprojects.publish])
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        sourceSets.all {
+            into(name + "/java", { from allJava })
+            into(name + "/resources", { from resources })
+        }
+    }
+
+    artifacts {
+        archives sourcesJar, javadocJar
+    }
+
+    uploadArchives {
+        ext.ossrhUsername = System.properties.ossrhUsername
+        ext.ossrhPassword = System.properties.ossrhPassword
+
+        doFirst {
+            // If the OSSRH credentials are not available, then fail the build
+            if (ossrhUsername == null || ossrhPassword == null) {
+                throw new GradleException('OSSRH credentials properties (ossrhUsername & ' +
+                        'ossrhPassword) are required to upload archives.')
+            }
+        }
+
+        repositories {
+            mavenDeployer {
+                //when publishing sign the pom
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                    authentication(userName: ossrhUsername, password: ossrhPassword)
+                }
+
+                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                    authentication(userName: ossrhUsername, password: ossrhPassword)
+                }
+
+                //augment the pom with additional information
+                pom.project {
+                    packaging 'jar'
+                    inceptionYear '2013'
+                    url 'https://cloudant.com'
+                    licenses {
+                        license {
+                            name 'The Apache Software License, Version 2.0'
+                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution 'repo'
+                        }
+                    }
+                    scm {
+                        connection 'scm:git:git://github.com/cloudant/sync-android.git'
+                        developerConnection 'scm:git:git@github.com/cloudant/sync-android.git'
+                        url 'https://java-cloudant@github.com/cloudant/sync-android.git'
+                    }
+                    properties {
+                        'project.build.sourceEncoding' 'UTF-8'
+                    }
+                    developers {
+                        developer {
+                            name 'IBM Cloudant'
+                            email 'support@cloudant.com'
+                            url 'https://cloudant.com'
+                            organization 'IBM'
+                            organizationUrl 'http://www.ibm.com'
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.2.1'
+}
+
+signing {
+    // Only apply signing when it is a release and is being published
+    required {
+        isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives")
+    }
+
+    // Load signing parameters from system properties
+    ['signing.keyId', 'signing.password', 'signing.secretKeyRingFile']
+            .each { propName ->
+        // Set a property with the given name if the system property is set
+        if (System.properties.(propName.toString()) != null) {
+            ext.(propName.toString()) = System.properties.(propName.toString())
+        }
+    }
+
+    // When signing, sign the archives
+    sign configurations.archives
+}
+
+// Function to get project doc sources (i.e. the project and all its dependent projects)
+def getProjectDocSources(project) {
+    // Get the compile time dependencies
+    def projectDependencies = project.configurations.compile.getAllDependencies().withType(ProjectDependency)
+    // Get the projects from the dependencies
+    def dependentProjects = projectDependencies*.dependencyProject
+    // Recurse
+    dependentProjects.each { dependentProjects += getProjectDocSources(it) }
+    // Finally add the original project
+    dependentProjects.add(project)
+    // Return without duplicates
+    return dependentProjects.unique()
 }
