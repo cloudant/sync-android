@@ -11,15 +11,11 @@ apply plugin: 'idea'
 
 repositories {
     mavenLocal()
-
-    maven { url "http://cloudant.github.io/cloudant-sync-eap/repository" }
-
     mavenCentral()
 }
 
 dependencies {
     compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'latest.release')
-    compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-core', version:'latest.release')
 }
 
 android {
