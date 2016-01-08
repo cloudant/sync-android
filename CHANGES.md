@@ -1,4 +1,4 @@
-# Unreleased
+# 0.15/0 (2016-01-08)
 - [BREAKING CHANGE] Removed the following classes:
 
   - PushConfiguration
@@ -7,11 +7,11 @@
   - PullReplication
   - Replication
   - ReplicatorFactory
-  
+
   These removals simplify configuration of replicators. This
   configuration functionality has been migrated to the
   `ReplicatorBuilder` class.
-  
+
 # 0.14.0 (2015-11-3)
 - [BREAKING CHANGE] Removed `setCustomHeaders` from `CouchConfig`. See
   [Http Interceptors](https://github.com/cloudant/sync-android/blob/master/doc/interceptors.md)
