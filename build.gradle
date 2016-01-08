@@ -14,11 +14,21 @@ allprojects {
     group = 'com.cloudant'
     version = '0.15.0'
     description = """cloudant-sync"""
+    //if the version says "snapshot" anywhere assume it is not a release
+    ext.isReleaseVersion = !version.toUpperCase(Locale.ENGLISH).contains("SNAPSHOT")
+
+    // Load signing parameters from system properties
+    ['signing.keyId', 'signing.password', 'signing.secretKeyRingFile']
+            .each { propName ->
+        // Set a property with the given name if the system property is set
+        if (System.properties.(propName.toString()) != null) {
+            ext.(propName.toString()) = System.properties.(propName.toString())
+        }
+    }
 }
 
 
-//if the version says "snapshot" anywhere assume it is not a release
-ext.isReleaseVersion = !version.toUpperCase(Locale.ENGLISH).contains("SNAPSHOT")
+
 dependencies {
     compile project(':cloudant-sync-datastore-core')
     compile project(':cloudant-sync-datastore-javase')
@@ -31,6 +41,17 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
+    apply plugin: 'signing'
+
+    signing {
+        // Only apply signing when it is a release and is being published
+        required {
+            isReleaseVersion
+        }
+
+        // When signing, sign the archives
+        sign configurations.archives
+    }
 
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
@@ -172,24 +193,7 @@ task wrapper(type: Wrapper) {
     gradleVersion = '2.2.1'
 }
 
-signing {
-    // Only apply signing when it is a release and is being published
-    required {
-        isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives")
-    }
 
-    // Load signing parameters from system properties
-    ['signing.keyId', 'signing.password', 'signing.secretKeyRingFile']
-            .each { propName ->
-        // Set a property with the given name if the system property is set
-        if (System.properties.(propName.toString()) != null) {
-            ext.(propName.toString()) = System.properties.(propName.toString())
-        }
-    }
-
-    // When signing, sign the archives
-    sign configurations.archives
-}
 
 // Function to get project doc sources (i.e. the project and all its dependent projects)
 def getProjectDocSources(project) {
