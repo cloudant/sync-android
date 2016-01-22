@@ -114,7 +114,7 @@ subprojects {
 
     task javadocJar(type: Jar, dependsOn: javadoc) {
         classifier = 'javadoc'
-        from new File(buildDir, 'docs')
+        from javadoc.destinationDir
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
