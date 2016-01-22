@@ -92,7 +92,7 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     public int batchLimitPerRun = 100;
 
-    public int insertBatchSize = 10;
+    public int insertBatchSize = 100;
 
     public boolean pullAttachmentsInline = false;
 

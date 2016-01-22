@@ -128,7 +128,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
         private int batchLimitPerRun = 100;
 
-        private int insertBatchSize = 10;
+        private int insertBatchSize = 100;
 
         private boolean pullAttachmentsInline = false;
 

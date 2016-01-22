@@ -192,8 +192,6 @@ public class HttpConnection  {
             int n = numberOfRetries;
             while (retry && n-- > 0) {
 
-                System.setProperty("http.keepAlive", "false");
-
                 connection = (HttpURLConnection) url.openConnection();
                 for (String key : requestProperties.keySet()) {
                     connection.setRequestProperty(key, requestProperties.get(key));
