@@ -1,4 +1,4 @@
-# 0.15.1
+# 0.15.1 (2016-01-25)
 - [IMPROVED] Use system `http` `keepalive` default value. This was
   previously set to `false`. In most circumstances, and especially
   with `https` connections, this will improve replication time. The
