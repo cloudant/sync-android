@@ -1,4 +1,16 @@
-# 0.15/0 (2016-01-08)
+# 0.15.1
+- [IMPROVED] Use system `http` `keepalive` default value. This was
+  previously set to `false`. In most circumstances, and especially
+  with `https` connections, this will improve replication time. The
+  default value can be over-ridden by setting the property before
+  making any replication requests, eg:
+  `System.setProperty("http.keepAlive", "false");`
+
+- [IMPROVED] Increase default `insertBatchSize` values for
+  replication. Pull replications from databases which support the
+  `_bulk_get` endpoint will see an improvement in performance.
+  
+# 0.15.0 (2016-01-08)
 - [BREAKING CHANGE] Removed the following classes:
 
   - PushConfiguration

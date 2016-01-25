@@ -12,7 +12,7 @@ apply plugin: 'signing'
 
 allprojects {
     group = 'com.cloudant'
-    version = '0.15.1-SNAPSHOT'
+    version = '0.15.1'
     description = """cloudant-sync"""
     //if the version says "snapshot" anywhere assume it is not a release
     ext.isReleaseVersion = !version.toUpperCase(Locale.ENGLISH).contains("SNAPSHOT")
