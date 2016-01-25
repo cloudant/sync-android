@@ -5,7 +5,6 @@
   default value can be over-ridden by setting the property before
   making any replication requests, eg:
   `System.setProperty("http.keepAlive", "false");`
-
 - [IMPROVED] Increase default `insertBatchSize` values for
   replication. Pull replications from databases which support the
   `_bulk_get` endpoint will see an improvement in performance.
