@@ -26,10 +26,12 @@ import com.cloudant.sync.datastore.DocumentNotFoundException;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.DocumentRevsUtils;
+import com.cloudant.sync.datastore.ForceInsertItem;
 import com.cloudant.sync.datastore.LocalDocument;
 import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.util.JSONUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +89,25 @@ class DatastoreWrapper {
     private String getCheckpointDocumentId(String replicatorIdentifier) {
         return "_local/" + replicatorIdentifier;
     }
+
+    public void bulkInsert(List<BasicPullStrategy.BatchItem> batches, boolean pullAttachmentsInline) throws DocumentException  {
+        List<ForceInsertItem> itemsToInsert = new ArrayList<ForceInsertItem>();
+        for (BasicPullStrategy.BatchItem batch : batches) {
+            for (DocumentRevs documentRevs : batch.revsList) {
+                logger.log(Level.FINEST, "Bulk inserting document revs: %s", documentRevs);
+
+                BasicDocumentRevision doc = DocumentRevsUtils.createDocument(documentRevs);
+
+                List<String> revisions = DocumentRevsUtils.createRevisionIdHistory(documentRevs);
+                Map<String, Object> attachments = documentRevs.getAttachments();
+                itemsToInsert.add(new ForceInsertItem(doc, revisions, attachments, batch.attachments, pullAttachmentsInline));
+
+            }
+        }
+        dbCore.forceInsert(itemsToInsert);
+
+    }
+
 
     public void bulkInsert(DocumentRevsList documentRevsList, Map<String[],List<PreparedAttachment>> preparedAttachments, boolean pullAttachmentsInline) throws DocumentException  {
         for(DocumentRevs documentRevs: documentRevsList) {
