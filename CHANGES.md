@@ -1,3 +1,8 @@
+# 0.15.2 (2016-02-04)
+- [IMPROVED] Optimise pull replication performance. This is achieved
+  by reducing excessive database traffic and batching up insertions in
+  one SQL transaction.
+
 # 0.15.1 (2016-01-25)
 - [IMPROVED] Use system `http` `keepalive` default value. This was
   previously set to `false`. In most circumstances, and especially
