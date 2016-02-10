@@ -22,9 +22,6 @@ import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 
-import java.io.File;
-import java.io.IOException;
-
 public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
 
 
@@ -51,46 +48,46 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
     }
 
     void createTwoDocuments() throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
-        MutableDocumentRevision rev_2Mut = new MutableDocumentRevision();
-        rev_2Mut.body = bodyTwo;
-        BasicDocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
+        DocumentRevision rev_2Mut = new DocumentRevision();
+        rev_2Mut.setBody(bodyTwo);
+        DocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
         validateNewlyCreatedDocument(rev_2);
     }
 
-    BasicDocumentRevision[] createThreeDocuments() throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+    DocumentRevision[] createThreeDocuments() throws Exception {
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
-        MutableDocumentRevision rev_2Mut = new MutableDocumentRevision();
-        rev_2Mut.body = bodyTwo;
-        BasicDocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
+        DocumentRevision rev_2Mut = new DocumentRevision();
+        rev_2Mut.setBody(bodyTwo);
+        DocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
         validateNewlyCreatedDocument(rev_2);
-        MutableDocumentRevision rev_3Mut = new MutableDocumentRevision();
-        rev_3Mut.body = bodyTwo;
-        BasicDocumentRevision rev_3 = datastore.createDocumentFromRevision(rev_3Mut);
+        DocumentRevision rev_3Mut = new DocumentRevision();
+        rev_3Mut.setBody(bodyTwo);
+        DocumentRevision rev_3 = datastore.createDocumentFromRevision(rev_3Mut);
         validateNewlyCreatedDocument(rev_3);
-        MutableDocumentRevision rev_3_a = rev_3.mutableCopy();
-        rev_3_a.body = bodyOne;
-        BasicDocumentRevision rev_4 = datastore.updateDocumentFromRevision(rev_3_a);
+        DocumentRevision rev_3_a = rev_3;
+        rev_3_a.setBody(bodyOne);
+        DocumentRevision rev_4 = datastore.updateDocumentFromRevision(rev_3_a);
         Assert.assertNotNull(rev_4);
-        return new BasicDocumentRevision[] { rev_1, rev_2, rev_4 };
+        return new DocumentRevision[] { rev_1, rev_2, rev_4 };
     }
 
-    void validateNewlyCreatedDocument(BasicDocumentRevision rev) {
+    void validateNewlyCreatedDocument(DocumentRevision rev) {
         Assert.assertNotNull(rev);
         CouchUtils.validateDocumentId(rev.getId());
         CouchUtils.validateRevisionId(rev.getRevision());
         Assert.assertEquals(1, CouchUtils.generationFromRevId(rev.getRevision()));
-        Assert.assertTrue(rev.isCurrent());
-        Assert.assertTrue(rev.getParent() == -1L);
+        Assert.assertTrue(((DocumentRevision)rev).isCurrent());
+        Assert.assertTrue(((DocumentRevision)rev).getParent() == -1L);
     }
 
-    void validateNewlyCreateLocalDocument(BasicDocumentRevision rev) {
+    void validateNewlyCreateLocalDocument(DocumentRevision rev) {
         Assert.assertNotNull(rev);
         CouchUtils.validateDocumentId(rev.getId());
         Assert.assertEquals("1-local", rev.getRevision());

@@ -12,17 +12,18 @@
 
 package com.cloudant.sync.datastore;
 
-import java.util.logging.Level;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
- *  A document revision that has been projected.
+ *  A document revision that has been projected. This means that some fields may be missing when
+ *  compared to the original copy of this revision.
  *
- *  This class implements a version of mutableCopy which returns the full
- *  document when called, to prevent accidental data loss which might come
- *  from saving a projected document.
+ *  Use {@link #toFullRevision()} to obtain a "full" revision with all fields present. This is a pre-requisite
+ *  for saving a {@code ProjectedDocumentRevision}.
+ *
  */
-public class ProjectedDocumentRevision extends BasicDocumentRevision {
+public class ProjectedDocumentRevision extends DocumentRevision {
 
     private static final Logger logger = Logger.getLogger(ProjectedDocumentRevision.class.getCanonicalName());
 
@@ -30,27 +31,22 @@ public class ProjectedDocumentRevision extends BasicDocumentRevision {
 
     ProjectedDocumentRevision(String docId,
                               String revId,
+                              boolean deleted,
+                              List<? extends Attachment> attachments,
                               DocumentBody body,
-                              BasicDocumentRevisionOptions options,
                               Datastore datastore) {
-        super(docId, revId, body, options);
+        super(docId, revId,body);
+
+        super.setDeleted(deleted);
+        super.setAttachmentsInternal(attachments);
         this.datastore = datastore;
+        this.fullRevision = false;
     }
 
     @Override
-    public MutableDocumentRevision mutableCopy() {
-        try {
-            BasicDocumentRevision rev = datastore.getDocument(this.getId());
-
-            // Don't want to return an updated version, breaks contract of mutableCopy
-            if (!rev.getRevision().equals(this.getRevision())) {
-                return null;
-            }
-
-            return rev.mutableCopy();
-        } catch (DocumentNotFoundException e){
-            logger.log(Level.SEVERE,String.format("Failed to load document %s from datastore",this.toString()),e);
-            return null;
-        }
+    public DocumentRevision toFullRevision() throws DocumentNotFoundException {
+        return this.datastore.getDocument(this.id,this.revision);
     }
+
+
 }

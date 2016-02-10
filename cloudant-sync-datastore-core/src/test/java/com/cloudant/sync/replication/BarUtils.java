@@ -17,10 +17,9 @@ package com.cloudant.sync.replication;
 import com.cloudant.common.CouchConstants;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.Response;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.util.CouchUtils;
 import org.junit.Assert;
 
@@ -86,12 +85,12 @@ public class BarUtils {
         bar.setName(name);
         bar.setAge(age);
 
-        MutableDocumentRevision rev = new MutableDocumentRevision();
+        DocumentRevision rev = new DocumentRevision();
         Map<String, Object> m = new HashMap<String, Object>();
         m.put("name", name);
         m.put("age", age);
-        rev.body = DocumentBodyFactory.create(m);
-        BasicDocumentRevision saved = db.createDocumentFromRevision(rev);
+        rev.setBody(DocumentBodyFactory.create(m));
+        DocumentRevision saved = db.createDocumentFromRevision(rev);
         bar.setRevision(saved.getRevision());
         bar.setId(saved.getId());
 
@@ -118,14 +117,14 @@ public class BarUtils {
         bar.setName(name);
         bar.setAge(age);
 
-        BasicDocumentRevision rev = db.getDocument(id);
-        MutableDocumentRevision revMut = rev.mutableCopy();
+        DocumentRevision rev = db.getDocument(id);
+        DocumentRevision revMut = rev;
         int oldGeneration = CouchUtils.generationFromRevId(rev.getRevision());
         Map<String, Object> m = new HashMap<String, Object>();
         m.put("name", name);
         m.put("age", age);
-        revMut.body = DocumentBodyFactory.create(m);
-        BasicDocumentRevision saved = db.updateDocumentFromRevision(revMut);
+        revMut.setBody(DocumentBodyFactory.create(m));
+        DocumentRevision saved = db.updateDocumentFromRevision(revMut);
 
         bar.setRevision(saved.getRevision());
         bar.setId(saved.getId());

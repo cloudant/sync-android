@@ -14,12 +14,10 @@
 
 package com.cloudant.sync.datastore;
 
-import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.cloudant.sync.notifications.DocumentCreated;
@@ -40,8 +38,8 @@ public class DocumentNotificationsTest extends BasicDatastoreTestBase {
     @Test
     public void notification_document_created() throws Exception {
         documentCreated = new CountDownLatch(1);
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.body = bodyOne;
+        DocumentRevision rev = new DocumentRevision();
+        rev.setBody(bodyOne);
         datastore.createDocumentFromRevision(rev);
         boolean ok = NotificationTestUtils.waitForSignal(documentCreated);
         Assert.assertTrue("Didn't receive document created event", ok);
@@ -50,13 +48,13 @@ public class DocumentNotificationsTest extends BasicDatastoreTestBase {
     @Test
     public void notification_document_updated() throws Exception {
         documentUpdated = new CountDownLatch(1);
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
         try {
-            MutableDocumentRevision rev_2Mut = rev_1.mutableCopy();
-            rev_2Mut.body = bodyTwo;
+            DocumentRevision rev_2Mut = rev_1;
+            rev_2Mut.setBody(bodyTwo);
             datastore.updateDocumentFromRevision(rev_2Mut);
         } catch (ConflictException ce) {
             Assert.fail("Got ConflictException when updating");
@@ -68,9 +66,9 @@ public class DocumentNotificationsTest extends BasicDatastoreTestBase {
     @Test
     public void notification_document_deleted() throws Exception {
         documentDeleted = new CountDownLatch(1);
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         try {
             datastore.deleteDocumentFromRevision(rev_1);
         } catch (ConflictException ce) {

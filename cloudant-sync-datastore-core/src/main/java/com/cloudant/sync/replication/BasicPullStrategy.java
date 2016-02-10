@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
- *
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software distributed under the
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language governing permissions
@@ -20,12 +20,10 @@ import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.DocumentNotFoundException;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
@@ -70,7 +68,8 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     private State state;
 
-    private static final Logger logger = Logger.getLogger(BasicPullStrategy.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(BasicPullStrategy.class
+            .getCanonicalName());
 
     private static final String LOG_TAG = "BasicPullStrategy";
 
@@ -101,13 +100,15 @@ class BasicPullStrategy implements ReplicationStrategy {
                              List<HttpConnectionRequestInterceptor> requestInterceptors,
                              List<HttpConnectionResponseInterceptor> responseInterceptors) {
         this.filter = filter;
-        this.sourceDb = new CouchClientWrapper(new CouchClient(source, requestInterceptors, responseInterceptors));
+        this.sourceDb = new CouchClientWrapper(new CouchClient(source, requestInterceptors,
+                responseInterceptors));
         this.targetDb = new DatastoreWrapper((DatastoreExtended) target);
         String replicatorName;
-        if(filter == null) {
+        if (filter == null) {
             replicatorName = String.format("%s <-- %s ", target.getDatastoreName(), source);
         } else {
-            replicatorName = String.format("%s <-- %s (%s)", target.getDatastoreName(), source, filter.getName());
+            replicatorName = String.format("%s <-- %s (%s)", target.getDatastoreName(), source,
+                    filter.getName());
         }
         this.name = String.format("%s [%s]", LOG_TAG, replicatorName);
     }
@@ -173,10 +174,12 @@ class BasicPullStrategy implements ReplicationStrategy {
             replicate();
 
         } catch (ExecutionException ex) {
-            logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.state.batchCounter),ex);
+            logger.log(Level.SEVERE, String.format("Batch %s ended with error:", this.state
+                    .batchCounter), ex);
             errorInfo = new ErrorInfo(ex.getCause());
         } catch (Throwable e) {
-            logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.state.batchCounter),e);
+            logger.log(Level.SEVERE, String.format("Batch %s ended with error:", this.state
+                    .batchCounter), e);
             errorInfo = new ErrorInfo(e);
         }
 
@@ -187,7 +190,7 @@ class BasicPullStrategy implements ReplicationStrategy {
         state.replicationTerminated = true;
 
         String msg = "Pull replication terminated via ";
-        msg += this.state.cancel? "cancel." : "completion.";
+        msg += this.state.cancel ? "cancel." : "completion.";
 
         // notify complete/errored on eventbus
         logger.info(msg + " Posting on EventBus.");
@@ -199,20 +202,24 @@ class BasicPullStrategy implements ReplicationStrategy {
     }
 
     private void replicate()
-            throws DatabaseNotFoundException, ExecutionException, InterruptedException, DocumentException, DatastoreException {
+            throws DatabaseNotFoundException, ExecutionException, InterruptedException,
+            DocumentException, DatastoreException {
         logger.info("Pull replication started");
         long startTime = System.currentTimeMillis();
 
         // We were cancelled before we started
-        if (this.state.cancel) { return; }
+        if (this.state.cancel) {
+            return;
+        }
 
-        if(!this.sourceDb.exists()) {
+        if (!this.sourceDb.exists()) {
             throw new DatabaseNotFoundException(
                     "Database not found " + this.sourceDb.getIdentifier());
         }
 
         this.state.documentCounter = 0;
-        for (this.state.batchCounter = 1; this.state.batchCounter < this.batchLimitPerRun; this.state.batchCounter++) {
+        for (this.state.batchCounter = 1; this.state.batchCounter < this.batchLimitPerRun; this
+                .state.batchCounter++) {
 
             if (this.state.cancel) {
                 return;
@@ -244,10 +251,10 @@ class BasicPullStrategy implements ReplicationStrategy {
             }
 
             long batchEndTime = System.currentTimeMillis();
-            msg =  String.format(
+            msg = String.format(
                     "Batch %s completed in %sms (batch was %s changes)",
                     this.state.batchCounter,
-                    batchEndTime-batchStartTime,
+                    batchEndTime - batchStartTime,
                     batchChangesProcessed
             );
             logger.info(msg);
@@ -261,10 +268,10 @@ class BasicPullStrategy implements ReplicationStrategy {
 
         long endTime = System.currentTimeMillis();
         long deltaTime = endTime - startTime;
-        String msg =  String.format(
-            "Pull completed in %sms (%s total changes processed)",
-            deltaTime,
-            this.state.documentCounter
+        String msg = String.format(
+                "Pull completed in %sms (%s total changes processed)",
+                deltaTime,
+                this.state.documentCounter
         );
         logger.info(msg);
     }
@@ -291,7 +298,8 @@ class BasicPullStrategy implements ReplicationStrategy {
         logger.info(feed);
 
         Multimap<String, String> openRevs = changeFeeds.openRevisions(0, changeFeeds.size());
-        Map<String, Collection<String>> missingRevisions = this.targetDb.getDbCore().revsDiff(openRevs);
+        Map<String, Collection<String>> missingRevisions = this.targetDb.getDbCore().revsDiff
+                (openRevs);
 
         int changesProcessed = 0;
 
@@ -355,18 +363,15 @@ class BasicPullStrategy implements ReplicationStrategy {
                                     if (offset >= 0 && offset < revs.getIds().size()) {
                                         String revId = String.valueOf(revpos) + "-" + revs.getIds
                                                 ().get(offset);
-                                        try {
-                                            BasicDocumentRevision dr = this.targetDb.getDbCore()
-                                                    .getDocument(documentRevs.getId(), revId);
-                                            Attachment a = this.targetDb.getDbCore()
-                                                    .getAttachment(dr, attachmentName);
-                                            if (a != null) {
-                                                // skip attachment, already got it
-                                                continue;
-                                            }
-                                        } catch (DocumentNotFoundException e) {
-                                            //do nothing, we may not have the document yet
+
+                                        Attachment a = this.targetDb.getDbCore()
+                                                .getAttachment(documentRevs.getId(), revId,
+                                                        attachmentName);
+                                        if (a != null) {
+                                            // skip attachment, already got it
+                                            continue;
                                         }
+
                                     }
                                     UnsavedStreamAttachment usa = this.sourceDb
                                             .getAttachmentStream(documentRevs.getId(),
@@ -388,8 +393,9 @@ class BasicPullStrategy implements ReplicationStrategy {
                         }
                     }
 
-                    if (this.state.cancel)
+                    if (this.state.cancel) {
                         break;
+                    }
 
                     batchesToInsert.add(new BatchItem(revsList, atts));
                     changesProcessed++;
@@ -403,8 +409,9 @@ class BasicPullStrategy implements ReplicationStrategy {
         if (!this.state.cancel) {
             try {
                 this.targetDb.putCheckpoint(this.getReplicationId(), changeFeeds.getLastSeq());
-            } catch (DatastoreException e){
-                logger.log(Level.WARNING,"Failed to put checkpoint doc, next replication will start from previous checkpoint",e);
+            } catch (DatastoreException e) {
+                logger.log(Level.WARNING, "Failed to put checkpoint doc, next replication will " +
+                        "start from previous checkpoint", e);
             }
         }
 
@@ -415,7 +422,7 @@ class BasicPullStrategy implements ReplicationStrategy {
         HashMap<String, String> dict = new HashMap<String, String>();
         dict.put("source", this.sourceDb.getIdentifier());
         dict.put("target", this.targetDb.getIdentifier());
-        if(filter != null) {
+        if (filter != null) {
             dict.put("filter", this.filter.toQueryString());
         }
         // get raw SHA-1 of dictionary
@@ -427,12 +434,12 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     private ChangesResultWrapper nextBatch() throws DatastoreException {
         final Object lastCheckpoint = this.targetDb.getCheckpoint(this.getReplicationId());
-        logger.fine("last checkpoint "+lastCheckpoint);
+        logger.fine("last checkpoint " + lastCheckpoint);
         ChangesResult changeFeeds = this.sourceDb.changes(
                 this.filter,
                 lastCheckpoint,
                 this.changeLimitPerBatch);
-        logger.finer("changes feed: "+JSONUtils.toPrettyJson(changeFeeds));
+        logger.finer("changes feed: " + JSONUtils.toPrettyJson(changeFeeds));
         return new ChangesResultWrapper(changeFeeds);
     }
 
@@ -454,7 +461,8 @@ class BasicPullStrategy implements ReplicationStrategy {
             // belong to a different subtree)
             HashSet<String> possibleAncestors = new HashSet<String>();
             for (String revId : revisions.get(id)) {
-                List<String> thesePossibleAncestors = targetDb.getDbCore().getPossibleAncestorRevisionIDs(id, revId, 50);
+                List<String> thesePossibleAncestors = targetDb.getDbCore()
+                        .getPossibleAncestorRevisionIDs(id, revId, 50);
                 if (thesePossibleAncestors != null) {
                     possibleAncestors.addAll(thesePossibleAncestors);
                 }
@@ -471,7 +479,7 @@ class BasicPullStrategy implements ReplicationStrategy {
             return new GetRevisionTaskThreaded(this.sourceDb, requests, this.pullAttachmentsInline);
         }
     }
-    
+
     @Override
     public EventBus getEventBus() {
         return eventBus;

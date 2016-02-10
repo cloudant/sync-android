@@ -20,15 +20,10 @@ import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.cloudant.sync.notifications.DocumentModified;
 import com.google.common.eventbus.Subscribe;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
 
 public class BasicDBCoreObservableTest {
 
@@ -71,23 +66,23 @@ public class BasicDBCoreObservableTest {
 
         Assert.assertEquals(-1L, testObserver.getSequence());
 
-        MutableDocumentRevision doc1Mut = new MutableDocumentRevision();
-        doc1Mut.body = bodyOne;
-        BasicDocumentRevision doc1 = core.createDocumentFromRevision(doc1Mut);
+        DocumentRevision doc1Mut = new DocumentRevision();
+        doc1Mut.setBody(bodyOne);
+        DocumentRevision doc1 = core.createDocumentFromRevision(doc1Mut);
         Assert.assertNotNull(doc1);
         Assert.assertEquals(1L, core.getLastSequence());
         Assert.assertEquals(1L, testObserver.getSequence());
 
-        MutableDocumentRevision doc2Mut = new MutableDocumentRevision();
-        doc2Mut.body = bodyOne;
-        BasicDocumentRevision doc2 = core.createDocumentFromRevision(doc2Mut);
+        DocumentRevision doc2Mut = new DocumentRevision();
+        doc2Mut.setBody(bodyOne);
+        DocumentRevision doc2 = core.createDocumentFromRevision(doc2Mut);
         Assert.assertNotNull(doc2);
         Assert.assertEquals(2L, core.getLastSequence());
         Assert.assertEquals(2L, testObserver.getSequence());
 
-        MutableDocumentRevision doc1_1Mut = doc1.mutableCopy();
-        doc1_1Mut.body = bodyTwo;
-        BasicDocumentRevision doc1_1 = core.updateDocumentFromRevision(doc1_1Mut);
+        DocumentRevision doc1_1Mut = doc1;
+        doc1_1Mut.setBody(bodyTwo);
+        DocumentRevision doc1_1 = core.updateDocumentFromRevision(doc1_1Mut);
         Assert.assertNotNull(doc1_1);
         Assert.assertEquals(3L, core.getLastSequence());
         Assert.assertEquals(3L, testObserver.getSequence());

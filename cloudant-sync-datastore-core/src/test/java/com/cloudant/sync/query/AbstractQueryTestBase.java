@@ -19,7 +19,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.TestUtils;
 
@@ -83,48 +83,47 @@ public abstract class AbstractQueryTestBase {
     // - When querying using $not operator
     // - When querying using $exists operator
     public void setUpBasicQueryData() throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "mike12";
+        DocumentRevision rev = new DocumentRevision("mike12");
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
 
-        rev.docId = "mike34";
+        rev = new DocumentRevision("mike34");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
 
-        rev.docId = "mike72";
+        rev = new DocumentRevision("mike72");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 72);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
 
-        rev.docId = "fred34";
+        rev = new DocumentRevision("fred34");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
 
-        rev.docId = "fred12";
+        rev = new DocumentRevision("fred12");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
-        rev.body = DocumentBodyFactory.create(bodyMap); 
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
 
@@ -146,63 +145,62 @@ public abstract class AbstractQueryTestBase {
     // Used to setup document data testing:
     // - When using non-ascii text
     public void setUpNonAsciiQueryData() throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "mike12";
+        DocumentRevision rev = new DocumentRevision("mike12");
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
 
         ds.createDocumentFromRevision(rev);
 
 
-        rev.docId = "mike34";
+        rev = new DocumentRevision("mike34");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
 
-        rev.docId = "mike72";
+        rev = new DocumentRevision("mike72");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 72);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
 
-        rev.docId = "اسم34";
+        rev = new DocumentRevision("اسم34");
         bodyMap.clear();
         bodyMap.put("name", "اسم");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred12";
+        rev = new DocumentRevision("fred12");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fredarabic";
+        rev = new DocumentRevision("fredarabic");
         bodyMap.clear();
         bodyMap.put("اسم", "fred");
         bodyMap.put("age", 12);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
 
-        rev.docId = "freddatatype";
+        rev = new DocumentRevision("freddatatype");
         bodyMap.clear();
         bodyMap.put("datatype", "fred");
         bodyMap.put("age", 12);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
     }
@@ -223,50 +221,51 @@ public abstract class AbstractQueryTestBase {
     // Used to setup document data testing:
     // - When using nested queries
     public void setUpNestedQueryData() throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "mike12";
+        DocumentRevision rev = new DocumentRevision("mike12");
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
-        rev.docId = "mike23";
+
+        rev = new DocumentRevision("mike23");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 23);
         bodyMap.put("pet", "parrot");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "mike34";
+        rev = new DocumentRevision("mike34");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
-        rev.docId = "john34";
+
+        rev = new DocumentRevision("john34");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "fish");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred43";
+        rev = new DocumentRevision("fred43");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 43);
         bodyMap.put("pet", "snake");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred12";
+        rev = new DocumentRevision("fred12");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet", "name"), "basic"),
@@ -277,52 +276,51 @@ public abstract class AbstractQueryTestBase {
     // - When indexing array fields
     // - When querying using $in operator
     public void setUpArrayIndexingData() throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "mike12";
+        DocumentRevision rev = new DocumentRevision("mike12");
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
         bodyMap.put("pet", Arrays.<Object>asList("cat", "dog"));
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred34";
+        rev = new DocumentRevision("fred34");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "parrot");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "mike34";
+        rev = new DocumentRevision("mike34");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 34);
         bodyMap.put("pet", Arrays.<Object>asList("cat", "dog", "fish"));
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred12";
+        rev = new DocumentRevision("fred12");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john44";
+        rev = new DocumentRevision("john44");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("age", 44);
         bodyMap.put("pet", Arrays.<Object>asList("hamster", "snake"));
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john22";
+        rev = new DocumentRevision("john22");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("age", 22);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age"), "pet"),
@@ -332,75 +330,74 @@ public abstract class AbstractQueryTestBase {
     // Used to setup document data testing for queries with mathematical operations.
     // - When querying using $mod operator
     public void setUpNumericOperationsQueryData() throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "mike31";
+        DocumentRevision rev = new DocumentRevision("mike31");
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("score", 31);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred11";
+        rev = new DocumentRevision("fred11");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("score", 11);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john15";
+        rev = new DocumentRevision("john15");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", 15);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john-15";
+        rev = new DocumentRevision("john-15");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", -15);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john15.2";
+        rev = new DocumentRevision("john15.2");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", 15.2);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john15.6";
+        rev = new DocumentRevision("john15.6");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", 15.6);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john0";
+        rev = new DocumentRevision("john0");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", 0);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john0.0";
+        rev = new DocumentRevision("john0.0");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", 0.0);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john0.6";
+        rev = new DocumentRevision("john0.6");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", 0.6);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john-0.6";
+        rev = new DocumentRevision("john-0.6");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", -0.6);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "score"), "name_score"),
@@ -410,13 +407,12 @@ public abstract class AbstractQueryTestBase {
     // Used to setup document data testing:
     // - When there is a large result set
     public void setUpLargeResultSetQueryData() throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        for (int i = 0; i < 150; i++) {
-            rev.docId = String.format("d%d", i);
+       for (int i = 0; i < 150; i++) {
+            DocumentRevision rev = new DocumentRevision(String.format("d%d", i));
             Map<String, Object> bodyMap = new HashMap<String, Object>();
             bodyMap.put("large_field", "cat");
             bodyMap.put("idx", i);
-            rev.body = DocumentBodyFactory.create(bodyMap);
+            rev.setBody(DocumentBodyFactory.create(bodyMap));
             ds.createDocumentFromRevision(rev);
         }
         assertThat(im.ensureIndexed(Arrays.<Object>asList("large_field", "idx"), "large"),
@@ -427,46 +423,45 @@ public abstract class AbstractQueryTestBase {
     // - When executing AND queries
     // - When executing OR queries
     public void setUpWithoutCoveringIndexesQueryData() throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "mike12";
+        DocumentRevision rev = new DocumentRevision("mike12");
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "mike34";
+        rev = new DocumentRevision("mike34");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "mike72";
+        rev = new DocumentRevision("mike72");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 72);
         bodyMap.put("pet", "cat");
         bodyMap.put("town", "bristol");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred34";
+        rev = new DocumentRevision("fred34");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred12";
+        rev = new DocumentRevision("fred12");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
         bodyMap.put("town", "bristol");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
@@ -476,68 +471,67 @@ public abstract class AbstractQueryTestBase {
     // Used to setup document data testing for queries containing a $size operator:
     // - When executing queries containing $size operator
     public void setUpSizeOperatorQueryData() throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "mike24";
+        DocumentRevision rev = new DocumentRevision("mike24");
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 24);
         bodyMap.put("pet", Collections.singletonList("cat"));
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "mike12";
+        rev = new DocumentRevision("mike12");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
         bodyMap.put("pet", Arrays.asList("cat", "dog"));
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred34";
+        rev = new DocumentRevision("fred34");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 34);
         bodyMap.put("pet", Arrays.asList("cat", "dog"));
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john44";
+        rev = new DocumentRevision("john44");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("age", 44);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred72";
+        rev = new DocumentRevision("fred72");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 72);
         bodyMap.put("pet", Collections.singletonList("dog"));
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john12";
+        rev = new DocumentRevision("john12");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("age", 12);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "bill34";
+        rev = new DocumentRevision("bill34");
         bodyMap.clear();
         bodyMap.put("name", "bill");
         bodyMap.put("age", 34);
         bodyMap.put("pet", Arrays.asList("cat", "parrot"));
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred11";
+        rev = new DocumentRevision("fred11");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 11);
         bodyMap.put("pet", new ArrayList<Object>());
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age"), "basic"), is("basic"));
@@ -546,32 +540,31 @@ public abstract class AbstractQueryTestBase {
     // Used to setup document data testing for sorting:
     // - When sorting
     public void setUpSortingQueryData() throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "mike12";
+        DocumentRevision rev = new DocumentRevision("mike12");
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
         bodyMap.put("age", Arrays.<Object>asList("cat", "dog"));
         bodyMap.put("same", "all");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred34";
+        rev = new DocumentRevision("fred34");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "parrot");
         bodyMap.put("same", "all");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred11";
+        rev = new DocumentRevision("fred11");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 11);
         bodyMap.put("pet", "fish");
         bodyMap.put("same", "all");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
         assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age", "same"), "pet"),
@@ -579,8 +572,7 @@ public abstract class AbstractQueryTestBase {
     }
 
     private void setUpSharedDocs() throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "mike12";
+        DocumentRevision rev = new DocumentRevision("mike12");
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
@@ -588,10 +580,10 @@ public abstract class AbstractQueryTestBase {
         petMap.put("species", "cat");
         petMap.put("name", "mike");
         bodyMap.put("pet", petMap);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "mike23";
+        rev = new DocumentRevision("mike23");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 23);
@@ -601,10 +593,10 @@ public abstract class AbstractQueryTestBase {
         petNameMap.put("first", "mike");
         petMap.put("name", petNameMap);
         bodyMap.put("pet", petMap);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "mike34";
+        rev = new DocumentRevision("mike34");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 34);
@@ -612,30 +604,30 @@ public abstract class AbstractQueryTestBase {
         petMap.put("species", "cat");
         petMap.put("name", "mike");
         bodyMap.put("pet", petMap);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "mike72";
+        rev = new DocumentRevision("mike72");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 72);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred34";
+        rev = new DocumentRevision("fred34");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred12";
+        rev = new DocumentRevision("fred12");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
     }
 

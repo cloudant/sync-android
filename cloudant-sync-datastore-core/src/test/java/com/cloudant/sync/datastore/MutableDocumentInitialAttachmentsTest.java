@@ -27,6 +27,7 @@ import java.util.HashMap;
 /**
  * Created by tomblench on 06/08/2014.
  */
+/*
 public class MutableDocumentInitialAttachmentsTest extends BasicDatastoreTestBase{
 
     BasicDocumentRevision saved;
@@ -240,3 +241,4 @@ public class MutableDocumentInitialAttachmentsTest extends BasicDatastoreTestBas
     }
 
 }
+*/

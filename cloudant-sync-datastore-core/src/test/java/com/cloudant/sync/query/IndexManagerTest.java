@@ -20,15 +20,13 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
-import com.cloudant.sync.util.SQLDatabaseTestUtils;
+import com.cloudant.sync.datastore.DocumentRevision;
 
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class IndexManagerTest extends AbstractIndexTestBase {
 
@@ -81,7 +79,7 @@ public class IndexManagerTest extends AbstractIndexTestBase {
     @Test
     public void deleteNonEmptyIndex() throws Exception {
         for (int i = 0; i < 4; i++) {
-            MutableDocumentRevision rev = new MutableDocumentRevision();
+            DocumentRevision rev = new DocumentRevision();
             Map<String, Object> bodyMap = new HashMap<String, Object>();
             bodyMap.put("name", "mike");
             bodyMap.put("age", 12);
@@ -89,7 +87,7 @@ public class IndexManagerTest extends AbstractIndexTestBase {
             petMap.put("species", "cat");
             petMap.put("name", "mike");
             bodyMap.put("pet", petMap);
-            rev.body = DocumentBodyFactory.create(bodyMap);
+            rev.setBody(DocumentBodyFactory.create(bodyMap));
             ds.createDocumentFromRevision(rev);
         }
 
@@ -102,7 +100,7 @@ public class IndexManagerTest extends AbstractIndexTestBase {
     @Test
     public void deleteTheCorrectNonEmptyIndex() throws Exception {
         for (int i = 0; i < 4; i++) {
-            MutableDocumentRevision rev = new MutableDocumentRevision();
+            DocumentRevision rev = new DocumentRevision();
             Map<String, Object> bodyMap = new HashMap<String, Object>();
             bodyMap.put("name", "mike");
             bodyMap.put("age", 12);
@@ -110,7 +108,7 @@ public class IndexManagerTest extends AbstractIndexTestBase {
             petMap.put("species", "cat");
             petMap.put("name", "mike");
             bodyMap.put("pet", petMap);
-            rev.body = DocumentBodyFactory.create(bodyMap);
+            rev.setBody(DocumentBodyFactory.create(bodyMap));
             ds.createDocumentFromRevision(rev);
         }
 
@@ -126,7 +124,7 @@ public class IndexManagerTest extends AbstractIndexTestBase {
     @Test
     public void deleteATextIndex() throws Exception {
         for (int i = 0; i < 4; i++) {
-            MutableDocumentRevision rev = new MutableDocumentRevision();
+            DocumentRevision rev = new DocumentRevision();
             Map<String, Object> bodyMap = new HashMap<String, Object>();
             bodyMap.put("name", "mike");
             bodyMap.put("age", 12);
@@ -134,7 +132,7 @@ public class IndexManagerTest extends AbstractIndexTestBase {
             petMap.put("species", "cat");
             petMap.put("name", "mike");
             bodyMap.put("pet", petMap);
-            rev.body = DocumentBodyFactory.create(bodyMap);
+            rev.setBody(DocumentBodyFactory.create(bodyMap));
             ds.createDocumentFromRevision(rev);
         }
 

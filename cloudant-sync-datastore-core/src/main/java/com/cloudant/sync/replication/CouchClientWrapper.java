@@ -24,7 +24,7 @@ import com.cloudant.mazha.OkOpenRevision;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
@@ -219,13 +219,12 @@ public class CouchClientWrapper implements CouchDB {
     }
 
     @Override
-    public void bulkCreateDocs(List<BasicDocumentRevision> revisions) {
+    public void bulkCreateDocs(List<DocumentRevision> revisions) {
         logger.entering("com.cloudant.sync.replication.CouchClientWrapper", "bulkCreateDocs",
                 revisions);
 
         List<Map> allObjs = new ArrayList<Map>();
-        for (BasicDocumentRevision obj : revisions) {
-            logger.finer(String.format("Document body: %s",obj.getBody()));
+        for (DocumentRevision obj : revisions) {
             allObjs.add(obj.asMap());
         }
 

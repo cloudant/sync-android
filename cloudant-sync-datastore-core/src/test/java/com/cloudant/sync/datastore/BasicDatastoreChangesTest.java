@@ -78,7 +78,7 @@ public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
 
     @Test
     public void changes_sinceLimitByTwo_correctResultAreReturned() throws Exception {
-        BasicDocumentRevision[] docs = createThreeDocuments();
+        DocumentRevision[] docs = createThreeDocuments();
         {
             Changes changes = datastore.changes(0, 2);
             Assert.assertEquals(2, changes.size());
@@ -96,7 +96,7 @@ public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
 
     @Test
     public void changes_limitByTenByThereAreOnlyFourChanges_lastSequenceIsFour() throws Exception {
-        BasicDocumentRevision[] docs = createThreeDocuments();
+        DocumentRevision[] docs = createThreeDocuments();
         Changes changes = datastore.changes(0, 10);
         Assert.assertEquals(3, changes.size());
         Assert.assertThat(changes.getIds(), hasItems(docs[0].getId(), docs[1].getId(), docs[2].getId()));

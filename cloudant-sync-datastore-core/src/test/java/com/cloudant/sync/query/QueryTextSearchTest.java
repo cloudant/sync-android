@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -50,60 +50,59 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
 
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "mike12";
+        DocumentRevision rev = new DocumentRevision("mike12");
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         bodyMap.put("comment", "He lives in Bristol, UK and his best friend is Fred.");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "mike34";
+        rev = new DocumentRevision("mike34");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
         bodyMap.put("comment", "He lives in a van down by the river in Bristol.");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "mike72";
+        rev = new DocumentRevision("mike72");
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 72);
         bodyMap.put("pet", "cat");
         bodyMap.put("comment",
                     "He's retired and has memories of spending time with his cat Remus.");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred34";
+        rev = new DocumentRevision("fred34");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
         bodyMap.put("comment",
                     "He lives next door to Mike and his cat Romulus is brother to Remus.");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred12";
+        rev = new DocumentRevision("fred12");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
         bodyMap.put("comment", "He lives in Bristol, UK and his best friend is Mike.");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john34";
+        rev = new DocumentRevision("john34");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
         bodyMap.put("comment", "وهو يعيش في بريستول، المملكة المتحدة، وأفضل صديق له هو مايك.");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
     }
 

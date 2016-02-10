@@ -14,8 +14,11 @@
 
 package com.cloudant.sync.datastore;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.json.JSONHelper;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,8 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-
 public class RevisionHistoryHelperTest {
 
     private JSONHelper jsonHelper = new JSONHelper();
@@ -37,7 +38,7 @@ public class RevisionHistoryHelperTest {
         Map m = new HashMap<String, Object>();
         m.put("name", "Tom");
 
-        List<BasicDocumentRevision> d = createDBObjects("Tom", "1-a");
+        List<DocumentRevision> d = createDBObjects("Tom", "1-a");
         String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
 
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
@@ -49,15 +50,15 @@ public class RevisionHistoryHelperTest {
 
     }
 
-    private List<BasicDocumentRevision> createDBObjects(String name, String... revisions) {
-        List<BasicDocumentRevision> res = new ArrayList<BasicDocumentRevision>();
+    private List<DocumentRevision> createDBObjects(String name, String... revisions) {
+        List<DocumentRevision> res = new ArrayList<DocumentRevision>();
         for(String revision : revisions) {
             res.add(createDBObject(name, revision));
         }
         return res;
     }
 
-    private BasicDocumentRevision createDBObject(String name, String rev) {
+    private DocumentRevision createDBObject(String name, String rev) {
         Map m = new HashMap<String, Object>();
         m.put("name", name);
         DocumentBody body = BasicDocumentBody.bodyWith(m);
@@ -74,7 +75,7 @@ public class RevisionHistoryHelperTest {
         Map m = new HashMap<String, Object>();
         m.put("name", "Tom");
 
-        List<BasicDocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
+        List<DocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
         String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
 
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
@@ -87,7 +88,7 @@ public class RevisionHistoryHelperTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void revisionHistoryToJson_historyIsInAscendingOrder_exception() {
-        List<BasicDocumentRevision> d = createDBObjects("Tom", "1-a", "2-b");
+        List<DocumentRevision> d = createDBObjects("Tom", "1-a", "2-b");
         RevisionHistoryHelper.revisionHistoryToJson(d);
     }
 
@@ -98,12 +99,12 @@ public class RevisionHistoryHelperTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void revisionHistoryToJson_zeroLengthHistory_exception() {
-        RevisionHistoryHelper.revisionHistoryToJson(new ArrayList<BasicDocumentRevision>());
+        RevisionHistoryHelper.revisionHistoryToJson(new ArrayList<DocumentRevision>());
     }
 
     @Test
     public void getRevisionPath_oneRevision_success() {
-        List<BasicDocumentRevision> d = createDBObjects("Tom", "1-a");
+        List<DocumentRevision> d = createDBObjects("Tom", "1-a");
         String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         List<String> revisions = RevisionHistoryHelper.getRevisionPath(documentRevs);
@@ -112,7 +113,7 @@ public class RevisionHistoryHelperTest {
 
     @Test
     public void getRevisionPath_twoRevision_success() {
-        List<BasicDocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
+        List<DocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
         String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         List<String> revisions = RevisionHistoryHelper.getRevisionPath(documentRevs);
@@ -121,7 +122,7 @@ public class RevisionHistoryHelperTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void getRevisionPath_revisionStartIsTooSmall_exception() {
-        List<BasicDocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
+        List<DocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
         String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
         DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
         addOneMoreIdToRevisions(documentRevs);

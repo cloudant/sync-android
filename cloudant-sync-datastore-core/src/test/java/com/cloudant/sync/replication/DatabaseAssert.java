@@ -14,6 +14,11 @@
 
 package com.cloudant.sync.replication;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.everyItem;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.collection.IsIn.isIn;
+
 import com.cloudant.common.CouchConstants;
 import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.CouchClient;
@@ -21,9 +26,9 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.OkOpenRevision;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.sync.datastore.Changes;
-import com.cloudant.sync.datastore.DocumentRevisionTree;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DatastoreExtended;
+import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
 
 import org.junit.Assert;
@@ -36,10 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
-
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.collection.IsIn.isIn;
-import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 
 /**
  * Used to assert a pull/push replication results are correct, basically used to assert a CouchDB instance has the
@@ -60,10 +61,10 @@ public class DatabaseAssert {
         final String id;
         final boolean deleted;
 
-        final BasicDocumentRevision documentRevision;
+        final DocumentRevision documentRevision;
         final ChangesResult.Row row;
 
-        public ChangeRowAdaptor(BasicDocumentRevision object) {
+        public ChangeRowAdaptor(DocumentRevision object) {
             this.id = object.getId();
             this.deleted = object.isDeleted();
 
@@ -104,7 +105,7 @@ public class DatabaseAssert {
         Changes changesBatch = datastore.changes(0, BATCH_LIMIT);
         while(changesBatch.size() > 0) {
 
-            for (BasicDocumentRevision object : changesBatch.getResults()) {
+            for (DocumentRevision object : changesBatch.getResults()) {
                 ChangeRowAdaptor adaptor = new ChangeRowAdaptor(object);
                 if (alreadyChecked.contains(adaptor.id)) {
                     continue;
@@ -185,7 +186,7 @@ public class DatabaseAssert {
      * Assert the specified document is deleted in both remote CouchDb and local datastore.
      */
     static void checkBothDeleted(String id, DatastoreExtended datastore, CouchClient client) throws Exception {
-        BasicDocumentRevision documentRevision = datastore.getDocument(id);
+        DocumentRevision documentRevision = datastore.getDocument(id);
         Assert.assertTrue(documentRevision.isDeleted());
 
         Map<String, Object> m = client.getDocument(id, documentRevision.getRevision());
@@ -240,7 +241,7 @@ public class DatabaseAssert {
      */
     static void checkWinningRevisionSame(String documentId, DatastoreExtended datastore,
                                          CouchClient client) throws Exception{
-        Map<String, Object> doc1 = datastore.getDocument(documentId).asMap();
+        Map<String, Object> doc1 = ((DocumentRevision)datastore.getDocument(documentId)).asMap();
         Map<String, Object> doc2 = client.getDocument(documentId);
         doc2.remove(CouchConstants._attachments);
         DatabaseAssert.assertSameStringMap(doc1, doc2);
@@ -262,7 +263,7 @@ public class DatabaseAssert {
         Map<String, List<String>> res = new HashMap<String, List<String>>();
         for(DocumentRevisionTree.DocumentRevisionNode revision : tree.leafs()) {
             List<String> path = new ArrayList<String>();
-            for(BasicDocumentRevision object : tree.getPathForNode(revision.getData().getSequence())) {
+            for(DocumentRevision object : tree.getPathForNode(revision.getData().getSequence())) {
                 path.add(object.getRevision());
             }
             res.put(revision.getData().getRevision(), path);

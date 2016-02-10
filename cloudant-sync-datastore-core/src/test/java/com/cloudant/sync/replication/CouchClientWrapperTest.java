@@ -25,9 +25,9 @@ import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.NoResourceException;
 import com.cloudant.mazha.Response;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionBuilder;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.TestUtils;
@@ -280,7 +280,7 @@ public class CouchClientWrapperTest extends CouchTestBase {
         String objectId1 = "haha";
         String objectId2 = "hehe";
 
-        List<BasicDocumentRevision> objects = createTwoDBObjects(remoteDb, objectId1, objectId2);
+        List<DocumentRevision> objects = createTwoDBObjects(remoteDb, objectId1, objectId2);
 
         remoteDb.bulkCreateDocs(objects);
 
@@ -295,16 +295,16 @@ public class CouchClientWrapperTest extends CouchTestBase {
         Assert.assertEquals(objects.get(1).getRevision(), obj2.get("_rev"));
     }
 
-    public List<BasicDocumentRevision> createTwoDBObjects(CouchClientWrapper remoteDb, String
+    public List<DocumentRevision> createTwoDBObjects(CouchClientWrapper remoteDb, String
             id1, String id2) {
-        List<BasicDocumentRevision> objects = new ArrayList<BasicDocumentRevision>();
+        List<DocumentRevision> objects = new ArrayList<DocumentRevision>();
 
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
         builder.setDocId(id1);
         builder.setRevId(CouchUtils.getFirstRevisionId());
         builder.setBody(bodyOne);
 
-        BasicDocumentRevision todo1 = builder.build();
+        DocumentRevision todo1 = builder.build();
         objects.add(todo1);
 
         DocumentRevisionBuilder builder2 = new DocumentRevisionBuilder();
@@ -312,7 +312,7 @@ public class CouchClientWrapperTest extends CouchTestBase {
         builder2.setRevId(CouchUtils.getFirstRevisionId());
         builder2.setBody(bodyTwo);
 
-        BasicDocumentRevision tdo2 = builder2.build();
+        DocumentRevision tdo2 = builder2.build();
         objects.add(tdo2);
 
         return objects;

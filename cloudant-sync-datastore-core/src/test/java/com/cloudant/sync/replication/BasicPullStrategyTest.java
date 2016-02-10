@@ -23,8 +23,8 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.AnimalDb;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.Response;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DatastoreExtended;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.query.IndexManager;
 import com.cloudant.sync.query.QueryResult;
@@ -44,7 +44,7 @@ import java.util.Map;
 public class BasicPullStrategyTest extends ReplicationTestBase {
 
     private Bar getDocument(String id) throws Exception {
-        BasicDocumentRevision rev = this.datastore.getDocument(id);
+        DocumentRevision rev = this.datastore.getDocument(id);
         Bar bar = new Bar();
         Map<String, Object> m = rev.getBody().asMap();
         bar.setAge((Integer)m.get("age"));
@@ -168,7 +168,7 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
         Bar bar1 = oneDocCreatedAndThenPulled(replicator);
         Response res = BarUtils.deleteBar(remoteDb, bar1.getId());
         this.pull(replicator, 1);
-        BasicDocumentRevision object = datastore.getDocument(res.getId(), res.getRev());
+        DocumentRevision object = datastore.getDocument(res.getId(), res.getRev());
         Assert.assertNotNull(object);
         Assert.assertTrue(object.isDeleted());
     }
