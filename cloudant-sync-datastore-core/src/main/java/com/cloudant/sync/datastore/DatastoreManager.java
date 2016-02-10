@@ -98,6 +98,11 @@ public class DatastoreManager {
      */
     public DatastoreManager(File directoryPath) {
         logger.fine("Datastore path: " + directoryPath);
+
+        if(!directoryPath.exists()){
+            directoryPath.mkdir();
+        }
+
         if(!directoryPath.isDirectory() ) {
             throw new IllegalArgumentException("Input path is not a valid directory");
         } else if(!directoryPath.canWrite()) {

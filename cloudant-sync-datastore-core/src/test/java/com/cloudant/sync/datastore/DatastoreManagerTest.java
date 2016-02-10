@@ -46,10 +46,31 @@ public class DatastoreManagerTest {
     public void nonWritableDatastoreManagerPathThrows() {
         File f = new File(TEST_PATH, "c_root_test");
         try {
+            f.mkdir();
             f.setReadOnly();
             manager = new DatastoreManager(f.getAbsolutePath());
         } finally {
             f.setWritable(true);
+            f.delete();
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createFailsIfMissingIntermediates(){
+        File f = new File(TEST_PATH, "missing_inter/missing_test");
+        try {
+            manager = new DatastoreManager(f.getAbsolutePath());
+        } finally {
+            f.delete();
+        }
+    }
+
+    @Test
+    public void createDirectoryIfMissing(){
+        File f = new File(TEST_PATH, "missing_test");
+        try {
+            manager = new DatastoreManager(f.getAbsolutePath());
+        } finally {
             f.delete();
         }
     }
