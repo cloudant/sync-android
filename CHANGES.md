@@ -1,3 +1,7 @@
+# 0.15.3 (2016-02-11)
+- [REVERT] Revert replication optimisations which caused updated revisions to be
+  inserted as new documents
+
 # 0.15.2 (2016-02-04)
 - [IMPROVED] Optimise pull replication performance. This is achieved
   by reducing excessive database traffic and batching up insertions in
@@ -13,7 +17,7 @@
 - [IMPROVED] Increase default `insertBatchSize` values for
   replication. Pull replications from databases which support the
   `_bulk_get` endpoint will see an improvement in performance.
-  
+
 # 0.15.0 (2016-01-08)
 - [BREAKING CHANGE] Removed the following classes:
 
