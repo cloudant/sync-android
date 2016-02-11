@@ -28,7 +28,6 @@ import com.cloudant.sync.datastore.migrations.MigrateDatabase6To100;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
-import com.cloudant.sync.notifications.DocumentModified;
 import com.cloudant.sync.notifications.DocumentUpdated;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
@@ -59,7 +58,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -74,43 +72,16 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     private static final String FULL_DOCUMENT_COLS = "docs.docid, docs.doc_id, revid, sequence, json, current, deleted, parent";
 
-    private static final String GET_DOC_NUMERIC_ID =
-            "SELECT doc_id from docs WHERE docid=?";
-
-    // get all document columns for current ("winning") revision of a given doc id
     private static final String GET_DOCUMENT_CURRENT_REVISION =
             "SELECT " + FULL_DOCUMENT_COLS + " FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id " +
                     "AND current=1 ORDER BY revid DESC LIMIT 1";
 
-    // get sequence number for current ("winning") revision of a given doc id
-    private static final String GET_SEQUENCE_CURRENT_REVISION =
-            "SELECT revs.sequence FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id " +
-                    "AND current=1 ORDER BY revid DESC LIMIT 1";
-
-    // get all document columns for a given revision and doc id
     private static final String GET_DOCUMENT_GIVEN_REVISION =
             "SELECT " + FULL_DOCUMENT_COLS + " FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id " +
                     "AND revid=? LIMIT 1";
 
-    // get sequence number for a given revision and doc id
-    private static final String GET_SEQUENCE_GIVEN_REVISION =
-            "SELECT revs.sequence FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id " +
-                    "AND revid=? LIMIT 1";
-
     public static final String SQL_CHANGE_IDS_SINCE_LIMIT = "SELECT doc_id, max(sequence) FROM revs " +
             "WHERE sequence > ? AND sequence <= ? GROUP BY doc_id ";
-
-    // get all non-deleted leaf rev ids for a given doc id
-    public static final String GET_NON_DELETED_LEAFS = "SELECT revs.revid FROM revs " +
-            "WHERE revs.doc_id = ? " +
-            "AND revs.deleted = 0 AND revs.sequence NOT IN " +
-            "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
-
-    // get all leaf rev ids for a given doc id
-    public static final String GET_ALL_LEAFS = "SELECT revs.revid FROM revs " +
-            "WHERE revs.doc_id = ? " +
-            "AND revs.sequence NOT IN " +
-            "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
 
     // Limit of parameters (placeholders) one query can have.
     // SQLite has limit on the number of placeholders on a single query, default 999.
@@ -305,47 +276,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     public BasicDocumentRevision getDocument(String id) throws DocumentNotFoundException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         return getDocument(id, null);
-    }
-
-    private long getSequenceInQueue(SQLDatabase db, String id, String rev)
-            throws DatastoreException {
-        Cursor cursor = null;
-        try {
-            String[] args = (rev == null) ? new String[]{id} : new String[]{id, rev};
-            String sql = (rev == null) ? GET_SEQUENCE_CURRENT_REVISION : GET_SEQUENCE_GIVEN_REVISION;
-            cursor = db.rawQuery(sql, args);
-            if (cursor.moveToFirst()) {
-                long sequence = cursor.getLong(0);
-                return sequence;
-            } else {
-                return -1;
-            }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE,"Error sequence with id: " + id + "and rev " + rev,e);
-            throw new DatastoreException(String.format("Could not find sequence with id %s at revision %s",id,rev),e);
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
-    }
-
-    private long getNumericIdInQueue(SQLDatabase db, String id)
-            throws AttachmentException, DocumentNotFoundException, DatastoreException {
-        Cursor cursor = null;
-        try {
-            String sql = GET_DOC_NUMERIC_ID;
-            cursor = db.rawQuery(sql, new String[]{id});
-            if (cursor.moveToFirst()) {
-                long sequence = cursor.getLong(0);
-                return sequence;
-            } else {
-                return -1;
-            }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE,"Error sequence with id: " + id);
-            throw new DatastoreException(String.format("Could not find sequence with id %s",id),e);
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
     }
 
     /**
@@ -560,11 +490,10 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         // outside the sqlDb as we're batching requests.
         Collections.sort(result, new Comparator<BasicDocumentRevision>() {
             @Override
-            public int compare(BasicDocumentRevision documentRevision, BasicDocumentRevision
-                    documentRevision2) {
+            public int compare(BasicDocumentRevision documentRevision, BasicDocumentRevision documentRevision2) {
                 long a = documentRevision.getSequence();
                 long b = documentRevision2.getSequence();
-                return (int) (a - b);
+                return (int)(a - b);
             }
         });
 
@@ -1005,145 +934,139 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
+
     @Override
     public void forceInsert(final BasicDocumentRevision rev,
                             final List<String> revisionHistory,
                             final Map<String, Object> attachments,
                             final Map<String[],List<PreparedAttachment>>preparedAttachments,
                             final boolean pullAttachmentsInline) throws DocumentException {
-        forceInsert(Collections.singletonList(new ForceInsertItem(rev, revisionHistory,
-                attachments, preparedAttachments, pullAttachmentsInline)));
-    }
-
-    @Override
-    public void forceInsert(final List<ForceInsertItem> items) throws DocumentException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
+        Preconditions.checkNotNull(rev, "Input document revision can not be null");
+        Preconditions.checkNotNull(revisionHistory, "Input revision history must not be null");
+        Preconditions.checkArgument(revisionHistory.size() > 0, "Input revision history must not be empty");
+        Preconditions.checkArgument(checkCurrentRevisionIsInRevisionHistory(rev, revisionHistory),
+                "Current revision must exist in revision history.");
+        Preconditions.checkArgument(checkRevisionIsInCorrectOrder(revisionHistory),
+                "Revision history must be in right order.");
+        CouchUtils.validateDocumentId(rev.getId());
+        CouchUtils.validateRevisionId(rev.getRevision());
 
-        for (ForceInsertItem item : items) {
-            Preconditions.checkNotNull(item.rev, "Input document revision can not be null");
-            Preconditions.checkNotNull(item.revisionHistory, "Input revision history must not be null");
-            Preconditions.checkArgument(item.revisionHistory.size() > 0, "Input revision history must not be empty");
-
-            Preconditions.checkArgument(checkCurrentRevisionIsInRevisionHistory(item.rev, item.revisionHistory),
-                    "Current revision must exist in revision history.");
-            Preconditions.checkArgument(checkRevisionIsInCorrectOrder(item.revisionHistory),
-                    "Revision history must be in right order.");
-            CouchUtils.validateDocumentId(item.rev.getId());
-            CouchUtils.validateRevisionId(item.rev.getRevision());
-        }
-
-        // for raising events after completing database transaction
-        final List<DocumentModified> events = new LinkedList<DocumentModified>();
+        logger.finer("forceInsert(): " + rev.toString() + ",\n" + JSONUtils.toPrettyJson
+                (revisionHistory));
 
         try {
-            queue.submitTransaction(new SQLQueueCallable<Object>() {
+            Object event = queue.submitTransaction(new SQLQueueCallable<Object>(){
                 @Override
-                public Object call(SQLDatabase db) throws Exception {
-                    for (ForceInsertItem item : items) {
+                public Object call(SQLDatabase db) throws Exception{
+                    DocumentCreated documentCreated = null;
+                    DocumentUpdated documentUpdated = null;
 
-                        logger.finer("forceInsert(): " + item.rev.toString());
+                    boolean ok = true;
 
-                        DocumentCreated documentCreated = null;
-                        DocumentUpdated documentUpdated = null;
+                    long seq = 0;
 
-                        boolean ok = true;
 
-                        long oldSeq = getSequenceInQueue(db, item.rev.getId(), null);
-                        long seq = 0;
+                    // sequence here is -1, but we need it to insert the attachment - also might
+                    // be wanted by subscribers
+                    BasicDocumentRevision revisionFromDB = null;
+                    try {
+                        revisionFromDB = getDocumentInQueue(db,rev.getId(),null);
+                    } catch (DocumentNotFoundException e){
+                        // this is expected since this method is normally used by replication
+                        // we may be missing the document from our copy
+                    }
 
-                        if (oldSeq != -1) {
-                            long docNumericId = getNumericIdInQueue(db, item.rev.getId());
-                            seq = doForceInsertExistingDocumentWithHistory(db, item.rev, docNumericId, item.revisionHistory,
-                                    item.attachments);
-                            item.rev.initialiseSequence(seq);
-                            // TODO fetch the parent doc?
-                            documentUpdated = new DocumentUpdated(null, item.rev);
-                        } else {
-                            seq = doForceInsertNewDocumentWithHistory(db, item.rev, item.revisionHistory);
-                            item.rev.initialiseSequence(seq);
-                            documentCreated = new DocumentCreated(item.rev);
+                    if (revisionFromDB != null) {
+                        seq = doForceInsertExistingDocumentWithHistory(db, rev, revisionHistory,
+                                attachments);
+                        rev.initialiseSequence(seq);
+                        // TODO fetch the parent doc?
+                        documentUpdated = new DocumentUpdated(null, rev);
+                    } else {
+                        seq = doForceInsertNewDocumentWithHistory(db, rev, revisionHistory);
+                        rev.initialiseSequence(seq);
+                        documentCreated = new DocumentCreated(rev);
+                    }
+
+                    // now deal with any attachments
+                    if (pullAttachmentsInline) {
+                        if (attachments != null) {
+                            for (String att : attachments.keySet()) {
+                                Map attachmentMetadata = (Map)attachments.get(att);
+                                Boolean stub = (Boolean) attachmentMetadata.get("stub");
+
+                                if (stub != null && stub) {
+                                    // stubs get copied forward at the end of
+                                    // insertDocumentHistoryIntoExistingTree - nothing to do here
+                                    continue;
+                                }
+                                String data = (String) attachmentMetadata.get("data");
+                                String type = (String) attachmentMetadata.get("content_type");
+                                InputStream is = Base64InputStreamFactory.get(new
+                                        ByteArrayInputStream(data.getBytes()));
+                                // inline attachments are automatically decompressed,
+                                // so we don't have to worry about that
+                                UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is,
+                                        att, type);
+                                try {
+                                    PreparedAttachment pa = AttachmentManager.prepareAttachment(
+                                            attachmentsDir, attachmentStreamFactory, usa);
+                                    AttachmentManager.addAttachment(db, attachmentsDir, rev, pa);
+                                } catch (Exception e) {
+                                    logger.log(Level.SEVERE, "There was a problem adding the " +
+                                                    "attachment "
+                                                    + usa + "to the datastore for document " + rev,
+                                            e);
+                                    throw e;
+                                }
+                            }
                         }
+                    } else {
 
-                        // now deal with any attachments
-                        if (item.pullAttachmentsInline) {
-                            if (item.attachments != null) {
-                                for (String att : item.attachments.keySet()) {
-                                    Map attachmentMetadata = (Map) item.attachments.get(att);
-                                    Boolean stub = (Boolean) attachmentMetadata.get("stub");
-
-                                    if (stub != null && stub) {
-                                        // stubs get copied forward at the end of
-                                        // insertDocumentHistoryIntoExistingTree - nothing to do here
+                        try {
+                            if (preparedAttachments != null) {
+                                for (String[] key : preparedAttachments.keySet()) {
+                                    String id = key[0];
+                                    String rev = key[1];
+                                    try {
+                                        BasicDocumentRevision doc = getDocumentInQueue(db, id, rev);
+                                        if (doc != null) {
+                                            AttachmentManager.addAttachmentsToRevision(db,
+                                                    attachmentsDir, doc, preparedAttachments.get(key));
+                                        }
+                                    } catch (DocumentNotFoundException e){
+                                        //safe to continue, previously getDocumentInQueue could return
+                                        // null and this was deemed safe and expected behaviour
+                                        // DocumentNotFoundException is thrown instead of returning
+                                        // null now.
                                         continue;
                                     }
-                                    String data = (String) attachmentMetadata.get("data");
-                                    String type = (String) attachmentMetadata.get("content_type");
-                                    InputStream is = Base64InputStreamFactory.get(new
-                                            ByteArrayInputStream(data.getBytes()));
-                                    // inline attachments are automatically decompressed,
-                                    // so we don't have to worry about that
-                                    UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is,
-                                            att, type);
-                                    try {
-                                        PreparedAttachment pa = AttachmentManager.prepareAttachment(
-                                                attachmentsDir, attachmentStreamFactory, usa);
-                                        AttachmentManager.addAttachment(db, attachmentsDir, item.rev, pa);
-                                    } catch (Exception e) {
-                                        logger.log(Level.SEVERE, "There was a problem adding the " +
-                                                        "attachment "
-                                                        + usa + "to the datastore for document " + item.rev,
-                                                e);
-                                        throw e;
-                                    }
                                 }
                             }
-                        } else {
-
-                            try {
-                                if (item.preparedAttachments != null) {
-                                    for (String[] key : item.preparedAttachments.keySet()) {
-                                        String id = key[0];
-                                        String rev = key[1];
-                                        try {
-                                            BasicDocumentRevision doc = getDocumentInQueue(db, id, rev);
-                                            if (doc != null) {
-                                                AttachmentManager.addAttachmentsToRevision(db,
-                                                        attachmentsDir, doc, item.preparedAttachments.get(key));
-                                            }
-                                        } catch (DocumentNotFoundException e) {
-                                            //safe to continue, previously getDocumentInQueue could return
-                                            // null and this was deemed safe and expected behaviour
-                                            // DocumentNotFoundException is thrown instead of returning
-                                            // null now.
-                                            continue;
-                                        }
-                                    }
-                                }
-                            } catch (Exception e) {
-                                logger.log(Level.SEVERE, "There was a problem adding an " +
-                                        "attachment to the datastore", e);
-                                throw e;
-                            }
-
+                        } catch (Exception e) {
+                            logger.log(Level.SEVERE, "There was a problem adding an " +
+                                    "attachment to the datastore", e);
+                            throw e;
                         }
-                        if (ok) {
-                            logger.log(Level.FINER, "Inserted revision: %s", item.rev);
-                            if (documentCreated != null) {
-                                events.add(documentCreated);
-                            } else if (documentUpdated != null) {
-                                events.add(documentUpdated);
-                            }
+
+                    }
+                    if (ok) {
+                        logger.log(Level.FINER, "Inserted revision: %s", rev);
+                        if (documentCreated != null) {
+                            return documentCreated;
+                        } else if (documentUpdated != null) {
+                            return documentUpdated;
                         }
                     }
                     return null;
                 }
             }).get();
 
-            // if we got here, everything got written to the database successfully
-            // now raise any events we stored up
-            for(DocumentModified event : events) {
+            if(event != null) {
                 eventBus.post(event);
             }
+
 
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -1182,7 +1105,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
      *                    as well) sorted in ascending order.
      */
     private long doForceInsertExistingDocumentWithHistory(SQLDatabase db,BasicDocumentRevision newRevision,
-                                                          long docNumericId,
                                                           List<String> revisions,
                                                           Map<String, Object> attachments)
             throws AttachmentException, DocumentNotFoundException, DatastoreException {
@@ -1194,57 +1116,89 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         Preconditions.checkNotNull(revisions, "Revision history should not be null.");
         Preconditions.checkArgument(revisions.size() > 0, "Revision history should have at least one revision." );
 
-        // do we have a common ancestor?
-        long ancestorSequence = getSequenceInQueue(db, newRevision.getId(), revisions.get(0));
+        // First look up all locally-known revisions of this document:
+
+        DocumentRevisionTree localRevs;
+        try {
+            localRevs = getAllRevisionsOfDocumentInQueue(db, newRevision.getId());
+        } catch (DocumentNotFoundException e){
+            //this shouldn't be thrown since from the checkArugment above call we know the document
+            //exists so it should have a revision history
+            throw new RuntimeException(String.format("Error getting all revisions of document" +
+                    " with id %s even though revision exists",newRevision.getId()), e);
+        }
+
+        assert localRevs != null;
 
         long sequence;
 
-        if(ancestorSequence == -1) {
-            sequence = insertDocumentHistoryToNewTree(db,newRevision, revisions, docNumericId);
+        BasicDocumentRevision parent = localRevs.lookup(newRevision.getId(), revisions.get(0));
+        if(parent == null) {
+            sequence = insertDocumentHistoryToNewTree(db,newRevision, revisions, localRevs.getDocumentNumericId(), localRevs);
         } else {
-            sequence = insertDocumentHistoryIntoExistingTree(db,newRevision, revisions, docNumericId, attachments);
+            sequence = insertDocumentHistoryIntoExistingTree(db,newRevision, revisions, localRevs.getDocumentNumericId(), localRevs, attachments);
         }
         return sequence;
     }
 
     private long insertDocumentHistoryIntoExistingTree(SQLDatabase db, BasicDocumentRevision newRevision, List<String> revisions,
-                                                       Long docNumericID,
+                                                       Long docNumericID, DocumentRevisionTree localRevs,
                                                        Map<String, Object> attachments)
             throws AttachmentException, DocumentNotFoundException, DatastoreException {
+        BasicDocumentRevision parent = localRevs.lookup(newRevision.getId(), revisions.get(0));
+        Preconditions.checkNotNull(parent, "Parent must not be null");
+        BasicDocumentRevision previousLeaf = localRevs.getCurrentRevision();
 
-        // get info about previous "winning" rev
-        long previousLeafSeq = getSequenceInQueue(db, newRevision.getId(), null);
-        Preconditions.checkArgument(previousLeafSeq > 0, "Parent revision must exist");
 
-        // Insert the new stub revisions, going down the tree
-        // at the end of the loop, parentSeq will be the parent of our doc to insert
-        long parentSeq = 0L;
-        for (int i=0; i<revisions.size()-1; i++) {
-            String revId = revisions.get(i);
-            long seq = getSequenceInQueue(db, newRevision.getId(), revId);
-            if (seq == -1) {
-                seq = insertStubRevision(db,docNumericID, revId, parentSeq);
-                this.changeDocumentToBeNotCurrent(db, parentSeq);
+        // Walk through the remote history in chronological order, matching each revision ID to
+        // a local revision. When the list diverges, start creating blank local revisions to fill
+        // in the local history
+        int i ;
+        for (i = 1; i < revisions.size(); i++) {
+            BasicDocumentRevision nextNode = localRevs.lookupChildByRevId(parent, revisions.get(i));
+            if (nextNode == null) {
+                break;
+            } else {
+                parent = nextNode;
             }
-            parentSeq = seq;
+        }
+
+        if (i >= revisions.size()) {
+            logger.finer("All revision are in local sqlDatabase already, no new revision inserted.");
+            return -1;
+        }
+
+        // Insert the new stub revisions
+        for (; i < revisions.size() - 1; i++) {
+            logger.finer("Inserting new stub revision, id: " + docNumericID + ", rev: " + revisions.get(i));
+            this.changeDocumentToBeNotCurrent(db,parent.getSequence());
+            insertStubRevision(db,docNumericID, revisions.get(i), parent.getSequence());
+            parent = getDocumentInQueue(db, newRevision.getId(), revisions.get(i));
+            localRevs.add(parent);
         }
 
         // Insert the new leaf revision
-        String newLeafRev = revisions.get(revisions.size() - 1);
-        logger.finer("Inserting new revision, id: " + docNumericID + ", rev: " + newLeafRev);
-        this.changeDocumentToBeNotCurrent(db,parentSeq);
+        logger.finer("Inserting new revision, id: " + docNumericID + ", rev: " + revisions.get(i));
+        String newRevisionId = revisions.get(revisions.size() - 1);
+        this.changeDocumentToBeNotCurrent(db,parent.getSequence());
         // don't copy over attachments
         InsertRevisionCallable callable = new InsertRevisionCallable();
         callable.docNumericId = docNumericID;
-        callable.revId = newLeafRev;
-        callable.parentSequence = parentSeq;
+        callable.revId = newRevisionId;
+        callable.parentSequence = parent.getSequence();
         callable.deleted = newRevision.isDeleted();
         callable.current = false; // we'll call pickWinnerOfConflicts to set this if it needs it
         callable.data = newRevision.asBytes();
         callable.available = true;
-        long newLeafSeq = callable.call(db);
+        long sequence = callable.call(db);
 
-        pickWinnerOfConflicts(db, docNumericID, newRevision.getId(), previousLeafSeq);
+        BasicDocumentRevision newLeaf = getDocumentInQueue(db, newRevision.getId(), newRevisionId);
+        localRevs.add(newLeaf);
+
+        // Refresh previous leaf in case it is changed in sqlDb but not in memory
+        previousLeaf = getDocumentInQueue(db, previousLeaf.getId(), previousLeaf.getRevision());
+
+        pickWinnerOfConflicts(db,previousLeaf,localRevs);
 
         // copy stubbed attachments forward from last real revision to this revision
         if (attachments != null) {
@@ -1252,7 +1206,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 Boolean stub = ((Map<String, Boolean>) attachments.get(att)).get("stub");
                 if (stub != null && stub.booleanValue()) {
                     try {
-                        AttachmentManager.copyAttachment(db, previousLeafSeq, newLeafSeq, att);
+                        AttachmentManager.copyAttachment(db,previousLeaf.getSequence(), sequence, att);
                     } catch (SQLException sqe) {
                         logger.log(Level.SEVERE, "Error copying stubbed attachments", sqe);
                         throw new DatastoreException("Error copying stubbed attachments",sqe);
@@ -1261,18 +1215,18 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             }
         }
 
-        return newLeafSeq;
+        return sequence;
     }
 
     private long insertDocumentHistoryToNewTree(SQLDatabase db, BasicDocumentRevision newRevision,
                                                 List<String> revisions,
-                                                Long docNumericID)
+                                                Long docNumericID,
+                                                DocumentRevisionTree localRevs)
             throws AttachmentException, DocumentNotFoundException, DatastoreException {
         Preconditions.checkArgument(checkCurrentRevisionIsInRevisionHistory(newRevision, revisions),
                 "Current revision must exist in revision history.");
 
-        // get info about previous "winning" rev
-        long previousLeafSeq = getSequenceInQueue(db, newRevision.getId(), null);
+        BasicDocumentRevision previousWinner = localRevs.getCurrentRevision();
 
         // Adding a brand new tree
         logger.finer("Inserting a brand new tree for an existing document.");
@@ -1280,28 +1234,31 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         for(int i = 0 ; i < revisions.size() - 1 ; i ++) {
             //we copy attachments here so allow the exception to propagate
             parentSequence = insertStubRevision(db,docNumericID, revisions.get(i), parentSequence);
+            BasicDocumentRevision newNode = this.getDocumentInQueue(db, newRevision.getId(),
+                    revisions.get(i));
+            localRevs.add(newNode);
         }
         // don't copy attachments
-        String newLeafRev = newRevision.getRevision();
         InsertRevisionCallable callable = new InsertRevisionCallable();
         callable.docNumericId = docNumericID;
-        callable.revId = newLeafRev;
+        callable.revId = newRevision.getRevision();
         callable.parentSequence = parentSequence;
         callable.deleted = newRevision.isDeleted();
         callable.current = false; // we'll call pickWinnerOfConflicts to set this if it needs it
         callable.data = newRevision.asBytes();
         callable.available = !newRevision.isDeleted();
-        long newLeafSeq = callable.call(db);
+        long sequence = callable.call(db);
+        BasicDocumentRevision newLeaf = getDocumentInQueue(db, newRevision.getId(), newRevision.getRevision());
+        localRevs.add(newLeaf);
 
-        pickWinnerOfConflicts(db, docNumericID, newRevision.getId(), previousLeafSeq);
-        return newLeafSeq;
+        // No need to refresh the previousWinner since we are inserting a new tree,
+        // and nothing on the old tree should be touched.
+        pickWinnerOfConflicts(db,previousWinner,localRevs);
+        return sequence;
     }
 
 
-    private void pickWinnerOfConflicts(SQLDatabase db,
-                                       long docNumericId,
-                                       String docId,
-                                       long previousWinnerSeq) throws DatastoreException {
+    private void pickWinnerOfConflicts(SQLDatabase db, BasicDocumentRevision previousWinner, DocumentRevisionTree objectTree) {
 
         /*
          Pick winner and mark the appropriate revision with the 'current' flag set
@@ -1318,54 +1275,29 @@ class BasicDatastore implements Datastore, DatastoreExtended {
          */
 
         // first get all non-deleted leafs
-        List<String> leafs = new ArrayList<String>();
-        Cursor cursor = null;
-        try {
-            cursor = db.rawQuery(GET_NON_DELETED_LEAFS, new String[]{Long.toString(docNumericId)});
-            while (cursor.moveToNext()) {
-                leafs.add(cursor.getString(0));
-            }
-        } catch (SQLException sqe) {
-            throw new DatastoreException("Exception thrown whilst trying to fetch non-deleted leaf nodes in pickWinnerOfConflicts", sqe);
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
-
-        // this is a corner case - all leaf nodes are deleted
-        // re-get with the same query but without the revs.delete clause
+        List<BasicDocumentRevision> leafs = objectTree.leafRevisions(true);
         if (leafs.size() == 0) {
-            try {
-                cursor = db.rawQuery(GET_ALL_LEAFS, new String[]{Long.toString(docNumericId)});
-                while (cursor.moveToNext()) {
-                    leafs.add(cursor.getString(0));
-                }
-            } catch (SQLException sqe) {
-                throw new DatastoreException("Exception thrown whilst trying to fetch all leaf nodes in pickWinnerOfConflicts", sqe);
-            } finally {
-                DatabaseUtils.closeCursorQuietly(cursor);
-            }
+            // all deleted, apply the normal rules to all the leafs
+            leafs = objectTree.leafRevisions();
         }
 
-        Collections.sort(leafs, new Comparator<String>() {
+        Collections.sort(leafs, new Comparator<BasicDocumentRevision>() {
             @Override
-            public int compare(String r1, String r2) {
-                int generationCompare = CouchUtils.generationFromRevId(r1) -
-                        CouchUtils.generationFromRevId(r2);
+            public int compare(BasicDocumentRevision r1, BasicDocumentRevision r2) {
+                int generationCompare = r1.getGeneration() - r2.getGeneration();
                 // note that the return statements have a unary minus since we are reverse sorting
                 if (generationCompare != 0) {
                     return -generationCompare;
                 } else {
-                    return -CouchUtils.getRevisionIdSuffix(r1).compareTo(CouchUtils
-                            .getRevisionIdSuffix(r2));
+                    return -r1.getRevision().compareTo(r2.getRevision());
                 }
             }
         });
         // new winner will be at the top of the list
-        String leaf = leafs.get(0);
-        long newWinnerSeq = getSequenceInQueue(db, docId, leaf);
-        if (previousWinnerSeq != newWinnerSeq) {
-            this.changeDocumentToBeNotCurrent(db, previousWinnerSeq);
-            this.changeDocumentToBeCurrent(db, newWinnerSeq);
+        BasicDocumentRevision leaf = leafs.get(0);
+        if (previousWinner.getSequence() != leaf.getSequence()) {
+            this.changeDocumentToBeNotCurrent(db, previousWinner.getSequence());
+            this.changeDocumentToBeCurrent(db, leaf.getSequence());
         }
     }
 
