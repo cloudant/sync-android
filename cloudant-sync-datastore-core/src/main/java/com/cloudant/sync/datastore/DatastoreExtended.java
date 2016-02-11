@@ -81,73 +81,61 @@ public interface DatastoreExtended extends Datastore {
     DocumentRevisionTree getAllRevisionsOfDocument(String documentId);
 
     /**
-     * <p>
-     * Inserts one or more revisions of a document into the database. For efficiency, this is
-     * performed as one database transaction.
-     * </p>
-     * <p>
-     * Each revision is inserted at a point in the tree expressed by the path described in the
-     * {@code revisionHistory} field. If any non-leaf revisions do not exist locally, then they are
-     * created as "stub" revisions.
-     * </p>
-     * <p>
-     * This method should only be called by the replicator. It is designed
-     * to allow revisions from remote databases to be added to this
-     * database during the replication process: the documents in the remote database already have
-     * revision IDs that need to be preserved for the two databases to be in sync (otherwise it
-     * would not be possible to tell that the two represent the same revision). This is analogous to
-     * using the _new_edits false option in CouchDB
-     * (see <a href="https://wiki.apache.org/couchdb/HTTP_Bulk_Document_API#Posting_Existing_Revisions">
-     * the CouchDB wiki</a> for more detail).
-     * <p>
-     * If the document was successfully inserted, a
+     * <p>Inserts a revision of a document with an existing revision ID and
+     * revision history.</p>
+     *
+     * <p>This method inserts a revision into the document tree for an existing
+     * document. It checks every revision in the revision history, and adds
+     * {@code rev} is it isn't already present in the datastore.</p>
+     *
+     * <p>Here is an example of revHistory:</p>
+     *
+     * <pre>
+     * [
+     *     "1-421ff3d58df47ea6c5e83ca65efb2fa9",
+     *     "2-74e0572530e3b4cd4776616d2f591a96",
+     *     "3-d8e1fb8127d8dd732d9ae46a6c38ae3c",
+     *     "4-47d7102726fc89914431cb217ab7bace"
+     * ]
+     * </pre>
+     *
+     * <p>This method should only be called by the replicator. It's designed
+     * to allow revisions from different datastores to be added to this
+     * datastore during the replication process, when we wouldn't want to
+     * create new revision IDs (as if we did, we wouldn't know that we already
+     * had a particular revision from a previous replication).</p>
+     *
+     * <p>The {@code revisionHistory} is required so that we know whether
+     * the {@code rev} is part of the existing document tree, so we can see
+     * whether it's a conflict which needs to be grafted to the tree or
+     * whether it's a newer version of the same branch we already have.</p>
+     *
+     * <p>If the document was successfully inserted, a
      * {@link com.cloudant.sync.notifications.DocumentCreated DocumentCreated},
      * {@link com.cloudant.sync.notifications.DocumentModified DocumentModified}, or
      * {@link com.cloudant.sync.notifications.DocumentDeleted DocumentDeleted}
      * event is posted on the event bus. The event will depend on the nature
-     * of the update made.
-     * </p>
+     * of the update made.</p>
      *
-     *
-     * @param items one or more revisions to insert. Each {@code ForceInsertItem} consists of:
-     * <ul>
-     * <li>
-     * <b>rev</b> A {@code DocumentRevision} containing the information for a revision
-     * from a remote datastore.
-     * </li>
-     * <li>
-     * <b>revisionHistory</b> The history of the revision being inserted,
-     * including the rev ID of {@code rev}. This list
-     * needs to be sorted in ascending order
-     * </li>
-     * <li>
-     * <b>attachments</b> Attachments metadata and optionally data if {@code pullAttachmentsInline} true
-     * </li>
-     * <li>
-     * <b>preparedAttachments</b> Non-empty if {@code pullAttachmentsInline} false.
-     * Attachments that have already been prepared, this is a
-     * Map of String[docId,revId] → list of attachments
-     * </li>
-     * <li>
-     * <b>pullAttachmentsInline</b> If true, use {@code attachments} metadata and data directly
-     * from received JSON to add new attachments for this revision.
-     * Else use {@code preparedAttachments} which were previously
-     * downloaded and prepared by processOneChangesBatch in
-     * BasicPullStrategy
-     * </li>
-     * </ul>
+     * @param rev A {@code DocumentRevision} containing the information for a revision
+     *            from a remote datastore.
+     * @param revisionHistory The history of the revision being inserted,
+     *                        including the rev ID of {@code rev}. This list
+     *                        needs to be sorted in ascending order
+     * @param attachments Attachments metadata and optionally data if {@code pullAttachmentsInline} true
+     * @param preparedAttachments Non-empty if {@code pullAttachmentsInline} false.
+     *                            Attachments that have already been prepared, this is a
+     *                            Map of String[docId,revId] → list of attachments
+     * @param pullAttachmentsInline If true, use {@code attachments} metadata and data directly
+     *                              from received JSON to add new attachments for this revision.
+     *                              Else use {@code preparedAttachments} which were previously
+     *                              downloaded and prepared by processOneChangesBatch in
+     *                              BasicPullStrategy
      *
      * @see Datastore#getEventBus()
      * @throws DocumentException if there was an error inserting the revision or its attachments
      * into the database
      */
-    void forceInsert(final List<ForceInsertItem> items) throws DocumentException;
-
-    /**
-     * This method has been deprecated and should not be used.
-     * @see #forceInsert(List)
-     */
-    @Deprecated
     void forceInsert(BasicDocumentRevision rev,
                             List<String> revisionHistory,
                             Map<String, Object> attachments,
