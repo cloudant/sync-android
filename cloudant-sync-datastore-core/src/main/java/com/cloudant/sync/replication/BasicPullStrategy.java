@@ -268,6 +268,18 @@ class BasicPullStrategy implements ReplicationStrategy {
         logger.info(msg);
     }
 
+    public class BatchItem {
+
+        public BatchItem(DocumentRevsList revsList,
+                         HashMap<String[], List<PreparedAttachment>> attachments) {
+            this.revsList = revsList;
+            this.attachments = attachments;
+        }
+
+        public HashMap<String[], List<PreparedAttachment>> attachments;
+        public DocumentRevsList revsList;
+    }
+
     private int processOneChangesBatch(ChangesResultWrapper changeFeeds)
             throws ExecutionException, InterruptedException, DocumentException {
         String feed = String.format(
@@ -285,7 +297,11 @@ class BasicPullStrategy implements ReplicationStrategy {
         // Process the changes in batches
         List<String> ids = Lists.newArrayList(missingRevisions.keySet());
         List<List<String>> batches = Lists.partition(ids, this.insertBatchSize);
+
+
         for (List<String> batch : batches) {
+
+            List<BatchItem> batchesToInsert = new ArrayList<BatchItem>();
 
             if (this.state.cancel) { break; }
 
@@ -374,9 +390,10 @@ class BasicPullStrategy implements ReplicationStrategy {
                     if (this.state.cancel)
                         break;
 
-                    this.targetDb.bulkInsert(revsList, atts, this.pullAttachmentsInline);
+                    batchesToInsert.add(new BatchItem(revsList, atts));
                     changesProcessed++;
                 }
+                this.targetDb.bulkInsert(batchesToInsert, this.pullAttachmentsInline);
             } catch (Exception e) {
                 throw new ExecutionException(e);
             }
