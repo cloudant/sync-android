@@ -191,7 +191,7 @@ device the the remote database.
 Replication is simple to get started in the common cases:
 
 ```java
-import com.cloudant.sync.replication.ReplicationFactory;
+import com.cloudant.sync.replication.ReplicatorBuilder;
 import com.cloudant.sync.replication.Replicator;
 
 URI uri = new URI("https://apikey:apipasswd@username.cloudant.com/my_database");
