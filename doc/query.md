@@ -408,8 +408,8 @@ Map<String, String> sortByName = new HashMap<String, String>();
 Map<String, String> sortByAge = new HashMap<String, String>();
 sortByName.put("name", "asc");
 sortByAge.put("age", "desc");
-sortDocument.add(sortName);
-sortDocument.add(sortAge);
+sortDocument.add(sortByName);
+sortDocument.add(sortByAge);
 QueryResult queryResult = im.find(query, 0, 0, null, sortDocument);
 ```
 
