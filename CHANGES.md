@@ -2,6 +2,8 @@
 - [IMPROVED] Optimise pull replication performance. This is achieved
   by reducing excessive database traffic and batching up insertions in
   one SQL transaction.
+- [FIXED] Issue where `java.lang.RuntimeException: Offer timed out` could be thrown 5 minutes after
+  stopping a replication.
 
 # 0.15.3 (2016-02-11)
 - [REVERT] Revert replication optimisations which caused updated revisions to be

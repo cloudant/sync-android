@@ -19,6 +19,7 @@ import static org.hamcrest.CoreMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.cloudant.common.CouchUtils;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.AnimalDb;
 import com.cloudant.mazha.CouchClient;
@@ -34,11 +35,15 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 @Category(RequireRunningCouchDB.class)
 public class BasicPullStrategyTest extends ReplicationTestBase {
@@ -401,6 +406,93 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
             im.close();
         }
 
+    }
+
+    /**
+     * Test that a replication can be stopped.
+     * Uses a lot of large-ish docs to ensure the replication takes some time.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void stopRunningReplication() throws Exception {
+        // Create a lot of documents in the remote db
+        int createBatches = 3;
+        int numDocsPerBatch = 700;
+        Random r = new Random();
+        for (int batch = 0; batch < createBatches; batch++) {
+            List<Foo> docs = new ArrayList<Foo>(numDocsPerBatch);
+            for (int i = 0; i < numDocsPerBatch; i++) {
+                Foo f = new Foo();
+                String docPrefix = batch + "-" + i + "-";
+                f.setId(docPrefix + CouchUtils.generateDocumentId());
+                f.setRevision(CouchUtils.getFirstRevisionId());
+                byte[] bytes = new byte[512];
+                r.nextBytes(bytes);
+                f.setFoo("Foo " + docPrefix + " " + new String(bytes, "UTF-8"));
+                docs.add(f);
+            }
+            remoteDb.getCouchClient().bulkCreateDocs(docs);
+        }
+
+        // Start the replication
+        Replicator replicator = getPullBuilder().build();
+        replicator.start();
+
+        // Wait until the replicator is already started before stopping
+        do {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } while (replicator.getState() == Replicator.State.PENDING);
+
+        // Assert that the replicator is started
+        Assert.assertEquals("The replicator should be started", Replicator.State.STARTED,
+                replicator.getState());
+
+        // Let the replicator run for a short time
+        TimeUnit.MILLISECONDS.sleep(500);
+
+        // This is horrible reflection to assert that no tasks have been left behind
+        // because of https://github.com/cloudant/sync-android/issues/232, it would otherwise take
+        // 5 minutes to see exceptions from tasks being left behind
+        BasicPullStrategy pullStrategy = getPrivateField(BasicReplicator.class, "strategy",
+                BasicPullStrategy.class, replicator);
+        List<GetRevisionTaskThreaded> tasks = getPrivateField(BasicPullStrategy.class,
+                "threadedTasks", List.class, pullStrategy);
+
+        // Assert that at least one task has been created before stopping the replicator
+        Assert.assertTrue("There should be at least one task created", tasks.size() >= 1);
+
+        // Now stop the replicator
+        replicator.stop();
+
+        // Wait until the replicator is stopped
+        do {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } while (replicator.getState() == Replicator.State.STOPPING);
+
+        // Assert that the replicator stopped (not error/complete)
+        Assert.assertEquals("The replicator should be stopped", Replicator.State.STOPPED,
+                replicator.getState());
+
+        // Check that the tasks have no leftover jobs or responses
+        for (GetRevisionTaskThreaded task : tasks) {
+            Collection jobs = getPrivateField(GetRevisionTaskThreaded.class, "submittedJobs",
+                    Collection.class, task);
+            Assert.assertTrue("There should be no jobs left", jobs.isEmpty());
+            Collection responses = getPrivateField(GetRevisionTaskThreaded.class, "responses",
+                    Collection.class, task);
+            Assert.assertTrue("There should be no responses left", responses.isEmpty());
+        }
+    }
+
+    /**
+     * Set field as accessible and get the value
+     */
+    private <T> T getPrivateField(Class<?> sourceOfField, String fieldName, Class<T>
+            typeOfField, Object instanceOfField) throws Exception {
+        Field field = sourceOfField.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return (T) field.get(instanceOfField);
     }
 
 }
