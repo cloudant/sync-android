@@ -1,4 +1,4 @@
-# Unreleased
+# 0.15.4 (2016-02-22)
 - [IMPROVED] Optimise pull replication performance. This is achieved
   by reducing excessive database traffic and batching up insertions in
   one SQL transaction.
