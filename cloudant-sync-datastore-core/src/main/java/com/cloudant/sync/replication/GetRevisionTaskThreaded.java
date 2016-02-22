@@ -17,9 +17,12 @@ package com.cloudant.sync.replication;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.google.common.base.Preconditions;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -80,6 +83,8 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
     private final CouchDB sourceDb;
     private final List<BulkGetRequest> requests;
     private final boolean pullAttachmentsInline;
+    private final Set<Future<DocumentRevsList>> submittedJobs =
+            Collections.synchronizedSet(new HashSet<Future<DocumentRevsList>>());
 
     private boolean iteratorValid = true;
 
@@ -137,14 +142,42 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
         // we make the request at construction time...
         for (final BulkGetRequest request : requests) {
 
-            completionService.submit(new Callable<DocumentRevsList>() {
+            submittedJobs.add(completionService.submit(new Callable<DocumentRevsList>() {
                 @Override
                 public DocumentRevsList call() throws Exception {
                     return new DocumentRevsList(GetRevisionTaskThreaded.this.sourceDb.getRevisions
                             (request.id, request.revs, request.atts_since,
                                     GetRevisionTaskThreaded.this.pullAttachmentsInline));
                 }
-            });
+            }));
+        }
+    }
+
+    void cancel() {
+        synchronized (submittedJobs) {
+            for (Future<DocumentRevsList> f : submittedJobs) {
+                // Don't interrupt if already running, we'll get the running ones from the completed
+                // queue.
+                f.cancel(false);
+            }
+        }
+        // Cancelling will line a whole bunch of tasks up for addition to the queue, so we need
+        // to keep draining it
+        try {
+            while (!submittedJobs.isEmpty()) {
+                try {
+                    Future<DocumentRevsList> r = completionService.poll(responseTimeout,
+                            responseTimeoutUnits);
+                    if (r != null) {
+                        submittedJobs.remove(r);
+                    }
+                } catch (InterruptedException e) {
+                    // If the poll was interrupted, try again
+                    continue;
+                }
+            }
+        } finally {
+            shutdownThreadPool();
         }
     }
 
@@ -162,6 +195,15 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
                 '}';
     }
 
+    private void shutdownThreadPool() {
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            ;
+        }
+    }
+
     private class GetRevisionTaskIterator implements Iterator<DocumentRevsList> {
 
         @Override
@@ -176,12 +218,7 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
             // if we have returned all of our results, we can shut down the executor
             if (!next) {
                 iteratorValid = false;
-                executorService.shutdown();
-                try {
-                    executorService.awaitTermination(5, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    ;
-                }
+                shutdownThreadPool();
             }
 
             return next;
@@ -201,6 +238,7 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
                     throw new NoSuchElementException("Poll timed out");
                 }
                 requestsOutstanding.decrementAndGet();
+                submittedJobs.remove(pollResult);
                 return pollResult.get();
             } catch (InterruptedException ie) {
                 iteratorValid = false;

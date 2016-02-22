@@ -20,10 +20,10 @@ import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.Attachment;
+import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DatastoreExtended;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentNotFoundException;
 import com.cloudant.sync.datastore.DocumentRevsList;
@@ -31,7 +31,6 @@ import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.Misc;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.EventBus;
@@ -215,7 +214,12 @@ class BasicPullStrategy implements ReplicationStrategy {
         this.state.documentCounter = 0;
         for (this.state.batchCounter = 1; this.state.batchCounter < this.batchLimitPerRun; this.state.batchCounter++) {
 
-            if (this.state.cancel) { return; }
+            if (this.state.cancel) {
+                for (GetRevisionTaskThreaded task : threadedTasks) {
+                    task.cancel();
+                }
+                return;
+            }
 
             String msg = String.format(
                     "Batch %s started (completed %s changes so far)",
@@ -435,6 +439,8 @@ class BasicPullStrategy implements ReplicationStrategy {
         return new ChangesResultWrapper(changeFeeds);
     }
 
+    private List<GetRevisionTaskThreaded> threadedTasks = new ArrayList<GetRevisionTaskThreaded>();
+
     public Iterable<DocumentRevsList> createTask(List<String> ids,
                                                  Map<String, Collection<String>> revisions) {
 
@@ -467,7 +473,9 @@ class BasicPullStrategy implements ReplicationStrategy {
         if (useBulkGet) {
             return new GetRevisionTaskBulk(this.sourceDb, requests, this.pullAttachmentsInline);
         } else {
-            return new GetRevisionTaskThreaded(this.sourceDb, requests, this.pullAttachmentsInline);
+            GetRevisionTaskThreaded task = new GetRevisionTaskThreaded(this.sourceDb, requests, this.pullAttachmentsInline);
+            threadedTasks.add(task);
+            return task;
         }
     }
     
