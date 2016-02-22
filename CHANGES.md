@@ -1,3 +1,8 @@
+# Unreleased
+- [IMPROVED] Optimise pull replication performance. This is achieved
+  by reducing excessive database traffic and batching up insertions in
+  one SQL transaction.
+
 # 0.15.3 (2016-02-11)
 - [REVERT] Revert replication optimisations which caused updated revisions to be
   inserted as new documents
