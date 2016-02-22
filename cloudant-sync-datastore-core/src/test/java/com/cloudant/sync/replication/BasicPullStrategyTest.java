@@ -460,7 +460,10 @@ public class BasicPullStrategyTest extends ReplicationTestBase {
                 "threadedTasks", List.class, pullStrategy);
 
         // Assert that at least one task has been created before stopping the replicator
-        Assert.assertTrue("There should be at least one task created", tasks.size() >= 1);
+        // Only applicable when not using bulk_get
+        if (!remoteDb.getCouchClient().isBulkSupported()) {
+            Assert.assertTrue("There should be at least one task created", tasks.size() >= 1);
+        }
 
         // Now stop the replicator
         replicator.stop();
