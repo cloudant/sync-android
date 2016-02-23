@@ -215,9 +215,6 @@ class BasicPullStrategy implements ReplicationStrategy {
         for (this.state.batchCounter = 1; this.state.batchCounter < this.batchLimitPerRun; this.state.batchCounter++) {
 
             if (this.state.cancel) {
-                for (GetRevisionTaskThreaded task : threadedTasks) {
-                    task.cancel();
-                }
                 return;
             }
 
@@ -439,8 +436,6 @@ class BasicPullStrategy implements ReplicationStrategy {
         return new ChangesResultWrapper(changeFeeds);
     }
 
-    private List<GetRevisionTaskThreaded> threadedTasks = new ArrayList<GetRevisionTaskThreaded>();
-
     public Iterable<DocumentRevsList> createTask(List<String> ids,
                                                  Map<String, Collection<String>> revisions) {
 
@@ -473,9 +468,7 @@ class BasicPullStrategy implements ReplicationStrategy {
         if (useBulkGet) {
             return new GetRevisionTaskBulk(this.sourceDb, requests, this.pullAttachmentsInline);
         } else {
-            GetRevisionTaskThreaded task = new GetRevisionTaskThreaded(this.sourceDb, requests, this.pullAttachmentsInline);
-            threadedTasks.add(task);
-            return task;
+            return new GetRevisionTaskThreaded(this.sourceDb, requests, this.pullAttachmentsInline);
         }
     }
     

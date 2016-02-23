@@ -23,10 +23,14 @@ public class TestReplicationListener {
     public boolean errorCalled = false;
     public boolean finishCalled = false;
     public Throwable exception = null;
+    public int batches = 0;
+    public int docs = 0;
 
     @Subscribe
     public void complete(ReplicationCompleted rc) {
         finishCalled = true;
+        batches = rc.batchesReplicated;
+        docs = rc.documentsReplicated;
     }
 
     @Subscribe
