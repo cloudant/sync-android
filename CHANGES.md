@@ -1,4 +1,4 @@
-# Unreleased
+# 0.15.5 (2016-02-25)
 - [FIXED] Issue where `java.lang.RuntimeException: Offer timed out` could be thrown 5 minutes after
   a replication error.
 
