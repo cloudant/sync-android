@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+/*
+ * Copyright (c) 2013, 2016 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -17,29 +17,25 @@ package com.cloudant.sync.replication;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.google.common.base.Preconditions;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
  * Handles calling CouchClient.getDocWithOpenRevisions() for a batch of revisions IDs, with
  * multiple simultaneous HTTP threads, returning the results back in a manner which can be iterated
  * over (to avoid deserialising the entire result into memory).
- * 
- * For each revision ID, gets the revision tree for a given document ID and lists of open revision IDs
+ *
+ * For each revision ID, gets the revision tree for a given document ID and lists of open
+ * revision IDs
  * and "atts_since" (revision IDs for which we know we have attachments)
  *
  * The document id and open revisions are from one row of change feeds. For example, for the
@@ -74,29 +70,37 @@ import java.util.logging.Logger;
  */
 class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
 
-    private static final Logger logger = Logger.getLogger(GetRevisionTaskThreaded.class.getCanonicalName());
-
-    // members used to make requests:
-
-    private final ExecutorService executorService;
-    private final ExecutorCompletionService<DocumentRevsList> completionService;
-    private final CouchDB sourceDb;
-    private final List<BulkGetRequest> requests;
-    private final boolean pullAttachmentsInline;
-    private final Set<Future<DocumentRevsList>> submittedJobs =
-            Collections.synchronizedSet(new HashSet<Future<DocumentRevsList>>());
-
-    private boolean iteratorValid = true;
+    private static final Logger logger = Logger.getLogger(GetRevisionTaskThreaded.class
+            .getCanonicalName());
 
     // this should be a sensible number of threads but we may make this configurable in future
-    int threads = 4;
+    private static final int threads = Runtime.getRuntime().availableProcessors() * 2;
+    private static final ThreadPoolExecutor executorService;
+
+    static {
+        // A static thread pool allows it to be shared between all tasks, reducing the overheads of
+        // thread creation and destruction, but at the expense of sharing threads between all
+        // replications (within the classloader/android application).
+        // On a large number of batches this offers a 4-5% improvement over creating a thread pool
+        // for each task instance.
+        ThreadPoolExecutor tpe = new ThreadPoolExecutor(threads, threads, 1,
+                TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>());
+        // Allowing core threads to timeout means we don't keep threads in memory except when
+        // replication tasks are running.
+        tpe.allowCoreThreadTimeOut(true);
+        executorService = tpe;
+    }
+
+    // members used to make requests:
+    private final QueuingExecutorCompletionService<BulkGetRequest, DocumentRevsList> completionService;
+    private final CouchDB sourceDb;
+    private final Queue<BulkGetRequest> requests = new ConcurrentLinkedQueue<BulkGetRequest>();
+    private final boolean pullAttachmentsInline;
 
     // members used to handle responses:
+    private boolean iteratorValid = true;
 
-    LinkedBlockingQueue<Future<DocumentRevsList>> responses;
-    AtomicInteger requestsOutstanding;
-
-    // timeouts for poll() and offer():
+    // timeout for poll()
     int responseTimeout = 5;
     TimeUnit responseTimeoutUnits = TimeUnit.MINUTES;
 
@@ -105,81 +109,25 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
                                    boolean pullAttachmentsInline) {
         Preconditions.checkNotNull(sourceDb, "sourceDb cannot be null");
         Preconditions.checkNotNull(requests, "requests cannot be null");
-        for(BulkGetRequest request : requests) {
+        for (BulkGetRequest request : requests) {
             Preconditions.checkNotNull(request.id, "id cannot be null");
             Preconditions.checkNotNull(request.revs, "revs cannot be null");
         }
 
         this.sourceDb = sourceDb;
-        this.requests = requests;
+        this.requests.addAll(requests);
         this.pullAttachmentsInline = pullAttachmentsInline;
-        this.executorService = Executors.newFixedThreadPool(threads);
-        // limit the size of the response queue, so we don't produce thousands of results before
-        // they have been consumed
-        this.responses = new LinkedBlockingQueue<Future<DocumentRevsList>>(threads) {
-            // from javadoc of ExecutorCompletionService:
-            // "This queue is treated as unbounded -- failed attempted Queue.add operations for completed taskes cause them not to be retrievable"
-            // so we make add() behave like offer() so we can block until the queue has capacity
+        this.completionService = new QueuingExecutorCompletionService<BulkGetRequest,
+                DocumentRevsList>(executorService, this.requests, threads + 1) {
             @Override
-            public boolean add(Future<DocumentRevsList> documentRevsListFuture) {
-                boolean offerResult;
-                try {
-                    offerResult = offer(documentRevsListFuture, responseTimeout,
-                            responseTimeoutUnits);
-                } catch (InterruptedException ie) {
-                    throw new RuntimeException("Offer interrupted", ie);
-                }
-                if (!offerResult) {
-                    throw new RuntimeException("Offer timed out");
-                }
-                return true;
+            public DocumentRevsList executeRequest(BulkGetRequest request) {
+                return new DocumentRevsList(GetRevisionTaskThreaded.this.sourceDb.getRevisions
+                        (request.id, request.revs, request.atts_since,
+                                GetRevisionTaskThreaded.this.pullAttachmentsInline));
             }
         };
-        this.completionService = new ExecutorCompletionService<DocumentRevsList>(executorService,
-                responses);
-        this.requestsOutstanding = new AtomicInteger(requests.size());
-
-        // we make the request at construction time...
-        for (final BulkGetRequest request : requests) {
-
-            submittedJobs.add(completionService.submit(new Callable<DocumentRevsList>() {
-                @Override
-                public DocumentRevsList call() throws Exception {
-                    return new DocumentRevsList(GetRevisionTaskThreaded.this.sourceDb.getRevisions
-                            (request.id, request.revs, request.atts_since,
-                                    GetRevisionTaskThreaded.this.pullAttachmentsInline));
-                }
-            }));
-        }
     }
 
-    void cancel() {
-        synchronized (submittedJobs) {
-            for (Future<DocumentRevsList> f : submittedJobs) {
-                // Don't interrupt if already running, we'll get the running ones from the completed
-                // queue.
-                f.cancel(false);
-            }
-        }
-        // Cancelling will line a whole bunch of tasks up for addition to the queue, so we need
-        // to keep draining it
-        try {
-            while (!submittedJobs.isEmpty()) {
-                try {
-                    Future<DocumentRevsList> r = completionService.poll(responseTimeout,
-                            responseTimeoutUnits);
-                    if (r != null) {
-                        submittedJobs.remove(r);
-                    }
-                } catch (InterruptedException e) {
-                    // If the poll was interrupted, try again
-                    continue;
-                }
-            }
-        } finally {
-            shutdownThreadPool();
-        }
-    }
 
     @Override
     public Iterator<DocumentRevsList> iterator() {
@@ -195,15 +143,6 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
                 '}';
     }
 
-    private void shutdownThreadPool() {
-        executorService.shutdown();
-        try {
-            executorService.awaitTermination(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            ;
-        }
-    }
-
     private class GetRevisionTaskIterator implements Iterator<DocumentRevsList> {
 
         @Override
@@ -213,12 +152,11 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
                 return false;
             }
 
-            boolean next = requestsOutstanding.get() != 0;
+            boolean next = completionService.hasRequestsOutstanding();
 
             // if we have returned all of our results, we can shut down the executor
             if (!next) {
                 iteratorValid = false;
-                shutdownThreadPool();
             }
 
             return next;
@@ -237,8 +175,6 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
                 if (pollResult == null) {
                     throw new NoSuchElementException("Poll timed out");
                 }
-                requestsOutstanding.decrementAndGet();
-                submittedJobs.remove(pollResult);
                 return pollResult.get();
             } catch (InterruptedException ie) {
                 iteratorValid = false;
