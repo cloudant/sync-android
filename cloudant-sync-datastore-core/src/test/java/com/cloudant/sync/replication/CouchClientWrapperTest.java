@@ -14,12 +14,20 @@
 
 package com.cloudant.sync.replication;
 
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+
 import com.cloudant.common.CouchTestBase;
 import com.cloudant.common.RequireRunningCouchDB;
-import com.cloudant.mazha.*;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentBody;
+import com.cloudant.mazha.ChangesResult;
+import com.cloudant.mazha.CouchConfig;
+import com.cloudant.mazha.DocumentRevs;
+import com.cloudant.mazha.NoResourceException;
+import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentBody;
+import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevisionBuilder;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.TestUtils;
@@ -36,8 +44,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import static org.hamcrest.CoreMatchers.*;
 
 @Category(RequireRunningCouchDB.class)
 public class CouchClientWrapperTest extends CouchTestBase {
@@ -316,14 +322,17 @@ public class CouchClientWrapperTest extends CouchTestBase {
     public void accessAndUpdateRemoteDbWithSlashInName() throws Exception {
         //do a little set up for this specific test
         CouchConfig config = super.getCouchConfig("myslash%2Fencoded_db");
-        remoteDb = new CouchClientWrapper(config.getRootUri(), config.getRequestInterceptors(),
+        CouchClientWrapper slashDb = new CouchClientWrapper(config.getRootUri(),
+                config.getRequestInterceptors(),
                 config.getResponseInterceptors());
-        CouchClientWrapperDbUtils.deleteDbQuietly(remoteDb);
-        remoteDb.createDatabase();
-        Bar bar1 = new Bar();
-        Response res1 = remoteDb.create(bar1);
-        Assert.assertNotNull(res1);
-        Assert.assertTrue(res1.getOk());
-
+        slashDb.createDatabase();
+        try {
+            Bar bar1 = new Bar();
+            Response res1 = slashDb.create(bar1);
+            Assert.assertNotNull(res1);
+            Assert.assertTrue(res1.getOk());
+        } finally {
+            CouchClientWrapperDbUtils.deleteDbQuietly(slashDb);
+        }
     }
 }
