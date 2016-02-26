@@ -615,7 +615,8 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public List<DocumentRevision> getDocumentsWithIds(final List<String> docIds) {
+    public List<DocumentRevision> getDocumentsWithIds(final List<String> docIds)  throws
+            DocumentException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkNotNull(docIds, "Input document id list cannot be null");
         try {
@@ -632,13 +633,12 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 }
             }).get();
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE,"Failed to get documents with ids",e);
+            logger.log(Level.SEVERE, "Failed to get documents with ids", e);
+            throw new DocumentException("Failed to get documents with ids", e);
         } catch (ExecutionException e) {
             logger.log(Level.SEVERE, "Failed to get documents with ids", e);
+            throw new DocumentException("Failed to get documents with ids", e);
         }
-
-        return null;
-
     }
 
     @Override
