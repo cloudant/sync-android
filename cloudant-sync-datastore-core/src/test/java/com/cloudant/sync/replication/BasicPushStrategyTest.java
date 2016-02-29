@@ -18,13 +18,10 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.NoResourceException;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionBuilder;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -68,7 +65,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         return DocumentBodyFactory.create(m);
     }
 
-    private BasicDocumentRevision createDbObject(String rev, DocumentBody body) {
+    private DocumentRevision createDbObject(String rev, DocumentBody body) {
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
         builder.setDocId("1");
         builder.setRevId(rev);
@@ -269,11 +266,11 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         BasicPushStrategy replicator = (BasicPushStrategy) ((BasicReplicator) super
                 .getPushBuilder().changeLimitPerBatch(1).build()).strategy;
 
-        BasicDocumentRevision rev = createDbObject("5-e", createDBBody("Tom"));
+        DocumentRevision rev = createDbObject("5-e", createDBBody("Tom"));
         datastore.forceInsert(rev, "1-a", "2-b", "3-c", "4-d", "5-e");
 
         // 5-x will be the winner
-        BasicDocumentRevision rev2 = createDbObject("5-x", createDBBody("Jerry"));
+        DocumentRevision rev2 = createDbObject("5-x", createDBBody("Jerry"));
         datastore.forceInsert(rev2, "1-a", "2-b", "3-c", "4-d", "5-x");
 
         this.push(replicator, 1);
@@ -292,11 +289,11 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         BasicPushStrategy replicator = (BasicPushStrategy) ((BasicReplicator) super
                 .getPushBuilder().changeLimitPerBatch(1).build()).strategy;
 
-        BasicDocumentRevision rev = createDbObject("4-d", createDBBody("Tom"));
+        DocumentRevision rev = createDbObject("4-d", createDBBody("Tom"));
         datastore.forceInsert(rev, "1-a", "2-b", "3-c", "4-d");
 
         // 4-d will be the winner
-        BasicDocumentRevision rev2 = createDbObject("3-z", createDBBody("Jerry"));
+        DocumentRevision rev2 = createDbObject("3-z", createDBBody("Jerry"));
         datastore.forceInsert(rev2, "1-x", "2-y", "3-z");
 
         this.push(replicator, 1);
@@ -315,10 +312,9 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         BasicPushStrategy replicator = super.getPushStrategy();
 
         String id = "\u738b\u4e1c\u5347";
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.body = createDBBody("Tom");
-        rev.docId = id;
-        BasicDocumentRevision saved = datastore.createDocumentFromRevision(rev);
+        DocumentRevision rev = new DocumentRevision(id);
+        rev.setBody(createDBBody("Tom"));
+        DocumentRevision saved = datastore.createDocumentFromRevision(rev);
 
         this.push(replicator, 1);
         assertPushReplicationStatus(replicator, 1, 2, "1");

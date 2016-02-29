@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.common.CouchConstants;
 import com.cloudant.http.HttpConnection;
 import com.cloudant.sync.util.JSONUtils;
 
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * <p>
@@ -84,7 +86,6 @@ public class MultipartAttachmentWriter {
     private ArrayList<InputStream> components;
 
     private String id;
-    private String revision;
 
     private long contentLength;
 
@@ -140,12 +141,10 @@ public class MultipartAttachmentWriter {
      *
      * @param body The DocumentRevision to be serialised as JSON
      */
-    public void setBody(BasicDocumentRevision body) {
-        this.bodyBytes = JSONUtils.serializeAsBytes(body.asMap());
+    public void setBody(Map<String,Object> body) {
+        this.id = (String)body.get(CouchConstants._id);
+        this.bodyBytes = JSONUtils.serializeAsBytes(body);
         contentLength += bodyBytes.length;
-
-        this.id = body.getId();
-        this.revision = body.getRevision();
     }
 
     /**
@@ -201,9 +200,6 @@ public class MultipartAttachmentWriter {
 
     public String getId() {
         return id;
-    }
-    public String getRevision() {
-        return revision;
     }
 
     @Override

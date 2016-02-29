@@ -89,7 +89,7 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
 
 
         Assert.assertNotNull(revision);
-        Assert.assertEquals(body,revision.getBody().asMap());
+        Assert.assertEquals(body, revision.getBody().asMap());
         Assert.assertEquals(revision.getId(),"someIdHere");
         Assert.assertEquals(revision.getRevision(),"3-750dac460a6cc41e6999f8943b8e603e");
         Assert.assertEquals(revision.getAttachments().size(),1);
@@ -143,7 +143,7 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
 
 
         Assert.assertNotNull(revision);
-        Assert.assertEquals(body,revision.getBody().asMap());
+        Assert.assertEquals(body, revision.getBody().asMap());
         Assert.assertEquals(revision.getId(),"someIdHere");
         Assert.assertEquals(revision.getRevision(),"3-750dac460a6cc41e6999f8943b8e603e");
         Assert.assertEquals(revision.getAttachments().size(),1);
@@ -201,7 +201,7 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
 
 
         Assert.assertNotNull(revision);
-        Assert.assertEquals(body,revision.getBody().asMap());
+        Assert.assertEquals(body, revision.getBody().asMap());
         Assert.assertEquals(revision.getId(),"someIdHere");
         Assert.assertEquals(revision.getRevision(),"3-750dac460a6cc41e6999f8943b8e603e");
         Assert.assertEquals(revision.getAttachments().size(),1);
@@ -250,7 +250,7 @@ public class DocumentRevisionBuilderAttachmentsTest extends ReplicationTestBase 
 
 
         Assert.assertNotNull(revision);
-        Assert.assertEquals(body,revision.getBody().asMap());
+        Assert.assertEquals(body, revision.getBody().asMap());
         Assert.assertEquals(revision.getId(),"someIdHere");
         Assert.assertEquals(revision.getRevision(),"3-750dac460a6cc41e6999f8943b8e603e");
         Assert.assertEquals(revision.getAttachments().size(),1);

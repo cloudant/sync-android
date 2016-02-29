@@ -65,15 +65,15 @@ public class DocumentRevisionBuilder {
      * <p>Builds and returns the {@code BasicDocumentRevision} for this builder.</p>
      * @return the {@code BasicDocumentRevision} for this builder
      */
-    public BasicDocumentRevision build() {
-        BasicDocumentRevision.BasicDocumentRevisionOptions options = new BasicDocumentRevision.BasicDocumentRevisionOptions();
+    public DocumentRevision build() {
+        DocumentRevision.DocumentRevisionOptions options = new DocumentRevision.DocumentRevisionOptions();
         options.sequence = sequence;
         options.docInternalId = docInternalId;
         options.deleted = deleted;
         options.current = current;
         options.parent = parent;
         options.attachments = attachments;
-        return new BasicDocumentRevision(docId, revId, body, options);
+        return new DocumentRevision(docId, revId, body, options);
     }
 
     /**
@@ -81,9 +81,9 @@ public class DocumentRevisionBuilder {
      * local document.</p>
      * @return the {@code BasicDocumentRevision} for this builder as a local document
      */
-    protected BasicDocumentRevision buildBasicDBObjectLocalDocument() {
+    protected DocumentRevision buildBasicDBObjectLocalDocument() {
         assert this.revId.endsWith("-local");
-        return new BasicDocumentRevision(docId, revId, body);
+        return new DocumentRevision(docId, revId, body);
     }
 
     /**
@@ -91,9 +91,9 @@ public class DocumentRevisionBuilder {
      * local document.</p>
      * @return the {@code DocumentRevision} for this builder as a local document
      */
-    public BasicDocumentRevision buildLocalDocument() {
+    public DocumentRevision buildLocalDocument() {
         assert this.revId.endsWith("-local");
-        return new BasicDocumentRevision(docId, revId, body);
+        return new DocumentRevision(docId, revId, body);
     }
 
 
@@ -105,9 +105,9 @@ public class DocumentRevisionBuilder {
      *
      * @return the stub {@code DocumentRevision} for this builder
      */
-    public BasicDocumentRevision buildStub() {
+    public DocumentRevision buildStub() {
         assert body == null;
-        return new BasicDocumentRevision(docId, revId);
+        return new DocumentRevision(docId, revId, DocumentBodyFactory.EMPTY);
     }
 
     /**
@@ -210,30 +210,13 @@ public class DocumentRevisionBuilder {
         return this;
     }
 
-    /**
-     * Builds and returns the {@link com.cloudant.sync.datastore.MutableDocumentRevision} for this builder.
-     * @return {@link com.cloudant.sync.datastore.MutableDocumentRevision} for this builder.
-     */
-    public MutableDocumentRevision buildMutable() {
-        MutableDocumentRevision revision = new MutableDocumentRevision(this.revId);
-        revision.body = this.body;
-        revision.docId = this.docId;
-        return revision;
-    }
 
     /**
      * Builds and returns the {@link com.cloudant.sync.datastore.ProjectedDocumentRevision} for this builder.
      * @return {@link com.cloudant.sync.datastore.ProjectedDocumentRevision} for this builder.
      */
     public ProjectedDocumentRevision buildProjected() {
-        BasicDocumentRevision.BasicDocumentRevisionOptions options = new BasicDocumentRevision.BasicDocumentRevisionOptions();
-        options.sequence = sequence;
-        options.docInternalId = docInternalId;
-        options.deleted = deleted;
-        options.current = current;
-        options.parent = parent;
-        options.attachments = attachments;
-        return new ProjectedDocumentRevision(docId, revId, body, options, datastore);
+        return new ProjectedDocumentRevision(docId, revId, deleted, attachments, body, datastore);
     }
 
     /**
@@ -243,7 +226,7 @@ public class DocumentRevisionBuilder {
      * @return A complete document revision representing the data from the Map
      * @throws IOException If attachments fail to be decoded correctly.
      */
-    public static BasicDocumentRevision buildRevisionFromMap(URI documentURI, Map<String, ? extends Object> map) throws IOException {
+    public static DocumentRevision buildRevisionFromMap(URI documentURI, Map<String, ? extends Object> map) throws IOException {
 
         for (String key : map.keySet()) {
 

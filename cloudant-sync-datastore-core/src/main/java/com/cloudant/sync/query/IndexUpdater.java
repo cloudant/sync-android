@@ -12,9 +12,9 @@
 
 package com.cloudant.sync.query;
 
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -144,7 +144,7 @@ class IndexUpdater {
             public Boolean call() {
                 boolean transactionSuccess = true;
                 database.beginTransaction();
-                for (BasicDocumentRevision rev: changes.getResults()) {
+                for (DocumentRevision rev: changes.getResults()) {
                     // Delete existing values
                     String tableName = IndexManager.tableNameForIndex(indexName);
                     database.delete(tableName, " _id = ? ", new String[]{rev.getId()});
@@ -214,7 +214,7 @@ class IndexUpdater {
      *  is an array, however, multiple entries are required.
      */
     @SuppressWarnings("unchecked")
-    private List<DBParameter> parametersToIndexRevision (BasicDocumentRevision rev,
+    private List<DBParameter> parametersToIndexRevision (DocumentRevision rev,
                                                          String indexName,
                                                          List<String> fieldNames) {
         if (rev == null) {
@@ -252,7 +252,7 @@ class IndexUpdater {
         List<Object> arrayFieldValues = null;
         if (arrayCount == 1) {
             arrayFieldValues = (List) ValueExtractor.extractValueForFieldName(arrayFieldName,
-                                                                              rev.getBody());
+                    rev.getBody());
         }
 
         if (arrayFieldValues != null && arrayFieldValues.size() > 0) {
@@ -300,7 +300,7 @@ class IndexUpdater {
                                             List<String> initialIncludedFields,
                                             List<Object> initialArgs,
                                             String indexName,
-                                            BasicDocumentRevision rev) {
+                                            DocumentRevision rev) {
         List<String> includeFieldNames = new ArrayList<String>();
         includeFieldNames.addAll(initialIncludedFields);
         List<Object> args = new ArrayList<Object>();

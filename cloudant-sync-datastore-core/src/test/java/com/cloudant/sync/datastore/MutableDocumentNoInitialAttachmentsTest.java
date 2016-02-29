@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Created by tomblench on 06/08/2014.
@@ -29,47 +28,46 @@ import java.io.IOException;
 public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestBase{
 
 
-    BasicDocumentRevision saved;
+    DocumentRevision saved;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "doc1";
-        rev.body  = bodyOne;
+        DocumentRevision rev = new DocumentRevision("doc1");
+        rev.setBody(bodyOne);
         saved = datastore.createDocumentFromRevision(rev);
     }
 
     // Update revision with updated body
     @Test
     public void updateBody() throws Exception {
-        MutableDocumentRevision update = saved.mutableCopy();
-        update.body = bodyTwo;
-        BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        DocumentRevision update = saved;
+        update.setBody(bodyTwo);
+        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
         Assert.assertNotNull("Updated DocumentRevision is null", updated);
     }
 
     // Update revision with updated body set to null
     @Test(expected = DocumentException.class)
     public void updateBodyNull() throws Exception {
-        MutableDocumentRevision update = saved.mutableCopy();
-        update.body = null;
-        BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        DocumentRevision update = saved;
+        update.setBody(null);
+        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
         Assert.fail("Expected NullPointerException");
     }
 
     // Update revision with updated body and new attachment
     @Test
     public void updateBodyAndAttachments() throws Exception {
-        MutableDocumentRevision update = saved.mutableCopy();
-        update.body = bodyTwo;
+        DocumentRevision update = saved;
+        update.setBody(bodyTwo);
         String attachmentName = "attachment_1.txt";
         File f = TestUtils.loadFixture("fixture/" + attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
-        update.attachments.put(attachmentName, att);
-        BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        update.getAttachments().put(attachmentName, att);
+        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
         Assert.assertNotNull("Updated DocumentRevision is null", updated);
-        Attachment retrievedAtt = datastore.getAttachment(updated, attachmentName);
+        Attachment retrievedAtt = datastore.getAttachment(updated.getId(), updated.getRevision(), attachmentName);
         Assert.assertNotNull("Retrieved attachment is null", retrievedAtt);
         // also get the attachments through the documentrev
         Assert.assertEquals("Revision should have 1 attachments", 1, updated.getAttachments().size());
@@ -79,10 +77,10 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
     // Update revision with updated body, explicitly set attachments to null
     @Test
     public void updateBodySetNullAttachments() throws Exception {
-        MutableDocumentRevision update = saved.mutableCopy();
-        update.body = bodyTwo;
-        update.attachments = null;
-        BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        DocumentRevision update = saved;
+        update.setBody(bodyTwo);
+        update.setAttachments(null);
+        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
         Assert.assertNotNull("Updated DocumentRevision is null", updated);
         // also get the attachments through the documentrev
         Assert.assertEquals("Revision should have 0 attachments", 0, updated.getAttachments().size());
@@ -91,14 +89,14 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
     // Update revision, don't change body, add new attachment
     @Test
     public void updateAttachments() throws Exception {
-        MutableDocumentRevision update = saved.mutableCopy();
+        DocumentRevision update = saved;
         String attachmentName = "attachment_1.txt";
         File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
-        update.attachments.put(attachmentName, att);
-        BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        update.getAttachments().put(attachmentName, att);
+        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
         Assert.assertNotNull("Updated DocumentRevision is null", updated);
-        Attachment retrievedAtt = datastore.getAttachment(updated, attachmentName);
+        Attachment retrievedAtt = datastore.getAttachment(updated.getId(), updated.getRevision(), attachmentName);
         Assert.assertNotNull("Retrieved attachment is null", retrievedAtt);
         // also get the attachments through the documentrev
         Assert.assertEquals("Revision should have 1 attachments", 1, updated.getAttachments().size());
@@ -109,13 +107,13 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
     // check that this fails correctly and that no new revision is created
     @Test
     public void updateBodySetInvalidAttachments() throws Exception {
-        MutableDocumentRevision update = saved.mutableCopy();
-        update.body = bodyTwo;
+        DocumentRevision update = saved;
+        update.setBody(bodyTwo);
         String attachmentName = "doesnt_exist_attachment";
         File f = TestUtils.loadFixture("fixture/"+ attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
-        update.attachments.put(attachmentName, att);
-        BasicDocumentRevision updated = null;
+        update.getAttachments().put(attachmentName, att);
+        DocumentRevision updated = null;
         try {
             updated = datastore.updateDocumentFromRevision(update);
             Assert.fail("Expected AttachmentException; not thrown");
@@ -124,7 +122,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         }
         // document should not be updated
         Assert.assertNull("Updated DocumentRevision is not null", updated);
-        BasicDocumentRevision retrieved = this.datastore.getDocument(saved.getId());
+        DocumentRevision retrieved = this.datastore.getDocument(saved.getId());
         Assert.assertEquals("Document should not be updated", retrieved.getRevision(), saved.getRevision());
         // also get the attachments through the documentrev
         Assert.assertEquals("Revision should have 0 attachments", 0, retrieved.getAttachments().size());

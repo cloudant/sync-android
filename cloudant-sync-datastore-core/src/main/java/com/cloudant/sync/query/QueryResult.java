@@ -13,7 +13,6 @@
 package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
@@ -132,8 +131,8 @@ public class QueryResult implements Iterable<DocumentRevision> {
                 range.length = Math.min(DEFAULT_BATCH_SIZE, originalDocIds.size() - range.location);
                 List<String> batch = originalDocIds.subList(range.location,
                                                             range.location + range.length);
-                List<BasicDocumentRevision> docs = datastore.getDocumentsWithIds(batch);
-                for (BasicDocumentRevision rev : docs) {
+                List<DocumentRevision> docs = datastore.getDocumentsWithIds(batch);
+                for (DocumentRevision rev : docs) {
                     DocumentRevision innerRev;
                     innerRev = rev;  // Allows us to replace later if projecting
 
@@ -178,7 +177,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
     }
 
     private DocumentRevision projectFields(List<String> fields,
-                                           BasicDocumentRevision rev,
+                                           DocumentRevision rev,
                                            Datastore datastore) {
         // grab the map filter fields and rebuild object
         Map<String, Object> originalBody = rev.getBody().asMap();
@@ -195,7 +194,6 @@ public class QueryResult implements Iterable<DocumentRevision> {
         revBuilder.setBody(DocumentBodyFactory.create(body));
         revBuilder.setDeleted(rev.isDeleted());
         revBuilder.setAttachments(new ArrayList<Attachment>(rev.getAttachments().values()));
-        revBuilder.setSequence(rev.getSequence());
         revBuilder.setDatastore(datastore);
 
         return revBuilder.buildProjected();

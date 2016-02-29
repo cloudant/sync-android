@@ -20,10 +20,10 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.DatabaseUtils;
@@ -93,13 +93,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
 
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "id123";
+        DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike" }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
-        rev.body = DocumentBodyFactory.create(bodyMap);
-        BasicDocumentRevision saved;
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
+        DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
 
@@ -167,15 +166,14 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                     Assert.fail(e.toString());
                 }
                 for (int i = 0; i < nDocs; i++) {
-                    MutableDocumentRevision rev = new MutableDocumentRevision();
-                    rev.docId = String.format("id_%d_%s",i,Thread.currentThread().getName());
+                    DocumentRevision rev = new DocumentRevision(String.format("id_%d_%s",i,Thread.currentThread().getName()));
                     Map<String, Object> bodyMap = new HashMap<String, Object>();
                     if (i % 2 == 0) {
                         bodyMap.put("name", "mike");
                     } else {
                         bodyMap.put("name", "tom");
                     }
-                    rev.body = DocumentBodyFactory.create(bodyMap);
+                    rev.setBody(DocumentBodyFactory.create(bodyMap));
                     try {
                         ds.createDocumentFromRevision(rev);
                     } catch (DocumentException de) {
@@ -262,14 +260,13 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
 
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "id123";
+        DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike", "age" : 12 }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
-        rev.body = DocumentBodyFactory.create(bodyMap);
-        BasicDocumentRevision saved;
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
+        DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
@@ -317,8 +314,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
 
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "id123";
+        DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike",
         //                 "age" : 12,
         //                 "pet" : "cat",
@@ -330,8 +326,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("pet", "cat");
         bodyMap.put("car", "mini");
         bodyMap.put("ignored", "something");
-        rev.body = DocumentBodyFactory.create(bodyMap);
-        BasicDocumentRevision saved;
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
+        DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
@@ -383,16 +379,15 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
 
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "id123";
+        DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike",  "age" : 12, "pet" : "cat", "ignored" : "something" }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         bodyMap.put("ignored", "something");
-        rev.body = DocumentBodyFactory.create(bodyMap);
-        BasicDocumentRevision saved;
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
+        DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
@@ -444,16 +439,15 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
 
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "id123";
+        DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike",  "age" : 12, "pet" : "cat", "ignored" : "something" }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         bodyMap.put("ignored", "something");
-        rev.body = DocumentBodyFactory.create(bodyMap);
-        BasicDocumentRevision saved;
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
+        DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
@@ -503,15 +497,14 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
 
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "id123";
+        DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike",  "pet" : [ "cat", "dog", "parrot" ] }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         List<String> pets = Arrays.asList("cat", "dog", "parrot");
         bodyMap.put("pet", pets);
-        rev.body = DocumentBodyFactory.create(bodyMap);
-        BasicDocumentRevision saved;
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
+        DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
@@ -562,8 +555,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
 
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "id123";
+        DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike",  "pet" : { "species" : [ "cat", "dog" ] } }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
@@ -571,8 +563,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         Map<String, Object> pets = new HashMap<String, Object>();
         pets.put("species", species);
         bodyMap.put("pet", pets);
-        rev.body = DocumentBodyFactory.create(bodyMap);
-        BasicDocumentRevision saved;
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
+        DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
@@ -623,18 +615,16 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
 
-        MutableDocumentRevision goodRev = new MutableDocumentRevision();
-        goodRev.docId = "id123";
+        DocumentRevision goodRev = new DocumentRevision("id123");
         // body content: { "name" : "mike", "pet" : [ "cat", "dog", "parrot" ] }
         Map<String, Object> goodBodyMap = new HashMap<String, Object>();
         goodBodyMap.put("name", "mike");
         List<String> pets = Arrays.asList("cat", "dog", "parrot");
         goodBodyMap.put("pet", pets);
-        goodRev.body = DocumentBodyFactory.create(goodBodyMap);
-        BasicDocumentRevision saved;
+        goodRev.setBody(DocumentBodyFactory.create(goodBodyMap));
+        DocumentRevision saved;
 
-        MutableDocumentRevision badRev = new MutableDocumentRevision();
-        badRev.docId = "id456";
+        DocumentRevision badRev = new DocumentRevision("id456");
         // body content: { "name" : "mike",
         //                 "pet" : [ "cat", "dog", "parrot" ],
         //                 "pet2" : [ "cat", "dog", "parrot" ] }
@@ -642,7 +632,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         badBodyMap.put("name", "mike");
         badBodyMap.put("pet", pets);
         badBodyMap.put("pet2", pets);
-        badRev.body = DocumentBodyFactory.create(badBodyMap);
+        badRev.setBody(DocumentBodyFactory.create(badBodyMap));
         saved = ds.createDocumentFromRevision(goodRev);
         ds.createDocumentFromRevision(badRev);
 
@@ -698,14 +688,13 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
 
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "id123";
+        DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike", "pet" : [] }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("pet", new ArrayList<Object>());
-        rev.body = DocumentBodyFactory.create(bodyMap);
-        BasicDocumentRevision saved;
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
+        DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
@@ -755,16 +744,15 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
 
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "id123";
+        DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike",  "pet" : { "species" : [] } }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         Map<String, Object> pets = new HashMap<String, Object>();
         pets.put("species", new ArrayList<Object>());
         bodyMap.put("pet", pets);
-        rev.body = DocumentBodyFactory.create(bodyMap);
-        BasicDocumentRevision saved;
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
+        DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
         assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
@@ -797,58 +785,57 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateAllIndexes() throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "mike12";
+        DocumentRevision rev = new DocumentRevision("mike12");
         // body content: { "name" : "mike",  "age" : 12, "pet" : "cat" }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "mike23";
+        rev = new DocumentRevision("mike23");
         // body content: { "name" : "mike",  "age" : 23, "pet" : "parrot" }
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 23);
         bodyMap.put("pet", "cat");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "mike34";
+        rev = new DocumentRevision("mike34");
         // body content: { "name" : "mike",  "age" : 34, "pet" : "dog" }
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "john72";
+        rev = new DocumentRevision("john72");
         // body content: { "name" : "john",  "age" : 72, "pet" : "fish" }
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("age", 72);
         bodyMap.put("pet", "fish");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred34";
+        rev = new DocumentRevision("fred34");
         // body content: { "name" : "fred",  "age" : 34, "pet" : "snake" }
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 34);
         bodyMap.put("pet", "snake");
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        rev.docId = "fred12";
+        rev = new DocumentRevision("fred12");
         // body content: { "name" : "fred",  "age" : 12 }
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
-        rev.body = DocumentBodyFactory.create(bodyMap);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
         // Test index updates for multiple json indexes as well as
@@ -904,7 +891,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
 
-        rev.docId = "newdoc";
+        rev = new DocumentRevision("newdoc");
+        rev.setBody(DocumentBodyFactory.EMPTY);
         ds.createDocumentFromRevision(rev);
 
         im.updateAllIndexes();

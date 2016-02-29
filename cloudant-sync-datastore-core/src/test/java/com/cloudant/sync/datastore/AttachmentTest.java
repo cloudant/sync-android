@@ -14,6 +14,9 @@
 
 package com.cloudant.sync.datastore;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.not;
+
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -30,9 +33,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.equalTo;
-
 /**
  * Created by tomblench on 12/03/2014.
  */
@@ -41,15 +41,15 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     @Test
     public void setAndGetAttachmentsTest() throws Exception {
         String attachmentName = "attachment_1.txt";
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
-        BasicDocumentRevision newRevision = null;
+        DocumentRevision newRevision = null;
         try {
-            MutableDocumentRevision rev1_mut = rev_1.mutableCopy();
-            rev1_mut.attachments.put(attachmentName, att);
+            DocumentRevision rev1_mut = rev_1;
+            rev1_mut.getAttachments().put(attachmentName, att);
             newRevision = datastore.updateDocumentFromRevision(rev1_mut);
         } catch (ConflictException ce){
             Assert.fail("ConflictException thrown: "+ce);
@@ -59,12 +59,13 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         try {
             byte[] expectedSha1 = Misc.getSha1((fis = new FileInputStream(f)));
 
-            SavedAttachment savedAtt = (SavedAttachment) datastore.getAttachment(newRevision,
+            SavedAttachment savedAtt = (SavedAttachment) datastore.getAttachment(newRevision.getId(),
+                    newRevision.getRevision(),
                     attachmentName);
             Assert.assertArrayEquals(expectedSha1, savedAtt.key);
 
             SavedAttachment savedAtt2 = (SavedAttachment) datastore.attachmentsForRevision
-                    (newRevision).get(0);
+                    ((DocumentRevision)newRevision).get(0);
             Assert.assertArrayEquals(expectedSha1, savedAtt2.key);
         } catch (FileNotFoundException fnfe) {
             Assert.fail("FileNotFoundException thrown " + fnfe);
@@ -76,18 +77,18 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     // check that the transaction gets rolled back if one file is dodgy
     @Test
     public void setBadAttachmentsTest() throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_1.txt"), "text/plain");
         Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/nonexistentfile"), "text/plain");
         Attachment att3 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_2.txt"), "text/plain");
-        BasicDocumentRevision newRevision = null;
+        DocumentRevision newRevision = null;
         try {
-            MutableDocumentRevision rev1_mut = rev_1.mutableCopy();
-            rev1_mut.attachments.put(att1.name, att1);
-            rev1_mut.attachments.put(att2.name, att2);
-            rev1_mut.attachments.put(att3.name, att3);
+            DocumentRevision rev1_mut = rev_1;
+            rev1_mut.getAttachments().put(att1.name, att1);
+            rev1_mut.getAttachments().put(att2.name, att2);
+            rev1_mut.getAttachments().put(att3.name, att3);
             newRevision = datastore.updateDocumentFromRevision(rev1_mut);
             Assert.fail("FileNotFoundException not thrown");
         } catch (AttachmentException ae) {
@@ -110,63 +111,63 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     @Test(expected = DocumentException.class)
     public void setAttachmentsConflictTest() throws Exception {
         String attachmentName = "attachment_1.txt";
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
 
-        BasicDocumentRevision rev_2;
+        DocumentRevision rev_2;
         try {
-            MutableDocumentRevision rev_1_mut = rev_1.mutableCopy();
-            rev_1_mut.body = bodyTwo;
+            DocumentRevision rev_1_mut = rev_1;
+            rev_1_mut.setBody(bodyTwo);
             rev_2 = datastore.updateDocumentFromRevision(rev_1_mut);
         } catch (ConflictException ce) {
             Assert.fail("ConflictException thrown: "+ce);
         }
         File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
-        MutableDocumentRevision newRevision = rev_1.mutableCopy();
-        newRevision.attachments.put(attachmentName, att);
+        DocumentRevision newRevision = rev_1;
+        newRevision.getAttachments().put(attachmentName, att);
         datastore.updateDocumentFromRevision(newRevision);
     }
 
     @Test
     public void createDeleteAttachmentsTest() throws Exception{
 
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_1.txt"), "text/plain");
         Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_2.txt"), "text/plain");
         Attachment att3 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/bonsai-boston.jpg"), "image/jpeg");
-        BasicDocumentRevision rev2 = null;
+        DocumentRevision rev2 = null;
 
-        MutableDocumentRevision rev_1_mut = rev_1.mutableCopy();
-        rev_1_mut.attachments.put(att1.name, att1);
-        rev_1_mut.attachments.put(att2.name, att2);
-        rev_1_mut.attachments.put(att3.name, att3);
+        DocumentRevision rev_1_mut = rev_1;
+        rev_1_mut.getAttachments().put(att1.name, att1);
+        rev_1_mut.getAttachments().put(att2.name, att2);
+        rev_1_mut.getAttachments().put(att3.name, att3);
         rev2 = datastore.updateDocumentFromRevision(rev_1_mut);
         Assert.assertNotNull("Revision null", rev2);
 
-        BasicDocumentRevision rev3 = null;
+        DocumentRevision rev3 = null;
 
-        MutableDocumentRevision rev2_mut = rev2.mutableCopy();
-        rev2_mut.attachments.remove(att1.name);
+        DocumentRevision rev2_mut = rev2;
+        rev2_mut.getAttachments().remove(att1.name);
         rev3 = datastore.updateDocumentFromRevision(rev2_mut);
         datastore.compact();
         Assert.assertNotNull("Revision null", rev3);
 
         // 1st shouldn't exist
-        Attachment savedAtt1 = datastore.getAttachment(rev3, "attachment_1.txt");
+        Attachment savedAtt1 = datastore.getAttachment(rev3.getId(), rev3.getRevision(), "attachment_1.txt");
         Assert.assertNull("Att1 not null", savedAtt1);
 
         // check we can read from the 2nd attachment, it wasn't deleted
-        Attachment savedAtt2 = datastore.getAttachment(rev3, "attachment_2.txt");
+        Attachment savedAtt2 = datastore.getAttachment(rev3.getId(), rev3.getRevision(), "attachment_2.txt");
         Assert.assertNotNull("Att2 null", savedAtt2);
         int i2 = savedAtt2.getInputStream().read();
         Assert.assertTrue("Can't read from Att2", i2 >= 0);
 
         // check we can read from the 3rd attachment, it wasn't deleted
-        Attachment savedAtt3 = datastore.getAttachment(rev3, "bonsai-boston.jpg");
+        Attachment savedAtt3 = datastore.getAttachment(rev3.getId(), rev3.getRevision(), "bonsai-boston.jpg");
         Assert.assertNotNull("Att3 null", savedAtt3);
         int i3 = savedAtt3.getInputStream().read();
         Assert.assertTrue("Can't read from Att2", i3 >= 0);
@@ -183,48 +184,48 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         // check that an attachment 'going missing' from the blob store doesn't stop us deleting it
         // from the database
         String attachmentName = "attachment_1.txt";
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
-        BasicDocumentRevision rev2 = null;
-        MutableDocumentRevision rev_1_mut = rev_1.mutableCopy();
-        rev_1_mut.attachments.put(att.name, att);
+        DocumentRevision rev2 = null;
+        DocumentRevision rev_1_mut = rev_1;
+        rev_1_mut.getAttachments().put(att.name, att);
         rev2 = datastore.updateDocumentFromRevision(rev_1_mut);
         Assert.assertNotNull("Revision null", rev2);
 
-        BasicDocumentRevision rev3 = null;
+        DocumentRevision rev3 = null;
         // clear out the attachment directory
         File attachments = new File(datastore.datastoreDir + "/extensions/com.cloudant.attachments");
         for(File attFile : attachments.listFiles()) {
             attFile.delete();
         }
-        MutableDocumentRevision rev2_mut = rev2.mutableCopy();
-        rev2_mut.attachments.remove(attachmentName);
+        DocumentRevision rev2_mut = rev2;
+        rev2_mut.getAttachments().remove(attachmentName);
         rev3 = datastore.updateDocumentFromRevision(rev2_mut);
         Assert.assertNotNull("Revision null", rev3);
 
         // check that there are no attachments now associated with this doc
-        Assert.assertTrue("Revision should have 0 attachments", datastore.attachmentsForRevision(rev3).isEmpty());
+        Assert.assertTrue("Revision should have 0 attachments", datastore.attachmentsForRevision((DocumentRevision)rev3).isEmpty());
     }
 
 
     @Test
     public void attachmentsForRevisionTest() throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
 
         Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_1.txt"), "text/plain");
         Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_2.txt"), "text/plain");
-        BasicDocumentRevision newRevision = null;
+        DocumentRevision newRevision = null;
         try {
-            MutableDocumentRevision rev_1_mut = rev_1.mutableCopy();
-            rev_1_mut.attachments.put(att1.name, att1);
-            rev_1_mut.attachments.put(att2.name, att2);
+            DocumentRevision rev_1_mut = rev_1;
+            rev_1_mut.getAttachments().put(att1.name, att1);
+            rev_1_mut.getAttachments().put(att2.name, att2);
             newRevision = datastore.updateDocumentFromRevision(rev_1_mut);
-            List<? extends Attachment> attsForRev = datastore.attachmentsForRevision(newRevision);
+            List<? extends Attachment> attsForRev = datastore.attachmentsForRevision((DocumentRevision)newRevision);
             Assert.assertEquals("Didn't get expected number of attachments", 2, attsForRev.size());
         } catch (ConflictException ce){
             Assert.fail("ConflictException thrown: "+ce);
@@ -234,35 +235,35 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     @Test
     public void duplicateAttachmentTest() throws Exception {
 
-        MutableDocumentRevision doc1Rev1Mut = new MutableDocumentRevision();
-        doc1Rev1Mut.body = bodyOne;
-        BasicDocumentRevision doc1Rev1 = datastore.createDocumentFromRevision(doc1Rev1Mut);
-        MutableDocumentRevision doc2Rev1Mut = new MutableDocumentRevision();
-        doc2Rev1Mut.body = bodyTwo;
-        BasicDocumentRevision doc2Rev1 = datastore.createDocumentFromRevision(doc2Rev1Mut);
+        DocumentRevision doc1Rev1Mut = new DocumentRevision();
+        doc1Rev1Mut.setBody(bodyOne);
+        DocumentRevision doc1Rev1 = datastore.createDocumentFromRevision(doc1Rev1Mut);
+        DocumentRevision doc2Rev1Mut = new DocumentRevision();
+        doc2Rev1Mut.setBody(bodyTwo);
+        DocumentRevision doc2Rev1 = datastore.createDocumentFromRevision(doc2Rev1Mut);
 
         File attachmentFile = TestUtils.loadFixture("fixture/attachment_1.txt");
         Attachment att1 = new UnsavedFileAttachment(attachmentFile, "text/plain");
         Attachment att2 = new UnsavedFileAttachment(attachmentFile, "text/plain");
 
-        BasicDocumentRevision newRevisionDoc1 = null;
-        BasicDocumentRevision newRevisionDoc2 = null;
+        DocumentRevision newRevisionDoc1 = null;
+        DocumentRevision newRevisionDoc2 = null;
 
         try {
-            MutableDocumentRevision doc1Rev1_mut = doc1Rev1.mutableCopy();
-            doc1Rev1_mut.attachments.put(att1.name, att1);
+            DocumentRevision doc1Rev1_mut = doc1Rev1;
+            doc1Rev1_mut.getAttachments().put(att1.name, att1);
             newRevisionDoc1 = datastore.updateDocumentFromRevision(doc1Rev1_mut);
             Assert.assertNotNull("Doc1 revision is null", newRevisionDoc1);
             List<? extends Attachment> attsForRev = datastore
-                .attachmentsForRevision(newRevisionDoc1);
+                .attachmentsForRevision((DocumentRevision)newRevisionDoc1);
             Assert.assertEquals("Didn't get expected number of attachments", 1,
                 attsForRev.size());
 
-            MutableDocumentRevision doc2Rev1_mut = doc2Rev1.mutableCopy();
-            doc2Rev1_mut.attachments.put(att2.name, att2);
+            DocumentRevision doc2Rev1_mut = doc2Rev1;
+            doc2Rev1_mut.getAttachments().put(att2.name, att2);
             newRevisionDoc2 = datastore.updateDocumentFromRevision(doc2Rev1_mut);
             Assert.assertNotNull("Doc2 revision is null", newRevisionDoc2);
-            attsForRev = datastore.attachmentsForRevision(newRevisionDoc2);
+            attsForRev = datastore.attachmentsForRevision((DocumentRevision)newRevisionDoc2);
             Assert.assertEquals("Didn't get expected number of attachments", 1,
                 attsForRev.size());
 

@@ -16,15 +16,11 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
-import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -63,18 +59,18 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
     }
 
     public String createDocInDatastore(String d) throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
+        DocumentRevision rev = new DocumentRevision();
         Map<String, String> m = new HashMap<String, String>();
         m.put("data", d);
-        rev.body = DocumentBodyFactory.create(m);
+        rev.setBody(DocumentBodyFactory.create(m));
         return datastore.createDocumentFromRevision(rev).getId();
     }
 
     public String updateDocInDatastore(String id, String data) throws Exception {
-        MutableDocumentRevision rev = datastore.getDocument(id).mutableCopy();
+        DocumentRevision rev = datastore.getDocument(id);
         Map<String, String> m = new HashMap<String, String>();
         m.put("data", data);
-        rev.body = DocumentBodyFactory.create(m);
+        rev.setBody(DocumentBodyFactory.create(m));
         return datastore.updateDocumentFromRevision(rev).getId();
     }
 
@@ -123,21 +119,21 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         {
             DocumentRevisionTree t1 = datastore.getAllRevisionsOfDocument(id1);
             Assert.assertEquals(2, t1.leafs().size());
-            BasicDocumentRevision c = t1.getCurrentRevision();
+            DocumentRevision c = t1.getCurrentRevision();
             Assert.assertEquals(4, t1.depth(c.getSequence()));
         }
 
         {
             DocumentRevisionTree t2 = datastore.getAllRevisionsOfDocument(id2);
             Assert.assertEquals(2, t2.leafs().size());
-            BasicDocumentRevision c = t2.getCurrentRevision();
+            DocumentRevision c = t2.getCurrentRevision();
             Assert.assertEquals(2, t2.depth(c.getSequence()));
         }
 
         {
             DocumentRevisionTree t3 = datastore.getAllRevisionsOfDocument(id3);
             Assert.assertEquals(2, t3.leafs().size());
-            BasicDocumentRevision c = t3.getCurrentRevision();
+            DocumentRevision c = t3.getCurrentRevision();
             Assert.assertEquals(4, t3.depth(c.getSequence()));
         }
     }
@@ -149,7 +145,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
     }
 
     public void checkDocumentIsSynced(String id) throws Exception{
-        BasicDocumentRevision fooLocal = this.datastore.getDocument(id);
+        DocumentRevision fooLocal = this.datastore.getDocument(id);
         Map fooRemote = remoteDb.get(Map.class, id);
         Assert.assertEquals(fooLocal.getId(), fooRemote.get("_id"));
         Assert.assertEquals(fooLocal.getRevision(), fooRemote.get("_rev"));

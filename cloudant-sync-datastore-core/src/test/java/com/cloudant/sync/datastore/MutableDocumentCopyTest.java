@@ -23,9 +23,15 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
+
+
 /**
  * Created by tomblench on 08/08/2014.
  */
+
+
+
+/*
 public class MutableDocumentCopyTest extends BasicDatastoreTestBase{
 
     BasicDocumentRevision saved;
@@ -105,4 +111,5 @@ public class MutableDocumentCopyTest extends BasicDatastoreTestBase{
         update.body = bodyTwo;
         datastore.createDocumentFromRevision(update);
     }
-}
+
+}*/

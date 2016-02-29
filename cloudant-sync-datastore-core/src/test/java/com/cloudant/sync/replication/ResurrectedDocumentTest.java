@@ -17,9 +17,8 @@ package com.cloudant.sync.replication;
 import com.cloudant.common.CouchUtils;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -58,10 +57,9 @@ public class ResurrectedDocumentTest extends ReplicationTestBase {
         push();
 
         for (int i=0; i<100; i++) {
-            MutableDocumentRevision rev = new MutableDocumentRevision();
-            rev.docId = "doc-a-"+i;
-            rev.body = DocumentBodyFactory.create("{\"test\": \"content\"}".getBytes());
-            BasicDocumentRevision newRev = datastore.createDocumentFromRevision(rev);
+            DocumentRevision rev = new DocumentRevision("doc-a-"+i);
+            rev.setBody(DocumentBodyFactory.create("{\"test\": \"content\"}".getBytes()));
+            DocumentRevision newRev = datastore.createDocumentFromRevision(rev);
             Assert.assertEquals(3, CouchUtils.generationFromRevId(newRev.getRevision()));
         }
 

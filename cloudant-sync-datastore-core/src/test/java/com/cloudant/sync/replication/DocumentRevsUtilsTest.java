@@ -14,13 +14,13 @@
 
 package com.cloudant.sync.replication;
 
+import static org.hamcrest.CoreMatchers.hasItems;
+
 import com.cloudant.mazha.DocumentRevs;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevsUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
-
-import junit.framework.TestCase;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
@@ -30,8 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-
-import static org.hamcrest.CoreMatchers.hasItems;
 
 public class DocumentRevsUtilsTest {
 
@@ -80,7 +78,7 @@ public class DocumentRevsUtilsTest {
     public void createDocument() throws Exception {
 
         DocumentRevs documentRevs = getDocumentRevsFromFile(TestUtils.loadFixture("fixture/document_revs_with_everything.json"));
-        BasicDocumentRevision documentRevision = DocumentRevsUtils.createDocument(documentRevs);
+        DocumentRevision documentRevision = DocumentRevsUtils.createDocument(documentRevs);
 
         Assert.assertEquals("cdb1a2fec33d146fe07a44ea823bf3ae", documentRevision.getId());
         Assert.assertEquals("4-47d7102726fc89914431cb217ab7bace", documentRevision.getRevision());
@@ -100,7 +98,7 @@ public class DocumentRevsUtilsTest {
     @Test
     public void createDocument_deletedDocument_documentMarkedAsDeleted() throws Exception {
         DocumentRevs documentRevs = getDocumentRevsFromFile(TestUtils.loadFixture("fixture/document_revs_deleted.json"));
-        BasicDocumentRevision documentRevision = DocumentRevsUtils.createDocument(documentRevs);
+        DocumentRevision documentRevision = DocumentRevsUtils.createDocument(documentRevs);
 
         Assert.assertTrue(documentRevision.isDeleted());
     }

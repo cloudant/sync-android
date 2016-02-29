@@ -35,7 +35,7 @@ import java.util.List;
  * to be built on top of its simpler key-value model.</p>
  *
  * <p>Each document consists of a set of revisions, hence most methods within
- * this class operating on {@link BasicDocumentRevision} objects, which carry both a
+ * this class operating on {@link DocumentRevision} objects, which carry both a
  * document ID and a revision ID. This forms the basis of the MVCC data model,
  * used to ensure safe peer-to-peer replication is possible.</p>
  *
@@ -44,14 +44,14 @@ import java.util.List;
  * the same document in-between replications. MVCC exposes these branches as
  * conflicted documents. These conflicts should be resolved by user-code, by
  * marking all but one of the leaf nodes of the branches as "deleted", using
- * the {@link Datastore#deleteDocumentFromRevision(BasicDocumentRevision)}
+ * the {@link Datastore#deleteDocumentFromRevision(DocumentRevision)}
  * method. When the
  * datastore is next replicated with a remote datastore, this fix will be
  * propagated, thereby resolving the conflicted document across the set of
  * peers.</p>
  *
  * @see DatastoreExtended
- * @see BasicDocumentRevision
+ * @see DocumentRevision
  *
  */
 public interface Datastore {
@@ -83,14 +83,14 @@ public interface Datastore {
      * <p>Returns the current winning revision of a document.</p>
      *
      * <p>Previously deleted documents can be retrieved
-     * (via tombstones, see {@link Datastore#deleteDocumentFromRevision(BasicDocumentRevision)})
+     * (via tombstones, see {@link Datastore#deleteDocumentFromRevision(DocumentRevision)})
      * </p>
      *
      * @param documentId ID of document to retrieve.
      * @return {@code DocumentRevision} of the document or null if it doesn't exist.
      * @throws com.cloudant.sync.datastore.DocumentNotFoundException When the document specified was not found
      */
-    BasicDocumentRevision getDocument(String documentId) throws DocumentNotFoundException;
+    DocumentRevision getDocument(String documentId) throws DocumentNotFoundException;
 
     /**
      * <p>Retrieves a given revision of a document.</p>
@@ -100,7 +100,7 @@ public interface Datastore {
      * revision may contain the metadata but not content of the revision.</p>
      *
      * <p>Previously deleted documents can be retrieved
-     * (via tombstones, see {@link Datastore#deleteDocumentFromRevision(BasicDocumentRevision)})
+     * (via tombstones, see {@link Datastore#deleteDocumentFromRevision(DocumentRevision)})
      * </p>
      *
      * @param documentId ID of the document
@@ -108,7 +108,7 @@ public interface Datastore {
      * @return {@code DocumentRevision} of the document or null if it doesn't exist.
      * @throws com.cloudant.sync.datastore.DocumentNotFoundException if the document at the specified revision was not found
      */
-    BasicDocumentRevision getDocument(String documentId, String revisionId) throws
+    DocumentRevision getDocument(String documentId, String revisionId) throws
             DocumentNotFoundException;
 
     /**
@@ -151,7 +151,7 @@ public interface Datastore {
      *                   descending order.
      * @return list of {@code DBObjects}, maximum length {@code limit}.
      */
-    List<BasicDocumentRevision> getAllDocuments(int offset, int limit, boolean descending);
+    List<DocumentRevision> getAllDocuments(int offset, int limit, boolean descending);
 
     /**
      * <p>Enumerates the current winning revision for all documents in the
@@ -159,7 +159,7 @@ public interface Datastore {
      *
      * @return list of {@code String}.
      */
-    public List<String> getAllDocumentIds();
+    List<String> getAllDocumentIds();
 
     /**
      * <p>Returns the current winning revisions for a set of documents.</p>
@@ -171,7 +171,7 @@ public interface Datastore {
      * @param documentIds list of document id
      * @return list of {@code DocumentRevision} objects.
      */
-    List<BasicDocumentRevision> getDocumentsWithIds(List<String> documentIds);
+    List<DocumentRevision> getDocumentsWithIds(List<String> documentIds);
 
     /**
      * <p>Retrieves the datastore's current sequence number.</p>
@@ -290,7 +290,7 @@ public interface Datastore {
      * @throws com.cloudant.sync.datastore.DocumentException if there was an error creating the document
      * @see Datastore#getEventBus()
      */
-    BasicDocumentRevision createDocumentFromRevision(MutableDocumentRevision rev) throws DocumentException;
+    DocumentRevision createDocumentFromRevision(DocumentRevision rev) throws DocumentException;
 
     /**
      * <p>Updates a document that exists in the datastore with with body and attachments
@@ -310,7 +310,7 @@ public interface Datastore {
      * @throws com.cloudant.sync.datastore.DocumentException if there was an error updating the document
      * @see Datastore#getEventBus()
      */
-    BasicDocumentRevision updateDocumentFromRevision(MutableDocumentRevision rev) throws DocumentException;
+    DocumentRevision updateDocumentFromRevision(DocumentRevision rev) throws DocumentException;
 
     /**
      * <p>Deletes a document from the datastore.</p>
@@ -337,22 +337,22 @@ public interface Datastore {
      * @see Datastore#getEventBus()
      * @see Datastore#resolveConflictsForDocument
      */
-    BasicDocumentRevision deleteDocumentFromRevision(BasicDocumentRevision rev) throws ConflictException;
+    DocumentRevision deleteDocumentFromRevision(DocumentRevision rev) throws ConflictException;
 
     /**
      * <p>Delete all leaf revisions for the document</p>
      *
      * <p>This is equivalent to calling
-     * {@link com.cloudant.sync.datastore.Datastore#deleteDocumentFromRevision(BasicDocumentRevision)
+     * {@link com.cloudant.sync.datastore.Datastore#deleteDocumentFromRevision(DocumentRevision)
      * deleteDocumentFromRevision} on all leaf revisions</p>
      *
      * @param id the ID of the document to delete leaf nodes for
      * @return a List of a <code>DocumentRevision</code>s - the deleted or "tombstone" documents
      * @throws com.cloudant.sync.datastore.DocumentException if there was an error deleting the document
      * @see Datastore#getEventBus()
-     * @see com.cloudant.sync.datastore.Datastore#deleteDocumentFromRevision(BasicDocumentRevision)
+     * @see com.cloudant.sync.datastore.Datastore#deleteDocumentFromRevision(DocumentRevision)
      */
-    List<BasicDocumentRevision> deleteDocument(String id) throws DocumentException;
+    List<DocumentRevision> deleteDocument(String id) throws DocumentException;
 
     /**
      * Compacts the sqlDatabase storage by removing the bodies and attachments of obsolete revisions.

@@ -15,12 +15,11 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.ProxyTestBase;
-import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.common.RequireRunningProxy;
 import com.cloudant.http.Http;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -80,15 +79,14 @@ public class UnreliableNetworkPushTest extends ProxyTestBase {
     }
 
     private void createLocalDocument(String docid) throws DocumentException {
-        MutableDocumentRevision mdr = new MutableDocumentRevision();
-        mdr.docId = docid;
+        DocumentRevision mdr = new DocumentRevision(docid);
         Map<String, Object> doc = new HashMap<String, Object>();
         // TODO make a much more complex document
         int nKeys = 50;
         for (int i=0; i<nKeys; i++) {
             doc.put("key_"+i, "value_"+i);
         }
-        mdr.body = DocumentBodyFactory.create(doc);
+        mdr.setBody(DocumentBodyFactory.create(doc));
         datastore.createDocumentFromRevision(mdr);
     }
 

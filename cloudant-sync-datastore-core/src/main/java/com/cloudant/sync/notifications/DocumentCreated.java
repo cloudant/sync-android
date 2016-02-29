@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.notifications;
 
-import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 
 public class DocumentCreated extends DocumentModified {
 
@@ -22,13 +22,13 @@ public class DocumentCreated extends DocumentModified {
      * Event for document create
      * 
      * <p>This event is posted by
-     * {@link com.cloudant.sync.datastore.Datastore#createDocumentFromRevision(com.cloudant.sync.datastore.MutableDocumentRevision)}
+     * {@link com.cloudant.sync.datastore.Datastore#createDocumentFromRevision(com.cloudant.sync.datastore.DocumentRevision)}
      * </p>
      *
      * @param newDocument
      *            New document revision
      */
-    public DocumentCreated(BasicDocumentRevision newDocument) {
+    public DocumentCreated(DocumentRevision newDocument) {
         super(null, newDocument);
     }
 

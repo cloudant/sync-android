@@ -29,7 +29,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.UUID;
@@ -75,12 +74,12 @@ public class MultipartAttachmentWriterTests {
 
     @Test
     public void Add1000TextAttachmentsTest() throws Exception {
-        MutableDocumentRevision docMut = new MutableDocumentRevision();
-        docMut.body = bodyOne;
-        BasicDocumentRevision doc = datastore.createDocumentFromRevision(docMut);
+        DocumentRevision docMut = new DocumentRevision();
+        docMut.setBody(bodyOne);
+        DocumentRevision doc = datastore.createDocumentFromRevision(docMut);
 
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
-        mpw.setBody(doc);
+        mpw.setBody(doc.asMap());
 
         for (int i=0; i<1000; i++) {
             String name = "attachment" + UUID.randomUUID();
@@ -114,12 +113,12 @@ public class MultipartAttachmentWriterTests {
 
     @Test
     public void AddImageAttachmentTest() throws Exception {
-        MutableDocumentRevision docMut = new MutableDocumentRevision();
-        docMut.body = bodyOne;
-        BasicDocumentRevision doc = datastore.createDocumentFromRevision(docMut);
+        DocumentRevision docMut = new DocumentRevision();
+        docMut.setBody(bodyOne);
+        DocumentRevision doc = datastore.createDocumentFromRevision(docMut);
 
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
-        mpw.setBody(doc);
+        mpw.setBody(doc.asMap());
 
         File f = TestUtils.loadFixture("fixture/bonsai-boston.jpg");
         Attachment att0 = new UnsavedFileAttachment(f, "image/jpeg");

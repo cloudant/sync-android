@@ -24,13 +24,12 @@ import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DatastoreExtended;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.Misc;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
@@ -280,11 +279,11 @@ class BasicPushStrategy implements ReplicationStrategy {
 
         // Process the changes themselves in batches, where we post a batch
         // at a time to the remote database's _bulk_docs endpoint.
-        List<List<BasicDocumentRevision>> batches = Lists.partition(
+        List<? extends List<DocumentRevision>> batches = Lists.partition(
                 changes.getResults(),
                 this.bulkInsertSize
         );
-        for (List<BasicDocumentRevision> batch : batches) {
+        for (List<DocumentRevision> batch : batches) {
 
             if (this.state.cancel) { break; }
 
@@ -343,16 +342,16 @@ class BasicPushStrategy implements ReplicationStrategy {
             DocumentRevisionTree tree = allTrees.get(docId);
             for(String rev : missingRevisions) {
                 long sequence = tree.lookup(docId, rev).getSequence();
-                List<BasicDocumentRevision> path = tree.getPathForNode(sequence);
+                List<DocumentRevision> path = tree.getPathForNode(sequence);
 
                 // get the attachments for the leaf of this path
-                BasicDocumentRevision dr = path.get(0);
+                DocumentRevision dr = path.get(0);
                 List<? extends Attachment> atts = this.sourceDb.getDbCore().attachmentsForRevision(dr);
 
                 // get common ancestor generation - needed to correctly stub out attachments
                 // closest back (first) instance of one of the possible ancestors rev id in the history tree
                 int minRevPos = 0;
-                for (BasicDocumentRevision ancestor : path) {
+                for (DocumentRevision ancestor : path) {
                     if (e.getValue().possible_ancestors != null &&
                             e.getValue().possible_ancestors.contains(ancestor.getRevision())) {
                         minRevPos = ancestor.getGeneration();
@@ -365,7 +364,7 @@ class BasicPushStrategy implements ReplicationStrategy {
                         this.pushAttachmentsInline,
                         minRevPos);
                 // if there are any large atts we will get a multipart writer, otherwise null
-                MultipartAttachmentWriter mpw = RevisionHistoryHelper.createMultipartWriter(dr,
+                MultipartAttachmentWriter mpw = RevisionHistoryHelper.createMultipartWriter(json,
                         atts,
                         this.pushAttachmentsInline,
                         minRevPos);

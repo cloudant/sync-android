@@ -14,6 +14,10 @@
 
 package com.cloudant.sync.datastore;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.JSONUtils;
@@ -31,10 +35,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
 public class BasicDatastoreForceInsertTest {
 
@@ -69,28 +69,28 @@ public class BasicDatastoreForceInsertTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void forceInsert_revHistoryNotInRightOrder_exception() throws Exception {
-        BasicDocumentRevision rev = createDbObject();
+        DocumentRevision rev = createDbObject();
         datastore.forceInsert(rev, "1-rev", "3-rev", "2-rev", "4-rev");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void forceInsert_currentRevisionNotInTheHistory_exception() throws Exception {
-        BasicDocumentRevision rev = createDbObject();
+        DocumentRevision rev = createDbObject();
         datastore.forceInsert(rev, "1-rev", "2-rev", "3-rev");
     }
 
     @Test
     public void forceInsert_documentNotInLocalDB_documentShouldBeInserted() throws Exception {
-        BasicDocumentRevision rev = createDbObject();
+        DocumentRevision rev = createDbObject();
         datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
         assertDBObjectIsCorrect(OBJECT_ID, 4, bodyOne);
     }
 
-    private BasicDocumentRevision createDbObject() {
+    private DocumentRevision createDbObject() {
         return createDbObject("4-rev", bodyOne);
     }
 
-    private BasicDocumentRevision createDbObject(String rev, DocumentBody body) {
+    private DocumentRevision createDbObject(String rev, DocumentBody body) {
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
         builder.setDocId(OBJECT_ID);
         builder.setRevId(rev);
@@ -99,7 +99,7 @@ public class BasicDatastoreForceInsertTest {
         return builder.build();
     }
 
-    private BasicDocumentRevision createDbObjectDeleted(String rev) {
+    private DocumentRevision createDbObjectDeleted(String rev) {
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
         builder.setDocId(OBJECT_ID);
         builder.setRevId(rev);
@@ -111,7 +111,7 @@ public class BasicDatastoreForceInsertTest {
     @Test
     public void forceInsert_newRevisionsFromRemoteDB_newRevisionShouldBeInserted() throws Exception {
         {
-            BasicDocumentRevision rev = createDbObject();
+            DocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
         }
 
@@ -123,7 +123,7 @@ public class BasicDatastoreForceInsertTest {
             builder.setRevId("5-rev");
             builder.setDeleted(false);
             builder.setBody(bodyOne);
-            BasicDocumentRevision newRev = builder.build();
+            DocumentRevision newRev = builder.build();
 
             datastore.forceInsert(newRev, "1-rev", "2-rev", "4-rev", "5-rev");
         }
@@ -135,12 +135,12 @@ public class BasicDatastoreForceInsertTest {
     public void forceInsert_longerPathFromRemoteDB_remoteDBWins() throws Exception {
 
         {
-            BasicDocumentRevision rev = createDbObject();
+            DocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
-            insertedObj.body = bodyTwo;
-            BasicDocumentRevision updatedObj = datastore.updateDocumentFromRevision(insertedObj);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updatedObj = datastore.updateDocumentFromRevision(insertedObj);
 
             Assert.assertNotNull(updatedObj);
 
@@ -153,7 +153,7 @@ public class BasicDatastoreForceInsertTest {
             builder.setRevId("6-rev");
             builder.setDeleted(false);
             builder.setBody(bodyOne);
-            BasicDocumentRevision newRev = builder.build();
+            DocumentRevision newRev = builder.build();
 
             datastore.forceInsert(newRev, "1-rev", "2-rev", "4-rev", "5-rev", "6-rev");
         }
@@ -165,14 +165,14 @@ public class BasicDatastoreForceInsertTest {
     @Test
     public void forceInsert_longerPathFromLocalDB_localDBWins() throws Exception {
         {
-            BasicDocumentRevision rev = createDbObject();
+            DocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
-            insertedObj.body = bodyTwo;
-            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
-            insertedObj.body = bodyTwo;
-            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
 
             Assert.assertNotNull(updateObj2);
 
@@ -185,14 +185,14 @@ public class BasicDatastoreForceInsertTest {
             builder.setRevId("5-rev");
             builder.setDeleted(false);
             builder.setBody(bodyOne);
-            BasicDocumentRevision newRev = builder.build();
+            DocumentRevision newRev = builder.build();
 
             datastore.forceInsert(newRev, "1-rev", "2-rev", "4-rev", "5-rev");
         }
 
         assertDBObjectIsCorrect(OBJECT_ID, 6, bodyTwo);
 
-        BasicDocumentRevision p = datastore.getDocument(OBJECT_ID, "5-rev");
+        DocumentRevision p = datastore.getDocument(OBJECT_ID, "5-rev");
         Assert.assertNotNull(p);
         Assert.assertEquals("5-rev", p.getRevision());
         Assert.assertTrue(Arrays.equals(bodyOne.asBytes(), p.getBody().asBytes()));
@@ -201,14 +201,14 @@ public class BasicDatastoreForceInsertTest {
     @Test
     public void forceInsert_sameLengthOfPath_remoteRevisionWins() throws Exception {
         {
-            BasicDocumentRevision rev = createDbObject();
+            DocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "3-rev", "4-rev");
 
-            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
-            insertedObj.body = bodyTwo;
-            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
-            insertedObj.body = bodyTwo;
-            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
 
             Assert.assertNotNull(updateObj2);
 
@@ -219,10 +219,10 @@ public class BasicDatastoreForceInsertTest {
         String remoteRevisionId6 = null;
         {
             DocumentRevisionTree tree = datastore.getAllRevisionsOfDocument(OBJECT_ID);
-            BasicDocumentRevision current = tree.getCurrentRevision();
-            List<BasicDocumentRevision> all = tree.getPathForNode(current.getSequence());
+            DocumentRevision current = tree.getCurrentRevision();
+            List<DocumentRevision> all = tree.getPathForNode(current.getSequence());
             // Make sure the latest revision from remote db has bigger String (in terms of String comparison)
-            for(BasicDocumentRevision a : all) {
+            for(DocumentRevision a : all) {
                 int g = CouchUtils.generationFromRevId(a.getRevision());
                 if(g == 6) {
                     localRevisionId6 = a.getRevision();
@@ -240,12 +240,12 @@ public class BasicDatastoreForceInsertTest {
             builder.setRevId(remoteRevisionId6);
             builder.setDeleted(false);
             builder.setBody(bodyOne);
-            BasicDocumentRevision newRev = builder.build();
+            DocumentRevision newRev = builder.build();
 
             datastore.forceInsert(newRev, "1-rev", "2-rev", "3-rev", "4-rev", "5-rev", remoteRevisionId6);
         }
 
-        BasicDocumentRevision obj = datastore.getDocument(OBJECT_ID);
+        DocumentRevision obj = datastore.getDocument(OBJECT_ID);
         Assert.assertEquals(remoteRevisionId6, obj.getRevision());
         Assert.assertTrue(Arrays.equals(bodyOne.asBytes(), obj.getBody().asBytes()));
     }
@@ -253,14 +253,14 @@ public class BasicDatastoreForceInsertTest {
     @Test
     public void forceInsert_sameLengthOfPath_localRevisionWins() throws Exception {
         {
-            BasicDocumentRevision rev = createDbObject();
+            DocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "3-rev", "4-rev");
 
-            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
-            insertedObj.body = bodyTwo;
-            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
-            insertedObj.body = bodyTwo;
-            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
 
             Assert.assertNotNull(updateObj2);
 
@@ -272,9 +272,9 @@ public class BasicDatastoreForceInsertTest {
         {
             // Make sure the latest revision from remote db has smaller String (in terms of String comparison)
             DocumentRevisionTree tree = datastore.getAllRevisionsOfDocument(OBJECT_ID);
-            BasicDocumentRevision current = tree.getCurrentRevision();
-            List<BasicDocumentRevision> all = tree.getPathForNode(current.getSequence());
-            for(BasicDocumentRevision a : all) {
+            DocumentRevision current = tree.getCurrentRevision();
+            List<DocumentRevision> all = tree.getPathForNode(current.getSequence());
+            for(DocumentRevision a : all) {
                 int g = CouchUtils.generationFromRevId(a.getRevision());
                 if(g == 6) {
                     localRevisionId6 = a.getRevision();
@@ -292,13 +292,13 @@ public class BasicDatastoreForceInsertTest {
             builder.setRevId(remoteRevisionId6);
             builder.setDeleted(false);
             builder.setBody(bodyOne);
-            BasicDocumentRevision newRev = builder.build();
+            DocumentRevision newRev = builder.build();
 
             datastore.forceInsert(newRev, "1-rev", "2-rev", "3-rev", "4-rev", "5-rev",
                     remoteRevisionId6);
         }
 
-        BasicDocumentRevision obj = datastore.getDocument(OBJECT_ID);
+        DocumentRevision obj = datastore.getDocument(OBJECT_ID);
         Assert.assertEquals(localRevisionId6, obj.getRevision());
         Assert.assertTrue(Arrays.equals(bodyTwo.asBytes(), obj.getBody().asBytes()));
     }
@@ -311,19 +311,19 @@ public class BasicDatastoreForceInsertTest {
         revs.add("4-rev");
 
         {
-            BasicDocumentRevision rev = createDbObject();
+            DocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
-            insertedObj.body = bodyTwo;
-            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
-            updateObj.body = bodyTwo;
-            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            updateObj.setBody(bodyTwo);
+            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
             Assert.assertNotNull(updateObj2);
 
             // Delete the document from the local database
             datastore.deleteDocumentFromRevision(updateObj2);
-            BasicDocumentRevision deletedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision deletedObj = datastore.getDocument(OBJECT_ID);
             Assert.assertTrue(deletedObj.isDeleted());
         }
 
@@ -333,7 +333,7 @@ public class BasicDatastoreForceInsertTest {
             builder.setRevId("5-rev");
             builder.setDeleted(false);
             builder.setBody(bodyOne);
-            BasicDocumentRevision newRev = builder.build();
+            DocumentRevision newRev = builder.build();
 
             datastore.forceInsert(newRev, "1-rev", "2-rev", "4-rev", "5-rev");
         }
@@ -344,14 +344,14 @@ public class BasicDatastoreForceInsertTest {
     @Test
     public void forceInsert_conflictsWithDocDeletedInRemoteDB_nonDeletionWins() throws Exception {
         {
-            BasicDocumentRevision rev = createDbObject();
+            DocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
-            insertedObj.body = bodyTwo;
-            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
-            updateObj.body = bodyTwo;
-            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            updateObj.setBody(bodyTwo);
+            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
             Assert.assertNotNull(updateObj2);
         }
 
@@ -361,7 +361,7 @@ public class BasicDatastoreForceInsertTest {
             builder.setRevId("8-rev");
             builder.setDeleted(true);
             builder.setBody(DocumentBodyFactory.EMPTY);
-            BasicDocumentRevision newRev = builder.build();
+            DocumentRevision newRev = builder.build();
 
             datastore.forceInsert(newRev, "1-rev", "2-rev", "4-rev",
                     "5-rev", "6-rev", "7-rev", "8-rev");
@@ -371,7 +371,7 @@ public class BasicDatastoreForceInsertTest {
     }
 
     private void assertDBObjectIsCorrect(String docId, int revGeneration, DocumentBody body) throws Exception {
-        BasicDocumentRevision obj = datastore.getDocument(docId);
+        DocumentRevision obj = datastore.getDocument(docId);
         Assert.assertNotNull(obj);
         Assert.assertEquals(revGeneration, CouchUtils.generationFromRevId(obj.getRevision()));
         Assert.assertTrue(Arrays.equals(body.asBytes(), obj.getBody().asBytes()));
@@ -380,14 +380,14 @@ public class BasicDatastoreForceInsertTest {
     @Test
     public void forceInsert_newTreeLengthOfOneFromRemoteDb_newTreeShouldBeInsertedAndNewTreeWins() throws Exception {
         {
-            BasicDocumentRevision rev = createDbObject("1-a", bodyOne);
+            DocumentRevision rev = createDbObject("1-a", bodyOne);
             datastore.forceInsert(rev, "1-a" );
-            BasicDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
             Assert.assertEquals("1-a", insertedObj.getRevision());
         }
 
         {
-            BasicDocumentRevision rev = createDbObject("1-b", bodyTwo);
+            DocumentRevision rev = createDbObject("1-b", bodyTwo);
             datastore.forceInsert(rev, "1-b");
         }
 
@@ -400,14 +400,14 @@ public class BasicDatastoreForceInsertTest {
     @Test
     public void forceInsert_newTreeLengthOfOneFromRemoteDb_newTreeShouldBeInsertedButOldTreeWins() throws Exception {
         {
-            BasicDocumentRevision rev = createDbObject("1-x", bodyOne);
+            DocumentRevision rev = createDbObject("1-x", bodyOne);
             datastore.forceInsert(rev, "1-x" );
-            BasicDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
             Assert.assertEquals("1-x", insertedObj.getRevision());
         }
 
         {
-            BasicDocumentRevision rev = createDbObject("1-a", bodyTwo);
+            DocumentRevision rev = createDbObject("1-a", bodyTwo);
             datastore.forceInsert(rev, "1-a");
         }
 
@@ -420,14 +420,14 @@ public class BasicDatastoreForceInsertTest {
     @Test
     public void forceInsert_newTreeLengthOfTwoFromRemoteDb_newTreeShouldBeInserted() throws Exception{
         {
-            BasicDocumentRevision rev = createDbObject("1-x", bodyOne);
+            DocumentRevision rev = createDbObject("1-x", bodyOne);
             datastore.forceInsert(rev, "1-x");
-            BasicDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
             Assert.assertEquals("1-x", insertedObj.getRevision());
         }
 
         {
-            BasicDocumentRevision rev = createDbObject("2-c", bodyTwo);
+            DocumentRevision rev = createDbObject("2-c", bodyTwo);
             datastore.forceInsert(rev, "1-a", "2-c");
         }
 
@@ -435,7 +435,7 @@ public class BasicDatastoreForceInsertTest {
         Assert.assertThat(tree.leafs(), hasSize(2));
         Assert.assertThat(tree.leafRevisionIds(), hasItems("1-x", "2-c"));
 
-        BasicDocumentRevision leaf = datastore.getDocument(OBJECT_ID, "2-c");
+        DocumentRevision leaf = datastore.getDocument(OBJECT_ID, "2-c");
         Assert.assertThat(tree.getPath(leaf.getSequence()), equalTo(Arrays.asList("2-c", "1-a")));
 
         assertDocumentHasRevAndBody(OBJECT_ID, "2-c", bodyTwo);
@@ -451,15 +451,15 @@ public class BasicDatastoreForceInsertTest {
         // create a chain of revs 1-x -> 6-x
         // then add 2-y and 7-x
 
-        BasicDocumentRevision rev1 = createDbObject("1-x", bodyOne);
-        BasicDocumentRevision rev2 = createDbObject("2-x", bodyOne);
-        BasicDocumentRevision rev3 = createDbObject("3-x", bodyOne);
-        BasicDocumentRevision rev4 = createDbObject("4-x", bodyOne);
-        BasicDocumentRevision rev5 = createDbObject("5-x", bodyOne);
-        BasicDocumentRevision rev6 = createDbObject("6-x", bodyOne);
+        DocumentRevision rev1 = createDbObject("1-x", bodyOne);
+        DocumentRevision rev2 = createDbObject("2-x", bodyOne);
+        DocumentRevision rev3 = createDbObject("3-x", bodyOne);
+        DocumentRevision rev4 = createDbObject("4-x", bodyOne);
+        DocumentRevision rev5 = createDbObject("5-x", bodyOne);
+        DocumentRevision rev6 = createDbObject("6-x", bodyOne);
 
-        BasicDocumentRevision rev7 = createDbObjectDeleted("7-x");
-        BasicDocumentRevision rev2_alt = createDbObject("2-y", bodyOne);
+        DocumentRevision rev7 = createDbObjectDeleted("7-x");
+        DocumentRevision rev2_alt = createDbObject("2-y", bodyOne);
 
         datastore.forceInsert(rev1, "1-x");
         datastore.forceInsert(rev2, "1-x", "2-x");
@@ -480,15 +480,15 @@ public class BasicDatastoreForceInsertTest {
         // this test is the same as the one above but we switch round the last two forceInserts
         // - this ensure we get the same result regardless of insertion order
 
-        BasicDocumentRevision rev1 = createDbObject("1-x", bodyOne);
-        BasicDocumentRevision rev2 = createDbObject("2-x", bodyOne);
-        BasicDocumentRevision rev3 = createDbObject("3-x", bodyOne);
-        BasicDocumentRevision rev4 = createDbObject("4-x", bodyOne);
-        BasicDocumentRevision rev5 = createDbObject("5-x", bodyOne);
-        BasicDocumentRevision rev6 = createDbObject("6-x", bodyOne);
+        DocumentRevision rev1 = createDbObject("1-x", bodyOne);
+        DocumentRevision rev2 = createDbObject("2-x", bodyOne);
+        DocumentRevision rev3 = createDbObject("3-x", bodyOne);
+        DocumentRevision rev4 = createDbObject("4-x", bodyOne);
+        DocumentRevision rev5 = createDbObject("5-x", bodyOne);
+        DocumentRevision rev6 = createDbObject("6-x", bodyOne);
 
-        BasicDocumentRevision rev7 = createDbObjectDeleted("7-x");
-        BasicDocumentRevision rev2_alt = createDbObject("2-y", bodyOne);
+        DocumentRevision rev7 = createDbObjectDeleted("7-x");
+        DocumentRevision rev2_alt = createDbObject("2-y", bodyOne);
 
         datastore.forceInsert(rev1, "1-x");
         datastore.forceInsert(rev2, "1-x", "2-x");
@@ -518,7 +518,7 @@ public class BasicDatastoreForceInsertTest {
         int nConflicts = 3; // number of conflicted leaf nodes
         char startChar = 'a'; // revids will be x-a, x-b, x-c etc where x is the generation
         String startRev = String.format("1-%c", startChar);
-        BasicDocumentRevision root = createDbObject(startRev, bodyOne);
+        DocumentRevision root = createDbObject(startRev, bodyOne);
         // make subtree for 1-a, 2-a etc
         makeSubTree(startRev, String.format("%c", startChar), 1, maxTree+2, nConflicts);
         // now make subtrees starting at 2-b, 3-c etc, rooted at 1-a, 2-a etc
@@ -533,11 +533,11 @@ public class BasicDatastoreForceInsertTest {
         Random a = new Random();
 
         // fetch non-deleted leafs until there are none left
-        List<BasicDocumentRevision> leafs;
+        List<DocumentRevision> leafs;
         while((leafs = (datastore.getAllRevisionsOfDocument(OBJECT_ID).leafRevisions(true))).size() != 0) {
             // getDocument() should never return a deleted document:
             // under previous behaviour of pickWinnerOfConflicts, this would fail
-            BasicDocumentRevision currentLeaf = datastore.getDocument(OBJECT_ID);
+            DocumentRevision currentLeaf = datastore.getDocument(OBJECT_ID);
             Assert.assertFalse("Current revision should not have been marked as deleted. Current leaf: " +
                     currentLeaf +
                     ". Current state of all leaf nodes: "+leafs,
@@ -545,16 +545,18 @@ public class BasicDatastoreForceInsertTest {
 
             // root the new deleted doc at the randomly selected leaf node
             int random = a.nextInt(leafs.size());
-            BasicDocumentRevision randomLeaf =  leafs.get(random);
+            DocumentRevision randomLeaf =  leafs.get(random);
             String newRevId = String.format("%d-%s-deleted", randomLeaf.getGeneration() + 1,
                     randomLeaf.getRevision());
-            BasicDocumentRevision deleted = createDbObjectDeleted(newRevId);
+            DocumentRevision deleted = createDbObjectDeleted(newRevId);
             datastore.forceInsert(deleted, randomLeaf.getRevision(), newRevId);
 
             // we use the same comparator as pickWinnerOfConflicts
-            Collections.sort(leafs, new Comparator<BasicDocumentRevision>() {
+            // re-fetch leafs after insert
+            leafs = (datastore.getAllRevisionsOfDocument(OBJECT_ID).leafRevisions(true));
+            Collections.sort(leafs, new Comparator<DocumentRevision>() {
                 @Override
-                public int compare(BasicDocumentRevision r1, BasicDocumentRevision r2) {
+                public int compare(DocumentRevision r1, DocumentRevision r2) {
                     int generationCompare = r1.getGeneration() - r2.getGeneration();
                     if (generationCompare != 0) {
                         return -generationCompare;
@@ -564,10 +566,16 @@ public class BasicDatastoreForceInsertTest {
                 }
             });
             currentLeaf = datastore.getDocument(OBJECT_ID);
+
+            if (leafs.size() == 0) {
+                break;
+            }
+
             // check that our view of 'current' agrees with what pickWinnerOfConflicts did
             Assert.assertEquals(currentLeaf, leafs.get(0));
+
             // also check that none of the other leafs are marked current
-            for (BasicDocumentRevision leaf : leafs.subList(1, leafs.size())) {
+            for (DocumentRevision leaf : leafs.subList(1, leafs.size())) {
                 Assert.assertFalse(
                         "Leaf "+leaf+" should not be marked current. Current state of all leaf nodes: "+leafs,
                         leaf.isCurrent());
@@ -584,7 +592,7 @@ public class BasicDatastoreForceInsertTest {
     }
 
     private void assertDocumentHasRevAndBody(String id, String rev, DocumentBody body) throws Exception {
-        BasicDocumentRevision obj = datastore.getDocument(id);
+        DocumentRevision obj = datastore.getDocument(id);
         Assert.assertEquals(rev, obj.getRevision());
         Assert.assertTrue(Arrays.equals(obj.getBody().asBytes(), body.asBytes()));
     }
@@ -597,14 +605,14 @@ public class BasicDatastoreForceInsertTest {
         String lastRevId = root;
         for (i=start; i<depth-1; i++) {
             String revId = String.format("%d-%s", i+1, id);
-            BasicDocumentRevision rev = createDbObject(revId, bodyOne);
+            DocumentRevision rev = createDbObject(revId, bodyOne);
             datastore.forceInsert(rev, lastRevId, revId);
             lastRevId = revId;
         }
         // now some leaf nodes of the format "12-11-x0", "12-11-x1" etc
         for (int j=0; j<conflicts; j++) {
             String revId = String.format("%d-%s%d", i+1, id, j);
-            BasicDocumentRevision rev = createDbObject(revId, bodyOne);
+            DocumentRevision rev = createDbObject(revId, bodyOne);
             datastore.forceInsert(rev, lastRevId, revId);
         }
     }

@@ -16,21 +16,12 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentRevisionBuilder;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.util.TestUtils;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -38,13 +29,10 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -96,19 +84,19 @@ public class AttachmentsPushTest extends ReplicationTestBase {
     }
 
     public String createDocInDatastore(String d) throws Exception {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
+        DocumentRevision rev = new DocumentRevision();
         Map<String, String> m = new HashMap<String, String>();
         m.put("data", d);
-        rev.body = DocumentBodyFactory.create(m);
+        rev.setBody(DocumentBodyFactory.create(m));
         return datastore.createDocumentFromRevision(rev).getId();
     }
 
 
     public String updateDocInDatastore(String id, String data) throws Exception {
-        MutableDocumentRevision rev = datastore.getDocument(id).mutableCopy();
+        DocumentRevision rev = datastore.getDocument(id);
         Map<String, String> m = new HashMap<String, String>();
         m.put("data", data);
-        rev.body = DocumentBodyFactory.create(m);
+        rev.setBody(DocumentBodyFactory.create(m));
         return datastore.updateDocumentFromRevision(rev).getId();
     }
 
@@ -119,11 +107,11 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         populateSomeDataInLocalDatastore();
         File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
-        BasicDocumentRevision oldRevision = datastore.getDocument(id1);
-        BasicDocumentRevision newRevision = null;
+        DocumentRevision oldRevision = datastore.getDocument(id1);
+        DocumentRevision newRevision = null;
         // set attachment
-        MutableDocumentRevision oldRevision_mut = oldRevision.mutableCopy();
-        oldRevision_mut.attachments.put(attachmentName, att);
+        DocumentRevision oldRevision_mut = oldRevision;
+        oldRevision_mut.getAttachments().put(attachmentName, att);
         newRevision = datastore.updateDocumentFromRevision(oldRevision_mut);
 
 
@@ -143,11 +131,11 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         populateSomeDataInLocalDatastore();
         File f = TestUtils.loadFixture("fixture/"+ attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "image/jpeg");
-        BasicDocumentRevision oldRevision = datastore.getDocument(id1);
-        BasicDocumentRevision newRevision = null;
+        DocumentRevision oldRevision = datastore.getDocument(id1);
+        DocumentRevision newRevision = null;
         // set attachment
-        MutableDocumentRevision oldRevision_mut = oldRevision.mutableCopy();
-        oldRevision_mut.attachments.put(attachmentName, att);
+        DocumentRevision oldRevision_mut = oldRevision;
+        oldRevision_mut.getAttachments().put(attachmentName, att);
         newRevision = datastore.updateDocumentFromRevision(oldRevision_mut);
 
 
@@ -170,26 +158,26 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         File f2 = TestUtils.loadFixture("fixture/"+ attachmentName2);
         Attachment att1 = new UnsavedFileAttachment(f1, "text/plain");
         Attachment att2 = new UnsavedFileAttachment(f2, "text/plain");
-        BasicDocumentRevision rev1 = datastore.getDocument(id1);
-        BasicDocumentRevision rev2 = null;
+        DocumentRevision rev1 = datastore.getDocument(id1);
+        DocumentRevision rev2 = null;
         // set attachment
-        MutableDocumentRevision rev1_mut = rev1.mutableCopy();
-        rev1_mut.attachments.put(attachmentName1, att1);
+        DocumentRevision rev1_mut = rev1;
+        rev1_mut.getAttachments().put(attachmentName1, att1);
         rev2 = datastore.updateDocumentFromRevision(rev1_mut);
 
         // push replication - att1 should be uploaded
         push();
 
-        MutableDocumentRevision rev2_mut = rev2.mutableCopy();
-        BasicDocumentRevision rev3 = datastore.updateDocumentFromRevision(rev2_mut);
+        DocumentRevision rev2_mut = rev2;
+        DocumentRevision rev3 = datastore.updateDocumentFromRevision(rev2_mut);
 
         // push replication - no atts should be uploaded
         push();
 
-        BasicDocumentRevision rev4 = null;
+        DocumentRevision rev4 = null;
         // set attachment
-        MutableDocumentRevision rev3_mut = rev3.mutableCopy();
-        rev3_mut.attachments.put(attachmentName2, att2);
+        DocumentRevision rev3_mut = rev3;
+        rev3_mut.getAttachments().put(attachmentName2, att2);
         rev4 = datastore.updateDocumentFromRevision(rev3_mut);
 
         // push replication - att2 should be uploaded
@@ -228,20 +216,20 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         File f2 = TestUtils.loadFixture("fixture/"+ attachmentName2);
         Attachment att1 = new UnsavedFileAttachment(f1, "text/plain");
         Attachment att2 = new UnsavedFileAttachment(f2, "text/plain");
-        BasicDocumentRevision rev1 = datastore.getDocument(id1);
-        BasicDocumentRevision rev2 = null;
+        DocumentRevision rev1 = datastore.getDocument(id1);
+        DocumentRevision rev2 = null;
         // set attachment
-        MutableDocumentRevision rev1_mut = rev1.mutableCopy();
-        rev1_mut.attachments.put(attachmentName1, att1);
+        DocumentRevision rev1_mut = rev1;
+        rev1_mut.getAttachments().put(attachmentName1, att1);
         rev2 = datastore.updateDocumentFromRevision(rev1_mut);
 
-        MutableDocumentRevision rev2_mut = rev2.mutableCopy();
-        BasicDocumentRevision rev3 = datastore.updateDocumentFromRevision(rev2_mut);
+        DocumentRevision rev2_mut = rev2;
+        DocumentRevision rev3 = datastore.updateDocumentFromRevision(rev2_mut);
 
-        BasicDocumentRevision rev4 = null;
+        DocumentRevision rev4 = null;
         // set attachment
-        MutableDocumentRevision rev3_mut = rev3.mutableCopy();
-        rev3_mut.attachments.put(attachmentName2, att2);
+        DocumentRevision rev3_mut = rev3;
+        rev3_mut.getAttachments().put(attachmentName2, att2);
         rev4 = datastore.updateDocumentFromRevision(rev3_mut);
 
         // push replication - att1 & att2 should be uploaded

@@ -20,8 +20,6 @@ package com.cloudant.sync.datastore;
 
 import com.google.common.collect.Multimap;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -148,7 +146,7 @@ public interface DatastoreExtended extends Datastore {
      * @see #forceInsert(List)
      */
     @Deprecated
-    void forceInsert(BasicDocumentRevision rev,
+    void forceInsert(DocumentRevision rev,
                             List<String> revisionHistory,
                             Map<String, Object> attachments,
                             Map<String[],List<PreparedAttachment>> preparedAttachments,
@@ -169,10 +167,10 @@ public interface DatastoreExtended extends Datastore {
      *                        including the rev ID of {@code rev}. This list
      *                        needs to be sorted in ascending order
      *
-     * @see DatastoreExtended#forceInsert(BasicDocumentRevision, java.util.List,java.util.Map, java.util.Map, boolean)
+     * @see DatastoreExtended#forceInsert(DocumentRevision, java.util.List,java.util.Map, java.util.Map, boolean)
      * @throws DocumentException if there was an error inserting the revision into the database
      */
-    void forceInsert(BasicDocumentRevision rev, String... revisionHistory) throws
+    void forceInsert(DocumentRevision rev, String... revisionHistory) throws
             DocumentException;
 
     /**
@@ -245,11 +243,12 @@ public interface DatastoreExtended extends Datastore {
      *
      * <p>Used by replicator when pushing attachments</p>
      *
-     * @param rev The revision with which the attachment is associated
+     * @param id The revision ID with which the attachment is associated
+     * @param rev The document ID with which the attachment is associated
      * @param attachmentName Name of the attachment
      * @return <code>Attachment</code> or null if there is no attachment with that name.
      */
-    Attachment getAttachment(BasicDocumentRevision rev, String attachmentName);
+    Attachment getAttachment(String id, String rev, String attachmentName);
 
     /**
      * <p>Returns all attachments for the revision.</p>
@@ -261,7 +260,7 @@ public interface DatastoreExtended extends Datastore {
      * @throws AttachmentException if there was an error reading the attachment metadata from the
      * database
      */
-    List<? extends Attachment> attachmentsForRevision(BasicDocumentRevision rev) throws
+    List<? extends Attachment> attachmentsForRevision(DocumentRevision rev) throws
             AttachmentException;
 
 }

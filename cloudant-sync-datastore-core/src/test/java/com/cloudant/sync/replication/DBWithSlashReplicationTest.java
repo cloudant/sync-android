@@ -18,10 +18,9 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.common.TestOptions;
 import com.cloudant.mazha.ClientTestUtils;
 import com.cloudant.mazha.Response;
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.util.AbstractTreeNode;
 
 import org.junit.Assert;
@@ -102,16 +101,15 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
         }
 
         //now create some local revs
-        BasicDocumentRevision revision = datastore.getDocument(documentName);
+        DocumentRevision revision = datastore.getDocument(documentName);
 
         for (int i = 0; i < 10; i++) {
-            MutableDocumentRevision mutableDocumentRevision = revision.mutableCopy();
-            Map<String, Object> body = mutableDocumentRevision.body.asMap();
+            Map<String, Object> body = revision.getBody().asMap();
             Number age = (Number) body.get("age");
             age = age.intValue() + 1;
             body.put("age", age);
-            mutableDocumentRevision.body = DocumentBodyFactory.create(body);
-            revision = datastore.updateDocumentFromRevision(mutableDocumentRevision);
+            revision.setBody(DocumentBodyFactory.create(body));
+            revision = datastore.updateDocumentFromRevision(revision);
         }
 
         // push the changes to the remote
@@ -139,13 +137,13 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
 
     }
 
-    private void extractRevisionIDsFromChildren(AbstractTreeNode<BasicDocumentRevision> node,
+    private void extractRevisionIDsFromChildren(AbstractTreeNode<DocumentRevision> node,
                                                 List<String> documentRevisions) {
 
         if (node.hasChildren()) {
-            Iterator<AbstractTreeNode<BasicDocumentRevision>> iterator = node.iterateChildren();
+            Iterator<AbstractTreeNode<DocumentRevision>> iterator = node.iterateChildren();
             while (iterator.hasNext()) {
-                AbstractTreeNode<BasicDocumentRevision> absNode = iterator.next();
+                AbstractTreeNode<DocumentRevision> absNode = iterator.next();
                 documentRevisions.add(absNode.getData().getRevision());
                 extractRevisionIDsFromChildren(absNode, documentRevisions);
             }

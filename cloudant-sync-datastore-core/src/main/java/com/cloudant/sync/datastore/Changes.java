@@ -31,9 +31,9 @@ public class Changes {
 
     private final long lastSequence;
 
-    private final List<BasicDocumentRevision> results;
+    private final List<DocumentRevision> results;
 
-    protected Changes(long lastSequence, List<BasicDocumentRevision> results) {
+    protected Changes(long lastSequence, List<DocumentRevision> results) {
         Preconditions.checkNotNull(results, "Changes results must not be null.");
         this.lastSequence = lastSequence;
         this.results = results;
@@ -56,7 +56,7 @@ public class Changes {
      *
      * @return the list of {@code DocumentRevision}s in this change set.
      */
-    public List<BasicDocumentRevision> getResults() {
+    public List<DocumentRevision> getResults() {
         return this.results;
     }
 
@@ -76,7 +76,7 @@ public class Changes {
      */
     public List<String> getIds() {
         List<String> ids = new ArrayList<String>();
-        for(BasicDocumentRevision obj : results) {
+        for(DocumentRevision obj : results) {
             ids.add(obj.getId());
         }
         return ids;

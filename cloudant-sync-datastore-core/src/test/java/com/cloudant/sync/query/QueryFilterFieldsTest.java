@@ -15,16 +15,15 @@ package com.cloudant.sync.query;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.datastore.ProjectedDocumentRevision;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
@@ -121,7 +120,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsFullMutableCopyOfProjectedDoc() {
+    public void returnsFullMutableCopyOfProjectedDoc() throws Exception {
         // query - { "name" : "mike", "age" : 12 }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
@@ -134,12 +133,12 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
             assertThat((String) revBody.get("name"), is("mike"));
 
             assertThat(rev, instanceOf(ProjectedDocumentRevision.class));
-            MutableDocumentRevision mutable = ((ProjectedDocumentRevision) rev).mutableCopy();
-            Map<String, Object> mutableBody = mutable.getBody().asMap();
-            assertThat(mutableBody.keySet(), containsInAnyOrder("name", "age", "pet"));
-            assertThat((String) mutableBody.get("name"), is("mike"));
-            assertThat((Integer) mutableBody.get("age"), is(12));
-            assertThat((String) mutableBody.get("pet"), is("cat"));
+            DocumentRevision copy = rev.toFullRevision();
+            Map<String, Object> bodyCopy = copy.getBody().asMap();
+            assertThat(bodyCopy.keySet(), containsInAnyOrder("name", "age", "pet"));
+            assertThat((String) bodyCopy.get("name"), is("mike"));
+            assertThat((Integer) bodyCopy.get("age"), is(12));
+            assertThat((String) bodyCopy.get("pet"), is("cat"));
         }
     }
 
@@ -157,18 +156,22 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
             assertThat(revBody.keySet(), contains("name"));
             assertThat((String) revBody.get("name"), is("mike"));
 
-            BasicDocumentRevision original = ds.getDocument(rev.getId());
-            MutableDocumentRevision update = original.mutableCopy();
+            DocumentRevision original = ds.getDocument(rev.getId());
+            DocumentRevision update = original;
             Map<String, Object> updateBody = original.getBody().asMap();
             updateBody.put("name", "charles");
-            update.body = DocumentBodyFactory.create(updateBody);
+            update.setBody(DocumentBodyFactory.create(updateBody));
             assertThat(ds.updateDocumentFromRevision(update), is(notNullValue()));
-            assertThat(((ProjectedDocumentRevision) rev).mutableCopy(), is(nullValue()));
+            assertThat(rev.isFullRevision(),is(false));
+            DocumentRevision fullRevision = rev.toFullRevision();
+            assertThat(fullRevision.isFullRevision(),is(true));
+            assertThat(fullRevision.getRevision(),is(equalTo(rev.getRevision())));
+            assertThat(fullRevision.getId(),is(equalTo(rev.getId())));
         }
     }
 
     @Test
-    public void returnsNullMutableCopyWhenDocDeleted() {
+    public void returnsNullMutableCopyWhenDocDeleted() throws Exception {
         // query - { "name" : "mike", "age" : 12 }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
@@ -190,7 +193,29 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
                 e.printStackTrace();
             }
 
-            assertThat(((ProjectedDocumentRevision) rev).mutableCopy(), is(nullValue()));
+            DocumentRevision fullRevision = rev.toFullRevision();
+            assertThat(fullRevision.isFullRevision(),is(true));
+            assertThat(fullRevision.getRevision(),is(equalTo(rev.getRevision())));
+            assertThat(fullRevision.getId(), is(equalTo(rev.getId())));
+        }
+    }
+
+    @Test
+    public void projectedDocumentProhibitedFromSaving() throws Exception {
+        // query - { "name" : "mike", "age" : 12 }
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("name", "mike");
+        query.put("age", 12);
+        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, Arrays.asList("name"), null);
+        assertThat(queryResult.size(), is(1));
+        for (DocumentRevision rev : queryResult) {
+            assertThat(rev, is(instanceOf(ProjectedDocumentRevision.class)));
+            try {
+                ds.updateDocumentFromRevision(rev);
+                Assert.fail("IllegalArgumentException not thrown");
+            } catch(IllegalArgumentException iae) {
+                ; // exception thrown - can't update from a projected revision
+            }
         }
     }
 

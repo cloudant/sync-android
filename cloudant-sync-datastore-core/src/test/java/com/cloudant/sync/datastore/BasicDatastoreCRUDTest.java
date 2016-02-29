@@ -83,20 +83,19 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void createDocument_bodyOnly_success() throws Exception {
-        MutableDocumentRevision rev_mut = new MutableDocumentRevision();
-        rev_mut.body = bodyOne;
-        BasicDocumentRevision rev = datastore.createDocumentFromRevision(rev_mut);
+        DocumentRevision rev_mut = new DocumentRevision();
+        rev_mut.setBody(bodyOne);
+        DocumentRevision rev = datastore.createDocumentFromRevision(rev_mut);
         validateNewlyCreatedDocument(rev);
-        Assert.assertNull(rev_mut.docId);
+        Assert.assertNull(rev_mut.getId());
     }
 
     @Test
     public void createDocument_docIdAndBody_success() throws Exception {
         String docId = CouchUtils.generateDocumentId();
-        MutableDocumentRevision newDoc = new MutableDocumentRevision();
-        newDoc.docId = docId;
-        newDoc.body = bodyOne;
-        BasicDocumentRevision rev = datastore.createDocumentFromRevision(newDoc);
+        DocumentRevision newDoc = new DocumentRevision(docId);
+        newDoc.setBody(bodyOne);
+        DocumentRevision rev = datastore.createDocumentFromRevision(newDoc);
         validateNewlyCreatedDocument(rev);
         Assert.assertEquals(docId, rev.getId());
     }
@@ -104,10 +103,9 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     @Test
     public void createDocument_idInChinese_success() throws Exception {
         String id = "\u738b\u4e1c\u5347";
-        MutableDocumentRevision newDoc = new MutableDocumentRevision();
-        newDoc.docId = id;
-        newDoc.body = bodyOne;
-        BasicDocumentRevision rev = datastore.createDocumentFromRevision(newDoc);
+        DocumentRevision newDoc = new DocumentRevision(id);
+        newDoc.setBody(bodyOne);
+        DocumentRevision rev = datastore.createDocumentFromRevision(newDoc);
         validateNewlyCreatedDocument(rev);
         System.out.println(rev.getId());
         Assert.assertEquals(id, rev.getId());
@@ -116,10 +114,9 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     @Test(expected = DocumentException.class)
     public void createDocument_existDocId_fail() throws Exception {
         String docId = CouchUtils.generateDocumentId();
-        MutableDocumentRevision newDoc = new MutableDocumentRevision();
-        newDoc.docId = docId;
-        newDoc.body = bodyOne;
-        BasicDocumentRevision rev = datastore.createDocumentFromRevision(newDoc);
+        DocumentRevision newDoc = new DocumentRevision(docId);
+        newDoc.setBody(bodyOne);
+        DocumentRevision rev = datastore.createDocumentFromRevision(newDoc);
         validateNewlyCreatedDocument(rev);
         datastore.createDocumentFromRevision(newDoc);
     }
@@ -127,8 +124,8 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     @Test(expected = DocumentException.class)
     public void createDocument_specialField_fail() throws Exception {
         Map m = createMapWithSpecialField();
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.body = BasicDocumentBody.bodyWith(m);
+        DocumentRevision rev = new DocumentRevision();
+        rev.setBody(BasicDocumentBody.bodyWith(m));
         datastore.createDocumentFromRevision(rev);
     }
 
@@ -148,74 +145,74 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void updateDocument_existingDocument_success() throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
 
-        MutableDocumentRevision rev_2Mut = rev_1.mutableCopy();
-        rev_2Mut.body = bodyTwo;
-        BasicDocumentRevision rev_2 = datastore.updateDocumentFromRevision(rev_2Mut);
+        DocumentRevision rev_2Mut = rev_1;
+        rev_2Mut.setBody(bodyTwo);
+        DocumentRevision rev_2 = datastore.updateDocumentFromRevision(rev_2Mut);
         Assert.assertEquals(2, CouchUtils.generationFromRevId(rev_2.getRevision()));
-        Assert.assertTrue(rev_2.isCurrent()); // new revision is current revision
+        Assert.assertTrue(((DocumentRevision)rev_2).isCurrent()); // new revision is current revision
 
-        BasicDocumentRevision rev_1_again = datastore.getDocument(rev_1.getId(), rev_1.getRevision());
-        Assert.assertTrue(rev_1.isCurrent()); // rev_1 is still marked as "current", and developer need query db to get the latest data, yikes :(
+        DocumentRevision rev_1_again = datastore.getDocument(rev_1.getId(), rev_1.getRevision());
+        Assert.assertTrue(((DocumentRevision)rev_1).isCurrent()); // rev_1 is still marked as "current", and developer need query db to get the latest data, yikes :(
         Assert.assertFalse(rev_1_again.isCurrent());
 
-        MutableDocumentRevision rev_3Mut = rev_2.mutableCopy();
-        rev_3Mut.body = bodyOne;
-        BasicDocumentRevision rev_3 = datastore.updateDocumentFromRevision(rev_3Mut);
+        DocumentRevision rev_3Mut = rev_2;
+        rev_3Mut.setBody(bodyOne);
+        DocumentRevision rev_3 = datastore.updateDocumentFromRevision(rev_3Mut);
         Assert.assertEquals(3, CouchUtils.generationFromRevId(rev_3.getRevision()));
 
-        MutableDocumentRevision rev_4Mut = rev_3.mutableCopy();
-        rev_4Mut.body = bodyTwo;
-        BasicDocumentRevision rev_4 = datastore.updateDocumentFromRevision(rev_4Mut);
+        DocumentRevision rev_4Mut = rev_3;
+        rev_4Mut.setBody(bodyTwo);
+        DocumentRevision rev_4 = datastore.updateDocumentFromRevision(rev_4Mut);
         Assert.assertEquals(4, CouchUtils.generationFromRevId(rev_4.getRevision()));
     }
 
     @Test(expected = DocumentException.class)
     public void updateDocument_specialField_exception() throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
 
         Map m = createMapWithSpecialField();
-        MutableDocumentRevision rev_2Mut = rev_1.mutableCopy();
-        rev_2Mut.body = BasicDocumentBody.bodyWith(m);
+        DocumentRevision rev_2Mut = rev_1;
+        rev_2Mut.setBody(BasicDocumentBody.bodyWith(m));
         datastore.updateDocumentFromRevision(rev_2Mut);
     }
 
     @Test(expected = DocumentException.class)
     public void updateDocument_targetDocumentNotCurrentRevision_exception() throws Exception{
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
         validateNewlyCreatedDocument(rev_1);
 
-        MutableDocumentRevision rev_2Mut = rev_1.mutableCopy();
-        rev_2Mut.body = bodyTwo;
-        BasicDocumentRevision rev_2 = datastore.updateDocumentFromRevision(rev_2Mut);
+        DocumentRevision rev_2Mut = rev_1;
+        rev_2Mut.setBody(bodyTwo);
+        DocumentRevision rev_2 = datastore.updateDocumentFromRevision(rev_2Mut);
         Assert.assertEquals(2, CouchUtils.generationFromRevId(rev_2.getRevision()));
 
         rev_1 = datastore.getDocument(rev_1.getId(), rev_1.getRevision());
-        Assert.assertFalse(rev_1.isCurrent());
-        rev_1Mut = rev_1.mutableCopy();
-        rev_1Mut.body = bodyOne;
+        Assert.assertFalse(((DocumentRevision)rev_1).isCurrent());
+        rev_1Mut = rev_1;
+        rev_1Mut.setBody(bodyOne);
 
         datastore.updateDocumentFromRevision(rev_1Mut);
     }
 
     @Test(expected = ConflictException.class)
     public void deleteDocument_previousRevisionNotLeafNode_exception() throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(rev_1Mut);
-        MutableDocumentRevision rev1_mut = rev1.mutableCopy();
-        rev1_mut.body = bodyTwo;
-        BasicDocumentRevision rev2 = datastore.updateDocumentFromRevision(rev1_mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev1_mut = rev1;
+        rev1_mut.setBody(bodyTwo);
+        DocumentRevision rev2 = datastore.updateDocumentFromRevision(rev1_mut);
         Assert.assertNotNull(rev2);
         this.datastore.deleteDocumentFromRevision(rev1);
     }
@@ -223,17 +220,17 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     @Test
     public void deleteDocument_previousRevisionWasWinner_newRevisionInsertedAsWinner()
             throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(rev_1Mut);
-        
-        BasicDocumentRevision deletedRev = this.datastore.deleteDocumentFromRevision(rev1);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev1 = datastore.createDocumentFromRevision(rev_1Mut);
+
+        DocumentRevision deletedRev = this.datastore.deleteDocumentFromRevision(rev1);
         Assert.assertEquals(2, CouchUtils.generationFromRevId(deletedRev.getRevision()));
         Assert.assertTrue(deletedRev.isDeleted());
-        Assert.assertTrue(deletedRev.isCurrent());
+        Assert.assertTrue(((DocumentRevision)deletedRev).isCurrent());
 
         DocumentRevisionTree tree = this.datastore.getAllRevisionsOfDocument(rev1.getId());
-        BasicDocumentRevision rev2 = (BasicDocumentRevision) tree.getCurrentRevision();
+        DocumentRevision rev2 = (DocumentRevision) tree.getCurrentRevision();
         Assert.assertEquals(2, CouchUtils.generationFromRevId(rev2.getRevision()));
         Assert.assertTrue(rev2.isDeleted());
         Assert.assertTrue(rev2.isCurrent());
@@ -243,17 +240,17 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     @Test
     public void deleteDocument_previousRevisionWasDeleted_noNewRevisionInserted()
             throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev1 = datastore.createDocumentFromRevision(rev_1Mut);
         this.datastore.deleteDocumentFromRevision(rev1);
         DocumentRevisionTree tree1 = this.datastore.getAllRevisionsOfDocument(rev1.getId());
-        BasicDocumentRevision rev2 = (BasicDocumentRevision) tree1.getCurrentRevision();
+        DocumentRevision rev2 = (DocumentRevision) tree1.getCurrentRevision();
         Assert.assertEquals(2, CouchUtils.generationFromRevId(rev2.getRevision()));
 
         this.datastore.deleteDocumentFromRevision(rev2);
         DocumentRevisionTree tree2 = this.datastore.getAllRevisionsOfDocument(rev1.getId());
-        BasicDocumentRevision rev3 = (BasicDocumentRevision) tree2.getCurrentRevision();
+        DocumentRevision rev3 = (DocumentRevision) tree2.getCurrentRevision();
         Assert.assertEquals(rev2.getRevision(), rev3.getRevision());
     }
 
@@ -261,13 +258,13 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     public void deleteDocument_previousRevisionWasNotWinner_newRevisionIsNotWinner()
             throws Exception {
 
-        MutableDocumentRevision rev1aMut = new MutableDocumentRevision();
-        rev1aMut.body = bodyOne;
-        BasicDocumentRevision rev1a = this.datastore.createDocumentFromRevision(rev1aMut);
-        MutableDocumentRevision rev2aMut = rev1a.mutableCopy();
-        rev2aMut.body = bodyTwo;
-        BasicDocumentRevision rev2a = this.datastore.updateDocumentFromRevision(rev2aMut);
-        BasicDocumentRevision rev3b = this.createDetachedDocumentRevision(rev1a.getId(), "3-b", bodyOne);
+        DocumentRevision rev1aMut = new DocumentRevision();
+        rev1aMut.setBody(bodyOne);
+        DocumentRevision rev1a = this.datastore.createDocumentFromRevision(rev1aMut);
+        DocumentRevision rev2aMut = rev1a;
+        rev2aMut.setBody(bodyTwo);
+        DocumentRevision rev2a = this.datastore.updateDocumentFromRevision(rev2aMut);
+        DocumentRevision rev3b = this.createDetachedDocumentRevision(rev1a.getId(), "3-b", bodyOne);
         this.datastore.forceInsert(rev3b, rev1a.getRevision(), "2-b", "3-b");
         this.datastore.deleteDocumentFromRevision(rev2a);
 
@@ -284,12 +281,12 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         }
 
         Assert.assertEquals(3, CouchUtils.generationFromRevId(newInsertedRevisionId));
-        BasicDocumentRevision newInsertedRevision = this.datastore.getDocument(rev1a.getId(), newInsertedRevisionId);
+        DocumentRevision newInsertedRevision = this.datastore.getDocument(rev1a.getId(), newInsertedRevisionId);
         Assert.assertTrue(newInsertedRevision.isDeleted());
         Assert.assertFalse(newInsertedRevision.isCurrent());
     }
 
-    private BasicDocumentRevision createDetachedDocumentRevision(String docId, String rev, DocumentBody body) {
+    private DocumentRevision createDetachedDocumentRevision(String docId, String rev, DocumentBody body) {
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
         builder.setDocId(docId);
         builder.setRevId(rev);
@@ -317,26 +314,26 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void getDocument_twoDoc() throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
 
-        BasicDocumentRevision revRead_1 = datastore.getDocument(rev_1.getId(), rev_1.getRevision());
+        DocumentRevision revRead_1 = datastore.getDocument(rev_1.getId(), rev_1.getRevision());
         Assert.assertTrue(revRead_1.isCurrent());
 
-        MutableDocumentRevision rev_2Mut = rev_1.mutableCopy();
-        rev_2Mut.body = bodyTwo;
+        DocumentRevision rev_2Mut = rev_1;
+        rev_2Mut.setBody(bodyTwo);
         datastore.updateDocumentFromRevision(rev_2Mut);
 
-        BasicDocumentRevision revRead_2 = datastore.getDocument(rev_1.getId(), rev_1.getRevision());
+        DocumentRevision revRead_2 = datastore.getDocument(rev_1.getId(), rev_1.getRevision());
         Assert.assertFalse(revRead_2.isCurrent());
 
-        BasicDocumentRevision revRead_3 = datastore.getDocument(rev_1.getId());
+        DocumentRevision revRead_3 = datastore.getDocument(rev_1.getId());
         Assert.assertTrue(revRead_3.isCurrent());
         Assert.assertEquals(2, CouchUtils.generationFromRevId(revRead_3.getRevision()));
 
-        BasicDocumentRevision revRead_3_2 = datastore.getDocument(rev_1.getId());
+        DocumentRevision revRead_3_2 = datastore.getDocument(rev_1.getId());
         Assert.assertTrue(revRead_3_2.isCurrent());
         Assert.assertEquals(2, CouchUtils.generationFromRevId(revRead_3_2.getRevision()));
     }
@@ -355,9 +352,9 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void existsDocument_goodOneAndBadOne() throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
 
         String badRevision = CouchUtils.generateNextRevisionId(rev_1.getRevision());
@@ -395,22 +392,22 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void getDocumentsWithIds_NA_allSpecifiedDocumentsShouldBeReturnedInCorrectOrder() throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
-        MutableDocumentRevision rev_1_2Mut = rev_1.mutableCopy();
-        rev_1_2Mut.body = bodyTwo;
-        BasicDocumentRevision rev_1_2 = datastore.updateDocumentFromRevision(rev_1_2Mut);
-        MutableDocumentRevision rev_2Mut = new MutableDocumentRevision();
-        rev_2Mut.body = bodyTwo;
-        BasicDocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1_2Mut = rev_1;
+        rev_1_2Mut.setBody(bodyTwo);
+        DocumentRevision rev_1_2 = datastore.updateDocumentFromRevision(rev_1_2Mut);
+        DocumentRevision rev_2Mut = new DocumentRevision();
+        rev_2Mut.setBody(bodyTwo);
+        DocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
 
         List<String> ids = new ArrayList<String>();
         ids.add(rev_1.getId());
         ids.add(rev_2.getId());
 
         {
-            List<BasicDocumentRevision> docs = datastore.getDocumentsWithIds(ids);
+            List<DocumentRevision> docs = datastore.getDocumentsWithIds(ids);
             Assert.assertEquals(2, docs.size());
             assertIdAndRevisionAndShallowContent(rev_1_2, docs.get(0));
         }
@@ -420,23 +417,23 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         ids2.add(rev_1.getId());
 
         {
-            List<BasicDocumentRevision> docs = datastore.getDocumentsWithIds(ids2);
+            List<DocumentRevision> docs = datastore.getDocumentsWithIds(ids2);
             Assert.assertEquals(2, docs.size());
             assertIdAndRevisionAndShallowContent(rev_2, docs.get(0));
         }
     }
 
-    private BasicDocumentRevision[] createTwoDocumentsForGetDocumentsWithInternalIdsTest() throws Exception {
-        MutableDocumentRevision rev_1Mut = new MutableDocumentRevision();
-        rev_1Mut.body = bodyOne;
-        BasicDocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
-        MutableDocumentRevision rev_1_2Mut = rev_1.mutableCopy();
-        rev_1_2Mut.body = bodyTwo;
-        BasicDocumentRevision rev_1_2 = datastore.updateDocumentFromRevision(rev_1_2Mut);
-        MutableDocumentRevision rev_2Mut = new MutableDocumentRevision();
-        rev_2Mut.body = bodyTwo;
-        BasicDocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
-        return new BasicDocumentRevision[]{ rev_1, rev_2 };
+    private DocumentRevision[] createTwoDocumentsForGetDocumentsWithInternalIdsTest() throws Exception {
+        DocumentRevision rev_1Mut = new DocumentRevision();
+        rev_1Mut.setBody(bodyOne);
+        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1_2Mut = rev_1;
+        rev_1_2Mut.setBody(bodyTwo);
+        DocumentRevision rev_1_2 = datastore.updateDocumentFromRevision(rev_1_2Mut);
+        DocumentRevision rev_2Mut = new DocumentRevision();
+        rev_2Mut.setBody(bodyTwo);
+        DocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
+        return new DocumentRevision[]{ rev_1, rev_2 };
     }
 
     @Test
@@ -447,7 +444,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         List<Long> ids = new ArrayList<Long>();
 
         {
-            List<BasicDocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
+            List<DocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
             Assert.assertEquals(0, docs.size());
         }
     }
@@ -455,15 +452,15 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     @Test
     public void getDocumentsWithInternalIds_twoIds_allSpecifiedDocumentsShouldBeReturnedInCorrectOrder() throws
             Exception {
-        BasicDocumentRevision[] dbObjects = createTwoDocumentsForGetDocumentsWithInternalIdsTest();
+        DocumentRevision[] dbObjects = createTwoDocumentsForGetDocumentsWithInternalIdsTest();
 
         List<Long> ids = new ArrayList<Long>();
-        ids.add(dbObjects[1].getInternalNumericId());
-        ids.add(dbObjects[0].getInternalNumericId());
+        ids.add(((DocumentRevision)dbObjects[1]).getInternalNumericId());
+        ids.add(((DocumentRevision)dbObjects[0]).getInternalNumericId());
         ids.add(101L);
 
         {
-            List<BasicDocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
+            List<DocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
             Assert.assertEquals(2, docs.size());
             Assert.assertEquals(dbObjects[0].getId(), docs.get(0).getId());
             Assert.assertEquals(dbObjects[1].getId(), docs.get(1).getId());
@@ -481,10 +478,10 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
             Map content = new HashMap();
             content.put("hello", "world");
             DocumentBody body = DocumentBodyFactory.create(content);
-            MutableDocumentRevision rev = new MutableDocumentRevision();
-            rev.body = body;
-            BasicDocumentRevision saved = datastore.createDocumentFromRevision(rev);
-            internal_ids.add(saved.getInternalNumericId());
+            DocumentRevision rev = new DocumentRevision();
+            rev.setBody(body);
+            DocumentRevision saved = datastore.createDocumentFromRevision(rev);
+            internal_ids.add(((DocumentRevision)saved).getInternalNumericId());
         }
 
         // Default SQLite parameter limit is 999, and we batch into batches
@@ -501,7 +498,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         };
         for (int[] test : tests) {
             int fromIndex = test[0], toIndex = test[0]+test[1];
-            List<BasicDocumentRevision> docs = datastore.getDocumentsWithInternalIds(
+            List<DocumentRevision> docs = datastore.getDocumentsWithInternalIds(
                 internal_ids.subList(fromIndex, toIndex)
             );
             Assert.assertEquals(test[1], docs.size());
@@ -518,12 +515,12 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         ids.add(102L);
 
         {
-            List<BasicDocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
+            List<DocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
             Assert.assertEquals(0, docs.size());
         }
     }
 
-    private void assertIdAndRevisionAndShallowContent(BasicDocumentRevision expected, BasicDocumentRevision actual) {
+    private void assertIdAndRevisionAndShallowContent(DocumentRevision expected, DocumentRevision actual) {
         Assert.assertEquals(expected.getId(), actual.getId());
         Assert.assertEquals(expected.getRevision(), actual.getRevision());
 
@@ -540,14 +537,14 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
         int objectCount = 100;
         List<DocumentBody> bodies = this.generateDocuments(objectCount);
-        List<BasicDocumentRevision> documentRevisions = new ArrayList<BasicDocumentRevision>(objectCount);
+        List<DocumentRevision> documentRevisions = new ArrayList<DocumentRevision>(objectCount);
         for (int i = 0; i < objectCount; i++) {
-            MutableDocumentRevision rev = new MutableDocumentRevision();
-            rev.body = bodies.get(i);
-            BasicDocumentRevision saved = datastore.createDocumentFromRevision(rev);
+            DocumentRevision rev = new DocumentRevision();
+            rev.setBody(bodies.get(i));
+            DocumentRevision saved = datastore.createDocumentFromRevision(rev);
             documentRevisions.add(saved);
         }
-        ArrayList<BasicDocumentRevision> reversedObjects = new ArrayList<BasicDocumentRevision>(documentRevisions);
+        ArrayList<DocumentRevision> reversedObjects = new ArrayList<DocumentRevision>(documentRevisions);
         Collections.reverse(reversedObjects);
 
         // Test count and offsets for descending and ascending
@@ -558,12 +555,11 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     @Test
     public void getAllDocumentIds() throws Exception {
         Assert.assertTrue(datastore.getAllDocumentIds().isEmpty());
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "document-one";
-        rev.body = bodyOne;
+        DocumentRevision rev = new DocumentRevision("document-one");
+        rev.setBody(bodyOne);
         datastore.createDocumentFromRevision(rev);
-        rev.docId = "document-two";
-        rev.body = bodyTwo;
+        rev = new DocumentRevision("document-two");
+        rev.setBody(bodyTwo);
         datastore.createDocumentFromRevision(rev);
         Assert.assertThat(datastore.getAllDocumentIds(), containsInAnyOrder("document-one",
                                                                             "document-two"));
@@ -571,19 +567,19 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void createDbWithSlashAndCreateDocument() throws Exception {
-            Datastore datastore = datastoreManager.openDatastore("dbwith/aslash");
-            MutableDocumentRevision rev = new MutableDocumentRevision();
-            rev.body = bodyOne;
-            BasicDocumentRevision doc = datastore.createDocumentFromRevision(rev);
-            validateNewlyCreatedDocument(doc);
-            datastore.close();
+        Datastore datastore = datastoreManager.openDatastore("dbwith/aslash");
+        DocumentRevision rev = new DocumentRevision();
+        rev.setBody(bodyOne);
+        DocumentRevision doc = datastore.createDocumentFromRevision(rev);
+        validateNewlyCreatedDocument(doc);
+        datastore.close();
     }
 
-    private void getAllDocuments_testCountAndOffset(int objectCount, List<BasicDocumentRevision> expectedDocumentRevisions, boolean descending) {
+    private void getAllDocuments_testCountAndOffset(int objectCount, List<DocumentRevision> expectedDocumentRevisions, boolean descending) {
 
         int count;
         int offset = 0;
-        List<BasicDocumentRevision> result;
+        List<DocumentRevision> result;
 
         // Count
         count = 10;
@@ -644,14 +640,14 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
         }
     }
 
-    private void getAllDocuments_compareResult(List<BasicDocumentRevision> expectedDocumentRevisions, List<BasicDocumentRevision> result, int count, int offset) {
-        ListIterator<BasicDocumentRevision> iterator;
+    private void getAllDocuments_compareResult(List<DocumentRevision> expectedDocumentRevisions, List<DocumentRevision> result, int count, int offset) {
+        ListIterator<DocumentRevision> iterator;
         iterator = result.listIterator();
         Assert.assertEquals(count, result.size());
         while (iterator.hasNext()) {
             int index = iterator.nextIndex();
-            BasicDocumentRevision actual = iterator.next();
-            BasicDocumentRevision expected = expectedDocumentRevisions.get(index + offset);
+            DocumentRevision actual = iterator.next();
+            DocumentRevision expected = expectedDocumentRevisions.get(index + offset);
 
             assertIdAndRevisionAndShallowContent(expected, actual);
         }

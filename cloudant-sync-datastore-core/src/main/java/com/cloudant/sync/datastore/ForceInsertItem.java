@@ -21,13 +21,13 @@ import java.util.Map;
  * Created by tomblench on 22/01/16.
  */
 public class ForceInsertItem {
-    public BasicDocumentRevision rev;
+    public DocumentRevision rev;
     public List<String> revisionHistory;
     public Map<String, Object> attachments;
     public Map<String[],List<PreparedAttachment>>preparedAttachments;
     public boolean pullAttachmentsInline;
 
-    public ForceInsertItem(BasicDocumentRevision rev, List<String> revisionHistory,
+    public ForceInsertItem(DocumentRevision rev, List<String> revisionHistory,
                            Map<String, Object> attachments, Map<String[],
             List<PreparedAttachment>> preparedAttachments, boolean pullAttachmentsInline) {
         this.rev = rev;
