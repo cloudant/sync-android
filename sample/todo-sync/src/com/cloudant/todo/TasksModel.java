@@ -21,14 +21,13 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DatastoreNotCreatedException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
 import com.cloudant.sync.replication.Replicator;
@@ -116,10 +115,10 @@ class TasksModel {
      * @return new revision of the document
      */
     public Task createDocument(Task task) {
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.body = DocumentBodyFactory.create(task.asMap());
+        DocumentRevision rev = new DocumentRevision();
+        rev.setBody(DocumentBodyFactory.create(task.asMap()));
         try {
-            BasicDocumentRevision created = this.mDatastore.createDocumentFromRevision(rev);
+            DocumentRevision created = this.mDatastore.createDocumentFromRevision(rev);
             return Task.fromRevision(created);
         } catch (DocumentException de) {
             return null;
@@ -134,10 +133,10 @@ class TasksModel {
      *      match the current rev in the datastore.
      */
     public Task updateDocument(Task task) throws ConflictException {
-        MutableDocumentRevision rev = task.getDocumentRevision().mutableCopy();
-        rev.body = DocumentBodyFactory.create(task.asMap());
+        DocumentRevision rev = task.getDocumentRevision();
+        rev.setBody(DocumentBodyFactory.create(task.asMap()));
         try {
-            BasicDocumentRevision updated = this.mDatastore.updateDocumentFromRevision(rev);
+            DocumentRevision updated = this.mDatastore.updateDocumentFromRevision(rev);
             return Task.fromRevision(updated);
         } catch (DocumentException de) {
             return null;
@@ -159,11 +158,11 @@ class TasksModel {
      */
     public List<Task> allTasks() {
         int nDocs = this.mDatastore.getDocumentCount();
-        List<BasicDocumentRevision> all = this.mDatastore.getAllDocuments(0, nDocs, true);
+        List<DocumentRevision> all = this.mDatastore.getAllDocuments(0, nDocs, true);
         List<Task> tasks = new ArrayList<Task>();
 
         // Filter all documents down to those of type Task.
-        for(BasicDocumentRevision rev : all) {
+        for(DocumentRevision rev : all) {
             Task t = Task.fromRevision(rev);
             if (t != null) {
                 tasks.add(t);
