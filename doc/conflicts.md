@@ -152,15 +152,15 @@ class PickFirstResolver implements ConflictResolver {
 Clearly, in the general case this will discard the user's data(!),
 but it'll do for this example.
 
-It is also possible to return a `MutableDocumentRevision` from
+It is also possible to return a new or updated `DocumentRevision` from
 `resolve`, perhaps by merging data from the conflicts:
 
 ```java
 class MergeResolver implements ConflictResolver {
     DocumentRevision resolve(String docId, List<DocumentRevision> conflicts) {
-        MutableDocumentRevision rev = conflicts.get(0).mutableCopy();
-        rev.body = /* ...update body, perhaps with data from the other conflicts */
-        rev.attachments = /* ...you can also create/update/delete attachments */
+        DocumentRevision rev = conflicts.get(0);
+        rev.setBody(/* ...update body, perhaps with data from the other conflicts */);
+        rev.setAttachments(/* ...you can also create/update/delete attachments */);
         return rev;
     }
 }

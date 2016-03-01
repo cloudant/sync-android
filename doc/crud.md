@@ -55,28 +55,29 @@ delete documents.
 Documents are represented as a set of revisions. To create a document, you
 set up the initial revision of the document and save that to the datastore.
 
-Create a mutable document revision object, set its body, ID and attachments
-and then call `createDocumentFromRevision(MutableDocumentRevision)` to add it to the datastore:
+Create a document revision object, set its body, ID and attachments
+and then call `createDocumentFromRevision(DocumentRevision)` to add it to the datastore:
 
 ```java
 Datastore ds = manager.openDatastore("my_datastore");
 
-// Create a document
-MutableDocumentRevision rev = new MutableDocumentRevision();
-rev.docId = "doc1"; // Or don't assign the docId property, we'll generate one
+// Create a document with a document id as the constructor argument
+DocumentRevision rev = new DocumentRevision("doc1");
+// Or don't assign the docId property, we'll generate one
+DocumentRevision rev = new DocumentRevision();
 
 // Build up body content from a Map
 Map<String, Object> json = new HashMap<String, Object>();
 json.put("description", "Buy milk");
 json.put("completed", false);
 json.put("type", "com.cloudant.sync.example.task");
-rev.body = DocumentBodyFactory.create(json);
+rev.setBody(DocumentBodyFactory.create(json));
 
 DocumentRevision revision = datastore.createDocumentFromRevision(rev);
 ```
 
 The only mandatory property to set before calling
-`createDocumentFromRevision(MutableDocumentRevision)` is the `body`. An ID will be generated
+`createDocumentFromRevision(DocumentRevision)` is the `body`. An ID will be generated
 for documents which don't have `docId` set.
 
 ### Retrieve
@@ -88,23 +89,20 @@ String docId = revision.docId;
 BasicDocumentRevision retrieved = datastore.getDocument(docId);
 ```
 
-You get an immutable revision back from this method call. To make changes to
-the document, you need to call `mutableCopy()` on the revision and save it
-back to the datastore, as shown below.
+This document is mutable and you can make changes to it, as shown below.
 
 ### Update
 
-To update a document, call `mutableCopy()` on the original document revision,
-make your changes and save the document:
+To update a document, make your changes and save the document:
 
 ```java
-MutableDocumentRevision update = retrieved.mutableCopy();
+DocumentRevision retrieved; // previously retrieved
 
 Map<String, Object> json = retrieved.getBody().asMap();
 json.put("completed", true);
-update.body = DocumentBodyFactory.create(json);
+retreived.setBody(DocumentBodyFactory.create(json));
 
-datastore.updateDocumentFromRevision(update);
+datastore.updateDocumentFromRevision(retrieved);
 ```
 
 ### Delete
@@ -142,7 +140,7 @@ They should be of small size -- maximum a few MB -- because they are
 replicated to and from the server in a way which doesn't allow for resuming
 an upload or download.
 
-Attachments are stored in the `attachments` property on a DocumentRevision
+Attachments are stored via the `attachments` getters/setters on a DocumentRevision
 object. This is a map of attachments, keyed by attachment name.
 
 To add an attachment to a document, just add (or overwrite) the attachment
@@ -150,20 +148,24 @@ in the `attachments` map:
 
 ```java
 // Create a new document
-MutableDocumentRevision rev = new MutableDocumentRevision();
-// or get an existing one and create a mutable copy
-BasicDocumentRevision retrieved = datastore.getDocument("mydoc");
-MutableDocumentRevision = retrieved.mutableCopy();
+DocumentRevision rev = new DocumentRevision();
+// or get an existing one
+DocumentRevision retrieved = datastore.getDocument("mydoc");
 
+// create a body
 rev.body = DocumentBodyFactory.create( ... );
+
+// create an UnsavedFileAttachment: the constructor takes
+// a File object on disk and a MIME type
 UnsavedFileAttachment att1 = new UnsavedFileAttachment(
     new File("/path/to/image.jpg"), "image/jpeg");
 
 // As with the document body, you can replace the attachments
-rev.attachments = new HashMap<String, Attachment>();
+rev.setAttachments(new HashMap<String, Attachment>());
 
 // Or just add or update a single one:
-rev.attachments.put(att1.name, att1);
+// (because the getter will always return the underlying map and not a copy)
+rev.getAttachments().put(att1.name, att1);
 
 DocumentRevision saved = datastore.createDocumentFromRevision(rev);
 ```
@@ -181,7 +183,7 @@ byte[] imageData;
 UnsavedStreamAttachment att2 = new UnsavedStreamAttachment(
     new ByteArrayInputStream(imageData), "cute_cat.jpg", "image/jpeg");
 
-MutableDocumentRevision rev = new MutableDocumentRevision();
+DocumentRevision rev = new DocumentRevision();
 rev.getAttachments().put(att1.name, att1);
 rev.getAttachments().put(att2.name, att2);
 DocumentRevision saved = datastore.createDocumentFromRevision(rev);
@@ -203,17 +205,16 @@ is.read(data);
 To remove an attachment, remove it from the `attachments` map:
 
 ```java
-BasicDocumentRevision retrieved = datastore.getDocument("myDoc");
-MutableDocumentRevision update = retrieved.mutableCopy();
-update.remove("cute_cat.jpg");
-DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+DocumentRevision retrieved = datastore.getDocument("myDoc");
+retrieved.getAttachments().remove("cute_cat.jpg");
+DocumentRevision updated = datastore.updateDocumentFromRevision(retrieved);
 ```
 
 To remove all attachments, set the `attachments` property to an empty map
 or `null`:
 
 ```java
-update.attachments = null;
+update.setAttachments(null);
 ```
 
 ## Cookbook
@@ -228,32 +229,30 @@ This is the simplest case as we don't need to worry about previous revisions.
 1. Add a document with body, but not attachments or ID. You'll get an
    autogenerated ID.
     ```java
-    MutableDocumentRevision rev = new MutableDocumentRevision();
-    rev.body = DocumentBodyFactory.create( ... );
+    DocumentRevision rev = new DocumentRevision();
+    rev.setBody(DocumentBodyFactory.create( ... ));
     
     DocumentRevision saved = datastore.createDocumentFromRevision(rev);
     ```
     
 1. Add a new document to the store with a body and ID, but without attachments.
     ```java
-    MutableDocumentRevision rev = new MutableDocumentRevision();
-    rev.docId = "doc1";
-    rev.body = DocumentBodyFactory.create( ... );
+    DocumentRevision rev = new DocumentRevision("doc1");
+    rev.setBody(DocumentBodyFactory.create( ... ));
     
     DocumentRevision saved = datastore.createDocumentFromRevision(rev);
     ```
     
 1. Add a new document to the store with attachments.
     ```java
-    MutableDocumentRevision rev = new MutableDocumentRevision();
-    rev.docId = "doc1";
-    rev.body = DocumentBodyFactory.create( ... );
+    DocumentRevision rev = new DocumentRevision("doc1");
+    rev.setBody(DocumentBodyFactory.create( ... ));
 
     DocumentRevision saved = datastore.createDocumentFromRevision(rev);
     
     UnsavedFileAttachment att1 = new UnsavedFileAttachment(
         new File("/path/to/image.jpg", "image/jpeg"));
-    rev.attachments.put(att1.name, att1);
+    rev.getAttachments().put(att1.name, att1);
     
     DocumentRevision saved = datastore.createDocumentFromRevision(rev);
     ```
@@ -261,21 +260,21 @@ This is the simplest case as we don't need to worry about previous revisions.
 1. Add a document with body and attachments, but no ID. You'll get an
    autogenerated ID.
     ```java
-    MutableDocumentRevision rev = new MutableDocumentRevision();
-    rev.body = DocumentBodyFactory.create( ... );
+    DocumentRevision rev = new DocumentRevision();
+    rev.setBody(DocumentBodyFactory.create( ... ));
     
     DocumentRevision saved = datastore.createDocumentFromRevision(rev);
     
     UnsavedFileAttachment att1 = new UnsavedFileAttachment(
         new File("/path/to/image.jpg", "image/jpeg"));
-    rev.attachments.put(att1.name, att1);
+    rev.getAttachments().put(att1.name, att1);
     
     DocumentRevision saved = datastore.createDocumentFromRevision(rev);
     ```
     
 1. You can't create a document without a body (body is the only required property).
     ```java
-    MutableDocumentRevision rev = new MutableDocumentRevision();
+    DocumentRevision rev = new DocumentRevision();
     
     DocumentRevision saved = datastore.createDocumentFromRevision(rev);
     // will throw java.lang.NullPointerException: Input document body can not be null
@@ -283,16 +282,14 @@ This is the simplest case as we don't need to worry about previous revisions.
     
 ### Updating a document
 
-To update a document, call `mutableCopy()` on the original document revision,
-make your changes and save the document.
+To update a document, make your changes and save the document.
 
 For the first set of examples the original document is set up with a body
 and no attachments:
 
 ```java
-MutableDocumentRevision rev = new MutableDocumentRevision();
-rev.docId = "doc1";
-rev.body = DocumentBodyFactory.create( ... );
+DocumentRevision rev = new DocumentRevision("doc1");
+rev.setBody(DocumentBodyFactory.create( ... ));
 
 DocumentRevision saved = datastore.createDocumentFromRevision(rev);
 
@@ -307,61 +304,59 @@ UnsavedFileAttachment att1 = new UnsavedFileAttachment(
     
 1. Update body for doc that has no attachments, adding no attachments
     ```java
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.body = DocumentBodyFactory.create( ... );
+    DocumentRevision saved; // a document we saved earlier
+    update.setBody(DocumentBodyFactory.create( ... ));
 
-    DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+    DocumentRevision updated = datastore.updateDocumentFromRevision(saved);
     ```
     
-1. Update body for doc with no attachments, adding attachments. Here we see
-   that a mutableCopy of a document with no attachments has an
-   `HashMap` set for its `attachments` property.
+1. Update body for doc with no attachments, adding attachments. The
+   attachments map is accessed and modified via the getAttachments()
+   getter.
     ```java
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.body = DocumentBodyFactory.create( ... );
-    update.attachments.put(att1.name, att1);
+    DocumentRevision saved; // a document we saved earlier
+    saved.setBody(DocumentBodyFactory.create( ... ));
+    saved.getAttachments().put(att1.name, att1);
     
-    DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+    DocumentRevision updated = datastore.updateDocumentFromRevision(saved);
     ```
     
-1. Update body for doc with no attachments, removing attachments dictionary
-   entirely.
+1. Update body and remove all attachments.
     ```java
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.body = DocumentBodyFactory.create( ... );
-    update.attachments = null;
+    DocumentRevision saved; // a document we saved earlier
+    saved.setBody(DocumentBodyFactory.create( ... ));
+    saved.setAttachments(null);
     
-    DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+    DocumentRevision updated = datastore.updateDocumentFromRevision(saved);
     ```
         
 1. Update the attachments without changing the body, add attachments to a doc
    that had none.
     ```java
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.attachments.put(att1.name, att1);
+    DocumentRevision saved; // a document we saved earlier
+    saved.getAttachments().put(att1.name, att1);
     
-    DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+    DocumentRevision updated = datastore.updateDocumentFromRevision(saved);
     ```
     
 1. Update attachments by copying from another revision.
     ```java
-    MutableDocumentRevision anotherDoc = datastore.getDocument("anotherId");
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.attachments = anotherDoc.attachment;
+    DocumentRevision anotherDoc = datastore.getDocument("anotherId");
+    DocumentRevision saved; // a document we saved earlier
+    saved.getAttachments().putAll(anotherDoc.getAttachments());
     
-    DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+    DocumentRevision updated = datastore.updateDocumentFromRevision(saved);
     ```
     
 1. Updating a document using an outdated source revision causes a conflict
     ```java
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.body = DocumentBodyFactory.create( ... );
-    datastore.updateDocumentFromRevision(update);
+    DocumentRevision saved; // a document we saved earlier
+    saved.setBody(DocumentBodyFactory.create( ... ));
+    datastore.updateDocumentFromRevision(saved);
     
-    MutableDocumentRevision update2 = saved.mutableCopy();
-    update.body = DocumentBodyFactory.create( ... );
+    saved.setBody(DocumentBodyFactory.create( ... ));
     
-    DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+    DocumentRevision updated = datastore.updateDocumentFromRevision(saved);
     // throws ConflictException
     ```
     
@@ -369,115 +364,77 @@ For the second set of examples the original document is set up with a body and
 several attachments:
 
 ```java
-MutableDocumentRevision rev = new MutableDocumentRevision();
-rev.docId = "doc1";
-rev.body = DocumentBodyFactory.create( ... );
+DocumentRevision rev = new DocumentRevision("doc1");
+rev.setBody(DocumentBodyFactory.create( ... ));
 
 UnsavedFileAttachment att1 = ...
 /* set up more attachments... */
-rev.attachments.put(att1.name, att1);
-rev.attachments.put(att2.name, att2);
-rev.attachments.put(att3.name, att3);
+rev.getAttachments().put(att1.name, att1);
+rev.getAttachments().put(att2.name, att2);
+rev.getAttachments().put(att3.name, att3);
 
 DocumentRevision saved = datastore.createDocumentFromRevision(rev);
 ```
     
 1. Update body without changing attachments
     ```java
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.body = DocumentBodyFactory.create( ... );
+    DocumentRevision saved; // a document we saved earlier
+    saved.setBody(DocumentBodyFactory.create( ... ));
     
-    DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+    DocumentRevision updated = datastore.updateDocumentFromRevision(saved);
     // Should have the same attachments
     ```
     
 1. Update the attachments without changing the body, remove attachments
     ```java
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.attachments.remove(att1.name);
+    DocumentRevision saved; // a document we saved earlier
+    saved.getAttachments().remove(att1.name);
     
-    DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+    DocumentRevision updated = datastore.updateDocumentFromRevision(saved);
     ```
     
 1. Update the attachments without changing the body, add attachments
     ```java
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.attachments.put(att1.name, att1);
+    DocumentRevision saved; // a document we saved earlier
+    saved.getAttachments().put(att1.name, att1);
     
-    DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+    DocumentRevision updated = datastore.updateDocumentFromRevision(saved);
     ```
     
 1. Update the attachments without changing the body, remove all attachments
    by setting `null` for attachments map.
     ```java
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.attachments = null;
+    DocumentRevision saved; // a document we saved earlier
+    saved.setAttachments(null);
     
-    DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+    DocumentRevision updated = datastore.updateDocumentFromRevision(saved);
     ```
     
 1. Update the attachments without changing the body, remove all attachments
    by setting an empty dictionary.
     ```java
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.attachments = new HashMap<String, Attachment>();
+    DocumentRevision saved; // a document we saved earlier
+    saved.setAttachments(new HashMap<String, Attachment>());
     
-    DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+    DocumentRevision updated = datastore.updateDocumentFromRevision(saved);
     ```
     
 1. Copy an attachment from one document to another.
     ```java
-    MutableDocumentRevision rev = new MutableDocumentRevision();
-    rev.docId = "doc1";
-    rev.body = DocumentBodyFactory.create( ... );
+    DocumentRevision rev = new DocumentRevision("doc1");
+    rev.setBody(DocumentBodyFactory.create( ... ));
     UnsavedFileAttachment att1 = ...
-    rev.attachments.put(att1.name, att1);
-    DocumentRevision revWithAttachmnets = datastore.createDocumentFromRevision(rev);
+    rev.getAttachments().put(att1.name, att1);
+    DocumentRevision revWithAttachments = datastore.createDocumentFromRevision(rev);
     
     // Add attachment to "saved" from "revWithAttachments"
-    MutableDocumentRevision updated = saved.mutableCopy();
-    Attachment savedAttachment = revWithAttachments.get("nameOfAttachment");
-    update.attachments.put(savedAttachment.name, savedAttachment);
+    DocumentRevision saved; // a document we saved earlier
+    Attachment savedAttachment = revWithAttachments.getAttachments().get("nameOfAttachment");
+    saved.getAttachments().put(savedAttachment.name, savedAttachment);
     
-    DocumentRevision updated = datastore.updateFromRevision(update);
+    DocumentRevision updated = datastore.updateFromRevision(saved);
     ```
-    
-### Creating a document from a `mutableCopy`
-
-It should be possible to create a new document from a `mutableCopy` of an existing document.
-
-
-1. Add a document from a `mutableCopy`, with attachments
-    ```java
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.docId = "doc2";
-    update.body = DocumentBodyFactory.create( ... );
-    // Create att100 attachment
-    update.attachments.put(att100.name, att100);
-    
-    DocumentRevision updated = datastore.createDocumentFromRevision(update);
-    ```
-    
-1. Add a document from a `mutableCopy`, without attachments
-    ```java
-    MutableDocumentRevision update = saved.mutableCopy();
-    update.docId = "doc2";
-    update.body = DocumentBodyFactory.create( ... );
-    update.attachments = null;
-    
-    DocumentRevision updated = datastore.createDocumentFromRevision(update);
-    ```
-    
-1. Fail if the document ID is present in the datastore. Note this shouldn't
-   fail if the document is being added to a different datastore.
-    ```java
-    DocumentRevision update = saved.mutableCopy();
-    update.body = DocumentBodyFactory.create( ... );
-    
-    DocumentRevision updated = datastore.createDocumentFromRevision(update);
-    // throws java.lang.IllegalArgumentException: Can not insert new doc, likely the docId exists already: doc1
-    ```
-    
+        
 ### Deleting a document
 
 1. You should be able to delete a given revision (i.e., add a tombstone to the end of the branch).
