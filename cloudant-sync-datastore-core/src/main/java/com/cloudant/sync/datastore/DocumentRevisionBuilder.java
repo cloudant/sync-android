@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * <p>Build {@code DocumentRevision}s in a chained manner.</p>
+ * <p>Build {@link DocumentRevision}s in a chained manner.</p>
  */
 public class DocumentRevisionBuilder {
 
@@ -62,7 +62,7 @@ public class DocumentRevisionBuilder {
     private Datastore datastore = null;
 
     /**
-     * <p>Builds and returns the {@code BasicDocumentRevision} for this builder.</p>
+     * <p>Builds and returns the {@link DocumentRevision} for this builder.</p>
      * @return the {@code BasicDocumentRevision} for this builder
      */
     public DocumentRevision build() {
@@ -77,7 +77,7 @@ public class DocumentRevisionBuilder {
     }
 
     /**
-     * <p>Builds and returns the {@code BasicDocumentRevision} for this builder, as a
+     * <p>Builds and returns the {@link DocumentRevision} for this builder, as a
      * local document.</p>
      * @return the {@code BasicDocumentRevision} for this builder as a local document
      */
@@ -87,7 +87,7 @@ public class DocumentRevisionBuilder {
     }
 
     /**
-     * <p>Builds and returns the {@code DocumentRevision} for this builder, as a
+     * <p>Builds and returns the {@link DocumentRevision} for this builder, as a
      * local document.</p>
      * @return the {@code DocumentRevision} for this builder as a local document
      */
@@ -98,7 +98,7 @@ public class DocumentRevisionBuilder {
 
 
     /**
-     * <p>Builds and returns the stub {@code DocumentRevision} for this builder.</p>
+     * <p>Builds and returns the stub {@link DocumentRevision} for this builder.</p>
      *
      * <p>A "stub" object has document and revision IDs, but no content/body.
      * </p>
