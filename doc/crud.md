@@ -86,7 +86,7 @@ Once you have created one or more documents, retrieve them by ID:
 
 ```java
 String docId = revision.docId;
-BasicDocumentRevision retrieved = datastore.getDocument(docId);
+DocumentRevision retrieved = datastore.getDocument(docId);
 ```
 
 This document is mutable and you can make changes to it, as shown below.
