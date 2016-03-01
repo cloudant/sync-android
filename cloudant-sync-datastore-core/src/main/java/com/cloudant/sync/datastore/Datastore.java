@@ -20,7 +20,6 @@ package com.cloudant.sync.datastore;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.google.common.eventbus.EventBus;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -170,8 +169,10 @@ public interface Datastore {
      *
      * @param documentIds list of document id
      * @return list of {@code DocumentRevision} objects.
+     * @throws com.cloudant.sync.datastore.DocumentException if there was an error retrieving the
+     * documents.
      */
-    List<DocumentRevision> getDocumentsWithIds(List<String> documentIds);
+    List<DocumentRevision> getDocumentsWithIds(List<String> documentIds) throws DocumentException;
 
     /**
      * <p>Retrieves the datastore's current sequence number.</p>

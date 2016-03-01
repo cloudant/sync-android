@@ -15,6 +15,7 @@ package com.cloudant.sync.query;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionBuilder;
 import com.google.common.collect.Lists;
@@ -60,6 +61,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
      *  Returns the number of documents in this query result.
      *
      *  @return the number of documents {@code DocumentRevision} in this query result.
+     *  @throws QueryException if the document ids for this query cannot be retrieved
      */
     public int size() {
         return documentIds().size();
@@ -72,6 +74,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
      *  consistent with the iterator results.
      *
      *  @return list of the document ids
+     *  @throws QueryException if the document ids for this query cannot be retrieved
      */
     public List<String> documentIds() {
         List<String> documentIds = new ArrayList<String>();
@@ -82,6 +85,10 @@ public class QueryResult implements Iterable<DocumentRevision> {
         return documentIds;
     }
 
+    /**
+     * @return a newly created Iterator over the query results
+     * @throws QueryException if the document ids for this query cannot be retrieved
+     */
     @Override
     public Iterator<DocumentRevision> iterator() {
         return new QueryResultIterator();
@@ -126,53 +133,56 @@ public class QueryResult implements Iterable<DocumentRevision> {
         }
 
         private Iterator<DocumentRevision> populateDocumentBlock() {
-            List<DocumentRevision> docList = new ArrayList<DocumentRevision>();
-            while (range.location < originalDocIds.size()) {
-                range.length = Math.min(DEFAULT_BATCH_SIZE, originalDocIds.size() - range.location);
-                List<String> batch = originalDocIds.subList(range.location,
-                                                            range.location + range.length);
-                List<DocumentRevision> docs = datastore.getDocumentsWithIds(batch);
-                for (DocumentRevision rev : docs) {
-                    DocumentRevision innerRev;
-                    innerRev = rev;  // Allows us to replace later if projecting
+            try {
+                List<DocumentRevision> docList = new ArrayList<DocumentRevision>();
+                while (range.location < originalDocIds.size()) {
+                    range.length = Math.min(DEFAULT_BATCH_SIZE, originalDocIds.size() - range.location);
+                    List<String> batch = originalDocIds.subList(range.location,
+                        range.location + range.length);
+                    List<DocumentRevision> docs = datastore.getDocumentsWithIds(batch);
+                    for (DocumentRevision rev : docs) {
+                        DocumentRevision innerRev;
+                        innerRev = rev;  // Allows us to replace later if projecting
 
-                    // Apply post-hoc matcher
-                    if (matcher != null && !matcher.matches(innerRev)) {
-                        continue;
+                        // Apply post-hoc matcher
+                        if (matcher != null && !matcher.matches(innerRev)) {
+                            continue;
+                        }
+
+                        // Apply skip (skip == 0 means disable)
+                        if (skip > 0 && nSkipped < skip) {
+                            nSkipped = nSkipped + 1;
+                            continue;
+                        }
+
+                        if (fields != null && !fields.isEmpty()) {
+                            innerRev = projectFields(fields, rev, datastore);
+                        }
+
+                        docList.add(innerRev);
+
+                        // Apply limit (limit == 0 means disable)
+                        nReturned = nReturned + 1;
+                        if (limit > 0 && nReturned >= limit) {
+                            limitReached = true;
+                            break;
+                        }
                     }
 
-                    // Apply skip (skip == 0 means disable)
-                    if (skip > 0 && nSkipped < skip) {
-                        nSkipped = nSkipped + 1;
-                        continue;
-                    }
+                    range.location = range.location + range.length;
 
-                    if (fields != null && !fields.isEmpty()) {
-                        innerRev = projectFields(fields, rev, datastore);
-                    }
-
-                    docList.add(innerRev);
-
-                    // Apply limit (limit == 0 means disable)
-                    nReturned = nReturned + 1;
-                    if (limit > 0 && nReturned >= limit) {
-                        limitReached = true;
+                    if (limitReached) {
                         break;
                     }
 
+                    if (!docList.isEmpty()) {
+                        break;
+                    }
                 }
-
-                range.location = range.location + range.length;
-
-                if (limitReached) {
-                    break;
-                }
-
-                if (!docList.isEmpty()) {
-                    break;
-                }
+                return docList.iterator();
+            } catch (DocumentException e) {
+                throw new QueryException(e);
             }
-            return docList.iterator();
         }
     }
 
