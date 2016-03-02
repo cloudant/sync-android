@@ -63,7 +63,7 @@ public class DocumentRevisionBuilder {
 
     /**
      * <p>Builds and returns the {@link DocumentRevision} for this builder.</p>
-     * @return the {@code BasicDocumentRevision} for this builder
+     * @return the {@link DocumentRevision} for this builder
      */
     public DocumentRevision build() {
         DocumentRevision.DocumentRevisionOptions options = new DocumentRevision.DocumentRevisionOptions();
@@ -79,7 +79,7 @@ public class DocumentRevisionBuilder {
     /**
      * <p>Builds and returns the {@link DocumentRevision} for this builder, as a
      * local document.</p>
-     * @return the {@code BasicDocumentRevision} for this builder as a local document
+     * @return the {@link DocumentRevision} for this builder as a local document
      */
     protected DocumentRevision buildBasicDBObjectLocalDocument() {
         assert this.revId.endsWith("-local");
@@ -89,7 +89,7 @@ public class DocumentRevisionBuilder {
     /**
      * <p>Builds and returns the {@link DocumentRevision} for this builder, as a
      * local document.</p>
-     * @return the {@code DocumentRevision} for this builder as a local document
+     * @return the {@link DocumentRevision} for this builder as a local document
      */
     public DocumentRevision buildLocalDocument() {
         assert this.revId.endsWith("-local");
@@ -220,7 +220,7 @@ public class DocumentRevisionBuilder {
     }
 
     /**
-     * Builds a BasicDocumentRevision from a Map of values from a CouchDB instance
+     * Builds a DocumentRevision from a Map of values from a CouchDB instance
      * @param documentURI The URI of the document
      * @param map The map of key value pairs fom the CouchDB server
      * @return A complete document revision representing the data from the Map
