@@ -14,16 +14,16 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.sync.datastore.Datastore;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A Builder to create a {@link Replicator Object}
@@ -38,6 +38,46 @@ public abstract class ReplicatorBuilder<S, T, E> {
             <HttpConnectionRequestInterceptor>();
     private List<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList
             <HttpConnectionResponseInterceptor>();
+
+    private URI addCookieInterceptorIfRequired(URI uri) {
+        String uriProtocol = uri.getScheme();
+        String uriHost = uri.getHost();
+        String uriPath = uri.getRawPath();
+
+        //Check if port exists
+        int uriPort = uri.getPort();
+        if (uriPort < 0) {
+            if ("http".equals(uriProtocol)) {
+                uriPort = 80;
+            } else if ("https".equals(uriProtocol)) {
+                uriPort = 443;
+            } else {
+                throw new RuntimeException("Unknown protocol: "+uriProtocol);
+            }
+        }
+
+        if (uri.getUserInfo() != null) {
+            String[] parts = uri.getUserInfo().split(":");
+            if (parts.length == 2) {
+                CookieInterceptor ci = new CookieInterceptor(parts[0], parts[1]);
+                requestInterceptors.add(ci);
+                responseInterceptors.add(ci);
+            }
+        }
+
+        try {
+            //Remove user credentials from url
+            URI redacted = new URI(uriProtocol
+                    + "://"
+                    + uriHost
+                    + ":"
+                    + uriPort
+                    + (uriPath != null ? uriPath : ""));
+            return redacted;
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * A Push Replication Builder
@@ -58,6 +98,9 @@ public abstract class ReplicatorBuilder<S, T, E> {
             if (super.source == null || super.target == null) {
                 throw new IllegalStateException("Source and target cannot be null");
             }
+
+            // add cookie interceptor and remove creds from URI if required
+            super.target = super.addCookieInterceptorIfRequired(super.target);
 
             BasicPushStrategy pushStrategy = new BasicPushStrategy(super.source,
                     super.target,
@@ -138,6 +181,9 @@ public abstract class ReplicatorBuilder<S, T, E> {
             if (super.source == null || super.target == null) {
                 throw new IllegalStateException("Source and target cannot be null");
             }
+
+            // add cookie interceptor and remove creds from URI if required
+            super.source = super.addCookieInterceptorIfRequired(super.source);
 
             BasicPullStrategy pullStrategy = new BasicPullStrategy(super.source,
                     super.target,

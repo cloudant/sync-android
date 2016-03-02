@@ -207,4 +207,36 @@ public class PullReplicatorTest extends ReplicationTestBase {
         Assert.assertEquals(3, this.datastore.getDocumentCount());
     }
 
+    @Test
+    public void replicatorBuilderAddsCookieInterceptorCustomPort() throws Exception {
+        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
+                from(new URI("http://🍶:🍶@some-host:123/path%2Fsome-path-日本")).
+                to(datastore);
+        BasicReplicator r = (BasicReplicator)p.build();
+        // check that user/pass has been removed
+        Assert.assertEquals("http://some-host:123/path%2Fsome-path-日本",
+                (((CouchClientWrapper)(((BasicPullStrategy)r.strategy).sourceDb)).
+                        getCouchClient().
+                        getRootUri()).
+                        toString()
+                );
+        assertCookieInterceptorPresent(p, "name=%F0%9F%8D%B6&password=%F0%9F%8D%B6");
+    }
+
+    @Test
+    public void replicatorBuilderAddsCookieInterceptorDefaultPort() throws Exception {
+        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
+                from(new URI("http://🍶:🍶@some-host/path%2Fsome-path-日本")).
+                to(datastore);
+        BasicReplicator r = (BasicReplicator)p.build();
+        // check that user/pass has been removed
+        Assert.assertEquals("http://some-host:80/path%2Fsome-path-日本",
+                (((CouchClientWrapper) (((BasicPullStrategy) r.strategy).sourceDb)).
+                        getCouchClient().
+                        getRootUri()).
+                        toString()
+        );
+       assertCookieInterceptorPresent(p, "name=%F0%9F%8D%B6&password=%F0%9F%8D%B6");
+    }
+
 }
