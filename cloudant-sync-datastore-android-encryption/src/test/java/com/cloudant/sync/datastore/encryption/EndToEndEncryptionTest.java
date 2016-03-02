@@ -22,6 +22,7 @@ import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DatastoreNotCreatedException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
@@ -174,15 +175,15 @@ public class EndToEndEncryptionTest {
     @Test
     public void attachmentsDataEncrypted() throws IOException, DocumentException, InvalidKeyException {
 
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.body = DocumentBodyFactory.create(new HashMap<String, String>());
+        DocumentRevision rev = new DocumentRevision();
+        rev.setBody(DocumentBodyFactory.create(new HashMap<String, String>()));
 
         File expectedPlainText = TestUtils.loadFixture("fixture/EncryptedAttachmentTest_plainText");
         assertNotNull(expectedPlainText);
 
         UnsavedFileAttachment attachment = new UnsavedFileAttachment(
                 expectedPlainText, "text/plain");
-        rev.attachments.put("EncryptedAttachmentTest_plainText", attachment);
+        rev.getAttachments().put("EncryptedAttachmentTest_plainText", attachment);
 
         datastore.createDocumentFromRevision(rev);
 
@@ -244,14 +245,13 @@ public class EndToEndEncryptionTest {
         documentBody.put("non-ascii", nonAsciiText);
 
         // Create
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = documentId;
-        rev.body = DocumentBodyFactory.create(documentBody);
-        BasicDocumentRevision saved = datastore.createDocumentFromRevision(rev);
+        DocumentRevision rev = new DocumentRevision(documentId);
+        rev.setBody(DocumentBodyFactory.create(documentBody));
+        DocumentRevision saved = datastore.createDocumentFromRevision(rev);
         assertNotNull(saved);
 
         // Read
-        BasicDocumentRevision retrieved = datastore.getDocument(documentId);
+        DocumentRevision retrieved = datastore.getDocument(documentId);
         assertNotNull(retrieved);
         Map<String, Object> retrievedBody = retrieved.getBody().asMap();
         assertEquals("mike", retrievedBody.get("name"));
@@ -260,11 +260,11 @@ public class EndToEndEncryptionTest {
         assertEquals(3, retrievedBody.size());
 
         // Update
-        MutableDocumentRevision update = retrieved.mutableCopy();
+        DocumentRevision update = retrieved;
         Map<String, Object> updateBody = retrieved.getBody().asMap();
         updateBody.put("name", "fred");
-        update.body = DocumentBodyFactory.create(updateBody);
-        BasicDocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        update.setBody(DocumentBodyFactory.create(updateBody));
+        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
         assertNotNull(updated);
         Map<String, Object> updatedBody = updated.getBody().asMap();
         assertEquals("fred", updatedBody.get("name"));
@@ -276,13 +276,13 @@ public class EndToEndEncryptionTest {
         final String attachmentName = "EncryptedAttachmentTest_plainText";
         File expectedPlainText = TestUtils.loadFixture("fixture/EncryptedAttachmentTest_plainText");
         assertNotNull(expectedPlainText);
-        MutableDocumentRevision attachmentRevision = updated.mutableCopy();
-        final Map<String, Attachment> atts = attachmentRevision.attachments;
+        DocumentRevision attachmentRevision = updated;
+        final Map<String, Attachment> atts = attachmentRevision.getAttachments();
         atts.put(attachmentName, new UnsavedFileAttachment(expectedPlainText, "text/plain"));
         atts.put("non-ascii", new UnsavedStreamAttachment(
                 new ByteArrayInputStream(nonAsciiText.getBytes()),
                 "non-ascii", "text/plain"));
-        BasicDocumentRevision updatedWithAttachment = datastore.updateDocumentFromRevision(attachmentRevision);
+        DocumentRevision updatedWithAttachment = datastore.updateDocumentFromRevision(attachmentRevision);
         InputStream in = updatedWithAttachment.getAttachments().get(attachmentName).getInputStream();
         assertTrue("Saved attachment did not read correctly",
                 IOUtils.contentEquals(new FileInputStream(expectedPlainText), in));
@@ -297,7 +297,7 @@ public class EndToEndEncryptionTest {
         } catch (ConflictException ex) {
             // Expected exception
         }
-        BasicDocumentRevision deleted = datastore.deleteDocumentFromRevision(updatedWithAttachment);
+        DocumentRevision deleted = datastore.deleteDocumentFromRevision(updatedWithAttachment);
         assertNotNull(deleted);
         assertEquals(true, deleted.isDeleted());
     }
