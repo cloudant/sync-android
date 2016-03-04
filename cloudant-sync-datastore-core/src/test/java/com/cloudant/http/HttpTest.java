@@ -13,6 +13,7 @@ package com.cloudant.http;
 import com.cloudant.common.CouchTestBase;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.common.TestOptions;
+import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.mazha.json.JSONHelper;

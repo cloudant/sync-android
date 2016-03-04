@@ -15,12 +15,9 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
-import com.cloudant.common.TestOptions;
-import com.cloudant.http.CookieInterceptor;
 
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 

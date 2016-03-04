@@ -22,7 +22,7 @@ import static com.cloudant.common.TestOptions.COUCH_URI;
 import static com.cloudant.common.TestOptions.COUCH_USERNAME;
 import static com.cloudant.common.TestOptions.HTTP_PROTOCOL;
 
-import com.cloudant.http.CookieInterceptor;
+import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 

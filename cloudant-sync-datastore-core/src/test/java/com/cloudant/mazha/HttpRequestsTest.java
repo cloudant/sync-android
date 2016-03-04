@@ -15,27 +15,19 @@
 package com.cloudant.mazha;
 
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.common.TestOptions;
 import com.cloudant.http.HttpConnectionInterceptorContext;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.google.common.base.Strings;
 
-import java.io.InputStream;
+import org.apache.commons.codec.binary.Base64;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 @Category(RequireRunningCouchDB.class)
@@ -54,7 +46,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
             }
         };
         return interceptor;
-    };
+    }
 
     // test we can set a custom header and make a request
     // (we don't check the header is received at the server!)
@@ -82,52 +74,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
         Assert.assertTrue(dbInfo.getDbName().contains(testDb));
     }
 
-    // test we can override the auth header if it is already set from user/pass
-    // NB this test only works with a local CouchDB in admin party mode and relies
-    // on the fact that any auth string other than "basic: <user:pass>" is accepted
-    @Test
-    public void customHeaderAuthOverride() throws Exception {
 
-        // check that we are running in a configuration where there is no username/password set:
-        // (most commonly this would be the default config of running against a local couch instance
-        // in admin party mode)
-        org.junit.Assume.assumeTrue("Test skipped because Basic Auth credentials are required to " +
-                        "access this server",
-                !TestOptions.COOKIE_AUTH && Strings.isNullOrEmpty(couchConfig.getRootUri().getUserInfo()));
-        URI root = couchConfig.getRootUri();
-
-        // copy the basic test url but add user:foo, pass:bar as credentials
-        URI rootWithUserCreds = new URI(root.getScheme(),
-                "foo:bar",
-                root.getHost(),
-                root.getPort(),
-                root.getPath(),
-                null,
-                null);
-        CouchConfig customCouchConfig = new CouchConfig(rootWithUserCreds);
-
-        // first we check that foo/bar is unauthorized
-        try {
-            CouchClient customClient = new CouchClient(customCouchConfig.getRootUri(),
-                    customCouchConfig.getRequestInterceptors(),
-                    customCouchConfig.getResponseInterceptors());
-            customClient.getDbInfo();
-            Assert.fail("Expected CouchException to be thrown");
-        } catch (CouchException ce) {
-            Assert.assertEquals("unauthorized", ce.getError());
-        }
-
-        // now put in a string which isn't basic auth, it will be ignored by the server
-        ArrayList<HttpConnectionRequestInterceptor> customInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
-        customInterceptors.add(makeHeaderInterceptor("Authorization", "test"));
-        customCouchConfig.setRequestInterceptors(customInterceptors);
-        CouchClient clientAuthHeader = new CouchClient(customCouchConfig.getRootUri(),
-                customCouchConfig.getRequestInterceptors(),
-                customCouchConfig.getResponseInterceptors());
-        CouchDbInfo dbInfo = clientAuthHeader.getDbInfo();
-        Assert.assertNotNull(dbInfo);
-        Assert.assertTrue(dbInfo.getDbName().contains(testDb));
-    }
 
     // test we can set the auth header when user and pass weren't set
     // NB this test relies on the fact that foo/bar is not a working username/password
