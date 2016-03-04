@@ -142,13 +142,12 @@ Once the libraries are added to a project, the basics of adding and reading
 a document are:
 
 ```java
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreNotCreatedException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 
 // Create a DatastoreManager using application internal storage path
@@ -158,21 +157,20 @@ DatastoreManager manager = new DatastoreManager(path.getAbsolutePath());
 Datastore ds = manager.openDatastore("my_datastore");
 
 // Create a document
-MutableDocumentRevision revision = new MutableDocumentRevision();
+DocumentRevision revision = new DocumentRevision();
 Map<String, Object> body = new HashMap<String, Object>();
 body.put("animal", "cat");
-revision.body = DocumentBodyFactory.create(body);
-BasicDocumentRevision saved = ds.createDocumentFromRevision(revision);
+revision.setBody(DocumentBodyFactory.create(body));
+DocumentRevision saved = ds.createDocumentFromRevision(revision);
 
 // Add an attachment -- binary data like a JPEG
-MutableDocumentRevision update = saved.mutableCopy();  // BasicDocumentRevision is readonly
 UnsavedFileAttachment att1 = new UnsavedFileAttachment(new File("/path/to/image.jpg"),
                                                        "image/jpeg");
-update.attachments.put(att1.name, att1);
-BasicDocumentRevision updated = ds.updateDocumentFromRevision(update);
+saved.getAttachments().put(att1.name, att1);
+DocumentRevision updated = ds.updateDocumentFromRevision(saved);
 
 // Read a document
-BasicDocumentRevision aRevision = ds.getDocument(updated.getId());
+DocumentRevision aRevision = ds.getDocument(updated.getId());
 ```
 
 Read more in [the CRUD document](https://github.com/cloudant/sync-android/blob/master/doc/crud.md).

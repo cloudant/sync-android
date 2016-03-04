@@ -1378,7 +1378,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                                                      DocumentRevision rev,
                                                      List<String> revHistory)
             throws AttachmentException{
-        logger.entering("BasicDocumentRevision",
+        logger.entering("DocumentRevision",
                 "doForceInsertNewDocumentWithHistory()",
                 new Object[]{rev, revHistory});
 

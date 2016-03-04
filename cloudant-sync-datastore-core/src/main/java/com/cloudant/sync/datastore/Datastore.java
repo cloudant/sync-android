@@ -285,7 +285,7 @@ public interface Datastore {
      * {@link com.cloudant.sync.notifications.DocumentCreated DocumentCreated}
      * event is posted on the event bus.</p>
      *
-     * @param rev the <code>MutableDocumentRevision</code> to be created
+     * @param rev the <code>DocumentRevision</code> to be created
      * @return a <code>DocumentRevision</code> - the newly created document
      * @throws com.cloudant.sync.datastore.AttachmentException if there was an error saving any new attachments
      * @throws com.cloudant.sync.datastore.DocumentException if there was an error creating the document
@@ -304,7 +304,7 @@ public interface Datastore {
      * {@link com.cloudant.sync.notifications.DocumentUpdated DocumentUpdated}
      * event is posted on the event bus.</p>
      *
-     * @param rev the <code>MutableDocumentRevision</code> to be updated
+     * @param rev the <code>DocumentRevision</code> to be updated
      * @return a <code>DocumentRevision</code> - the updated document
      * @throws ConflictException <code>rev</code> is not a current revision for this document
      * @throws com.cloudant.sync.datastore.AttachmentException if there was an error saving the attachments
@@ -332,7 +332,7 @@ public interface Datastore {
      * method in this way from client code. See the doc/conflicts.md document for
      * more details.</p>
      *
-     * @param rev the <code>MutableDocumentRevision</code> to be deleted
+     * @param rev the <code>DocumentRevision</code> to be deleted
      * @return a <code>DocumentRevision</code> - the deleted or "tombstone" document
      * @throws ConflictException if the <code>sourceRevisionId</code> is not the current revision
      * @see Datastore#getEventBus()
