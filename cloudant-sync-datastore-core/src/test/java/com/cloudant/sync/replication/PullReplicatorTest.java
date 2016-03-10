@@ -16,12 +16,10 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.common.TestOptions;
-import com.cloudant.http.CookieInterceptor;
+import com.cloudant.http.interceptors.CookieInterceptor;
 
-import org.apache.http.cookie.Cookie;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
