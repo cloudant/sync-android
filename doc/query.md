@@ -44,18 +44,18 @@ The `IndexManager` object provides the ability to manage query indexes and execu
 Secondly, these documents are in the datastore:
 
 ```java
-{ "name": "mike", 
-  "age": 12, 
+{ "name": "mike",
+  "age": 12,
   "pet": {"species": "cat"},
   "comment": "Mike goes to middle school and likes reading books." };
 
-{ "name": "mike", 
-  "age": 34, 
+{ "name": "mike",
+  "age": 34,
   "pet": {"species": "dog"},
   "comment": "Mike is a doctor and likes reading books." };
 
-{ "name": "fred", 
-  "age": 23, 
+{ "name": "fred",
+  "age": 23,
   "pet": {"species": "cat"},
   "comment": "Fred works for a startup out of his home office." };
 ```
@@ -74,28 +74,28 @@ Basic querying of fields benefits but does _not require_ a JSON index. For examp
 Use the following methods to create a JSON index:
 
 ```
-ensureIndexed(List<Object> fieldNames, 
+ensureIndexed(List<Object> fieldNames,
               String indexName)
 ```
 
 Use either of the following methods to create a TEXT index:
 
 ```
-ensureIndexed(List<Object> fieldNames, 
-              String indexName, 
-              String indexType)
+ensureIndexed(List<Object> fieldNames,
+              String indexName,
+              IndexType indexType)
 
-// or 
+// or
 
-ensureIndexed(List<Object> fieldNames, 
-              String indexName, 
-              String indexType, 
+ensureIndexed(List<Object> fieldNames,
+              String indexName,
+              IndexType indexType,
               Map<String, String> indexSettings)
-``` 
+```
 
 These indexes are persistent across application restarts as they are saved to disk. They are kept up to date as documents change; there's no need to call the `ensureIndexed(...)` method each time your applications starts, though there is no harm in doing so.
 
-The first argument, `fieldNames` is a list of fields to put into the index. The second argument, `indexName` is a name for the index. This is used to delete indexes at a later stage and appears when you list the indexes in the database.  The third argument, `indexType` defines what type of index to create.  Valid index types are `json` and `text`.  If not provided, the index type defaults to `json`.  The fourth argument, `indexSettings` is comprised of index parameters and their values.  Currently the only valid index setting is `tokenize` and it can only apply to a TEXT index.  If index settings are not provided for a TEXT index, the `tokenize` parameter defaults to the value `simple`.
+The first argument, `fieldNames` is a list of fields to put into the index. The second argument, `indexName` is a name for the index. This is used to delete indexes at a later stage and appears when you list the indexes in the database.  The third argument, `indexType` defines what type of index to create. If not provided, the index type defaults to `JSON`.  The fourth argument, `indexSettings` is comprised of index parameters and their values.  Currently the only valid index setting is `tokenize` and it can only apply to a TEXT index.  If index settings are not provided for a TEXT index, the `tokenize` parameter defaults to the value `simple`.
 
 A field can appear in more than one index. The query engine will select an appropriate index to use for a given query. However, the more indexes you have, the more disk space they will use and the greater the overhead in keeping them up to date.
 
@@ -103,7 +103,7 @@ To index values in sub-documents, use _dotted notation_. This notation puts the 
 
 ```java
 // Create an index over the name, age, and species fields.
-String name = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet.species"), 
+String name = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet.species"),
                                "basic");
 if (name == null) {
     // there was an error creating the index
@@ -112,7 +112,7 @@ if (name == null) {
 
 ####Indexing for text search
 
-Since text search relies on SQLite FTS which is a compile time option, we must ensure that SQLite FTS is infact available.  To verify that text search is enabled and that a text index can be created use `isTextSearchEnabled()` before attempting to create a text index.  If text search is not enabled see [compiling and enabling SQLite FTS][enableFTS] and [SQLite Android Bindings][androidBind] for details. 
+Since text search relies on SQLite FTS which is a compile time option, we must ensure that SQLite FTS is infact available.  To verify that text search is enabled and that a text index can be created use `isTextSearchEnabled()` before attempting to create a text index.  If text search is not enabled see [compiling and enabling SQLite FTS][enableFTS] and [SQLite Android Bindings][androidBind] for details.
 
 [enableFTS]: http://www.sqlite.org/fts3.html#section_2
 [androidBind]: https://www.sqlite.org/android/doc/trunk/www/index.wiki
@@ -120,9 +120,9 @@ Since text search relies on SQLite FTS which is a compile time option, we must e
 ```java
 if (im.isTextSearchEnabled()) {
     // Create a text index over the name and comment fields.
-    String name = im.ensureIndexed(Arrays.<Object>asList("name", "comment"), 
-                                   "basic_text_index", 
-                                   "text");
+    String name = im.ensureIndexed(Arrays.<Object>asList("name", "comment"),
+                                   "basic_text_index",
+                                   IndexType.TEXT);
     if (name == null) {
         // there was an error creating the index
     }
@@ -140,9 +140,9 @@ if (im.isTextSearchEnabled()) {
     Map<String, String> settings = new HashMap<String, String>();
     settings.add("tokenize", "porter");
     // Create a text index over the name and comment fields.
-    String name = im.ensureIndexed(Arrays.<Object>asList("name", "comment"), 
-                                   "basic_text_index", 
-                                   "text",
+    String name = im.ensureIndexed(Arrays.<Object>asList("name", "comment"),
+                                   "basic_text_index",
+                                   IndexType.TEXT,
                                    settings);
     if (name == null) {
         // there was an error creating the index
@@ -163,7 +163,7 @@ If an index needs to be changed, first delete the existing index by calling `del
 
 #### Indexing document metadata (_id and _rev)
 
-The document ID and revision ID are automatically indexed under `_id` and `_rev` 
+The document ID and revision ID are automatically indexed under `_id` and `_rev`
 respectively. If you need to query on document ID or document revision ID,
 use these field names.
 
@@ -248,8 +248,8 @@ query.put("$text", search);
 This query will match the following document because both `doctor` and `books` are found in its comment field.
 
 ```
-{ "name": "mike", 
-  "age": 34, 
+{ "name": "mike",
+  "age": 34,
   "pet": {"species": "dog"},
   "comment": "Mike is a doctor and likes reading books." };
 ```
@@ -267,8 +267,8 @@ query.put("$text", search);
 This query will match the following document because the phrase `is a doctor` is found in its comment field.
 
 ```
-{ "name": "mike", 
-  "age": 34, 
+{ "name": "mike",
+  "age": 34,
   "pet": {"species": "dog"},
   "comment": "Mike is a doctor and likes reading books." };
 ```
@@ -286,8 +286,8 @@ query.put("$text", search);
 This query will match the following document because the prefix `doc` followed by the `*` wildcard matches `doctor` found in its comment field.
 
 ```
-{ "name": "mike", 
-  "age": 34, 
+{ "name": "mike",
+  "age": 34,
   "pet": {"species": "dog"},
   "comment": "Mike is a doctor and likes reading books." };
 ```
@@ -314,7 +314,7 @@ Use `$or` to find documents where just one of the clauses match.
 To find all people with a `dog` who are under thirty:
 
 ```java
-// query: { "$or": [ { "pet.species": { "$eq": "dog" } }, 
+// query: { "$or": [ { "pet.species": { "$eq": "dog" } },
 //                   { "age": { "$lt": 30 } }
 //                 ]}
 Map<String, Object> query = new HashMap<String, Object>();
@@ -337,7 +337,7 @@ This selects documents where _either_ the person has a pet `dog` _or_ they are
 both over thirty _and_ named `mike`:
 
 ```java
-// query: { "$or": [ { "pet.species": { "$eq": "dog" } }, 
+// query: { "$or": [ { "pet.species": { "$eq": "dog" } },
 //                   { "$and": [ { "age": { "$gt": 30 } },
 //                               { "name": { "$eq": "mike" } }
 //                             ] }
@@ -380,7 +380,7 @@ There is an extended version of the `find` method which supports:
 - Skipping results.
 - Limiting the number of results returned.
 
-For any of these, use 
+For any of these, use
 
 ```java
 find(Map<String, Object> query,
@@ -392,7 +392,7 @@ find(Map<String, Object> query,
 
 #### Sorting
 
-Provide a sort document to the extended version of the `find` method to sort the results of a query. 
+Provide a sort document to the extended version of the `find` method to sort the results of a query.
 
 The sort document is a list of fields to sort by. Each field is represented by a map specifying the name of the field to sort by and the direction to sort.
 
@@ -480,7 +480,7 @@ Take this document as an example:
 You can create an index over the `pet` field:
 
 ```java
-String name = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet"), 
+String name = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet"),
                                "basic");
 ```
 
@@ -521,7 +521,7 @@ successful.
 However, if there was one index with `pet` in and another with `name` in, like this:
 
 ```java
-String indexOne = im.ensureIndexed(Arrays.<Object>asList("name", "age"), 
+String indexOne = im.ensureIndexed(Arrays.<Object>asList("name", "age"),
                                    "index_one");
 String indexTwo = im.ensureIndexed(Arrays.<Object>asList("age", "pet"),
                                    "index_two");
@@ -548,7 +548,7 @@ Right now the list of supported features is:
 - Skipping results.
 - Queries can include unindexed fields.
 - Queries can include a text search clause, although if they do no unindexed fields may be used.
-      
+
 Selectors -> combination
 
 - `$and`
@@ -603,7 +603,7 @@ the commit log :)
 
 Overall restrictions:
 
-- Cannot use covering indexes with projection (`fields`) to avoid loading 
+- Cannot use covering indexes with projection (`fields`) to avoid loading
   documents from the datastore.
 
 #### Query syntax
@@ -655,27 +655,27 @@ Here:
 * Quotes enclose literal string values.
 
 <pre>
-<em>query</em> := 
+<em>query</em> :=
     <strong>{ }</strong>
     <strong>{</strong> <em>many-expressions</em> <strong>}</strong>
 
 <em>many-expressions</em> := <em>expression</em> (&quot;,&quot; <em>expression</em>)*
 
-<em>expression</em> := 
+<em>expression</em> :=
     <em>compound-expression</em>
     <em>comparison-expression</em>
     <em>text-search-expression</em>
 
-<em>compound-expression</em> := 
+<em>compound-expression</em> :=
     <strong>{</strong> (&quot;$and&quot; | &quot;$nor&quot; | &quot;$or&quot;) <strong>:</strong> <strong>[</strong> <em>many-expressions</em> <strong>] }</strong>  // nor not implemented
-    
+
 <em>comparison-expression</em> :=
     <strong>{</strong> <em>field</em> <strong>:</strong> <strong>{</strong> <em>operator-expression</em> <strong>} }</strong>
 
-<em>negation-expression</em> := 
+<em>negation-expression</em> :=
     <strong>{</strong> &quot;$not&quot; <strong>:</strong> <strong>{</strong> <em>operator-expression</em> <strong>} }</strong>
 
-<em>operator-expression</em> := 
+<em>operator-expression</em> :=
     <em>negation-expression</em>
     <strong>{</strong> <em>operator</em> <strong>:</strong> <em>simple-value</em> <strong>}</strong>
     <strong>{</strong> &quot;$regex&quot; <strong>:</strong> <em>Pattern</em> <strong>}</strong>  // not implemented

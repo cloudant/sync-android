@@ -72,7 +72,7 @@ class IndexCreator {
             return null;
         }
 
-        if (index.indexType.equalsIgnoreCase("text")) {
+        if (index.indexType == IndexType.TEXT) {
             if (!IndexManager.ftsAvailable(queue, database)) {
                 logger.log(Level.SEVERE, "Text search not supported.  To add support for text " +
                                          "search, enable FTS compile options in SQLite.");
@@ -120,7 +120,7 @@ class IndexCreator {
             if (existingIndexes != null && existingIndexes.get(index.indexName) != null) {
                 Map<String, Object> existingIndex =
                         (Map<String, Object>) existingIndexes.get(index.indexName);
-                String existingType = (String) existingIndex.get("type");
+                IndexType existingType = (IndexType) existingIndex.get("type");
                 String existingSettings = (String) existingIndex.get("settings");
                 List<String> existingFieldsList = (List<String>) existingIndex.get("fields");
                 Set<String> existingFields = new HashSet<String>(existingFieldsList);
@@ -153,7 +153,7 @@ class IndexCreator {
                 for (String fieldName: fieldNamesList) {
                     ContentValues parameters = new ContentValues();
                     parameters.put("index_name", index.indexName);
-                    parameters.put("index_type", index.indexType);
+                    parameters.put("index_type", index.indexType.toString());
                     parameters.put("index_settings", index.settingsAsJSON());
                     parameters.put("field_name", fieldName);
                     parameters.put("last_sequence", 0);
@@ -174,7 +174,7 @@ class IndexCreator {
                 }
 
                 List<String> statements = new ArrayList<String>();
-                if (index.indexType.equalsIgnoreCase(Index.TEXT_TYPE)) {
+                if (index.indexType == IndexType.TEXT) {
                     List<String> settingsList = new ArrayList<String>();
                     // Add text settings
                     for (String key : index.indexSettings.keySet()) {
@@ -284,11 +284,11 @@ class IndexCreator {
      */
     @SuppressWarnings("unchecked")
     protected static boolean indexLimitReached(Index index, Map<String, Object> existingIndexes) {
-        if (index.indexType.equalsIgnoreCase(Index.TEXT_TYPE)) {
+        if (index.indexType == IndexType.TEXT) {
             for (String name : existingIndexes.keySet()) {
                 Map<String, Object> existingIndex = (Map<String, Object>) existingIndexes.get(name);
-                String type = (String) existingIndex.get("type");
-                if (type.equalsIgnoreCase(Index.TEXT_TYPE) &&
+                IndexType type = (IndexType) existingIndex.get("type");
+                if (type == IndexType.TEXT &&
                     !name.equalsIgnoreCase(index.indexName)) {
                     logger.log(Level.SEVERE,
                             String.format("The text index %s already exists.  ", name) +

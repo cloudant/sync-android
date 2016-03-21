@@ -31,12 +31,6 @@ class Index {
 
     private static final Logger logger = Logger.getLogger(Index.class.getCanonicalName());
 
-    public static final String JSON_TYPE = "json";
-
-    public static final String TEXT_TYPE = "text";
-
-    private static final List<String> validTypes = Arrays.asList(JSON_TYPE, TEXT_TYPE);
-
     private static final String TEXT_TOKENIZE = "tokenize";
 
     private static final String TEXT_DEFAULT_TOKENIZER = "simple";
@@ -47,7 +41,7 @@ class Index {
 
     protected final String indexName;
 
-    protected final String indexType;
+    protected final IndexType indexType;
 
     protected final Map<String, String> indexSettings;
 
@@ -55,7 +49,7 @@ class Index {
 
     private Index(List<Object> fieldNames,
                   String indexName,
-                  String indexType,
+                  IndexType indexType,
                   Map<String, String> indexSettings) {
         this.fieldNames = fieldNames;
         this.indexName = indexName;
@@ -71,10 +65,10 @@ class Index {
      * @return the Index object or null if arguments passed in were invalid.
      */
     public static Index getInstance(List<Object> fieldNames, String indexName) {
-        return getInstance(fieldNames, indexName, JSON_TYPE);
+        return getInstance(fieldNames, indexName, IndexType.JSON);
     }
 
-    public static Index getInstance(List<Object> fieldNames, String indexName, String indexType) {
+    public static Index getInstance(List<Object> fieldNames, String indexName, IndexType indexType) {
         return getInstance(fieldNames, indexName, indexType, null);
     }
 
@@ -91,7 +85,7 @@ class Index {
      */
     public static Index getInstance(List<Object> fieldNames,
                               String indexName,
-                              String indexType,
+                              IndexType indexType,
                               Map<String, String> indexSettings) {
         if (fieldNames == null || fieldNames.isEmpty()) {
             logger.log(Level.SEVERE, "No field names were provided.");
@@ -103,22 +97,12 @@ class Index {
             return null;
         }
 
-        if (indexType == null || indexType.isEmpty()) {
-            logger.log(Level.SEVERE, "No index type was provided.");
-            return null;
-        }
-
-        if (!validTypes.contains(indexType.toLowerCase())) {
-            logger.log(Level.SEVERE, String.format("Invalid index type %s.", indexType));
-            return null;
-        }
-
-        if (indexType.equalsIgnoreCase(JSON_TYPE) && indexSettings != null) {
+        if (indexType == IndexType.JSON && indexSettings != null) {
             logger.log(Level.WARNING, String.format("Index type is %s, index settings %s ignored.",
                                                     indexType,
                                                     indexSettings.toString()));
             indexSettings = null;
-        } else if (indexType.equalsIgnoreCase(TEXT_TYPE)) {
+        } else if (indexType == IndexType.TEXT) {
             if (indexSettings == null) {
                 indexSettings = new HashMap<String, String>();
                 indexSettings.put(TEXT_TOKENIZE, TEXT_DEFAULT_TOKENIZER);
@@ -148,8 +132,8 @@ class Index {
      * @param indexSettings the indexSettings to compare to
      * @return true/false - whether there is a match
      */
-    protected boolean compareIndexTypeTo(String indexType, String indexSettings) {
-        if (!this.indexType.equalsIgnoreCase(indexType)) {
+    protected boolean compareIndexTypeTo(IndexType indexType, String indexSettings) {
+        if (this.indexType != indexType) {
             return false;
         }
 

@@ -194,13 +194,13 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         // supports using the json type
         String indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField),
                                             "basic",
-                                            "json");
+                                            IndexType.JSON);
         assertThat(indexName, is("basic"));
         Map<String, Object> indexes = im.listIndexes();
         assertThat(indexes.size(), is(1));
         @SuppressWarnings("unchecked")
         Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
-        assertThat((String) index.get("type"), is("json"));
+        assertThat((IndexType) index.get("type"), is(IndexType.JSON));
         assertThat(index.get("settings"), is(nullValue()));
     }
 
@@ -213,13 +213,13 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
         String indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField),
                                             "basic",
-                                            "text");
+                                            IndexType.TEXT);
         assertThat(indexName, is("basic"));
         Map<String, Object> indexes = im.listIndexes();
         assertThat(indexes.size(), is(1));
         @SuppressWarnings("unchecked")
         Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
-        assertThat((String) index.get("type"), is("text"));
+        assertThat((IndexType) index.get("type"), is(IndexType.TEXT));
         assertThat((String) index.get("settings"), is("{\"tokenize\":\"simple\"}"));
     }
 
@@ -228,15 +228,15 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         Map<String, String> settings = new HashMap<String, String>();
         settings.put("tokenize", "porter");
         String indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"),
-                                            "basic",
-                                            "text",
-                                             settings);
+                "basic",
+                IndexType.TEXT,
+                settings);
         assertThat(indexName, is("basic"));
         Map<String, Object> indexes = im.listIndexes();
         assertThat(indexes.size(), is(1));
         @SuppressWarnings("unchecked")
         Map<String, Object> index = (Map<String, Object>) indexes.get("basic");
-        assertThat((String) index.get("type"), is("text"));
+        assertThat((IndexType) index.get("type"), is(IndexType.TEXT));
         assertThat((String) index.get("settings"), is("{\"tokenize\":\"porter\"}"));
     }
 
@@ -246,7 +246,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         settings.put("tokenize", "porter");
         String indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"),
                                             "textIndex",
-                                            "text",
+                                            IndexType.TEXT,
                                             settings);
         assertThat(indexName, is("textIndex"));
         indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"), "jsonIndex");
@@ -257,37 +257,9 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
     public void correctlyLimitsTextIndexesToOne() {
-        String indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic", "text");
+        String indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic", IndexType.TEXT);
         assertThat(indexName, is("basic"));
-        indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"), "anotherIndex", "text");
-        assertThat(indexName, is(nullValue()));
-    }
-
-    @Test
-    public void createIndexWithGeoType() {
-        HashMap<String, String> nameField = new HashMap<String, String>();
-        nameField.put("name", "asc");
-        HashMap<String, String> ageField = new HashMap<String, String>();
-        ageField.put("age", "desc");
-
-        // doesn't support using the geo type
-        String indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField),
-                                            "basic",
-                                            "geo");
-        assertThat(indexName, is(nullValue()));
-    }
-
-    @Test
-    public void createIndexWithUnplannedType() {
-        HashMap<String, String> nameField = new HashMap<String, String>();
-        nameField.put("name", "asc");
-        HashMap<String, String> ageField = new HashMap<String, String>();
-        ageField.put("age", "desc");
-
-        // doesn't support using the unplanned type
-        String indexName = im.ensureIndexed(Arrays.<Object>asList(nameField, ageField),
-                                            "basic",
-                                            "frog");
+        indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age"), "anotherIndex", IndexType.TEXT);
         assertThat(indexName, is(nullValue()));
     }
 

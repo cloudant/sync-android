@@ -393,8 +393,8 @@ class QuerySqlTranslator {
             Map<String, Object> indexDefinition = (Map<String, Object>) indexes.get(indexName);
 
             // Don't choose a text index for a non-text query clause
-            String indexType = (String) indexDefinition.get("type");
-            if (indexType.equalsIgnoreCase("text")) {
+            IndexType indexType = (IndexType) indexDefinition.get("type");
+            if (indexType == IndexType.TEXT) {
                 continue;
             }
 
@@ -414,8 +414,8 @@ class QuerySqlTranslator {
         String textIndex = null;
         for (String indexName: indexes.keySet()) {
             Map<String, Object> indexDefinition = (Map<String, Object>) indexes.get(indexName);
-            String indexType = (String) indexDefinition.get("type");
-            if (indexType.equalsIgnoreCase("text")) {
+            IndexType indexType = (IndexType) indexDefinition.get("type");
+            if (indexType == IndexType.TEXT) {
                 textIndex = indexName;
             }
         }
