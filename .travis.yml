@@ -3,7 +3,7 @@ sudo: false
 script: "./gradlew check integrationTest"
 
 jdk:
-  - openjdk6
+  - openjdk7
 
 services:
   - couchdb
