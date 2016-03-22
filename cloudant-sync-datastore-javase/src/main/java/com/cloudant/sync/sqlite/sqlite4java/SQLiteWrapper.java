@@ -24,6 +24,7 @@ import com.google.common.base.Strings;
 
 import java.io.File;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -244,8 +245,8 @@ public class SQLiteWrapper extends SQLDatabase {
             this.executeSQLStatement(updateQuery, bindArgs);
             return getConnection().getChanges();
         } catch (SQLiteException e) {
-            logger.log(Level.SEVERE, String.format("Error updating: %1, %2, %3, %4", table,
-                    values, whereClause, whereArgs), e);
+            logger.log(Level.SEVERE, String.format("Error updating: %s, %s, %s, %s", table,
+                    values, whereClause, Arrays.toString(whereArgs)), e);
             return -1;
         }
     }
