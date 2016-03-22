@@ -54,4 +54,10 @@ public class ReplicationErrored {
         return false;
     }
 
+    @Override
+    public int hashCode() {
+        int result = replicator != null ? replicator.hashCode() : 0;
+        result = 31 * result + (errorInfo != null ? errorInfo.hashCode() : 0);
+        return result;
+    }
 }

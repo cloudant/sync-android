@@ -50,14 +50,34 @@ public class ReplicationCompleted {
      * The total number of batches replicated by the {@link #replicator}
      */
     public final int batchesReplicated;
-    
+
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof ReplicationCompleted) {
-            ReplicationCompleted rc = (ReplicationCompleted)other;
-            return this.replicator == rc.replicator;
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
         }
-        return false;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ReplicationCompleted that = (ReplicationCompleted) o;
+
+        if (documentsReplicated != that.documentsReplicated) {
+            return false;
+        }
+        if (batchesReplicated != that.batchesReplicated) {
+            return false;
+        }
+        return !(replicator != null ? !replicator.equals(that.replicator) : that.replicator !=
+                null);
+
     }
 
+    @Override
+    public int hashCode() {
+        int result = replicator != null ? replicator.hashCode() : 0;
+        result = 31 * result + documentsReplicated;
+        result = 31 * result + batchesReplicated;
+        return result;
+    }
 }
