@@ -403,7 +403,7 @@ class BasicPushStrategy implements ReplicationStrategy {
     private long getLastCheckpointSequence() throws DatastoreException {
         String lastSequence =  targetDb.getCheckpoint(this.getReplicationId());
         // As we are pretty sure the checkpoint is a number
-        return Strings.isNullOrEmpty(lastSequence) ? 0 : Long.valueOf(lastSequence);
+        return Strings.isNullOrEmpty(lastSequence) ? 0 : Long.parseLong(lastSequence);
     }
 
     private void putCheckpoint(String checkpoint) throws DatastoreException {
