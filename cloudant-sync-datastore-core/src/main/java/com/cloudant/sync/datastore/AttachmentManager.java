@@ -27,6 +27,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -466,7 +467,7 @@ class AttachmentManager {
     }
 
     private static String keyToString(byte[] key) {
-        return new String(new Hex().encode(key));
+        return new String(new Hex().encode(key), Charset.forName("UTF-8"));
     }
 
     /**

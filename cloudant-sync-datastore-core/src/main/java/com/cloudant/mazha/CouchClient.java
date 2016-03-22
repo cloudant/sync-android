@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -129,8 +130,8 @@ public class CouchClient  {
             }
             if (needsCouchException) {
                 try {
-                    Map<String, String> json = jsonHelper.fromJson(new InputStreamReader(errorStream),
-                            Map.class);
+                    Map<String, String> json = jsonHelper.fromJson(new InputStreamReader
+                            (errorStream, Charset.forName("UTF-8")), Map.class);
                     CouchException ce = new CouchException(responseMessage, cause, responseCode);
                     ce.setError(json.get("error"));
                     ce.setReason(json.get("reason"));
@@ -225,7 +226,7 @@ public class CouchClient  {
     private <T> T executeToJsonObjectWithRetry(final HttpConnection connection,
                                                Class<T> c) throws CouchException {
         InputStream is = this.executeToInputStreamWithRetry(connection);
-        InputStreamReader isr = new InputStreamReader(is);
+        InputStreamReader isr = new InputStreamReader(is, Charset.forName("UTF-8"));
         try {
             T json = new JSONHelper().fromJson(isr, c);
             return json;
@@ -490,21 +491,23 @@ public class CouchClient  {
         });
     }
 
-    public <T> T getDocument(final String id, final Map<String, Object> options, final TypeReference<T> type)  {
+    public <T> T getDocument(final String id, final Map<String, Object> options, final
+    TypeReference<T> type) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
         Preconditions.checkNotNull(type, "type must not be null");
 
-                URI doc = uriHelper.documentUri(id, options);
-                InputStream is = null;
-                try {
-                    HttpConnection connection = Http.GET(doc);
-                    is = executeToInputStreamWithRetry(connection);
-                    T returndoc = jsonHelper.fromJson(new InputStreamReader(is), type);
-                    logger.fine("getDocument returning " + returndoc);
-                    return returndoc;
-                } finally {
-                    closeQuietly(is);
-                }
+        URI doc = uriHelper.documentUri(id, options);
+        InputStream is = null;
+        try {
+            HttpConnection connection = Http.GET(doc);
+            is = executeToInputStreamWithRetry(connection);
+            T returndoc = jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8"))
+                    , type);
+            logger.fine("getDocument returning " + returndoc);
+            return returndoc;
+        } finally {
+            closeQuietly(is);
+        }
     }
 
     public Map<String, Object> getDocument(String id, String rev) {
@@ -519,7 +522,8 @@ public class CouchClient  {
         InputStream is = null;
         try {
             is = this.getDocumentStream(id, rev);
-            T returndoc = jsonHelper.fromJson(new InputStreamReader(is), type);
+            T returndoc = jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8"))
+                    , type);
             logger.fine("getDocument returning " + returndoc);
             return returndoc;
         } finally {
@@ -559,7 +563,7 @@ public class CouchClient  {
         try {
             HttpConnection connection = Http.GET(findRevs);
             is = this.executeToInputStreamWithRetry(connection);
-            return jsonHelper.fromJson(new InputStreamReader(is), type);
+            return jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8")), type);
         } finally {
             closeQuietly(is);
         }
@@ -620,7 +624,9 @@ public class CouchClient  {
         InputStream is = null;
         try {
             is = bulkCreateDocsInputStream(objects);
-            return jsonHelper.fromJsonToList(new InputStreamReader(is), new TypeReference<List<Response>>() {});
+            return jsonHelper.fromJsonToList(new InputStreamReader(is, Charset.forName("UTF-8")),
+                    new TypeReference<List<Response>>() {
+                    });
         } finally {
             closeQuietly(is);
         }
@@ -638,7 +644,8 @@ public class CouchClient  {
     }
 
     /**
-     * Bulk insert a list of document that are serialized to JSON data already. For performance reasons,
+     * Bulk insert a list of document that are serialized to JSON data already. For performance
+     * reasons,
      * the JSON doc is not validated.
      *
      * @param serializedDocs list of JSON documents
@@ -653,9 +660,10 @@ public class CouchClient  {
         connection.setRequestBody(payload);
         try {
             is = this.executeToInputStreamWithRetry(connection);
-            return jsonHelper.fromJsonToList(new InputStreamReader(is), new TypeReference<List<Response>>() {});
-        }
-        finally {
+            return jsonHelper.fromJsonToList(new InputStreamReader(is, Charset.forName("UTF-8")),
+                    new TypeReference<List<Response>>() {
+            });
+        } finally {
             closeQuietly(is);
         }
     }
@@ -706,8 +714,10 @@ public class CouchClient  {
             HttpConnection connection = Http.POST(uri, "application/json");
             connection.setRequestBody(payload);
             is = executeToInputStreamWithRetry(connection);
-            Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is),
-                new TypeReference<Map<String, MissingRevisions>>() { });
+            Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is,
+                            Charset.forName("UTF-8")),
+                    new TypeReference<Map<String, MissingRevisions>>() {
+                    });
             return diff;
         } finally {
             closeQuietly(is);
