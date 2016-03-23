@@ -13,7 +13,9 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.v4.content.WakefulBroadcastReceiver;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -32,6 +34,8 @@ public abstract class ReplicationService extends Service
 
     private Handler mServiceHandler;
     private ReplicationPolicyManager mReplicationPolicyManager;
+    private boolean mReplicatorsInitialised;
+    private List<Message> mCommandQueue = new ArrayList<Message>();
 
     /**
      * Stores the set of {@link ReplicationCompleteListener}s listening for replication complete
@@ -56,7 +60,7 @@ public abstract class ReplicationService extends Service
 
     public interface ReplicationCompleteListener {
         /**
-         * Callback to indicate that all replications specified by {@link #getReplicators(Context)}
+         * Callback to indicate that all replications passed to {@link #setReplicators(Replicator[])}
          * are complete.
          */
         void allReplicationsComplete();
@@ -153,18 +157,38 @@ public abstract class ReplicationService extends Service
         // Get the HandlerThread's Looper and use it for our Handler.
         Looper serviceLooper = thread.getLooper();
         mServiceHandler = getHandler(serviceLooper);
+    }
 
-        Replicator[] replicators = getReplicators(getApplicationContext());
-
+    /**
+     * Set the {@link Replicator} objects configured to perform the required replications.
+     * The {@code ReplicationService} will not begin replications until this method has
+     * been called. This operation should only be called once.
+     *
+     * @param replicators An array of the configured {@code Replicator} objects.
+     * @throws IllegalArgumentException if {@code replicators} is null or empty.
+     * @throws IllegalStateException if called again after a previous call to this method
+     *         with a valid array of {@code Replicator} objects.
+     */
+    public void setReplicators(Replicator[] replicators) {
+        if (mReplicatorsInitialised) {
+            throw new IllegalStateException("Replicators already set");
+        }
         if (replicators != null && replicators.length > 0) {
             if (mReplicationPolicyManager == null) {
                 mReplicationPolicyManager = new ReplicationPolicyManager();
             }
             mReplicationPolicyManager.addReplicators(replicators);
             mReplicationPolicyManager.setReplicationsCompletedListener(this);
+            synchronized (mCommandQueue) {
+                mReplicatorsInitialised = true;
+                for (Message msg : mCommandQueue) {
+                    mServiceHandler.sendMessage(msg);
+                }
+                mCommandQueue.clear();
+            }
         } else {
-            throw new RuntimeException(
-                    "No replications setup. Please return Replicators from getReplicators()");
+            throw new IllegalArgumentException(
+                    "No replications setup. Please pass Replicators to setReplicators(Replicator[])");
         }
     }
 
@@ -179,7 +203,19 @@ public abstract class ReplicationService extends Service
             Bundle bundle = new Bundle();
             bundle.putParcelable(EXTRA_INTENT, intent);
             msg.setData(bundle);
-            mServiceHandler.sendMessage(msg);
+            synchronized (mCommandQueue) {
+                if (mReplicatorsInitialised) {
+                    mServiceHandler.sendMessage(msg);
+                } else {
+                    // Add the message to the command queue if it's different to the one at the
+                    // tail of the queue. These messages will then be
+                    // processed once setReplicators(Replicator[]) has been called.
+                    if (mCommandQueue.size() == 0 ||
+                        mCommandQueue.get(mCommandQueue.size() - 1).arg2 != msg.arg2) {
+                        mCommandQueue.add(msg);
+                    }
+                }
+            }
         }
 
         return START_REDELIVER_INTENT;
@@ -210,8 +246,8 @@ public abstract class ReplicationService extends Service
     }
 
     /**
-     * Start the set of replications specified in the set of {@link Replicator}s returned by
-     * {@link #getReplicators(Context)}.
+     * Start the set of replications specified in the set of {@link Replicator}s passed to
+     * {@link #setReplicators(Replicator[])}.
      */
     protected void startReplications() {
         if (mReplicationPolicyManager != null) {
@@ -316,12 +352,5 @@ public abstract class ReplicationService extends Service
             mOperationStartedListener.operationStarted(operationId);
         }
     }
-
-    /**
-     * @param context A valid application context.
-     * @return An array of {@link Replicator} instances containing the replications you wish
-     * to run.
-     */
-    protected abstract Replicator[] getReplicators(Context context);
 }
 

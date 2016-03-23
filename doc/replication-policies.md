@@ -40,19 +40,27 @@ is displayed it may be desirable to replicate every few minutes and then update 
 
 #### ReplicationService
 
-`ReplicationService` is an abstract class and your subclass must implement the following abstract method:
-* `protected abstract Replicator[] getReplicators(Context context)` This method should return an array of `Replicator` objects that define the replications you want to invoke.
+`ReplicationService` is an abstract class.
+
+Before replications can begin, you must call `setReplicators(Replicator[])` on your concrete implementation to set the
+array of `Replicator` objects that define the replications you want to invoke. Any commands received by the `ReplicationService`
+(e.g. starting or stopping replications) before `setReplicators(Replicator[])` has been called will be queued and only
+processed once `setReplicators(Replicator[])` has been called.
 
 #### PeriodicReplicationService
 
 This abstract class is a child of `ReplicationService` and requires you to implement the following abstract methods:
-* `protected abstract Replicator[] getReplicators(Context context)` This method should return an array of `Replicator` objects that define the replications you want to invoke.
 * `protected abstract int getBoundIntervalInSeconds()` This method should return the interval (in seconds) you wish to have between replications when components are bound to the Service.
 * `protected abstract int getUnboundIntervalInSeconds()` This method should return the interval (in seconds) you wish to have between replications when components are not bound to the Service.
 * `protected abstract boolean startReplicationOnBind()` This should return `true` if you wish to have replications triggered immediately when a component binds to the Service.
 
 Note that internally this uses [android.app.AlarmManager.setInexactRepeating()](http://developer.android.com/reference/android/app/AlarmManager.html#setInexactRepeating(int, long, long, android.app.PendingIntent)) 
 to schedule the repetition of the replications at the given intervals in a battery efficient way. This means the intervals between replications will not be exact.
+
+Before replications can begin, you must call `setReplicators(Replicator[])` on your concrete implementation to set the
+array of `Replicator` objects that define the replications you want to invoke. Any commands received by the `ReplicationService`
+(e.g. starting or stopping replications) before `setReplicators(Replicator[])` has been called will be queued and only
+processed once `setReplicators(Replicator[])` has been called.
 
 #### PeriodicReplicationReceiver
 
@@ -167,7 +175,9 @@ public class MyReplicationService extends PeriodicReplicationService {
     }
 
     @Override
-    protected Replicator[] getReplicators(Context context) {
+    public void onCreate() {
+        super.onCreate();
+
         try {
             URI uri = new URI("https", "my_api_key:my_api_secret", "myaccount.cloudant.com", 443, "/" + "mydb", null, null);
 
@@ -187,11 +197,11 @@ public class MyReplicationService extends PeriodicReplicationService {
             Replicator pullReplicator = ReplicatorBuilder.pull().from(uri).to(datastore).withId(PULL_REPLICATION_ID).build();
             Replicator pushReplicator = ReplicatorBuilder.push().to(uri).from(datastore).withId(PUSH_REPLICATION_ID).build();
 
-            return new Replicator[]{pullReplicator, pushReplicator};
+            // Replications will not begin until setReplicators(Replicator[]) is called.
+            setReplicators(new Replicator[]{pullReplicator, pushReplicator});
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
-        return null;
     }
 
     @Override
@@ -213,6 +223,36 @@ public class MyReplicationService extends PeriodicReplicationService {
 ```
 
 Note that we set IDs on the replications so that these IDs can be used to identify the replication that has completed or errored.
+
+The service will not start replications until `setReplicators(Replicator[])` is called, and any commands sent to the `ReplicationService`
+prior to `setReplicators(Replicator[])` being called will be queued.
+
+If you needed to obtain credentials for the replications asynchronously (e.g. from a remote service) you could achieve this by, for example,
+starting an `AsyncTask` in the `onCreate()` method and calling `setReplicators(Replicator[])` in the `AsyncTask`'s `onPostExecute()` method - e.g.:
+
+```java
+@Override
+public void onCreate() {
+    super.onCreate();
+
+    new AsyncTask<Void, Void, Replicator[]>() {
+        @Override
+        protected Replicator[] doInBackground(Void... params) {
+            // Fetch the credentials needed for replication and set up the replicators.
+            // ...
+
+            // Return the array of replicators you have configured.
+            return replicators;
+        }
+
+        @Override
+        protected void onPostExecute(Replicator[] replicators) {
+            setReplicators(replicators);
+        }
+
+    }.execute();
+}
+```
 
 #### AndroidManifest.xml
 

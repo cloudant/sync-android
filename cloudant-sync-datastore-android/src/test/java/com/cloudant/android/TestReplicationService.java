@@ -37,31 +37,6 @@ public class TestReplicationService extends PeriodicReplicationService {
         attachBaseContext(baseContext);
     }
 
-    protected Replicator[] getReplicators(Context context) {
-        try {
-            File path = context.getDir(
-                DATASTORE_MANGER_DIR,
-                Context.MODE_PRIVATE
-            );
-            DatastoreManager manager = new DatastoreManager(path.getAbsolutePath());
-            Datastore datastore = null;
-            try {
-                datastore = manager.openDatastore(TASKS_DATASTORE_NAME);
-            } catch (DatastoreNotCreatedException dnce) {
-                Log.e(TAG, "Unable to open Datastore", dnce);
-            }
-
-            // Set some arbitrary URI. Our tests use mocks, so we're not going to communicate with it anyway.
-            URI uri = new URI("https://test.cloudant.com");
-            Replicator pullReplicator = ReplicatorBuilder.pull().from(uri).to(datastore).withId(0).build();
-            return new Replicator[] {pullReplicator};
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
     protected int getBoundIntervalInSeconds() {
         return 60;
     }
