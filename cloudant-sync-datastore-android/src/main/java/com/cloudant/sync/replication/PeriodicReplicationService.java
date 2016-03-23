@@ -81,7 +81,8 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
                     resetAlarmDueTimesOnReboot();
                     break;
                 default:
-                    //do nothing
+                    // Do nothing
+                    break;
             }
 
             super.handleMessage(msg);
