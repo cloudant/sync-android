@@ -389,8 +389,8 @@ class QuerySqlTranslator {
     protected static String chooseIndexForFields(Set<String> neededFields,
                                                  Map<String, Object> indexes) {
         String chosenIndex = null;
-        for (String indexName: indexes.keySet()) {
-            Map<String, Object> indexDefinition = (Map<String, Object>) indexes.get(indexName);
+        for (Map.Entry<String, Object> entry: indexes.entrySet()) {
+            Map<String, Object> indexDefinition = (Map<String, Object>) entry.getValue();
 
             // Don't choose a text index for a non-text query clause
             IndexType indexType = (IndexType) indexDefinition.get("type");
@@ -401,7 +401,7 @@ class QuerySqlTranslator {
             List<String> fieldList = (List<String>) indexDefinition.get("fields");
             Set<String> providedFields = new HashSet<String>(fieldList);
             if (providedFields.containsAll(neededFields)) {
-                chosenIndex = indexName;
+                chosenIndex = entry.getKey();
                 break;
             }
         }
@@ -412,11 +412,11 @@ class QuerySqlTranslator {
     @SuppressWarnings("unchecked")
     private static String getTextIndex(Map<String, Object> indexes) {
         String textIndex = null;
-        for (String indexName: indexes.keySet()) {
-            Map<String, Object> indexDefinition = (Map<String, Object>) indexes.get(indexName);
+        for (Map.Entry<String, Object> entry: indexes.entrySet()) {
+            Map<String, Object> indexDefinition = (Map<String, Object>) entry.getValue();
             IndexType indexType = (IndexType) indexDefinition.get("type");
             if (indexType == IndexType.TEXT) {
-                textIndex = indexName;
+                textIndex = entry.getKey();
             }
         }
 

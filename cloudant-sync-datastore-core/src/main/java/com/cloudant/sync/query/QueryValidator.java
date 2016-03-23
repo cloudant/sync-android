@@ -119,10 +119,10 @@ class QueryValidator {
             //     [ {"field1": "mike"}, ... ]
             //     [ {"field1": [ "mike", "bob" ]}, ... ]
             List<Object> andClause = new ArrayList<Object>();
-            for (String k: query.keySet()) {
-                Object predicate = query.get(k);
+            for (Map.Entry<String, Object> entry: query.entrySet()) {
+                Object predicate = entry.getValue();
                 Map<String, Object> element = new HashMap<String, Object>();
-                element.put(k, predicate);
+                element.put(entry.getKey(), predicate);
                 andClause.add(element);
             }
             query.clear();

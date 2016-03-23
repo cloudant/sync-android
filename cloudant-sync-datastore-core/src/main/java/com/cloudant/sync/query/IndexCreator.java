@@ -308,8 +308,9 @@ class IndexCreator {
     @SuppressWarnings("unchecked")
     protected static boolean indexLimitReached(Index index, Map<String, Object> existingIndexes) {
         if (index.indexType == IndexType.TEXT) {
-            for (String name : existingIndexes.keySet()) {
-                Map<String, Object> existingIndex = (Map<String, Object>) existingIndexes.get(name);
+            for (Map.Entry<String, Object> entry : existingIndexes.entrySet()) {
+                String name = entry.getKey();
+                Map<String, Object> existingIndex = (Map<String, Object>) entry.getValue();
                 IndexType type = (IndexType) existingIndex.get("type");
                 if (type == IndexType.TEXT &&
                     !name.equalsIgnoreCase(index.indexName)) {

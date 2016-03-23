@@ -341,8 +341,8 @@ class BasicPullStrategy implements ReplicationStrategy {
                                 atts.put(new String[]{documentRevs.getId(), documentRevs.getRev()
                                 }, preparedAtts);
 
-                                for (String attachmentName : attachments.keySet()) {
-                                    Map attachmentMetadata = (Map) attachments.get(attachmentName);
+                                for (Map.Entry<String, Object> entry : attachments.entrySet()) {
+                                    Map attachmentMetadata = (Map) entry.getValue();
                                     int revpos = (Integer) attachmentMetadata.get("revpos");
                                     String contentType = (String) attachmentMetadata.get
                                             ("content_type");
@@ -367,7 +367,7 @@ class BasicPullStrategy implements ReplicationStrategy {
 
                                         Attachment a = this.targetDb.getDbCore()
                                                 .getAttachment(documentRevs.getId(), revId,
-                                                        attachmentName);
+                                                        entry.getKey());
                                         if (a != null) {
                                             // skip attachment, already got it
                                             continue;
@@ -376,7 +376,7 @@ class BasicPullStrategy implements ReplicationStrategy {
                                     }
                                     UnsavedStreamAttachment usa = this.sourceDb
                                             .getAttachmentStream(documentRevs.getId(),
-                                                    documentRevs.getRev(), attachmentName,
+                                                    documentRevs.getRev(), entry.getKey(),
                                                     contentType, encoding);
 
                                     // by preparing the attachment here, it is downloaded outside

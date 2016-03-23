@@ -100,10 +100,10 @@ class IndexUpdater {
     private boolean updateAllIndexes(Map<String, Object> indexes) {
         boolean success = true;
 
-        for (String indexName: indexes.keySet()) {
-            Map<String, Object> index = (Map<String, Object>) indexes.get(indexName);
+        for (Map.Entry<String, Object> entry: indexes.entrySet()) {
+            Map<String, Object> index = (Map<String, Object>) entry.getValue();
             List<String> fields = (ArrayList<String>) index.get("fields");
-            success = updateIndex(indexName, fields);
+            success = updateIndex(entry.getKey(), fields);
             if (!success) {
                 break;
             }
