@@ -17,7 +17,7 @@ package com.cloudant.sync.sqlite.sqlite4java;
 import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
-import com.cloudant.sync.sqlite.ContentValues;
+import com.cloudant.android.ContentValues;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

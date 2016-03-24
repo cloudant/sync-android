@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.datastore.migrations;
 
-import com.cloudant.sync.sqlite.ContentValues;
+import com.cloudant.android.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.DatabaseUtils;

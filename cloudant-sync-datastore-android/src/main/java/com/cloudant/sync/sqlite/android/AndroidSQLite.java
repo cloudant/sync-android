@@ -16,7 +16,8 @@ package com.cloudant.sync.sqlite.android;
 
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
-import com.cloudant.sync.sqlite.ContentValues;
+
+import com.cloudant.android.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.google.common.base.Preconditions;

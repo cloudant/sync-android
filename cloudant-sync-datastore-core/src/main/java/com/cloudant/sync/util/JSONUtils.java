@@ -14,8 +14,9 @@
 
 package com.cloudant.sync.util;
 
-import com.cloudant.common.PropertyFilterMixIn;
 import com.cloudant.common.CouchConstants;
+import com.cloudant.common.PropertyFilterMixIn;
+import com.cloudant.mazha.Document;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;

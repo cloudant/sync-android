@@ -24,9 +24,9 @@ package com.cloudant.sync.sqlite.android;
  * Created by estebanmlaver.
  */
 
+import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.KeyUtils;
-import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.google.common.base.Preconditions;
