@@ -498,8 +498,9 @@ class AttachmentManager {
         String filename = null;
 
         db.beginTransaction();
+        Cursor c = null;
         try {
-            Cursor c = db.rawQuery(SQL_FILENAME_LOOKUP_QUERY, new String[]{ keyString });
+            c = db.rawQuery(SQL_FILENAME_LOOKUP_QUERY, new String[]{ keyString });
             if (c.moveToFirst()) {
                 filename = c.getString(0);
                 logger.finest(String.format("Found filename %s for key %s", filename, keyString));
@@ -507,12 +508,12 @@ class AttachmentManager {
                 filename = generateFilenameForKey(db, keyString);
                 logger.finest(String.format("Added filename %s for key %s", filename, keyString));
             }
-            c.close();
             db.setTransactionSuccessful();
         } catch (SQLException e) {
             logger.log(Level.WARNING, "Couldn't read key,filename mapping database", e);
             filename = null;
         } finally {
+            DatabaseUtils.closeCursorQuietly(c);
             db.endTransaction();
         }
 
