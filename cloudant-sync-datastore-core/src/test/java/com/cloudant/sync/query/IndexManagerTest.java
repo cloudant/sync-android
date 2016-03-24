@@ -15,7 +15,6 @@ package com.cloudant.sync.query;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -136,7 +135,7 @@ public class IndexManagerTest extends AbstractIndexTestBase {
             ds.createDocumentFromRevision(rev);
         }
 
-        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic", "text");
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic", IndexType.TEXT);
         assertThat(im.listIndexes().keySet(), contains("basic"));
 
         assertThat(im.deleteIndexNamed("basic"), is(true));

@@ -45,7 +45,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         super.setUp();
         indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet"), "basic");
         assertThat(indexName, is("basic"));
-        textIndexName = im.ensureIndexed(Arrays.<Object>asList("comments"), "basic_text", "text");
+        textIndexName = im.ensureIndexed(Arrays.<Object>asList("comments"), "basic_text", IndexType.TEXT);
         assertThat(textIndexName, is("basic_text"));
         indexes = im.listIndexes();
         assertThat(indexes.size(), is(2));
@@ -494,7 +494,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> indexes = new HashMap<String, Object>();
         Map<String, Object> index = new HashMap<String, Object>();
         index.put("name", "named");
-        index.put("type", "json");
+        index.put("type", IndexType.JSON);
         index.put("fields", Arrays.<Object>asList("name"));
         indexes.put("named", index);
 
@@ -512,7 +512,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         Map<String, Object> indexes = new HashMap<String, Object>();
         Map<String, Object> index = new HashMap<String, Object>();
         index.put("name", "named");
-        index.put("type", "json");
+        index.put("type", IndexType.JSON);
         index.put("fields", Arrays.<Object>asList("name", "age", "pet"));
         indexes.put("named", index);
 
@@ -532,17 +532,17 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         Map<String, Object> named = new HashMap<String, Object>();
         named.put("name", "named");
-        named.put("type", "json");
+        named.put("type", IndexType.JSON);
         named.put("fields", Arrays.<Object>asList("name", "age", "pet"));
 
         Map<String, Object> bopped = new HashMap<String, Object>();
         bopped.put("name", "bopped");
-        bopped.put("type", "json");
+        bopped.put("type", IndexType.JSON);
         bopped.put("fields", Arrays.<Object>asList("house_number", "pet"));
 
         Map<String, Object> unsuitable = new HashMap<String, Object>();
         unsuitable.put("name", "unsuitable");
-        unsuitable.put("type", "json");
+        unsuitable.put("type", IndexType.JSON);
         unsuitable.put("fields", Arrays.<Object>asList("name"));
 
         indexes.put("named", named);
@@ -565,7 +565,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         Map<String, Object> named = new HashMap<String, Object>();
         named.put("name", "named");
-        named.put("type", "json");
+        named.put("type", IndexType.JSON);
         named.put("fields", Arrays.<Object>asList("name", "age", "pet"));
 
         Map<String, Object> bopped = new HashMap<String, Object>();
@@ -575,12 +575,12 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         Map<String, Object> manyField = new HashMap<String, Object>();
         manyField.put("name", "manyField");
-        manyField.put("type", "json");
+        manyField.put("type", IndexType.JSON);
         manyField.put("fields", Arrays.<Object>asList("name", "age", "pet"));
 
         Map<String, Object> unsuitable = new HashMap<String, Object>();
         unsuitable.put("name", "unsuitable");
-        unsuitable.put("type", "json");
+        unsuitable.put("type", IndexType.JSON);
         unsuitable.put("fields", Arrays.<Object>asList("name"));
 
         indexes.put("named", named);
@@ -604,12 +604,12 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         Map<String, Object> named = new HashMap<String, Object>();
         named.put("name", "named");
-        named.put("type", "json");
+        named.put("type", IndexType.JSON);
         named.put("fields", Arrays.<Object>asList("name", "age"));
 
         Map<String, Object> unsuitable = new HashMap<String, Object>();
         unsuitable.put("name", "unsuitable");
-        unsuitable.put("type", "json");
+        unsuitable.put("type", IndexType.JSON);
         unsuitable.put("fields", Arrays.<Object>asList("name"));
 
         indexes.put("named", named);

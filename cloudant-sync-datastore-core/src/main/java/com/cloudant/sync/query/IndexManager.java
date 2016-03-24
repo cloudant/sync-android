@@ -188,7 +188,7 @@ public class IndexManager {
             indexes = new HashMap<String, Object>();
             while (cursor.moveToNext()) {
                 String rowIndex = cursor.getString(0);
-                String rowType = cursor.getString(1);
+                IndexType rowType = IndexType.enumValue(cursor.getString(1));
                 String rowField = cursor.getString(2);
                 String rowSettings = cursor.getString(3);
                 if (!indexes.containsKey(rowIndex)) {
@@ -255,7 +255,7 @@ public class IndexManager {
      *  @param indexType The type of index (json or text currently supported)
      *  @return name of created index
      */
-    public String ensureIndexed(List<Object> fieldNames, String indexName, String indexType) {
+    public String ensureIndexed(List<Object> fieldNames, String indexName, IndexType indexType) {
         return ensureIndexed(fieldNames, indexName, indexType, null);
     }
 
@@ -273,7 +273,7 @@ public class IndexManager {
      */
     public String ensureIndexed(List<Object> fieldNames,
                                 String indexName,
-                                String indexType,
+                                IndexType indexType,
                                 Map<String, String> indexSettings) {
         return IndexCreator.ensureIndexed(Index.getInstance(fieldNames,
                                                             indexName,

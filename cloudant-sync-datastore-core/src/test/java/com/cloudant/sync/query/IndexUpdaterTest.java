@@ -20,7 +20,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
@@ -841,11 +840,11 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         // Test index updates for multiple json indexes as well as
         // index updates for co-existing json and text indexes.
         if (testType.equals(TEXT_INDEX_EXECUTION)) {
-            createIndex("basic", Arrays.<Object>asList("age", "pet", "name"), "text");
+            createIndex("basic", Arrays.<Object>asList("age", "pet", "name"), IndexType.TEXT);
         } else {
-            createIndex("basic", Arrays.<Object>asList("age", "pet", "name"), "json");
+            createIndex("basic", Arrays.<Object>asList("age", "pet", "name"), IndexType.JSON);
         }
-        createIndex("basicName", Arrays.<Object>asList("name"), "json");
+        createIndex("basicName", Arrays.<Object>asList("name"), IndexType.JSON);
 
         im.updateAllIndexes();
 
@@ -959,14 +958,14 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     private void createIndex(String indexName, List<Object> fieldNames) {
         if (testType.equals(TEXT_INDEX_EXECUTION)) {
-            createIndex(indexName, fieldNames, "text");
+            createIndex(indexName, fieldNames, IndexType.TEXT);
         } else {
-            createIndex(indexName, fieldNames, "json");
+            createIndex(indexName, fieldNames, IndexType.JSON);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void createIndex(String indexName, List<Object> fieldNames, String indexType) {
+    private void createIndex(String indexName, List<Object> fieldNames, IndexType indexType) {
         assertThat(im.ensureIndexed(fieldNames, indexName, indexType), is(indexName));
 
         Map<String, Object> indexes = im.listIndexes();

@@ -12,6 +12,10 @@
 
 package com.cloudant.sync.query;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
@@ -27,10 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 
 public class QueryResultTest extends AbstractQueryTestBase {
 
@@ -61,7 +61,7 @@ public class QueryResultTest extends AbstractQueryTestBase {
     public void testQueryGetDocumentsWithIdsFails() throws InterruptedException,
         ExecutionException {
         List<Object> fields = Collections.<Object>singletonList("pet");
-        assertThat(im.ensureIndexed(fields, "basic_text", "text"), is("basic_text"));
+        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
 
         // query - { "$text" : { "$search" : "cat" } }
         Map<String, Object> search = new HashMap<String, Object>();
