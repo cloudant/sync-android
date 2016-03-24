@@ -9,6 +9,8 @@
  the following APIs:
   - Index#getInstance
   - IndexManger#ensureIndexed
+- [BREAKING CHANGE] Made it easier to create replication policies where credentials for replicators
+  need to be retrieved asynchronously.
 
 # 0.15.5 (2016-02-25)
 - [FIXED] Issue where `java.lang.RuntimeException: Offer timed out` could be thrown 5 minutes after
@@ -61,7 +63,7 @@
   for a code sample which shows how to add custom request headers
   using an HTTP Request Interceptor.
 - [NEW] Added replication policies, allowing users to easily create policies such as "Replicate
-   every 2 hours, only when on Wifi". See the [Replication Policies User Guide](REPLICATION_POLICIES.md).
+   every 2 hours, only when on Wifi". See the [Replication Policies User Guide](doc/replication-policies.md).
 - [IMPROVED] Replication reliability when transferring data over unreliable
   networks.
 

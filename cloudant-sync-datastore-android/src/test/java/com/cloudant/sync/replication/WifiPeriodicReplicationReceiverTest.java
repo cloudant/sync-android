@@ -75,10 +75,6 @@ public class WifiPeriodicReplicationReceiverTest extends AndroidTestCase {
             super(Receiver.class);
         }
         @Override
-        protected Replicator[] getReplicators(Context context) {
-            return null;
-        }
-        @Override
         protected int getBoundIntervalInSeconds() {
             return 20;
         }

@@ -19,6 +19,7 @@ import org.mockito.Mockito;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
@@ -31,12 +32,14 @@ import static org.mockito.Mockito.when;
 public class ReplicationServiceTest extends ServiceTestCase<TestReplicationService> {
 
     private static final long ALARM_TOLERANCE_MS = 500;
+    private static final int DEFAULT_WAIT_SECONDS = 5;
     private Context mMockContext;
     private SharedPreferences mMockPreferences;
     private SharedPreferences.Editor mMockPreferencesEditor;
     private AlarmManager mMockAlarmManager;
     private WifiManager mMockWifiManager;
     private WifiManager.WifiLock mMockWifiLock;
+    private Replicator[] mMockReplicators;
 
     ReplicationPolicyManager mMockReplicationPolicyManager;
     private TestReplicationService mService;
@@ -59,6 +62,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         mMockWifiManager = mock(WifiManager.class);
         mMockWifiLock = mock(WifiManager.WifiLock.class);
         mMockReplicationPolicyManager = mock(ReplicationPolicyManager.class);
+        mMockReplicators = new Replicator[]{mock(Replicator.class)};
     }
 
     @Test
@@ -88,20 +92,22 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         final CountDownLatch latch = new CountDownLatch(1);
 
         service.setOperationStartedListener(new PeriodicReplicationService
-                .OperationStartedListener() {
+            .OperationStartedListener() {
             @Override
             public void operationStarted(int operationId) {
-                if (operationId == PeriodicReplicationService.COMMAND_DEVICE_REBOOTED) {
-                    latch.countDown();
-                }
+                assertEquals("Unexpected command received",
+                    PeriodicReplicationService.COMMAND_DEVICE_REBOOTED,
+                    operationId);
+                latch.countDown();
             }
         });
 
         ArgumentCaptor<String> captorPrefKeys = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Long> captorPrefValues = ArgumentCaptor.forClass(Long.class);
         service.onStartCommand(intent, 0, 0);
+        service.setReplicators(mMockReplicators);
         try {
-            latch.await();
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
             verify(mMockPreferencesEditor, times(2)).putLong(captorPrefKeys.capture(), captorPrefValues.capture());
             List<String> prefsKeys = captorPrefKeys.getAllValues();
             List<Long> prefsValues = captorPrefValues.getAllValues();
@@ -110,7 +116,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
                 Math.abs(SystemClock.elapsedRealtime() - prefsValues.get(0)) < ALARM_TOLERANCE_MS);
             assertEquals("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueClock", prefsKeys.get(1));
             assertTrue("Alarm clock time not within " + ALARM_TOLERANCE_MS + "ms of current time",
-                    Math.abs(System.currentTimeMillis() - prefsValues.get(1)) < ALARM_TOLERANCE_MS);
+                Math.abs(System.currentTimeMillis() - prefsValues.get(1)) < ALARM_TOLERANCE_MS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -121,6 +127,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
      * the device has been rebooted, if the next alarm scheduled in SharedPreferences is within
      * the alarm period of the current time, the alarm scheduled in SharedPreferences is unchanged.
      */
+    @Test
     public void testOnStartCommandRebootDelayedAlarm() {
         PeriodicReplicationService service = new TestReplicationService(mMockContext);
         Intent intent = new Intent(mMockContext, TestReplicationService.class);
@@ -132,20 +139,22 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         when(mMockPreferences.getLong("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueClock", 0)).thenReturn(timeReturned);
 
         service.setOperationStartedListener(new PeriodicReplicationService
-                .OperationStartedListener() {
+            .OperationStartedListener() {
             @Override
             public void operationStarted(int operationId) {
-                if (operationId == PeriodicReplicationService.COMMAND_DEVICE_REBOOTED) {
-                    latch.countDown();
-                }
+                assertEquals("Unexpected command received",
+                    PeriodicReplicationService.COMMAND_DEVICE_REBOOTED,
+                    operationId);
+                latch.countDown();
             }
         });
 
         ArgumentCaptor<String> captorPrefKeys = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Long> captorPrefValues = ArgumentCaptor.forClass(Long.class);
         service.onStartCommand(intent, 0, 0);
+        service.setReplicators(mMockReplicators);
         try {
-            latch.await();
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
             verify(mMockPreferencesEditor, never()).putLong(captorPrefKeys.capture(), captorPrefValues.capture());
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -158,6 +167,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
      * more than the alarm period in the future, the next alarm is scheduled one alarm period from
      * the current time.
      */
+    @Test
     public void testOnStartCommandRebootLateAlarm() {
         PeriodicReplicationService service = new TestReplicationService(mMockContext);
         Intent intent = new Intent(mMockContext, TestReplicationService.class);
@@ -169,20 +179,22 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         when(mMockPreferences.getLong("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueClock", 0)).thenReturn(timeReturned);
 
         service.setOperationStartedListener(new PeriodicReplicationService
-                .OperationStartedListener() {
+            .OperationStartedListener() {
             @Override
             public void operationStarted(int operationId) {
-                if (operationId == PeriodicReplicationService.COMMAND_DEVICE_REBOOTED) {
-                    latch.countDown();
-                }
+                assertEquals("Unexpected command received",
+                    PeriodicReplicationService.COMMAND_DEVICE_REBOOTED,
+                    operationId);
+                latch.countDown();
             }
         });
 
         ArgumentCaptor<String> captorPrefKeys = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Long> captorPrefValues = ArgumentCaptor.forClass(Long.class);
         service.onStartCommand(intent, 0, 0);
+        service.setReplicators(mMockReplicators);
         try {
-            latch.await();
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
             verify(mMockPreferencesEditor, times(2)).putLong(captorPrefKeys.capture(), captorPrefValues.capture());
             List<String> prefsKeys = captorPrefKeys.getAllValues();
             List<Long> prefsValues = captorPrefValues.getAllValues();
@@ -204,6 +216,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
      * periodic replications should be started, the {@link AlarmManager}, is setup to fire
      * at the correct time and with the correct frequency.
      */
+    @Test
     public void testOnStartCommandStartPeriodicReplications() {
         PeriodicReplicationService service = new TestReplicationService(mMockContext);
         Intent intent = new Intent(mMockContext, TestReplicationService.class);
@@ -217,18 +230,20 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         when(mMockPreferences.getLong("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed", 0)).thenReturn(timeReturned);
 
         service.setOperationStartedListener(new PeriodicReplicationService
-                .OperationStartedListener() {
+            .OperationStartedListener() {
             @Override
             public void operationStarted(int operationId) {
-                if (operationId == PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION) {
-                    latch.countDown();
-                }
+                assertEquals("Unexpected command received",
+                    PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION,
+                    operationId);
+                latch.countDown();
             }
         });
 
         service.onStartCommand(intent, 0, 0);
+        service.setReplicators(mMockReplicators);
         try {
-            latch.await();
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
             ArgumentCaptor<String> captorPrefKeys = ArgumentCaptor.forClass(String.class);
             ArgumentCaptor<Boolean> captorPrefValues = ArgumentCaptor.forClass(Boolean.class);
             verify(mMockPreferencesEditor, times(1)).putBoolean(captorPrefKeys.capture(), captorPrefValues.capture());
@@ -257,8 +272,9 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
     /**
      * Check that when an intent is sent to the {@link PeriodicReplicationService} indicating that
      * periodic replications should be started, if they have already been started, the
-     * {@link AlarmManager} is not invoked to restart the periodic replications..
+     * {@link AlarmManager} is not invoked to restart the periodic replications.
      */
+    @Test
     public void testOnStartCommandStartPeriodicReplicationsAlreadyStarted() {
         PeriodicReplicationService service = new TestReplicationService(mMockContext);
         Intent intent = new Intent(mMockContext, TestReplicationService.class);
@@ -269,19 +285,21 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         when(mMockPreferences.getBoolean("com.cloudant.sync.replication.PeriodicReplicationService.periodicReplicationsActive", false)).thenReturn(true);
 
         service.setOperationStartedListener(new PeriodicReplicationService
-                .OperationStartedListener() {
+            .OperationStartedListener() {
             @Override
             public void operationStarted(int operationId) {
-                if (operationId == PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION) {
-                    latch.countDown();
-                }
+                assertEquals("Unexpected command received",
+                    PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION,
+                    operationId);
+                latch.countDown();
             }
         });
 
         service.onStartCommand(intent, 0, 0);
+        service.setReplicators(mMockReplicators);
         try {
-            latch.await();
-             verify(mMockAlarmManager, never()).setInexactRepeating(Mockito.anyInt(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any(PendingIntent.class));
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
+            verify(mMockAlarmManager, never()).setInexactRepeating(Mockito.anyInt(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any(PendingIntent.class));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -291,6 +309,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
      * Check that when an intent is sent to the {@link PeriodicReplicationService} indicating that
      * periodic replications should be stopped, the {@link AlarmManager}, is cancelled.
      */
+    @Test
     public void testOnStartCommandStopPeriodicReplications() {
         PeriodicReplicationService service = new TestReplicationService(mMockContext);
         Intent intent = new Intent(mMockContext, TestReplicationService.class);
@@ -304,18 +323,20 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         when(mMockPreferences.getLong("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed", 0)).thenReturn(timeReturned);
 
         service.setOperationStartedListener(new PeriodicReplicationService
-                .OperationStartedListener() {
+            .OperationStartedListener() {
             @Override
             public void operationStarted(int operationId) {
-                if (operationId == PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION) {
-                    latch.countDown();
-                }
+                assertEquals("Unexpected command received",
+                    PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION,
+                    operationId);
+                latch.countDown();
             }
         });
 
         service.onStartCommand(intent, 0, 0);
+        service.setReplicators(mMockReplicators);
         try {
-            latch.await();
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
             ArgumentCaptor<String> captorPrefKeys = ArgumentCaptor.forClass(String.class);
             ArgumentCaptor<Boolean> captorPrefValues = ArgumentCaptor.forClass(Boolean.class);
             verify(mMockPreferencesEditor, times(1)).putBoolean(captorPrefKeys.capture(), captorPrefValues.capture());
@@ -335,6 +356,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
      * periodic replications should be stopped, if they have already been stopped, the
      * {@link AlarmManager} is not cancelled again.
      */
+    @Test
     public void testOnStartCommandStopPeriodicReplicationsAlreadyStopped() {
         PeriodicReplicationService service = new TestReplicationService(mMockContext);
         Intent intent = new Intent(mMockContext, TestReplicationService.class);
@@ -348,18 +370,20 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         when(mMockPreferences.getLong("com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed", 0)).thenReturn(timeReturned);
 
         service.setOperationStartedListener(new PeriodicReplicationService
-                .OperationStartedListener() {
+            .OperationStartedListener() {
             @Override
             public void operationStarted(int operationId) {
-                if (operationId == PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION) {
-                    latch.countDown();
-                }
+                assertEquals("Unexpected command received",
+                    PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION,
+                    operationId);
+                latch.countDown();
             }
         });
 
         service.onStartCommand(intent, 0, 0);
+        service.setReplicators(mMockReplicators);
         try {
-            latch.await();
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
             verify(mMockAlarmManager, never()).cancel(Mockito.any(PendingIntent.class));
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -372,6 +396,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
      * the {@link ReplicationPolicyManager} is started and the next alarm time is stored in
      * SharedPreferences.
      */
+    @Test
     public void testOnStartCommandStartReplication() {
         PeriodicReplicationService service = new TestReplicationService(mMockContext);
         Intent intent = new Intent(mMockContext, TestReplicationService.class);
@@ -385,18 +410,20 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         final CountDownLatch latch = new CountDownLatch(1);
 
         service.setOperationStartedListener(new PeriodicReplicationService
-                .OperationStartedListener() {
+            .OperationStartedListener() {
             @Override
             public void operationStarted(int operationId) {
-                if (operationId == PeriodicReplicationService.COMMAND_START_REPLICATION) {
-                    latch.countDown();
-                }
+                assertEquals("Unexpected command received",
+                    PeriodicReplicationService.COMMAND_START_REPLICATION,
+                    operationId);
+                latch.countDown();
             }
         });
 
         service.onStartCommand(intent, 0, 0);
+        service.setReplicators(mMockReplicators);
         try {
-            latch.await();
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
             verify(mMockWifiLock, times(1)).acquire();
             verify(mMockReplicationPolicyManager, times(1)).startReplications();
             ArgumentCaptor<String> captorPrefKeys = ArgumentCaptor.forClass(String.class);
@@ -420,6 +447,7 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
      * a replication should be stopped, the {@link android.net.wifi.WifiManager.WifiLock} is
      * released and the {@link ReplicationPolicyManager} is stopped.
      */
+    @Test
     public void testOnStartCommandStopReplication() {
         PeriodicReplicationService service = new TestReplicationService(mMockContext);
         service.setReplicationPolicyManager(mMockReplicationPolicyManager);
@@ -432,14 +460,15 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         final CountDownLatch latch = new CountDownLatch(2);
 
         service.setOperationStartedListener(new PeriodicReplicationService
-                .OperationStartedListener() {
+            .OperationStartedListener() {
             @Override
             public void operationStarted(int operationId) {
                 if (operationId == PeriodicReplicationService.COMMAND_START_REPLICATION && latch.getCount() == 2) {
                     latch.countDown();
-                }
-                else if (operationId == PeriodicReplicationService.COMMAND_STOP_REPLICATION && latch.getCount() == 1) {
+                } else if (operationId == PeriodicReplicationService.COMMAND_STOP_REPLICATION && latch.getCount() == 1) {
                     latch.countDown();
+                } else {
+                    fail("Unexpected command received");
                 }
             }
         });
@@ -450,12 +479,192 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         Intent stopIntent = new Intent(mMockContext, TestReplicationService.class);
         stopIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, PeriodicReplicationService.COMMAND_STOP_REPLICATION);
         service.onStartCommand(stopIntent, 0, 0);
+        service.setReplicators(mMockReplicators);
         try {
-            latch.await();
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
             verify(mMockWifiLock, times(1)).release();
             verify(mMockReplicationPolicyManager, times(1)).stopReplications();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Check that when an intent is sent to the {@link PeriodicReplicationService} indicating that
+     * a replication should be started, the {@link PeriodicReplicationService} waits until
+     * {@link ReplicationService#setReplicators(Replicator[])} is called before processing
+     * the start replication operation.
+     */
+    @Test
+    public void testOnStartCommandStartReplicationWaitsForSetReplicators() {
+        PeriodicReplicationService service = new TestReplicationService(mMockContext);
+        Intent intent = new Intent(mMockContext, TestReplicationService.class);
+        intent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, PeriodicReplicationService.COMMAND_START_REPLICATION);
+        service.setReplicationPolicyManager(mMockReplicationPolicyManager);
+
+        service.onCreate();
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        service.setOperationStartedListener(new PeriodicReplicationService
+            .OperationStartedListener() {
+            @Override
+            public void operationStarted(int operationId) {
+                assertEquals("Unexpected command received",
+                    PeriodicReplicationService.COMMAND_START_REPLICATION,
+                    operationId);
+                latch.countDown();
+            }
+        });
+
+        service.onStartCommand(intent, 0, 0);
+        try {
+            // Wait a bit to check the OperationStartedListener isn't called.
+            latch.await(1000, TimeUnit.MILLISECONDS);
+            assertEquals("CountDownLatch should not be decremented", latch.getCount(), 1);
+            service.setReplicators(mMockReplicators);
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Check that when intents are sent to the {@link PeriodicReplicationService}
+     * the commands are queued until {@link ReplicationService#setReplicators(Replicator[])} is
+     * called and the queued messages are then processed.
+     */
+    @Test
+    public void testOnStartCommandStartReplicationCommandsQueuedBeforeSetReplicators() {
+        PeriodicReplicationService service = new TestReplicationService(mMockContext);
+        Intent startIntent = new Intent(mMockContext, TestReplicationService.class);
+        startIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, PeriodicReplicationService.COMMAND_START_REPLICATION);
+
+        Intent stopIntent = new Intent(mMockContext, TestReplicationService.class);
+        stopIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, PeriodicReplicationService
+            .COMMAND_STOP_REPLICATION);
+
+        service.setReplicationPolicyManager(mMockReplicationPolicyManager);
+
+        service.onCreate();
+        final CountDownLatch latch = new CountDownLatch(2);
+
+        service.setOperationStartedListener(new PeriodicReplicationService
+            .OperationStartedListener() {
+            @Override
+            public void operationStarted(int operationId) {
+                if (latch.getCount() == 2 && operationId == PeriodicReplicationService
+                    .COMMAND_START_REPLICATION) {
+                    latch.countDown();
+                } else if (latch.getCount() == 1 && operationId == PeriodicReplicationService
+                    .COMMAND_STOP_REPLICATION) {
+                    latch.countDown();
+                } else {
+                    fail("Unexpected command or commands received in incorrect order");
+                }
+            }
+        });
+
+        service.onStartCommand(startIntent, 0, 0);
+        service.onStartCommand(stopIntent, 0, 0);
+        service.setReplicators(mMockReplicators);
+        try {
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Check that when intents are sent to the {@link PeriodicReplicationService}, consecutive
+     * duplicate commands are ignored and commands are queued until
+     * {@link ReplicationService#setReplicators(Replicator[])}
+     * is called and the queued messages are then processed.
+     */
+    @Test
+    public void testOnStartCommandStartReplicationCommandsQueuedConsecutiveDuplicatesRemoved() {
+        PeriodicReplicationService service = new TestReplicationService(mMockContext);
+        Intent startIntent = new Intent(mMockContext, TestReplicationService.class);
+        startIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, PeriodicReplicationService.COMMAND_START_REPLICATION);
+
+        Intent stopIntent = new Intent(mMockContext, TestReplicationService.class);
+        stopIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, PeriodicReplicationService
+            .COMMAND_STOP_REPLICATION);
+
+        service.setReplicationPolicyManager(mMockReplicationPolicyManager);
+
+        service.onCreate();
+        final CountDownLatch latch = new CountDownLatch(2);
+
+        service.setOperationStartedListener(new PeriodicReplicationService
+            .OperationStartedListener() {
+            @Override
+            public void operationStarted(int operationId) {
+                if (latch.getCount() == 2 && operationId == PeriodicReplicationService
+                    .COMMAND_START_REPLICATION) {
+                    latch.countDown();
+                } else if (latch.getCount() == 1 && operationId == PeriodicReplicationService
+                    .COMMAND_STOP_REPLICATION) {
+                    latch.countDown();
+                } else {
+                    fail("Unexpected command or commands received in incorrect order");
+                }
+            }
+        });
+
+        service.onStartCommand(startIntent, 0, 0);
+        service.onStartCommand(startIntent, 0, 0);
+        service.onStartCommand(stopIntent, 0, 0);
+        service.setReplicators(mMockReplicators);
+        try {
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Check that when {@link PeriodicReplicationService#setReplicators(Replicator[])}, is called
+     * with a null argument, {@link IllegalArgumentException} is thrown.
+     */
+    @Test
+    public void testSetReplicatorsNull() {
+        PeriodicReplicationService service = new TestReplicationService(mMockContext);
+        try {
+            service.setReplicators(null);
+            fail("IllegalArgumentException should have been thrown");
+        } catch (IllegalArgumentException e) {
+            // Success.
+        }
+    }
+
+    /**
+     * Check that when {@link PeriodicReplicationService#setReplicators(Replicator[])}, is called
+     * with an empty array, {@link IllegalArgumentException} is thrown.
+     */
+    @Test
+    public void testSetReplicatorsEmpty() {
+        PeriodicReplicationService service = new TestReplicationService(mMockContext);
+        try {
+            service.setReplicators(new Replicator[]{});
+            fail("IllegalArgumentException should have been thrown");
+        } catch (IllegalArgumentException e) {
+            // Success.
+        }
+    }
+
+    /**
+     * Check that when {@link PeriodicReplicationService#setReplicators(Replicator[])}, is called
+     * multiple times, {@link IllegalStateException} is thrown.
+     */
+    @Test
+    public void testSetReplicatorsMultipleInvocations() {
+        PeriodicReplicationService service = new TestReplicationService(mMockContext);
+        service.setReplicators(mMockReplicators);
+        try {
+            service.setReplicators(mMockReplicators);
+            fail("IllegalStateException should have been thrown");
+        } catch (IllegalStateException e) {
+            // Success.
         }
     }
 
