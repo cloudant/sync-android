@@ -1,3 +1,11 @@
+# 1.0.0 (Unreleased)
+- [BREAKING CHANGE] The `BasicDocumentRevision` and
+  `MutableDocumentRevision` classes have been removed, in order to
+  simplify use of API methods. All code using this library will need
+  to be updated to use the `DocumentRevision` class. See the updated
+  [CRUD guide](https://github.com/cloudant/sync-android/blob/master/doc/crud.md)
+  for examples of how to use this class.
+
 # 0.15.5 (2016-02-25)
 - [FIXED] Issue where `java.lang.RuntimeException: Offer timed out` could be thrown 5 minutes after
   a replication error.
