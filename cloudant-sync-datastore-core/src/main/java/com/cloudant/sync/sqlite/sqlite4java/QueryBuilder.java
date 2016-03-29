@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.sqlite.sqlite4java;
 
-import com.cloudant.sync.sqlite.ContentValues;
+import com.cloudant.android.ContentValues;
 import com.google.common.base.Strings;
 
 import java.util.ArrayList;

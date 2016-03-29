@@ -14,9 +14,8 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.sync.util.Document;
 
-import java.util.HashMap;
+import com.cloudant.mazha.Document;
 
 public class Bar extends Document {
 

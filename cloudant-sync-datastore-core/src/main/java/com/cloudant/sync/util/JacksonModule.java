@@ -15,6 +15,7 @@
 package com.cloudant.sync.util;
 
 import com.cloudant.common.PropertyFilterMixIn;
+import com.cloudant.mazha.Document;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 

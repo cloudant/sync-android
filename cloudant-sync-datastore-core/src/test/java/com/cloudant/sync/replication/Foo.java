@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.sync.util.Document;
+import com.cloudant.mazha.Document;
 
 public class Foo extends Document {
 

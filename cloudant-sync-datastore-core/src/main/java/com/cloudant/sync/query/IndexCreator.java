@@ -12,8 +12,8 @@
 
 package com.cloudant.sync.query;
 
+import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.google.common.base.Joiner;
 

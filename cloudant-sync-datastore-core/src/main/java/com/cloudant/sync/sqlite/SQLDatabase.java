@@ -18,6 +18,8 @@
 
 package com.cloudant.sync.sqlite;
 
+import com.cloudant.android.ContentValues;
+
 import java.sql.SQLException;
 
 public abstract class SQLDatabase {
@@ -181,7 +183,7 @@ public abstract class SQLDatabase {
      *            Passing null will update all rows.
      * @return the number of rows affected
      */
-    public abstract int update(String table, com.cloudant.sync.sqlite.ContentValues values,
+    public abstract int update(String table, ContentValues values,
                       String whereClause, String[] whereArgs);
 
     /**
@@ -219,7 +221,7 @@ public abstract class SQLDatabase {
      *            column values
      * @return the row ID of the newly inserted row, or -1 if an error occurred
      */
-    public abstract long insert(String table, com.cloudant.sync.sqlite.ContentValues values);
+    public abstract long insert(String table, ContentValues values);
 
     /**
      *

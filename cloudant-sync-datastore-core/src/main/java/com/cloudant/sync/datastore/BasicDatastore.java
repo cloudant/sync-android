@@ -18,6 +18,7 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64InputStreamFactory;
+import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.callables.GetAllDocumentIdsCallable;
 import com.cloudant.sync.datastore.callables.GetPossibleAncestorRevisionIdsCallable;
 import com.cloudant.sync.datastore.callables.InsertRevisionCallable;
@@ -30,7 +31,6 @@ import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
 import com.cloudant.sync.notifications.DocumentModified;
 import com.cloudant.sync.notifications.DocumentUpdated;
-import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;

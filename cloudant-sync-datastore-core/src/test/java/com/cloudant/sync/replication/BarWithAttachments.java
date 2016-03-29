@@ -14,7 +14,8 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.sync.util.Document;
+
+import com.cloudant.mazha.Document;
 
 import java.util.HashMap;
 

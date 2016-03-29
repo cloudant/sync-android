@@ -12,10 +12,10 @@
 
 package com.cloudant.sync.query;
 
+import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.sqlite.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.DatabaseUtils;

@@ -16,14 +16,15 @@ package com.cloudant.sync.sqlite.sqlite4java;
 
 import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteException;
-import com.cloudant.sync.sqlite.ContentValues;
+import com.cloudant.android.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 import com.google.common.base.Strings;
-import org.junit.Assert;
+
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
