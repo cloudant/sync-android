@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 
+import java.nio.charset.Charset;
 import java.util.Map;
 
 /**
@@ -32,7 +33,7 @@ public class JSONUtils {
 
     private static final String LOG_TAG = "JSONUtils";
 
-    public static final byte[] EMPTY_JSON = "{}".getBytes();
+    public static final byte[] EMPTY_JSON = "{}".getBytes(Charset.forName("UTF-8"));
 
     // These reserved string is used to construct a filter. The filter is used by Jackson to
     // ignore these field when serialized a generic object before put the serialized result
@@ -155,7 +156,7 @@ public class JSONUtils {
         // TODO: this is using system default charset, how to handle all unicode?
         // TODO: what is the correct way to deal with bytes == null?
         if (bytes != null) {
-            return new String(bytes);
+            return new String(bytes, Charset.forName("UTF-8"));
         } else {
             return new String("");
         }

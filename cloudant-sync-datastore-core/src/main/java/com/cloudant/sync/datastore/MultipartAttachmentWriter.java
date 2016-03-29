@@ -22,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -79,7 +80,7 @@ public class MultipartAttachmentWriter {
     private String boundary;
     private byte partBoundary[];
     private byte trailingBoundary[];
-    private static byte crlf[] = "\r\n".getBytes();
+    private static byte crlf[] = "\r\n".getBytes(Charset.forName("UTF-8"));
     private byte contentType[];
     private int currentComponentIdx;
 

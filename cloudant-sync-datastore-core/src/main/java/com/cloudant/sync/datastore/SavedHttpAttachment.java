@@ -55,7 +55,7 @@ public class SavedHttpAttachment extends Attachment {
          Number length;
          String data = (String)attachmentData.get("data");
          if(data != null){
-            byte[] dataArray =  data.getBytes();
+            byte[] dataArray =  data.getBytes("UTF-8");
             InputStream is = Base64InputStreamFactory.get(new ByteArrayInputStream(dataArray));
             this.data = IOUtils.toByteArray(is);
             length = this.data.length;

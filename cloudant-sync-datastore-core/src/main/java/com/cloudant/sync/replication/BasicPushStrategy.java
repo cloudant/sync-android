@@ -38,6 +38,7 @@ import org.apache.commons.codec.binary.Hex;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -397,13 +398,13 @@ class BasicPushStrategy implements ReplicationStrategy {
         byte[] sha1Bytes = Misc.getSha1(new ByteArrayInputStream(JSONUtils.serializeAsBytes(dict)));
         // return SHA-1 as a hex string
         byte[] sha1Hex = new Hex().encode(sha1Bytes);
-        return new String(sha1Hex);
+        return new String(sha1Hex, Charset.forName("UTF-8"));
     }
 
     private long getLastCheckpointSequence() throws DatastoreException {
         String lastSequence =  targetDb.getCheckpoint(this.getReplicationId());
         // As we are pretty sure the checkpoint is a number
-        return Strings.isNullOrEmpty(lastSequence) ? 0 : Long.valueOf(lastSequence);
+        return Strings.isNullOrEmpty(lastSequence) ? 0 : Long.parseLong(lastSequence);
     }
 
     private void putCheckpoint(String checkpoint) throws DatastoreException {

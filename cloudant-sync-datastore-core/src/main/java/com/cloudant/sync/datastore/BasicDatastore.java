@@ -23,8 +23,8 @@ import com.cloudant.sync.datastore.callables.GetPossibleAncestorRevisionIdsCalla
 import com.cloudant.sync.datastore.callables.InsertRevisionCallable;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
-import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.datastore.migrations.MigrateDatabase6To100;
+import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
@@ -1078,7 +1078,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                                 String data = (String) attachmentMetadata.get("data");
                                 String type = (String) attachmentMetadata.get("content_type");
                                 InputStream is = Base64InputStreamFactory.get(new
-                                        ByteArrayInputStream(data.getBytes()));
+                                        ByteArrayInputStream(data.getBytes("UTF-8")));
                                 // inline attachments are automatically decompressed,
                                 // so we don't have to worry about that
                                 UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is,

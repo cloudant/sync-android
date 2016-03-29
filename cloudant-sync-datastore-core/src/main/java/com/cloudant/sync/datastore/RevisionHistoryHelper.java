@@ -250,7 +250,7 @@ public class RevisionHistoryHelper {
                             // the apache codec implementation
                             bos.flush();
                             bos.close();
-                            theAtt.put("data", baos.toString());  //base64 of data
+                            theAtt.put("data", new String(baos.toByteArray(), "UTF-8")); //base64 of data
                         } finally {
                             IOUtils.closeQuietly(fis);
                         }

@@ -27,6 +27,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -466,7 +467,7 @@ class AttachmentManager {
     }
 
     private static String keyToString(byte[] key) {
-        return new String(new Hex().encode(key));
+        return new String(new Hex().encode(key), Charset.forName("UTF-8"));
     }
 
     /**
@@ -497,8 +498,9 @@ class AttachmentManager {
         String filename = null;
 
         db.beginTransaction();
+        Cursor c = null;
         try {
-            Cursor c = db.rawQuery(SQL_FILENAME_LOOKUP_QUERY, new String[]{ keyString });
+            c = db.rawQuery(SQL_FILENAME_LOOKUP_QUERY, new String[]{ keyString });
             if (c.moveToFirst()) {
                 filename = c.getString(0);
                 logger.finest(String.format("Found filename %s for key %s", filename, keyString));
@@ -506,12 +508,12 @@ class AttachmentManager {
                 filename = generateFilenameForKey(db, keyString);
                 logger.finest(String.format("Added filename %s for key %s", filename, keyString));
             }
-            c.close();
             db.setTransactionSuccessful();
         } catch (SQLException e) {
             logger.log(Level.WARNING, "Couldn't read key,filename mapping database", e);
             filename = null;
         } finally {
+            DatabaseUtils.closeCursorQuietly(c);
             db.endTransaction();
         }
 

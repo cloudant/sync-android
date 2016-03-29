@@ -37,6 +37,7 @@ import org.apache.commons.codec.binary.Hex;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -429,7 +430,7 @@ class BasicPullStrategy implements ReplicationStrategy {
         byte[] sha1Bytes = Misc.getSha1(new ByteArrayInputStream(JSONUtils.serializeAsBytes(dict)));
         // return SHA-1 as a hex string
         byte[] sha1Hex = new Hex().encode(sha1Bytes);
-        return new String(sha1Hex);
+        return new String(sha1Hex, Charset.forName("UTF-8"));
     }
 
     private ChangesResultWrapper nextBatch() throws DatastoreException {

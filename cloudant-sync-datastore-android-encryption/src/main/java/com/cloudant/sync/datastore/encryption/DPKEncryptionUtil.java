@@ -14,28 +14,21 @@
 
 package com.cloudant.sync.datastore.encryption;
 
-import android.os.Build;
-
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.json.JSONException;
-import org.json.JSONObject;
 
+import java.nio.charset.Charset;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Formatter;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
@@ -60,7 +53,7 @@ class DPKEncryptionUtil {
      * @return The string
      */
     public static final String byteArrayToHexString(byte[] bytes) {
-        return new String(new Hex().encode(bytes));
+        return new String(new Hex().encode(bytes), Charset.forName("UTF-8"));
     }
 
     /**
