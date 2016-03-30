@@ -28,12 +28,7 @@ A list of known findbugs issues that we cannot fix at this time.
                 <Class name="com.cloudant.sync.datastore.DatastoreManager"/>
                 <Method name="&lt;init&gt;" />
             </And>
-            <And>
-                <Class name="com.cloudant.sync.sqlite.SQLDatabaseQueue"/>
-                <Method name="updateSchema"/>
-            </And>
         </Or>
-
     </Match>
     <Match>
         <Bug code="RV" pattern="RV_NEGATING_RESULT_OF_COMPARETO" />
