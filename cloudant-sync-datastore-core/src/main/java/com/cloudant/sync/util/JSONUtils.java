@@ -161,7 +161,7 @@ public class JSONUtils {
         if (bytes != null) {
             return new String(bytes, Charset.forName("UTF-8"));
         } else {
-            return new String("");
+            return "";
         }
     }
 }
