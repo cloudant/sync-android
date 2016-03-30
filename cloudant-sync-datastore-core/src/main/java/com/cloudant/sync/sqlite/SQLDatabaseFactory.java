@@ -18,7 +18,6 @@
 package com.cloudant.sync.sqlite;
 
 import com.cloudant.sync.datastore.encryption.KeyProvider;
-import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.datastore.migrations.Migration;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.Misc;
@@ -26,7 +25,6 @@ import com.google.common.base.Preconditions;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -218,7 +216,9 @@ public class SQLDatabaseFactory {
             }
         }
         if (!dbFile.exists()) {
-            dbFile.createNewFile();
+            if(!dbFile.createNewFile()){
+                throw new IOException("Can not create datastore.");
+            }
         }
     }
 }
