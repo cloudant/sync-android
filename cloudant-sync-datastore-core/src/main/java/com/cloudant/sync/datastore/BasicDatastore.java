@@ -873,7 +873,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         callable.parentSequence = prevRevision.getSequence();
         callable.deleted = true;
         callable.current = prevRevision.isCurrent();
-        callable.data = JSONUtils.EMPTY_JSON;
+        callable.data = JSONUtils.emptyJSONAsBytes();
         callable.available = false;
         callable.call(db);
 
@@ -927,7 +927,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         callable.parentSequence = parentSequence;
         callable.deleted = false;
         callable.current = false;
-        callable.data = JSONUtils.EMPTY_JSON;
+        callable.data = JSONUtils.emptyJSONAsBytes();
         callable.available = false;
         return callable.call(db);
     }

@@ -34,7 +34,9 @@ public class JSONUtils {
 
     private static final String LOG_TAG = "JSONUtils";
 
-    public static final byte[] EMPTY_JSON = "{}".getBytes(Charset.forName("UTF-8"));
+    public static byte[] emptyJSONAsBytes(){
+        return "{}".getBytes(Charset.forName("UTF-8"));
+    }
 
     // These reserved string is used to construct a filter. The filter is used by Jackson to
     // ignore these field when serialized a generic object before put the serialized result
