@@ -104,7 +104,7 @@ public class BasicDatastoreForceInsertTest {
         builder.setDocId(OBJECT_ID);
         builder.setRevId(rev);
         builder.setDeleted(true);
-        builder.setBody(new BasicDocumentBody(JSONUtils.emptyJSONAsBytes()));
+        builder.setBody(new BasicDocumentBody(JSONUtils.emptyJSONObjectAsBytes()));
         return builder.build();
     }
 

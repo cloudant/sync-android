@@ -62,6 +62,6 @@ public class BasicDBObjectTest {
         DocumentRevision td = this.builder.buildStub();
         Assert.assertEquals(DOCUMENT_ID, td.getId());
         Assert.assertEquals(REVISION_ID, td.getRevision());
-        Arrays.equals(JSONUtils.emptyJSONAsBytes(), td.getBody().asBytes());
+        Arrays.equals(JSONUtils.emptyJSONObjectAsBytes(), td.getBody().asBytes());
     }
 }

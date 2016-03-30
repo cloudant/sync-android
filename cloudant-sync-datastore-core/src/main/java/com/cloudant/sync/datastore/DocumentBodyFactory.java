@@ -28,7 +28,7 @@ public class DocumentBodyFactory {
      * <p>Returns a {@link DocumentBody}  object representing an empty document body.
      * This instance is shared.</p>
      */
-    public final static BasicDocumentBody EMPTY = new BasicDocumentBody(JSONUtils.emptyJSONAsBytes());
+    public final static BasicDocumentBody EMPTY = new BasicDocumentBody(JSONUtils.emptyJSONObjectAsBytes());
 
     /**
      * <p>Returns a new {@link DocumentBody} object from JSON data.</p>
