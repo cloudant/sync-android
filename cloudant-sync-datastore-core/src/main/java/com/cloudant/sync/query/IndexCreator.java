@@ -17,11 +17,15 @@ import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.google.common.base.Joiner;
 
+import org.apache.commons.codec.binary.Hex;
+
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -37,6 +41,7 @@ class IndexCreator {
 
     private final SQLDatabase database;
     private final Datastore datastore;
+    private static Random indexNameRandom = new Random();
 
     private final ExecutorService queue;
 
@@ -63,16 +68,16 @@ class IndexCreator {
      *
      *  This function generates a name for the new index.
      *
-     *  @param index The object that defines an index.  Includes field list, name, type and options.
+     *  @param proposedIndex The object that defines an index.  Includes field list, name, type and options.
      *  @return name of created index
      */
     @SuppressWarnings("unchecked")
-    private String ensureIndexed(final Index index) {
-        if (index == null) {
+    private String ensureIndexed(Index proposedIndex) {
+        if (proposedIndex == null) {
             return null;
         }
 
-        if (index.indexType == IndexType.TEXT) {
+        if (proposedIndex.indexType == IndexType.TEXT) {
             if (!IndexManager.ftsAvailable(queue, database)) {
                 logger.log(Level.SEVERE, "Text search not supported.  To add support for text " +
                                          "search, enable FTS compile options in SQLite.");
@@ -80,7 +85,7 @@ class IndexCreator {
             }
         }
 
-        final List<String> fieldNamesList = removeDirectionsFromFields(index.fieldNames);
+        final List<String> fieldNamesList = removeDirectionsFromFields(proposedIndex.fieldNames);
 
         for (String fieldName: fieldNamesList) {
             if (!validFieldName(fieldName)) {
@@ -93,7 +98,7 @@ class IndexCreator {
         Set<String> uniqueNames = new HashSet<String>(fieldNamesList);
         if (uniqueNames.size() != fieldNamesList.size()) {
             String msg = String.format("Cannot create index with duplicated field names %s"
-                                       , index.fieldNames);
+                                       , proposedIndex.fieldNames);
             logger.log(Level.SEVERE, msg);
         }
 
@@ -110,29 +115,46 @@ class IndexCreator {
         // Then check whether the index already exists; return success if it does and is same,
         // else fail.
         try {
+
             Map<String, Object> existingIndexes = listIndexesInDatabaseQueue();
-            if (indexLimitReached(index, existingIndexes)) {
+
+            if(proposedIndex.indexName == null){
+                // generate a name for the index.
+                String indexName = IndexCreator.generateIndexName(existingIndexes.keySet());
+                if(indexName == null){
+                    logger.warning("Failed to generate unique index name");
+                    return null;
+                }
+
+                proposedIndex = Index.getInstance(proposedIndex.fieldNames,
+                                          indexName,
+                        proposedIndex.indexType,
+                        proposedIndex.indexSettings);
+            }
+
+
+            if (indexLimitReached(proposedIndex, existingIndexes)) {
                 String msg = String.format("Index limit reached.  Cannot create index %s.",
-                                           index.indexName);
+                                           proposedIndex.indexName);
                 logger.log(Level.SEVERE, msg);
                 return null;
             }
-            if (existingIndexes != null && existingIndexes.get(index.indexName) != null) {
+            if (existingIndexes != null && existingIndexes.get(proposedIndex.indexName) != null) {
                 Map<String, Object> existingIndex =
-                        (Map<String, Object>) existingIndexes.get(index.indexName);
+                        (Map<String, Object>) existingIndexes.get(proposedIndex.indexName);
                 IndexType existingType = (IndexType) existingIndex.get("type");
                 String existingSettings = (String) existingIndex.get("settings");
                 List<String> existingFieldsList = (List<String>) existingIndex.get("fields");
                 Set<String> existingFields = new HashSet<String>(existingFieldsList);
                 Set<String> newFields = new HashSet<String>(fieldNamesList);
                 if (existingFields.equals(newFields) &&
-                    index.compareIndexTypeTo(existingType, existingSettings)) {
-                    boolean success = IndexUpdater.updateIndex(index.indexName,
+                        proposedIndex.compareIndexTypeTo(existingType, existingSettings)) {
+                    boolean success = IndexUpdater.updateIndex(proposedIndex.indexName,
                                                                fieldNamesList,
                                                                database,
                                                                datastore,
                                                                queue);
-                    return success ? index.indexName : null;
+                    return success ? proposedIndex.indexName : null;
                 }
             }
         } catch (ExecutionException e) {
@@ -143,6 +165,7 @@ class IndexCreator {
             return null;
         }
 
+        final Index index = proposedIndex;
         Future<Boolean> result = queue.submit(new Callable<Boolean>() {
             @Override
             public Boolean call() {
@@ -353,6 +376,49 @@ class IndexCreator {
         return String.format("CREATE VIRTUAL TABLE %s USING FTS4 ( %s, %s )", tableName,
                                                                               cols,
                                                                               settings);
+    }
+
+    /**
+     * Iterate candidate indexNames generated from the indexNameRandom generator
+     * until we find one which doesn't already exist.
+     *
+     * We make sure the generated name is not an index already by the list
+     * of index names returned by {@link #listIndexesInDatabaseQueue()} method.
+     * This is because we avoid knowing about how indexes are stored in SQLite, however
+     * this means that it is not thread safe, it is possible for a new index with the same
+     * name to be created after a copy of the indexes has been taken from the database.
+     *
+     * We allow up to 200 random name generations, which should give us many millions
+     * of indexes before a name fails to be generated and makes sure this method doesn't
+     * loop forever.
+     *
+     * @param existingIndexNames The names of the indexes that exist in the database.
+     *
+     * @return The generated index name or {@code null} if it failed.
+     *
+     */
+    private static String generateIndexName(Set<String> existingIndexNames) throws ExecutionException, InterruptedException {
+
+        String indexName = null;
+        Hex hex = new Hex();
+
+        int tries = 0;
+        byte[] randomBytes = new byte[20];
+        while (tries < 200 && indexName == null) {
+            indexNameRandom.nextBytes(randomBytes);
+            String candidate = new String(hex.encode(randomBytes), Charset.forName("UTF-8"));
+
+            if(!existingIndexNames.contains(candidate)){
+                indexName = candidate;
+            }
+            tries++;
+        }
+
+        if (indexName != null) {
+            return indexName;
+        } else {
+            return null;
+        }
     }
 
 }

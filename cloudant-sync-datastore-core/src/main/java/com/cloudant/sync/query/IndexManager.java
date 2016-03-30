@@ -224,9 +224,7 @@ public class IndexManager {
      *  @return name of created index
      */
     public String ensureIndexed(List<Object> fieldNames) {
-        logger.log(Level.SEVERE, "ensureIndexed(fieldNames) not implemented.");
-
-        return null;
+        return this.ensureIndexed(fieldNames, null);
     }
 
     /**
@@ -235,14 +233,14 @@ public class IndexManager {
      *  This function generates a name for the new index.
      *
      *  @param fieldNames List of field names in the sort format
-     *  @param indexName Name of index to create
+     *  @param indexName Name of index to create or null to generate an index name.
      *  @return name of created index
      */
     public String ensureIndexed(List<Object> fieldNames, String indexName) {
         return IndexCreator.ensureIndexed(Index.getInstance(fieldNames, indexName),
-                                          database,
-                                          datastore,
-                                          queue);
+                database,
+                datastore,
+                queue);
     }
 
     /**
@@ -251,7 +249,7 @@ public class IndexManager {
      *  This function generates a name for the new index.
      *
      *  @param fieldNames List of field names in the sort format
-     *  @param indexName Name of index to create
+     *  @param indexName Name of index to create or null to generate an index name.
      *  @param indexType The type of index (json or text currently supported)
      *  @return name of created index
      */
@@ -265,7 +263,7 @@ public class IndexManager {
      *  This function generates a name for the new index.
      *
      *  @param fieldNames List of field names in the sort format
-     *  @param indexName Name of index to create
+     *  @param indexName Name of index to create or null to generate an index name.
      *  @param indexType The type of index (json or text currently supported)
      *  @param indexSettings The optional settings to be applied to an index
      *                       Only text indexes support settings - Ex. { "tokenize" : "simple" }
@@ -276,12 +274,12 @@ public class IndexManager {
                                 IndexType indexType,
                                 Map<String, String> indexSettings) {
         return IndexCreator.ensureIndexed(Index.getInstance(fieldNames,
-                                                            indexName,
-                                                            indexType,
-                                                            indexSettings),
-                                          database,
-                                          datastore,
-                                          queue);
+                        indexName,
+                        indexType,
+                        indexSettings),
+                database,
+                datastore,
+                queue);
     }
 
     /**
@@ -442,8 +440,8 @@ public class IndexManager {
     public boolean isTextSearchEnabled() {
         if (!textSearchEnabled) {
             logger.log(Level.INFO, "Text search is currently not supported.  " +
-                                   "To enable text search recompile SQLite with " +
-                                   "the full text search compile options enabled.");
+                    "To enable text search recompile SQLite with " +
+                    "the full text search compile options enabled.");
         }
         return textSearchEnabled;
     }

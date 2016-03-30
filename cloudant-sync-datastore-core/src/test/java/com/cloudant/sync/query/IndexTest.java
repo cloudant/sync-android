@@ -14,6 +14,7 @@ package com.cloudant.sync.query;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 import org.junit.Before;
@@ -66,11 +67,14 @@ public class IndexTest {
     }
 
     @Test
-    public void returnsNullWhenNoIndexName() {
+    public void returnsValueWhenIndexNameIsNull(){
         Index index = Index.getInstance(fieldNames, null);
-        assertThat(index, is(nullValue()));
+        assertThat(index, is(notNullValue()));
+    }
 
-        index = Index.getInstance(fieldNames, "");
+    @Test
+    public void returnsNullWhenNoIndexName() {
+        Index index = Index.getInstance(fieldNames, "");
         assertThat(index, is(nullValue()));
     }
 
