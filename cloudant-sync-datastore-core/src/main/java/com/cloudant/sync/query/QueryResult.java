@@ -209,7 +209,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
         return revBuilder.buildProjected();
     }
 
-    private class Range {
+    private static class Range {
         public int location;
         public int length;
 

@@ -82,7 +82,7 @@ public class CouchClient  {
     // - stream non-null and exception null: the call was successful, result in stream
     // - stream null and exception non-null: the call was unsuccessful, details in exception
     // - fatal: set to true when exception non-null, indicates call should not be retried
-    private class ExecuteResult
+    private static class ExecuteResult
     {
         private ExecuteResult(InputStream stream,
                               InputStream errorStream,
