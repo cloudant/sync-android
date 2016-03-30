@@ -19,8 +19,17 @@ A list of known findbugs issues that we cannot fix at this time.
 
     <Match>
         <Bug code="RV" pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE" />
-        <Class name="com.cloudant.sync.datastore.AttachmentManager"/>
-        <Method name="addAttachment" />
+        <Or >
+            <And>
+                <Class name="com.cloudant.sync.datastore.AttachmentManager"/>
+                <Method name="addAttachment" />
+            </And>
+            <And>
+                <Class name="com.cloudant.sync.datastore.DatastoreManager"/>
+                <Method name="&lt;init&gt;" />
+            </And>
+        </Or>
+
     </Match>
     <Match>
         <Bug code="RV" pattern="RV_NEGATING_RESULT_OF_COMPARETO" />
