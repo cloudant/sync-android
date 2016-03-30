@@ -69,7 +69,6 @@ public class DocumentRevision implements Comparable<DocumentRevision> {
     private long internalNumericId;
     private boolean current;
     private long parent = -1L;
-    private Map<String, Object> map = null;
 
     public DocumentRevision() {
         // BasicDatastore#createDocumentFromRevision will assign an id
