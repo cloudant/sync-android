@@ -80,6 +80,8 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
                 case COMMAND_DEVICE_REBOOTED:
                     resetAlarmDueTimesOnReboot();
                     break;
+                default:
+                    //do nothing
             }
 
             super.handleMessage(msg);

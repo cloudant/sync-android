@@ -32,7 +32,7 @@ final class BasicDocumentBody implements DocumentBody {
     protected BasicDocumentBody(byte[] bytes) {
         // compacted revisions have their bodies set to null, so return an empty body
         if (bytes == null) {
-            bytes = JSONUtils.EMPTY_JSON;
+            bytes = JSONUtils.emptyJSONObjectAsBytes();
         }
         if(JSONUtils.isValidJSON(bytes)) {
             this.bytes = bytes;

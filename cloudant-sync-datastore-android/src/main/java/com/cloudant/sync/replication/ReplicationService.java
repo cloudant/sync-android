@@ -123,6 +123,8 @@ public abstract class ReplicationService extends Service
                     case COMMAND_STOP_REPLICATION:
                         stopReplications();
                         break;
+                    default:
+                        //do nothing
                 }
             } finally {
                 // Get the Intent used to start the service and release the WakeLock if there is one.

@@ -15,7 +15,8 @@
 package com.cloudant.sync.datastore.migrations;
 
 import com.cloudant.sync.sqlite.SQLDatabase;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
+
+import java.util.Arrays;
 
 /**
  * Runs a database migration which consists only of SQL statements.
@@ -25,7 +26,7 @@ public class SchemaOnlyMigration implements Migration {
     private String[] statements;
 
     public SchemaOnlyMigration(String[] statements) {
-        this.statements = statements;
+        this.statements = Arrays.copyOf(statements, statements.length);
     }
 
     public void runMigration(SQLDatabase db) throws Exception {

@@ -422,7 +422,7 @@ class IndexUpdater {
         return success;
     }
 
-    private class DBParameter {
+    private static class DBParameter {
         private final String tableName;
         private final ContentValues contentValues;
 

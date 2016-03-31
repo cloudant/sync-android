@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -34,7 +35,12 @@ public class JSONUtils {
 
     private static final String LOG_TAG = "JSONUtils";
 
-    public static final byte[] EMPTY_JSON = "{}".getBytes(Charset.forName("UTF-8"));
+
+    private static final byte[] EMPTY_JSON = "{}".getBytes(Charset.forName("UTF-8"));
+
+    public static byte[] emptyJSONObjectAsBytes(){
+        return Arrays.copyOf(EMPTY_JSON, EMPTY_JSON.length);
+    }
 
     // These reserved string is used to construct a filter. The filter is used by Jackson to
     // ignore these field when serialized a generic object before put the serialized result
@@ -159,7 +165,7 @@ public class JSONUtils {
         if (bytes != null) {
             return new String(bytes, Charset.forName("UTF-8"));
         } else {
-            return new String("");
+            return "";
         }
     }
 }

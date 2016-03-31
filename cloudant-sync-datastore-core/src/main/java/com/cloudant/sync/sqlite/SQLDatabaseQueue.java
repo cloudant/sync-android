@@ -20,7 +20,6 @@ import com.cloudant.sync.datastore.migrations.Migration;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -74,13 +73,16 @@ public class SQLDatabaseQueue {
      * @param version The version of the schema
      */
     public void updateSchema(final Migration migration, final int version){
-        queue.submit(new Callable<Object>() {
+        queue.execute(new Runnable() {
             @Override
-            public Object call() throws Exception {
-                SQLDatabaseFactory.updateSchema(db, migration, version);
-                return null;
+            public void run() {
+                try {
+                    SQLDatabaseFactory.updateSchema(db, migration, version);
+                } catch (SQLException e){
+                    logger.log(Level.SEVERE, "Failed to update database schema",e);
+                }
             }
-        }); //fire and forget
+        }); // Fire and forget
     }
 
     /**

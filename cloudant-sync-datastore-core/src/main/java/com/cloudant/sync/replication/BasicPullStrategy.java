@@ -51,7 +51,7 @@ import java.util.logging.Logger;
 class BasicPullStrategy implements ReplicationStrategy {
 
     // internal state which gets reset each time run() is called
-    private class State {
+    private static class State {
         // Flag to stop the replication thread.
         // Volatile as might be set from another thread.
         private volatile boolean cancel = false;
@@ -277,7 +277,7 @@ class BasicPullStrategy implements ReplicationStrategy {
         logger.info(msg);
     }
 
-    public class BatchItem {
+    public static class BatchItem {
 
         public BatchItem(DocumentRevsList revsList,
                          HashMap<String[], List<PreparedAttachment>> attachments) {

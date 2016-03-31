@@ -51,7 +51,7 @@ import java.util.logging.Logger;
 class BasicPushStrategy implements ReplicationStrategy {
 
     // internal state which gets reset each time run() is called
-    private class State {
+    private static class State {
         // Flag to stop the replication thread.
         // Volatile as might be set from another thread.
         private volatile boolean cancel = false;
@@ -263,7 +263,7 @@ class BasicPushStrategy implements ReplicationStrategy {
      * A small value class containing a set of documents to push, some
      * via multipart and some via _bulk_docs
      */
-    private class ItemsToPush
+    private static class ItemsToPush
     {
         public ItemsToPush() {
             serializedDocs = new ArrayList<String>();
