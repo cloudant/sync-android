@@ -15,6 +15,8 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.CouchTestBase;
+import com.cloudant.http.HttpConnectionRequestInterceptor;
+import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.sync.datastore.DatastoreExtended;
@@ -26,8 +28,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
-import java.net.URISyntaxException;
-import java.util.logging.Filter;
+import java.lang.reflect.Field;
+import java.util.List;
 
 public abstract class ReplicationTestBase extends CouchTestBase {
 
@@ -167,6 +169,27 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
         return new PullResult(replicator, listener);
+    }
+
+    protected void assertCookieInterceptorPresent(ReplicatorBuilder p, String expectedRequestBody)
+            throws NoSuchFieldException, IllegalAccessException {
+        // peek inside these private fields to see that interceptors have been set
+        Field reqI = ReplicatorBuilder.class.getDeclaredField("requestInterceptors");
+        Field respI = ReplicatorBuilder.class.getDeclaredField("responseInterceptors");
+        reqI.setAccessible(true);
+        respI.setAccessible(true);
+        List<HttpConnectionRequestInterceptor> reqIList = (List)reqI.get(p);
+        List<HttpConnectionRequestInterceptor> respIList = (List)respI.get(p);
+        Assert.assertEquals(1, reqIList.size());
+        Assert.assertEquals(CookieInterceptor.class, reqIList.get(0).getClass());
+        Assert.assertEquals(1, respIList.size());
+        Assert.assertEquals(CookieInterceptor.class, respIList.get(0).getClass());
+        CookieInterceptor ci = (CookieInterceptor)reqIList.get(0);
+        Field srbField = CookieInterceptor.class.getDeclaredField("sessionRequestBody");
+        srbField.setAccessible(true);
+        byte[] srb = (byte[])srbField.get(ci);
+        String srbString = new String(srb);
+        Assert.assertEquals(expectedRequestBody, srbString);
     }
 
     protected class PushResult {

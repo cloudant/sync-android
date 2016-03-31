@@ -21,6 +21,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.net.URI;
+
 @Category(RequireRunningCouchDB.class)
 public class PushReplicatorTest extends ReplicationTestBase {
 
@@ -148,6 +150,40 @@ public class PushReplicatorTest extends ReplicationTestBase {
         // check document counter has been reset since last replication and incremented
         Assert.assertEquals(1, replicationStrategy2.getDocumentCounter());
         Assert.assertEquals(3, remoteDb.couchClient.getDbInfo().getDocCount());
+    }
+
+
+    @Test
+    public void replicatorBuilderAddsCookieInterceptorCustomPort() throws Exception {
+        ReplicatorBuilder.Push p = ReplicatorBuilder.push().
+                from(datastore).
+                to(new URI("http://🍶:🍶@some-host:123/path%2Fsome-path-日本"));
+        BasicReplicator r = (BasicReplicator)p.build();
+        // check that user/pass has been removed
+        Assert.assertEquals("http://some-host:123/path%2Fsome-path-日本",
+                (((CouchClientWrapper) (((BasicPushStrategy) r.strategy).targetDb)).
+                        getCouchClient().
+                        getRootUri()).
+                        toString()
+        );
+        assertCookieInterceptorPresent(p, "name=%F0%9F%8D%B6&password=%F0%9F%8D%B6");
+    }
+
+    @Test
+    public void replicatorBuilderAddsCookieInterceptorDefaultPort() throws Exception {
+        ReplicatorBuilder.Push p = ReplicatorBuilder.push().
+                from(datastore).
+                to(new URI("http://🍶:🍶@some-host/path%2Fsome-path-日本"));
+        BasicReplicator r = (BasicReplicator)p.build();
+        // check that user/pass has been removed
+        Assert.assertEquals("http://some-host:80/path%2Fsome-path-日本",
+                (((CouchClientWrapper)(((BasicPushStrategy)r.strategy).targetDb)).
+                        getCouchClient().
+                        getRootUri()).
+                        toString()
+        );
+        assertCookieInterceptorPresent(p, "name=%F0%9F%8D%B6&password=%F0%9F%8D%B6");
+
     }
 
 
