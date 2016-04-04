@@ -47,11 +47,6 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         name = im.ensureIndexed(fieldNames, "basic");
         assertThat(name, is(nullValue()));
 
-        // doesn't create an index on null name
-        fieldNames = Arrays.<Object>asList("name");
-        name = im.ensureIndexed(fieldNames, null);
-        assertThat(name, is(nullValue()));
-
         // doesn't create an index without a name
         name = im.ensureIndexed(fieldNames, "");
         assertThat(name, is(nullValue()));

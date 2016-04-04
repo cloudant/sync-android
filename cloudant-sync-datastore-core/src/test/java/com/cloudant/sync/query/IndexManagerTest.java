@@ -16,7 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.notNullValue;
 
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
@@ -30,8 +30,8 @@ import java.util.Map;
 public class IndexManagerTest extends AbstractIndexTestBase {
 
     @Test
-    public void unimplementedEnsureIndexed() {
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name")), is(nullValue()));
+    public void enusureIndexedGeneratesIndexName() {
+        assertThat(im.ensureIndexed(Arrays.<Object>asList("name")), is(notNullValue()));
     }
 
     @Test

@@ -61,7 +61,7 @@ class Index {
      * This method sets the index type to the default setting of "json"
      *
      * @param fieldNames the field names in the index
-     * @param indexName the index name
+     * @param indexName the index name or null
      * @return the Index object or null if arguments passed in were invalid.
      */
     public static Index getInstance(List<Object> fieldNames, String indexName) {
@@ -77,7 +77,7 @@ class Index {
      * Index object is valid.
      *
      * @param fieldNames the field names in the index
-     * @param indexName the index name
+     * @param indexName the index name or null
      * @param indexType the index type (json or text)
      * @param indexSettings the optional settings used to configure the index.
      *                      Only supported parameter is 'tokenize' for text indexes only.
@@ -92,8 +92,7 @@ class Index {
             return null;
         }
 
-        if (indexName == null || indexName.isEmpty()) {
-            logger.log(Level.SEVERE, "No index name was provided.");
+        if(indexName != null && indexName.isEmpty()){
             return null;
         }
 
