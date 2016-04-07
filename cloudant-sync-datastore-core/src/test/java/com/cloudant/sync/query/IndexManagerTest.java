@@ -56,6 +56,38 @@ public class IndexManagerTest extends AbstractIndexTestBase {
     }
 
     @Test
+    public void createIndexWithSpaceInName() {
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic index");
+        assertThat(im.listIndexes().keySet(), contains("basic index"));
+    }
+
+    @Test
+         public void createIndexWithSingleQuoteInName() {
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic'index");
+        assertThat(im.listIndexes().keySet(), contains("basic'index"));
+    }
+
+    @Test
+    public void createIndexWithSemiColonQuoteInName() {
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic;index");
+        assertThat(im.listIndexes().keySet(), contains("basic;index"));
+    }
+
+    @Test
+    public void createIndexWithBracketsInName() {
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic(index)");
+        assertThat(im.listIndexes().keySet(), contains("basic(index)"));
+    }
+
+    @Test
+    public void createIndexWithKeyWordName() {
+        im.ensureIndexed(Arrays.<Object>asList("name", "address"), "INSERT INDEX");
+        assertThat(im.listIndexes().keySet(), contains("INSERT INDEX"));
+    }
+
+
+
+    @Test
      public void deleteEmptyIndex() {
         im.ensureIndexed(Arrays.<Object>asList("name", "address"), "basic");
         assertThat(im.listIndexes().keySet(), contains("basic"));

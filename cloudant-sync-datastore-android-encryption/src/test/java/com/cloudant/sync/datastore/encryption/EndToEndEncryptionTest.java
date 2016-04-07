@@ -14,6 +14,13 @@
 
 package com.cloudant.sync.datastore.encryption;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.Datastore;
@@ -25,9 +32,11 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.query.IndexManager;
+import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.TestUtils;
 
 import net.sqlcipher.database.SQLiteDatabase;
+
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
@@ -49,13 +58,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 
 /**
@@ -288,6 +290,14 @@ public class EndToEndEncryptionTest {
         assertTrue("Saved attachment did not read correctly",
                 IOUtils.contentEquals(new ByteArrayInputStream(nonAsciiText.getBytes()), in));
 
+        // perform a query to ensure we can use special chars
+        IndexManager indexManager = new IndexManager(datastore);
+        assertNotNull(indexManager.ensureIndexed(Arrays.<Object>asList("name","pet"),"my index"));
+        // query for the name fred and check that docs are returned.
+        Map<String,Object> selector = new HashMap<String, Object>();
+        selector.put("name","fred");
+        QueryResult queryResult = indexManager.find(selector);
+        assertNotNull(queryResult);
         // Delete
         try {
             datastore.deleteDocumentFromRevision(saved);

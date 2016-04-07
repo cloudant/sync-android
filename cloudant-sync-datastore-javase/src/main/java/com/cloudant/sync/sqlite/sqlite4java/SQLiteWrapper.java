@@ -263,8 +263,9 @@ public class SQLiteWrapper extends SQLDatabase {
     @Override
     public int delete(String table, String whereClause, String[] whereArgs) {
         try {
-            String sql = new StringBuilder("DELETE FROM ")
+            String sql = new StringBuilder("DELETE FROM \"")
                     .append(table)
+                    .append("\"")
                     .append(!Strings.isNullOrEmpty(whereClause) ? " WHERE " +
                             whereClause : "")
                     .toString();
@@ -288,8 +289,9 @@ public class SQLiteWrapper extends SQLDatabase {
             StringBuilder sql = new StringBuilder();
             sql.append("INSERT ");
             sql.append(CONFLICT_VALUES[conflictAlgorithm]);
-            sql.append(" INTO ");
+            sql.append(" INTO \"");
             sql.append(table);
+            sql.append("\"");
             sql.append('(');
 
 

@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.runners.Parameterized.Parameters;
 
+import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
@@ -112,6 +113,32 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         ageOperator.put("$eq", 12.0f);
         query.put("age", ageOperator);
         assertThat(im.find(query), is(nullValue()));
+    }
+
+    @Test
+    public void returnsDocForQueryAgainstIndexWithSpecialChar() throws Exception {
+        DocumentRevision rev = new DocumentRevision("mike12");
+        Map<String, Object> bodyMap = new HashMap<String, Object>();
+        bodyMap.put("name", "mike");
+        bodyMap.put("age", 12);
+        bodyMap.put("pet", "cat");
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
+        ds.createDocumentFromRevision(rev);
+        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic index"), is
+                ("basic index"));
+
+        // query - { "name" : "mike" }
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("name", "mike");
+        QueryResult queryResult = im.find(query);
+        List<String> docCheckList = new ArrayList<String>();
+        for (DocumentRevision revision: queryResult) {
+            assertThat(revision.getId(), is(notNullValue()));
+            assertThat(revision.getBody(), is(notNullValue()));
+            docCheckList.add(revision.getId());
+        }
+        assertThat(queryResult.size(), is(docCheckList.size()));
+        assertThat(queryResult.documentIds(), containsInAnyOrder(docCheckList.toArray()));
     }
 
     @Test

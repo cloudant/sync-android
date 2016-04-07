@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -338,7 +339,7 @@ class IndexCreator {
     }
 
     private String createIndexTableStatementForIndex(String indexName, List<String> columns) {
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManager.tableNameForIndex(indexName));
         Joiner joiner = Joiner.on(" NONE,").skipNulls();
         String cols = joiner.join(columns);
 
@@ -351,7 +352,7 @@ class IndexCreator {
         Joiner joiner = Joiner.on(",").skipNulls();
         String cols = joiner.join(columns);
 
-        return String.format("CREATE INDEX %s ON %s ( %s )", sqlIndexName, tableName, cols);
+        return String.format(Locale.ENGLISH, "CREATE INDEX \"%s\" ON \"%s\" ( %s )", sqlIndexName, tableName, cols);
     }
 
     /**
@@ -368,7 +369,8 @@ class IndexCreator {
     private String createVirtualTableStatementForIndex(String indexName,
                                                        List<String> columns,
                                                        List<String> indexSettings) {
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManager
+                .tableNameForIndex(indexName));
         Joiner joiner = Joiner.on(",").skipNulls();
         String cols = joiner.join(columns);
         String settings = joiner.join(indexSettings);
