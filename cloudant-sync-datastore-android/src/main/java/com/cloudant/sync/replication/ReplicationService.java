@@ -124,7 +124,8 @@ public abstract class ReplicationService extends Service
                         stopReplications();
                         break;
                     default:
-                        //do nothing
+                        // Do nothing
+                        break;
                 }
             } finally {
                 // Get the Intent used to start the service and release the WakeLock if there is one.

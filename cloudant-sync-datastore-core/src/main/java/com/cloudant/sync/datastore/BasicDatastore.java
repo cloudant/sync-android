@@ -1248,14 +1248,15 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
         // copy stubbed attachments forward from last real revision to this revision
         if (attachments != null) {
-            for (String att : attachments.keySet()) {
-                Boolean stub = ((Map<String, Boolean>) attachments.get(att)).get("stub");
+            for (Map.Entry<String, Object> att : attachments.entrySet()) {
+                Boolean stub = ((Map<String, Boolean>) att.getValue()).get("stub");
                 if (stub != null && stub.booleanValue()) {
                     try {
-                        AttachmentManager.copyAttachment(db, previousLeafSeq, newLeafSeq, att);
+                        AttachmentManager.copyAttachment(db, previousLeafSeq, newLeafSeq, att
+                                .getKey());
                     } catch (SQLException sqe) {
                         logger.log(Level.SEVERE, "Error copying stubbed attachments", sqe);
-                        throw new DatastoreException("Error copying stubbed attachments",sqe);
+                        throw new DatastoreException("Error copying stubbed attachments", sqe);
                     }
                 }
             }

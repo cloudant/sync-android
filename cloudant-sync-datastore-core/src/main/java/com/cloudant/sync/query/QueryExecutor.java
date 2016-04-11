@@ -418,11 +418,11 @@ class QueryExecutor {
         }
 
         String chosenIndex = null;
-        for (String indexName : indexes.keySet()) {
-            Map<String, Object> index = (Map<String, Object>) indexes.get(indexName);
+        for (Map.Entry<String, Object> entry : indexes.entrySet()) {
+            Map<String, Object> index = (Map<String, Object>) entry.getValue();
             Set<String> providedFields = new HashSet<String>((List<String>) index.get("fields"));
             if (providedFields.containsAll(neededFields)) {
-                chosenIndex = indexName;
+                chosenIndex = entry.getKey();
                 break;
             }
         }

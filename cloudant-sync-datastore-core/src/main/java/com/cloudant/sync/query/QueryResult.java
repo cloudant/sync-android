@@ -192,9 +192,9 @@ public class QueryResult implements Iterable<DocumentRevision> {
         // grab the map filter fields and rebuild object
         Map<String, Object> originalBody = rev.getBody().asMap();
         Map<String, Object> body = new HashMap<String, Object>();
-        for (String key : originalBody.keySet()) {
-            if (fields.contains(key)) {
-                body.put(key, originalBody.get(key));
+        for (Map.Entry<String, Object> entry : originalBody.entrySet()) {
+            if (fields.contains(entry.getKey())) {
+                body.put(entry.getKey(), entry.getValue());
             }
         }
 
