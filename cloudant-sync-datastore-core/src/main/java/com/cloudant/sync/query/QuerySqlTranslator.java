@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -128,7 +129,7 @@ class QuerySqlTranslator {
 
             if (allDocsIndex != null && !allDocsIndex.isEmpty()) {
                 String tableName = IndexManager.tableNameForIndex(allDocsIndex);
-                String sql = String.format("SELECT _id FROM %s", tableName);
+                String sql = String.format(Locale.ENGLISH, "SELECT _id FROM \"%s\"", tableName);
                 sqlNode.sql = SqlParts.partsForSql(sql, new String[]{});
             }
 
@@ -441,7 +442,8 @@ class QuerySqlTranslator {
 
         String tableName = IndexManager.tableNameForIndex(indexName);
 
-        String sql = String.format("SELECT _id FROM %s WHERE %s",
+        String sql = String.format(Locale.ENGLISH,
+                                   "SELECT _id FROM \"%s\" WHERE %s",
                                    tableName,
                                    where.sqlWithPlaceHolders);
         return SqlParts.partsForSql(sql, where.placeHolderValues);
@@ -469,7 +471,7 @@ class QuerySqlTranslator {
         String search = searchClause.get(SEARCH);
         search = search.replace("'", "''");
 
-        String sql = String.format("SELECT _id FROM %s WHERE %s MATCH ?", tableName, tableName);
+        String sql = String.format(Locale.ENGLISH, "SELECT _id FROM \"%s\" WHERE \"%s\" MATCH ?", tableName, tableName);
         return SqlParts.partsForSql(sql, new String[]{ search });
     }
 
@@ -643,8 +645,8 @@ class QuerySqlTranslator {
                                             String sqlOperator,
                                             String tableName,
                                             String operand) {
-        String whereForSubSelect = String.format("\"%s\" %s %s", fieldName, sqlOperator, operand);
-        String subSelect = String.format("SELECT _id FROM %s WHERE %s",
+        String whereForSubSelect = String.format(Locale.ENGLISH, "\"%s\" %s %s", fieldName, sqlOperator, operand);
+        String subSelect = String.format(Locale.ENGLISH, "SELECT _id FROM \"%s\" WHERE %s",
                                          tableName,
                                          whereForSubSelect);
 

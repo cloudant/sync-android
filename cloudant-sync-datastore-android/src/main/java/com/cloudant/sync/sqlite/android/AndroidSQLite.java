@@ -99,7 +99,7 @@ public class AndroidSQLite extends SQLDatabase {
 
     @Override
     public int update(String table, ContentValues args, String whereClause, String[] whereArgs) {
-        return this.database.update(table, this.createAndroidContentValues(args), whereClause, whereArgs);
+        return this.database.update("\""+table+"\"", this.createAndroidContentValues(args), whereClause, whereArgs);
     }
 
     @Override
@@ -109,7 +109,7 @@ public class AndroidSQLite extends SQLDatabase {
 
     @Override
     public int delete(String table, String whereClause, String[] whereArgs) {
-        return this.database.delete(table, whereClause, whereArgs);
+        return this.database.delete("\""+table+"\"", whereClause, whereArgs);
     }
 
     @Override
@@ -122,7 +122,7 @@ public class AndroidSQLite extends SQLDatabase {
         //android DB will thrown an exception rather than return a -1 row id if there is a failure
         // so we catch constraintException and return -1
         try {
-        return this.database.insertWithOnConflict(table, null,
+        return this.database.insertWithOnConflict("\""+table+"\"", null,
                 createAndroidContentValues(initialValues), conflictAlgorithm);
         } catch (SQLiteConstraintException sqlce){
             return -1;

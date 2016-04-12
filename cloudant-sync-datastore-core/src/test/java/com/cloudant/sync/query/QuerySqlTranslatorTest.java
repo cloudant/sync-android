@@ -72,7 +72,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         SqlQueryNode sqlNode = (SqlQueryNode) andNode.children.get(0);
         String sql = sqlNode.sql.sqlWithPlaceHolders;
         String[] placeHolderValues = sqlNode.sql.placeHolderValues;
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic\"";
         assertThat(sql, is(select));
         assertThat(placeHolderValues, is(emptyArray()));
     }
@@ -92,7 +92,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         SqlQueryNode sqlNode = (SqlQueryNode) andNode.children.get(0);
         String sql = sqlNode.sql.sqlWithPlaceHolders;
         String[] placeHolderValues = sqlNode.sql.placeHolderValues;
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic\"";
         String where = " WHERE \"name\" = ?";
         assertThat(sql, is(String.format("%s%s", select, where)));
         assertThat(placeHolderValues, is(arrayContaining("mike")));
@@ -114,7 +114,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         SqlQueryNode sqlNode = (SqlQueryNode) andNode.children.get(0);
         String sql = sqlNode.sql.sqlWithPlaceHolders;
         String[] placeHolderValues = sqlNode.sql.placeHolderValues;
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic\"";
         String where = " WHERE \"name\" = ? AND \"pet\" = ?";
         assertThat(sql, is(String.format("%s%s", select, where)));
         assertThat(placeHolderValues, is(arrayContainingInAnyOrder("mike", "cat")));
@@ -140,7 +140,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         SqlQueryNode sqlNode = (SqlQueryNode) andNode.children.get(0);
         String sql = sqlNode.sql.sqlWithPlaceHolders;
         String[] placeHolderValues = sqlNode.sql.placeHolderValues;
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic\"";
         String where = " WHERE \"name\" = ? AND \"pet\" = ?";
         assertThat(sql, is(String.format("%s%s", select, where)));
         assertThat(placeHolderValues, is(arrayContainingInAnyOrder("mike", "cat")));
@@ -174,7 +174,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         AndQueryNode andNode = (AndQueryNode) node;
         assertThat(andNode.children.size(), is(2));
 
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic\"";
         String where = " WHERE \"name\" = ? AND \"pet\" = ?";
         String sql = String.format("%s%s", select, where);
 
@@ -218,7 +218,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         AndQueryNode andNode = (AndQueryNode) node;
         assertThat(andNode.children.size(), is(2));
 
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic\"";
         String where = " WHERE \"name\" = ? AND \"pet\" = ?";
         String sql = String.format("%s%s", select, where);
 
@@ -256,7 +256,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         OrQueryNode orNode = (OrQueryNode) node;
         assertThat(orNode.children.size(), is(2));
 
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic\"";
         String whereLeft = " WHERE \"name\" = ?";
         String whereRight = " WHERE \"pet\" = ?";
         String sqlLeft = String.format("%s%s", select, whereLeft);
@@ -299,7 +299,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         OrQueryNode orNode = (OrQueryNode) node;
         assertThat(orNode.children.size(), is(3));
 
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic\"";
         String whereLeft = " WHERE \"name\" = ?";
         String whereRight = " WHERE \"pet\" = ?";
         String sqlLeft = String.format("%s%s", select, whereLeft);
@@ -357,7 +357,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         OrQueryNode orNode = (OrQueryNode) node;
         assertThat(orNode.children.size(), is(4));
 
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic\"";
         String whereLeft = " WHERE \"name\" = ?";
         String whereRight = " WHERE \"pet\" = ?";
         String whereAnd = " WHERE \"name\" = ? AND \"pet\" = ?";
@@ -431,7 +431,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         OrQueryNode orNode = (OrQueryNode) node;
         assertThat(orNode.children.size(), is(3));
 
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic\"";
         String whereLeft = " WHERE \"name\" = ?";
         String whereRight = " WHERE \"pet\" = ?";
         String whereAnd = " WHERE \"name\" = ? AND \"pet\" = ?";
@@ -836,7 +836,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         name.put("name", not);
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
                                                                  indexName);
-        String expected = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" = ?)",
+        String expected = String.format("_id NOT IN (SELECT _id FROM \"%s\" WHERE \"name\" = ?)",
                                         indexTable);
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
@@ -866,10 +866,10 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         List<Object> clauses = Arrays.<Object>asList(name, age, pet);
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(clauses, indexName);
 
-        String expectedName = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" = ?)",
+        String expectedName = String.format("_id NOT IN (SELECT _id FROM \"%s\" WHERE \"name\" = ?)",
                                             indexTable);
         String expectedAge = "\"age\" = ?";
-        String expectedPet = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"pet\" = ?)",
+        String expectedPet = String.format("_id NOT IN (SELECT _id FROM \"%s\" WHERE \"pet\" = ?)",
                                            indexTable);
         String expected = String.format("%s AND %s AND %s", expectedName, expectedAge, expectedPet);
 
@@ -888,7 +888,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
                                                                  indexName);
-        String expected = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" > ?)",
+        String expected = String.format("_id NOT IN (SELECT _id FROM \"%s\" WHERE \"name\" > ?)",
                                         indexTable);
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
@@ -905,7 +905,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
                                                                  indexName);
-        String expected = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" >= ?)",
+        String expected = String.format("_id NOT IN (SELECT _id FROM \"%s\" WHERE \"name\" >= ?)",
                                         indexTable);
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
@@ -922,7 +922,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
                                                                  indexName);
-        String expected = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" < ?)",
+        String expected = String.format("_id NOT IN (SELECT _id FROM \"%s\" WHERE \"name\" < ?)",
                                         indexTable);
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
@@ -939,7 +939,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
                                                                  indexName);
-        String expected = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" <= ?)",
+        String expected = String.format("_id NOT IN (SELECT _id FROM \"%s\" WHERE \"name\" <= ?)",
                                         indexTable);
         assertThat(where.sqlWithPlaceHolders, is(expected));
         assertThat(where.placeHolderValues, is(arrayContaining("mike")));
@@ -956,7 +956,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(name),
                                                                  indexName);
-        String expected = String.format("_id NOT IN (SELECT _id FROM %s %s)",
+        String expected = String.format("_id NOT IN (SELECT _id FROM \"%s\" %s)",
                                         indexTable,
                                         "WHERE \"name\" IN ( ?, ? )");
         assertThat(where.sqlWithPlaceHolders, is(expected));
@@ -978,7 +978,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(Arrays.<Object>asList(c1, c2),
                                                                  indexName);
-        String notEqName = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"name\" = ?)",
+        String notEqName = String.format("_id NOT IN (SELECT _id FROM \"%s\" WHERE \"name\" = ?)",
                                          indexTable);
         String eqName = "\"name\" = ?";
         String expected = String.format("%s AND %s", notEqName, eqName);
@@ -1016,7 +1016,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         String ageGt = "\"age\" > ?";
         String ageLte = "\"age\" <= ?";
         String nameEq = "\"name\" = ?";
-        String ageNe = String.format("_id NOT IN (SELECT _id FROM %s WHERE \"age\" = ?)",
+        String ageNe = String.format("_id NOT IN (SELECT _id FROM \"%s\" WHERE \"age\" = ?)",
                                      indexTable);
         String ageEq = "\"age\" = ?";
         String expected = String.format("%s AND %s AND %s AND %s AND %s",
@@ -1042,7 +1042,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
                 QuerySqlTranslator.whereSqlForAndClause(Collections.<Object>singletonList(age),
                                                         indexName);
         String expected = String.format("_id NOT IN " +
-                                        "(SELECT _id FROM %s" +
+                                        "(SELECT _id FROM \"%s\"" +
                                         " WHERE \"age\" %% ? = CAST(? AS INTEGER))",
                                         indexTable);
         assertThat(where.sqlWithPlaceHolders, is(expected));
@@ -1078,7 +1078,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         name.put("name", eq);
         List<Object> clause = Arrays.<Object>asList(name);
         SqlParts sql = QuerySqlTranslator.selectStatementForAndClause(clause, "anIndex");
-        String expected = "SELECT _id FROM _t_cloudant_sync_query_index_anIndex WHERE \"name\" = ?";
+        String expected = "SELECT _id FROM \"_t_cloudant_sync_query_index_anIndex\" WHERE \"name\" = ?";
         assertThat(sql.sqlWithPlaceHolders, is(expected));
         assertThat(sql.placeHolderValues, is(arrayContaining("mike")));
     }
@@ -1102,7 +1102,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
         List<Object> clause = Arrays.<Object>asList(name, age, pet);
         SqlParts sql = QuerySqlTranslator.selectStatementForAndClause(clause, "anIndex");
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_anIndex";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_anIndex\"";
         String where = " WHERE \"name\" = ? AND \"age\" = ? AND \"pet\" = ?";
         String expected = String.format("%s%s", select, where);
         assertThat(sql.sqlWithPlaceHolders, is(expected));
@@ -1135,8 +1135,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         String sql = sqlNode.sql.sqlWithPlaceHolders;
         String[] placeHolderValues = sqlNode.sql.placeHolderValues;
 
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic_text";
-        String where = " WHERE _t_cloudant_sync_query_index_basic_text MATCH ?";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic_text\"";
+        String where = " WHERE \"_t_cloudant_sync_query_index_basic_text\" MATCH ?";
         assertThat(sql, is(String.format("%s%s", select, where)));
         assertThat(placeHolderValues, is(arrayContainingInAnyOrder("foo bar baz")));
     }
@@ -1169,7 +1169,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         String sql = sqlNode.sql.sqlWithPlaceHolders;
         String[] placeHolderValues = sqlNode.sql.placeHolderValues;
 
-        String select = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic\"";
         String where = " WHERE \"name\" = ?";
         assertThat(sql, is(String.format("%s%s", select, where)));
         assertThat(placeHolderValues, is(arrayContainingInAnyOrder("mike")));
@@ -1178,8 +1178,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         sql = sqlNode.sql.sqlWithPlaceHolders;
         placeHolderValues = sqlNode.sql.placeHolderValues;
 
-        select = "SELECT _id FROM _t_cloudant_sync_query_index_basic_text";
-        where = " WHERE _t_cloudant_sync_query_index_basic_text MATCH ?";
+        select = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic_text\"";
+        where = " WHERE \"_t_cloudant_sync_query_index_basic_text\" MATCH ?";
         assertThat(sql, is(String.format("%s%s", select, where)));
         assertThat(placeHolderValues, is(arrayContainingInAnyOrder("foo bar baz")));
     }
@@ -1208,12 +1208,12 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         OrQueryNode orNode = (OrQueryNode) node;
         assertThat(orNode.children.size(), is(2));
 
-        String selectLeft = "SELECT _id FROM _t_cloudant_sync_query_index_basic";
+        String selectLeft = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic\"";
         String whereLeft = " WHERE \"name\" = ?";
         String sqlLeft = String.format("%s%s", selectLeft, whereLeft);
 
-        String selectRight = "SELECT _id FROM _t_cloudant_sync_query_index_basic_text";
-        String whereRight = " WHERE _t_cloudant_sync_query_index_basic_text MATCH ?";
+        String selectRight = "SELECT _id FROM \"_t_cloudant_sync_query_index_basic_text\"";
+        String whereRight = " WHERE \"_t_cloudant_sync_query_index_basic_text\" MATCH ?";
         String sqlRight = String.format("%s%s", selectRight, whereRight);
 
         SqlQueryNode sqlNode = (SqlQueryNode) orNode.children.get(0);

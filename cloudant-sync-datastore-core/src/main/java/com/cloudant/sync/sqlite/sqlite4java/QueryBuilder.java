@@ -29,7 +29,9 @@ public class QueryBuilder {
 
         StringBuilder query = new StringBuilder(120);
         query.append("UPDATE ")
+                .append("\"")
                 .append(table)
+                .append("\"")
                 .append(" SET ");
 
         int i = 0;
@@ -66,8 +68,9 @@ public class QueryBuilder {
 
     public static String buildSelectCountQuery(String table, String where) {
         StringBuilder query = new StringBuilder(120);
-        query.append("SELECT count(*) FROM ");
+        query.append("SELECT count(*) FROM \"");
         query.append(table);
+        query.append("\"");
         if(where != null) {
             appendClause(query, " WHERE ", where);
         }
@@ -93,8 +96,10 @@ public class QueryBuilder {
         } else {
             query.append("* ");
         }
-        query.append("FROM ");
-        query.append(table);
+        query.append("FROM ")
+                .append("\"")
+                .append(table)
+                .append("\"");
 
         if(where != null) {
             appendClause(query, " WHERE ", where);
@@ -129,9 +134,10 @@ public class QueryBuilder {
             String column = columns[i];
             if (column != null) {
                 if (i > 0) {
-                    s.append(", ");
+                    s.append(", \"");
                 }
                 s.append(column);
+                s.append("\"");
             }
         }
         s.append(' ');
