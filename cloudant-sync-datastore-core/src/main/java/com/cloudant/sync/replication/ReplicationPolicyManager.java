@@ -1,12 +1,11 @@
 package com.cloudant.sync.replication;
 
+import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
-import com.google.common.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,7 +24,10 @@ public class ReplicationPolicyManager {
         void replicationErrored(int id);
     }
 
-    private class ReplicationListener {
+    /**
+     * This class is not intended as API, it is public for EventBus access only.
+     */
+    public class ReplicationListener {
 
         Set<Replicator> replicatorsInProgress;
 

@@ -14,9 +14,7 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.sync.notifications.ReplicationCompleted;
-import com.cloudant.sync.notifications.ReplicationErrored;
-import com.google.common.eventbus.Subscribe;
+import com.cloudant.sync.event.Subscribe;
 
 /**
  * Simple implementation of <code>StrategyListener</code>. It can be checked if the complete() or

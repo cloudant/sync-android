@@ -81,7 +81,7 @@ replication finishes so we can wait for a replication to finish without
 needing to poll:
 
 ```java
-import com.google.common.eventbus.Subscribe;
+import com.cloudant.sync.event.Subscribe;
 import java.util.concurrent.CountDownLatch;
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;

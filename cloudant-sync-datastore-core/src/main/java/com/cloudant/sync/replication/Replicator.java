@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.replication;
 
-import com.google.common.eventbus.EventBus;
+import com.cloudant.sync.event.EventBus;
 
 /**
  * <p>Manages replication between a local

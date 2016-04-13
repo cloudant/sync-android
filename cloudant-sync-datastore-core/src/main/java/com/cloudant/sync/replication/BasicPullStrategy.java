@@ -27,11 +27,11 @@ import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
+import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.Misc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.eventbus.EventBus;
 
 import org.apache.commons.codec.binary.Hex;
 

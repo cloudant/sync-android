@@ -14,9 +14,9 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentUpdated;
-import com.google.common.eventbus.Subscribe;
 
 import org.apache.commons.codec.binary.Base64;
 import org.junit.Assert;

@@ -14,9 +14,9 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
-import com.google.common.eventbus.Subscribe;
 
 public class TestReplicationListener {
 

@@ -28,11 +28,11 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
+import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.Misc;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.common.eventbus.EventBus;
 
 import org.apache.commons.codec.binary.Hex;
 
