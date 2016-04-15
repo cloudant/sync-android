@@ -269,7 +269,7 @@ and when the device has rebooted. We also don't want other apps to invoke our
 so we set `android:exported="false"`, so we add the following to our manifest file:
 
 ```xml
-<receiver android:name=".MyBackgroundWifiIntervalReplicationPolicyManager" android:exported="false">
+<receiver android:name=".MyWifiPeriodicReplicationReceiver" android:exported="false">
     <intent-filter>
         <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
         <action android:name="com.cloudant.sync.replication.PeriodicReplicationReceiver.Alarm" />
