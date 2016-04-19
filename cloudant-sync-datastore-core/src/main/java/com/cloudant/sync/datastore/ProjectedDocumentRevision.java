@@ -22,6 +22,7 @@ import java.util.logging.Logger;
  *  Use {@link #toFullRevision()} to obtain a "full" revision with all fields present. This is a pre-requisite
  *  for saving a {@code ProjectedDocumentRevision}.
  *
+ * @api_public
  */
 public class ProjectedDocumentRevision extends DocumentRevision {
 

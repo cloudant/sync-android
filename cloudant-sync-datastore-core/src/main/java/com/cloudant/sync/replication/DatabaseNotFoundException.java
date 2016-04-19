@@ -20,6 +20,9 @@
 
 package com.cloudant.sync.replication;
 
+/**
+ * @api_public
+ */
 public class DatabaseNotFoundException extends Exception {
     public DatabaseNotFoundException(String s) {
         super(s);

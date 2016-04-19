@@ -22,6 +22,9 @@ package com.cloudant.common;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
 
+/**
+ * @api_private
+ */
 @JsonFilter(PropertyFilterMixIn.SIMPLE_FILTER_NAME)
 public class PropertyFilterMixIn {
 

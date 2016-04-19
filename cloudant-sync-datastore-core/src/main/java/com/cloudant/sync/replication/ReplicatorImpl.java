@@ -22,8 +22,9 @@ import com.google.common.base.Preconditions;
 
 /**
  * This class is not intended as API, it is public for EventBus access only.
+ * @api_private
  */
-public class BasicReplicator implements Replicator {
+public class ReplicatorImpl implements Replicator {
 
     public static final int NULL_ID = -1;
     protected Thread strategyThread;
@@ -35,11 +36,11 @@ public class BasicReplicator implements Replicator {
 
     private final EventBus eventBus = new EventBus();
 
-    public BasicReplicator(ReplicationStrategy strategy) {
+    public ReplicatorImpl(ReplicationStrategy strategy) {
         this(strategy, NULL_ID);
     }
 
-    public BasicReplicator(ReplicationStrategy strategy, int id) {
+    public ReplicatorImpl(ReplicationStrategy strategy, int id) {
         this.strategy = strategy;
         this.id = id;
         this.state = State.PENDING;

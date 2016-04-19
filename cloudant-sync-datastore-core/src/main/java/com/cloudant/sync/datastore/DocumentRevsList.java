@@ -58,6 +58,8 @@ import java.util.List;
  * For <code>DocumentRevs</code> with the same "min-generation", the order is un-determined. This is
  * probably the case two document with same id/body are created in different database.
  * </p>
+ *
+ * @api_private
  */
 public class DocumentRevsList implements Iterable<DocumentRevs> {
 

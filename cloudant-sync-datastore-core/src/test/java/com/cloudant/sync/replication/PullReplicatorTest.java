@@ -186,7 +186,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
     public void replicatorCanBeReused() throws Exception {
         ReplicatorBuilder replicatorBuilder = super.getPullBuilder();
         Replicator replicator = replicatorBuilder.build();
-        ReplicationStrategy replicationStrategy = ((BasicReplicator)replicator).strategy;
+        ReplicationStrategy replicationStrategy = ((ReplicatorImpl)replicator).strategy;
         replicator.start();
         // replicate 2 docs created at test setup
         while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
@@ -197,7 +197,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
         Bar bar3 = BarUtils.createBar(remoteDb, "Test", 52);
         couchClient.create(bar3);
         replicator.start();
-        ReplicationStrategy replicationStrategy2 = ((BasicReplicator)replicator).strategy;
+        ReplicationStrategy replicationStrategy2 = ((ReplicatorImpl)replicator).strategy;
         // replicate 3rd doc
         while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
             Thread.sleep(50);
@@ -212,10 +212,10 @@ public class PullReplicatorTest extends ReplicationTestBase {
         ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
                 from(new URI("http://🍶:🍶@some-host:123/path%2Fsome-path-日本")).
                 to(datastore);
-        BasicReplicator r = (BasicReplicator)p.build();
+        ReplicatorImpl r = (ReplicatorImpl)p.build();
         // check that user/pass has been removed
         Assert.assertEquals("http://some-host:123/path%2Fsome-path-日本",
-                (((CouchClientWrapper)(((BasicPullStrategy)r.strategy).sourceDb)).
+                (((CouchClientWrapper)(((PullStrategy)r.strategy).sourceDb)).
                         getCouchClient().
                         getRootUri()).
                         toString()
@@ -228,10 +228,10 @@ public class PullReplicatorTest extends ReplicationTestBase {
         ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
                 from(new URI("http://🍶:🍶@some-host/path%2Fsome-path-日本")).
                 to(datastore);
-        BasicReplicator r = (BasicReplicator)p.build();
+        ReplicatorImpl r = (ReplicatorImpl)p.build();
         // check that user/pass has been removed
         Assert.assertEquals("http://some-host:80/path%2Fsome-path-日本",
-                (((CouchClientWrapper) (((BasicPullStrategy) r.strategy).sourceDb)).
+                (((CouchClientWrapper) (((PullStrategy) r.strategy).sourceDb)).
                         getCouchClient().
                         getRootUri()).
                         toString()

@@ -17,6 +17,8 @@ package com.cloudant.sync.datastore;
 
 /**
  * Created by Rhys Short on 05/02/15.
+ *
+ * @api_public
  */
 public class DocumentException extends Exception {
 

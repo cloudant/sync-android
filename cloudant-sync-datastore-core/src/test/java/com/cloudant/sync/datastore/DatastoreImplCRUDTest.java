@@ -36,14 +36,14 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
-public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
+public class DatastoreImplCRUDTest extends BasicDatastoreTestBase {
 
     public ArrayList<DocumentBody> generateDocuments(int count) {
         ArrayList<DocumentBody> result = new ArrayList<DocumentBody>(count);
         for (int i = 0; i < count; i++) {
             HashMap<String, String> map = new HashMap<String,String>();
             map.put(String.format("hello-%d", i), "world");
-            DocumentBody documentBody = new BasicDocumentBody(map);
+            DocumentBody documentBody = new DocumentBodyImpl(map);
             result.add(documentBody);
         }
         return result;
@@ -125,7 +125,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
     public void createDocument_specialField_fail() throws Exception {
         Map m = createMapWithSpecialField();
         DocumentRevision rev = new DocumentRevision();
-        rev.setBody(BasicDocumentBody.bodyWith(m));
+        rev.setBody(DocumentBodyImpl.bodyWith(m));
         datastore.createDocumentFromRevision(rev);
     }
 
@@ -180,7 +180,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
         Map m = createMapWithSpecialField();
         DocumentRevision rev_2Mut = rev_1;
-        rev_2Mut.setBody(BasicDocumentBody.bodyWith(m));
+        rev_2Mut.setBody(DocumentBodyImpl.bodyWith(m));
         datastore.updateDocumentFromRevision(rev_2Mut);
     }
 
@@ -297,7 +297,7 @@ public class BasicDatastoreCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void getLastSequence_noDocuments_ShouldBeMinusOne() {
-        Assert.assertEquals(BasicDatastore.SEQUENCE_NUMBER_START, datastore.getLastSequence());
+        Assert.assertEquals(DatastoreImpl.SEQUENCE_NUMBER_START, datastore.getLastSequence());
     }
 
     @Test

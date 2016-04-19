@@ -50,6 +50,8 @@ import java.util.Map;
  * TODO: need to think about how to better handle boolean serialization/de-serialization, since it could be absence,
  *       null, true and false for de-serialization, and when we do not need to put it into the JSON if it is false
  *       during serialization.
+ *
+ * @api_private
  */
 public class DocumentRevs {
 

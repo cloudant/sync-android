@@ -70,6 +70,7 @@ import java.util.Map;
  * @see <a href=http://couchdb.readthedocs.org/en/latest/api/document/common.html#creating-multiple-attachments>Creating Multiple Attachments</a>
  * @see <a href=http://tools.ietf.org/html/rfc2387>RFC 2387</a>
  *
+ * @api_private
  */
 
 public class MultipartAttachmentWriter {

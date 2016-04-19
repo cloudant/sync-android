@@ -23,6 +23,8 @@ import android.util.Log;
  *           responsible for handling the alarms triggered by the {@link AlarmManager} at
  *           the intervals when replication is required and handles resetting of alarms after
  *           reboot of the device.
+ *
+ * @api_public
  */
 public abstract class PeriodicReplicationService<T extends PeriodicReplicationReceiver>
     extends ReplicationService {

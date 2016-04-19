@@ -24,6 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * @api_private
+ */
 public class SQLiteWrapperUtils {
 
     private static final String LOG_TAG = "SQLiteWrapperUtils";

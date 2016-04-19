@@ -22,6 +22,7 @@ import java.util.Properties;
 
 /**
  * Provides a HTTP User-Agent string for CloudantSync
+ * @api_private
  */
 public class LibraryVersion implements com.cloudant.http.Version {
 

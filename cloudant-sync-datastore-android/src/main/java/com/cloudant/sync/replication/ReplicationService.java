@@ -22,6 +22,8 @@ import java.util.Set;
  * This abstract class forms the basis for creating replication policies on Android.
  * The replications run in a {@link Service} so that they can properly manage the
  * lifecycle and handle being killed or restarted by the operating system
+ *
+ * @api_public
  */
 public abstract class ReplicationService extends Service
         implements ReplicationPolicyManager.ReplicationsCompletedListener {

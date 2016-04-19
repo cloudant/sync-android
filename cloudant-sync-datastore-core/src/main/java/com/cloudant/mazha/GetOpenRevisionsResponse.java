@@ -70,6 +70,8 @@ import java.util.Map;
  *
  * The response firstly is convert to a <code>List</code> of <code>Map</code>, which could be used to construct
  * and <code>GetOpenRevisionsResponse</code> object.
+ *
+ * @api_private
  */
 
 public class GetOpenRevisionsResponse {

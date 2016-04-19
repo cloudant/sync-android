@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * @api_private
+ */
 public class DocumentRevsUtils {
 
     private static final Logger logger = Logger.getLogger(DocumentRevsUtils.class.getCanonicalName());

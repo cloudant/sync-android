@@ -25,6 +25,9 @@ import com.google.common.base.Strings;
 
 import java.sql.SQLException;
 
+/**
+ * @api_private
+ */
 public class AndroidSQLite extends SQLDatabase {
 
     android.database.sqlite.SQLiteDatabase database = null;

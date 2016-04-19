@@ -36,10 +36,10 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
     public void setUp() throws Exception {
         super.setUp();
         jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
-        bodyOne = new BasicDocumentBody(jsonData);
+        bodyOne = new DocumentBodyImpl(jsonData);
 
         jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentTwoFile));
-        bodyTwo = new BasicDocumentBody(jsonData);
+        bodyTwo = new DocumentBodyImpl(jsonData);
     }
 
     @After

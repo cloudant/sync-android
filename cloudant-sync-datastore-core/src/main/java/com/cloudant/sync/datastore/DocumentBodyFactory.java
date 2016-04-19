@@ -21,6 +21,8 @@ import java.util.Map;
 /**
  * <p>Factory class to create DocumentBody objects from either JSON byte-streams
  * or java Map objects.</p>
+ *
+ * @api_public
  */
 public class DocumentBodyFactory {
 
@@ -28,7 +30,7 @@ public class DocumentBodyFactory {
      * <p>Returns a {@link DocumentBody}  object representing an empty document body.
      * This instance is shared.</p>
      */
-    public final static BasicDocumentBody EMPTY = new BasicDocumentBody(JSONUtils.emptyJSONObjectAsBytes());
+    public final static DocumentBodyImpl EMPTY = new DocumentBodyImpl(JSONUtils.emptyJSONObjectAsBytes());
 
     /**
      * <p>Returns a new {@link DocumentBody} object from JSON data.</p>
@@ -36,7 +38,7 @@ public class DocumentBodyFactory {
      * @return DocumentBody object containing given data.
      */
     public static DocumentBody create(byte[] bytes) {
-        return new BasicDocumentBody(bytes);
+        return new DocumentBodyImpl(bytes);
     }
 
     /**
@@ -45,6 +47,6 @@ public class DocumentBodyFactory {
      * @return DocumentBody object containing given data.
      */
     public static DocumentBody create(Map map) {
-        return new BasicDocumentBody(map);
+        return new DocumentBodyImpl(map);
     }
 }

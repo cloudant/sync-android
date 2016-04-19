@@ -22,6 +22,9 @@ import com.cloudant.android.ContentValues;
 
 import java.sql.SQLException;
 
+/**
+ * @api_private
+ */
 public abstract class SQLDatabase {
 
     public String filename;

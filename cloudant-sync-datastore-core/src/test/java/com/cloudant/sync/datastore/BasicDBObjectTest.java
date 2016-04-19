@@ -14,12 +14,9 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.sync.util.JSONUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
 
 public class BasicDBObjectTest {
 
@@ -41,7 +38,7 @@ public class BasicDBObjectTest {
     public void constructor_fullObject_objectShouldBeCorrectlyCreated() {
         this.builder.setDocId(DOCUMENT_ID);
         this.builder.setRevId(REVISION_ID);
-        this.builder.setBody(new BasicDocumentBody(JSON_BODY));
+        this.builder.setBody(new DocumentBodyImpl(JSON_BODY));
         this.builder.setSequence(SEQUENCE);
         this.builder.setInternalId(INTERNAL_ID);
         this.builder.setDeleted(Boolean.TRUE);
@@ -54,14 +51,4 @@ public class BasicDBObjectTest {
         Assert.assertEquals("test data", (String) td.getBody().asMap().get("a"));
     }
 
-    @Test
-    public void constructor_stubObject_stubObjectShouldBeCreated() {
-        this.builder.setDocId(DOCUMENT_ID);
-        this.builder.setRevId(REVISION_ID);
-
-        DocumentRevision td = this.builder.buildStub();
-        Assert.assertEquals(DOCUMENT_ID, td.getId());
-        Assert.assertEquals(REVISION_ID, td.getRevision());
-        Arrays.equals(JSONUtils.emptyJSONObjectAsBytes(), td.getBody().asBytes());
-    }
 }

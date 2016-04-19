@@ -32,6 +32,8 @@ import java.util.logging.Logger;
 
 /**
  * Implementation of SQLDatabase backed by sqlite4java.
+ *
+ * @api_private
  */
 public class SQLiteWrapper extends SQLDatabase {
 

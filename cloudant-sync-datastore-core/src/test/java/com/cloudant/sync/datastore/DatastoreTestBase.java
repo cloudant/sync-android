@@ -27,13 +27,13 @@ public abstract class DatastoreTestBase {
 
     String datastore_manager_dir;
     DatastoreManager datastoreManager;
-    BasicDatastore datastore = null;
+    DatastoreImpl datastore = null;
 
     @Before
     public void setUp() throws Exception {
         datastore_manager_dir = TestUtils.createTempTestingDir(this.getClass().getName());
         datastoreManager = new DatastoreManager(this.datastore_manager_dir);
-        this.datastore = (BasicDatastore) (this.datastoreManager.openDatastore(getClass().getSimpleName()));
+        this.datastore = (DatastoreImpl) (this.datastoreManager.openDatastore(getClass().getSimpleName()));
 
     }
 

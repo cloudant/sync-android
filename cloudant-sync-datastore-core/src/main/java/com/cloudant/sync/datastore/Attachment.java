@@ -23,6 +23,8 @@ import java.io.InputStream;
 
 /**
  * Base class for Attachments
+ *
+ * @api_public
  */
 public abstract class Attachment implements Comparable<Attachment>{
 

@@ -33,6 +33,8 @@ import java.util.logging.Logger;
  * SQLDatabaseQuue provides the ability to ensure that the
  * only a single thread accesses the SQLDatabase. Tasks submitted to this
  * queue are guaranteed to be executed in the order they are received
+ *
+ * @api_private
  */
 public class SQLDatabaseQueue {
 

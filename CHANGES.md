@@ -1,4 +1,13 @@
 # 1.0.0 (Unreleased)
+- [NOTE] This library follows the
+  [Semantic Versioning 2.0.0 specification](http://semver.org). To
+  support this we now explicitly declare which parts of the library
+  form the "public API" (see below). Subsequent version numbers will
+  reflect the compatibility status of API changes.
+- [IMPROVED] Javadoc output now shows "API Status" of "Public" or
+  "Private" for each class. See
+  [the last paragraph of this section of the README](https://github.com/cloudant/sync-android/blob/master/README.md#overview-of-the-library)
+  for more details.
 - [BREAKING CHANGE] The `EventBus` APIs have been changed from the Google Guava
   (`com.google.common.eventbus`) to our own `com.cloudant.sync.event` API. The new implementation
   has increased restrictions on visibility of `@Subscribe` annotated methods. See the
@@ -10,12 +19,15 @@
   to be updated to use the `DocumentRevision` class. See the updated
   [CRUD guide](https://github.com/cloudant/sync-android/blob/master/doc/crud.md)
   for examples of how to use this class.
-- [BREAKING CHANGE] Index type is now defined as the IndexType enum this effects
+- [BREAKING CHANGE] Index type is now defined as an enum. This affects
  the following APIs:
-  - Index#getInstance
-  - IndexManger#ensureIndexed
-- [BREAKING CHANGE] Made it easier to create replication policies where credentials for replicators
-  need to be retrieved asynchronously.
+  - `Index#getInstance`
+  - `IndexManger#ensureIndexed`
+- [BREAKING CHANGE] Creation of replication policies made easier where credentials for replicators
+need to be retrieved asynchronously.
+- [BREAKING CHANGE] The `DatastoreExtended` interface has been removed.
+- [BREAKING CHANGE] Some internal classes have been renamed. Code
+  relying on these classes will no longer compile.
 
 # 0.15.5 (2016-02-25)
 - [FIXED] Issue where `java.lang.RuntimeException: Offer timed out` could be thrown 5 minutes after

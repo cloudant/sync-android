@@ -16,6 +16,9 @@ package com.cloudant.sync.sqlite.sqlite4java;
 
 import com.cloudant.sync.sqlite.Cursor;
 
+/**
+ * @api_private
+ */
 public class DBUtils {
 
     public static int getTypeOfObject(Object obj) {

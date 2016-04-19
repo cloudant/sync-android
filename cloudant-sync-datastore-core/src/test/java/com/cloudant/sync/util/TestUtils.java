@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.util;
 
-import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
@@ -29,7 +28,6 @@ import java.lang.reflect.Method;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLData;
 import java.sql.SQLException;
 import java.util.UUID;
 

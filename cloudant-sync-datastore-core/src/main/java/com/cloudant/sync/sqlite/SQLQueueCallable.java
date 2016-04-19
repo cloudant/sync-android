@@ -19,6 +19,8 @@ import java.util.concurrent.Callable;
 /**
  * A task which performs actions on a SQLDatabase passed in when
  * called.
+ *
+ * @api_private
  */
 public abstract class SQLQueueCallable<T> implements Callable<T> {
 

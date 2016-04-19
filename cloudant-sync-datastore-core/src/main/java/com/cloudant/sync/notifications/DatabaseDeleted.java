@@ -19,6 +19,8 @@ package com.cloudant.sync.notifications;
  *
  * <p>This event is posted by
  * {@link com.cloudant.sync.datastore.DatastoreManager#deleteDatastore(String) daleteDatastore(String)}</p>
+ *
+ * @api_public
  */
 public class DatabaseDeleted extends DatabaseModified {
 

@@ -43,6 +43,7 @@ import java.util.zip.GZIPOutputStream;
  * The output stream returned should have unencrypted, unzipped data written to
  * its write method.
  *
+ * @api_private
  */
 class AttachmentStreamFactory {
 

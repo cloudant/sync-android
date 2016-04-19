@@ -19,6 +19,8 @@ import java.util.Map;
 
 /**
  * Created by tomblench on 22/01/16.
+ *
+ * @api_private
  */
 public class ForceInsertItem {
     public DocumentRevision rev;

@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.datastore;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
@@ -31,7 +30,9 @@ import java.util.logging.Logger;
  * An attachment which has been been copied to a temporary location and had its sha1 calculated,
  * prior to being added to the datastore.
  *
- * In most cases, this class will only be used by the AttachmentManager and BasicDatastore classes.
+ * In most cases, this class will only be used by the AttachmentManager and DatastoreImpl classes.
+ *
+ * @api_private
  */
 public class PreparedAttachment {
 

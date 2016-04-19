@@ -19,7 +19,7 @@ import java.net.URI;
 public class ReplicationPolicyManagerTest extends ReplicationTestBase {
 
     URI source;
-    BasicReplicator replicator;
+    ReplicatorImpl replicator;
 
     @Before
     public void setUp() throws Exception {

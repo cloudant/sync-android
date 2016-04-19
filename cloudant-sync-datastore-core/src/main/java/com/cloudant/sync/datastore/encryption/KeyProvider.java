@@ -19,6 +19,8 @@ package com.cloudant.sync.datastore.encryption;
  * keys used by the datastore when encryption is enabled.
  *
  * Created by Mike Rhodes on 11/05/15.
+ *
+ * @api_public
  */
 public interface KeyProvider {
 

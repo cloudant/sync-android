@@ -39,7 +39,7 @@ public class DocumentRevisionTreeTest {
 
     @Before
     public void startUp() {
-        b = new BasicDocumentBody("{\"a\": \"haha\"}".getBytes());
+        b = new DocumentBodyImpl("{\"a\": \"haha\"}".getBytes());
 
         /**
          * c1 -> c2 -> c3 -> c4 -> c5

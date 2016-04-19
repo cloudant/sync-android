@@ -7,6 +7,8 @@ import java.util.TimerTask;
  * This replication policy invokes replications at regular intervals.
  * This is not suitable for use on Android because the timer task is likely to be killed
  * by the operating system and this does not handle the case where the device is asleep.
+ *
+ * @api_public
  */
 public class IntervalTimerReplicationPolicyManager extends ReplicationPolicyManager {
 

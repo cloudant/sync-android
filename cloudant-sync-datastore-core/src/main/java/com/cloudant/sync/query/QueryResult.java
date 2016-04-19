@@ -31,6 +31,7 @@ import java.util.NoSuchElementException;
  *  Iterable result of a query executed with {@link IndexManager}.
  *
  *  @see IndexManager
+ *  @api_public
  */
 public class QueryResult implements Iterable<DocumentRevision> {
 

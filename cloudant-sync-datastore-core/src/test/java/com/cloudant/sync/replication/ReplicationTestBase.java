@@ -19,7 +19,7 @@ import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.CouchConfig;
-import com.cloudant.sync.datastore.DatastoreExtended;
+import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.TestUtils;
@@ -36,7 +36,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     public String datastoreManagerPath = null;
 
     protected DatastoreManager datastoreManager = null;
-    protected DatastoreExtended datastore = null;
+    protected DatastoreImpl datastore = null;
     protected SQLDatabase database = null;
     protected DatastoreWrapper datastoreWrapper = null;
 
@@ -64,7 +64,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     protected void createDatastore() throws Exception {
         datastoreManagerPath = TestUtils.createTempTestingDir(this.getClass().getName());
         datastoreManager = new DatastoreManager(this.datastoreManagerPath);
-        datastore = (DatastoreExtended) datastoreManager.openDatastore(getClass().getSimpleName());
+        datastore = (DatastoreImpl) datastoreManager.openDatastore(getClass().getSimpleName());
         datastoreWrapper = new DatastoreWrapper(datastore);
     }
 
@@ -129,21 +129,21 @@ public abstract class ReplicationTestBase extends CouchTestBase {
                 filter(filter);
     }
 
-    protected BasicPushStrategy getPushStrategy() {
-        return (BasicPushStrategy)((BasicReplicator)this.getPushBuilder().build()).strategy;
+    protected PushStrategy getPushStrategy() {
+        return (PushStrategy)((ReplicatorImpl)this.getPushBuilder().build()).strategy;
     }
 
-    protected BasicPullStrategy getPullStrategy() {
-        return (BasicPullStrategy)((BasicReplicator)this.getPullBuilder().build()).strategy;
+    protected PullStrategy getPullStrategy() {
+        return (PullStrategy)((ReplicatorImpl)this.getPullBuilder().build()).strategy;
     }
 
-    protected BasicPullStrategy getPullStrategy(PullFilter filter) {
-        return (BasicPullStrategy)((BasicReplicator)this.getPullBuilder(filter).build()).strategy;
+    protected PullStrategy getPullStrategy(PullFilter filter) {
+        return (PullStrategy)((ReplicatorImpl)this.getPullBuilder(filter).build()).strategy;
     }
 
     protected PushResult push() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        BasicPushStrategy replicator = this.getPushStrategy();
+        PushStrategy replicator = this.getPushStrategy();
         replicator.getEventBus().register(listener);
         replicator.run();
         Assert.assertTrue(listener.finishCalled);
@@ -153,7 +153,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     protected PullResult pull() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        BasicPullStrategy replicator = this.getPullStrategy();
+        PullStrategy replicator = this.getPullStrategy();
         replicator.getEventBus().register(listener);
         replicator.run();
         Assert.assertTrue(listener.finishCalled);
@@ -163,7 +163,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     protected PullResult pull(PullFilter filter) throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        BasicPullStrategy replicator = this.getPullStrategy(filter);
+        PullStrategy replicator = this.getPullStrategy(filter);
         replicator.getEventBus().register(listener);
         replicator.run();
         Assert.assertTrue(listener.finishCalled);
@@ -193,22 +193,22 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     }
 
     protected class PushResult {
-        public PushResult(BasicPushStrategy pushStrategy, TestStrategyListener listener) {
+        public PushResult(PushStrategy pushStrategy, TestStrategyListener listener) {
             this.pushStrategy = pushStrategy;
             this.listener = listener;
         }
 
-        BasicPushStrategy pushStrategy;
+        PushStrategy pushStrategy;
         TestStrategyListener listener;
     }
 
     protected class PullResult {
-        public PullResult(BasicPullStrategy pullStrategy, TestStrategyListener listener) {
+        public PullResult(PullStrategy pullStrategy, TestStrategyListener listener) {
             this.pullStrategy = pullStrategy;
             this.listener = listener;
         }
 
-        BasicPullStrategy pullStrategy;
+        PullStrategy pullStrategy;
         TestStrategyListener listener;
     }
 

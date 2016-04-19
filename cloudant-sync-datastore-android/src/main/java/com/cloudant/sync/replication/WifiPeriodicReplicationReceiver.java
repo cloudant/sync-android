@@ -50,6 +50,7 @@ import android.net.NetworkInfo;
  *
  * @param <T> The {@link PeriodicReplicationService} component triggered by this
  * {@link android.content.BroadcastReceiver}
+ * @api_public
  */
 
 public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicationService>

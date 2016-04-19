@@ -142,41 +142,61 @@ Once the libraries are added to a project, the basics of adding and reading
 a document are:
 
 ```java
-import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreNotCreatedException;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.datastore.UnsavedFileAttachment;
-
 // Create a DatastoreManager using application internal storage path
 File path = getApplicationContext().getDir("datastores", Context.MODE_PRIVATE);
 DatastoreManager manager = new DatastoreManager(path.getAbsolutePath());
 
-Datastore ds = manager.openDatastore("my_datastore");
+try {
+    Datastore ds = manager.openDatastore("my_datastore");
 
-// Create a document
-DocumentRevision revision = new DocumentRevision();
-Map<String, Object> body = new HashMap<String, Object>();
-body.put("animal", "cat");
-revision.setBody(DocumentBodyFactory.create(body));
-DocumentRevision saved = ds.createDocumentFromRevision(revision);
+    // Create a document
+    DocumentRevision revision = new DocumentRevision();
+    Map<String, Object> body = new HashMap<String, Object>();
+    body.put("animal", "cat");
+    revision.setBody(DocumentBodyFactory.create(body));
+    DocumentRevision saved = ds.createDocumentFromRevision(revision);
 
-// Add an attachment -- binary data like a JPEG
-UnsavedFileAttachment att1 = new UnsavedFileAttachment(new File("/path/to/image.jpg"),
-                                                       "image/jpeg");
-saved.getAttachments().put(att1.name, att1);
-DocumentRevision updated = ds.updateDocumentFromRevision(saved);
+    // Add an attachment -- binary data like a JPEG
+    UnsavedFileAttachment att1 =
+        new UnsavedFileAttachment(new File("/path/to/image.jpg"), "image/jpeg");
+    saved.getAttachments().put(att1.name, att1);
+    DocumentRevision updated = ds.updateDocumentFromRevision(saved);
 
-// Read a document
-DocumentRevision aRevision = ds.getDocument(updated.getId());
+    // Read a document
+    DocumentRevision aRevision = ds.getDocument(updated.getId());
+} catch (DatastoreException datastoreException) {
+
+    // this will be thrown if we don't have permissions to write to the
+    // datastore path
+    System.err.println("Problem opening datastore: "+datastoreException);
+} catch (DocumentException documentException) {
+
+    // this will be thrown in case of errors performing CRUD operations on
+    // documents
+    System.err.println("Problem accessing datastore: "+documentException);
+}
 ```
 
 Read more in [the CRUD document](https://github.com/cloudant/sync-android/blob/master/doc/crud.md).
 
 You can also subscribe for notifications of changes in the database, which
 is described in [the events documentation](https://github.com/cloudant/sync-android/blob/master/doc/events.md).
+
+The
+[javadoc](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-core/)
+for the latest release version of the library is the definitive
+reference for the library. Each jar contains the full javadoc for
+itself and the other jars - this is for convenience at the slight
+expense of duplication.
+
+Note that each class has an "API Status" declaration in the
+javadoc. This status is either "Public" or "Private". The general
+guidance is that API consumers (who are building software which uses
+this library) are discouraged from using "Private" API classes. This
+is because they may expose implementation details of the library which
+may be subject to change without notice or without change to the major
+version number. This behaviour follows the
+[Semantic Versioning 2.0.0 specification](http://semver.org).
 
 ### Replicating Data Between Many Devices
 
@@ -189,9 +209,6 @@ device the the remote database.
 Replication is simple to get started in the common cases:
 
 ```java
-import com.cloudant.sync.replication.ReplicatorBuilder;
-import com.cloudant.sync.replication.Replicator;
-
 URI uri = new URI("https://apikey:apipasswd@username.cloudant.com/my_database");
 Datastore ds = manager.openDatastore("my_datastore");
 

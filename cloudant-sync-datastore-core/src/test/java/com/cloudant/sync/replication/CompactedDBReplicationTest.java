@@ -39,7 +39,7 @@ import java.util.Set;
 @Category(RequireRunningCouchDB.class)
 public class CompactedDBReplicationTest extends ReplicationTestBase {
 
-    BasicReplicator replicator;
+    ReplicatorImpl replicator;
 
     @Before
     public void setUp() throws Exception {

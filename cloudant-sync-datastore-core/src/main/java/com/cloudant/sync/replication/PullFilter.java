@@ -46,6 +46,7 @@ import java.util.Map;
  *
  * @see <a href="http://couchdb.readthedocs.org/en/1.6.x/replication/intro.html#controlling-which-documents-to-replicate">Controlling documents replicated</a>
  * @see <a href="http://docs.couchdb.org/en/1.6.x/couchapp/ddocs.html#filter-functions">Filter functions CouchDB docs</a>
+ * @api_public
  */
 public class PullFilter {
 
@@ -120,7 +121,7 @@ public class PullFilter {
      *
      * @return Query string like representation of the filter
      *
-     * @see BasicPullStrategy#getReplicationId()
+     * @see PullStrategy#getReplicationId()
      */
     public String toQueryString() {
         if (this.parameters == null) {

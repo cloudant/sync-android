@@ -198,7 +198,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         Assert.assertNotNull(response);
     }
 
-    private void waitForPushToFinish(BasicPushStrategy push) throws Exception{
+    private void waitForPushToFinish(PushStrategy push) throws Exception{
         TestStrategyListener listener = new TestStrategyListener();
         push.eventBus.register(listener);
         Thread t = new Thread(push);
@@ -209,7 +209,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         push.eventBus.unregister(listener);
     }
 
-    private void waitForPullToFinish(BasicPullStrategy pull) throws Exception {
+    private void waitForPullToFinish(PullStrategy pull) throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
         pull.getEventBus().register(listener);
         Thread t = new Thread(pull);

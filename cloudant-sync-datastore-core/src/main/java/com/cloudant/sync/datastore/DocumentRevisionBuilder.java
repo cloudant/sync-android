@@ -19,6 +19,8 @@ import java.util.List;
 
 /**
  * <p>Build {@link DocumentRevision}s in a chained manner.</p>
+ *
+ * @api_private
  */
 public class DocumentRevisionBuilder {
 
@@ -67,40 +69,6 @@ public class DocumentRevisionBuilder {
         options.parent = parent;
         options.attachments = attachments;
         return new DocumentRevision(docId, revId, body, options);
-    }
-
-    /**
-     * <p>Builds and returns the {@link DocumentRevision} for this builder, as a
-     * local document.</p>
-     * @return the {@link DocumentRevision} for this builder as a local document
-     */
-    protected DocumentRevision buildBasicDBObjectLocalDocument() {
-        assert this.revId.endsWith("-local");
-        return new DocumentRevision(docId, revId, body);
-    }
-
-    /**
-     * <p>Builds and returns the {@link DocumentRevision} for this builder, as a
-     * local document.</p>
-     * @return the {@link DocumentRevision} for this builder as a local document
-     */
-    public DocumentRevision buildLocalDocument() {
-        assert this.revId.endsWith("-local");
-        return new DocumentRevision(docId, revId, body);
-    }
-
-
-    /**
-     * <p>Builds and returns the stub {@link DocumentRevision} for this builder.</p>
-     *
-     * <p>A "stub" object has document and revision IDs, but no content/body.
-     * </p>
-     *
-     * @return the stub {@code DocumentRevision} for this builder
-     */
-    public DocumentRevision buildStub() {
-        assert body == null;
-        return new DocumentRevision(docId, revId, DocumentBodyFactory.EMPTY);
     }
 
     /**

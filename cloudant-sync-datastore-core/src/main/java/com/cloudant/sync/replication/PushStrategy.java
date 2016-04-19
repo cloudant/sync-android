@@ -23,7 +23,7 @@ import com.cloudant.sync.datastore.AttachmentException;
 import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreExtended;
+import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
@@ -48,7 +48,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-class BasicPushStrategy implements ReplicationStrategy {
+/**
+ * @api_private
+ */
+class PushStrategy implements ReplicationStrategy {
 
     // internal state which gets reset each time run() is called
     private static class State {
@@ -69,9 +72,9 @@ class BasicPushStrategy implements ReplicationStrategy {
 
     private State state;
 
-    private static final String LOG_TAG = "BasicPushStrategy";
+    private static final String LOG_TAG = "PushStrategy";
 
-    private static final Logger logger = Logger.getLogger(BasicPushStrategy.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(PushStrategy.class.getCanonicalName());
 
     CouchDB targetDb;
 
@@ -91,11 +94,11 @@ class BasicPushStrategy implements ReplicationStrategy {
 
     public PushAttachmentsInline pushAttachmentsInline = PushAttachmentsInline.Small;
 
-    public BasicPushStrategy(Datastore source,
-                             URI target,
-                             List<HttpConnectionRequestInterceptor> requestInterceptors,
-                             List<HttpConnectionResponseInterceptor> responseInterceptors) {
-        this.sourceDb = new DatastoreWrapper((DatastoreExtended) source);
+    public PushStrategy(Datastore source,
+                        URI target,
+                        List<HttpConnectionRequestInterceptor> requestInterceptors,
+                        List<HttpConnectionResponseInterceptor> responseInterceptors) {
+        this.sourceDb = new DatastoreWrapper((DatastoreImpl) source);
         this.targetDb = new CouchClientWrapper(new CouchClient(target, requestInterceptors, responseInterceptors));
         String replicatorName = String.format("%s <-- %s ", target, source.getDatastoreName());
         this.name = String.format("%s [%s]", LOG_TAG, replicatorName);
@@ -329,7 +332,7 @@ class BasicPushStrategy implements ReplicationStrategy {
      * @throws AttachmentException
      *
      * @see com.cloudant.mazha.CouchClient.MissingRevisions
-     * @see com.cloudant.sync.replication.BasicPushStrategy.ItemsToPush
+     * @see PushStrategy.ItemsToPush
      */
     private ItemsToPush missingRevisionsToJsonDocs(
             Map<String, DocumentRevisionTree> allTrees,

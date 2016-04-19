@@ -16,6 +16,8 @@ package com.cloudant.sync.query;
 
 /**
  * Denotes the type for an Query Index.
+ *
+ * @api_public
  */
 public enum IndexType {
 

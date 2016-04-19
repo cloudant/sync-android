@@ -17,6 +17,8 @@ import android.support.v4.content.WakefulBroadcastReceiver;
  *
  * @param <T> The {@link PeriodicReplicationService} component triggered by this
  * {@link android.content.BroadcastReceiver}
+ *
+ * @api_public
  */
 public class PeriodicReplicationReceiver<T extends PeriodicReplicationService> extends WakefulBroadcastReceiver {
 

@@ -19,6 +19,9 @@ package com.cloudant.mazha;
 import com.cloudant.mazha.json.OpenRevisionDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+/**
+ * @api_private
+ */
 @JsonDeserialize(using = OpenRevisionDeserializer.class)
 public interface OpenRevision {
 }

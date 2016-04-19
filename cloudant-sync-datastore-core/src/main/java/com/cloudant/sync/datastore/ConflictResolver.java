@@ -18,6 +18,8 @@ import java.util.List;
 
 /**
  * Interface to implement conflicts resolving algorithm.
+ *
+ * @api_public
  */
 public interface ConflictResolver {
 
