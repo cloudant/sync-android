@@ -14,22 +14,20 @@
 
 package com.cloudant.sync.datastore;
 
-import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-
+import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DatabaseCreated;
+import com.cloudant.sync.notifications.DatabaseDeleted;
+import com.cloudant.sync.notifications.DatabaseOpened;
+import com.cloudant.sync.util.TestUtils;
+
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.cloudant.sync.notifications.DatabaseOpened;
-import com.cloudant.sync.notifications.DatabaseDeleted;
-import com.cloudant.sync.util.TestUtils;
-import com.google.common.eventbus.Subscribe;
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 public class DatabaseNotificationsTest {
 

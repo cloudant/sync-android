@@ -14,11 +14,22 @@
 
 package com.cloudant.sync.replication;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+
 import com.cloudant.sync.datastore.DatastoreExtended;
+import com.cloudant.sync.event.EventBus;
+import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,8 +38,6 @@ import org.mockito.stubbing.Answer;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-
-import static org.mockito.Mockito.*;
 
 public class BasicReplicatorMockTest {
 

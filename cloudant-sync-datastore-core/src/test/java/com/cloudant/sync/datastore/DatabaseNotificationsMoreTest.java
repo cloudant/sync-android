@@ -14,11 +14,14 @@
 
 package com.cloudant.sync.datastore;
 
+import static org.hamcrest.Matchers.hasSize;
+
+import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DatabaseCreated;
 import com.cloudant.sync.notifications.DatabaseOpened;
 import com.cloudant.sync.util.TestUtils;
-import com.google.common.eventbus.Subscribe;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -26,8 +29,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.hamcrest.Matchers.hasSize;
 
 /**
  * Uses pattern called EventRecorder to assert certain and only certain

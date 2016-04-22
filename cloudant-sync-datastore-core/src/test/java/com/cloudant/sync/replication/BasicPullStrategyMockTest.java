@@ -14,6 +14,15 @@
 
 package com.cloudant.sync.replication;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.DocumentRevs;
@@ -21,13 +30,11 @@ import com.cloudant.mazha.OkOpenRevision;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.datastore.DocumentRevsList;
+import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.util.TestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.eventbus.Subscribe;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.invocation.InvocationOnMock;
@@ -39,11 +46,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Mockito.*;
 
 @Category(RequireRunningCouchDB.class)
 public class BasicPullStrategyMockTest extends ReplicationTestBase {

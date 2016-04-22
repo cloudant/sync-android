@@ -14,13 +14,16 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.sync.event.EventBus;
+import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
 import com.google.common.base.Preconditions;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 
-class BasicReplicator implements Replicator {
+/**
+ * This class is not intended as API, it is public for EventBus access only.
+ */
+public class BasicReplicator implements Replicator {
 
     public static final int NULL_ID = -1;
     protected Thread strategyThread;

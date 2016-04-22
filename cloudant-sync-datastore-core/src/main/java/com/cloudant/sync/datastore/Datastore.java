@@ -18,7 +18,7 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.datastore.encryption.KeyProvider;
-import com.google.common.eventbus.EventBus;
+import com.cloudant.sync.event.EventBus;
 
 import java.util.Iterator;
 import java.util.List;

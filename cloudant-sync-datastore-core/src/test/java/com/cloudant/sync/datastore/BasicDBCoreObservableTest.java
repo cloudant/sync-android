@@ -14,16 +14,16 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.event.Subscribe;
+import com.cloudant.sync.notifications.DocumentModified;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.TestUtils;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.cloudant.sync.notifications.DocumentModified;
-import com.google.common.eventbus.Subscribe;
 
 public class BasicDBCoreObservableTest {
 

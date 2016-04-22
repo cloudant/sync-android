@@ -26,6 +26,7 @@ import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.datastore.migrations.MigrateDatabase6To100;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
+import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
@@ -44,7 +45,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.eventbus.EventBus;
 
 import org.apache.commons.io.FilenameUtils;
 

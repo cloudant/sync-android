@@ -15,7 +15,8 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.sync.datastore.DatastoreException;
-import com.google.common.eventbus.EventBus;
+import com.cloudant.sync.event.EventBus;
+
 
 interface ReplicationStrategy extends Runnable {
 

@@ -14,16 +14,16 @@
 
 package com.cloudant.sync.datastore;
 
-import java.util.concurrent.CountDownLatch;
+import com.cloudant.sync.event.Subscribe;
+import com.cloudant.sync.notifications.DocumentCreated;
+import com.cloudant.sync.notifications.DocumentDeleted;
+import com.cloudant.sync.notifications.DocumentUpdated;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.cloudant.sync.notifications.DocumentCreated;
-import com.cloudant.sync.notifications.DocumentDeleted;
-import com.cloudant.sync.notifications.DocumentUpdated;
-import com.google.common.eventbus.Subscribe;
+import java.util.concurrent.CountDownLatch;
 
 public class DocumentNotificationsTest extends BasicDatastoreTestBase {
 

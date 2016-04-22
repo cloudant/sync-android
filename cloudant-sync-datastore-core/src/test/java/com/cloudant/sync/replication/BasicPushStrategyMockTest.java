@@ -14,9 +14,19 @@
 
 package com.cloudant.sync.replication;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.CouchClient;
-import com.google.common.eventbus.Subscribe;
+import com.cloudant.sync.event.Subscribe;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -25,8 +35,6 @@ import org.mockito.ArgumentMatcher;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.mockito.Mockito.*;
 
 @Category(RequireRunningCouchDB.class)
 public class BasicPushStrategyMockTest extends ReplicationTestBase {
