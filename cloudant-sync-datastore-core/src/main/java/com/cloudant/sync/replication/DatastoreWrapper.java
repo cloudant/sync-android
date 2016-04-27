@@ -18,8 +18,8 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.AttachmentException;
 import com.cloudant.sync.datastore.DatastoreException;
+import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentNotFoundException;
 import com.cloudant.sync.datastore.DocumentRevision;
@@ -42,13 +42,13 @@ class DatastoreWrapper {
 
     private final static Logger logger = Logger.getLogger(DatastoreWrapper.class.getCanonicalName());
 
-    private DatastoreExtended dbCore;
+    private DatastoreImpl dbCore;
 
-    public DatastoreWrapper(DatastoreExtended dbCore) {
+    public DatastoreWrapper(DatastoreImpl dbCore) {
         this.dbCore = dbCore;
     }
 
-    public DatastoreExtended getDbCore() {
+    public DatastoreImpl getDbCore() {
         return dbCore;
     }
 
@@ -90,9 +90,9 @@ class DatastoreWrapper {
         return "_local/" + replicatorIdentifier;
     }
 
-    public void bulkInsert(List<BasicPullStrategy.BatchItem> batches, boolean pullAttachmentsInline) throws DocumentException  {
+    public void bulkInsert(List<PullStrategy.BatchItem> batches, boolean pullAttachmentsInline) throws DocumentException  {
         List<ForceInsertItem> itemsToInsert = new ArrayList<ForceInsertItem>();
-        for (BasicPullStrategy.BatchItem batch : batches) {
+        for (PullStrategy.BatchItem batch : batches) {
             for (DocumentRevs documentRevs : batch.revsList) {
                 logger.log(Level.FINEST, "Bulk inserting document revs: %s", documentRevs);
 

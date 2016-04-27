@@ -46,7 +46,7 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
     // NB although the user has to encode the / themselves as %2F, this is still a valuable test
     // as it shows we don't double-encode eg encode %2F as %252F
 
-    BasicReplicator replicator;
+    ReplicatorImpl replicator;
 
     @Before
     public void setUp() throws Exception {

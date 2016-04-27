@@ -22,7 +22,6 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,13 +42,13 @@ public class BasicDBBodyTest {
     @Test(expected = IllegalArgumentException.class)
     public void constructor_nullInput_exception() {
         Map m = null;
-        new BasicDocumentBody(m);
+        new DocumentBodyImpl(m);
     }
 
     // Invalid input should result in am object with empty JSON body
     @Test(expected = IllegalArgumentException.class)
     public void constructor_invalidInput_objectWithEmptyJsonShouldBeCreated() {
-        DocumentBody body = new BasicDocumentBody("[]".getBytes());
+        DocumentBody body = new DocumentBodyImpl("[]".getBytes());
         Assert.assertTrue(Arrays.equals("{}".getBytes(), body.asBytes()));
         Assert.assertNotNull(body.asMap());
         Assert.assertTrue(body.asMap().size() == 0);
@@ -57,7 +56,7 @@ public class BasicDBBodyTest {
 
     @Test
     public void constructor_byteArray_correctObjectShouldBeCreated() throws Exception {
-        DocumentBody body = new BasicDocumentBody(jsonData);
+        DocumentBody body = new DocumentBodyImpl(jsonData);
         Assert.assertTrue(Arrays.equals(jsonData, body.asBytes()));
         Assert.assertNotNull(body.asMap());
 
@@ -67,14 +66,14 @@ public class BasicDBBodyTest {
 
     @Test
     public void constructor_map_correctObjectShouldBeCreated() {
-        DocumentBody body = new BasicDocumentBody(JSONUtils.deserialize(jsonData));
+        DocumentBody body = new DocumentBodyImpl(JSONUtils.deserialize(jsonData));
         Map<String, Object> map = JSONUtils.deserialize(body.asBytes());
         assertMapIsCorrect(map);
     }
 
     @Test
     public void constructor_emptyMap_objectWithEmptyJsonShouldBeCreated() {
-        DocumentBody body = new BasicDocumentBody(new HashMap());
+        DocumentBody body = new DocumentBodyImpl(new HashMap());
         Assert.assertTrue(Arrays.equals("{}".getBytes(), body.asBytes()));
         Assert.assertNotNull(body.asMap());
         Assert.assertTrue(body.asMap().size() == 0);
@@ -83,7 +82,7 @@ public class BasicDBBodyTest {
     @Test
     public void asMap_differentNumberTypes_jacksonPicksNaturalMapping() throws IOException {
         byte[] d = FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/basic_bdbody_test_as_map.json"));
-        DocumentBody body = new BasicDocumentBody(d);
+        DocumentBody body = new DocumentBodyImpl(d);
         Assert.assertEquals("-101", body.asMap().get("StringValue"));
 
         Map<String, Object> m = body.asMap();

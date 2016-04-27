@@ -5,6 +5,8 @@ package com.cloudant.sync.query;
  * we can pass meaningful exception traces over the {@link QueryResult#iterator()}
  * boundary as we can't change the signature of {@link QueryResult#iterator} to
  * add a checked exception.
+ *
+ * @api_public
  */
 public class QueryException extends RuntimeException {
     public QueryException(Exception causedBy){

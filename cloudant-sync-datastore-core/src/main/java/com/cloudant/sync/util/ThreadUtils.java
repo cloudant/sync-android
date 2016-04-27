@@ -16,6 +16,7 @@ package com.cloudant.sync.util;
 
 /**
  * Internal utility class
+ * @api_private
  */
 public class ThreadUtils {
 

@@ -21,6 +21,7 @@ import java.lang.reflect.Constructor;
 
 /**
  * Created by tomblench on 07/07/2014.
+ * @api_private
  */
 public class Base64InputStreamFactory {
     public static InputStream get(InputStream is) {

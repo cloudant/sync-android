@@ -149,7 +149,7 @@ public class DatastoreManagerTest {
         Map m = new HashMap<String, Object>();
         m.put("name", name);
         DocumentRevision rev = new DocumentRevision();
-        rev.setBody(new BasicDocumentBody(m));
+        rev.setBody(new DocumentBodyImpl(m));
         return rev;
     }
 

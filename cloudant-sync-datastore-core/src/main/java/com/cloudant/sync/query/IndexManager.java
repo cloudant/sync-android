@@ -37,6 +37,7 @@
 package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.sqlite.Cursor;
@@ -68,6 +69,8 @@ import java.util.regex.Pattern;
  *  - delete indexes
  *  - execute queries
  *  - update indexes (usually done automatically)
+ *
+ *  @api_public
  */
 public class IndexManager {
 
@@ -96,9 +99,9 @@ public class IndexManager {
         validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
         queue = Executors.newSingleThreadExecutor();
 
-        final String filename = datastore.extensionDataFolder(EXTENSION_NAME) + File.separator
+        final String filename = ((DatastoreImpl)datastore).extensionDataFolder(EXTENSION_NAME) + File.separator
                                                                               + "indexes.sqlite";
-        final KeyProvider keyProvider = datastore.getKeyProvider();
+        final KeyProvider keyProvider = ((DatastoreImpl)datastore).getKeyProvider();
 
         SQLDatabase sqlDatabase = null;
         try {

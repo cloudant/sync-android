@@ -35,6 +35,9 @@ import com.google.common.base.Strings;
 import net.sqlcipher.database.SQLiteConstraintException;
 import net.sqlcipher.database.SQLiteDatabase;
 
+/**
+ * @api_private
+ */
 public class AndroidSQLCipherSQLite extends SQLDatabase {
 
     SQLiteDatabase database = null;

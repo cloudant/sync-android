@@ -27,13 +27,15 @@ import java.util.List;
 
 /**
  * A Builder to create a {@link Replicator Object}
+ *
+ * @api_public
  */
 // S = Source Type, T = target Type, E = Extending class Type
 public abstract class ReplicatorBuilder<S, T, E> {
 
     private T target;
     private S source;
-    private int id = BasicReplicator.NULL_ID;
+    private int id = ReplicatorImpl.NULL_ID;
     private List<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList
             <HttpConnectionRequestInterceptor>();
     private List<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList
@@ -102,7 +104,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             // add cookie interceptor and remove creds from URI if required
             super.target = super.addCookieInterceptorIfRequired(super.target);
 
-            BasicPushStrategy pushStrategy = new BasicPushStrategy(super.source,
+            PushStrategy pushStrategy = new PushStrategy(super.source,
                     super.target,
                     super.requestInterceptors,
                     super.responseInterceptors);
@@ -112,7 +114,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             pushStrategy.bulkInsertSize = bulkInsertSize;
             pushStrategy.pushAttachmentsInline = pushAttachmentsInline;
 
-            return new BasicReplicator(pushStrategy, super.id);
+            return new ReplicatorImpl(pushStrategy, super.id);
         }
 
         /**
@@ -185,7 +187,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             // add cookie interceptor and remove creds from URI if required
             super.source = super.addCookieInterceptorIfRequired(super.source);
 
-            BasicPullStrategy pullStrategy = new BasicPullStrategy(super.source,
+            PullStrategy pullStrategy = new PullStrategy(super.source,
                     super.target,
                     pullPullFilter,
                     super.requestInterceptors,
@@ -196,7 +198,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             pullStrategy.insertBatchSize = insertBatchSize;
             pullStrategy.pullAttachmentsInline = pullAttachmentsInline;
 
-            return new BasicReplicator(pullStrategy, super.id);
+            return new ReplicatorImpl(pullStrategy, super.id);
         }
 
         /**

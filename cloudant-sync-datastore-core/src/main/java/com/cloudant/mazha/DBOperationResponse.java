@@ -18,7 +18,9 @@
 
 package com.cloudant.mazha;
 
-
+/**
+ * @api_private
+ */
 public class DBOperationResponse {
     private boolean ok = Boolean.FALSE;
 

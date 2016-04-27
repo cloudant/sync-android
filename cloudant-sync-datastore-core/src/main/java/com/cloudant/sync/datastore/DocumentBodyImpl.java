@@ -24,12 +24,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-final class BasicDocumentBody implements DocumentBody {
+/**
+ * @api_private
+ */
+final class DocumentBodyImpl implements DocumentBody {
 
     private byte[] bytes;
     private Map<String, Object> map;
 
-    protected BasicDocumentBody(byte[] bytes) {
+    protected DocumentBodyImpl(byte[] bytes) {
         // compacted revisions have their bodies set to null, so return an empty body
         if (bytes == null) {
             bytes = JSONUtils.emptyJSONObjectAsBytes();
@@ -41,7 +44,7 @@ final class BasicDocumentBody implements DocumentBody {
         }
     }
 
-    protected BasicDocumentBody(Map map) {
+    protected DocumentBodyImpl(Map map) {
         Preconditions.checkArgument(map != null);
         if(JSONUtils.isValidJSON(map)) {
             this.map = map;
@@ -51,11 +54,11 @@ final class BasicDocumentBody implements DocumentBody {
     }
 
     public static DocumentBody bodyWith(byte[] bytes) {
-        return new BasicDocumentBody(bytes);
+        return new DocumentBodyImpl(bytes);
     }
 
     public static DocumentBody bodyWith(Map map) {
-        return new BasicDocumentBody(map);
+        return new DocumentBodyImpl(map);
     }
 
     @Override

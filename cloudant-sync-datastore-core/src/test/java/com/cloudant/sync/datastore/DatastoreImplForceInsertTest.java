@@ -36,7 +36,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
-public class BasicDatastoreForceInsertTest {
+public class DatastoreImplForceInsertTest {
 
     public static final String OBJECT_ID = "object_id";
     String database_dir ;
@@ -44,21 +44,21 @@ public class BasicDatastoreForceInsertTest {
     String documentTwoFile = "fixture/document_2.json";
 
     SQLDatabase database = null;
-    BasicDatastore datastore = null;
+    DatastoreImpl datastore = null;
     byte[] jsonData = null;
     DocumentBody bodyOne = null;
     DocumentBody bodyTwo = null;
 
     @Before
     public void setUp() throws Exception {
-        database_dir = TestUtils.createTempTestingDir(BasicDatastoreForceInsertTest.class.getName());
-        datastore = new BasicDatastore(database_dir, "test");
+        database_dir = TestUtils.createTempTestingDir(DatastoreImplForceInsertTest.class.getName());
+        datastore = new DatastoreImpl(database_dir, "test");
 
         jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
-        bodyOne = new BasicDocumentBody(jsonData);
+        bodyOne = new DocumentBodyImpl(jsonData);
 
         jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentTwoFile));
-        bodyTwo = new BasicDocumentBody(jsonData);
+        bodyTwo = new DocumentBodyImpl(jsonData);
     }
 
     @After
@@ -104,7 +104,7 @@ public class BasicDatastoreForceInsertTest {
         builder.setDocId(OBJECT_ID);
         builder.setRevId(rev);
         builder.setDeleted(true);
-        builder.setBody(new BasicDocumentBody(JSONUtils.emptyJSONObjectAsBytes()));
+        builder.setBody(new DocumentBodyImpl(JSONUtils.emptyJSONObjectAsBytes()));
         return builder.build();
     }
 

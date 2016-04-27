@@ -25,6 +25,7 @@ import com.cloudant.sync.replication.Replicator;
  *
  * <p>Continuous replications (when implemented) will never complete.</p>
  *
+ * @api_public
  */
 public class ReplicationCompleted {
 

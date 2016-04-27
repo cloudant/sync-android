@@ -24,8 +24,10 @@ import java.util.List;
  * <p>{@code Changes} objects describe a list of changes to the datastore.</p>
  *
  * <p>The object contains a list of the changes between some sequence number
- * (passed to the {@link DatastoreExtended#changes(long, int)} method) and
+ * (passed to the {@link Datastore#changes(long, int)} method) and
  * the {@link Changes#lastSequence} field of the object.</p>
+ *
+ * @api_public
  */
 public class Changes {
 

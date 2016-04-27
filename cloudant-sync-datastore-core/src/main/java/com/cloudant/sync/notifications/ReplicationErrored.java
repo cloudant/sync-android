@@ -27,6 +27,7 @@ import com.cloudant.sync.replication.Replicator;
  *      <li>network connection unavailable</li>
  * </ul>
  *
+ * @api_public
  */
 public class ReplicationErrored {
 

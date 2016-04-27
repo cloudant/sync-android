@@ -18,7 +18,9 @@
 
 package com.cloudant.mazha;
 
-
+/**
+ * @api_private
+ */
 public class CouchException extends RuntimeException {
 
     private int statusCode;

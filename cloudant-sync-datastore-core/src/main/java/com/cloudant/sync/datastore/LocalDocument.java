@@ -16,6 +16,8 @@ package com.cloudant.sync.datastore;
 
 /**
  * A local Document, this document does not have a history, or the concept of revisions
+ *
+ * @api_private
  */
 public class LocalDocument {
 

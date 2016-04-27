@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * method for posting an event to the bus. Events are isolated to each specific instance of this
  * class.
  * </p>
+ * @api_public
  */
 public class EventBus {
 

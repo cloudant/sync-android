@@ -39,6 +39,8 @@ import java.util.Map;
  * content for this revision as a {@link DocumentBody} object. Clients will
  * typically set only the revision content rather than the metadata
  * explicitly.</p>
+ *
+ * @api_public
  */
 public class DocumentRevision implements Comparable<DocumentRevision> {
 
@@ -228,7 +230,7 @@ public class DocumentRevision implements Comparable<DocumentRevision> {
      *
      * @return the sequence number of this revision's parent revision.
      */
-    public long getParent() {
+    long getParent() {
         return this.parent;
     }
 

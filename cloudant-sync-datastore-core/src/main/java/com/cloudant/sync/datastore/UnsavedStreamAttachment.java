@@ -23,6 +23,8 @@ import java.io.InputStream;
 
 /**
  * An Attachment which is read from a stream before saving to the database
+ *
+ * @api_public
  */
 public class UnsavedStreamAttachment extends Attachment {
 

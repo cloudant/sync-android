@@ -40,7 +40,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
     public void start_StartedThenComplete() throws Exception {
         prepareTwoDocumentsInLocalDB();
 
-        BasicReplicator replicator = (BasicReplicator)super.getPushBuilder().build();
+        ReplicatorImpl replicator = (ReplicatorImpl)super.getPushBuilder().build();
 
         TestReplicationListener listener = new TestReplicationListener();
         Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
@@ -67,7 +67,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
             BarUtils.createBar(datastore, "docnum", i);
         }
 
-        BasicReplicator replicator = (BasicReplicator)super.getPushBuilder().build();
+        ReplicatorImpl replicator = (ReplicatorImpl)super.getPushBuilder().build();
 
         TestReplicationListener listener = new TestReplicationListener();
         Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
@@ -132,7 +132,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
         prepareTwoDocumentsInLocalDB();
         ReplicatorBuilder replicatorBuilder = super.getPushBuilder();
         Replicator replicator = replicatorBuilder.build();
-        ReplicationStrategy replicationStrategy = ((BasicReplicator)replicator).strategy;
+        ReplicationStrategy replicationStrategy = ((ReplicatorImpl)replicator).strategy;
         replicator.start();
         // replicate 2 docs created above
         while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
@@ -142,7 +142,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
         Assert.assertEquals(2, replicationStrategy.getDocumentCounter());
         Bar bar3 = BarUtils.createBar(datastore, "Test", 52);
         replicator.start();
-        ReplicationStrategy replicationStrategy2 = ((BasicReplicator)replicator).strategy;
+        ReplicationStrategy replicationStrategy2 = ((ReplicatorImpl)replicator).strategy;
         // replicate 3rd doc
         while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
             Thread.sleep(50);
@@ -158,10 +158,10 @@ public class PushReplicatorTest extends ReplicationTestBase {
         ReplicatorBuilder.Push p = ReplicatorBuilder.push().
                 from(datastore).
                 to(new URI("http://🍶:🍶@some-host:123/path%2Fsome-path-日本"));
-        BasicReplicator r = (BasicReplicator)p.build();
+        ReplicatorImpl r = (ReplicatorImpl)p.build();
         // check that user/pass has been removed
         Assert.assertEquals("http://some-host:123/path%2Fsome-path-日本",
-                (((CouchClientWrapper) (((BasicPushStrategy) r.strategy).targetDb)).
+                (((CouchClientWrapper) (((PushStrategy) r.strategy).targetDb)).
                         getCouchClient().
                         getRootUri()).
                         toString()
@@ -174,10 +174,10 @@ public class PushReplicatorTest extends ReplicationTestBase {
         ReplicatorBuilder.Push p = ReplicatorBuilder.push().
                 from(datastore).
                 to(new URI("http://🍶:🍶@some-host/path%2Fsome-path-日本"));
-        BasicReplicator r = (BasicReplicator)p.build();
+        ReplicatorImpl r = (ReplicatorImpl)p.build();
         // check that user/pass has been removed
         Assert.assertEquals("http://some-host:80/path%2Fsome-path-日本",
-                (((CouchClientWrapper)(((BasicPushStrategy)r.strategy).targetDb)).
+                (((CouchClientWrapper)(((PushStrategy)r.strategy).targetDb)).
                         getCouchClient().
                         getRootUri()).
                         toString()

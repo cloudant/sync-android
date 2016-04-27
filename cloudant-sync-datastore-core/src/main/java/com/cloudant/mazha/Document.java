@@ -21,6 +21,9 @@ package com.cloudant.mazha;
 import com.cloudant.common.CouchConstants;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * @api_private
+ */
 public class Document {
 	
 	@JsonProperty(CouchConstants._id)

@@ -311,13 +311,13 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     @Override
     protected PullResult pull() throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
-        BasicReplicator pull = (BasicReplicator) getPullBuilder().pullAttachmentsInline
+        ReplicatorImpl pull = (ReplicatorImpl) getPullBuilder().pullAttachmentsInline
                 (pullAttachmentsInline).build();
         pull.strategy.getEventBus().register(listener);
         pull.strategy.run();
         Assert.assertTrue(listener.finishCalled);
         Assert.assertFalse(listener.errorCalled);
-        return new PullResult((BasicPullStrategy) pull.strategy, listener);
+        return new PullResult((PullStrategy) pull.strategy, listener);
     }
 
 }

@@ -17,7 +17,6 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.event.EventBus;
 
 import java.util.Iterator;
@@ -29,9 +28,11 @@ import java.util.List;
  *
  * <p>The Datastore can be viewed as a pool of heterogeneous JSON documents. One
  * datastore can hold many different types of document, unlike tables within a
- * relational model. The datastore provides hooks, particularly in the
- * {@link DatastoreExtended} interface, which allow for various querying models
- * to be built on top of its simpler key-value model.</p>
+ * relational model. The datastore exposes a simple key-value model where the key
+ * is the document ID combined with a (sometimes optional) revision ID.</p>
+ *
+ * <p>For a more advanced way of querying the Datastore, see the
+ * {@link com.cloudant.sync.query.IndexManager} class</p>
  *
  * <p>Each document consists of a set of revisions, hence most methods within
  * this class operating on {@link DocumentRevision} objects, which carry both a
@@ -49,8 +50,9 @@ import java.util.List;
  * propagated, thereby resolving the conflicted document across the set of
  * peers.</p>
  *
- * @see DatastoreExtended
  * @see DocumentRevision
+ * @see com.cloudant.sync.query.IndexManager
+ * @api_public
  *
  */
 public interface Datastore {
@@ -67,16 +69,6 @@ public interface Datastore {
      * @return the name of this datastore
      */
     String getDatastoreName();
-
-    /**
-     * <p>Returns the encryption KeyProvider of this datastore.</p>
-     *
-     * <p>Note the key provider could return null for the key,
-     * in which case encryption isn't used on this datastore.</p>
-     *
-     * @return the key provider used by this datastore.
-     */
-    KeyProvider getKeyProvider();
 
     /**
      * <p>Returns the current winning revision of a document.</p>
@@ -221,15 +213,6 @@ public interface Datastore {
     EventBus getEventBus();
 
     /**
-     * <p>Return the directory for specified extensionName</p>
-     *
-     * @param extensionName name of the extension
-     *
-     * @return the directory for specified extensionName
-     */
-    String extensionDataFolder(String extensionName);
-
-    /**
      * <p>Return {@code @Iterable<String>} over ids to all the Documents with
      * conflicted revisions.</p>
      *
@@ -269,11 +252,6 @@ public interface Datastore {
      * Close the datastore
      */
     void close();
-
-
-    List<String> getPossibleAncestorRevisionIDs(String docId,
-                                                       String revId,
-                                                       int limit);
 
     /**
      * <p>Adds a new document with body and attachments from <code>rev</code>.</p>

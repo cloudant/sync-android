@@ -21,7 +21,7 @@ import java.io.IOException;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 
-public class BasicDatastoreChangesTest extends BasicDatastoreTestBase {
+public class DatastoreImplChangesTest extends BasicDatastoreTestBase {
 
     @Test
     public void changes_noChanges_nothing() {

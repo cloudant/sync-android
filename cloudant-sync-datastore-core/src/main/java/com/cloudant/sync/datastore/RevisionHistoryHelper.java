@@ -40,6 +40,8 @@ import java.util.logging.Logger;
  *
  * <p>This class is not complete, but should bring together a set of utility
  * methods for working with document trees.</p>
+ *
+ * @api_private
  */
 public class RevisionHistoryHelper {
 

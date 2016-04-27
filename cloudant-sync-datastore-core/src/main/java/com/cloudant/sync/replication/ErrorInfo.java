@@ -20,6 +20,8 @@ package com.cloudant.sync.replication;
  *
  * @see Replicator
  * @see com.cloudant.sync.notifications.ReplicationErrored
+ *
+ * @api_public
  */
 public class ErrorInfo {
 

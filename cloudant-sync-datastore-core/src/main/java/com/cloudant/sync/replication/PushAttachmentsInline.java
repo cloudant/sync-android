@@ -26,6 +26,7 @@ package com.cloudant.sync.replication;
  *     <li>True: Always push attachments inline as a base64-encoded string.</li>
  * </ul>
  *
+ * @api_public
  */
 
 public enum PushAttachmentsInline {

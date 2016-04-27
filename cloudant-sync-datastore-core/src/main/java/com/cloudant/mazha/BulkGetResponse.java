@@ -25,6 +25,10 @@ import java.util.List;
 /*
  * For deserialising the response from the _bulk_get endpoint
  */
+
+/**
+ * @api_private
+ */
 public class BulkGetResponse {
 
     @JsonProperty

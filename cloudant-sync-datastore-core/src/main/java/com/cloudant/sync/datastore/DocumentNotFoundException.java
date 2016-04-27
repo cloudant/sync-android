@@ -16,6 +16,8 @@ package com.cloudant.sync.datastore;
 
 /**
  * Thrown when a document cannot be found.
+ *
+ * @api_public
  */
 public class DocumentNotFoundException extends DocumentException {
 

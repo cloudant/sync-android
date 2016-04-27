@@ -22,7 +22,7 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreExtended;
+import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.PreparedAttachment;
@@ -48,7 +48,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-class BasicPullStrategy implements ReplicationStrategy {
+/**
+ * @api_private
+ */
+class PullStrategy implements ReplicationStrategy {
 
     // internal state which gets reset each time run() is called
     private static class State {
@@ -69,10 +72,10 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     private State state;
 
-    private static final Logger logger = Logger.getLogger(BasicPullStrategy.class
+    private static final Logger logger = Logger.getLogger(PullStrategy.class
             .getCanonicalName());
 
-    private static final String LOG_TAG = "BasicPullStrategy";
+    private static final String LOG_TAG = "PullStrategy";
 
     CouchDB sourceDb;
 
@@ -95,15 +98,15 @@ class BasicPullStrategy implements ReplicationStrategy {
 
     public boolean pullAttachmentsInline = false;
 
-    public BasicPullStrategy(URI source,
-                             Datastore target,
-                             PullFilter filter,
-                             List<HttpConnectionRequestInterceptor> requestInterceptors,
-                             List<HttpConnectionResponseInterceptor> responseInterceptors) {
+    public PullStrategy(URI source,
+                        Datastore target,
+                        PullFilter filter,
+                        List<HttpConnectionRequestInterceptor> requestInterceptors,
+                        List<HttpConnectionResponseInterceptor> responseInterceptors) {
         this.filter = filter;
         this.sourceDb = new CouchClientWrapper(new CouchClient(source, requestInterceptors,
                 responseInterceptors));
-        this.targetDb = new DatastoreWrapper((DatastoreExtended) target);
+        this.targetDb = new DatastoreWrapper((DatastoreImpl) target);
         String replicatorName;
         if (filter == null) {
             replicatorName = String.format("%s <-- %s ", target.getDatastoreName(), source);

@@ -14,6 +14,9 @@
 
 package com.cloudant.sync.sqlite;
 
+/**
+ * @api_private
+ */
 public interface Cursor {
 
     /** Value returned by {@link #columnType(int)} if the specified column is null */

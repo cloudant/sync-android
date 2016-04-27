@@ -23,6 +23,7 @@ package com.cloudant.mazha;
  * Represents CouchDB response as a result of a request.
  * @author Ahmed Yehia
  *
+ * @api_private
  */
 public class Response {
 

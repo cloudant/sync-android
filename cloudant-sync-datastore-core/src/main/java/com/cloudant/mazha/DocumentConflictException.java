@@ -18,7 +18,9 @@
 
 package com.cloudant.mazha;
 
-
+/**
+ * @api_private
+ */
 public class DocumentConflictException extends CouchException {
 	
 	public DocumentConflictException(String message) {

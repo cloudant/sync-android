@@ -22,6 +22,7 @@ import java.util.logging.Logger;
 
 /**
  * Internal utility class
+ * @api_private
  */
 public class Misc {
 

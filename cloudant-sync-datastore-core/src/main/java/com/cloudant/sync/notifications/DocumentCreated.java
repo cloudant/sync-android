@@ -16,6 +16,9 @@ package com.cloudant.sync.notifications;
 
 import com.cloudant.sync.datastore.DocumentRevision;
 
+/**
+ * @api_public
+ */
 public class DocumentCreated extends DocumentModified {
 
     /**

@@ -63,7 +63,7 @@ public class MultipartAttachmentWriterTests {
         datastoreManager = new DatastoreManager(this.datastore_manager_dir);
         datastore = (this.datastoreManager.openDatastore(getClass().getSimpleName()));
         jsonData = "{\"body\":\"This is a body.\"}".getBytes();
-        bodyOne = BasicDocumentBody.bodyWith(jsonData);
+        bodyOne = DocumentBodyImpl.bodyWith(jsonData);
     }
 
     @After

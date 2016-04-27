@@ -41,6 +41,8 @@ import java.util.Map;
  *
  * <p>Changing the data stored within this object will not result in changes
  * to the database unless explicitly saved as a new revision.</p>
+ *
+ * @api_public
  */
 public interface DocumentBody {
 

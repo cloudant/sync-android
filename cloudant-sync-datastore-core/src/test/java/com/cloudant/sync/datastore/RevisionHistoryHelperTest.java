@@ -61,7 +61,7 @@ public class RevisionHistoryHelperTest {
     private DocumentRevision createDBObject(String name, String rev) {
         Map m = new HashMap<String, Object>();
         m.put("name", name);
-        DocumentBody body = BasicDocumentBody.bodyWith(m);
+        DocumentBody body = DocumentBodyImpl.bodyWith(m);
 
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
         builder.setDocId("1");

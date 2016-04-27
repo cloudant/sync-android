@@ -188,7 +188,7 @@ public class DatastoreSchemaTests {
         Assert.assertTrue(unzipToDirectory(zippedVersion6, temp_folder));
 
         // Datastore manager the temp folder
-        BasicDatastore datastore = (BasicDatastore) new DatastoreManager(
+        DatastoreImpl datastore = (DatastoreImpl) new DatastoreManager(
                 new File(temp_folder, "datastores").getAbsolutePath())
                 .openDatastore("testdb");
 

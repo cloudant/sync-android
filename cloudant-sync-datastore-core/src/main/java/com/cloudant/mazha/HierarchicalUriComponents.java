@@ -28,6 +28,9 @@ import com.google.common.base.Preconditions;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 
+/**
+ * @api_private
+ */
 public class HierarchicalUriComponents {
 
     /**

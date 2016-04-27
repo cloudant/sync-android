@@ -14,6 +14,9 @@
 
 package com.cloudant.sync.notifications;
 
+/**
+ * @api_public
+ */
 public class DatabaseModified {
 
     /**

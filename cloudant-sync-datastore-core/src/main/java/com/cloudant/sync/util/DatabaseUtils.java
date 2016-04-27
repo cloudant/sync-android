@@ -19,6 +19,9 @@ import com.cloudant.sync.sqlite.Cursor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * @api_private
+ */
 public  class DatabaseUtils {
 
     private final static String LOG_TAG = "DatabaseUtils";

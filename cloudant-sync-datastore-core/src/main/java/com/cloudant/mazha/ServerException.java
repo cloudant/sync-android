@@ -18,7 +18,9 @@
 
 package com.cloudant.mazha;
 
-
+/**
+ * @api_private
+ */
 public class ServerException extends RuntimeException {
 
     private int statusCode;

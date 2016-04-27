@@ -112,3 +112,18 @@ uploadArchives {
         }
     }
 }
+
+//
+// tools - these aren't part of the library but part of the build system etc
+//
+
+sourceSets {
+  tools {
+    java 
+  }
+}
+
+compileToolsJava {
+    // tools.jar needed for custom doclet
+    classpath += files(org.gradle.internal.jvm.Jvm.current().toolsJar)
+}

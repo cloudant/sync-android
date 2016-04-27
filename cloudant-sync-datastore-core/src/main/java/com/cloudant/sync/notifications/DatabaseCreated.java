@@ -23,6 +23,7 @@ package com.cloudant.sync.notifications;
  * {@link com.cloudant.sync.datastore.DatastoreManager#openDatastore(String) openDatastore(String)}
  * </p>
  *
+ * @api_public
  */
 public class DatabaseCreated extends DatabaseModified {
 

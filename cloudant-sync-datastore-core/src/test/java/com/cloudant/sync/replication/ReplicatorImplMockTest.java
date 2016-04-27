@@ -24,9 +24,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import com.cloudant.sync.datastore.DatastoreExtended;
+import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.event.Subscribe;
+
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
 
@@ -39,22 +40,22 @@ import org.mockito.stubbing.Answer;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class BasicReplicatorMockTest {
+public class ReplicatorImplMockTest {
 
     URI uri;
-    DatastoreExtended mockDatastore;
+    DatastoreImpl mockDatastore;
     ReplicationStrategy mockStrategy;
     Listener mockListener;
-    TestReplicator replicator;
+    TestReplicatorImpl replicator;
 
     @Before
     public void setUp() throws Exception {
         uri = new URI("http://127.0.0.1:5984/db1");
-        mockDatastore = mock(DatastoreExtended.class);
+        mockDatastore = mock(DatastoreImpl.class);
         mockStrategy = mock(ReplicationStrategy.class);
         when(mockStrategy.getEventBus()).thenReturn(new EventBus());
         mockListener = mock(Listener.class);
-        replicator = new TestReplicator(
+        replicator = new TestReplicatorImpl(
                 mockStrategy);
 
         // mockStrategy always needs to be ready to start
@@ -313,9 +314,9 @@ public class BasicReplicatorMockTest {
         verify(mockStrategy, times(2)).run();
     }
 
-    public class TestReplicator extends BasicReplicator {
+    public class TestReplicatorImpl extends ReplicatorImpl {
 
-        public TestReplicator(ReplicationStrategy strategy) {
+        public TestReplicatorImpl(ReplicationStrategy strategy) {
             super(strategy);
         }
 
@@ -367,7 +368,7 @@ public class BasicReplicatorMockTest {
         when(mockStrategy.isReplicationTerminated()).thenReturn(true);
         when(mockStrategy.getEventBus()).thenReturn(new EventBus());
 
-        TestReplicator replicator = new TestReplicator(mockStrategy);
+        TestReplicatorImpl replicator = new TestReplicatorImpl(mockStrategy);
         replicator.getEventBus().register(listener);
         replicator.start();
 
@@ -391,7 +392,7 @@ public class BasicReplicatorMockTest {
         when(mockStrategy.isReplicationTerminated()).thenReturn(true);
         when(mockStrategy.getEventBus()).thenReturn(new EventBus());
 
-        TestReplicator replicator = new TestReplicator(mockStrategy);
+        TestReplicatorImpl replicator = new TestReplicatorImpl(mockStrategy);
         replicator.getEventBus().register(listener);
         replicator.start();
 

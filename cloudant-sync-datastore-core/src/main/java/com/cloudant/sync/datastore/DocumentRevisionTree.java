@@ -129,6 +129,8 @@ import java.util.*;
  *
  * @see com.cloudant.sync.datastore.Datastore#resolveConflictsForDocument(String, ConflictResolver)
  * @see com.cloudant.sync.datastore.ConflictResolver
+ *
+ * @api_private
  */
 @SuppressWarnings("serial")
 public class DocumentRevisionTree {

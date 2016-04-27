@@ -19,6 +19,8 @@ import org.apache.commons.io.Charsets;
 
 /**
  * Utility methods for manipulating keys.
+ *
+ * @api_private
  */
 public class KeyUtils {
 

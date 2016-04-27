@@ -26,6 +26,9 @@ import com.google.common.base.Preconditions;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
+/**
+ * @api_private
+ */
 public class RetriableTask<T> implements Callable<T> {
 
     private final static Logger logger = Logger.getLogger(RetriableTask.class.getCanonicalName());

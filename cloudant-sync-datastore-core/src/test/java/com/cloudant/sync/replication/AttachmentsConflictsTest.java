@@ -17,7 +17,7 @@ package com.cloudant.sync.replication;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.ConflictResolver;
-import com.cloudant.sync.datastore.DatastoreExtended;
+import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
@@ -68,7 +68,7 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         this.push();
 
         this.datastoreManager.deleteDatastore(this.datastore.getDatastoreName());
-        this.datastore = (DatastoreExtended)this.datastoreManager.openDatastore("foo-bar-baz");
+        this.datastore = (DatastoreImpl)this.datastoreManager.openDatastore("foo-bar-baz");
         this.pull();
 
         DocumentRevision gotRev = this.datastore.getDocument("doc-a");
@@ -118,7 +118,7 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         this.pull();
 
         this.datastoreManager.deleteDatastore(this.datastore.getDatastoreName());
-        this.datastore = (DatastoreExtended)this.datastoreManager.openDatastore("foo-bar-baz");
+        this.datastore = (DatastoreImpl)this.datastoreManager.openDatastore("foo-bar-baz");
         this.pull();
 
         DocumentRevision gotRev = this.datastore.getDocument("doc-a");

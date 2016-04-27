@@ -52,6 +52,8 @@ import java.util.logging.Logger;
  * <p>A datastore's on-disk representation is a single file containing
  * all its data. In future, there may be other files and folders per
  * datastore.</p>
+ *
+ * @api_public
  */
 public class DatastoreManager {
 
@@ -264,7 +266,7 @@ public class DatastoreManager {
             // if it does not exist
 
             //Pass database directory, database name, and SQLCipher key provider
-            BasicDatastore ds = new BasicDatastore(dbDirectory, dbName, provider);
+            DatastoreImpl ds = new DatastoreImpl(dbDirectory, dbName, provider);
 
             if(!dbDirectoryExist) {
                 this.eventBus.post(new DatabaseCreated(dbName));

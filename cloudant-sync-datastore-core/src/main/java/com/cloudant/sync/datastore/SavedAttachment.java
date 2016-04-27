@@ -15,14 +15,11 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.replication.PushAttachmentsInline;
-import com.cloudant.sync.sqlite.Cursor;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Logger;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Created by tomblench on 14/03/2014.
@@ -30,6 +27,8 @@ import java.util.zip.GZIPInputStream;
 
 /**
  * An Attachment which has been retrieved from the Database
+ *
+ * @api_public
  */
 class SavedAttachment extends Attachment {
 

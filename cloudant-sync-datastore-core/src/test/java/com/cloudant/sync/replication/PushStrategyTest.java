@@ -30,13 +30,13 @@ import java.util.Map;
 
 
 @Category(RequireRunningCouchDB.class)
-public class BasicPushStrategyTest extends ReplicationTestBase {
+public class PushStrategyTest extends ReplicationTestBase {
 
     // some helpers...
 
     // we use this utility method rather than ReplicationTestBase.push() because some
     // methods want to make assertions on the BasicPushStrategy after running the replication
-    private void push(BasicPushStrategy replicator, int expectedDocs) throws Exception {
+    private void push(PushStrategy replicator, int expectedDocs) throws Exception {
         TestStrategyListener listener = new TestStrategyListener();
         replicator.eventBus.register(listener);
         replicator.run();
@@ -45,7 +45,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         Assert.assertEquals(expectedDocs, listener.documentsReplicated);
     }
 
-    private void assertPushReplicationStatus(BasicPushStrategy replicator, int documentCounter,
+    private void assertPushReplicationStatus(PushStrategy replicator, int documentCounter,
                                              int batchCounter, String lastSequence) throws
             Exception {
         Assert.assertEquals("DocumentRevisionTree counter",
@@ -78,14 +78,14 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_nothing_lastSequenceShouldStillBeNull() throws Exception {
-        BasicPushStrategy replicator = super.getPushStrategy();
+        PushStrategy replicator = super.getPushStrategy();
         this.push(replicator, 0);
         assertPushReplicationStatus(replicator, 0, 1, null);
     }
 
     @Test
     public void push_noChangesAfterOneDoc_lastSequenceShouldNotBeTouched() throws Exception {
-        BasicPushStrategy replicator = super.getPushStrategy();
+        PushStrategy replicator = super.getPushStrategy();
 
         // Prepare
         oneDocCreatedAndThenPush(replicator);
@@ -99,7 +99,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_oneDocOneRev_revisionShouldBePulled() throws Exception {
-        BasicPushStrategy replicator = super.getPushStrategy();
+        PushStrategy replicator = super.getPushStrategy();
 
         oneDocCreatedAndThenPush(replicator);
         assertPushReplicationStatus(replicator, 1, 2, "1");
@@ -107,7 +107,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_oneDocAfterAnother_lastSequenceShouldNotBeTouched() throws Exception {
-        BasicPushStrategy replicator = super.getPushStrategy();
+        PushStrategy replicator = super.getPushStrategy();
 
         // Prepare
         oneDocCreatedAndThenPush(replicator);
@@ -121,7 +121,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     @Test
     public void push_oneUpdatedDocAfterAnother_lastSequenceShouldBeUpdatedCorrectly() throws
             Exception {
-        BasicPushStrategy replicator = super.getPushStrategy();
+        PushStrategy replicator = super.getPushStrategy();
 
         // Prepare
         oneDocCreatedThenUpdatedAndThenPush(replicator);
@@ -139,7 +139,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
     @Test
     public void push_oneDeletedDocAfterAnother_lastSequenceShouldBeUpdatedCorrectly() throws
             Exception {
-        BasicPushStrategy replicator = super.getPushStrategy();
+        PushStrategy replicator = super.getPushStrategy();
 
         // Prepare
         oneDocCreatedThenUpdatedAndThenPush(replicator);
@@ -152,7 +152,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_twoDocs_lastSequenceShouldBeUpdatedCorrectly() throws Exception {
-        BasicPushStrategy replicator = super.getPushStrategy();
+        PushStrategy replicator = super.getPushStrategy();
 
         twoDocCreatedAndThenPush(replicator);
         assertPushReplicationStatus(replicator, 2, 2, "2");
@@ -160,13 +160,13 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void test_oneDocCreatedAndThenPush() throws Exception {
-        BasicPushStrategy replicator = super.getPushStrategy();
+        PushStrategy replicator = super.getPushStrategy();
 
         oneDocCreatedAndThenPush(replicator);
         assertPushReplicationStatus(replicator, 1, 2, "1");
     }
 
-    private Bar oneDocCreatedAndThenPush(BasicPushStrategy replicator) throws Exception {
+    private Bar oneDocCreatedAndThenPush(PushStrategy replicator) throws Exception {
         Bar bar1 = BarUtils.createBar(datastore, "Tom", 31);
         this.push(replicator, 1);
         Bar bar2 = couchClient.getDocument(bar1.getId(), Bar.class);
@@ -174,7 +174,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         return bar1;
     }
 
-    private Bar[] twoDocCreatedAndThenPush(BasicPushStrategy replicator) throws Exception {
+    private Bar[] twoDocCreatedAndThenPush(PushStrategy replicator) throws Exception {
         Bar bar1 = BarUtils.createBar(datastore, "Tom", 31);
         Bar bar2 = BarUtils.createBar(datastore, "Jerry", 50);
         this.push(replicator, 2);
@@ -188,13 +188,13 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_oneDocCreatedThenUpdatedAndThenPush() throws Exception {
-        BasicPushStrategy replicator = super.getPushStrategy();
+        PushStrategy replicator = super.getPushStrategy();
 
         oneDocCreatedThenUpdatedAndThenPush(replicator);
         assertPushReplicationStatus(replicator, 1, 2, "2");
     }
 
-    private Bar oneDocCreatedThenUpdatedAndThenPush(BasicPushStrategy replicator) throws Exception {
+    private Bar oneDocCreatedThenUpdatedAndThenPush(PushStrategy replicator) throws Exception {
         Bar bar1 = BarUtils.createBar(datastore, "Tom", 31);
         Bar bar2 = BarUtils.updateBar(datastore, bar1.getId(), "Jerry", 50);
         this.push(replicator, 1);
@@ -205,13 +205,13 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_oneDocCreatedThenUpdatedThenDeletedAndThenPush() throws Exception {
-        BasicPushStrategy replicator = super.getPushStrategy();
+        PushStrategy replicator = super.getPushStrategy();
 
         oneDocCreatedThenUpdatedThenDeletedAndThenPush(replicator);
         assertPushReplicationStatus(replicator, 1, 2, "3");
     }
 
-    private void oneDocCreatedThenUpdatedThenDeletedAndThenPush(BasicPushStrategy replicator)
+    private void oneDocCreatedThenUpdatedThenDeletedAndThenPush(PushStrategy replicator)
             throws Exception {
         Bar bar = oneDocCreatedThenUpdatedAndThenPush(replicator);
         BarUtils.deleteBar(datastore, bar.getId());
@@ -226,7 +226,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_oneDocOneRevAndResetCheckpoint_docShouldNotBePushedAgain() throws Exception {
-        BasicPushStrategy replicator = super.getPushStrategy();
+        PushStrategy replicator = super.getPushStrategy();
 
         oneDocCreatedAndThenPush(replicator);
         assertPushReplicationStatus(replicator, 1, 2, "1");
@@ -244,14 +244,14 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_changeLimitIsOne_batchCounterShouldBeCorrect() throws Exception {
-        BasicPushStrategy replicator = (BasicPushStrategy) ((BasicReplicator) super
+        PushStrategy replicator = (PushStrategy) ((ReplicatorImpl) super
                 .getPushBuilder().changeLimitPerBatch(1).build()).strategy;
 
         twoDocsCreatedAndThenPushed(replicator);
         assertPushReplicationStatus(replicator, 2, 3, "2");
     }
 
-    private void twoDocsCreatedAndThenPushed(BasicPushStrategy replicator) throws Exception {
+    private void twoDocsCreatedAndThenPushed(PushStrategy replicator) throws Exception {
         Bar bar1 = BarUtils.createBar(datastore, "Tom", 31);
         Bar bar2 = BarUtils.createBar(datastore, "Jerry", 50);
         this.push(replicator, 2);
@@ -263,7 +263,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_twoBranchForSameTree_allBranchesShouldBePushed() throws Exception {
-        BasicPushStrategy replicator = (BasicPushStrategy) ((BasicReplicator) super
+        PushStrategy replicator = (PushStrategy) ((ReplicatorImpl) super
                 .getPushBuilder().changeLimitPerBatch(1).build()).strategy;
 
         DocumentRevision rev = createDbObject("5-e", createDBBody("Tom"));
@@ -286,7 +286,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_twoTrees_allTreeShouldBePushed() throws Exception {
-        BasicPushStrategy replicator = (BasicPushStrategy) ((BasicReplicator) super
+        PushStrategy replicator = (PushStrategy) ((ReplicatorImpl) super
                 .getPushBuilder().changeLimitPerBatch(1).build()).strategy;
 
         DocumentRevision rev = createDbObject("4-d", createDBBody("Tom"));
@@ -309,7 +309,7 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
 
     @Test
     public void push_documentWithIdInChinese_docBePushed() throws Exception {
-        BasicPushStrategy replicator = super.getPushStrategy();
+        PushStrategy replicator = super.getPushStrategy();
 
         String id = "\u738b\u4e1c\u5347";
         DocumentRevision rev = new DocumentRevision(id);

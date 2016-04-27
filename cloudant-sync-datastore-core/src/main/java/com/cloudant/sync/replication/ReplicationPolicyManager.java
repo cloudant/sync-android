@@ -10,6 +10,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * @api_public
+ */
 public class ReplicationPolicyManager {
 
     private final List<Replicator> replicators = new ArrayList<Replicator>();
@@ -26,6 +29,9 @@ public class ReplicationPolicyManager {
 
     /**
      * This class is not intended as API, it is public for EventBus access only.
+     * API consumers should not call these methods. See #setReplicationsCompletedListener for more
+     * information on replication lifecycle events.
+     * @api_private
      */
     public class ReplicationListener {
 
@@ -113,6 +119,13 @@ public class ReplicationPolicyManager {
         }
     }
 
+    /**
+     * Interested parties wishing to receive replication lifecycle events should call
+     * this method with a class implementing the {@link ReplicationsCompletedListener} interface.
+     *
+     * @param listener A class implementing appropriate callback methods for replication lifecycle
+     *                 events
+     */
     public void setReplicationsCompletedListener(ReplicationsCompletedListener listener) {
         mReplicationsCompletedListener = listener;
     }

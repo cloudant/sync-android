@@ -67,10 +67,13 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-class BasicDatastore implements Datastore, DatastoreExtended {
+/**
+ * @api_private
+ */
+public class DatastoreImpl implements Datastore {
 
     private static final String LOG_TAG = "BasicDatastore";
-    private static final Logger logger = Logger.getLogger(BasicDatastore.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
 
     private static final String FULL_DOCUMENT_COLS = "docs.docid, docs.doc_id, revid, sequence, json, current, deleted, parent";
 
@@ -148,7 +151,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
      */
     private final AttachmentStreamFactory attachmentStreamFactory;
 
-    public BasicDatastore(String dir, String name) throws SQLException, IOException, DatastoreException {
+    public DatastoreImpl(String dir, String name) throws SQLException, IOException, DatastoreException {
         this(dir, name, new NullKeyProvider());
     }
 
@@ -160,7 +163,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
      * @throws SQLException
      * @throws IOException
      */
-    public BasicDatastore(String dir, String name, KeyProvider provider) throws SQLException, IOException, DatastoreException {
+    public DatastoreImpl(String dir, String name, KeyProvider provider) throws SQLException, IOException, DatastoreException {
         Preconditions.checkNotNull(dir);
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(provider);
@@ -196,7 +199,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return this.datastoreName;
     }
 
-    @Override
     public KeyProvider getKeyProvider() {
         return this.keyProvider;
     }
@@ -401,6 +403,15 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return null;
     }
 
+    /**
+     * <p>Returns {@code DocumentRevisionTree} of a document.</p>
+     *
+     * <p>The tree contains the complete revision history of the document,
+     * including branches for conflicts and deleted leaves.</p>
+     *
+     * @param docId  id of the document
+     * @return {@code DocumentRevisionTree} of the specified document
+     */
     public DocumentRevisionTree getAllRevisionsOfDocument(final String docId) {
 
         try {
@@ -451,7 +462,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
 
     @Override
-    public Changes changes(long since,final int limit) {
+    public Changes changes(long since, final int limit) {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkArgument(limit > 0, "Limit must be positive number");
         final long verifiedSince = since >= 0 ? since : 0;
@@ -641,7 +652,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
-    @Override
     public List<String> getPossibleAncestorRevisionIDs(final String docId,
                                                        final String revId,
                                                        final int limit) {
@@ -679,7 +689,13 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return map;
     }
 
-    @Override
+    /**
+     * <p>Returns the current winning revision of a local document.</p>
+     *
+     * @param docId id of the local document
+     * @return {@code LocalDocument} of the document
+     * @throws DocumentNotFoundException if the document ID doesn't exist
+     */
     public LocalDocument getLocalDocument(final String docId) throws DocumentNotFoundException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         try {
@@ -766,7 +782,17 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
-    @Override
+    /**
+     * <p>Inserts a local document with an ID and body. Replacing the current local document of the
+     * same id if one is present. </p>
+     *
+     * <p>Local documents are not replicated between datastores.</p>
+     *
+     * @param docId      The document id for the document
+     * @param body       JSON body for the document
+     * @return {@code DocumentRevision} of the newly created document
+     * @throws DocumentException if there is an error inserting the local document into the database
+     */
     public LocalDocument insertLocalDocument(final String docId, final DocumentBody body) throws DocumentException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         CouchUtils.validateDocumentId(docId);
@@ -887,7 +913,13 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
-    @Override
+    /**
+     * <p>Deletes a local document.</p>
+     *
+     * @param docId documentId of the document to be deleted
+     *
+     * @throws DocumentNotFoundException if the document ID doesn't exist
+     */
     public void deleteLocalDocument(final String docId) throws DocumentNotFoundException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
@@ -932,6 +964,13 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return callable.call(db);
     }
 
+    /**
+     * <p>Returns the current winning revision of a local document.</p>
+     *
+     * @param documentId id of the local document
+     * @return {@code LocalDocument} of the document
+     * @throws DocumentNotFoundException if the document ID doesn't exist
+     */
     private LocalDocument doGetLocalDocument(SQLDatabase db, String docId)
             throws  DocumentNotFoundException, DocumentException, DatastoreException {
         assert !Strings.isNullOrEmpty(docId);
@@ -942,7 +981,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             if (cursor.moveToFirst()) {
                 byte[] json = cursor.getBlob(0);
 
-                return new LocalDocument(docId,BasicDocumentBody.bodyWith(json));
+                return new LocalDocument(docId, DocumentBodyImpl.bodyWith(json));
             } else {
                 throw new DocumentNotFoundException(String.format("No local document found with id: %s", docId));
             }
@@ -975,7 +1014,16 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return result;
     }
 
-    @Override
+    /**
+     * <p>Returns the datastore's unique identifier.</p>
+     *
+     * <p>This is used for the checkpoint document in a remote datastore
+     * during replication.</p>
+     *
+     * @return a unique identifier for the datastore.
+     * @throws DatastoreException if there was an error retrieving the unique identifier from the
+     * database
+     */
     public String getPublicIdentifier() throws DatastoreException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         try {
@@ -1005,7 +1053,11 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
-    @Override
+    /**
+     * This method has been deprecated and should not be used.
+     * @see #forceInsert(List)
+     */
+    @Deprecated
     public void forceInsert(final DocumentRevision rev,
                             final List<String> revisionHistory,
                             final Map<String, Object> attachments,
@@ -1015,7 +1067,67 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 attachments, preparedAttachments, pullAttachmentsInline)));
     }
 
-    @Override
+    /**
+     * <p>
+     * Inserts one or more revisions of a document into the database. For efficiency, this is
+     * performed as one database transaction.
+     * </p>
+     * <p>
+     * Each revision is inserted at a point in the tree expressed by the path described in the
+     * {@code revisionHistory} field. If any non-leaf revisions do not exist locally, then they are
+     * created as "stub" revisions.
+     * </p>
+     * <p>
+     * This method should only be called by the replicator. It is designed
+     * to allow revisions from remote databases to be added to this
+     * database during the replication process: the documents in the remote database already have
+     * revision IDs that need to be preserved for the two databases to be in sync (otherwise it
+     * would not be possible to tell that the two represent the same revision). This is analogous to
+     * using the _new_edits false option in CouchDB
+     * (see <a href="https://wiki.apache.org/couchdb/HTTP_Bulk_Document_API#Posting_Existing_Revisions">
+     * the CouchDB wiki</a> for more detail).
+     * <p>
+     * If the document was successfully inserted, a
+     * {@link com.cloudant.sync.notifications.DocumentCreated DocumentCreated},
+     * {@link com.cloudant.sync.notifications.DocumentModified DocumentModified}, or
+     * {@link com.cloudant.sync.notifications.DocumentDeleted DocumentDeleted}
+     * event is posted on the event bus. The event will depend on the nature
+     * of the update made.
+     * </p>
+     *
+     *
+     * @param items one or more revisions to insert. Each {@code ForceInsertItem} consists of:
+     * <ul>
+     * <li>
+     * <b>rev</b> A {@code DocumentRevision} containing the information for a revision
+     * from a remote datastore.
+     * </li>
+     * <li>
+     * <b>revisionHistory</b> The history of the revision being inserted,
+     * including the rev ID of {@code rev}. This list
+     * needs to be sorted in ascending order
+     * </li>
+     * <li>
+     * <b>attachments</b> Attachments metadata and optionally data if {@code pullAttachmentsInline} true
+     * </li>
+     * <li>
+     * <b>preparedAttachments</b> Non-empty if {@code pullAttachmentsInline} false.
+     * Attachments that have already been prepared, this is a
+     * Map of String[docId,revId] → list of attachments
+     * </li>
+     * <li>
+     * <b>pullAttachmentsInline</b> If true, use {@code attachments} metadata and data directly
+     * from received JSON to add new attachments for this revision.
+     * Else use {@code preparedAttachments} which were previously
+     * downloaded and prepared by processOneChangesBatch in
+     * BasicPullStrategy
+     * </li>
+     * </ul>
+     *
+     * @see Datastore#getEventBus()
+     * @throws DocumentException if there was an error inserting the revision or its attachments
+     * into the database
+     */
     public void forceInsert(final List<ForceInsertItem> items) throws DocumentException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
 
@@ -1153,7 +1265,24 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     }
 
-    @Override
+    /**
+     * <p>Inserts a revision of a document with an existing revision ID</p>
+     *
+     * <p>Equivalent to:</p>
+     *
+     * <code>
+     *    forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
+     * </code>
+     *
+     * @param rev A {@code DocumentRevision} containing the information for a revision
+     *            from a remote datastore.
+     * @param revisionHistory The history of the revision being inserted,
+     *                        including the rev ID of {@code rev}. This list
+     *                        needs to be sorted in ascending order
+     *
+     * @see DatastoreImpl#forceInsert(DocumentRevision, java.util.List,java.util.Map, java.util.Map, boolean)
+     * @throws DocumentException if there was an error inserting the revision into the database
+     */
     public void forceInsert(DocumentRevision rev, String... revisionHistory) throws DocumentException {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         this.forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
@@ -1453,7 +1582,30 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return !queue.isShutdown();
     }
 
-    @Override
+    /**
+     * Returns the subset of given the document id/revisions that are not stored in the database.
+     *
+     * The input revisions is a map, whose key is document id, and value is a list of revisions.
+     * An example input could be (in json format):
+     *
+     * { "03ee06461a12f3c288bb865b22000170":
+     *     [
+     *       "1-b2e54331db828310f3c772d6e042ac9c",
+     *       "2-3a24009a9525bde9e4bfa8a99046b00d"
+     *     ],
+     *   "82e04f650661c9bdb88c57e044000a4b":
+     *     [
+     *       "3-bb39f8c740c6ffb8614c7031b46ac162"
+     *     ]
+     * }
+     *
+     * The output is in same format.
+     *
+     * @see <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
+     * @param revisions a Multimap of document id → revision id
+     * @return a Map of document id → collection of revision id: the subset of given the document
+     * id/revisions that are not stored in the database
+     */
     public Map<String, Collection<String>> revsDiff(final Multimap<String, String> revisions) {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkNotNull(revisions, "Input revisions must not be null");
@@ -1542,7 +1694,6 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
-    @Override
     public String extensionDataFolder(String extensionName) {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(extensionName),
@@ -1726,7 +1877,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder()
                 .setDocId(docId)
                 .setRevId(revId)
-                .setBody(BasicDocumentBody.bodyWith(json))
+                .setBody(DocumentBodyImpl.bodyWith(json))
                 .setDeleted(deleted)
                 .setSequence(sequence)
                 .setInternalId(internalId)
@@ -1737,16 +1888,39 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return builder.build();
     }
 
-
-    // this is just a facade into attachmentManager.PrepareAttachment for the sake of DatastoreWrapper
-    @Override
+    /**
+     * <p>
+     * Read attachment stream to a temporary location and calculate sha1,
+     * prior to being added to the datastore.
+     * </p>
+     * <p>
+     * Used by replicator when receiving new/updated attachments
+     *</p>
+     *
+     * @param att           Attachment to be prepared, providing data either from a file or a stream
+     * @param length        Size in bytes of attachment as signalled by "length" metadata property
+     * @param encodedLength Size in bytes of attachment, after encoding, as signalled by
+     *                      "encoded_length" metadata property
+     * @return A prepared attachment, ready to be added to the datastore
+     * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
+     *                             attachment data.
+     */
     public PreparedAttachment prepareAttachment(Attachment att, long length, long encodedLength) throws AttachmentException {
         PreparedAttachment pa = AttachmentManager.prepareAttachment(attachmentsDir,
                 attachmentStreamFactory, att, length, encodedLength);
         return pa;
     }
     
-    @Override
+    /**
+     * <p>Returns attachment <code>attachmentName</code> for the revision.</p>
+     *
+     * <p>Used by replicator when pushing attachments</p>
+     *
+     * @param id The revision ID with which the attachment is associated
+     * @param rev The document ID with which the attachment is associated
+     * @param attachmentName Name of the attachment
+     * @return <code>Attachment</code> or null if there is no attachment with that name.
+     */
     public Attachment getAttachment(final String id, final String rev, final String attachmentName) {
         try {
             return queue.submit(new SQLQueueCallable<Attachment>() {
@@ -1766,7 +1940,16 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return null;
     }
 
-    @Override
+    /**
+     * <p>Returns all attachments for the revision.</p>
+     *
+     * <p>Used by replicator when pulling attachments</p>
+     *
+     * @param rev The revision with which the attachments are associated
+     * @return List of <code>Attachment</code>
+     * @throws AttachmentException if there was an error reading the attachment metadata from the
+     * database
+     */
     public List<? extends Attachment> attachmentsForRevision(final DocumentRevision rev) throws AttachmentException {
         try {
             return queue.submit(new SQLQueueCallable<List<? extends Attachment>>(){

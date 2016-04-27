@@ -25,6 +25,9 @@ import java.io.Reader;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @api_private
+ */
 public class JSONHelper {
 
     private final ObjectMapper objectMapper;
