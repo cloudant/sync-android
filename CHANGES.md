@@ -11,7 +11,7 @@
 - [BREAKING CHANGE] The `EventBus` APIs have been changed from the Google Guava
   (`com.google.common.eventbus`) to our own `com.cloudant.sync.event` API. The new implementation
   has increased restrictions on visibility of `@Subscribe` annotated methods. See the
-  [Event guide](https://github.com/cloudant/sync-android/blob/master/doc/event.md) and javadoc for
+  [Event guide](https://github.com/cloudant/sync-android/blob/master/doc/events.md) and javadoc for
   details.
 - [BREAKING CHANGE] The `BasicDocumentRevision` and
   `MutableDocumentRevision` classes have been removed, in order to
