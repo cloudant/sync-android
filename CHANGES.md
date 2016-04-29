@@ -8,6 +8,7 @@
   "Private" for each class. See
   [the last paragraph of this section of the README](https://github.com/cloudant/sync-android/blob/master/README.md#overview-of-the-library)
   for more details.
+- [NEW] Added filtering for push replications.
 - [BREAKING CHANGE] The `EventBus` APIs have been changed from the Google Guava
   (`com.google.common.eventbus`) to our own `com.cloudant.sync.event` API. The new implementation
   has increased restrictions on visibility of `@Subscribe` annotated methods. See the

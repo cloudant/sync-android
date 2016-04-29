@@ -15,6 +15,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.sync.datastore.DocumentRevision;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -22,6 +23,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 @Category(RequireRunningCouchDB.class)
 public class PushReplicatorTest extends ReplicationTestBase {
@@ -183,8 +185,155 @@ public class PushReplicatorTest extends ReplicationTestBase {
                         toString()
         );
         assertCookieInterceptorPresent(p, "name=%F0%9F%8D%B6&password=%F0%9F%8D%B6");
-
     }
 
+    /**
+     * Asserts that the last sequence number of a replicator checkpoint matches that of the test
+     * datastore.
+     */
+    private void assertLastSequence(Replicator r) throws Exception {
+        // Need to know about the internals to get the replication ID
+        ReplicatorImpl replicator = (ReplicatorImpl) r;
+        Assert.assertEquals("The checkpoint should match the datstore last sequence.",
+                Long.toString(datastore.getLastSequence()),
+                remoteDb.getCheckpoint(replicator.strategy.getReplicationId()));
+    }
+
+    @Test
+    public void testPushReplicationFilter() throws Exception {
+        prepareTwoDocumentsInLocalDB();
+        ReplicatorBuilder.Push push = this.getPushBuilder();
+        push.filter(new PushFilter() {
+            @Override
+            public boolean shouldReplicateDocument(DocumentRevision revision) {
+                return revision.getBody().asMap().get("name").equals("Tom");
+            }
+        });
+        Replicator replicator = push.build();
+        replicator.start();
+        while (replicator.getState() != Replicator.State.COMPLETE && replicator.getState() !=
+                Replicator.State.ERROR) {
+            Thread.sleep(50);
+        }
+
+        Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
+
+        // Check that the remote only contains the single doc we need.
+        Assert.assertEquals(1, couchClient.getDbInfo().getDocCount());
+
+        assertLastSequence(replicator);
+    }
+
+    @Test
+    public void testPushReplicationFilterPushesZeroDocs() throws Exception {
+        prepareTwoDocumentsInLocalDB();
+        ReplicatorBuilder.Push push = this.getPushBuilder();
+        push.filter(new PushFilter() {
+            @Override
+            public boolean shouldReplicateDocument(DocumentRevision revision) {
+                return false;
+            }
+        });
+        Replicator replicator = push.build();
+        replicator.start();
+        while (replicator.getState() != Replicator.State.COMPLETE && replicator.getState() !=
+                Replicator.State.ERROR) {
+            Thread.sleep(50);
+        }
+
+        Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
+
+        // Check that the remote contains no docs.
+        Assert.assertEquals(0, couchClient.getDbInfo().getDocCount());
+
+        assertLastSequence(replicator);
+    }
+
+    /**
+     * This test checks that the replication continues from the correct place.
+     * It does this by first replicating with a filter that excludes all docs. This means that the 2
+     * local changes will get processed, but no documents will be added to the remote.
+     * Then it does another replication <b>without a filter</b>. We have made no more local changes
+     * so if the replicator starts from the correct checkpoint then there will be no changes and no
+     * more documents will be copied.
+     * The test will fail if the replicator starts from the wrong checkpoint because the 2 original
+     * changes would be visible after the second start() call.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testPushReplicationFilterContinuesFromCorrectPlace() throws Exception {
+        prepareTwoDocumentsInLocalDB();
+        ReplicatorBuilder.Push push = this.getPushBuilder();
+        push.filter(new PushFilter() {
+            @Override
+            public boolean shouldReplicateDocument(DocumentRevision revision) {
+                return false;
+            }
+        });
+        Replicator replicator = push.build();
+        replicator.start();
+        while (replicator.getState() != Replicator.State.COMPLETE && replicator.getState() !=
+                Replicator.State.ERROR) {
+            Thread.sleep(50);
+        }
+
+        Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
+
+        // Check that the remote contains no docs.
+        Assert.assertEquals(0, couchClient.getDbInfo().getDocCount());
+        replicator = this.getPushBuilder().build();
+        replicator.start();
+
+        while (replicator.getState() != Replicator.State.COMPLETE && replicator.getState() !=
+                Replicator.State.ERROR) {
+            Thread.sleep(50);
+        }
+
+        Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
+
+        // Check that the remote still contains no docs.
+        Assert.assertEquals(0, couchClient.getDbInfo().getDocCount());
+
+        assertLastSequence(replicator);
+    }
+
+    /**
+     * Tests that the replicator completes when there are no more changes to process even when all
+     * changes are being filtered out. Uses a batch size of 1 to ensure that multiple batches get
+     * processed.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testPushReplicationComplete() throws Exception {
+        prepareTwoDocumentsInLocalDB();
+        Replicator replicator = getPushBuilder().filter(new PushFilter() {
+            @Override
+            public boolean shouldReplicateDocument(DocumentRevision revision) {
+                return false;
+            }
+        }).changeLimitPerBatch(1).batchLimitPerRun(5).build();
+
+        // Register a listener for the completion event
+        TestReplicationListener listener = new TestReplicationListener();
+        replicator.getEventBus().register(listener);
+
+        replicator.start();
+        long timeout = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(5);
+        while (!listener.finishCalled && System.currentTimeMillis() <= timeout) {
+            TimeUnit.MILLISECONDS.sleep(50);
+        }
+
+        Assert.assertTrue("The replication should complete not timeout.", listener.finishCalled);
+
+        Assert.assertEquals("The replicator should be in COMPLETE state.", Replicator.State
+                .COMPLETE, replicator.getState());
+
+        // Expect 3 batches, 2 with 1 change each, and a third with no changes.
+        Assert.assertEquals("There should be three batches processed.", 3, listener.batches);
+
+        assertLastSequence(replicator);
+    }
 
 }

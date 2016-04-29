@@ -92,6 +92,8 @@ class PushStrategy implements ReplicationStrategy {
 
     public int bulkInsertSize = 10;
 
+    public PushFilter filter = null;
+
     public PushAttachmentsInline pushAttachmentsInline = PushAttachmentsInline.Small;
 
     public PushStrategy(Datastore source,
@@ -188,70 +190,107 @@ class PushStrategy implements ReplicationStrategy {
     }
 
     private void replicate()
-            throws DatabaseNotFoundException, InterruptedException, ExecutionException, AttachmentException, DatastoreException {
+            throws DatabaseNotFoundException, InterruptedException, ExecutionException,
+            AttachmentException, DatastoreException {
         logger.info("Push replication started");
         long startTime = System.currentTimeMillis();
 
         // We were cancelled before we started
-        if (this.state.cancel) { return; }
+        if (this.state.cancel) {
+            return;
+        }
 
-        if(!this.targetDb.exists()) {
+        if (!this.targetDb.exists()) {
             throw new DatabaseNotFoundException(
                     "Database not found: " + this.targetDb.getIdentifier());
         }
 
         this.state.documentCounter = 0;
-        for(this.state.batchCounter = 1 ; this.state.batchCounter < this.batchLimitPerRun; this.state.batchCounter ++) {
+        for (this.state.batchCounter = 1; this.state.batchCounter < this.batchLimitPerRun; this
+                .state.batchCounter++) {
 
-            if (this.state.cancel) { return; }
+            if (this.state.cancel) {
+                return;
+            }
 
             String msg = String.format(
-                "Batch %s started (completed %s changes so far)",
-                this.state.batchCounter,
-                this.state.documentCounter
+                    "Batch %s started (completed %s changes so far)",
+                    this.state.batchCounter,
+                    this.state.documentCounter
             );
             logger.info(msg);
             long batchStartTime = System.currentTimeMillis();
 
+            // Get the next batch of changes and record the size and last sequence
             Changes changes = getNextBatch();
+            final int unfilteredChangesSize = changes.size();
+            final long lastSeq = changes.getLastSequence();
+
+            // Count the number of changes processed
             int changesProcessed = 0;
+
+            // If there is a filter replace the changes with the filtered list of changes
+            if (this.filter != null) {
+                List<DocumentRevision> allowedChanges = new ArrayList<DocumentRevision>(changes
+                        .getResults().size());
+
+                for (DocumentRevision revision : changes.getResults()) {
+                    if (this.filter.shouldReplicateDocument(revision)) {
+                        allowedChanges.add(revision);
+                    }
+                }
+
+                changes = new FilteredChanges(changes.getLastSequence(), allowedChanges);
+            }
+            final int filteredChangesSize = changes.size();
 
             // So we can check whether all changes were processed during
             // a log analysis.
             msg = String.format(
                     "Batch %s contains %s changes",
                     this.state.batchCounter,
-                    changes.size()
+                    filteredChangesSize
             );
             logger.info(msg);
 
-            if (changes.size() > 0) {
+            if (filteredChangesSize > 0) {
                 changesProcessed = processOneChangesBatch(changes);
                 this.state.documentCounter += changesProcessed;
             }
 
+            // If not cancelled and there were any changes set a checkpoint
+            if (!this.state.cancel && unfilteredChangesSize > 0) {
+                try {
+                    this.putCheckpoint(String.valueOf(lastSeq));
+                } catch (DatastoreException e) {
+                    logger.log(Level.WARNING, "Failed to put checkpoint doc, next replication " +
+                            "will " +
+                            "start from previous checkpoint", e);
+                }
+            }
+
             long batchEndTime = System.currentTimeMillis();
-            msg =  String.format(
+            msg = String.format(
                     "Batch %s completed in %sms (processed %s changes)",
                     this.state.batchCounter,
-                    batchEndTime-batchStartTime,
+                    batchEndTime - batchStartTime,
                     changesProcessed
             );
             logger.info(msg);
 
             // This logic depends on the changes in the feed rather than the
             // changes we actually processed.
-            if(changes.size() == 0) {
+            if (unfilteredChangesSize == 0) {
                 break;
             }
         }
 
         long endTime = System.currentTimeMillis();
         long deltaTime = endTime - startTime;
-        String msg =  String.format(
-            "Push completed in %sms (%s total changes processed)",
-            deltaTime,
-            this.state.documentCounter
+        String msg = String.format(
+                "Push completed in %sms (%s total changes processed)",
+                deltaTime,
+                this.state.documentCounter
         );
         logger.info(msg);
     }
@@ -260,6 +299,12 @@ class PushStrategy implements ReplicationStrategy {
         long lastPushSequence = getLastCheckpointSequence();
         logger.fine("Last push sequence from remote database: " + lastPushSequence);
         return this.sourceDb.getDbCore().changes(lastPushSequence, this.changeLimitPerBatch);
+    }
+
+    private static class FilteredChanges extends Changes {
+        public FilteredChanges(long lastSequence, List<DocumentRevision> results) {
+            super(lastSequence, results);
+        }
     }
 
     /**
@@ -303,15 +348,6 @@ class PushStrategy implements ReplicationStrategy {
                 this.targetDb.putMultiparts(multiparts);
                 this.targetDb.bulkCreateSerializedDocs(serialisedMissingRevs);
                 changesProcessed += docMissingRevs.size();
-            }
-        }
-
-        if (!this.state.cancel) {
-            try {
-                this.putCheckpoint(String.valueOf(changes.getLastSequence()));
-            } catch (DatastoreException e){
-                logger.log(Level.WARNING,"Failed to put checkpoint doc, next replication will " +
-                        "start from previous checkpoint",e);
             }
         }
 
