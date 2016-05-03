@@ -1,4 +1,4 @@
-# 1.0.0 (Unreleased)
+# 1.0.0 (2016-05-03)
 - [NOTE] This library follows the
   [Semantic Versioning 2.0.0 specification](http://semver.org). To
   support this we now explicitly declare which parts of the library
