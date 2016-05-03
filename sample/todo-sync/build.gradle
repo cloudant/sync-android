@@ -3,19 +3,24 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.1.3'
+        classpath 'com.android.tools.build:gradle:2.1.0'
     }
 }
-apply plugin: 'android'
+apply plugin: 'com.android.application'
 apply plugin: 'idea'
 
 repositories {
+    // enable this to build from latest snapshot release
+    // maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     mavenLocal()
     mavenCentral()
 }
 
 dependencies {
+    // change version to 'latest.integration' to build from latest snapshot release
     compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'latest.release')
+    // needed for PeriodicReplicationReceiver etc
+    compile 'com.android.support:support-v13:23.3.0'
 }
 
 android {
@@ -57,7 +62,8 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            proguardFile 'proguard.cfg'
+            // use default proguard config plus our extra settings
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard.cfg'
         }
     }
 
