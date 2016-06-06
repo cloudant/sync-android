@@ -22,7 +22,13 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class DatastoreManagerTest {
 
@@ -213,4 +219,49 @@ public class DatastoreManagerTest {
         Assert.assertEquals(0, datastores.size());
     }
 
+    @Test
+    public void multithreadedDatastoreCreation() throws Exception {
+        int numberOfThreads = 25;
+        final List<Datastore> datastores = Collections.synchronizedList(new ArrayList<Datastore>());
+        final List<Throwable> exceptions = Collections.synchronizedList(new ArrayList<Throwable>());
+        final CountDownLatch latch = new CountDownLatch(1);
+        List<Thread> threads = new ArrayList<Thread>(numberOfThreads);
+        for (int i = 0; i < numberOfThreads; i++) {
+            threads.add(new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        latch.await(20, TimeUnit.SECONDS);
+                        Datastore ds = manager.openDatastore("sameDatastoreName");
+                        datastores.add(ds);
+                    } catch(Throwable e) {
+                        exceptions.add(e);
+                    }
+                }
+            }));
+        }
+        for (Thread thread : threads) {
+            thread.start();
+        }
+        // Release many threads simultaneously
+        latch.countDown();
+        // Wait for all threads to finish
+        for (Thread thread : threads) {
+            thread.join();
+        }
+        Assert.assertTrue("There should be no exceptions.", exceptions.isEmpty());
+        Assert.assertEquals("There should be the correct number of datastores", numberOfThreads, datastores.size());
+        Datastore ds0 = datastores.get(0);
+        for (Datastore ds : datastores) {
+            Assert.assertSame("The datastore instances should all be the same", ds0, ds);
+        }
+    }
+
+    @Test
+    public void datastoreInstanceNotReusedAfterClose() throws Exception {
+        Datastore ds1 = manager.openDatastore("ds1");
+        ds1.close();
+        Datastore ds2 = manager.openDatastore("ds1");
+        Assert.assertNotSame("The Datastore instances should not be the same.", ds1, ds2);
+    }
 }

@@ -34,7 +34,6 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +61,8 @@ public class DatastoreManager {
 
     private final String path;
 
-    private final Map<String, Datastore> openedDatastores = Collections.synchronizedMap(new HashMap<String, Datastore>());
+    /* This map should only be accessed inside synchronized(openDatastores) blocks */
+    private final Map<String, Datastore> openedDatastores = new HashMap<String, Datastore>();
 
     /**
      * The regex used to validate a datastore name, {@value}.
@@ -183,21 +183,21 @@ public class DatastoreManager {
      *
      * @see DatastoreManager#getEventBus()
      */
-    public Datastore openDatastore(String dbName, KeyProvider provider) throws DatastoreNotCreatedException {
+    public Datastore openDatastore(String dbName, KeyProvider provider) throws
+            DatastoreNotCreatedException {
         Preconditions.checkArgument(dbName.matches(LEGAL_CHARACTERS),
                 "A database must be named with all lowercase letters (a-z), digits (0-9),"
                         + " or any of the _$()+-/ characters. The name has to start with a"
                         + " lowercase letter (a-z).");
-        if (!openedDatastores.containsKey(dbName)) {
-            synchronized (openedDatastores) {
-                if (!openedDatastores.containsKey(dbName)) {
-                    Datastore ds = createDatastore(dbName, provider);
-                    ds.getEventBus().register(this);
-                    openedDatastores.put(dbName, ds);
-                }
+        synchronized (openedDatastores) {
+            Datastore ds = openedDatastores.get(dbName);
+            if (ds == null) {
+                ds = createDatastore(dbName, provider);
+                ds.getEventBus().register(this);
+                openedDatastores.put(dbName, ds);
             }
+            return ds;
         }
-        return openedDatastores.get(dbName);
     }
 
     /**
@@ -227,9 +227,9 @@ public class DatastoreManager {
         Preconditions.checkNotNull(dbName, "Datastore name must not be null");
 
         synchronized (openedDatastores) {
-            if (openedDatastores.containsKey(dbName)) {
-                openedDatastores.get(dbName).close();
-                openedDatastores.remove(dbName);
+            Datastore ds = openedDatastores.remove(dbName);
+            if (ds != null) {
+                ds.close();
             }
             String dbDirectory = getDatastoreDirectory(dbName);
             File dir = new File(dbDirectory);
