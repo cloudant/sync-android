@@ -52,7 +52,7 @@ public class DatabaseNotificationsMoreTest {
     public void setUp() throws Exception {
         datastoreManagerDir = TestUtils
                 .createTempTestingDir(DatabaseNotificationsMoreTest.class.getName());
-        datastoreManager = new DatastoreManager(datastoreManagerDir);
+        datastoreManager = DatastoreManager.getInstance(datastoreManagerDir);
         datastoreManager.getEventBus().register(this);
         this.clearAllEventList();
     }

@@ -37,7 +37,7 @@ public abstract class AbstractIndexTestBase {
     public void setUp() throws Exception {
         factoryPath = TestUtils.createTempTestingDir(AbstractIndexTestBase.class.getName());
         assertThat(factoryPath, is(notNullValue()));
-        factory = new DatastoreManager(factoryPath);
+        factory = DatastoreManager.getInstance(factoryPath);
         assertThat(factory, is(notNullValue()));
         ds = (DatastoreImpl) factory.openDatastore(AbstractIndexTestBase.class.getSimpleName());
         assertThat(ds, is(notNullValue()));

@@ -34,7 +34,7 @@ import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.query.IndexManager;
 
 File path = getApplicationContext().getDir("datastores");
-DatastoreManager manager = new DatastoreManager(path.getAbsolutePath());
+DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
 Datastore ds = manager.openDatastore("my_datastore");
 IndexManager im = new IndexManager(ds);
 ```

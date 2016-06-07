@@ -101,7 +101,7 @@ public class EndToEndEncryptionTest {
     @Before
     public void setUp() throws DatastoreNotCreatedException {
         datastoreManagerDir = TestUtils.createTempTestingDir(this.getClass().getName());
-        datastoreManager = new DatastoreManager(this.datastoreManagerDir);
+        datastoreManager = DatastoreManager.getInstance(this.datastoreManagerDir);
 
         if(dataShouldBeEncrypted) {
             this.datastore = this.datastoreManager.openDatastore(getClass().getSimpleName(),

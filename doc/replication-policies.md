@@ -186,7 +186,7 @@ public class MyReplicationService extends PeriodicReplicationService {
                 Context.MODE_PRIVATE
             );
 
-            DatastoreManager manager = new DatastoreManager(path.getAbsolutePath());
+            DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
             Datastore datastore = null;
             try {
                 datastore = manager.openDatastore(TASKS_DATASTORE_NAME);

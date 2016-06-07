@@ -58,7 +58,7 @@ Once you've included the binaries in your app's build, you need to perform some 
     KeyProvider keyProvider = new SimpleKeyProvider(key); 
 
     File path = getApplicationContext().getDir("datastores", MODE_PRIVATE);
-    DatastoreManager manager = new DatastoreManager(path.getAbsolutePath()); 
+    DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
 
     Datastore ds = manager.openDatastore("my_datastore", keyProvider);
     ```
@@ -112,7 +112,7 @@ protected void onCreate(Bundle savedInstanceState) {
     KeyProvider keyProvider = 
             new SimpleKeyProvider("testAKeyPasswordtestAKeyPassword".getBytes());
  
-    DatastoreManager manager = new DatastoreManager(path.getAbsolutePath());
+    DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
  
     Datastore ds = null;
     try {
