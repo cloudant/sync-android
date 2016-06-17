@@ -45,71 +45,101 @@ There are currently four jar files for the datastore:
 * `cloudant-sync-datastore-android-encryption`: Android encryption specific classes.
 * `cloudant-sync-datastore-javase`: Java SE specific classes.
 
-### Gradle
+### Gradle or Maven
 
-Add the maven repo and a compile time dependency on the datastore jar:
+Add the maven repo and a compile time dependency on the appropriate datastore artifact. The datastore artifact dependency will include its other required dependencies and is different depending on the target use case as shown here:
 
-```groovy
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
+1. Target is Android. If you also want datastore encryption see 2.
+    * Gradle
+    ```groovy
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
 
-dependencies {
-    // include this if you're targeting Android. If you also want datastore encryption
-    // you will need to include cloudant-sync-datastore-android-encryption instead (see below).
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'latest.release'
-    // include this if you're targeting Android and want datastore encryption.
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android-encryption', version:'latest.release'
-    // include this if you're targeting Java SE
-    compile group: 'com.cloudant', name: 'cloudant-sync-datastore-javase', version:'latest.release'
-}
-```
+    dependencies {
+        compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'latest.release'
+    }
+    ```
+    * Maven
+    ```xml
+    <project>
+        <repositories>
+        ...
+        </repositories>
 
+        <dependencies>
+            <dependency>
+                <groupId>com.cloudant</groupId>
+                <artifactId>cloudant-sync-datastore-android</artifactId>
+                <version>latest.release</version>
+                <scope>compile</scope>
+            </dependency>
+        </dependencies>
+    </project>
+    ```
+1. Target is Android and you want datastore encryption. 
+    * Gradle
+    ```groovy
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    dependencies {
+        compile group: 'com.cloudant', name: 'cloudant-sync-datastore-android-encryption', version:'latest.release'
+    }
+    ```
+    * Maven
+    ```xml
+    <project>
+        <repositories>
+        ...
+        </repositories>
+
+        <dependencies>
+            <dependency>
+                <groupId>com.cloudant</groupId>
+                <artifactId>cloudant-sync-datastore-android-encryption</artifactId>
+                <version>latest.release</version>
+                <scope>compile</scope>
+            </dependency>
+        </dependencies>
+    </project>
+    ```
+1. Target is Java SE.
+    * Gradle
+    ```groovy
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    dependencies {
+        compile group: 'com.cloudant', name: 'cloudant-sync-datastore-javase', version:'latest.release'
+    }
+    ```
+    * Maven
+    ```xml
+    <project>
+        <repositories>
+        ...
+        </repositories>
+
+        <dependencies>
+            <dependency>
+                <groupId>com.cloudant</groupId>
+                <artifactId>cloudant-sync-datastore-javase</artifactId>
+                <version>latest.release</version>
+                <scope>compile</scope>
+            </dependency>
+        </dependencies>
+    </project>
+    ```
+    
 You can see a fuller example in the sample application's [build.gradle][sabg].
 
 [sabg]: https://github.com/cloudant/sync-android/blob/master/sample/todo-sync/build.gradle
-
-### Maven
-
-It's a similar story in maven, add the repo and the dependency:
-
-```xml
-<project>
-  ...
-
-  <repositories>
-    ...
-  </repositories>
-
-  <dependencies>
-    ...
-    <!-- include this if you're targeting Android. If you want datastore encryption
-         you will need to include cloudant-sync-datastore-android-encryption instead (see below). -->
-    <dependency>
-      <groupId>com.cloudant</groupId>
-      <artifactId>cloudant-sync-datastore-android</artifactId>
-      <version>latest.release</version>
-      <scope>compile</scope>
-    </dependency>
-    <!-- include this if you're targeting Android and want datastore encryption. -->
-    <dependency>
-      <groupId>com.cloudant</groupId>
-      <artifactId>cloudant-sync-datastore-android-encryption</artifactId>
-      <version>latest.release</version>
-      <scope>compile</scope>
-    </dependency>
-    <!-- include this if you're targeting Java SE -->
-    <dependency>
-      <groupId>com.cloudant</groupId>
-      <artifactId>cloudant-sync-datastore-javase</artifactId>
-      <version>latest.release</version>
-      <scope>compile</scope>
-    </dependency>
-  </dependencies>
-
-</project>
-```
 
 _Note_: Older versions than 0.3.0 had a separate Mazha jar. This was rolled
 into the main jar for distribution simplicity. The dependency needs removing
