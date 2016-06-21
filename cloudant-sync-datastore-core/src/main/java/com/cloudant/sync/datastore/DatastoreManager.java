@@ -34,10 +34,11 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 /**
@@ -57,12 +58,17 @@ import java.util.logging.Logger;
  */
 public class DatastoreManager {
 
+    // Static map to manage DatastoreManager instances (one per directory path)
+    private static final ConcurrentMap<File, DatastoreManager> datastoreManagers = new
+            ConcurrentHashMap<File, DatastoreManager>();
+
     private final static String LOG_TAG = "DatastoreManager";
     private final static Logger logger = Logger.getLogger(DatastoreManager.class.getCanonicalName());
 
     private final String path;
 
-    private final Map<String, Datastore> openedDatastores = Collections.synchronizedMap(new HashMap<String, Datastore>());
+    /* This map should only be accessed inside synchronized(openDatastores) blocks */
+    private final Map<String, Datastore> openedDatastores = new HashMap<String, Datastore>();
 
     /**
      * The regex used to validate a datastore name, {@value}.
@@ -73,17 +79,17 @@ public class DatastoreManager {
 
     /**
      * <p>Constructs a {@code DatastoreManager} to manage a directory.</p>
-     *
      * <p>Datastores are created within the {@code directoryPath} directory.
      * In general, this folder should be under the control of, and only used
      * by, a single {@code DatastoreManager} object at any time.</p>
      *
      * @param directoryPath root directory to manage
-     *
      * @see DatastoreManager#DatastoreManager(java.io.File)
+     * @deprecated Use {@link DatastoreManager#getInstance(String)} to guarantee only a
+     * single DatastoreManager instance is created per storage path.
      */
     public DatastoreManager(String directoryPath) {
-        this(new File(directoryPath));
+        this(new File(directoryPath), false);
     }
 
     /**
@@ -97,8 +103,32 @@ public class DatastoreManager {
      *
      * @throws IllegalArgumentException if the {@code directoryPath} is not a
      *          directory or isn't writable.
+     *
+     * @deprecated Use {@link DatastoreManager#getInstance(File)} to guarantee only a single
+     * DatastoreManager instance is created per storage path.
      */
     public DatastoreManager(File directoryPath) {
+        this(directoryPath, false);
+    }
+
+    /**
+     * <p>Constructs a {@code DatastoreManager} to manage a directory.</p>
+     *
+     * <p>Datastores are created within the {@code directoryPath} directory.
+     * In general, this folder should be under the control of, and only used
+     * by, a single {@code DatastoreManager} object at any time.</p>
+     *<P>
+     * Internal use only, external callers should use DatastoreManager.getInstance().
+     *</P>
+     * @param directoryPath root directory to manage
+     * @param unused parameter to distinguish the private constructor from the deprecated public one
+     *               to be removed when deprecated constructors are removed.
+     *
+     * @throws IllegalArgumentException if the {@code directoryPath} is not a
+     *          directory or isn't writable.
+     *
+     */
+    private DatastoreManager(File directoryPath, boolean unused) {
         logger.fine("Datastore path: " + directoryPath);
 
         if(!directoryPath.exists()){
@@ -111,6 +141,43 @@ public class DatastoreManager {
             throw new IllegalArgumentException("Datastore directory is not writable");
         }
         this.path = directoryPath.getAbsolutePath();
+    }
+
+    /**
+     * <P>Gets a {@code DatastoreManager} to manage the specified directory of datastores.</P>
+     *
+     * @param directoryPath root directory to manage
+     * @see DatastoreManager#getInstance(File)
+     * @return a new or existing DatastoreManager instance for the specified directory.
+     */
+    public static DatastoreManager getInstance(String directoryPath) {
+        return DatastoreManager.getInstance(new File(directoryPath));
+    }
+
+    /**
+     * <P>Gets a {@code DatastoreManager} to manage the specified directory of datastores.</P>
+     * <P>This folder should be under the control of, and only used by, a single
+     * {@code DatastoreManager} instance at any time.
+     * </P>
+     * <P>accessing a DatastoreManager via this method guarantees that only a single
+     * DatastoreManager instance exists for the specified path within the static scope of this
+     * DatastoreManager class.
+     * </P>
+     * <P>
+     * This method is thread safe and it is acceptable to repeatedly call this method to re-obtain
+     * the same DatastoreManager instance.
+     * </P>
+     *
+     * @param directoryPath root directory to manage
+     * @return a new or existing DatastoreManager instance for the specified directory.
+     * @throws IllegalArgumentException if the {@code directoryPath} is not a
+     *                                  directory or isn't writable.
+     */
+    public static DatastoreManager getInstance(File directoryPath) {
+        // Uses the deprecated public constructor until we can change it to a private constructor.
+        DatastoreManager manager = new DatastoreManager(directoryPath, false);
+        DatastoreManager existingManager = datastoreManagers.putIfAbsent(directoryPath, manager);
+        return (existingManager == null) ? manager : existingManager;
     }
 
     /**
@@ -183,21 +250,21 @@ public class DatastoreManager {
      *
      * @see DatastoreManager#getEventBus()
      */
-    public Datastore openDatastore(String dbName, KeyProvider provider) throws DatastoreNotCreatedException {
+    public Datastore openDatastore(String dbName, KeyProvider provider) throws
+            DatastoreNotCreatedException {
         Preconditions.checkArgument(dbName.matches(LEGAL_CHARACTERS),
                 "A database must be named with all lowercase letters (a-z), digits (0-9),"
                         + " or any of the _$()+-/ characters. The name has to start with a"
                         + " lowercase letter (a-z).");
-        if (!openedDatastores.containsKey(dbName)) {
-            synchronized (openedDatastores) {
-                if (!openedDatastores.containsKey(dbName)) {
-                    Datastore ds = createDatastore(dbName, provider);
-                    ds.getEventBus().register(this);
-                    openedDatastores.put(dbName, ds);
-                }
+        synchronized (openedDatastores) {
+            Datastore ds = openedDatastores.get(dbName);
+            if (ds == null) {
+                ds = createDatastore(dbName, provider);
+                ds.getEventBus().register(this);
+                openedDatastores.put(dbName, ds);
             }
+            return ds;
         }
-        return openedDatastores.get(dbName);
     }
 
     /**
@@ -227,9 +294,9 @@ public class DatastoreManager {
         Preconditions.checkNotNull(dbName, "Datastore name must not be null");
 
         synchronized (openedDatastores) {
-            if (openedDatastores.containsKey(dbName)) {
-                openedDatastores.get(dbName).close();
-                openedDatastores.remove(dbName);
+            Datastore ds = openedDatastores.remove(dbName);
+            if (ds != null) {
+                ds.close();
             }
             String dbDirectory = getDatastoreDirectory(dbName);
             File dir = new File(dbDirectory);

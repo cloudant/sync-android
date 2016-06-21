@@ -14,6 +14,8 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.util.MultiThreadedTestHelper;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -22,7 +24,11 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 public class DatastoreManagerTest {
 
@@ -34,7 +40,7 @@ public class DatastoreManagerTest {
         TEST_PATH = FileUtils.getTempDirectory().getAbsolutePath() + File.separator +
                 "DatastoreManagerTest";
         new File(TEST_PATH).mkdirs();
-        manager = new DatastoreManager(TEST_PATH);
+        manager = DatastoreManager.getInstance(TEST_PATH);
     }
 
     @After
@@ -48,7 +54,7 @@ public class DatastoreManagerTest {
         try {
             f.mkdir();
             f.setReadOnly();
-            manager = new DatastoreManager(f.getAbsolutePath());
+            manager = DatastoreManager.getInstance(f.getAbsolutePath());
         } finally {
             f.setWritable(true);
             f.delete();
@@ -59,7 +65,7 @@ public class DatastoreManagerTest {
     public void createFailsIfMissingIntermediates(){
         File f = new File(TEST_PATH, "missing_inter/missing_test");
         try {
-            manager = new DatastoreManager(f.getAbsolutePath());
+            manager = DatastoreManager.getInstance(f.getAbsolutePath());
         } finally {
             f.delete();
         }
@@ -69,7 +75,7 @@ public class DatastoreManagerTest {
     public void createDirectoryIfMissing(){
         File f = new File(TEST_PATH, "missing_test");
         try {
-            manager = new DatastoreManager(f.getAbsolutePath());
+            manager = DatastoreManager.getInstance(f.getAbsolutePath());
         } finally {
             f.delete();
         }
@@ -213,4 +219,73 @@ public class DatastoreManagerTest {
         Assert.assertEquals(0, datastores.size());
     }
 
+    @Test
+    public void multithreadedDatastoreCreation() throws Exception {
+        new MultiThreadedTestHelper<Datastore>(25) {
+
+            @Override
+            protected void doAssertions() throws Exception {
+                Datastore ds0 = results.get(0);
+                for (Datastore ds : results) {
+                    Assert.assertSame("The datastore instances should all be the same", ds0, ds);
+                }
+            }
+
+            @Override
+            protected Callable<Datastore> getCallable() {
+                return new
+                        Callable<Datastore>() {
+                            @Override
+                            public Datastore call() throws Exception {
+                                return manager.openDatastore("sameDatastoreName");
+                            }
+                        };
+            }
+        }.run();
+    }
+
+    @Test
+    public void datastoreInstanceNotReusedAfterClose() throws Exception {
+        Datastore ds1 = manager.openDatastore("ds1");
+        ds1.close();
+        Datastore ds2 = manager.openDatastore("ds1");
+        Assert.assertNotSame("The Datastore instances should not be the same.", ds1, ds2);
+    }
+
+    @Test
+    public void assertFactoryReturnsSameInstanceString() throws Exception {
+        DatastoreManager manager2 = DatastoreManager.getInstance(manager.getPath());
+        Assert.assertSame("The DatastoreManager instances should be the same.", manager, manager2);
+    }
+
+    @Test
+    public void assertFactoryReturnsSameInstanceFile() throws Exception {
+        DatastoreManager manager2 = DatastoreManager.getInstance(new File(manager.getPath()));
+        Assert.assertSame("The DatastoreManager instances should be the same.", manager, manager2);
+    }
+
+    @Test
+    public void multithreadedDatastoreManagerAccess() throws Exception {
+        new MultiThreadedTestHelper<DatastoreManager>(25) {
+
+            @Override
+            protected void doAssertions() throws Exception {
+                for (DatastoreManager gotManager : results) {
+                    Assert.assertSame("The datastore manager instances should all be the same",
+                            manager, gotManager);
+                }
+            }
+
+            @Override
+            protected Callable<DatastoreManager> getCallable() {
+                return new
+                        Callable<DatastoreManager>() {
+                            @Override
+                            public DatastoreManager call() throws Exception {
+                                return DatastoreManager.getInstance(manager.getPath());
+                            }
+                        };
+            }
+        }.run();
+    }
 }

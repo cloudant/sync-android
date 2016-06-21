@@ -70,7 +70,7 @@ class TasksModel {
                 DATASTORE_MANGER_DIR,
                 Context.MODE_PRIVATE
         );
-        DatastoreManager manager = new DatastoreManager(path.getAbsolutePath());
+        DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
         try {
             this.mDatastore = manager.openDatastore(TASKS_DATASTORE_NAME);
         } catch (DatastoreNotCreatedException dnce) {

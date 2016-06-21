@@ -53,7 +53,7 @@ public abstract class AbstractQueryTestBase {
     public void setUp() throws Exception {
         factoryPath = TestUtils.createTempTestingDir(AbstractQueryTestBase.class.getName());
         assertThat(factoryPath, is(notNullValue()));
-        factory = new DatastoreManager(factoryPath);
+        factory = DatastoreManager.getInstance(factoryPath);
         assertThat(factory, is(notNullValue()));
         String datastoreName = AbstractQueryTestBase.class.getSimpleName();
         ds = (DatastoreImpl) factory.openDatastore(datastoreName);
