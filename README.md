@@ -2,17 +2,16 @@
 
 [![Build Status](https://travis-ci.org/cloudant/sync-android.png?branch=master)](https://travis-ci.org/cloudant/sync-android)
 
-cloudant-sync-datastore-core: [![maven-core](https://maven-badges.herokuapp.com/maven-central/com.cloudant/cloudant-sync-datastore-core/badge.svg?label=maven central core)](https://maven-badges.herokuapp.com/maven-central/com.cloudant/cloudant-sync-datastore-core)
+[![maven-central-core](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-core.svg?label=maven-central core)](http://search.maven.org/#search|ga|1|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-core")
 [![javadoc-core](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-core.svg?label=javadoc-core)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-core)
 
-cloudant-sync-datastore-android: [![maven-android](https://maven-badges.herokuapp.com/maven-central/com.cloudant/cloudant-sync-datastore-android/badge.svg?label=maven central android)](https://maven-badges.herokuapp.com/maven-central/com.cloudant/cloudant-sync-datastore-android)
+[![maven-central-android](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-android.svg?label=maven-central android)](http://search.maven.org/#search|ga|1|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-android")
 [![javadoc-android](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-android.svg?label=javadoc-android)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-android)
 
-cloudant-sync-datastore-android-encryption: [![maven-android-encryption](https://maven-badges.herokuapp.com/maven-central/com.cloudant/cloudant-sync-datastore-android-encryption/badge.svg?label=maven central android encryption)](https://maven-badges.herokuapp.com/maven-central/com.cloudant/cloudant-sync-datastore-android-encryption)
+[![maven-central-android-encryption](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-android-encryption.svg?label=maven-central android-encryption)](http://search.maven.org/#search|ga|1|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-android-encryption")
 [![javadoc-android-encryption](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-android.svg?label=javadoc-android-encryption)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-android)
 
-cloudant-sync-datastore-javase:
-[![maven-javase](https://maven-badges.herokuapp.com/maven-central/com.cloudant/cloudant-sync-datastore-javase/badge.svg?label=maven central javase)](https://maven-badges.herokuapp.com/maven-central/com.cloudant/cloudant-sync-datastore-javase)
+[![maven-central-javase](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-javase.svg?label=maven-central javase)](http://search.maven.org/#search|ga|1|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-javase")
 [![javadoc-javase](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-javase.svg?label=javadoc-javase)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-javase)
 
 **Applications use Cloudant Sync to store, index and query local JSON data on a
