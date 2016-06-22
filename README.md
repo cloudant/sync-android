@@ -1,6 +1,6 @@
 # Cloudant Sync - Android Datastore
 
-[![Build Status](https://travis-ci.org/cloudant/sync-android.png?branch=master)](https://travis-ci.org/cloudant/sync-android)
+[![Build Status](https://travis-ci.org/cloudant/sync-android.svg?branch=master)](https://travis-ci.org/cloudant/sync-android)
 
 [![maven-central-core](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-core.svg?label=maven-central core)](http://search.maven.org/#search|ga|1|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-core")
 [![javadoc-core](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-core.svg?label=javadoc-core)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-core)
