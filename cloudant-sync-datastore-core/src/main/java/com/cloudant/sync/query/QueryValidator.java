@@ -587,7 +587,7 @@ class QueryValidator {
         } else if (operator.equals(MOD)) {
             return validateModArgument(predicateValue);
         } else if (validateNotAFloat(predicateValue)) {
-            return (predicateValue instanceof String || predicateValue instanceof Number);
+            return (predicateValue instanceof String || predicateValue instanceof Number || predicateValue instanceof Boolean);
         }
 
         return false;

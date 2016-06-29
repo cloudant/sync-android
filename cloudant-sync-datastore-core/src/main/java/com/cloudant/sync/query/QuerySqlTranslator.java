@@ -484,7 +484,17 @@ class QuerySqlTranslator {
         // [ { "fieldName":  "mike"}, ...]
 
         List<String> whereClauses = new ArrayList<String>();
-        List<Object> sqlParameters = new ArrayList<Object>();
+        List<Object> sqlParameters = new ArrayList<Object>() {
+            @Override
+            public boolean add(Object o) {
+                if (o instanceof Boolean){
+                    Boolean bool = (Boolean) o;
+                    return super.add(bool ? "1" : "0");
+                } else {
+                    return super.add(String.valueOf(o));
+                }
+            }
+        };
 
         Map<String, String> operatorMap = new HashMap<String, String>();
         operatorMap.put(EQ, "=");
@@ -558,11 +568,14 @@ class QuerySqlTranslator {
                         sqlParameters.add(modulus.get(1));
                     } else {
                         // The predicate map value must be either a
-                        // String or a non-Float Number here.
+                        // String, a non-Float Number or Boolean here.
                         // This was validated during normalization.
+                        // Boolean values need to be converted into 1 or 0
+                        // to match SQLite expected values.
                         predicateValue = negatedPredicate.get(operator);
                         placeholder = "?";
-                        sqlParameters.add(String.valueOf(predicateValue));
+                        sqlParameters.add(predicateValue);
+
                     }
 
                     whereClause = whereClauseForNot(fieldName, sqlOperator, tableName, placeholder);
@@ -592,11 +605,13 @@ class QuerySqlTranslator {
                         sqlParameters.add(modulus.get(1));
                     } else {
                         // The predicate map value must be either a
-                        // String or a non-Float Number here.
+                        // String, a non-Float Number or Boolean here.
                         // This was validated during normalization.
+                        // Boolean values need to be converted into 1 or 0
+                        // to match SQLite expected values.
                         Object predicateValue = predicate.get(operator);
                         placeholder = "?";
-                        sqlParameters.add(String.valueOf(predicateValue));
+                        sqlParameters.add(predicateValue);
                     }
 
                     whereClause = String.format("\"%s\" %s %s", fieldName,

@@ -672,4 +672,22 @@ public class QueryValidatorTest {
         assertThat(normalizedQuery, is(nullValue()));
     }
 
+    @Test
+    public void normalizesQueryWithEQOperator() {
+        Map<String, Object> query = new HashMap<String, Object>();
+
+        // query - { "animal" : true }
+        query.put("animal", Boolean.TRUE);
+        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
+
+        // normalized query - { "$and" : [ { "animal" : { "$eq" : true } } ] }
+        Map<String, Object> c1op = new HashMap<String, Object>();
+        c1op.put("$eq", Boolean.TRUE);
+        Map<String, Object> c1 = new HashMap<String, Object>();
+        c1.put("animal", c1op);
+        Map<String, Object> expected = new LinkedHashMap<String, Object>();
+        expected.put("$and", Arrays.<Object>asList(c1));
+        assertThat(normalizedQuery, is(expected));
+    }
+
 }
