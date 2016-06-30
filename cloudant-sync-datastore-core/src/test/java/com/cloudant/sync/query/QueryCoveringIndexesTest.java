@@ -116,6 +116,28 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     }
 
     @Test
+    public void returnsDocForQueryWithBool() throws Exception {
+        setUpBasicQueryData();
+        DocumentRevision rev = new DocumentRevision("marriedMike");
+        Map<String, Object> bodyMap = new HashMap<String, Object>();
+        bodyMap.put("name", "mike");
+        bodyMap.put("age", 12);
+        bodyMap.put("pet", "cat");
+        bodyMap.put("married", true);
+        rev.setBody(DocumentBodyFactory.create(bodyMap));
+        ds.createDocumentFromRevision(rev);
+        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age", "married"), "married"), is("married"));
+        // query - { "married" : { "eq" : true } }
+        Map<String, Object> marriedOperator = new HashMap<String, Object>();
+        marriedOperator.put("$eq", true);
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("married", marriedOperator);
+        QueryResult result = im.find(query);
+        assertThat(result, is(notNullValue()));
+        assertThat(result.documentIds().size(), is(1));
+    }
+
+    @Test
     public void returnsDocForQueryAgainstIndexWithSpecialChar() throws Exception {
         DocumentRevision rev = new DocumentRevision("mike12");
         Map<String, Object> bodyMap = new HashMap<String, Object>();
