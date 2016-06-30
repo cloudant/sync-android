@@ -39,6 +39,9 @@ Datastore ds = manager.openDatastore("my_datastore");
 IndexManager im = new IndexManager(ds);
 ```
 
+Note: The `IndexManager` object needs to be closed when you have finished using it, to prevent
+leaking of native resources. To close an `IndexManager` instance call the `close()` method.
+
 The `IndexManager` object provides the ability to manage query indexes and execute queries.
 
 Secondly, these documents are in the datastore:
