@@ -700,7 +700,7 @@ Here:
 
 <em>field</em> := <em>String</em>  // a field name
 
-<em>simple-value</em> := <em>String</em> | <em>Number</em>
+<em>simple-value</em> := <em>String</em> | <em>Number</em> | <em>Boolean</em>
 
 <em>string-value</em> := <em>String</em>
 
