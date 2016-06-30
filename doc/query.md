@@ -704,9 +704,9 @@ Here:
 
 <em>string-value</em> := <em>String</em>
 
-<em>number</em> := <em>NSNumber</em>
+<em>number</em> := <em>Subclass of Number</em>
 
-<em>non-zero-number</em> := <em>NSNumber</em>
+<em>non-zero-number</em> := <em>Subclass of Number</em>
 
 <em>positive-integer</em> := <em>Integer</em>
 
