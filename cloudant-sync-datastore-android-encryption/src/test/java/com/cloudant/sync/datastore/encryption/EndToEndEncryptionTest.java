@@ -128,8 +128,11 @@ public class EndToEndEncryptionTest {
         // it.
 
         IndexManager im = new IndexManager(this.datastore);
-        im.ensureIndexed(Arrays.<Object>asList("name", "age"));
-
+        try {
+            im.ensureIndexed(Arrays.<Object>asList("name", "age"));
+        } finally {
+            im.close();
+        }
 
         InputStream in = new FileInputStream(jsonDatabase);
         byte[] magicBytesBuffer = new byte[sqlCipherMagicBytes.length];
@@ -137,7 +140,7 @@ public class EndToEndEncryptionTest {
 
         assertEquals("Didn't read full buffer", magicBytesBuffer.length, readLength);
 
-        if(dataShouldBeEncrypted) {
+        if (dataShouldBeEncrypted) {
             assertThat("SQLite magic bytes found in file that should be encrypted",
                     sqlCipherMagicBytes, IsNot.not(IsEqual.equalTo(magicBytesBuffer)));
         } else {
@@ -150,7 +153,11 @@ public class EndToEndEncryptionTest {
     public void indexDataEncrypted() throws IOException {
 
         IndexManager im = new IndexManager(this.datastore);
-        im.ensureIndexed(Arrays.<Object>asList("name", "age"));
+        try {
+            im.ensureIndexed(Arrays.<Object>asList("name", "age"));
+        } finally {
+            im.close();
+        }
 
         File jsonDatabase = new File(datastoreManagerDir
                 + File.separator + "EndToEndEncryptionTest"
@@ -164,7 +171,7 @@ public class EndToEndEncryptionTest {
 
         assertEquals("Didn't read full buffer", magicBytesBuffer.length, readLength);
 
-        if(dataShouldBeEncrypted) {
+        if (dataShouldBeEncrypted) {
             assertThat("SQLite magic bytes found in file that should be encrypted",
                     sqlCipherMagicBytes, IsNot.not(IsEqual.equalTo(magicBytesBuffer)));
         } else {
@@ -293,12 +300,17 @@ public class EndToEndEncryptionTest {
 
         // perform a query to ensure we can use special chars
         IndexManager indexManager = new IndexManager(datastore);
-        assertNotNull(indexManager.ensureIndexed(Arrays.<Object>asList("name","pet"),"my index"));
-        // query for the name fred and check that docs are returned.
-        Map<String,Object> selector = new HashMap<String, Object>();
-        selector.put("name","fred");
-        QueryResult queryResult = indexManager.find(selector);
-        assertNotNull(queryResult);
+        try {
+            assertNotNull(indexManager.ensureIndexed(Arrays.<Object>asList("name", "pet"), "my index"));
+
+            // query for the name fred and check that docs are returned.
+            Map<String, Object> selector = new HashMap<String, Object>();
+            selector.put("name", "fred");
+            QueryResult queryResult = indexManager.find(selector);
+            assertNotNull(queryResult);
+        } finally {
+            indexManager.close();
+        }
         // Delete
         try {
             datastore.deleteDocumentFromRevision(saved);

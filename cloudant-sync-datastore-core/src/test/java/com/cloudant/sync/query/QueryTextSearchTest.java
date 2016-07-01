@@ -43,12 +43,11 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     public void setUp() throws Exception {
         super.setUp();
         im = new IndexManager(ds);
+        indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
-        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
-        assertThat(db, is(notNullValue()));
-        assertThat(im.getQueue(), is(notNullValue()));
+        assertThat(indexManagerDatabaseQueue, is(notNullValue()));
         String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
-        SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
+        SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue, metadataTableList);
 
         DocumentRevision rev = new DocumentRevision("mike12");
         Map<String, Object> bodyMap = new HashMap<String, Object>();
@@ -304,7 +303,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void canQueryUsingEnhancedQuerySyntaxNOT() throws Exception{
         // Only execute this test if SQLite enhanced query syntax is enabled
-        Set<String> compileOptions = SQLDatabaseTestUtils.getCompileOptions(db);
+        Set<String> compileOptions = SQLDatabaseTestUtils.getCompileOptions(indexManagerDatabaseQueue);
         if (compileOptions.containsAll(Arrays.asList("ENABLE_FTS3", "ENABLE_FTS3_PARENTHESIS"))) {
             List<Object> fields = Collections.<Object>singletonList("comment");
             assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
@@ -325,7 +324,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void canQueryUsingEnhancedQuerySyntaxParentheses() throws Exception{
         // Only execute this test if SQLite enhanced query syntax is enabled
-        Set<String> compileOptions = SQLDatabaseTestUtils.getCompileOptions(db);
+        Set<String> compileOptions = SQLDatabaseTestUtils.getCompileOptions(indexManagerDatabaseQueue);
         if (compileOptions.containsAll(Arrays.asList("ENABLE_FTS3", "ENABLE_FTS3_PARENTHESIS"))) {
             List<Object> fields = Collections.<Object>singletonList("comment");
             assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));

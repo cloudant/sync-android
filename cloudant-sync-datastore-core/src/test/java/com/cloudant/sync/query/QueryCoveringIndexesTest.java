@@ -84,12 +84,11 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         } else if (testType.equals(STANDARD_EXECUTION)) {
             im = new IndexManager(ds);
         }
+        indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
-        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
-        assertThat(db, is(notNullValue()));
-        assertThat(im.getQueue(), is(notNullValue()));
+        assertThat(indexManagerDatabaseQueue, is(notNullValue()));
         String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
-        SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
+        SQLDatabaseTestUtils.assertTablesExist(TestUtils.getDBQueue(im), metadataTableList);
     }
 
     // When executing AND queries

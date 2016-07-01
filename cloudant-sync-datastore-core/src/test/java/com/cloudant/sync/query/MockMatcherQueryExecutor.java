@@ -15,6 +15,7 @@ package com.cloudant.sync.query;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.DatabaseUtils;
 
 import java.sql.SQLException;
@@ -38,8 +39,8 @@ public class MockMatcherQueryExecutor extends QueryExecutor{
 
     private final Set<String> docIds;
 
-    MockMatcherQueryExecutor(SQLDatabase database, Datastore datastore, ExecutorService queue) {
-        super(database, datastore, queue);
+    MockMatcherQueryExecutor(Datastore datastore, SQLDatabaseQueue queue) {
+        super(datastore, queue);
         docIds = new HashSet<String>(datastore.getAllDocumentIds());
     }
 

@@ -17,11 +17,14 @@ package com.cloudant.sync.util;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
+import com.cloudant.sync.query.IndexManager;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseFactory;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 
 import org.apache.commons.io.FileUtils;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -56,6 +59,13 @@ public class TestUtils {
             }
         } catch (Exception e) {
         }
+    }
+
+    public static SQLDatabaseQueue getDBQueue(IndexManager indexManager) throws Exception {
+        Class clazz =  IndexManager.class;
+        Field dbQueue = clazz.getDeclaredField("dbQueue");
+        dbQueue.setAccessible(true);
+        return (SQLDatabaseQueue) dbQueue.get(indexManager);
     }
 
     public static String createTempTestingDir(String dirPrefix) {
@@ -147,23 +157,5 @@ public class TestUtils {
 
        }
    }
-
-   public static SQLDatabase getDatabaseConnectionToExistingDb(SQLDatabase db){
-       if(Misc.isRunningOnAndroid())
-           return db;
-
-       try {
-           String filePath = (String) db.getClass()
-                   .getMethod("getDatabaseFile")
-                   .invoke(db);
-           return SQLDatabaseFactory.openSqlDatabase(filePath,
-                   new NullKeyProvider());
-       } catch (Exception e) {
-           e.printStackTrace();
-       }
-
-       return null;
-   }
-
 
 }

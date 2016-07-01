@@ -42,12 +42,11 @@ public class QuerySortTest extends AbstractQueryTestBase {
     public void setUp() throws Exception {
         super.setUp();
         im = new IndexManager(ds);
+        indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
-        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
-        assertThat(db, is(notNullValue()));
-        assertThat(im.getQueue(), is(notNullValue()));
+        assertThat(TestUtils.getDBQueue(im), is(notNullValue()));
         String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
-        SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
+        SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue, metadataTableList);
 
         Map<String, Object> indexA = new HashMap<String, Object>();
         indexA.put("name", "a");

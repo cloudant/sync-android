@@ -16,22 +16,37 @@ package com.cloudant.sync.util;
 
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
+import com.cloudant.sync.sqlite.SQLQueueCallable;
+
 import org.junit.Assert;
 
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
 
 public class SQLDatabaseTestUtils {
 
-    public static void assertTablesExist(SQLDatabase db, String... tables) throws SQLException {
-        Set<String> allTables = getAllTableNames(db);
-        for(String table: tables) {
-            Assert.assertThat(allTables, hasItem(table));
-        }
+    public static void assertTablesExist(SQLDatabaseQueue dbQueue, final String... tables) throws ExecutionException, InterruptedException {
+        dbQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+               assertTablesExist(db, tables);
+                return null;
+            }
+        }).get();
+
+    }
+
+    public static void assertTablesExist(SQLDatabase db, final String... tables) throws SQLException {
+                Set<String> allTables = getAllTableNames(db);
+                for(String table: tables) {
+                    Assert.assertThat(allTables, hasItem(table));
+                }
     }
 
     public static void assertTablesNotExist(SQLDatabase db, String... tables) throws SQLException {
@@ -55,20 +70,27 @@ public class SQLDatabaseTestUtils {
         }
     }
 
-    public static Set<String> getCompileOptions(SQLDatabase db) throws SQLException {
-        Cursor cursor = null;
-        Set<String> compileOptions = new HashSet<String>();
-        try {
-            cursor = db.rawQuery("PRAGMA compile_options", new String[]{});
-            while(cursor.moveToNext()) {
-                compileOptions.add(cursor.getString(0));
+    public static Set<String> getCompileOptions(SQLDatabaseQueue dbQueue) throws SQLException,
+            ExecutionException, InterruptedException {
+        return dbQueue.submit(new SQLQueueCallable<Set<String>>() {
+            @Override
+            public Set<String> call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                Set<String> compileOptions = new HashSet<String>();
+                try {
+                    cursor = db.rawQuery("PRAGMA compile_options", new String[]{});
+                    while(cursor.moveToNext()) {
+                        compileOptions.add(cursor.getString(0));
+                    }
+                } finally {
+                    if (cursor != null) {
+                        cursor.close();
+                    }
+                }
+                return compileOptions;
             }
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-        return compileOptions;
+        }).get();
+
     }
 
 }
