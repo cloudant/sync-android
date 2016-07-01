@@ -43,9 +43,12 @@ import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseFactory;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
+import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -85,9 +88,9 @@ public class IndexManager {
     private static final Logger logger = Logger.getLogger(IndexManager.class.getName());
 
     private final Datastore datastore;
-    private final SQLDatabase database;
     private final Pattern validFieldName;
-    private final ExecutorService queue;
+
+    private final SQLDatabaseQueue dbQueue;
 
     private boolean textSearchEnabled;
 
@@ -98,54 +101,24 @@ public class IndexManager {
     public IndexManager(Datastore datastore) {
         this.datastore = datastore;
         validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
-        queue = Executors.newSingleThreadExecutor();
 
         final String filename = ((DatastoreImpl)datastore).extensionDataFolder(EXTENSION_NAME) + File.separator
                                                                               + "indexes.sqlite";
         final KeyProvider keyProvider = ((DatastoreImpl)datastore).getKeyProvider();
 
-        SQLDatabase sqlDatabase = null;
         try {
-            sqlDatabase = queue.submit(new Callable<SQLDatabase>() {
-                @Override
-                public SQLDatabase call() throws Exception {
-                    SQLDatabase db = SQLDatabaseFactory.openSqlDatabase(filename, keyProvider);
-
-                    if (db != null) {
-                        SQLDatabaseFactory.updateSchema(db,
-                                new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
-                        SQLDatabaseFactory.updateSchema(db,
-                                new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
-                    }
-
-                    return db;
-                }
-            }).get();
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Problem opening or creating database.", e);
-        } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Problem opening or creating database.", e);
+            dbQueue = new SQLDatabaseQueue(filename, keyProvider);
+            dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
+            dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
+            textSearchEnabled = ftsAvailable(dbQueue);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Failed to open database", e);
         }
-        database = sqlDatabase;
-        textSearchEnabled = ftsAvailable(queue, database);
+
     }
 
     public void close() {
-        try {
-            queue.submit(new Runnable() {
-                @Override
-                public void run() {
-                    database.close();
-
-                }
-            }).get();
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE,"Failed to close db",e);
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to close db", e);
-        }
-        queue.shutdown();
+        dbQueue.shutdown();
     }
 
     /**
@@ -162,9 +135,9 @@ public class IndexManager {
      */
     public Map<String, Object> listIndexes() {
         try {
-            return queue.submit(new Callable<Map<String, Object>>() {
+            return dbQueue.submit(new SQLQueueCallable<Map<String, Object> >() {
                 @Override
-                public Map<String, Object> call() throws Exception {
+                public Map<String, Object> call(SQLDatabase database) throws Exception {
                      return IndexManager.listIndexesInDatabase(database);
                 }
             }).get();
@@ -242,9 +215,8 @@ public class IndexManager {
      */
     public String ensureIndexed(List<Object> fieldNames, String indexName) {
         return IndexCreator.ensureIndexed(Index.getInstance(fieldNames, indexName),
-                database,
                 datastore,
-                queue);
+                dbQueue);
     }
 
     /**
@@ -281,9 +253,8 @@ public class IndexManager {
                         indexName,
                         indexType,
                         indexSettings),
-                database,
                 datastore,
-                queue);
+                dbQueue);
     }
 
     /**
@@ -298,9 +269,9 @@ public class IndexManager {
             return false;
         }
 
-        Future<Boolean> result = queue.submit(new Callable<Boolean>() {
+        Future<Boolean> result = dbQueue.submit(new SQLQueueCallable<Boolean>() {
             @Override
-            public Boolean call() {
+            public Boolean call(SQLDatabase database) {
                 Boolean transactionSuccess = true;
                 database.beginTransaction();
 
@@ -350,7 +321,7 @@ public class IndexManager {
     public boolean updateAllIndexes() {
         Map<String, Object> indexes = listIndexes();
 
-        return IndexUpdater.updateAllIndexes(indexes, database, datastore, queue);
+        return IndexUpdater.updateAllIndexes(indexes, datastore, dbQueue);
     }
 
     public QueryResult find(Map<String, Object> query) {
@@ -371,7 +342,7 @@ public class IndexManager {
             return null;
         }
 
-        QueryExecutor queryExecutor = new QueryExecutor(database, datastore, queue);
+        QueryExecutor queryExecutor = new QueryExecutor(datastore, dbQueue);
         Map<String, Object> indexes = listIndexes();
 
         return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
@@ -386,11 +357,11 @@ public class IndexManager {
     }
 
     protected ExecutorService getQueue() {
-        return queue;
+        return null;
     }
 
     protected SQLDatabase getDatabase() {
-        return database;
+        return null;
     }
 
     /**
@@ -398,11 +369,11 @@ public class IndexManager {
      *
      * @return text search enabled setting
      */
-    protected static boolean ftsAvailable(ExecutorService q, final SQLDatabase db) {
+    protected static boolean ftsAvailable(SQLDatabaseQueue q) {
         boolean ftsAvailable = false;
-        Future<Boolean> result = q.submit(new Callable<Boolean>() {
+        Future<Boolean> result = q.submitTransaction(new SQLQueueCallable<Boolean>() {
             @Override
-            public Boolean call() {
+            public Boolean call(SQLDatabase db) {
                 Boolean transactionSuccess = true;
                 db.beginTransaction();
                 List<String> statements = new ArrayList<String>();
