@@ -226,12 +226,6 @@ subprojects {
     }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.2.1'
-}
-
-
-
 // Function to get project doc sources (i.e. the project and all its dependent projects)
 def getProjectDocSources(project) {
     // Get the compile time dependencies
