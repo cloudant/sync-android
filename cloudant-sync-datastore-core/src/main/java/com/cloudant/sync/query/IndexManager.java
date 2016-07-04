@@ -77,22 +77,9 @@ import java.util.regex.Pattern;
  *  @deprecated Use methods on {@link Datastore} instead.
  */
 public class IndexManager {
-
-    private static final String INDEX_TABLE_PREFIX = "_t_cloudant_sync_query_index_";
-    private static final String FTS_CHECK_TABLE_NAME = "_t_cloudant_sync_query_fts_check";
-    public static final String INDEX_METADATA_TABLE_NAME = "_t_cloudant_sync_query_metadata";
-
-    private static final String EXTENSION_NAME = "com.cloudant.sync.query";
-    private static final String INDEX_FIELD_NAME_PATTERN = "^[a-zA-Z][a-zA-Z0-9_]*$";
-
     private static final Logger logger = Logger.getLogger(IndexManager.class.getName());
 
     private final Datastore datastore;
-    private final Pattern validFieldName;
-
-    private final SQLDatabaseQueue dbQueue;
-
-    private boolean textSearchEnabled;
 
     /**
      *  Constructs a new IndexManager which indexes documents in 'datastore'
@@ -100,25 +87,11 @@ public class IndexManager {
      */
     public IndexManager(Datastore datastore) {
         this.datastore = datastore;
-        validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
-
-        final String filename = ((DatastoreImpl)datastore).extensionDataFolder(EXTENSION_NAME) + File.separator
-                                                                              + "indexes.sqlite";
-        final KeyProvider keyProvider = ((DatastoreImpl)datastore).getKeyProvider();
-
-        try {
-            dbQueue = new SQLDatabaseQueue(filename, keyProvider);
-            dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
-            dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
-            textSearchEnabled = ftsAvailable(dbQueue);
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Failed to open database", e);
-        }
 
     }
 
     public void close() {
-        dbQueue.shutdown();
+        // do nothing.
     }
 
     /**
@@ -134,62 +107,7 @@ public class IndexManager {
      *  @return Map of indexes in the database.
      */
     public Map<String, Object> listIndexes() {
-        try {
-            return dbQueue.submit(new SQLQueueCallable<Map<String, Object> >() {
-                @Override
-                public Map<String, Object> call(SQLDatabase database) throws Exception {
-                     return IndexManager.listIndexesInDatabase(database);
-                }
-            }).get();
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE,"Failed to list indexes",e);
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            logger.log(Level.SEVERE,"Failed to list indexes",e);
-            throw new RuntimeException(e);
-        }
-
-    }
-
-    protected static Map<String, Object> listIndexesInDatabase(SQLDatabase db) {
-        // Accumulate indexes and definitions into a map
-        String sql;
-        sql = String.format("SELECT index_name, index_type, field_name, index_settings FROM %s",
-                             INDEX_METADATA_TABLE_NAME);
-        Map<String, Object> indexes = null;
-        Map<String, Object> index;
-        List<String> fields = null;
-        Cursor cursor = null;
-        try {
-            cursor = db.rawQuery(sql, new String[]{});
-            indexes = new HashMap<String, Object>();
-            while (cursor.moveToNext()) {
-                String rowIndex = cursor.getString(0);
-                IndexType rowType = IndexType.enumValue(cursor.getString(1));
-                String rowField = cursor.getString(2);
-                String rowSettings = cursor.getString(3);
-                if (!indexes.containsKey(rowIndex)) {
-                    index = new HashMap<String, Object>();
-                    fields = new ArrayList<String>();
-                    index.put("type", rowType);
-                    index.put("name", rowIndex);
-                    index.put("fields", fields);
-                    if (rowSettings != null && !rowSettings.isEmpty()) {
-                        index.put("settings", rowSettings);
-                    }
-                    indexes.put(rowIndex, index);
-                }
-                if (fields != null) {
-                    fields.add(rowField);
-                }
-            }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Failed to get a list of indexes in the database.", e);
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
-
-        return indexes;
+        return datastore.listIndexes();
     }
 
     /**
@@ -201,7 +119,11 @@ public class IndexManager {
      *  @return name of created index
      */
     public String ensureIndexed(List<Object> fieldNames) {
-        return this.ensureIndexed(fieldNames, null);
+        try {
+            return datastore.ensureIndexed(fieldNames);
+        } catch (CheckedQueryException e) {
+            return null;
+        }
     }
 
     /**
@@ -214,9 +136,11 @@ public class IndexManager {
      *  @return name of created index
      */
     public String ensureIndexed(List<Object> fieldNames, String indexName) {
-        return IndexCreator.ensureIndexed(Index.getInstance(fieldNames, indexName),
-                datastore,
-                dbQueue);
+        try {
+            return datastore.ensureIndexed(fieldNames, indexName);
+        } catch (CheckedQueryException e) {
+            return null;
+        }
     }
 
     /**
@@ -230,7 +154,11 @@ public class IndexManager {
      *  @return name of created index
      */
     public String ensureIndexed(List<Object> fieldNames, String indexName, IndexType indexType) {
-        return ensureIndexed(fieldNames, indexName, indexType, null);
+        try {
+            return datastore.ensureIndexed(fieldNames, indexName, indexType);
+        } catch (CheckedQueryException e) {
+            return null;
+        }
     }
 
     /**
@@ -249,12 +177,11 @@ public class IndexManager {
                                 String indexName,
                                 IndexType indexType,
                                 Map<String, String> indexSettings) {
-        return IndexCreator.ensureIndexed(Index.getInstance(fieldNames,
-                        indexName,
-                        indexType,
-                        indexSettings),
-                datastore,
-                dbQueue);
+        try {
+            return datastore.ensureIndexed(fieldNames, indexName, indexType, indexSettings);
+        } catch (CheckedQueryException e) {
+            return null;
+        }
     }
 
     /**
@@ -264,53 +191,11 @@ public class IndexManager {
      *  @return deletion status as true/false
      */
     public boolean deleteIndexNamed(final String indexName) {
-        if (indexName == null || indexName.isEmpty()) {
-            logger.log(Level.WARNING, "TO delete an index, index name should be provided.");
-            return false;
-        }
-
-        Future<Boolean> result = dbQueue.submit(new SQLQueueCallable<Boolean>() {
-            @Override
-            public Boolean call(SQLDatabase database) {
-                Boolean transactionSuccess = true;
-                database.beginTransaction();
-
-                try {
-                    // Drop the index table
-                    String tableName = tableNameForIndex(indexName);
-                    String sql = String.format("DROP TABLE \"%s\"", tableName);
-                    database.execSQL(sql);
-
-                    // Delete the metadata entries
-                    String where = " index_name = ? ";
-                    database.delete(INDEX_METADATA_TABLE_NAME, where, new String[]{ indexName });
-                } catch (SQLException e) {
-                    String msg = String.format("Failed to delete index: %s",indexName);
-                    logger.log(Level.SEVERE, msg, e);
-                    transactionSuccess = false;
-                }
-
-                if (transactionSuccess) {
-                    database.setTransactionSuccessful();
-                }
-                database.endTransaction();
-
-                return transactionSuccess;
-            }
-        });
-
-        boolean success;
         try {
-            success = result.get();
-        } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error during index deletion:", e);
-            return false;
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error during index deletion:", e);
+            return datastore.deleteIndexNamed(indexName);
+        } catch (CheckedQueryException e) {
             return false;
         }
-
-        return success;
     }
 
     /**
@@ -319,13 +204,15 @@ public class IndexManager {
      *  @return update status as true/false
      */
     public boolean updateAllIndexes() {
-        Map<String, Object> indexes = listIndexes();
-
-        return IndexUpdater.updateAllIndexes(indexes, datastore, dbQueue);
+        return datastore.updateAllIndexes();
     }
 
     public QueryResult find(Map<String, Object> query) {
-        return find(query, 0, 0, null, null);
+        try {
+            return datastore.find(query);
+        } catch (CheckedQueryException e) {
+            return null;
+        }
     }
 
     public QueryResult find(Map<String, Object> query,
@@ -333,92 +220,21 @@ public class IndexManager {
                             long limit,
                             List<String> fields,
                             List<Map<String, String>> sortDocument) {
-        if (query == null) {
-            logger.log(Level.SEVERE, "-find called with null selector; bailing.");
-            return null;
-        }
-
-        if (!updateAllIndexes()) {
-            return null;
-        }
-
-        QueryExecutor queryExecutor = new QueryExecutor(datastore, dbQueue);
-        Map<String, Object> indexes = listIndexes();
-
-        return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
-    }
-
-    protected static String tableNameForIndex(String indexName) {
-        return INDEX_TABLE_PREFIX.concat(indexName);
-    }
-
-    protected Datastore getDatastore() {
-        return datastore;
-    }
-
-    protected ExecutorService getQueue() {
-        return null;
-    }
-
-    protected SQLDatabase getDatabase() {
-        return null;
-    }
-
-    /**
-     * Check that support for text search exists in SQLite by building a VIRTUAL table.
-     *
-     * @return text search enabled setting
-     */
-    protected static boolean ftsAvailable(SQLDatabaseQueue q) {
-        boolean ftsAvailable = false;
-        Future<Boolean> result = q.submitTransaction(new SQLQueueCallable<Boolean>() {
-            @Override
-            public Boolean call(SQLDatabase db) {
-                Boolean transactionSuccess = true;
-                db.beginTransaction();
-                List<String> statements = new ArrayList<String>();
-                statements.add(String.format("CREATE VIRTUAL TABLE %s USING FTS4 ( col )",
-                                             FTS_CHECK_TABLE_NAME));
-                statements.add(String.format("DROP TABLE %s", FTS_CHECK_TABLE_NAME));
-
-                for (String statement : statements) {
-                    try {
-                        db.execSQL(statement);
-                    } catch (SQLException e) {
-                        // An exception here means that FTS is not enabled in SQLite.
-                        // Logging happens in calling method.
-                        transactionSuccess = false;
-                        break;
-                    }
-                }
-
-                if (transactionSuccess) {
-                    db.setTransactionSuccessful();
-                }
-                db.endTransaction();
-
-                return  transactionSuccess;
-            }
-        });
-
         try {
-            ftsAvailable = result.get();
-        } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error encountered:", e);
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
+            return datastore.find(query, skip, limit, fields, sortDocument);
+        } catch (CheckedQueryException e) {
+            return null;
         }
 
-        return ftsAvailable;
     }
+
 
     public boolean isTextSearchEnabled() {
-        if (!textSearchEnabled) {
-            logger.log(Level.INFO, "Text search is currently not supported.  " +
-                    "To enable text search recompile SQLite with " +
-                    "the full text search compile options enabled.");
+        try {
+            return datastore.isTextSearchEnabled();
+        } catch (CheckedQueryException e) {
+            return false;
         }
-        return textSearchEnabled;
     }
 
 }

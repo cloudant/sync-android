@@ -52,7 +52,7 @@ public class DatastoreImplForceInsertTest {
     @Before
     public void setUp() throws Exception {
         database_dir = TestUtils.createTempTestingDir(DatastoreImplForceInsertTest.class.getName());
-        datastore = new DatastoreImpl(database_dir, "test");
+        datastore = new QueryableDatastore(database_dir, "test");
 
         jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         bodyOne = new DocumentBodyImpl(jsonData);

@@ -148,28 +148,4 @@ public class TestUtils {
        }
    }
 
-   public static SQLDatabase getDatabaseConnectionToExistingDb(SQLDatabase db){
-       if(Misc.isRunningOnAndroid())
-           return db;
-
-       try {
-           String filePath = (String) db.getClass()
-                   .getMethod("getDatabaseFile")
-                   .invoke(db);
-           return SQLDatabaseFactory.openSqlDatabase(filePath,
-                   new NullKeyProvider());
-       } catch (IllegalAccessException e) {
-           e.printStackTrace();
-       } catch (InvocationTargetException e) {
-           e.printStackTrace();
-       } catch (NoSuchMethodException e) {
-           e.printStackTrace();
-       } catch (IOException e) {
-           e.printStackTrace();
-       }
-
-       return null;
-   }
-
-
 }

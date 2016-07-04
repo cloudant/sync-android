@@ -18,7 +18,9 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DatastoreManager;
+import com.cloudant.sync.datastore.QueryableDatastore;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -29,9 +31,9 @@ public abstract class AbstractIndexTestBase {
 
     String factoryPath = null;
     DatastoreManager factory = null;
-    DatastoreImpl ds = null;
-    IndexManager im = null;
-    SQLDatabase db = null;
+    ForwardingDatastore fd = null;
+    QueryableDatastore ds = null;
+    SQLDatabaseQueue dbq = null;
 
     @Before
     public void setUp() throws Exception {
@@ -39,28 +41,27 @@ public abstract class AbstractIndexTestBase {
         assertThat(factoryPath, is(notNullValue()));
         factory = DatastoreManager.getInstance(factoryPath);
         assertThat(factory, is(notNullValue()));
-        ds = (DatastoreImpl) factory.openDatastore(AbstractIndexTestBase.class.getSimpleName());
+        ds = (QueryableDatastore) factory.openDatastore(AbstractIndexTestBase.class.getSimpleName());
         assertThat(ds, is(notNullValue()));
-        im = new IndexManager(ds);
-        assertThat(im, is(notNullValue()));
-        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
-        assertThat(db, is(notNullValue()));
-        assertThat(im.getQueue(), is(notNullValue()));
-        String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
-        SQLDatabaseTestUtils.assertTablesExist(TestUtils.getDatabaseConnectionToExistingDb(db),
-                                               metadataTableList);
+        fd = new ForwardingDatastore(ds);
+        dbq = ds.getQueryQueue();
+        assertThat(fd, is(notNullValue()));
+//        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
+//        assertThat(db, is(notNullValue()));
+//        assertThat(im.getQueue(), is(notNullValue()));
+        String[] metadataTableList = new String[] { QueryConstants.INDEX_METADATA_TABLE_NAME };
+//        SQLDatabaseTestUtils.assertTablesExist(TestUtils.getDatabaseConnectionToExistingDb(db),
+//                                               metadataTableList);
     }
 
     @After
     public void tearDown() {
-        im.close();
-        assertThat(im.getQueue().isShutdown(), is(true));
-        TestUtils.deleteDatabaseQuietly(db);
         ds.close();
+//        assertThat(im.getQueue().isShutdown(), is(true));
+//        TestUtils.deleteDatabaseQuietly(db); // FIXME make this work
         TestUtils.deleteTempTestingDir(factoryPath);
 
-        db = null;
-        im = null;
+        dbq = null;
         ds = null;
         factory = null;
         factoryPath = null;

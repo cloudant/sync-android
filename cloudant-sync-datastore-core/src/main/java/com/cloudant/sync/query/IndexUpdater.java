@@ -37,7 +37,7 @@ import java.util.logging.Logger;
 /**
  *  Handles updating indexes for a given datastore.
  */
-class IndexUpdater {
+public class IndexUpdater {
 
     private final Datastore datastore;
 
@@ -142,7 +142,7 @@ class IndexUpdater {
                 database.beginTransaction();
                 for (DocumentRevision rev: changes.getResults()) {
                     // Delete existing values
-                    String tableName = IndexManager.tableNameForIndex(indexName);
+                    String tableName = QueryConstants.tableNameForIndex(indexName);
                     database.delete(tableName, " _id = ? ", new String[]{rev.getId()});
 
                     // Insert new values if the rev isn't deleted
@@ -345,7 +345,7 @@ class IndexUpdater {
             }
             argIndex = argIndex + 1;
         }
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = QueryConstants.tableNameForIndex(indexName);
 
         return new DBParameter(tableName, contentValues);
     }
@@ -356,7 +356,7 @@ class IndexUpdater {
             public Long call(SQLDatabase database) {
                 long result = 0;
                 String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = ?",
-                                           IndexManager.INDEX_METADATA_TABLE_NAME);
+                        QueryConstants.INDEX_METADATA_TABLE_NAME);
                 Cursor cursor = null;
                 try {
                     cursor = database.rawQuery(sql, new String[]{ indexName });
@@ -393,7 +393,7 @@ class IndexUpdater {
                 boolean updateSuccess = true;
                 ContentValues v = new ContentValues();
                 v.put("last_sequence", lastSequence);
-                int row = database.update(IndexManager.INDEX_METADATA_TABLE_NAME,
+                int row = database.update(QueryConstants.INDEX_METADATA_TABLE_NAME,
                                           v,
                                           " index_name = ? ",
                                           new String[]{ indexName });

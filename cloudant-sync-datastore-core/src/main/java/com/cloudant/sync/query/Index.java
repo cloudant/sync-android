@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 /**
  * This class provides functionality to manage an index
  */
-class Index {
+public class Index {
 
     private static final Logger logger = Logger.getLogger(Index.class.getCanonicalName());
 

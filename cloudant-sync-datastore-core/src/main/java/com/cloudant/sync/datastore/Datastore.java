@@ -20,6 +20,7 @@ package com.cloudant.sync.datastore;
 import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.query.CheckedQueryException;
 import com.cloudant.sync.query.IndexType;
+import com.cloudant.sync.query.QueryResult;
 
 import java.util.Iterator;
 import java.util.List;
@@ -420,7 +421,16 @@ public interface Datastore {
      */
     boolean updateAllIndexes();
 
-    public boolean isTextSearchEnabled() throws CheckedQueryException;
+    boolean isTextSearchEnabled() throws CheckedQueryException;
+
+    QueryResult find(Map<String, Object> query) throws CheckedQueryException;
+
+    QueryResult find(Map<String, Object> query,
+                     long skip,
+                     long limit,
+                     List<String> fields,
+                     List<Map<String, String>> sortDocument) throws CheckedQueryException;
+
 
 }
 

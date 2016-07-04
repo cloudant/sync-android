@@ -20,7 +20,9 @@ import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.QueryableDatastore;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.After;
@@ -45,9 +47,9 @@ public abstract class AbstractQueryTestBase {
 
     String factoryPath = null;
     DatastoreManager factory = null;
-    DatastoreImpl ds = null;
-    IndexManager im = null;
-    SQLDatabase db = null;
+    QueryableDatastore ds = null;
+    ForwardingDatastore fd = null;
+    SQLDatabaseQueue dbq = null;
 
     @Before
     public void setUp() throws Exception {
@@ -56,20 +58,19 @@ public abstract class AbstractQueryTestBase {
         factory = DatastoreManager.getInstance(factoryPath);
         assertThat(factory, is(notNullValue()));
         String datastoreName = AbstractQueryTestBase.class.getSimpleName();
-        ds = (DatastoreImpl) factory.openDatastore(datastoreName);
+        ds = (QueryableDatastore) factory.openDatastore(datastoreName);
+        dbq = ds.getQueryQueue();
         assertThat(ds, is(notNullValue()));
     }
 
     @After
     public void tearDown() {
-        im.close();
-        assertThat(im.getQueue().isShutdown(), is(true));
-        TestUtils.deleteDatabaseQuietly(db);
+//        fd.close();
+//        assertThat(fd.getQueue().isShutdown(), is(true));
+//        TestUtils.deleteDatabaseQuietly(db);
         ds.close();
         TestUtils.deleteTempTestingDir(factoryPath);
 
-        db = null;
-        im = null;
         ds = null;
         factory = null;
         factoryPath = null;
@@ -127,8 +128,8 @@ public abstract class AbstractQueryTestBase {
         ds.createDocumentFromRevision(rev);
 
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
     }
 
     // Used to setup document data testing:
@@ -136,9 +137,9 @@ public abstract class AbstractQueryTestBase {
     public void setUpDottedQueryData() throws Exception {
         setUpSharedDocs();
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet.name", "pet.species"), "pet"),
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("age", "pet.name", "pet.species"), "pet"),
                 is("pet"));
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet.name.first"), "firstname"),
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("name", "pet.name.first"), "firstname"),
                 is("firstname"));
     }
 
@@ -210,11 +211,11 @@ public abstract class AbstractQueryTestBase {
     public void setUpOrQueryData() throws Exception {
         setUpSharedDocs();
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet", "name"), "basic"),
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("age", "pet", "name"), "basic"),
                 is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet.name", "pet.species"), "pet"),
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("age", "pet.name", "pet.species"), "pet"),
                 is("pet"));
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet.name.first"), "firstname"),
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("age", "pet.name.first"), "firstname"),
                 is("firstname"));
     }
 
@@ -268,7 +269,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet", "name"), "basic"),
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("age", "pet", "name"), "basic"),
                 is("basic"));
     }
 
@@ -323,7 +324,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age"), "pet"),
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("name", "pet", "age"), "pet"),
                 is("pet"));
     }
 
@@ -400,7 +401,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "score"), "name_score"),
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("name", "score"), "name_score"),
                                     is("name_score"));
     }
 
@@ -415,7 +416,7 @@ public abstract class AbstractQueryTestBase {
             rev.setBody(DocumentBodyFactory.create(bodyMap));
             ds.createDocumentFromRevision(rev);
         }
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("large_field", "idx"), "large"),
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("large_field", "idx"), "large"),
                 is("large"));
     }
 
@@ -464,8 +465,8 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
     }
 
     // Used to setup document data testing for queries containing a $size operator:
@@ -534,7 +535,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age"), "basic"), is("basic"));
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("name", "pet", "age"), "basic"), is("basic"));
     }
 
     // Used to setup document data testing for sorting:
@@ -567,7 +568,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age", "same"), "pet"),
+        assertThat(fd.ensureIndexed(Arrays.<Object>asList("name", "pet", "age", "same"), "pet"),
                 is("pet"));
     }
 

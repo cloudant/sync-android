@@ -25,6 +25,8 @@ import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.ProjectedDocumentRevision;
+import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -41,13 +43,16 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        im = new IndexManager(ds);
-        assertThat(im, is(notNullValue()));
-        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
-        assertThat(db, is(notNullValue()));
-        assertThat(im.getQueue(), is(notNullValue()));
-        String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
-        SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
+        fd = new ForwardingDatastore(ds);
+        assertThat(fd, is(notNullValue()));
+        final String[] metadataTableList = new String[] { QueryConstants.INDEX_METADATA_TABLE_NAME };
+        dbq.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
+                return null;
+            }
+        }).get();
 
         setUpBasicQueryData();
     }
@@ -55,11 +60,11 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     // When filtering fields on find
 
     @Test
-    public void returnsFieldSpecifiedOnly() {
+    public void returnsFieldSpecifiedOnly() throws Exception {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, Arrays.asList("name"), null);
+        QueryResult queryResult = fd.find(query, 0, Long.MAX_VALUE, Arrays.asList("name"), null);
         for (DocumentRevision rev : queryResult) {
             Map<String, Object> revBody = rev.getBody().asMap();
             assertThat(revBody.keySet(), contains("name"));
@@ -67,11 +72,11 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsAllFieldsWhenFieldsArrayEmpty() {
+    public void returnsAllFieldsWhenFieldsArrayEmpty() throws CheckedQueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, new ArrayList<String>(), null);
+        QueryResult queryResult = fd.find(query, 0, Long.MAX_VALUE, new ArrayList<String>(), null);
         for (DocumentRevision rev : queryResult) {
             Map<String, Object> revBody = rev.getBody().asMap();
             assertThat(revBody.keySet(), containsInAnyOrder("name", "pet", "age"));
@@ -79,11 +84,11 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsAllFieldsWhenFieldsArrayNull() {
+    public void returnsAllFieldsWhenFieldsArrayNull() throws CheckedQueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, null, null);
+        QueryResult queryResult = fd.find(query, 0, Long.MAX_VALUE, null, null);
         for (DocumentRevision rev : queryResult) {
             Map<String, Object> revBody = rev.getBody().asMap();
             assertThat(revBody.keySet(), containsInAnyOrder("name", "pet", "age"));
@@ -91,11 +96,11 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsNullWhenUsingDottedNotation() {
+    public void returnsNullWhenUsingDottedNotation() throws CheckedQueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
-        QueryResult queryResult = im.find(query,
+        QueryResult queryResult = fd.find(query,
                                           0,
                                           Long.MAX_VALUE,
                                           Arrays.asList("name.blah"),
@@ -104,11 +109,11 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsOnlyFieldsSpecified() {
+    public void returnsOnlyFieldsSpecified() throws CheckedQueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
-        QueryResult queryResult = im.find(query,
+        QueryResult queryResult = fd.find(query,
                                           0,
                                           Long.MAX_VALUE,
                                           Arrays.asList("name", "pet"),
@@ -125,7 +130,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
         query.put("age", 12);
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, Arrays.asList("name"), null);
+        QueryResult queryResult = fd.find(query, 0, Long.MAX_VALUE, Arrays.asList("name"), null);
         assertThat(queryResult.size(), is(1));
         for (DocumentRevision rev : queryResult) {
             Map<String, Object> revBody = rev.getBody().asMap();
@@ -148,7 +153,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
         query.put("age", 12);
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, Arrays.asList("name"), null);
+        QueryResult queryResult = fd.find(query, 0, Long.MAX_VALUE, Arrays.asList("name"), null);
         assertThat(queryResult.size(), is(1));
         for (DocumentRevision rev : queryResult) {
             assertThat(rev, is(instanceOf(ProjectedDocumentRevision.class)));
@@ -176,7 +181,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
         query.put("age", 12);
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, Arrays.asList("name"), null);
+        QueryResult queryResult = fd.find(query, 0, Long.MAX_VALUE, Arrays.asList("name"), null);
         assertThat(queryResult.size(), is(1));
         for (DocumentRevision rev : queryResult) {
             assertThat(rev, is(instanceOf(ProjectedDocumentRevision.class)));
@@ -206,7 +211,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
         query.put("age", 12);
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, Arrays.asList("name"), null);
+        QueryResult queryResult = fd.find(query, 0, Long.MAX_VALUE, Arrays.asList("name"), null);
         assertThat(queryResult.size(), is(1));
         for (DocumentRevision rev : queryResult) {
             assertThat(rev, is(instanceOf(ProjectedDocumentRevision.class)));

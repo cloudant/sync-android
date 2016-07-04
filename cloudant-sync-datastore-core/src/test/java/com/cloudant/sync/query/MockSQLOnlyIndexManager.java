@@ -13,6 +13,7 @@
 package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.QueryableDatastore;
 
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,7 @@ import java.util.Map;
  * @see com.cloudant.sync.query.IndexManager
  * @see com.cloudant.sync.query.MockSQLOnlyQueryExecutor
  */
-public class MockSQLOnlyIndexManager extends IndexManager {
+public class MockSQLOnlyIndexManager extends ForwardingDatastore {
 
     public MockSQLOnlyIndexManager(Datastore datastore) {
         super(datastore);
@@ -46,9 +47,9 @@ public class MockSQLOnlyIndexManager extends IndexManager {
             return null;
         }
 
-        MockSQLOnlyQueryExecutor queryExecutor = new MockSQLOnlyQueryExecutor(getDatabase(),
-                                                                              getDatastore(),
-                                                                              getQueue());
+        MockSQLOnlyQueryExecutor queryExecutor = new MockSQLOnlyQueryExecutor(
+                                                                              this,
+                ((QueryableDatastore)datastore).getQueryQueue());
         Map<String, Object> indexes = listIndexes();
         return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
     }

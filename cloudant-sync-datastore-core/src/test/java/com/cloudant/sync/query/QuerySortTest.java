@@ -19,6 +19,8 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
+import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -41,13 +43,16 @@ public class QuerySortTest extends AbstractQueryTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        im = new IndexManager(ds);
-        assertThat(im, is(notNullValue()));
-        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
-        assertThat(db, is(notNullValue()));
-        assertThat(im.getQueue(), is(notNullValue()));
-        String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
-        SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
+        fd = new ForwardingDatastore(ds);
+        assertThat(fd, is(notNullValue()));
+        final String[] metadataTableList = new String[] { QueryConstants.INDEX_METADATA_TABLE_NAME };
+        dbq.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
+                return null;
+            }
+        }).get();
 
         Map<String, Object> indexA = new HashMap<String, Object>();
         indexA.put("name", "a");
@@ -78,7 +83,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
         sortName.put("name", "asc");
         List<Map<String, String>> order = new ArrayList<Map<String, String>>();
         order.add(sortName);
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, null, order);
+        QueryResult queryResult = fd.find(query, 0, Long.MAX_VALUE, null, order);
         assertThat(queryResult.documentIds(), contains("fred11", "fred34", "mike12"));
     }
 
@@ -94,7 +99,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
         List<Map<String, String>> order = new ArrayList<Map<String, String>>();
         order.add(sortName);
         order.add(sortAge);
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, null, order);
+        QueryResult queryResult = fd.find(query, 0, Long.MAX_VALUE, null, order);
         assertThat(queryResult.documentIds(), contains("fred34", "fred11", "mike12"));
     }
 
@@ -107,7 +112,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
         sortPet.put("pet", "asc");
         List<Map<String, String>> order = new ArrayList<Map<String, String>>();
         order.add(sortPet);
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, null, order);
+        QueryResult queryResult = fd.find(query, 0, Long.MAX_VALUE, null, order);
         assertThat(queryResult.documentIds(), contains("mike12", "fred11", "fred34"));
     }
 
@@ -123,7 +128,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
         List<Map<String, String>> order = new ArrayList<Map<String, String>>();
         order.add(sortName);
         order.add(sortAge);
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, null, order);
+        QueryResult queryResult = fd.find(query, 0, Long.MAX_VALUE, null, order);
         assertThat(queryResult, is(nullValue()));
     }
 
@@ -137,7 +142,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
         sort.put("age", "desc");
         List<Map<String, String>> order = new ArrayList<Map<String, String>>();
         order.add(sort);
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, null, order);
+        QueryResult queryResult = fd.find(query, 0, Long.MAX_VALUE, null, order);
         assertThat(queryResult, is(nullValue()));
     }
 

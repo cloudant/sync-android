@@ -39,13 +39,16 @@ public class QueryResultTest extends AbstractQueryTestBase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        im = new IndexManager(ds);
-        assertThat(im, is(notNullValue()));
-        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
-        assertThat(db, is(notNullValue()));
-        assertThat(im.getQueue(), is(notNullValue()));
-        String[] metadataTableList = new String[]{IndexManager.INDEX_METADATA_TABLE_NAME};
-        SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
+        fd = new ForwardingDatastore(ds);
+        assertThat(fd, is(notNullValue()));
+        final String[] metadataTableList = new String[]{QueryConstants.INDEX_METADATA_TABLE_NAME};
+        dbq.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
+                return null;
+            }
+        }).get();
 
         queue = new SQLDatabaseQueue(factoryPath + "/" + factory.listAllDatastores().get(0) +
             "/db.sync", new NullKeyProvider());
@@ -58,17 +61,17 @@ public class QueryResultTest extends AbstractQueryTestBase {
      * to get the document ids from the QueryResult.
      */
     @Test(expected = QueryException.class)
-    public void testQueryGetDocumentsWithIdsFails() throws InterruptedException,
+    public void testQueryGetDocumentsWithIdsFails() throws Exception,
         ExecutionException {
         List<Object> fields = Collections.<Object>singletonList("pet");
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(fd.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
 
         // query - { "$text" : { "$search" : "cat" } }
         Map<String, Object> search = new HashMap<String, Object>();
         search.put("$search", "cat");
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("$text", search);
-        QueryResult queryResult = im.find(query);
+        QueryResult queryResult = fd.find(query);
 
         queue.submit(new SQLQueueCallable<Void>() {
             @Override

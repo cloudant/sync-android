@@ -14,6 +14,7 @@ package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -29,8 +30,8 @@ import java.util.concurrent.ExecutorService;
  */
 public class MockSQLOnlyQueryExecutor extends QueryExecutor{
 
-    MockSQLOnlyQueryExecutor(SQLDatabase database, Datastore datastore, ExecutorService queue) {
-        super(database, datastore, queue);
+    MockSQLOnlyQueryExecutor( Datastore datastore, SQLDatabaseQueue queue) {
+        super( datastore, queue);
     }
 
     @Override

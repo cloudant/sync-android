@@ -53,7 +53,7 @@ public class BasicDBCoreObservableTest {
     @Test
     public void createDocument_bodyOnly_success() throws Exception {
 
-        this.core = new DatastoreImpl(database_dir, "test");
+        this.core = new QueryableDatastore(database_dir, "test");
 
         this.jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         this.bodyOne = new DocumentBodyImpl(jsonData);
