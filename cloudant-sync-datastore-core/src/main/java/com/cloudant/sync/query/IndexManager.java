@@ -71,6 +71,7 @@ import java.util.regex.Pattern;
  *  - update indexes (usually done automatically)
  *
  *  @api_public
+ *  @deprecated Use methods on {@link Datastore} instead.
  */
 public class IndexManager {
 
