@@ -18,6 +18,7 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.event.EventBus;
+import com.cloudant.sync.query.CheckedQueryException;
 import com.cloudant.sync.query.IndexType;
 
 import java.util.Iterator;
@@ -362,7 +363,7 @@ public interface Datastore {
      *  @param fieldNames List of field names in the sort format
      *  @return name of created index
      */
-    String ensureIndexed(List<Object> fieldNames);
+    String ensureIndexed(List<Object> fieldNames) throws CheckedQueryException;
 
     /**
      *  Add a single, possibly compound, index for the given field names.
@@ -373,7 +374,7 @@ public interface Datastore {
      *  @param indexName Name of index to create or null to generate an index name.
      *  @return name of created index
      */
-    String ensureIndexed(List<Object> fieldNames, String indexName);
+    String ensureIndexed(List<Object> fieldNames, String indexName) throws CheckedQueryException;
 
     /**
      *  Add a single, possibly compound, index for the given field names.
@@ -385,7 +386,7 @@ public interface Datastore {
      *  @param indexType The type of index (json or text currently supported)
      *  @return name of created index
      */
-    String ensureIndexed(List<Object> fieldNames, String indexName, IndexType indexType);
+    String ensureIndexed(List<Object> fieldNames, String indexName, IndexType indexType) throws CheckedQueryException;
 
     /**
      *  Add a single, possibly compound, index for the given field names.
@@ -402,7 +403,7 @@ public interface Datastore {
      String ensureIndexed(List<Object> fieldNames,
                                 String indexName,
                                 IndexType indexType,
-                                Map<String, String> indexSettings);
+                                Map<String, String> indexSettings) throws CheckedQueryException;
 
     /**
      *  Delete an index.
@@ -410,7 +411,7 @@ public interface Datastore {
      *  @param indexName Name of index to delete
      *  @return deletion status as true/false
      */
-    boolean deleteIndexNamed(final String indexName);
+    boolean deleteIndexNamed(final String indexName) throws CheckedQueryException;
 
     /**
      *  Update all indexes.
@@ -419,7 +420,7 @@ public interface Datastore {
      */
     boolean updateAllIndexes();
 
-    public boolean isTextSearchEnabled();
+    public boolean isTextSearchEnabled() throws CheckedQueryException;
 
 }
 
