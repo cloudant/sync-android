@@ -18,9 +18,11 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.event.EventBus;
+import com.cloudant.sync.query.IndexType;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>The Datastore is the core interaction point for create, delete and update
@@ -337,6 +339,87 @@ public interface Datastore {
      * Compacts the sqlDatabase storage by removing the bodies and attachments of obsolete revisions.
      */
     void compact();
+
+    /**
+     *  Get a list of indexes and their definitions as a Map.
+     *
+     *  Returns:
+     *
+     *  { indexName: { type: json,
+     *                 name: indexName,
+     *                 fields: [field1, field2]
+     *  }
+     *
+     *  @return Map of indexes in the database.
+     */
+     Map<String, Object> listIndexes();
+
+    /**
+     *  Add a single, possibly compound, index for the given field names.
+     *
+     *  This method generates a name for the new index.
+     *
+     *  @param fieldNames List of field names in the sort format
+     *  @return name of created index
+     */
+    String ensureIndexed(List<Object> fieldNames);
+
+    /**
+     *  Add a single, possibly compound, index for the given field names.
+     *
+     *  This function generates a name for the new index.
+     *
+     *  @param fieldNames List of field names in the sort format
+     *  @param indexName Name of index to create or null to generate an index name.
+     *  @return name of created index
+     */
+    String ensureIndexed(List<Object> fieldNames, String indexName);
+
+    /**
+     *  Add a single, possibly compound, index for the given field names.
+     *
+     *  This function generates a name for the new index.
+     *
+     *  @param fieldNames List of field names in the sort format
+     *  @param indexName Name of index to create or null to generate an index name.
+     *  @param indexType The type of index (json or text currently supported)
+     *  @return name of created index
+     */
+    String ensureIndexed(List<Object> fieldNames, String indexName, IndexType indexType);
+
+    /**
+     *  Add a single, possibly compound, index for the given field names.
+     *
+     *  This function generates a name for the new index.
+     *
+     *  @param fieldNames List of field names in the sort format
+     *  @param indexName Name of index to create or null to generate an index name.
+     *  @param indexType The type of index (json or text currently supported)
+     *  @param indexSettings The optional settings to be applied to an index
+     *                       Only text indexes support settings - Ex. { "tokenize" : "simple" }
+     *  @return name of created index
+     */
+     String ensureIndexed(List<Object> fieldNames,
+                                String indexName,
+                                IndexType indexType,
+                                Map<String, String> indexSettings);
+
+    /**
+     *  Delete an index.
+     *
+     *  @param indexName Name of index to delete
+     *  @return deletion status as true/false
+     */
+    boolean deleteIndexNamed(final String indexName);
+
+    /**
+     *  Update all indexes.
+     *
+     *  @return update status as true/false
+     */
+    boolean updateAllIndexes();
+
+    public boolean isTextSearchEnabled();
 
 }
 
