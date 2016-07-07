@@ -59,7 +59,7 @@ public class QueryableDatastore extends DatastoreImpl {
 
     private final Pattern validFieldName;
 
-    private final SQLDatabaseQueue dbQueue;
+    private final SQLDatabaseQueue indexDbQueue;
 
     private boolean textSearchEnabled;
 
@@ -75,10 +75,10 @@ public class QueryableDatastore extends DatastoreImpl {
         final String filename = this.extensionDataFolder(EXTENSION_NAME) + File.separator
                 + "indexes.sqlite";
 
-        dbQueue = new SQLDatabaseQueue(filename, provider);
-        dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
-        dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
-        textSearchEnabled = ftsAvailable(dbQueue);
+        indexDbQueue = new SQLDatabaseQueue(filename, provider);
+        indexDbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
+        indexDbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
+        textSearchEnabled = ftsAvailable(indexDbQueue);
 
     }
 
@@ -120,7 +120,7 @@ public class QueryableDatastore extends DatastoreImpl {
     @Override
     public Map<String, Object> listIndexes() {
         try {
-            return dbQueue.submit(new SQLQueueCallable<Map<String, Object> >() {
+            return indexDbQueue.submit(new SQLQueueCallable<Map<String, Object> >() {
                 @Override
                 public Map<String, Object> call(SQLDatabase database) throws Exception {
                     return QueryableDatastore.listIndexesInDatabase(database);
@@ -186,7 +186,7 @@ public class QueryableDatastore extends DatastoreImpl {
     public String ensureIndexed(List<Object> fieldNames, String indexName) throws CheckedQueryException {
         return IndexCreator.ensureIndexed(Index.getInstance(fieldNames, indexName),
                 this,
-                dbQueue);
+                indexDbQueue);
     }
 
     @Override
@@ -201,7 +201,7 @@ public class QueryableDatastore extends DatastoreImpl {
                 indexType,
                 indexSettings),
                 this,
-                dbQueue);
+                indexDbQueue);
     }
 
     @Override
@@ -211,7 +211,7 @@ public class QueryableDatastore extends DatastoreImpl {
             return false;
         }
 
-        Future<Boolean> result = dbQueue.submitTransaction(new SQLQueueCallable<Boolean>() {
+        Future<Boolean> result = indexDbQueue.submitTransaction(new SQLQueueCallable<Boolean>() {
             @Override
             public Boolean call(SQLDatabase database) throws Exception {
                 // Drop the index table
@@ -245,7 +245,7 @@ public class QueryableDatastore extends DatastoreImpl {
     public boolean updateAllIndexes() {
         Map<String, Object> indexes = listIndexes();
 
-        return IndexUpdater.updateAllIndexes(indexes, this, dbQueue);
+        return IndexUpdater.updateAllIndexes(indexes, this, indexDbQueue);
     }
 
     @Override
@@ -275,7 +275,7 @@ public class QueryableDatastore extends DatastoreImpl {
             throw new CheckedQueryException(); //FIXME: use a proper exception.
         }
 
-        QueryExecutor queryExecutor = new QueryExecutor(this, dbQueue);
+        QueryExecutor queryExecutor = new QueryExecutor(this, indexDbQueue);
         Map<String, Object> indexes = listIndexes();
 
         return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
@@ -283,12 +283,12 @@ public class QueryableDatastore extends DatastoreImpl {
 
     @Override
     public void close() {
-        dbQueue.shutdown();
+        indexDbQueue.shutdown();
         super.close();
     }
 
     public SQLDatabaseQueue getQueryQueue(){
-        return this.dbQueue;
+        return this.indexDbQueue;
     }
 
 
