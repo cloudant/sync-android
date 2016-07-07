@@ -46,20 +46,14 @@ public abstract class AbstractIndexTestBase {
         assertThat(ds, is(notNullValue()));
         fd = ds;
         dbq = ds.getQueryQueue();
+        assertThat(dbq, is(notNullValue()));
         assertThat(fd, is(notNullValue()));
-//        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
-//        assertThat(db, is(notNullValue()));
-//        assertThat(im.getQueue(), is(notNullValue()));
         String[] metadataTableList = new String[] { QueryConstants.INDEX_METADATA_TABLE_NAME };
-//        SQLDatabaseTestUtils.assertTablesExist(TestUtils.getDatabaseConnectionToExistingDb(db),
-//                                               metadataTableList);
     }
 
     @After
     public void tearDown() {
         ds.close();
-//        assertThat(im.getQueue().isShutdown(), is(true));
-//        TestUtils.deleteDatabaseQuietly(db); // FIXME make this work
         TestUtils.deleteTempTestingDir(factoryPath);
 
         dbq = null;
