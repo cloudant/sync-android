@@ -24,7 +24,6 @@ import static org.junit.runners.Parameterized.Parameters;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
-import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,9 +76,9 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
     public void setUp() throws Exception {
         super.setUp();
         if (testType.equals(MATCHER_EXECUTION)) {
-            fd = new MockMatcherIndexManager(ds);
+            fd = this.proxy(new QueryInvocationHandler.Matcher(ds));
         } else if (testType.equals(STANDARD_EXECUTION)) {
-            fd = new ForwardingDatastore(ds);
+            fd = ds;
         }
         assertThat(fd, is(notNullValue()));
         final String[] metadataTableList = new String[] { QueryConstants.INDEX_METADATA_TABLE_NAME };

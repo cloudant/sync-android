@@ -16,6 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
+import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
@@ -28,6 +29,9 @@ import com.cloudant.sync.util.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,7 +52,7 @@ public abstract class AbstractQueryTestBase {
     String factoryPath = null;
     DatastoreManager factory = null;
     QueryableDatastore ds = null;
-    ForwardingDatastore fd = null;
+    Datastore fd = null;
     SQLDatabaseQueue dbq = null;
 
     @Before
@@ -61,6 +65,12 @@ public abstract class AbstractQueryTestBase {
         ds = (QueryableDatastore) factory.openDatastore(datastoreName);
         dbq = ds.getQueryQueue();
         assertThat(ds, is(notNullValue()));
+    }
+
+    protected Datastore proxy(InvocationHandler handler) throws Exception {
+        Class proxy = Proxy.getProxyClass(Datastore.class.getClassLoader(), Datastore.class);
+        Constructor constructor = proxy.getConstructor(InvocationHandler.class);
+        return (Datastore) constructor.newInstance(handler);
     }
 
     @After

@@ -26,7 +26,6 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
-import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -80,11 +79,11 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     public void setUp() throws Exception{
         super.setUp();
         if (testType.equals(SQL_ONLY_EXECUTION)) {
-            fd = new MockSQLOnlyIndexManager(ds);
+            fd = this.proxy(new QueryInvocationHandler.SQL(ds));
         } else if (testType.equals(MATCHER_EXECUTION)) {
-            fd = new MockMatcherIndexManager(ds);
+            fd = this.proxy(new QueryInvocationHandler.Matcher(ds));
         } else if (testType.equals(STANDARD_EXECUTION)) {
-            fd = new ForwardingDatastore(ds);
+            fd = ds;
         }
         assertThat(fd, is(notNullValue()));
         final String[] metadataTableList = new String[] { QueryConstants.INDEX_METADATA_TABLE_NAME };
@@ -103,7 +102,9 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     @Test(expected = CheckedQueryException.class)
     public void returnsNullForNoQuery() throws Exception {
         setUpBasicQueryData();
-        fd.find(null);
+        // always call on the normal datastore because the implementation of find on the proxy
+        // will result in NPE instead of CheckedQueryException.
+        ds.find(null);
     }
 
     @Test

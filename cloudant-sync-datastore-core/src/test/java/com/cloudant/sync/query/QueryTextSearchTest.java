@@ -44,7 +44,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        fd = new ForwardingDatastore(ds);
+        fd = ds;
         assertThat(fd, is(notNullValue()));
         final String[] metadataTableList = new String[] { QueryConstants.INDEX_METADATA_TABLE_NAME };
         dbq.submit(new SQLQueueCallable<Void>() {
