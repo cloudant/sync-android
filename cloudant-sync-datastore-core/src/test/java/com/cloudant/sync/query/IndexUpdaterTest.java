@@ -71,7 +71,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     @Test
     public void updateIndexNoIndexName() throws Exception {
         createIndex("basic", Arrays.<Object>asList("name"));
-//        assertThat(IndexUpdater.updateIndex(null, fields, db, ds, im.getQueue()), is(false));
+        assertThat(IndexUpdater.updateIndex(null, fields, ds, dbq), is(false));
     }
 
     @Test
