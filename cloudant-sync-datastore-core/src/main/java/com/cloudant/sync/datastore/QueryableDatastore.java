@@ -207,7 +207,7 @@ public class QueryableDatastore extends DatastoreImpl {
     @Override
     public boolean deleteIndexNamed(final String indexName) throws CheckedQueryException {
         if (indexName == null || indexName.isEmpty()) {
-            logger.log(Level.WARNING, "TO delete an index, index name should be provided.");
+            logger.log(Level.WARNING, "To delete an index, index name should be provided.");
             return false;
         }
 
