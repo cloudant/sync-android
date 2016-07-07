@@ -68,9 +68,9 @@ public abstract class AbstractQueryTestBase {
     }
 
     protected Datastore proxy(InvocationHandler handler) throws Exception {
-        Class proxy = Proxy.getProxyClass(Datastore.class.getClassLoader(), Datastore.class);
-        Constructor constructor = proxy.getConstructor(InvocationHandler.class);
-        return (Datastore) constructor.newInstance(handler);
+        return (Datastore) Proxy.newProxyInstance(Datastore.class.getClassLoader(),
+                new Class<?>[]{ Datastore.class },
+                handler);
     }
 
     @After
