@@ -18,6 +18,8 @@ import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
+import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 
 import java.sql.SQLException;
@@ -35,12 +37,11 @@ import java.util.logging.Logger;
 /**
  *  Handles updating indexes for a given datastore.
  */
-class IndexUpdater {
+public class IndexUpdater {
 
-    private final SQLDatabase database;
     private final Datastore datastore;
 
-    private final ExecutorService queue;
+    private final SQLDatabaseQueue queue;
 
     private static final Logger logger = Logger.getLogger(IndexUpdater.class.getName());
 
@@ -48,9 +49,8 @@ class IndexUpdater {
      *  Constructs a new CDTQQueryExecutor using the indexes in 'database' to index documents from
      *  'datastore'.
      */
-    public IndexUpdater(SQLDatabase database, Datastore datastore, ExecutorService queue) {
+    public IndexUpdater(Datastore datastore, SQLDatabaseQueue queue) {
         this.datastore = datastore;
-        this.database = database;
         this.queue = queue;
     }
 
@@ -60,16 +60,14 @@ class IndexUpdater {
      *  These indexes are assumed to already exist.
      *
      *  @param indexes Map of indexes and their definitions.
-     *  @param database The local database
      *  @param datastore The local datastore
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
     public static boolean updateAllIndexes(Map<String, Object> indexes,
-                                           SQLDatabase database,
                                            Datastore datastore,
-                                           ExecutorService queue) {
-        IndexUpdater updater = new IndexUpdater(database, datastore, queue);
+                                           SQLDatabaseQueue queue) {
+        IndexUpdater updater = new IndexUpdater(datastore, queue);
 
         return updater.updateAllIndexes(indexes);
     }
@@ -81,17 +79,15 @@ class IndexUpdater {
      *
      *  @param indexName Name of index to update
      *  @param fieldNames List of field names in the sort format
-     *  @param database The local database
      *  @param datastore The local datastore
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
     public static boolean updateIndex(String indexName,
                                       List<String> fieldNames,
-                                      SQLDatabase database,
                                       Datastore datastore,
-                                      ExecutorService queue) {
-        IndexUpdater updater = new IndexUpdater(database, datastore, queue);
+                                      SQLDatabaseQueue queue) {
+        IndexUpdater updater = new IndexUpdater(datastore, queue);
 
         return updater.updateIndex(indexName, fieldNames);
     }
@@ -139,14 +135,14 @@ class IndexUpdater {
             return false;
         }
 
-        Future<Boolean> result = queue.submit( new Callable<Boolean>() {
+        Future<Boolean> result = queue.submitTransaction(new SQLQueueCallable<Boolean>() {
             @Override
-            public Boolean call() {
+            public Boolean call(SQLDatabase database) {
                 boolean transactionSuccess = true;
                 database.beginTransaction();
                 for (DocumentRevision rev: changes.getResults()) {
                     // Delete existing values
-                    String tableName = IndexManager.tableNameForIndex(indexName);
+                    String tableName = QueryConstants.tableNameForIndex(indexName);
                     database.delete(tableName, " _id = ? ", new String[]{rev.getId()});
 
                     // Insert new values if the rev isn't deleted
@@ -349,18 +345,18 @@ class IndexUpdater {
             }
             argIndex = argIndex + 1;
         }
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = QueryConstants.tableNameForIndex(indexName);
 
         return new DBParameter(tableName, contentValues);
     }
 
     private long sequenceNumberForIndex(final String indexName) {
-        Future<Long> sequenceNumber = queue.submit( new Callable<Long>() {
+        Future<Long> sequenceNumber = queue.submit( new SQLQueueCallable<Long>() {
             @Override
-            public Long call() {
+            public Long call(SQLDatabase database) {
                 long result = 0;
                 String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = ?",
-                                           IndexManager.INDEX_METADATA_TABLE_NAME);
+                        QueryConstants.INDEX_METADATA_TABLE_NAME);
                 Cursor cursor = null;
                 try {
                     cursor = database.rawQuery(sql, new String[]{ indexName });
@@ -391,13 +387,13 @@ class IndexUpdater {
     }
 
     private boolean updateMetadataForIndex(final String indexName, final long lastSequence) {
-        Future<Boolean> result = queue.submit(new Callable<Boolean>() {
+        Future<Boolean> result = queue.submit(new SQLQueueCallable<Boolean>() {
             @Override
-            public Boolean call() {
+            public Boolean call(SQLDatabase database) {
                 boolean updateSuccess = true;
                 ContentValues v = new ContentValues();
                 v.put("last_sequence", lastSequence);
-                int row = database.update(IndexManager.INDEX_METADATA_TABLE_NAME,
+                int row = database.update(QueryConstants.INDEX_METADATA_TABLE_NAME,
                                           v,
                                           " index_name = ? ",
                                           new String[]{ indexName });

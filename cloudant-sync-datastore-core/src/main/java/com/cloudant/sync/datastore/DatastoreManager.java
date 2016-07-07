@@ -333,7 +333,7 @@ public class DatastoreManager {
             // if it does not exist
 
             //Pass database directory, database name, and SQLCipher key provider
-            DatastoreImpl ds = new DatastoreImpl(dbDirectory, dbName, provider);
+            QueryableDatastore ds = new QueryableDatastore(dbDirectory, dbName, provider);
 
             if(!dbDirectoryExist) {
                 this.eventBus.post(new DatabaseCreated(dbName));

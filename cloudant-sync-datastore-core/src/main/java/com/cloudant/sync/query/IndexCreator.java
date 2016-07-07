@@ -14,7 +14,10 @@ package com.cloudant.sync.query;
 
 import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.QueryableDatastore;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
+import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.google.common.base.Joiner;
 
 import org.apache.commons.codec.binary.Hex;
@@ -38,27 +41,24 @@ import java.util.logging.Logger;
 /**
  *  Handles creating indexes for a given datastore.
  */
-class IndexCreator {
+public class IndexCreator {
 
-    private final SQLDatabase database;
     private final Datastore datastore;
     private static Random indexNameRandom = new Random();
 
-    private final ExecutorService queue;
+    private final SQLDatabaseQueue queue;
 
     private static final Logger logger = Logger.getLogger(IndexCreator.class.getName());
 
-    public IndexCreator(SQLDatabase database, Datastore datastore, ExecutorService queue) {
+    public IndexCreator(Datastore datastore, SQLDatabaseQueue queue) {
         this.datastore = datastore;
-        this.database = database;
         this.queue = queue;
     }
 
-    protected static String ensureIndexed(Index index,
-                                          SQLDatabase database,
-                                          Datastore datastore,
-                                          ExecutorService queue) {
-        IndexCreator executor = new IndexCreator(database, datastore, queue);
+    public static String ensureIndexed(Index index,
+                                       Datastore datastore,
+                                       SQLDatabaseQueue queue) {
+        IndexCreator executor = new IndexCreator(datastore, queue);
 
         return executor.ensureIndexed(index);
     }
@@ -79,7 +79,7 @@ class IndexCreator {
         }
 
         if (proposedIndex.indexType == IndexType.TEXT) {
-            if (!IndexManager.ftsAvailable(queue, database)) {
+            if (!((QueryableDatastore)datastore).ftsAvailable(queue)) {
                 logger.log(Level.SEVERE, "Text search not supported.  To add support for text " +
                                          "search, enable FTS compile options in SQLite.");
                 return null;
@@ -152,7 +152,6 @@ class IndexCreator {
                         proposedIndex.compareIndexTypeTo(existingType, existingSettings)) {
                     boolean success = IndexUpdater.updateIndex(proposedIndex.indexName,
                                                                fieldNamesList,
-                                                               database,
                                                                datastore,
                                                                queue);
                     return success ? proposedIndex.indexName : null;
@@ -167,9 +166,9 @@ class IndexCreator {
         }
 
         final Index index = proposedIndex;
-        Future<Boolean> result = queue.submit(new Callable<Boolean>() {
+        Future<Boolean> result = queue.submit(new SQLQueueCallable<Boolean>() {
             @Override
-            public Boolean call() {
+            public Boolean call(SQLDatabase database) {
                 Boolean transactionSuccess = true;
                 database.beginTransaction();
 
@@ -181,7 +180,7 @@ class IndexCreator {
                     parameters.put("index_settings", index.settingsAsJSON());
                     parameters.put("field_name", fieldName);
                     parameters.put("last_sequence", 0);
-                    long rowId = database.insert(IndexManager.INDEX_METADATA_TABLE_NAME,
+                    long rowId = database.insert(QueryConstants.INDEX_METADATA_TABLE_NAME,
                                                  parameters);
                     if (rowId < 0) {
                         transactionSuccess = false;
@@ -246,7 +245,6 @@ class IndexCreator {
         if (success) {
             success = IndexUpdater.updateIndex(index.indexName,
                                                fieldNamesList,
-                                               database,
                                                datastore,
                                                queue);
         }
@@ -329,10 +327,10 @@ class IndexCreator {
 
     private Map<String, Object> listIndexesInDatabaseQueue() throws ExecutionException,
                                                                     InterruptedException {
-        Future<Map<String, Object>> indexes = queue.submit(new Callable<Map<String, Object>>() {
+        Future<Map<String, Object>> indexes = queue.submit(new SQLQueueCallable<Map<String,Object>>() {
             @Override
-            public Map<String, Object> call() {
-                return IndexManager.listIndexesInDatabase(database);
+            public Map<String, Object> call(SQLDatabase database) {
+                return QueryableDatastore.listIndexesInDatabase(database);
             }
         });
 
@@ -340,7 +338,7 @@ class IndexCreator {
     }
 
     private String createIndexTableStatementForIndex(String indexName, List<String> columns) {
-        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManager.tableNameForIndex(indexName));
+        String tableName = String.format(Locale.ENGLISH, "\"%s\"", QueryConstants.tableNameForIndex(indexName));
         Joiner joiner = Joiner.on(" NONE,").skipNulls();
         String cols = joiner.join(columns);
 
@@ -348,7 +346,7 @@ class IndexCreator {
     }
 
     private String createIndexIndexStatementForIndex(String indexName, List<String> columns) {
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = QueryConstants.tableNameForIndex(indexName);
         String sqlIndexName = tableName.concat("_index");
         Joiner joiner = Joiner.on(",").skipNulls();
         String cols = joiner.join(columns);
@@ -370,7 +368,7 @@ class IndexCreator {
     private String createVirtualTableStatementForIndex(String indexName,
                                                        List<String> columns,
                                                        List<String> indexSettings) {
-        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManager
+        String tableName = String.format(Locale.ENGLISH, "\"%s\"", QueryConstants
                 .tableNameForIndex(indexName));
         Joiner joiner = Joiner.on(",").skipNulls();
         String cols = joiner.join(columns);

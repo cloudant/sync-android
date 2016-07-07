@@ -43,11 +43,11 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet"), "basic");
+        indexName = fd.ensureIndexed(Arrays.<Object>asList("name", "age", "pet"), "basic");
         assertThat(indexName, is("basic"));
-        textIndexName = im.ensureIndexed(Arrays.<Object>asList("comments"), "basic_text", IndexType.TEXT);
+        textIndexName = fd.ensureIndexed(Arrays.<Object>asList("comments"), "basic_text", IndexType.TEXT);
         assertThat(textIndexName, is("basic_text"));
-        indexes = im.listIndexes();
+        indexes = fd.listIndexes();
         assertThat(indexes.size(), is(2));
         indexesCoverQuery = new Boolean[]{ false };
         indexTable = String.format("_t_cloudant_sync_query_index_%s", indexName);
@@ -57,7 +57,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     // When creating a tree
 
     @Test
-    public void copesWhenNoMatchingIndex() {
+    public void copesWhenNoMatchingIndex() throws Exception {
         // query - { "firstname" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("firstname", "mike");
@@ -78,7 +78,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void copesWithSingleFieldQuery() {
+    public void copesWithSingleFieldQuery() throws Exception {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
@@ -99,7 +99,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void copesWithSingleLevelANDedQuery() {
+    public void copesWithSingleLevelANDedQuery() throws Exception {
         // query - { "name" : "mike", "pet" : "cat" }
         Map<String, Object> query = new LinkedHashMap<String, Object>();
         query.put("name", "mike");
@@ -121,7 +121,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void copesWithLongHandSingleLevelANDedQuery() {
+    public void copesWithLongHandSingleLevelANDedQuery() throws Exception {
         // query - { "$and" : [ { "name" : "mike" }, { "pet" : "cat" } ] }
         Map<String, Object> nameMap = new HashMap<String, Object>();
         nameMap.put("name", "mike");
@@ -147,7 +147,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void copesWithLongHandTwoLevelANDedQuery() {
+    public void copesWithLongHandTwoLevelANDedQuery() throws Exception {
         // query - { "$and" : [ { "name" : "mike" },
         //                      { "pet" : "cat" },
         //                      { "$and" : [ { "name" : "mike" }, { "pet" : "cat" } ] } ] }
@@ -191,7 +191,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void ordersANDNodesLastInTrees() {
+    public void ordersANDNodesLastInTrees() throws Exception {
         // query - { "$and" : [ { "$and" : [ { "name" : "mike" }, { "pet" : "cat" } ] },
         //                      { "name" : "mike" },
         //                      { "pet" : "cat" } ] }
@@ -235,7 +235,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void supportsOR() {
+    public void supportsOR() throws Exception {
         // query - { "$or" : [ { "name" : "mike" }, { "pet" : "cat" } ] }
         Map<String, Object> nameMap = new HashMap<String, Object>();
         nameMap.put("name", "mike");
@@ -272,7 +272,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void supportsORInSubTrees() {
+    public void supportsORInSubTrees() throws Exception {
         // query - { "$or" : [ { "name" : "mike" },
         //                      { "pet" : "cat" },
         //                      { "$or" : [ { "name" : "mike" }, { "pet" : "cat" } ] } ] }
@@ -327,7 +327,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void supportsANDAndORInSubTreesTwoLevel() {
+    public void supportsANDAndORInSubTreesTwoLevel() throws Exception {
         // query - { "$or" : [ { "name" : "mike" },
         //                      { "pet" : "cat" },
         //                      { "$or" : [ { "name" : "mike" }, { "pet" : "cat" } ] },
@@ -394,7 +394,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void supportsANDAndORInSubTreesThreeLevel() {
+    public void supportsANDAndORInSubTreesThreeLevel() throws Exception {
         // query - { "$or" : [ { "name" : "mike" },
         //                      { "pet" : "cat" },
         //                      { "$or" : [ { "name" : "mike" },
@@ -471,7 +471,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     // When selecting an index to use
 
     @Test
-    public void indexSelectionFailsWhenNoIndexes() {
+    public void indexSelectionFailsWhenNoIndexes() throws Exception {
         Map<String, Object> eq = new HashMap<String, Object>();
         eq.put("$eq", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
@@ -481,7 +481,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void indexSelectionFailsWhenNoQueryKeys() {
+    public void indexSelectionFailsWhenNoQueryKeys() throws Exception {
         Map<String, Object> indexes = new HashMap<String, Object>();
         indexes.put("named", Arrays.<Object>asList("name", "age", "pet"));
         assertThat(QuerySqlTranslator.chooseIndexForAndClause(null, indexes), is(nullValue()));
@@ -490,7 +490,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void selectsIndexForSingleFieldQuery() {
+    public void selectsIndexForSingleFieldQuery() throws Exception {
         Map<String, Object> indexes = new HashMap<String, Object>();
         Map<String, Object> index = new HashMap<String, Object>();
         index.put("name", "named");
@@ -508,7 +508,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void selectsIndexForMultiFieldQuery() {
+    public void selectsIndexForMultiFieldQuery() throws Exception {
         Map<String, Object> indexes = new HashMap<String, Object>();
         Map<String, Object> index = new HashMap<String, Object>();
         index.put("name", "named");
@@ -527,7 +527,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void selectsIndexFromMultipleIndexesForMultiFieldQuery() {
+    public void selectsIndexFromMultipleIndexesForMultiFieldQuery() throws Exception {
         Map<String, Object> indexes = new HashMap<String, Object>();
 
         Map<String, Object> named = new HashMap<String, Object>();
@@ -560,7 +560,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void selectsCorrectIndexWhenSeveralMatch() {
+    public void selectsCorrectIndexWhenSeveralMatch() throws Exception {
         Map<String, Object> indexes = new HashMap<String, Object>();
 
         Map<String, Object> named = new HashMap<String, Object>();
@@ -599,7 +599,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void nullWhenNoSuitableIndexAvailable() {
+    public void nullWhenNoSuitableIndexAvailable() throws Exception {
         Map<String, Object> indexes = new HashMap<String, Object>();
 
         Map<String, Object> named = new HashMap<String, Object>();
@@ -626,7 +626,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     // When generating query WHERE clauses
 
     @Test
-    public void nullWhereClauseWhenQueryEmpty() {
+    public void nullWhereClauseWhenQueryEmpty() throws Exception {
         assertThat(QuerySqlTranslator.whereSqlForAndClause(null, indexName), is(nullValue()));
         SqlParts where = QuerySqlTranslator.whereSqlForAndClause(new ArrayList<Object>(),
                                                                  indexName);
@@ -634,7 +634,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void validWhereClauseForSingleTermEQ() {
+    public void validWhereClauseForSingleTermEQ() throws Exception {
         Map<String, Object> eq = new HashMap<String, Object>();
         eq.put("$eq", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
@@ -646,7 +646,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void validWhereClauseForMultiTermEQ() {
+    public void validWhereClauseForMultiTermEQ() throws Exception {
         Map<String, Object> nameEq = new HashMap<String, Object>();
         nameEq.put("$eq", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
@@ -670,7 +670,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorWhenUsingGT() {
+    public void usesCorrectSQLOperatorWhenUsingGT() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$gt", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
@@ -684,7 +684,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorWhenUsingGTE() {
+    public void usesCorrectSQLOperatorWhenUsingGTE() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$gte", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
@@ -698,7 +698,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorWhenUsingLT() {
+    public void usesCorrectSQLOperatorWhenUsingLT() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$lt", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
@@ -712,7 +712,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorWhenUsingLTE() {
+    public void usesCorrectSQLOperatorWhenUsingLTE() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$lte", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
@@ -726,7 +726,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorForEXISTSTrue() {
+    public void usesCorrectSQLOperatorForEXISTSTrue() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$exists", true);
         Map<String, Object> name = new HashMap<String, Object>();
@@ -739,7 +739,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorForEXISTSFalse() {
+    public void usesCorrectSQLOperatorForEXISTSFalse() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$exists", false);
         Map<String, Object> name = new HashMap<String, Object>();
@@ -752,7 +752,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorForNOTEXISTSFalse() {
+    public void usesCorrectSQLOperatorForNOTEXISTSFalse() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$exists", false);
         Map<String, Object> notOp = new HashMap<String, Object>();
@@ -767,7 +767,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorForNOTEXISTSTrue() {
+    public void usesCorrectSQLOperatorForNOTEXISTSTrue() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$exists", true);
         Map<String, Object> notOp = new HashMap<String, Object>();
@@ -782,7 +782,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void constructsValidWhereClauseForINUsingSingleElement() {
+    public void constructsValidWhereClauseForINUsingSingleElement() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$in", Arrays.<Object>asList("mike"));
         Map<String, Object> name = new HashMap<String, Object>();
@@ -796,7 +796,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void constructsValidWhereClauseForINUsingMultipleElements() {
+    public void constructsValidWhereClauseForINUsingMultipleElements() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$in", Arrays.<Object>asList("mike", "fred"));
         Map<String, Object> name = new HashMap<String, Object>();
@@ -810,7 +810,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorsWhenUsingMOD() {
+    public void usesCorrectSQLOperatorsWhenUsingMOD() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$mod", Arrays.<Object>asList(2, 1));
         Map<String, Object> age = new HashMap<String, Object>();
@@ -827,7 +827,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     // When generating query WHERE clauses with $not
 
     @Test
-    public void validWhereNOTClauseForSingleTermEQ() {
+    public void validWhereNOTClauseForSingleTermEQ() throws Exception {
         Map<String, Object> eq = new HashMap<String, Object>();
         eq.put("$eq", "mike");
         Map<String, Object> not = new HashMap<String, Object>();
@@ -843,7 +843,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void validWhereNOTClauseForMultiTermEQ() {
+    public void validWhereNOTClauseForMultiTermEQ() throws Exception {
         Map<String, Object> eq = new HashMap<String, Object>();
         eq.put("$eq", "mike");
         Map<String, Object> not = new HashMap<String, Object>();
@@ -878,7 +878,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorWhenUsingNOTGT() {
+    public void usesCorrectSQLOperatorWhenUsingNOTGT() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$gt", "mike");
         Map<String, Object> not = new HashMap<String, Object>();
@@ -895,7 +895,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorWhenUsingNOTGTE() {
+    public void usesCorrectSQLOperatorWhenUsingNOTGTE() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$gte", "mike");
         Map<String, Object> not = new HashMap<String, Object>();
@@ -912,7 +912,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorWhenUsingNOTLT() {
+    public void usesCorrectSQLOperatorWhenUsingNOTLT() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$lt", "mike");
         Map<String, Object> not = new HashMap<String, Object>();
@@ -929,7 +929,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorWhenUsingNOTLTE() {
+    public void usesCorrectSQLOperatorWhenUsingNOTLTE() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$lte", "mike");
         Map<String, Object> not = new HashMap<String, Object>();
@@ -946,7 +946,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void constructsValidWhereClauseForNOTIN() {
+    public void constructsValidWhereClauseForNOTIN() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$in", Arrays.<Object>asList("mike", "fred"));
         Map<String, Object> notOp = new HashMap<String, Object>();
@@ -964,7 +964,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void returnsCorrectWhenTwoConditionsOneField() {
+    public void returnsCorrectWhenTwoConditionsOneField() throws Exception {
         Map<String, Object> c1op = new HashMap<String, Object>();
         c1op.put("$eq", "mike");
         Map<String, Object> c1not = new HashMap<String, Object>();
@@ -987,7 +987,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void returnsCorrectWhenMultiConditionsMultiFields() {
+    public void returnsCorrectWhenMultiConditionsMultiFields() throws Exception {
         Map<String, Object> c1op = new HashMap<String, Object>();
         c1op.put("$gt", 12);
         Map<String, Object> c1 = new HashMap<String, Object>();
@@ -1030,7 +1030,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void usesCorrectSQLOperatorsWhenUsingNOTMOD() {
+    public void usesCorrectSQLOperatorsWhenUsingNOTMOD() throws Exception {
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$mod", Arrays.<Object>asList(2, 1));
         Map<String, Object> notOp = new HashMap<String, Object>();
@@ -1052,7 +1052,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     // When generating query SELECT clauses
 
     @Test
-    public void nullSelectClauseWhenQueryEmpty() {
+    public void nullSelectClauseWhenQueryEmpty() throws Exception {
         assertThat(QuerySqlTranslator.selectStatementForAndClause(null, "named"), is(nullValue()));
         SqlParts sql = QuerySqlTranslator.selectStatementForAndClause(new ArrayList<Object>(),
                                                                       "named");
@@ -1060,7 +1060,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void nullSelectClauseWhenIndexEmpty() {
+    public void nullSelectClauseWhenIndexEmpty() throws Exception {
         Map<String, Object> eq = new HashMap<String, Object>();
         eq.put("$eq", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
@@ -1071,7 +1071,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void validSelectClauseForSingleTermEQ() {
+    public void validSelectClauseForSingleTermEQ() throws Exception {
         Map<String, Object> eq = new HashMap<String, Object>();
         eq.put("$eq", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
@@ -1084,7 +1084,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void validSelectClauseForMultiTermEQ() {
+    public void validSelectClauseForMultiTermEQ() throws Exception {
         Map<String, Object> nameEq = new HashMap<String, Object>();
         nameEq.put("$eq", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
@@ -1112,7 +1112,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     // Dealing with Text searches
 
     @Test
-    public void supportsSingleTextSearch() {
+    public void supportsSingleTextSearch() throws Exception {
         // query - { "$text" : { "$search" : "foo bar baz" } }
         Map<String, Object> searchMap = new HashMap<String, Object>();
         searchMap.put("$search", "foo bar baz");
@@ -1142,7 +1142,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void supportsANDWithTextSearch() {
+    public void supportsANDWithTextSearch() throws Exception {
         // query - { "$and" : [ { "name" : "mike" }, { "$text" : { "$search" : "foo bar baz" } } ] }
         Map<String, Object> nameMap = new HashMap<String, Object>();
         nameMap.put("name", "mike");
@@ -1185,7 +1185,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void supportsORWithTextSearch() {
+    public void supportsORWithTextSearch() throws Exception {
         // query - { "$or" : [ { "name" : "mike" }, { "$text" : { "$search" : "foo bar baz" } } ] }
         Map<String, Object> nameMap = new HashMap<String, Object>();
         nameMap.put("name", "mike");
@@ -1226,8 +1226,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void nullWhenTextSearchDoesNotFindTextIndex() {
-        assertThat(im.deleteIndexNamed("basic_text"), is(true));
+    public void nullWhenTextSearchDoesNotFindTextIndex() throws Exception {
+        assertThat(fd.deleteIndexNamed("basic_text"), is(true));
         // query - { "$text" : { "$search" : "foo bar baz" } }
         Map<String, Object> searchMap = new HashMap<String, Object>();
         searchMap.put("$search", "foo bar baz");
@@ -1236,14 +1236,14 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         query = QueryValidator.normaliseAndValidateQuery(query);
 
         QueryNode node = QuerySqlTranslator.translateQuery(query,
-                                                           im.listIndexes(),
+                                                           fd.listIndexes(),
                                                            indexesCoverQuery);
         assertThat(node, is(nullValue()));
     }
 
     @Test
-    public void nullWhenCompoundQueryIncludesTextSearchDoesNotFindJsonIndex() {
-        assertThat(im.deleteIndexNamed("basic"), is(true));
+    public void nullWhenCompoundQueryIncludesTextSearchDoesNotFindJsonIndex() throws Exception {
+        assertThat(fd.deleteIndexNamed("basic"), is(true));
         // query - { "$and" : [ { "name" : "mike" }, { "$text" : { "$search" : "foo bar baz" } } ] }
         Map<String, Object> nameMap = new HashMap<String, Object>();
         nameMap.put("name", "mike");
@@ -1256,7 +1256,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         query = QueryValidator.normaliseAndValidateQuery(query);
 
         QueryNode node = QuerySqlTranslator.translateQuery(query,
-                                                           im.listIndexes(),
+                                                           fd.listIndexes(),
                                                            indexesCoverQuery);
         assertThat(node, is(nullValue()));
     }
@@ -1264,7 +1264,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     // When checking for a specific operator in a clause
 
     @Test
-    public void findsOperatorInClauseList() {
+    public void findsOperatorInClauseList() throws Exception {
         Map<String, Object> nameMap = new HashMap<String, Object>();
         Map<String, Object> nameEqMap = new HashMap<String, Object>();
         nameEqMap.put("$eq", "mike");
@@ -1282,7 +1282,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void doesNotFindOperatorWhenNotInClauseList() {
+    public void doesNotFindOperatorWhenNotInClauseList() throws Exception {
         Map<String, Object> nameMap = new HashMap<String, Object>();
         Map<String, Object> nameEqMap = new HashMap<String, Object>();
         nameEqMap.put("$eq", "mike");

@@ -70,7 +70,7 @@ import java.util.logging.Logger;
 /**
  * @api_private
  */
-public class DatastoreImpl implements Datastore {
+public abstract class DatastoreImpl implements Datastore {
 
     private static final String LOG_TAG = "BasicDatastore";
     private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());

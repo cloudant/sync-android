@@ -15,6 +15,8 @@ package com.cloudant.sync.query;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
+import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
@@ -35,11 +37,10 @@ import java.util.logging.Logger;
 /**
  *  Handles querying indexes for a given datastore.
  */
-class QueryExecutor {
+public class QueryExecutor {
 
-    private final SQLDatabase database;
     private final Datastore datastore;
-    private final ExecutorService queue;
+    private final SQLDatabaseQueue queue;
 
     private static final Logger logger = Logger.getLogger(QueryExecutor.class.getName());
 
@@ -49,8 +50,7 @@ class QueryExecutor {
      *  Constructs a new QueryExecutor using the indexes in 'database' to find documents from
      *  'datastore'.
      */
-    QueryExecutor(SQLDatabase database, Datastore datastore, ExecutorService queue) {
-        this.database = database;
+    public QueryExecutor(Datastore datastore, SQLDatabaseQueue queue) {
         this.datastore = datastore;
         this.queue = queue;
     }
@@ -108,9 +108,9 @@ class QueryExecutor {
             return null;
         }
 
-        Future<List<String>> result = queue.submit(new Callable<List<String>>() {
+        Future<List<String>> result = queue.submit(new SQLQueueCallable<List<String>>() {
             @Override
-            public List<String> call() throws Exception {
+            public List<String> call(SQLDatabase database) throws Exception {
                 Set<String> docIdSet = executeQueryTree(root, database);
                 List<String> docIdList;
 
@@ -360,7 +360,7 @@ class QueryExecutor {
             return null;
         }
 
-        String indexTable = IndexManager.tableNameForIndex(chosenIndex);
+        String indexTable = QueryConstants.tableNameForIndex(chosenIndex);
 
         // for small result sets:
         // SELECT _id FROM idx WHERE _id IN (?, ?) ORDER BY fieldName ASC, fieldName2 DESC

@@ -12,7 +12,7 @@
 
 package com.cloudant.sync.query;
 
-final class QueryConstants {
+public final class QueryConstants {
 
     public static final String AND = "$and";
 
@@ -46,13 +46,17 @@ final class QueryConstants {
 
     public static final String SIZE = "$size";
 
+    private static final String INDEX_TABLE_PREFIX = "_t_cloudant_sync_query_index_";
+
+    public static final String INDEX_METADATA_TABLE_NAME = "_t_cloudant_sync_query_metadata";
+
     private QueryConstants() {
         throw new AssertionError();
     }
 
     public static String[] getSchemaVersion1() {
         return new String[] {
-                "CREATE TABLE " + IndexManager.INDEX_METADATA_TABLE_NAME + " ( " +
+                "CREATE TABLE " + INDEX_METADATA_TABLE_NAME + " ( " +
                 "        index_name TEXT NOT NULL, " +
                 "        index_type TEXT NOT NULL, " +
                 "        field_name TEXT NOT NULL, " +
@@ -62,9 +66,13 @@ final class QueryConstants {
 
     public static String[] getSchemaVersion2() {
         return new String[] {
-                "ALTER TABLE " + IndexManager.INDEX_METADATA_TABLE_NAME +
+                "ALTER TABLE " + INDEX_METADATA_TABLE_NAME +
                 "        ADD COLUMN index_settings TEXT NULL;"
         };
+    }
+
+    public static String tableNameForIndex(String indexName) {
+        return INDEX_TABLE_PREFIX.concat(indexName);
     }
 
 }
