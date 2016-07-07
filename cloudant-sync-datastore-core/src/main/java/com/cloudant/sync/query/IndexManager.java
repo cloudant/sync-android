@@ -91,7 +91,7 @@ public class IndexManager {
     }
 
     public void close() {
-        // do nothing.
+        // do nothing, index database is closed when the datastore is closed.
     }
 
     /**
