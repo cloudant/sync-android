@@ -282,7 +282,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                     DatabaseUtils.closeCursorQuietly(cursor);
                 }
 
-                    return null;
+                return null;
             }
         }).get();
 
