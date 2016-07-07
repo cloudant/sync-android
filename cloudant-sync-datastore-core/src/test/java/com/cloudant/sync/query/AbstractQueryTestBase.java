@@ -75,9 +75,6 @@ public abstract class AbstractQueryTestBase {
 
     @After
     public void tearDown() {
-//        fd.close();
-//        assertThat(fd.getQueue().isShutdown(), is(true));
-//        TestUtils.deleteDatabaseQuietly(db);
         ds.close();
         TestUtils.deleteTempTestingDir(factoryPath);
 
