@@ -14,12 +14,11 @@
 
 package com.cloudant.mazha;
 
+import com.cloudant.common.CollectionFactory;
 import com.cloudant.common.CouchConstants;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -392,7 +391,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         for(int i = 0 ; i < 10000 ; i ++) {
             revisions.add(String.valueOf(i + "-a" ));
         }
-        Map<String, Set<String>> revs = ImmutableMap.of("A", revisions);
+        Map<String, Set<String>> revs = CollectionFactory.MAP.of("A", revisions);
         Map<String, CouchClient.MissingRevisions> diffs = client.revsDiff(revs);
 
         Assert.assertEquals(1, diffs.size());
@@ -402,9 +401,9 @@ public class CouchClientBasicTest extends CouchClientTestBase {
 
     @Test
     public void revsDiff_twoDocs_returnTwoDocs() {
-        Set<String> revs1 = ImmutableSet.of("1-a", "2-b");
-        Set<String> revs2 = ImmutableSet.of("1-c", "2-d");
-        Map<String, Set<String>> revs = ImmutableMap.of("A", revs1, "B", revs2);
+        Set<String> revs1 = CollectionFactory.SET.of("1-a", "2-b");
+        Set<String> revs2 = CollectionFactory.SET.of("1-c", "2-d");
+        Map<String, Set<String>> revs = CollectionFactory.MAP.of("A", revs1, "B", revs2);
 
         Map<String, CouchClient.MissingRevisions> diffs = client.revsDiff(revs);
         Assert.assertEquals(2, diffs.size());
@@ -421,8 +420,8 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     public void revsDiff_oneDocsOneRev_returnNothing() {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
 
-        Set<String> revs1 = ImmutableSet.of(res.getRev());
-        Map<String, Set<String>> revs = ImmutableMap.of(res.getId(), revs1);
+        Set<String> revs1 = CollectionFactory.SET.of(res.getRev());
+        Map<String, Set<String>> revs = CollectionFactory.MAP.of(res.getId(), revs1);
 
         Map<String, CouchClient.MissingRevisions> diffs = client.revsDiff(revs);
         Assert.assertEquals(0, diffs.size());
@@ -432,8 +431,8 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     public void revsDiff_oneDocsTwoRev_returnOneRevs() {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
 
-        Set<String> revs1 = ImmutableSet.of(res.getRev(), "2-a");
-        Map<String, Set<String>> revs = ImmutableMap.of(res.getId(), revs1);
+        Set<String> revs1 = CollectionFactory.SET.of(res.getRev(), "2-a");
+        Map<String, Set<String>> revs = CollectionFactory.MAP.of(res.getId(), revs1);
 
         Map<String, CouchClient.MissingRevisions> diffs = client.revsDiff(revs);
         Assert.assertEquals(1, diffs.size());

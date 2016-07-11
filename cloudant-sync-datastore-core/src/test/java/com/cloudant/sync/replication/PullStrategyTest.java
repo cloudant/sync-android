@@ -19,6 +19,7 @@ import static org.hamcrest.CoreMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.cloudant.common.CollectionFactory;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.AnimalDb;
 import com.cloudant.mazha.CouchClient;
@@ -28,7 +29,6 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.query.IndexManager;
 import com.cloudant.sync.query.QueryResult;
-import com.google.common.collect.ImmutableMap;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -311,7 +311,7 @@ public class PullStrategyTest extends ReplicationTestBase {
     public void pull_filterMammalFromAnimalDbUsingParameterizedFilter_eightDocShouldBePulled()
             throws Exception {
         PullFilter filter = new PullFilter("animal/by_class",
-                ImmutableMap.of("class", "mammal"));
+                CollectionFactory.MAP.of("class", "mammal"));
         PullStrategy replicator = super.getPullStrategy(filter);
 
         Assert.assertEquals(0, datastore.getDocumentCount());
@@ -330,7 +330,7 @@ public class PullStrategyTest extends ReplicationTestBase {
     public void pull_filterSmallFromAnimalDbUsingIntegerFilter_eightDocShouldBePulled()
             throws Exception {
         PullFilter filter = new PullFilter("animal/small",
-                ImmutableMap.of("max_length", "2"));
+                CollectionFactory.MAP.of("max_length", "2"));
         PullStrategy replicator = super.getPullStrategy(filter);
 
         Assert.assertEquals(0, datastore.getDocumentCount());
@@ -349,7 +349,7 @@ public class PullStrategyTest extends ReplicationTestBase {
     public void pull_filterSmallFromAnimalDbUsingNullFilter_eightDocShouldBePulled()
             throws Exception {
         PullFilter filter = new PullFilter("animal/by_chinese_name",
-                ImmutableMap.of("chinese_name", "\u718a\u732b"));
+                CollectionFactory.MAP.of("chinese_name", "\u718a\u732b"));
         PullStrategy replicator = super.getPullStrategy(filter);
 
         Assert.assertEquals(0, datastore.getDocumentCount());
@@ -368,7 +368,7 @@ public class PullStrategyTest extends ReplicationTestBase {
     public void pull_emptyFilterKey_noDocReturned()
             throws Exception {
         PullFilter filter = new PullFilter("animal/by_chinese_name",
-                ImmutableMap.of("", "\u718a\u732b"));
+                CollectionFactory.MAP.of("", "\u718a\u732b"));
         PullStrategy replicator = super.getPullStrategy(filter);
 
         Assert.assertEquals(0, datastore.getDocumentCount());
