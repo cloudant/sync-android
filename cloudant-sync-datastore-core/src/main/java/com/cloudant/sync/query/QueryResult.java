@@ -18,7 +18,7 @@ import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionBuilder;
-import com.google.common.collect.Lists;
+import com.cloudant.sync.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,7 +79,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
      */
     public List<String> documentIds() {
         List<String> documentIds = new ArrayList<String>();
-        List<DocumentRevision> docs = Lists.newArrayList(iterator());
+        List<DocumentRevision> docs = CollectionUtils.newArrayList(iterator());
         for (DocumentRevision doc : docs) {
             documentIds.add(doc.getId());
         }

@@ -18,8 +18,8 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 
+import com.cloudant.sync.util.CollectionUtils;
 import com.cloudant.sync.util.CouchUtils;
-import com.google.common.collect.Lists;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,7 +39,7 @@ public class DatastoreImplConflictsTest extends BasicDatastoreTestBase {
         DocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "1-rev", "Jerry");
         this.datastore.forceInsert(newRev, "1-rev");
         Iterator<String> iterator = this.datastore.getConflictedDocumentIds();
-        List<String> conflictedDocId = Lists.newArrayList(iterator);
+        List<String> conflictedDocId = CollectionUtils.newArrayList(iterator);
         Assert.assertThat(conflictedDocId, hasSize(1));
         Assert.assertThat(conflictedDocId, hasItems(rev.getId()));
     }
@@ -54,7 +54,7 @@ public class DatastoreImplConflictsTest extends BasicDatastoreTestBase {
         this.datastore.forceInsert(newRev2, "1-b", "2-b", "3-b");
 
         Iterator<String> iterator = this.datastore.getConflictedDocumentIds();
-        List<String> conflictedDocId = Lists.newArrayList(iterator);
+        List<String> conflictedDocId = CollectionUtils.newArrayList(iterator);
         Assert.assertThat(conflictedDocId, hasSize(1));
         Assert.assertThat(conflictedDocId, hasItems(rev.getId()));
     }
@@ -67,7 +67,7 @@ public class DatastoreImplConflictsTest extends BasicDatastoreTestBase {
         this.datastore.forceInsert(newRev, "1-a", "2-a", "3-a", "4-a");
 
         Iterator<String> iterator = this.datastore.getConflictedDocumentIds();
-        List<String> conflictedDocId = Lists.newArrayList(iterator);
+        List<String> conflictedDocId = CollectionUtils.newArrayList(iterator);
         Assert.assertThat(conflictedDocId, hasSize(0));
     }
 
@@ -450,7 +450,7 @@ public class DatastoreImplConflictsTest extends BasicDatastoreTestBase {
     private void testWithConflictCount(int conflictCount) throws Exception {
         List<String> expectedConflicts = createConflictDocuments(conflictCount);
         Iterator<String> iterator = this.datastore.getConflictedDocumentIds();
-        List<String> actualConflicts = Lists.newArrayList(iterator);
+        List<String> actualConflicts = CollectionUtils.newArrayList(iterator);
         Assert.assertThat(actualConflicts, hasSize(expectedConflicts.size()));
         for(String id : expectedConflicts) {
             Assert.assertThat(actualConflicts, hasItem(id));
