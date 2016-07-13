@@ -27,17 +27,19 @@ import java.util.concurrent.CountDownLatch;
 
 public class DocumentNotificationsTest extends BasicDatastoreTestBase {
 
-    static CountDownLatch documentCreated, documentUpdated, documentDeleted;
+    CountDownLatch documentCreated, documentUpdated, documentDeleted;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
         datastore.getEventBus().register(this);
+        documentCreated = new CountDownLatch(1);
+        documentUpdated = new CountDownLatch(1);
+        documentDeleted = new CountDownLatch(1);
     }
 
     @Test
     public void notification_document_created() throws Exception {
-        documentCreated = new CountDownLatch(1);
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(bodyOne);
         datastore.createDocumentFromRevision(rev);
@@ -47,7 +49,6 @@ public class DocumentNotificationsTest extends BasicDatastoreTestBase {
 
     @Test
     public void notification_document_updated() throws Exception {
-        documentUpdated = new CountDownLatch(1);
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
         DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
@@ -65,7 +66,6 @@ public class DocumentNotificationsTest extends BasicDatastoreTestBase {
 
     @Test
     public void notification_document_deleted() throws Exception {
-        documentDeleted = new CountDownLatch(1);
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
         DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
