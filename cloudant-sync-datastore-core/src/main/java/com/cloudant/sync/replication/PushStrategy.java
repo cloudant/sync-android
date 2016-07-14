@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+ * Copyright (c) 2013, 2016 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -398,15 +398,19 @@ class PushStrategy implements ReplicationStrategy {
                     }
                 }
 
+                // do we inline all attachments as base64 or send them all via multipart writer?
+                boolean shouldInline = RevisionHistoryHelper.shouldInline(atts,
+                        this.pushAttachmentsInline,
+                        minRevPos);
                 // get the json, and inline any small attachments
                 Map<String, Object> json = RevisionHistoryHelper.revisionHistoryToJson(path,
                         atts,
-                        this.pushAttachmentsInline,
+                        shouldInline,
                         minRevPos);
                 // if there are any large atts we will get a multipart writer, otherwise null
                 MultipartAttachmentWriter mpw = RevisionHistoryHelper.createMultipartWriter(json,
                         atts,
-                        this.pushAttachmentsInline,
+                        shouldInline,
                         minRevPos);
 
                 // now we will have either a multipart or a plain doc

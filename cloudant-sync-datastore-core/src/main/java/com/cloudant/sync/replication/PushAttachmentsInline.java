@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015 Cloudant, Inc. All rights reserved.
+ * Copyright (c) 2015, 2016 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -14,17 +14,28 @@
 
 package com.cloudant.sync.replication;
 
+import java.util.List;
+
 /**
  * <p>
  * Strategy to decide whether to push attachments inline:
  * </p>
  *
  * <ul>
- *     <li>False: Always push attachments separately as an HTTP binary PUT</li>
+ *     <li>False: Always push attachments separately from JSON body, via multipart/related</li>
  *     <li>Small: Push small attachments inline, and large attachments separately.
  *         Uses SavedAttachment.isLarge() to determine whether attachment is small or large.</li>
- *     <li>True: Always push attachments inline as a base64-encoded string.</li>
+ *     <li>True: Always push attachments inline in JSON body, as a base64-encoded string.</li>
  * </ul>
+ *
+ * <p>
+ * Note that all attachments belonging to a pushed revision are either sent via multipart/related,
+ * or all inline in JSON body, as a base64-encoded string.
+ * Further details of this can be found at
+ * {@link com.cloudant.sync.datastore.RevisionHistoryHelper#shouldInline(List, PushAttachmentsInline, int)}
+ * </p>
+ *
+ * @see com.cloudant.sync.datastore.RevisionHistoryHelper
  *
  * @api_public
  */
