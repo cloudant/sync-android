@@ -27,8 +27,6 @@ allprojects {
     }
 }
 
-
-
 dependencies {
     compile project(':cloudant-sync-datastore-core')
     compile project(':cloudant-sync-datastore-javase')
@@ -223,6 +221,82 @@ subprojects {
                 }
             }
         }
+    }
+
+    File dexAllDir = new File(project.buildDir, "dex-all")
+    File dexAllInputDir = new File(dexAllDir, "in")
+    File dexAllOutputDir = new File(dexAllDir, "out")
+    task copyDependencies(type: Copy) {
+        from configurations.runtime
+        into dexAllInputDir
+    }
+
+    task copyLib(type: Copy, dependsOn: assemble) {
+        from jar.destinationDir
+        into dexAllInputDir
+    }
+
+    task dexAll(type: AndroidExec, dependsOn: [copyDependencies, copyLib]) {
+        doFirst {
+            dexAllOutputDir.mkdir()
+            def writer = new PrintWriter(new File(dexAllOutputDir, "dexInputList.txt"))
+            writer.println(dexAllInputDir.absolutePath)
+            writer.close()
+        }
+        inputs.dir dexAllInputDir
+        outputs.dir dexAllOutputDir
+        workingDir dexAllOutputDir
+        commandLine 'bash', '-e', '-c', """
+            dx --dex --statistics --num-threads=4 --core-library --output=all.dex --input-list=dexInputList.txt >dex.log 2>&1
+        """
+    }
+
+    task methodCount(type: Exec, dependsOn: [dexAll]) {
+        // Run this task to get the Android method counts.
+        workingDir dexAllOutputDir
+        commandLine 'bash', '-e', '-c', """
+            grep 'method id:.*' dex.log
+        """
+    }
+}
+
+// A gradle Exec task that includes the Android tools on the path.
+// Tasks of this type can only execute if sdk.dir is set in local.properties or the ANDROID_HOME
+// environment variable is set. It will include the highest found version of the build-tools.
+class AndroidExec extends org.gradle.api.tasks.Exec {
+
+    @Override
+    Task configure(Closure closure) {
+        String androidPath = null;
+        File localProperties = new File(getProject().getRootProject().getRootDir(), "local.properties")
+        if (localProperties.exists()) {
+            Properties properties = new Properties()
+            localProperties.withInputStream { instr ->
+                properties.load(instr)
+            }
+            androidPath = properties.getProperty('sdk.dir')
+        }
+
+        if(androidPath == null){
+            androidPath = System.env.ANDROID_HOME
+        }
+
+        if (androidPath != null) {
+            // Get the highest build tools version
+            def btv = Arrays.asList(new File(androidPath + File.separator + "build-tools").list())
+                    .sort().reverse().get(0)
+
+            String[] androidPaths = ["tools", "build-tools" + File.separator + btv, "platform-tools"]
+            for (String aPath : androidPaths) {
+                environment("PATH", environment.PATH + File.pathSeparator + androidPath
+                        + File.separator + aPath)
+            }
+        } else {
+            doFirst { throw new TaskInstantiationException("ANDROID_HOME environment variable or " +
+                    "local.properties sdk.dir definition did not exist. " +
+                    "Unable to run tasks of type AndroidExec without these properties.")}
+        }
+        return super.configure(closure)
     }
 }
 
