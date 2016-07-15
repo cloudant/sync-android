@@ -117,6 +117,22 @@ task(uploadFixtures, type: AndroidExec) {
     commandLine "adb","push", "-p", "$scriptLocation/../../fixture", "/sdcard/fixture"
 }
 
+task(clearDeviceLog, type: AndroidExec) {
+    commandLine "adb","logcat", "-c"
+}
+
+task(pullDeviceLog, type: AndroidExec) {
+    doFirst {
+        standardOutput = new FileOutputStream(new File(reportsDir, "logcat.log"), false)
+    }
+    commandLine "adb","logcat", "-d"
+}
+
+tasks.withType(com.android.build.gradle.internal.tasks.AndroidTestTask) {
+    dependsOn clearDeviceLog
+    finalizedBy pullDeviceLog
+}
+
 def convertTestSysPropsToHash (){
 
     return "{" +
