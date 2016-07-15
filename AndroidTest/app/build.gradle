@@ -110,29 +110,11 @@ repositories {
     mavenCentral()
 }
 
-task(uploadFixtures,type:Exec) {
+task(uploadFixtures, type: AndroidExec) {
     // need to upload the fixtures to the device/emulator external storage
     // this will work irrespective of current working directory due to use of $scriptLocation
 
-    def rootDir = project.rootDir
-    def localProperties = new File(rootDir, "local.properties")
-    def androidPath = null;
-    if (localProperties.exists()) {
-        Properties properties = new Properties()
-        localProperties.withInputStream { instr ->
-            properties.load(instr)
-        }
-        androidPath = properties.getProperty('sdk.dir')
-    }
-
-    if(androidPath == null){
-         androidPath = System.env.ANDROID_HOME
-        if(androidPath == null){
-            throw new Exception("Couldn't find android sdk directory, set ANDROID_HOME or sdk.dir in local.properties");
-        }
-    }
-
-    commandLine "$androidPath/platform-tools/adb","push", "-p", "$scriptLocation/../../fixture", "/sdcard/fixture"
+    commandLine "adb","push", "-p", "$scriptLocation/../../fixture", "/sdcard/fixture"
 }
 
 def convertTestSysPropsToHash (){
