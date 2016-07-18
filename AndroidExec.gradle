@@ -1,0 +1,70 @@
+/*
+ * Copyright (c) 2016 IBM Corp. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
+// Define AndroidExec as an external property for includers to be able to use it
+ext.AndroidExec = AndroidExec
+
+// A gradle Exec task that searches the Android tools locations for matching executables.
+// Tasks of this type can only execute if sdk.dir is set in local.properties or the ANDROID_HOME
+// environment variable is set. It will include the highest found version of the build-tools.
+public class AndroidExec extends Exec {
+
+    @Override
+    Task configure(Closure closure) {
+        Task toReturn = super.configure(closure)
+        String androidPath = null;
+        File localProperties = new File(getProject().getRootProject().getRootDir(), "local.properties")
+        if (localProperties.exists()) {
+            Properties properties = new Properties()
+            localProperties.withInputStream { instr ->
+                properties.load(instr)
+            }
+            androidPath = properties.getProperty('sdk.dir')
+        }
+
+        if(androidPath == null){
+            androidPath = System.env.ANDROID_HOME
+        }
+
+        if (androidPath != null) {
+            // Get the highest build tools version
+            def btv = Arrays.asList(new File(androidPath + File.separator + "build-tools").list())
+                    .sort().reverse().get(0)
+
+            String[] androidToolsPaths = ["tools", "build-tools" + File.separator + btv, "platform-tools"]
+            // Search the tools paths looking for a matching file to set as the executable
+            for (String androidToolsPath : androidToolsPaths) {
+                File toolsPath = new File(androidPath + File.separator + androidToolsPath);
+                // Search the android paths
+                String[] matchingExec = toolsPath.list(new FilenameFilter() {
+                    @Override
+                    boolean accept(File dir, String name) {
+                        return name.equals(getExecutable());
+                    }
+                })
+                if (matchingExec.length == 1) {
+                    setExecutable(new File(toolsPath, matchingExec[0]))
+                    break
+                }
+            }
+        } else {
+            doFirst {
+                throw new TaskInstantiationException("ANDROID_HOME environment variable or " +
+                        "local.properties sdk.dir definition did not exist. " +
+                        "Unable to run tasks of type AndroidExec without these properties.")
+            }
+        }
+        return toReturn
+    }
+}
