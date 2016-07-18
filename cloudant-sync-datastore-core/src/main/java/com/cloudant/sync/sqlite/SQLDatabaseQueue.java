@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 IBM Corp. All rights reserved.
+ * Copyright (C) 2015, 2016 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -26,6 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,7 +42,7 @@ public class SQLDatabaseQueue {
     private final SQLDatabase db;
     private final ExecutorService queue = Executors.newSingleThreadExecutor();
     private final Logger logger = Logger.getLogger(SQLDatabase.class.getCanonicalName());
-    private volatile boolean acceptTasks = true;
+    private AtomicBoolean acceptTasks = new AtomicBoolean(true);
 
     /**
      * Creates an SQLQueue for the database specified.
@@ -143,21 +144,24 @@ public class SQLDatabaseQueue {
      * tasks
      */
     public void shutdown() {
-        acceptTasks = false;
-        //pass straight to queue, tasks passed via submitTaskToQueue will now be blocked.
-        queue.submit(new Runnable() {
-            @Override
-            public void run() {
-                db.close();
+        // If shutdown has already been called then we don't need to shutdown again
+        if (acceptTasks.getAndSet(false)) {
+            //pass straight to queue, tasks passed via submitTaskToQueue will now be blocked.
+            queue.submit(new Runnable() {
+                @Override
+                public void run() {
+                    db.close();
+                }
+            });
+            queue.shutdown();
+            try {
+                queue.awaitTermination(5, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                logger.log(Level.SEVERE, "Interrupted while waiting for queue to terminate", e);
             }
-        });
-        queue.shutdown();
-        try {
-            queue.awaitTermination(5,TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE,"Interrupted while waiting for queue to terminate",e);
+        } else {
+            logger.log(Level.WARNING, "Database is already closed.");
         }
-
     }
 
     /**
@@ -177,7 +181,7 @@ public class SQLDatabaseQueue {
      * @throws RejectedExecutionException If the queue has been shutdown.
      */
     private <T> Future<T> submitTaskToQueue(SQLQueueCallable<T> callable){
-        if(acceptTasks){
+        if(acceptTasks.get()){
             return queue.submit(callable);
         } else {
             throw new RejectedExecutionException("Database is closed");
