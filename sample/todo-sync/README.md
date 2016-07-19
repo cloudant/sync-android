@@ -1,17 +1,24 @@
-# Example app: Todo Sync
+# Example application: Todo Sync
 
-The _todo-sync_ application shows how to do basic CRUD with the Sync Datastore and how to set up a replication between a remote Cloudant database and an application.
+The _todo-sync_ Android application shows how to do basic CRUD
+(create, read, update, delete) with the local Datastore and how to
+replicate between a remote Cloudant database and a local Datastore.
 
-## Full Setup Guide
-
-There's a full setup guide here: https://github.com/cloudant/sync-android/blob/master/doc/android-qs.md
+The application is a simple example of a "to-do" list with items which
+can be created, marked "done", and deleted.
 
 ## In Brief
 
-Create a database on your Cloudant account for the app to synchronise with. It's best-practice to use API keys for device access rather than your Cloudant credentials, so when the database is created, use the Permissions tab to create an API key with:
+Create a database on your Cloudant account for the application to
+synchronise with. It's best-practice to use API keys for device access
+rather than your Cloudant credentials, so when the database is
+created, use the Permissions tab to create an API key with:
 
 * `read` and `write` permissions if you don't want to sync design documents.
 * `admin` permissions if you want to sync design documents.
+
+Database permissions can be set throught the
+[Cloudant Dashboard](https://cloudant.com/changing-database-permissions-tutorial/).
 
 For the example below, this database is called `example_app_todo`.
 
@@ -29,27 +36,46 @@ Add these values to `res/values/settings.xml` as shown:
 <resources>
     <string name="default_user">cloudant_account_name</string>
     <string name="default_dbname">example_app_todo</string>
-    <string name="default_api_key">dongshengcn</string>
-    <string name="default_api_password">secretpassword</string>
+    <string name="default_api_key">cloudant_account_name</string>
+    <string name="default_api_password">cloudant_api_password</string>
 </resources>
 ```
 
 ## Build
 
-You will need [gradle][gradle] 1.8 installed to build the sample application.
+The [gradle][gradle] wrapper (`gradlew` or `gradlew.bat`) is bundled
+with this distribution. This is used to build the sample application.
 
 [gradle]: http://www.gradle.org/installation
 
-Set up a `local.properties` file in the root folder of the sample app with the location of your Android SDK:
+You will need to install the [Android SDK][android] in order to build
+and run the sample application. Remember to set your SDK location -
+there are two ways to do this:
 
+[android]: https://developer.android.com/studio/index.html
+
+- Export the ANDROID_HOME environment variable:
+```
+export ANDROID_HOME=/Users/mike/Code/android/android-sdk-macosx
+```
+
+_or_ 
+
+- Set up a `local.properties` file in the `todo-sync` directory with
+  the location of your Android SDK:
 ```
 sdk.dir=/Users/mike/Code/android/android-sdk-macosx
 ```
 
-Connect your development-enabled Android device. You should be able install the sample application on to your device using:
+Now you are ready to build and run the sample application. You can run
+the application on an emulator or an a development-enabled Android
+device.
 
+Either start your emulator instance or connect your device. In the
+`todo-sync` directory, you should be able install the sample
+application using:
 ```bash
-gradle installDebug
+../../gradlew installDebug
 ```
 
 Once installed, the default settings entered in the XML file above should appear in the Settings screen of the application. 

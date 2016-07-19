@@ -176,7 +176,9 @@ Java:
 
 ## Example application
 
-There is a [sample application and a quickstart guide](/sample/).
+There is a [sample Android application](https://github.com/cloudant/sync-android/blob/master/sample/todo-sync).
+
+See the accompanying README.md for detailed instructions of how to run and build the sample.
 
 ## Overview of the library
 
