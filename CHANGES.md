@@ -1,4 +1,15 @@
 # Unreleased
+
+- [NEW] Updated to version 2.5.1 of the `cloudant-http` library. This
+  includes optional support for handling HTTP status code 429 `Too
+  Many Requests` with blocking backoff and retries. To enable the
+  backoff add an instance of a `Replay429Interceptor` with the desired
+  number of retries and initial backoff:
+  ```
+  builder.addResponseInterceptors(new Replay429Interceptor(retries, initialBackoff));
+  ```
+  A default instance is available using 3 retries and starting with a
+  250 ms backoff: `Replay429Interceptor.WITH_DEFAULTS`
 - [DEPRECATED] `DatastoreManager` constructors. Use `DatastoreManager.getInstance` factory methods
   instead to guarantee only a single `DatastoreManager` instance is created for a given storage
   directory path in the scope of the `DatastoreManager` class.
