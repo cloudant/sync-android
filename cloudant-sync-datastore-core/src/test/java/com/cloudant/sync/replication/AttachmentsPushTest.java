@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Cloudant, Inc. All rights reserved.
+ * Copyright (c) 2014, 2016 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -48,6 +48,18 @@ public class AttachmentsPushTest extends ReplicationTestBase {
     String id1;
     String id2;
     String id3;
+
+    // override builder so we can set our push preference
+    @Override
+    protected ReplicatorBuilder.Push getPushBuilder() {
+        return ReplicatorBuilder.push().
+                from(this.datastore).
+                to(this.couchConfig.getRootUri()).
+                pushAttachmentsInline(pushAttachmentsInline).
+                addRequestInterceptors(couchConfig.getRequestInterceptors()).
+                addResponseInterceptors(couchConfig.getResponseInterceptors());
+    }
+
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -146,6 +158,40 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         InputStream is1 = this.couchClient.getAttachmentStream(id1, newRevision.getRevision(), attachmentName, false);
         InputStream is2 = new FileInputStream(f);
         Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(is1, is2));
+    }
+
+
+    // check that small and large attachments both get sent as
+    // multipart or base64 inline but not a mixture
+    // (verification of multipart transport to be done manually eg via
+    // wireshark)
+    @Test
+    public void pushBigAndSmallAttachmentsTest() throws Exception {
+        // simple 1-rev attachment
+        String attachmentName1 = "bonsai-boston.jpg";
+        String attachmentName2 = "attachment_1.txt";
+        populateSomeDataInLocalDatastore();
+        File f1 = TestUtils.loadFixture("fixture/"+ attachmentName1);
+        File f2 = TestUtils.loadFixture("fixture/"+ attachmentName2);
+        Attachment att1 = new UnsavedFileAttachment(f1, "image/jpeg");
+        Attachment att2 = new UnsavedFileAttachment(f2, "text/plain");
+        DocumentRevision oldRevision = datastore.getDocument(id1);
+        DocumentRevision newRevision = null;
+        // set attachment
+        oldRevision.getAttachments().put(attachmentName1, att1);
+        oldRevision.getAttachments().put(attachmentName2, att2);
+        newRevision = datastore.updateDocumentFromRevision(oldRevision);
+
+        // push replication
+        push();
+
+        // check it's in the DB
+        InputStream is1_1 = this.couchClient.getAttachmentStream(id1, newRevision.getRevision(), attachmentName1, false);
+        InputStream is1_2 = this.couchClient.getAttachmentStream(id1, newRevision.getRevision(), attachmentName2, false);
+        InputStream is2_1 = new FileInputStream(f1);
+        InputStream is2_2 = new FileInputStream(f2);
+        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(is1_1, is2_1));
+        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(is1_2, is2_2));
     }
 
     @Test
