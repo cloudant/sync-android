@@ -125,7 +125,7 @@ task(pullDeviceLog, type: AndroidExec) {
     doFirst {
         standardOutput = new FileOutputStream(new File(reportsDir, "logcat.log"), false)
     }
-    commandLine "adb","logcat", "-d"
+    commandLine "adb","logcat", "-d", "-v", "threadtime"
 }
 
 tasks.withType(com.android.build.gradle.internal.tasks.AndroidTestTask) {
