@@ -23,6 +23,7 @@ import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -52,6 +53,12 @@ public class QueryResultTest extends AbstractQueryTestBase {
 
         setUpBasicQueryData();
     }
+
+    @After
+    public void shutdownQueue() throws Exception {
+        queue.shutdown();
+    }
+
 
     /*
      * Perform a simple query then drop the revs table from the database before attempting

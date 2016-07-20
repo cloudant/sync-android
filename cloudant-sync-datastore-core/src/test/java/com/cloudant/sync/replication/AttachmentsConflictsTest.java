@@ -69,17 +69,23 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
 
         this.datastoreManager.deleteDatastore(this.datastore.getDatastoreName());
         this.datastore = (DatastoreImpl)this.datastoreManager.openDatastore("foo-bar-baz");
-        this.pull();
+        try {
+            this.pull();
 
-        DocumentRevision gotRev = this.datastore.getDocument("doc-a");
+            DocumentRevision gotRev = this.datastore.getDocument("doc-a");
 
-        Assert.assertEquals(gotRev.getAttachments().size(), 1);
-        // local one is guaranteed to be winner because its revision tree is longer
-        Assert.assertEquals(gotRev.getBody().asMap().get("foo"), "local");
-        Assert.assertFalse(TestUtils.streamsEqual(gotRev.getAttachments().get("att1").getInputStream(),
-                new ByteArrayInputStream("hello".getBytes())));
-        Assert.assertTrue(TestUtils.streamsEqual(gotRev.getAttachments().get("att1").getInputStream(),
-                new ByteArrayInputStream("hello universe".getBytes())));
+            Assert.assertEquals(gotRev.getAttachments().size(), 1);
+            // local one is guaranteed to be winner because its revision tree is longer
+            Assert.assertEquals(gotRev.getBody().asMap().get("foo"), "local");
+            Assert.assertFalse(TestUtils.streamsEqual(gotRev.getAttachments().get("att1").getInputStream(),
+
+                    new ByteArrayInputStream("hello".getBytes())));
+            Assert.assertTrue(TestUtils.streamsEqual(gotRev.getAttachments().get("att1")
+                    .getInputStream(),
+                    new ByteArrayInputStream("hello universe".getBytes())));
+        } finally {
+            this.datastore.close();
+        }
     }
 
     // test that we can correctly pull attachments for a resolved remote db
@@ -119,10 +125,14 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
 
         this.datastoreManager.deleteDatastore(this.datastore.getDatastoreName());
         this.datastore = (DatastoreImpl)this.datastoreManager.openDatastore("foo-bar-baz");
-        this.pull();
+        try {
+            this.pull();
 
-        DocumentRevision gotRev = this.datastore.getDocument("doc-a");
-        Assert.assertEquals(gotRev.getAttachments().size(), 1);
+            DocumentRevision gotRev = this.datastore.getDocument("doc-a");
+            Assert.assertEquals(gotRev.getAttachments().size(), 1);
+        } finally {
+            this.datastore.close();
+        }
     }
 
 }

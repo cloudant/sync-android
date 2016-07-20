@@ -568,11 +568,14 @@ public class DatastoreImplCRUDTest extends BasicDatastoreTestBase {
     @Test
     public void createDbWithSlashAndCreateDocument() throws Exception {
         Datastore datastore = datastoreManager.openDatastore("dbwith/aslash");
-        DocumentRevision rev = new DocumentRevision();
-        rev.setBody(bodyOne);
-        DocumentRevision doc = datastore.createDocumentFromRevision(rev);
-        validateNewlyCreatedDocument(doc);
-        datastore.close();
+        try {
+            DocumentRevision rev = new DocumentRevision();
+            rev.setBody(bodyOne);
+            DocumentRevision doc = datastore.createDocumentFromRevision(rev);
+            validateNewlyCreatedDocument(doc);
+        } finally {
+            datastore.close();
+        }
     }
 
     private void getAllDocuments_testCountAndOffset(int objectCount, List<DocumentRevision> expectedDocumentRevisions, boolean descending) {

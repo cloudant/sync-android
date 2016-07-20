@@ -39,6 +39,7 @@ public abstract class DatastoreTestBase {
 
     @After
     public void testDown() {
+        datastore.close();
         TestUtils.deleteTempTestingDir(datastore_manager_dir);
     }
 }
