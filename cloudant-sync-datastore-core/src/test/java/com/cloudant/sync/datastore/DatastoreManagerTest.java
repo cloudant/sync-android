@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+ * Copyright (C) 2013, 2016 IBM Corp. All rights reserved.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -226,8 +226,15 @@ public class DatastoreManagerTest {
             @Override
             protected void doAssertions() throws Exception {
                 Datastore ds0 = results.get(0);
-                for (Datastore ds : results) {
-                    Assert.assertSame("The datastore instances should all be the same", ds0, ds);
+                try {
+                    for (Datastore ds : results) {
+                        Assert.assertSame("The datastore instances should all be the same", ds0, ds);
+
+                    }
+                } finally {
+                    for (Datastore ds : results) {
+                        if (ds != null) ds.close();
+                    }
                 }
             }
 
@@ -246,10 +253,18 @@ public class DatastoreManagerTest {
 
     @Test
     public void datastoreInstanceNotReusedAfterClose() throws Exception {
-        Datastore ds1 = manager.openDatastore("ds1");
-        ds1.close();
-        Datastore ds2 = manager.openDatastore("ds1");
-        Assert.assertNotSame("The Datastore instances should not be the same.", ds1, ds2);
+        Datastore ds1 = null, ds2 = null;
+        try {
+            ds1 = manager.openDatastore("ds1");
+        } finally {
+            if (ds1 != null) ds1.close();
+        }
+        try {
+            ds2 = manager.openDatastore("ds1");
+            Assert.assertNotSame("The Datastore instances should not be the same.", ds1, ds2);
+        } finally {
+            if (ds2 != null) ds2.close();
+        }
     }
 
     @Test
