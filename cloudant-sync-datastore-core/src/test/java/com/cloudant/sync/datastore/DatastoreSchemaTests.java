@@ -192,18 +192,19 @@ public class DatastoreSchemaTests {
                 new File(temp_folder, "datastores").getAbsolutePath())
                 .openDatastore("testdb");
 
-        // Check migration worked
-        datastore.runOnDbQueue(new SQLQueueCallable<Object>() {
-            @Override
-            public Object call(SQLDatabase db) throws Exception {
-                Assert.assertTrue("DB version should be 100 or more", db.getVersion() >= 100);
-                return null;
-            }
-        }).get();
-
-        datastore.close();
-
-        TestUtils.deleteTempTestingDir(temp_folder.getAbsolutePath());
+        try {
+            // Check migration worked
+            datastore.runOnDbQueue(new SQLQueueCallable<Object>() {
+                @Override
+                public Object call(SQLDatabase db) throws Exception {
+                    Assert.assertTrue("DB version should be 100 or more", db.getVersion() >= 100);
+                    return null;
+                }
+            }).get();
+        } finally {
+            datastore.close();
+            TestUtils.deleteTempTestingDir(temp_folder.getAbsolutePath());
+        }
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")  // mkdirs result should be fine

@@ -113,6 +113,7 @@ public class EndToEndEncryptionTest {
 
     @After
     public void tearDown() {
+        datastore.close();
         TestUtils.deleteTempTestingDir(datastoreManagerDir);
     }
 
