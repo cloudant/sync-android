@@ -47,8 +47,9 @@ public class SQLDatabaseQueue {
      * Creates an SQLQueue for the database specified.
      * @param filename The file where the database is located
      * @throws IOException If an problem is encountered creating the DB
+     * @throws SQLException If the database cannot be opened.
      */
-    public SQLDatabaseQueue(String filename) throws IOException {
+    public SQLDatabaseQueue(String filename) throws IOException, SQLException {
         this(filename, new NullKeyProvider());
     }
 
@@ -58,8 +59,9 @@ public class SQLDatabaseQueue {
      * @param provider The key provider object that contains the user-defined SQLCipher key.
      *                 Supply a NullKeyProvider to use a non-encrypted database.
      * @throws IOException If a problem occurs creating the database
+     * @throws SQLException If the database cannot be opened.
      */
-    public SQLDatabaseQueue(String filename, KeyProvider provider) throws IOException {
+    public SQLDatabaseQueue(String filename, KeyProvider provider) throws IOException, SQLException {
         this.db = SQLDatabaseFactory.createSQLDatabase(filename, provider);
         queue.submit(new Runnable() {
             @Override
