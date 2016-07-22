@@ -21,6 +21,8 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.runners.Parameterized.Parameters;
 
+import com.cloudant.sync.datastore.DocumentBodyFactory;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -106,6 +108,68 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
         query.put("town", "bristol");
         QueryResult queryResult = im.find(query);
         assertThat(queryResult.documentIds(), containsInAnyOrder("mike72", "fred12"));
+    }
+
+    @Test
+    public void canIterateOverDocumentsWithPostHocMatcher() throws Exception {
+        setUpWithoutCoveringIndexesQueryData();
+
+        for (int i = 0; i < 51; i++){
+            DocumentRevision rev = new DocumentRevision("rhys"+i);
+            Map<String, Object> bodyMap = new HashMap<String, Object>();
+            bodyMap.put("name", "rhys");
+            bodyMap.put("age", 12);
+            bodyMap.put("pet", "cat");
+            bodyMap.put("town", "cardiff");
+            rev.setBody(DocumentBodyFactory.create(bodyMap));
+            ds.createDocumentFromRevision(rev);
+        }
+
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("town", "bristol");
+        QueryResult queryResult = im.find(query);
+
+        int count = 0;
+        for(DocumentRevision rev: queryResult){
+
+            assertThat("Rev is not null", rev,is(notNullValue()));
+            count++;
+        }
+        assertThat(count, is(2)); // Should have called .next() twice.
+
+    }
+
+    @Test
+    public void canIterateOverDocumentsWithPostHocMatcher101() throws Exception {
+        setUpWithoutCoveringIndexesQueryData();
+
+        for (int i = 0; i < 101; i++){
+            DocumentRevision rev = new DocumentRevision("rhys"+i);
+            Map<String, Object> bodyMap = new HashMap<String, Object>();
+            bodyMap.put("name", "rhys");
+            bodyMap.put("age", 12);
+            bodyMap.put("pet", "cat");
+            if ( i % 2 == 0) {
+                bodyMap.put("town", "cardiff");
+            } else {
+                bodyMap.put("town", "bristol"); //+2
+            }
+            rev.setBody(DocumentBodyFactory.create(bodyMap));
+            ds.createDocumentFromRevision(rev);
+        }
+
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("town", "bristol");
+        QueryResult queryResult = im.find(query);
+        int count = 0;
+        for(DocumentRevision rev: queryResult){
+
+            assertThat("Rev is not null", rev,is(notNullValue()));
+            assertThat((String) rev.getBody().asMap().get("town"), is("bristol"));
+            count++;
+        }
+        assertThat(count, is(52)); // should have called the iterator.next 52 times
+
     }
 
     @Test

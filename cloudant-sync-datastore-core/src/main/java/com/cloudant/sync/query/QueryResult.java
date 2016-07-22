@@ -122,10 +122,21 @@ public class QueryResult implements Iterable<DocumentRevision> {
             if (!this.hasNext()) {
                 throw new NoSuchElementException();
             }
-            if (!documentBlock.hasNext()) {
+
+            // it is always safe to call documentBlock.next() without calling hasNext because
+            // the this.hasNext() will return false if there are no more documents to read this
+            // is because we load the next block of documents (if there are any), before
+            // returning the last document from the last batch, ensuring that documentBlock.next()
+            // will always have a document to return.
+            DocumentRevision doc =  documentBlock.next();
+
+            // Only load the next batch if the limit hasn't been reached, if it has
+            // it will cause an off by one error, eg instead of 60, you'd get 61 results.
+            if (!documentBlock.hasNext() && !limitReached) {
                 documentBlock = populateDocumentBlock();
             }
-            return documentBlock.next();
+
+            return doc;
         }
 
         @Override
