@@ -46,8 +46,9 @@ public class SQLDatabaseFactory {
      * @return {@code SQLDatabase} for the given filename
      * @throws IOException if the file does not exists, and also
      *         can not be created
+     * @throws SQLException if the database cannot be opened.
      */
-    public static SQLDatabase createSQLDatabase(String dbFilename, KeyProvider provider) throws IOException {
+    public static SQLDatabase createSQLDatabase(String dbFilename, KeyProvider provider) throws IOException, SQLException {
 
         boolean runningOnAndroid =  Misc.isRunningOnAndroid();
         boolean useSqlCipher = (provider.getEncryptionKey() != null);
@@ -78,7 +79,7 @@ public class SQLDatabaseFactory {
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to load database module", e);
-            return null;
+            throw new SQLException("Failed to load database module", e);
         }
 
     }
@@ -91,8 +92,9 @@ public class SQLDatabaseFactory {
      * @return {@code SQLDatabase} for the given filename
      * @throws IOException if the file does not exists, and also
      *         can not be created
+     * @throws SQLException If the database could not be opened.
      */
-    public static SQLDatabase openSqlDatabase(String dbFilename, KeyProvider provider) throws IOException {
+    public static SQLDatabase openSqlDatabase(String dbFilename, KeyProvider provider) throws IOException, SQLException {
 
         boolean runningOnAndroid =  Misc.isRunningOnAndroid();
         boolean useSqlCipher = (provider.getEncryptionKey() != null);
@@ -110,7 +112,7 @@ public class SQLDatabaseFactory {
                     if (validateOpenedDatabase(result)) {
                         return result;
                     } else {
-                        return null;
+                        throw new SQLException("Database could not be opened, invalid key.");
                     }
                 } else {
                     return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLite")
@@ -129,7 +131,7 @@ public class SQLDatabaseFactory {
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to load database module", e);
-            return null;
+            throw new SQLException("Failed to load database module", e);
         }
     }
 

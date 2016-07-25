@@ -158,13 +158,7 @@ public class TestUtils {
                    .invoke(db);
            return SQLDatabaseFactory.openSqlDatabase(filePath,
                    new NullKeyProvider());
-       } catch (IllegalAccessException e) {
-           e.printStackTrace();
-       } catch (InvocationTargetException e) {
-           e.printStackTrace();
-       } catch (NoSuchMethodException e) {
-           e.printStackTrace();
-       } catch (IOException e) {
+       } catch (Exception e) {
            e.printStackTrace();
        }
 

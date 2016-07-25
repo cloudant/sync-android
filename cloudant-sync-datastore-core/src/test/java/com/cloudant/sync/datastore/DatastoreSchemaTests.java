@@ -77,8 +77,7 @@ public class DatastoreSchemaTests {
      * fixture/datastores-user_version6.zip contains a known database, at version 6 and
      * with two attachments.
      */
-    public void migrateVersion6To100() throws DatastoreNotCreatedException, ExecutionException,
-            InterruptedException, IOException {
+    public void migrateVersion6To100() throws Exception {
         // Extract database to temp folder
         File temp_folder = new File(TestUtils.createTempTestingDir(this.getClass().getName()));
         File zippedVersion6 = f("fixture/datastores-user_version6.zip");
