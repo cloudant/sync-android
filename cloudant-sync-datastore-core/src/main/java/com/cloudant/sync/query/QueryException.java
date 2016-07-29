@@ -12,4 +12,8 @@ public class QueryException extends RuntimeException {
     public QueryException(Exception causedBy){
         super(causedBy);
     }
+
+    public QueryException(String messaage){
+        super(messaage);
+    }
 }

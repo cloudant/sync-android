@@ -13,6 +13,7 @@
 package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.util.TestUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -46,9 +47,13 @@ public class MockMatcherIndexManager extends IndexManager {
             return null;
         }
 
-        MockMatcherQueryExecutor queryExecutor = new MockMatcherQueryExecutor(getDatabase(),
-                                                                              getDatastore(),
-                                                                              getQueue());
+        MockMatcherQueryExecutor queryExecutor = null;
+        try {
+            queryExecutor = new MockMatcherQueryExecutor(getDatastore(),
+                    TestUtils.getDBQueue(this));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         Map<String, Object> indexes = listIndexes();
         return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
     }

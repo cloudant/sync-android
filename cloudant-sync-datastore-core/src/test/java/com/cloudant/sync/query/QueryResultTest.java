@@ -41,12 +41,11 @@ public class QueryResultTest extends AbstractQueryTestBase {
     public void setUp() throws Exception {
         super.setUp();
         im = new IndexManager(ds);
+        indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
-        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
-        assertThat(db, is(notNullValue()));
-        assertThat(im.getQueue(), is(notNullValue()));
+        assertThat(indexManagerDatabaseQueue, is(notNullValue()));
         String[] metadataTableList = new String[]{IndexManager.INDEX_METADATA_TABLE_NAME};
-        SQLDatabaseTestUtils.assertTablesExist(db, metadataTableList);
+        SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue, metadataTableList);
 
         queue = new SQLDatabaseQueue(factoryPath + "/" + factory.listAllDatastores().get(0) +
             "/db.sync", new NullKeyProvider());

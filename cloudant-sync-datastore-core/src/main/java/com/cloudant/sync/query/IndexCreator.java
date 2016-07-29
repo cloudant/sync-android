@@ -15,6 +15,8 @@ package com.cloudant.sync.query;
 import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
+import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.google.common.base.Joiner;
 
 import org.apache.commons.codec.binary.Hex;
@@ -40,25 +42,22 @@ import java.util.logging.Logger;
  */
 class IndexCreator {
 
-    private final SQLDatabase database;
     private final Datastore datastore;
     private static Random indexNameRandom = new Random();
 
-    private final ExecutorService queue;
+    private final SQLDatabaseQueue queue;
 
     private static final Logger logger = Logger.getLogger(IndexCreator.class.getName());
 
-    public IndexCreator(SQLDatabase database, Datastore datastore, ExecutorService queue) {
+    public IndexCreator(Datastore datastore, SQLDatabaseQueue queue) {
         this.datastore = datastore;
-        this.database = database;
         this.queue = queue;
     }
 
     protected static String ensureIndexed(Index index,
-                                          SQLDatabase database,
                                           Datastore datastore,
-                                          ExecutorService queue) {
-        IndexCreator executor = new IndexCreator(database, datastore, queue);
+                                          SQLDatabaseQueue queue) {
+        IndexCreator executor = new IndexCreator(datastore, queue);
 
         return executor.ensureIndexed(index);
     }
@@ -79,7 +78,7 @@ class IndexCreator {
         }
 
         if (proposedIndex.indexType == IndexType.TEXT) {
-            if (!IndexManager.ftsAvailable(queue, database)) {
+            if (!IndexManager.ftsAvailable(queue)) {
                 logger.log(Level.SEVERE, "Text search not supported.  To add support for text " +
                                          "search, enable FTS compile options in SQLite.");
                 return null;
@@ -152,7 +151,6 @@ class IndexCreator {
                         proposedIndex.compareIndexTypeTo(existingType, existingSettings)) {
                     boolean success = IndexUpdater.updateIndex(proposedIndex.indexName,
                                                                fieldNamesList,
-                                                               database,
                                                                datastore,
                                                                queue);
                     return success ? proposedIndex.indexName : null;
@@ -167,9 +165,9 @@ class IndexCreator {
         }
 
         final Index index = proposedIndex;
-        Future<Boolean> result = queue.submit(new Callable<Boolean>() {
+        Future<Boolean> result = queue.submit(new SQLQueueCallable<Boolean>() {
             @Override
-            public Boolean call() {
+            public Boolean call(SQLDatabase database) {
                 Boolean transactionSuccess = true;
                 database.beginTransaction();
 
@@ -246,7 +244,6 @@ class IndexCreator {
         if (success) {
             success = IndexUpdater.updateIndex(index.indexName,
                                                fieldNamesList,
-                                               database,
                                                datastore,
                                                queue);
         }
@@ -329,9 +326,9 @@ class IndexCreator {
 
     private Map<String, Object> listIndexesInDatabaseQueue() throws ExecutionException,
                                                                     InterruptedException {
-        Future<Map<String, Object>> indexes = queue.submit(new Callable<Map<String, Object>>() {
+        Future<Map<String, Object>> indexes = queue.submit(new SQLQueueCallable<Map<String,Object>>() {
             @Override
-            public Map<String, Object> call() {
+            public Map<String, Object> call(SQLDatabase database) {
                 return IndexManager.listIndexesInDatabase(database);
             }
         });

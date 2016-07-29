@@ -25,6 +25,7 @@ import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -40,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 @RunWith(Parameterized.class)
 public class IndexUpdaterTest extends AbstractIndexTestBase {
@@ -62,7 +64,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @Override
-    public void tearDown() {
+    public void tearDown() throws Exception {
         super.tearDown();
         fields = null;
     }
@@ -70,7 +72,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     @Test
     public void updateIndexNoIndexName() throws Exception {
         createIndex("basic", Arrays.<Object>asList("name"));
-        assertThat(IndexUpdater.updateIndex(null, fields, db, ds, im.getQueue()), is(false));
+        assertThat(IndexUpdater.updateIndex(null, fields, ds, indexManagerDatabaseQueue), is(false));
     }
 
     @Test
@@ -80,49 +82,59 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
-        String sql = String.format("SELECT * FROM %s", table);
-        Cursor cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(0));
-        } catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        final String sql = String.format("SELECT * FROM %s", table);
+
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(0));
+                    return null;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+            }
+        }).get();
+
+
 
         DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike" }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        DocumentRevision saved;
+        final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(1));
-            assertThat(cursor.getColumnCount(), is(3));
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.getString(0), is("id123"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.getString(1), is(saved.getRevision()));
-                assertThat(cursor.columnName(2), is("name"));
-                assertThat(cursor.getString(2), is("mike"));
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(1));
+                    assertThat(cursor.getColumnCount(), is(3));
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.getString(0), is("id123"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.getString(1), is(saved.getRevision()));
+                        assertThat(cursor.columnName(2), is("name"));
+                        assertThat(cursor.getString(2), is("mike"));
+                    }
+                    return null;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
             }
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
+
     }
 
 
@@ -133,17 +145,22 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
-        String sql = String.format("SELECT * FROM %s", table);
-        Cursor cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(0));
-        } catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        final String sql = String.format("SELECT * FROM %s", table);
+
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(0));
+                    return null;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+            }
+        }).get();
+
 
         final int nDocs = 50;
         final int nThreads = 8;
@@ -180,7 +197,11 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                     }
                     // batch up index updates
                     if (i % nUpdates == nUpdates-1) {
-                        IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue());
+                        try {
+                            IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
             }
@@ -200,44 +221,47 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }
 
         // catch any missing index updates (needed where nDocs % nUpdates != 0)
-        IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue());
+        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
 
         // now the "basic" index should be up to date, check the sequence number
         // and the values in the index
 
         assertThat(getIndexSequenceNumber("basic"), is((long)nDocs*nThreads));
 
-        int mikes = 0;
-        int toms = 0;
-
-        cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(nDocs*nThreads));
-            assertThat(cursor.getColumnCount(), is(3));
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.columnName(2), is("name"));
-                int docNum = Integer.valueOf(cursor.getString(0).split("_")[1]);
-                // even document numbers should have name==mike, odd name==tom
-                if (docNum % 2 == 0) {
-                    assertThat(cursor.getString(2), is("mike"));
-                    mikes++;
-                } else {
-                    assertThat(cursor.getString(2), is("tom"));
-                    toms++;
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                int mikes = 0;
+                int toms = 0;
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(nDocs*nThreads));
+                    assertThat(cursor.getColumnCount(), is(3));
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.columnName(2), is("name"));
+                        int docNum = Integer.valueOf(cursor.getString(0).split("_")[1]);
+                        // even document numbers should have name==mike, odd name==tom
+                        if (docNum % 2 == 0) {
+                            assertThat(cursor.getString(2), is("mike"));
+                            mikes++;
+                        } else {
+                            assertThat(cursor.getString(2), is("tom"));
+                            toms++;
+                        }
+                    }
+                    // check that the number of values on the name field is correct
+                    assertThat(mikes, is(nDocs/2*nThreads + nDocs%2*nThreads));
+                    assertThat(toms, is(nDocs/2*nThreads));
+                    return null;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
                 }
             }
-            // check that the number of values on the name field is correct
-            assertThat(mikes, is(nDocs/2*nThreads + nDocs%2*nThreads));
-            assertThat(toms, is(nDocs/2*nThreads));
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
+
     }
 
     @Test
@@ -247,17 +271,21 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
-        String sql = String.format("SELECT * FROM %s", table);
-        Cursor cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(0));
-        } catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        final String sql = String.format("SELECT * FROM %s", table);
+
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(0));
+                    return null;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+            }
+        }).get();
 
         DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike", "age" : 12 }
@@ -265,33 +293,37 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        DocumentRevision saved;
+        final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(1));
-            assertThat(cursor.getColumnCount(), is(4));
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.getString(0), is("id123"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.getString(1), is(saved.getRevision()));
-                assertThat(cursor.columnName(2), is("name"));
-                assertThat(cursor.getString(2), is("mike"));
-                assertThat(cursor.columnName(3), is("age"));
-                assertThat(cursor.getInt(3), is(12));
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(1));
+                    assertThat(cursor.getColumnCount(), is(4));
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.getString(0), is("id123"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.getString(1), is(saved.getRevision()));
+                        assertThat(cursor.columnName(2), is("name"));
+                        assertThat(cursor.getString(2), is("mike"));
+                        assertThat(cursor.columnName(3), is("age"));
+                        assertThat(cursor.getInt(3), is(12));
+                    }
+                    return null;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
             }
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
+
     }
 
     @Test
@@ -301,17 +333,22 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
-        String sql = String.format("SELECT * FROM %s", table);
-        Cursor cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(0));
-        } catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        final String sql = String.format("SELECT * FROM %s", table);
+
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(0));
+                    return null;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+            }
+        }).get();
+
 
         DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike",
@@ -326,37 +363,41 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("car", "mini");
         bodyMap.put("ignored", "something");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        DocumentRevision saved;
+        final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(1));
-            assertThat(cursor.getColumnCount(), is(6));
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.getString(0), is("id123"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.getString(1), is(saved.getRevision()));
-                assertThat(cursor.columnName(2), is("name"));
-                assertThat(cursor.getString(2), is("mike"));
-                assertThat(cursor.columnName(3), is("age"));
-                assertThat(cursor.getInt(3), is(12));
-                assertThat(cursor.columnName(4), is("pet"));
-                assertThat(cursor.getString(4), is("cat"));
-                assertThat(cursor.columnName(5), is("car"));
-                assertThat(cursor.getString(5), is("mini"));
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(1));
+                    assertThat(cursor.getColumnCount(), is(6));
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.getString(0), is("id123"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.getString(1), is(saved.getRevision()));
+                        assertThat(cursor.columnName(2), is("name"));
+                        assertThat(cursor.getString(2), is("mike"));
+                        assertThat(cursor.columnName(3), is("age"));
+                        assertThat(cursor.getInt(3), is(12));
+                        assertThat(cursor.columnName(4), is("pet"));
+                        assertThat(cursor.getString(4), is("cat"));
+                        assertThat(cursor.columnName(5), is("car"));
+                        assertThat(cursor.getString(5), is("mini"));
+                    }
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+                return null;
             }
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
+
     }
 
     @Test
@@ -366,17 +407,22 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
-        String sql = String.format("SELECT * FROM %s", table);
-        Cursor cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(0));
-        } catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        final String sql = String.format("SELECT * FROM %s", table);
+
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(0));
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+                return null;
+            }
+        }).get();
+
 
         DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike",  "age" : 12, "pet" : "cat", "ignored" : "something" }
@@ -386,37 +432,41 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("pet", "cat");
         bodyMap.put("ignored", "something");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        DocumentRevision saved;
+        final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(1, cursor.getCount());
-            Assert.assertEquals(6, cursor.getColumnCount());
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.getString(0), is("id123"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.getString(1), is(saved.getRevision()));
-                assertThat(cursor.columnName(2), is("name"));
-                assertThat(cursor.getString(2), is("mike"));
-                assertThat(cursor.columnName(3), is("age"));
-                assertThat(cursor.getInt(3), is(12));
-                assertThat(cursor.columnName(4), is("pet"));
-                assertThat(cursor.getString(4), is("cat"));
-                assertThat(cursor.columnName(5), is("car"));
-                assertThat(cursor.getString(5), is(nullValue()));
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    Assert.assertEquals(1, cursor.getCount());
+                    Assert.assertEquals(6, cursor.getColumnCount());
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.getString(0), is("id123"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.getString(1), is(saved.getRevision()));
+                        assertThat(cursor.columnName(2), is("name"));
+                        assertThat(cursor.getString(2), is("mike"));
+                        assertThat(cursor.columnName(3), is("age"));
+                        assertThat(cursor.getInt(3), is(12));
+                        assertThat(cursor.columnName(4), is("pet"));
+                        assertThat(cursor.getString(4), is("cat"));
+                        assertThat(cursor.columnName(5), is("car"));
+                        assertThat(cursor.getString(5), is(nullValue()));
+                    }
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+                return null;
             }
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
+
     }
 
     @Test
@@ -426,17 +476,22 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
-        String sql = String.format("SELECT * FROM %s", table);
-        Cursor cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(0));
-        } catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        final String sql = String.format("SELECT * FROM %s", table);
+
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(0));
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+                return null;
+            }
+        }).get();
+
 
         DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike",  "age" : 12, "pet" : "cat", "ignored" : "something" }
@@ -446,33 +501,37 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("pet", "cat");
         bodyMap.put("ignored", "something");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        DocumentRevision saved;
+        final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(1));
-            assertThat(cursor.getColumnCount(), is(4));
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.getString(0), is("id123"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.getString(1), is(saved.getRevision()));
-                assertThat(cursor.columnName(2), is("car"));
-                assertThat(cursor.getString(2), is(nullValue()));
-                assertThat(cursor.columnName(3), is("van"));
-                assertThat(cursor.getString(3), is(nullValue()));
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(1));
+                    assertThat(cursor.getColumnCount(), is(4));
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.getString(0), is("id123"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.getString(1), is(saved.getRevision()));
+                        assertThat(cursor.columnName(2), is("car"));
+                        assertThat(cursor.getString(2), is(nullValue()));
+                        assertThat(cursor.columnName(3), is("van"));
+                        assertThat(cursor.getString(3), is(nullValue()));
+                    }
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+                return null;
             }
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
+
     }
 
     @Test
@@ -484,17 +543,23 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         Assert.assertEquals(0, getIndexSequenceNumber("basic"));
 
         String table = IndexManager.tableNameForIndex("basic");
-        String sql = String.format("SELECT * FROM %s", table);
-        Cursor cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(0));
-        } catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        final String sql = String.format("SELECT * FROM %s", table);
+
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(0));
+                    return null;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+            }
+        }).get();
+
+
 
         DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike",  "pet" : [ "cat", "dog", "parrot" ] }
@@ -503,36 +568,40 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         List<String> pets = Arrays.asList("cat", "dog", "parrot");
         bodyMap.put("pet", pets);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        DocumentRevision saved;
+        final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(3));
-            assertThat(cursor.getColumnCount(), is(4));
-            List<String> petList = new ArrayList<String>();
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.getString(0), is("id123"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.getString(1), is(saved.getRevision()));
-                assertThat(cursor.columnName(2), is("name"));
-                assertThat(cursor.getString(2), is("mike"));
-                assertThat(cursor.columnName(3), is("pet"));
-                assertThat(cursor.getString(3), is(notNullValue()));
-                petList.add(cursor.getString(3));
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(3));
+                    assertThat(cursor.getColumnCount(), is(4));
+                    List<String> petList = new ArrayList<String>();
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.getString(0), is("id123"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.getString(1), is(saved.getRevision()));
+                        assertThat(cursor.columnName(2), is("name"));
+                        assertThat(cursor.getString(2), is("mike"));
+                        assertThat(cursor.columnName(3), is("pet"));
+                        assertThat(cursor.getString(3), is(notNullValue()));
+                        petList.add(cursor.getString(3));
+                    }
+                    assertThat(petList, containsInAnyOrder("cat", "dog", "parrot"));
+                    return null;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
             }
-            assertThat(petList, containsInAnyOrder("cat", "dog", "parrot"));
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
+
     }
 
     @Test
@@ -542,17 +611,22 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
-        String sql = String.format("SELECT * FROM %s", table);
-        Cursor cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(0));
-        } catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        final String sql = String.format("SELECT * FROM %s", table);
+
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(0));
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+                return null;
+            }
+        }).get();
+
 
         DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike",  "pet" : { "species" : [ "cat", "dog" ] } }
@@ -563,36 +637,40 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         pets.put("species", species);
         bodyMap.put("pet", pets);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        DocumentRevision saved;
+        final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(2));
-            assertThat(cursor.getColumnCount(), is(4));
-            List<String> petList = new ArrayList<String>();
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.getString(0), is("id123"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.getString(1), is(saved.getRevision()));
-                assertThat(cursor.columnName(2), is("name"));
-                assertThat(cursor.getString(2), is("mike"));
-                assertThat(cursor.columnName(3), is("pet.species"));
-                assertThat(cursor.getString(3), is(notNullValue()));
-                petList.add(cursor.getString(3));
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(2));
+                    assertThat(cursor.getColumnCount(), is(4));
+                    List<String> petList = new ArrayList<String>();
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.getString(0), is("id123"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.getString(1), is(saved.getRevision()));
+                        assertThat(cursor.columnName(2), is("name"));
+                        assertThat(cursor.getString(2), is("mike"));
+                        assertThat(cursor.columnName(3), is("pet.species"));
+                        assertThat(cursor.getString(3), is(notNullValue()));
+                        petList.add(cursor.getString(3));
+                    }
+                    assertThat(petList, containsInAnyOrder("cat", "dog"));
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+                return null;
             }
-            assertThat(petList, containsInAnyOrder("cat", "dog"));
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
+
     }
 
     @Test
@@ -602,17 +680,21 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
-        String sql = String.format("SELECT * FROM %s", table);
-        Cursor cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(0));
-        } catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        final String sql = String.format("SELECT * FROM %s", table);
+
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(0));
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+                return null;
+            }
+        }).get();
 
         DocumentRevision goodRev = new DocumentRevision("id123");
         // body content: { "name" : "mike", "pet" : [ "cat", "dog", "parrot" ] }
@@ -621,7 +703,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         List<String> pets = Arrays.asList("cat", "dog", "parrot");
         goodBodyMap.put("pet", pets);
         goodRev.setBody(DocumentBodyFactory.create(goodBodyMap));
-        DocumentRevision saved;
+        final DocumentRevision saved;
 
         DocumentRevision badRev = new DocumentRevision("id456");
         // body content: { "name" : "mike",
@@ -635,37 +717,41 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         saved = ds.createDocumentFromRevision(goodRev);
         ds.createDocumentFromRevision(badRev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(2l));
 
         // Document id123 is successfully indexed. 
         // Document id456 is rejected due to multiple arrays.
-        cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(3));
-            assertThat(cursor.getColumnCount(), is(5));
-            List<String> petList = new ArrayList<String>();
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.getString(0), is("id123"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.getString(1), is(saved.getRevision()));
-                assertThat(cursor.columnName(2), is("name"));
-                assertThat(cursor.getString(2), is("mike"));
-                assertThat(cursor.columnName(3), is("pet"));
-                assertThat(cursor.getString(3), is(notNullValue()));
-                petList.add(cursor.getString(3));
-                assertThat(cursor.columnName(4), is("pet2"));
-                assertThat(cursor.getString(4), is(nullValue()));
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(3));
+                    assertThat(cursor.getColumnCount(), is(5));
+                    List<String> petList = new ArrayList<String>();
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.getString(0), is("id123"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.getString(1), is(saved.getRevision()));
+                        assertThat(cursor.columnName(2), is("name"));
+                        assertThat(cursor.getString(2), is("mike"));
+                        assertThat(cursor.columnName(3), is("pet"));
+                        assertThat(cursor.getString(3), is(notNullValue()));
+                        petList.add(cursor.getString(3));
+                        assertThat(cursor.columnName(4), is("pet2"));
+                        assertThat(cursor.getString(4), is(nullValue()));
+                    }
+                    assertThat(petList, containsInAnyOrder("cat", "dog", "parrot"));
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+                return null;
             }
-            assertThat(petList, containsInAnyOrder("cat", "dog", "parrot"));
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
+
     }
 
     @Test
@@ -675,17 +761,23 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
-        String sql = String.format("SELECT * FROM %s", table);
-        Cursor cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(0));
-        } catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        final String sql = String.format("SELECT * FROM %s", table);
+
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(0));
+                    return null;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+            }
+        }).get();
+
+
 
         DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike", "pet" : [] }
@@ -693,35 +785,41 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("name", "mike");
         bodyMap.put("pet", new ArrayList<Object>());
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        DocumentRevision saved;
+        final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(1, cursor.getCount());
-            Assert.assertEquals(5, cursor.getColumnCount());
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.getString(0), is("id123"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.getString(1), is(saved.getRevision()));
-                assertThat(cursor.columnName(2), is("name"));
-                assertThat(cursor.getString(2), is("mike"));
-                assertThat(cursor.columnName(3), is("car"));
-                assertThat(cursor.getString(3), is(nullValue()));
-                assertThat(cursor.columnName(4), is("pet"));
-                assertThat(cursor.getString(4), is(nullValue()));
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    Assert.assertEquals(1, cursor.getCount());
+                    Assert.assertEquals(5, cursor.getColumnCount());
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.getString(0), is("id123"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.getString(1), is(saved.getRevision()));
+                        assertThat(cursor.columnName(2), is("name"));
+                        assertThat(cursor.getString(2), is("mike"));
+                        assertThat(cursor.columnName(3), is("car"));
+                        assertThat(cursor.getString(3), is(nullValue()));
+                        assertThat(cursor.columnName(4), is("pet"));
+                        assertThat(cursor.getString(4), is(nullValue()));
+                    }
+                    return null;
+                }
+                finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
             }
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
+
+
     }
 
     @Test
@@ -731,17 +829,21 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
         String table = IndexManager.tableNameForIndex("basic");
-        String sql = String.format("SELECT * FROM %s", table);
-        Cursor cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(0));
-        } catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        final String sql = String.format("SELECT * FROM %s", table);
+
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(0));
+                    return null;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+            }
+        }).get();
 
         DocumentRevision rev = new DocumentRevision("id123");
         // body content: { "name" : "mike",  "pet" : { "species" : [] } }
@@ -751,35 +853,38 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         pets.put("species", new ArrayList<Object>());
         bodyMap.put("pet", pets);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        DocumentRevision saved;
+        final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, db, ds, im.getQueue()), is(true));
+        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sql, new String[]{});
-            Assert.assertEquals(1, cursor.getCount());
-            Assert.assertEquals(5, cursor.getColumnCount());
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.getString(0), is("id123"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.getString(1), is(saved.getRevision()));
-                assertThat(cursor.columnName(2), is("name"));
-                assertThat(cursor.getString(2), is("mike"));
-                assertThat(cursor.columnName(3), is("car"));
-                assertThat(cursor.getString(3), is(nullValue()));
-                assertThat(cursor.columnName(4), is("pet.species"));
-                assertThat(cursor.getString(4), is(nullValue()));
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sql, new String[]{});
+                    Assert.assertEquals(1, cursor.getCount());
+                    Assert.assertEquals(5, cursor.getColumnCount());
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.getString(0), is("id123"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.getString(1), is(saved.getRevision()));
+                        assertThat(cursor.columnName(2), is("name"));
+                        assertThat(cursor.getString(2), is("mike"));
+                        assertThat(cursor.columnName(3), is("car"));
+                        assertThat(cursor.getString(3), is(nullValue()));
+                        assertThat(cursor.columnName(4), is("pet.species"));
+                        assertThat(cursor.getString(4), is(nullValue()));
+                    }
+                    return null;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
             }
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
     }
 
     @Test
@@ -853,42 +958,44 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         String basicTable = IndexManager.tableNameForIndex("basic");
         String basicNameTable = IndexManager.tableNameForIndex("basicName");
-        String sqlBasic = String.format("SELECT * FROM %s", basicTable);
-        String sqlBasicName = String.format("SELECT * FROM %s", basicNameTable);
-        Cursor cursor = null;
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sqlBasic, new String[]{});
-            assertThat(cursor.getCount(), is(6));
-            assertThat(cursor.getColumnCount(), is(5));
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.columnName(2), is("age"));
-                assertThat(cursor.columnName(3), is("pet"));
-                assertThat(cursor.columnName(4), is("name"));
-            }
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sqlBasic, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        final String sqlBasic = String.format("SELECT * FROM %s", basicTable);
+        final String sqlBasicName = String.format("SELECT * FROM %s", basicNameTable);
 
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sqlBasicName, new String[]{});
-            assertThat(cursor.getCount(), is(6));
-            assertThat(cursor.getColumnCount(), is(3));
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.columnName(2), is("name"));
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sqlBasic, new String[]{});
+                    assertThat(cursor.getCount(), is(6));
+                    assertThat(cursor.getColumnCount(), is(5));
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.columnName(2), is("age"));
+                        assertThat(cursor.columnName(3), is("pet"));
+                        assertThat(cursor.columnName(4), is("name"));
+                    }
+                    DatabaseUtils.closeCursorQuietly(cursor);
+
+                    cursor = null;
+
+                    cursor = db.rawQuery(sqlBasicName, new String[]{});
+                    assertThat(cursor.getCount(), is(6));
+                    assertThat(cursor.getColumnCount(), is(3));
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.columnName(2), is("name"));
+                    }
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+                return null;
             }
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sqlBasicName, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
+
+
 
         rev = new DocumentRevision("newdoc");
         rev.setBody(DocumentBodyFactory.EMPTY);
@@ -899,61 +1006,64 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(7l));
         assertThat(getIndexSequenceNumber("basicName"), is(7l));
 
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sqlBasic, new String[]{});
-            assertThat(cursor.getCount(), is(7));
-            assertThat(cursor.getColumnCount(), is(5));
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.columnName(2), is("age"));
-                assertThat(cursor.columnName(3), is("pet"));
-                assertThat(cursor.columnName(4), is("name"));
-            }
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sqlBasic, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    cursor = db.rawQuery(sqlBasic, new String[]{});
+                    assertThat(cursor.getCount(), is(7));
+                    assertThat(cursor.getColumnCount(), is(5));
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.columnName(2), is("age"));
+                        assertThat(cursor.columnName(3), is("pet"));
+                        assertThat(cursor.columnName(4), is("name"));
+                    }
 
-        try {
-            SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-            cursor = db.rawQuery(sqlBasicName, new String[]{});
-            assertThat(cursor.getCount(), is(7));
-            assertThat(cursor.getColumnCount(), is(3));
-            while (cursor.moveToNext()) {
-                assertThat(cursor.columnName(0), is("_id"));
-                assertThat(cursor.columnName(1), is("_rev"));
-                assertThat(cursor.columnName(2), is("name"));
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                    cursor = null;
+                    cursor = db.rawQuery(sqlBasicName, new String[]{});
+                    assertThat(cursor.getCount(), is(7));
+                    assertThat(cursor.getColumnCount(), is(3));
+                    while (cursor.moveToNext()) {
+                        assertThat(cursor.columnName(0), is("_id"));
+                        assertThat(cursor.columnName(1), is("_rev"));
+                        assertThat(cursor.columnName(2), is("name"));
+                    }
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
+                return null;
             }
-        }catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sqlBasicName, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
+        }).get();
+
     }
 
-    private long getIndexSequenceNumber(String indexName) {
+    private long getIndexSequenceNumber(String indexName) throws Exception {
         String where = String.format("index_name = \"%s\" group by last_sequence", indexName);
-        String sql = String.format("SELECT last_sequence FROM %s where %s",
+        final String sql = String.format("SELECT last_sequence FROM %s where %s",
                                    IndexManager.INDEX_METADATA_TABLE_NAME,
                                    where);
-        Cursor cursor = null;
-        Long lastSequence = 0l;
-        SQLDatabase db = TestUtils.getDatabaseConnectionToExistingDb(this.db);
-        try {
-            cursor = db.rawQuery(sql, new String[]{});
-            assertThat(cursor.getCount(), is(1));
-            while (cursor.moveToNext()) {
-                lastSequence = cursor.getLong(0);
+
+       return indexManagerDatabaseQueue.submit(new SQLQueueCallable<Long>() {
+            @Override
+            public Long call(SQLDatabase db) throws Exception {
+                Cursor cursor = null;
+                try {
+                    Long lastSequence = 0l;
+                    cursor = db.rawQuery(sql, new String[]{});
+                    assertThat(cursor.getCount(), is(1));
+                    while (cursor.moveToNext()) {
+                        lastSequence = cursor.getLong(0);
+                    }
+                    return lastSequence;
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursor);
+                }
             }
-        } catch (SQLException e) {
-            Assert.fail(String.format("SQLException occurred executing %s: %s", sql, e));
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
-        return lastSequence;
+        }).get();
     }
 
     private void createIndex(String indexName, List<Object> fieldNames) {

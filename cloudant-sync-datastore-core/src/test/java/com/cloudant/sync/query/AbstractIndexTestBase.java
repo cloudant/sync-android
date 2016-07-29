@@ -19,6 +19,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -31,7 +32,7 @@ public abstract class AbstractIndexTestBase {
     DatastoreManager factory = null;
     DatastoreImpl ds = null;
     IndexManager im = null;
-    SQLDatabase db = null;
+    SQLDatabaseQueue indexManagerDatabaseQueue;
 
     @Before
     public void setUp() throws Exception {
@@ -43,23 +44,20 @@ public abstract class AbstractIndexTestBase {
         assertThat(ds, is(notNullValue()));
         im = new IndexManager(ds);
         assertThat(im, is(notNullValue()));
-        db = TestUtils.getDatabaseConnectionToExistingDb(im.getDatabase());
-        assertThat(db, is(notNullValue()));
-        assertThat(im.getQueue(), is(notNullValue()));
+        indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
+        assertThat(indexManagerDatabaseQueue, is(notNullValue()));
         String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
-        SQLDatabaseTestUtils.assertTablesExist(TestUtils.getDatabaseConnectionToExistingDb(db),
+        SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue,
                                                metadataTableList);
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         im.close();
-        assertThat(im.getQueue().isShutdown(), is(true));
+        assertThat(indexManagerDatabaseQueue.isShutdown(), is(true));
         ds.close();
-        TestUtils.deleteDatabaseQuietly(db);
         TestUtils.deleteTempTestingDir(factoryPath);
 
-        db = null;
         im = null;
         ds = null;
         factory = null;

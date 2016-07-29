@@ -21,6 +21,7 @@ import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.After;
@@ -47,7 +48,7 @@ public abstract class AbstractQueryTestBase {
     DatastoreManager factory = null;
     DatastoreImpl ds = null;
     IndexManager im = null;
-    SQLDatabase db = null;
+    SQLDatabaseQueue indexManagerDatabaseQueue;
 
     @Before
     public void setUp() throws Exception {
@@ -61,14 +62,12 @@ public abstract class AbstractQueryTestBase {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         im.close();
-        assertThat(im.getQueue().isShutdown(), is(true));
+        assertThat(indexManagerDatabaseQueue.isShutdown(), is(true));
         ds.close();
-        TestUtils.deleteDatabaseQuietly(db);
         TestUtils.deleteTempTestingDir(factoryPath);
 
-        db = null;
         im = null;
         ds = null;
         factory = null;
