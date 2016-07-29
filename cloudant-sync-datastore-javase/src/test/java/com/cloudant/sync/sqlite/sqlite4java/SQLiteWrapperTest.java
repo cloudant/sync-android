@@ -61,8 +61,9 @@ public class SQLiteWrapperTest {
 
     @After
     public void tearDown() throws Exception {
-        TestUtils.deleteTempTestingDir(database_dir);
+        database.close();
         TestUtils.deleteDatabaseQuietly(database);
+        TestUtils.deleteTempTestingDir(database_dir);
     }
 
     @Test

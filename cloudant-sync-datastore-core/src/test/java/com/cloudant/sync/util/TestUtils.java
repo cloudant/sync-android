@@ -55,6 +55,9 @@ public class TestUtils {
     public static void deleteDatabaseQuietly(SQLDatabase database) {
         try {
             if (database != null) {
+                if (database.isOpen()) {
+                    database.close(); // Close before deleting
+                }
                 FileUtils.deleteQuietly(new File(database.filename));
             }
         } catch (Exception e) {
