@@ -63,6 +63,7 @@ public class SQLDatabaseFactoryTest {
 
     @After
     public void tearDown() throws Exception {
+        database.close();
         TestUtils.deleteDatabaseQuietly(database);
         TestUtils.deleteTempTestingDir(database_dir);
     }

@@ -46,8 +46,8 @@ public class BasicDBCoreObservableTest {
 
     @After
     public void tearDown() {
-        TestUtils.deleteTempTestingDir(this.database_dir);
         core.close();
+        TestUtils.deleteTempTestingDir(this.database_dir);
     }
 
     @Test
