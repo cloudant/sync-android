@@ -104,12 +104,14 @@ public class DatastoreImpl implements Datastore {
             "WHERE sequence > ? AND sequence <= ? GROUP BY doc_id ";
 
     // get all non-deleted leaf rev ids for a given doc id
+    // gets all revs whose sequence is not a parent of another rev and the rev isn't deleted
     public static final String GET_NON_DELETED_LEAFS = "SELECT revs.revid FROM revs " +
             "WHERE revs.doc_id = ? " +
             "AND revs.deleted = 0 AND revs.sequence NOT IN " +
             "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
 
     // get all leaf rev ids for a given doc id
+    // gets all revs whose sequence is not a parent of another rev
     public static final String GET_ALL_LEAFS = "SELECT revs.revid FROM revs " +
             "WHERE revs.doc_id = ? " +
             "AND revs.sequence NOT IN " +
@@ -483,8 +485,8 @@ public class DatastoreImpl implements Datastore {
                         }
                         List<DocumentRevision> results = getDocumentsWithInternalIdsInQueue(db, ids);
                         if(results.size() != ids.size()) {
-                            throw new IllegalStateException("The number of document does not match number of ids, " +
-                                    "something must be wrong here.");
+                            throw new IllegalStateException(String.format("The number of documents %d does not match number of ids %d, " +
+                                    "something must be wrong here.", results.size(), ids.size()));
                         }
 
                         return new Changes(lastSequence, results);
