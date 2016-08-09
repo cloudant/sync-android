@@ -488,4 +488,9 @@ class PullStrategy implements ReplicationStrategy {
     public EventBus getEventBus() {
         return eventBus;
     }
+
+    @Override
+    public String getRemote() {
+        return this.sourceDb.getIdentifier();
+    }
 }

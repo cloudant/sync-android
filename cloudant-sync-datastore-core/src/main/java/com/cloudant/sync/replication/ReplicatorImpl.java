@@ -20,6 +20,8 @@ import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
 import com.google.common.base.Preconditions;
 
+import java.util.Locale;
+
 /**
  * This class is not intended as API, it is public for EventBus access only.
  * @api_private
@@ -62,7 +64,11 @@ public class ReplicatorImpl implements Replicator {
                 // complete/stopped/error -> started: (re)start replication for nth time
                 // we assume register() is idempotent
                 this.strategy.getEventBus().register(this);
-                this.strategyThread = new Thread(this.strategy);
+                String replicatorThreadName = String.format(Locale.ENGLISH,
+                        "Replicator: %s - %s",
+                        this.strategy.getClass().getSimpleName(),
+                        this.strategy.getRemote());
+                this.strategyThread = new Thread(this.strategy, replicatorThreadName);
                 this.strategyThread.start();
                 this.state = State.STARTED;
                 break;
