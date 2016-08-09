@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -40,7 +41,7 @@ import java.util.logging.Logger;
 public class SQLDatabaseQueue {
 
     private final SQLDatabase db;
-    private final ExecutorService queue = Executors.newSingleThreadExecutor();
+    private final ExecutorService queue;
     private final Logger logger = Logger.getLogger(SQLDatabase.class.getCanonicalName());
     private AtomicBoolean acceptTasks = new AtomicBoolean(true);
 
@@ -62,7 +63,13 @@ public class SQLDatabaseQueue {
      * @throws IOException If a problem occurs creating the database
      * @throws SQLException If the database cannot be opened.
      */
-    public SQLDatabaseQueue(String filename, KeyProvider provider) throws IOException, SQLException {
+    public SQLDatabaseQueue(final String filename, KeyProvider provider) throws IOException, SQLException {
+        queue = Executors.newSingleThreadExecutor(new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                return new Thread(r, "SQLDatabaseQueue - "+ filename);
+            }
+        });
         this.db = SQLDatabaseFactory.createSQLDatabase(filename, provider);
         queue.submit(new Runnable() {
             @Override
