@@ -510,7 +510,7 @@ public class DatastoreImpl implements Datastore {
            logger.log(Level.SEVERE, "Failed to get changes",e);
             if(e.getCause()!= null){
                 if(e.getCause() instanceof IllegalStateException) {
-                    throw (IllegalStateException) e.getCause();
+                    throw new IllegalStateException(e);
                 }
             }
         }
