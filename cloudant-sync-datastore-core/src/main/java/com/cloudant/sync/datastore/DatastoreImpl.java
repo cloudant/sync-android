@@ -61,6 +61,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -492,8 +493,12 @@ public class DatastoreImpl implements Datastore {
                         }
                         List<DocumentRevision> results = getDocumentsWithInternalIdsInQueue(db, ids);
                         if(results.size() != ids.size()) {
-                            throw new IllegalStateException(String.format("The number of documents %d does not match number of ids %d, " +
-                                    "something must be wrong here.", results.size(), ids.size()));
+                            throw new IllegalStateException(String.format(Locale.ENGLISH,
+                                    "The number of documents does not match number of ids, " +
+                                    "something must be wrong here. Number of IDs: %s, number of documents: %s",
+                                    ids.size(),
+                                    results.size()
+                                    ));
                         }
 
                         return new Changes(lastSequence, results);
@@ -508,11 +513,9 @@ public class DatastoreImpl implements Datastore {
             logger.log(Level.SEVERE, "Failed to get changes",e);
         } catch (ExecutionException e) {
            logger.log(Level.SEVERE, "Failed to get changes",e);
-            if(e.getCause()!= null){
                 if(e.getCause() instanceof IllegalStateException) {
-                    throw new IllegalStateException(e);
+                    throw new IllegalStateException("Failed to get changes, SQLite version: "+queue.getSQLiteVersion(),e);
                 }
-            }
         }
 
         return null;

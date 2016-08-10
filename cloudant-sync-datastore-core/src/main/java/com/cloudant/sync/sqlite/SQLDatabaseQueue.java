@@ -44,7 +44,7 @@ public class SQLDatabaseQueue {
     private final ExecutorService queue;
     private final Logger logger = Logger.getLogger(SQLDatabase.class.getCanonicalName());
     private AtomicBoolean acceptTasks = new AtomicBoolean(true);
-
+    private String sqliteVersion = null;
     /**
      * Creates an SQLQueue for the database specified.
      * @param filename The file where the database is located
@@ -195,5 +195,39 @@ public class SQLDatabaseQueue {
         } else {
             throw new RejectedExecutionException("Database is closed");
         }
+    }
+
+    /**
+     * Returns the SQLite Version.
+     * @return The SQLite version or "Unknown" if the version could not be determined.
+     */
+    public synchronized String getSQLiteVersion() {
+
+        if (this.sqliteVersion == null) {
+            try {
+                this.sqliteVersion = this.submit(new SQLQueueCallable<String>() {
+                    @Override
+                    public String call(SQLDatabase db) throws Exception {
+                        Cursor cursor = db.rawQuery("SELECT sqlite_version()", null);
+
+                        String sqliteVersion = "";
+                        while (cursor.moveToNext()) {
+                            sqliteVersion += cursor.getString(0);
+                        }
+                        return sqliteVersion;
+                    }
+                }).get();
+                return sqliteVersion;
+            } catch (InterruptedException e) {
+                logger.log(Level.WARNING, "Could not determine SQLite version", e);
+            } catch (ExecutionException e) {
+                logger.log(Level.WARNING, "Could not determine SQLite version", e);
+            }
+            this.sqliteVersion = "unknown";
+        }
+
+        return this.sqliteVersion;
+
+
     }
 }
