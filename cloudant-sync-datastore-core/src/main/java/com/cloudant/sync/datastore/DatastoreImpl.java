@@ -92,15 +92,15 @@ public class DatastoreImpl implements Datastore {
             "SELECT revs.sequence FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id " +
                     "AND current=1 ORDER BY revid DESC LIMIT 1";
 
-    // get all document columns for a given revision and doc id
+    // get all document columns for a given revision and doc id† (see below)
     private static final String GET_DOCUMENT_GIVEN_REVISION =
-            "SELECT " + FULL_DOCUMENT_COLS + " FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id " +
-                    "AND revid=? LIMIT 1";
+            "SELECT " + FULL_DOCUMENT_COLS + " FROM revs, docs WHERE docs.docid=? AND revs" +
+                    ".doc_id=docs.doc_id AND revid=? ORDER BY revs.sequence LIMIT 1";
 
-    // get sequence number for a given revision and doc id
+    // get sequence number for a given revision and doc id† (see below)
     private static final String GET_SEQUENCE_GIVEN_REVISION =
             "SELECT revs.sequence FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id " +
-                    "AND revid=? LIMIT 1";
+                    "AND revid=? ORDER BY revs.sequence LIMIT 1";
 
     public static final String SQL_CHANGE_IDS_SINCE_LIMIT = "SELECT doc_id, max(sequence) FROM revs " +
             "WHERE sequence > ? AND sequence <= ? GROUP BY doc_id ";
@@ -118,6 +118,11 @@ public class DatastoreImpl implements Datastore {
             "WHERE revs.doc_id = ? " +
             "AND revs.sequence NOT IN " +
             "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
+
+    // † N.B. whilst there should only ever be a single result bugs have resulted in duplicate
+    // revision IDs in the tree. Whilst it appears that the lowest sequence number is always
+    // returned by these queries we use ORDER BY sequence to guarantee that and lock down a
+    // behaviour for any future occurrences of duplicate revs in a tree.
 
     // Limit of parameters (placeholders) one query can have.
     // SQLite has limit on the number of placeholders on a single query, default 999.
