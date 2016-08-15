@@ -15,6 +15,11 @@
   directory path in the scope of the `DatastoreManager` class.
 - [FIX] Corrected a case where two root nodes with identical revision IDs prevented selection of the
   correct new winning revision.
+- [FIX] Added migration on `Datastore` opening to repair datastores with duplicated revisions or
+  attachments caused by an issue running parallel pull replications with the same source and target.
+  Note that in rare circumstances for some documents this may result in a different, but corrected,
+  winning revision than before migration.
+
 
 # 1.0.0 (2016-05-03)
 - [NOTE] This library follows the
