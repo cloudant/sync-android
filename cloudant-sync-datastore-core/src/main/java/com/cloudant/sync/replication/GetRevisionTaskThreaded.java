@@ -25,8 +25,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -121,6 +123,13 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
                 DocumentRevsList>(executorService, this.requests, threads + 1) {
             @Override
             public DocumentRevsList executeRequest(BulkGetRequest request) {
+                // since this is part of a thread pool, we'll rename each thread as it takes a task.
+                try {
+                    Thread.currentThread().setName("GetRevisionThread: " + GetRevisionTaskThreaded.this.sourceDb.getIdentifier());
+
+                } catch (SecurityException e){
+                    logger.log(Level.WARNING, "Could not rename pull strategy pool thread", e);
+                }
                 return new DocumentRevsList(GetRevisionTaskThreaded.this.sourceDb.getRevisions
                         (request.id, request.revs, request.atts_since,
                                 GetRevisionTaskThreaded.this.pullAttachmentsInline));

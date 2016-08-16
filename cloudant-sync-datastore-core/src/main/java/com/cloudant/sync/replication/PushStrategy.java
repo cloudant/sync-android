@@ -459,4 +459,8 @@ class PushStrategy implements ReplicationStrategy {
         return eventBus;
     }
 
+    @Override
+    public String getRemote() {
+        return this.targetDb.getIdentifier();
+    }
 }

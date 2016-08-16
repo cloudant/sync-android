@@ -32,4 +32,6 @@ interface ReplicationStrategy extends Runnable {
 
     int getBatchCounter();
 
+    String getRemote();
+
 }
