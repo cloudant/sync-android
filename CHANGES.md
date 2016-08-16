@@ -13,6 +13,8 @@
 - [DEPRECATED] `DatastoreManager` constructors. Use `DatastoreManager.getInstance` factory methods
   instead to guarantee only a single `DatastoreManager` instance is created for a given storage
   directory path in the scope of the `DatastoreManager` class.
+- [FIX] Corrected a case where two root nodes with identical revision IDs prevented selection of the
+  correct new winning revision.
 
 # 1.0.0 (2016-05-03)
 - [NOTE] This library follows the

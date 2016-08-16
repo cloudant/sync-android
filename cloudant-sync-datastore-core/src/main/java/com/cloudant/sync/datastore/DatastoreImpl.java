@@ -62,6 +62,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -90,30 +92,37 @@ public class DatastoreImpl implements Datastore {
             "SELECT revs.sequence FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id " +
                     "AND current=1 ORDER BY revid DESC LIMIT 1";
 
-    // get all document columns for a given revision and doc id
+    // get all document columns for a given revision and doc id† (see below)
     private static final String GET_DOCUMENT_GIVEN_REVISION =
-            "SELECT " + FULL_DOCUMENT_COLS + " FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id " +
-                    "AND revid=? LIMIT 1";
+            "SELECT " + FULL_DOCUMENT_COLS + " FROM revs, docs WHERE docs.docid=? AND revs" +
+                    ".doc_id=docs.doc_id AND revid=? ORDER BY revs.sequence LIMIT 1";
 
-    // get sequence number for a given revision and doc id
+    // get sequence number for a given revision and doc id† (see below)
     private static final String GET_SEQUENCE_GIVEN_REVISION =
             "SELECT revs.sequence FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id " +
-                    "AND revid=? LIMIT 1";
+                    "AND revid=? ORDER BY revs.sequence LIMIT 1";
 
     public static final String SQL_CHANGE_IDS_SINCE_LIMIT = "SELECT doc_id, max(sequence) FROM revs " +
             "WHERE sequence > ? AND sequence <= ? GROUP BY doc_id ";
 
     // get all non-deleted leaf rev ids for a given doc id
-    public static final String GET_NON_DELETED_LEAFS = "SELECT revs.revid FROM revs " +
+    // gets all revs whose sequence is not a parent of another rev and the rev isn't deleted
+    public static final String GET_NON_DELETED_LEAFS = "SELECT revs.revid, revs.sequence FROM revs " +
             "WHERE revs.doc_id = ? " +
             "AND revs.deleted = 0 AND revs.sequence NOT IN " +
             "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
 
     // get all leaf rev ids for a given doc id
-    public static final String GET_ALL_LEAFS = "SELECT revs.revid FROM revs " +
+    // gets all revs whose sequence is not a parent of another rev
+    public static final String GET_ALL_LEAFS = "SELECT revs.revid, revs.sequence FROM revs " +
             "WHERE revs.doc_id = ? " +
             "AND revs.sequence NOT IN " +
             "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
+
+    // † N.B. whilst there should only ever be a single result bugs have resulted in duplicate
+    // revision IDs in the tree. Whilst it appears that the lowest sequence number is always
+    // returned by these queries we use ORDER BY sequence to guarantee that and lock down a
+    // behaviour for any future occurrences of duplicate revs in a tree.
 
     // Limit of parameters (placeholders) one query can have.
     // SQLite has limit on the number of placeholders on a single query, default 999.
@@ -483,8 +492,8 @@ public class DatastoreImpl implements Datastore {
                         }
                         List<DocumentRevision> results = getDocumentsWithInternalIdsInQueue(db, ids);
                         if(results.size() != ids.size()) {
-                            throw new IllegalStateException("The number of document does not match number of ids, " +
-                                    "something must be wrong here.");
+                            throw new IllegalStateException(String.format("The number of documents %d does not match number of ids %d, " +
+                                    "something must be wrong here.", results.size(), ids.size()));
                         }
 
                         return new Changes(lastSequence, results);
@@ -1448,35 +1457,7 @@ public class DatastoreImpl implements Datastore {
          */
 
         // first get all non-deleted leafs
-        List<String> leafs = new ArrayList<String>();
-        Cursor cursor = null;
-        try {
-            cursor = db.rawQuery(GET_NON_DELETED_LEAFS, new String[]{Long.toString(docNumericId)});
-            while (cursor.moveToNext()) {
-                leafs.add(cursor.getString(0));
-            }
-        } catch (SQLException sqe) {
-            throw new DatastoreException("Exception thrown whilst trying to fetch non-deleted leaf nodes in pickWinnerOfConflicts", sqe);
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
-
-        // this is a corner case - all leaf nodes are deleted
-        // re-get with the same query but without the revs.delete clause
-        if (leafs.size() == 0) {
-            try {
-                cursor = db.rawQuery(GET_ALL_LEAFS, new String[]{Long.toString(docNumericId)});
-                while (cursor.moveToNext()) {
-                    leafs.add(cursor.getString(0));
-                }
-            } catch (SQLException sqe) {
-                throw new DatastoreException("Exception thrown whilst trying to fetch all leaf nodes in pickWinnerOfConflicts", sqe);
-            } finally {
-                DatabaseUtils.closeCursorQuietly(cursor);
-            }
-        }
-
-        Collections.sort(leafs, new Comparator<String>() {
+        SortedMap<String, Long> leafs = new TreeMap<String, Long>(new Comparator<String>() {
             @Override
             public int compare(String r1, String r2) {
                 int generationCompare = CouchUtils.generationFromRevId(r1) -
@@ -1490,9 +1471,36 @@ public class DatastoreImpl implements Datastore {
                 }
             }
         });
+
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(GET_NON_DELETED_LEAFS, new String[]{Long.toString(docNumericId)});
+            while (cursor.moveToNext()) {
+                leafs.put(cursor.getString(0), cursor.getLong(1));
+            }
+        } catch (SQLException sqe) {
+            throw new DatastoreException("Exception thrown whilst trying to fetch non-deleted leaf nodes in pickWinnerOfConflicts", sqe);
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
+        }
+
+        // this is a corner case - all leaf nodes are deleted
+        // re-get with the same query but without the revs.delete clause
+        if (leafs.size() == 0) {
+            try {
+                cursor = db.rawQuery(GET_ALL_LEAFS, new String[]{Long.toString(docNumericId)});
+                while (cursor.moveToNext()) {
+                    leafs.put(cursor.getString(0), cursor.getLong(1));
+                }
+            } catch (SQLException sqe) {
+                throw new DatastoreException("Exception thrown whilst trying to fetch all leaf nodes in pickWinnerOfConflicts", sqe);
+            } finally {
+                DatabaseUtils.closeCursorQuietly(cursor);
+            }
+        }
+
         // new winner will be at the top of the list
-        String leaf = leafs.get(0);
-        long newWinnerSeq = getSequenceInQueue(db, docId, leaf);
+        long newWinnerSeq = leafs.get(leafs.firstKey());
         if (previousWinnerSeq != newWinnerSeq) {
             this.changeDocumentToBeNotCurrent(db, previousWinnerSeq);
             this.changeDocumentToBeCurrent(db, newWinnerSeq);
@@ -1814,7 +1822,7 @@ public class DatastoreImpl implements Datastore {
                         }
 
 
-                        
+
                     return null;
                 }
             }).get();
