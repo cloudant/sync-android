@@ -1943,7 +1943,7 @@ public class DatastoreImpl implements Datastore {
     /**
      * <p>Returns all attachments for the revision.</p>
      *
-     * <p>Used by replicator when pulling attachments</p>
+     * <p>Used by replicator when pushing attachments</p>
      *
      * @param rev The revision with which the attachments are associated
      * @return List of <code>Attachment</code>
