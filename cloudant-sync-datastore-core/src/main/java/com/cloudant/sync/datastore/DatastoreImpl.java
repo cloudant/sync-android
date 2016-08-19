@@ -757,7 +757,7 @@ public class DatastoreImpl implements Datastore {
                         , docId));
             }
             // if we got here, parent rev was deleted
-            this.setCurrent(db, potentialParent, false);
+            this.setCurrent(db, potentialParent.getSequence(), false);
             callable.revId = CouchUtils.generateNextRevisionId(potentialParent.getRevision());
             callable.docNumericId = potentialParent.getInternalNumericId();
             callable.parentSequence = potentialParent.getSequence();
@@ -858,7 +858,7 @@ public class DatastoreImpl implements Datastore {
             throw new ConflictException("Revision to be updated is not current revision.");
         }
 
-        this.setCurrent(db, preRevision, false);
+        this.setCurrent(db, preRevision.getSequence(), false);
         String newRevisionId = this.insertNewWinnerRevision(db, body, preRevision);
         return this.getDocumentInQueue(db, preRevision.getId(), newRevisionId);
     }
@@ -898,7 +898,7 @@ public class DatastoreImpl implements Datastore {
         if (prevRevision.isDeleted()) {
             throw new DocumentNotFoundException("Previous Revision is already deleted");
         }
-        setCurrent(db, prevRevision, false);
+        setCurrent(db, prevRevision.getSequence(), false);
         String newRevisionId = CouchUtils.generateNextRevisionId(prevRevision.getRevision());
         // Previous revision to be deleted could be winner revision ("current" == true),
         // or a non-winner leaf revision ("current" == false), the new inserted
@@ -1365,7 +1365,7 @@ public class DatastoreImpl implements Datastore {
             long seq = getSequenceInQueue(db, newRevision.getId(), revId);
             if (seq == -1) {
                 seq = insertStubRevision(db,docNumericID, revId, parentSeq);
-                this.changeDocumentToBeNotCurrent(db, parentSeq);
+                this.setCurrent(db, parentSeq, false);
             }
             parentSeq = seq;
         }
@@ -1373,7 +1373,7 @@ public class DatastoreImpl implements Datastore {
         // Insert the new leaf revision
         String newLeafRev = revisions.get(revisions.size() - 1);
         logger.finer("Inserting new revision, id: " + docNumericID + ", rev: " + newLeafRev);
-        this.changeDocumentToBeNotCurrent(db,parentSeq);
+        this.setCurrent(db, parentSeq, false);
         // don't copy over attachments
         InsertRevisionCallable callable = new InsertRevisionCallable();
         callable.docNumericId = docNumericID;
@@ -1385,7 +1385,7 @@ public class DatastoreImpl implements Datastore {
         callable.available = true;
         long newLeafSeq = callable.call(db);
 
-        pickWinnerOfConflicts(db, docNumericID, newRevision.getId(), previousLeafSeq);
+        pickWinnerOfConflicts(db, docNumericID);
 
         // copy stubbed attachments forward from last real revision to this revision
         if (attachments != null) {
@@ -1413,9 +1413,6 @@ public class DatastoreImpl implements Datastore {
         Preconditions.checkArgument(checkCurrentRevisionIsInRevisionHistory(newRevision, revisions),
                 "Current revision must exist in revision history.");
 
-        // get info about previous "winning" rev
-        long previousLeafSeq = getSequenceInQueue(db, newRevision.getId(), null);
-
         // Adding a brand new tree
         logger.finer("Inserting a brand new tree for an existing document.");
         long parentSequence = 0L;
@@ -1435,15 +1432,13 @@ public class DatastoreImpl implements Datastore {
         callable.available = !newRevision.isDeleted();
         long newLeafSeq = callable.call(db);
 
-        pickWinnerOfConflicts(db, docNumericID, newRevision.getId(), previousLeafSeq);
+        pickWinnerOfConflicts(db, docNumericID);
         return newLeafSeq;
     }
 
 
     private void pickWinnerOfConflicts(SQLDatabase db,
-                                       long docNumericId,
-                                       String docId,
-                                       long previousWinnerSeq) throws DatastoreException {
+                                       long docNumericId) throws DatastoreException {
 
         /*
          Pick winner and mark the appropriate revision with the 'current' flag set
@@ -1504,10 +1499,18 @@ public class DatastoreImpl implements Datastore {
 
         // new winner will be at the top of the list
         long newWinnerSeq = leafs.get(leafs.firstKey());
-        if (previousWinnerSeq != newWinnerSeq) {
-            this.changeDocumentToBeNotCurrent(db, previousWinnerSeq);
-            this.changeDocumentToBeCurrent(db, newWinnerSeq);
-        }
+        // set current=1 for winning sequence
+        ContentValues currentTrue = new ContentValues();
+        currentTrue.put("current", 1);
+        db.update("revs", currentTrue,
+                "sequence=?", new String[]{Long.toString(newWinnerSeq)});
+        // set current=0 for all other leaf sequences with this doc_id
+        ContentValues currentFalse = new ContentValues();
+        currentFalse.put("current", 0);
+        db.update("revs", currentFalse,
+                "sequence!=? AND doc_id=? AND sequence NOT IN " +
+                        "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL)",
+                new String[]{Long.toString(newWinnerSeq), Long.toString(docNumericId)});
     }
 
     /**
@@ -1540,20 +1543,6 @@ public class DatastoreImpl implements Datastore {
         callable.available = true;
         long sequence = callable.call(db);
         return sequence;
-    }
-
-    private void changeDocumentToBeCurrent(SQLDatabase db, long sequence) {
-        ContentValues args = new ContentValues();
-        args.put("current", 1);
-        String[] whereArgs = {Long.toString(sequence)};
-        db.update("revs", args, "sequence=?", whereArgs);
-    }
-
-    private void changeDocumentToBeNotCurrent(SQLDatabase db, long sequence) {
-        ContentValues args = new ContentValues();
-        args.put("current", 0);
-        String[] whereArgs = {Long.toString(sequence)};
-        db.update("revs", args, "sequence=?", whereArgs);
     }
 
     @Override
@@ -1791,16 +1780,16 @@ public class DatastoreImpl implements Datastore {
                         for(DocumentRevision revision : docTree.leafRevisions()) {
                             if(revision.getRevision().equals(revIdKeep)) {
                                 // this is the one we want to keep, set it to current
-                                setCurrent(db, revision, true);
+                                setCurrent(db, revision.getSequence(), true);
                             } else {
                                 if (revision.isDeleted()) {
                                     // if it is deleted, just make it non-current
-                                    setCurrent(db, revision, false);
+                                    setCurrent(db, revision.getSequence(), false);
                                 } else {
                                     // if it's not deleted, deleted and make it non-current
                                     DocumentRevision deleted = deleteDocumentInQueue(db,
                                             revision.getId(), revision.getRevision());
-                                    setCurrent(db, deleted, false);
+                                    setCurrent(db, deleted.getSequence(), false);
                                 }
                             }
                         }
@@ -1860,10 +1849,25 @@ public class DatastoreImpl implements Datastore {
         return newRevisionId;
     }
 
-    private void setCurrent(SQLDatabase db,DocumentRevision winner, boolean currentValue) {
+    /**
+     * <p>
+     *     Set the {@code current} field in the revs table to true or false.
+     * </p>
+     * <p>
+     *     The {@code current} field is used to track the "current" or "winning" revision in the
+     *     case of conflicted document trees. This is updated according to the standard couch
+     *     algorithm.
+     * </p>
+     * @param db             Database instance containing revision to modify
+     * @param sequence       Sequence number of revision
+     * @param valueOfCurrent New value of {@code current} (true/false)
+     *
+     * @see #pickWinnerOfConflicts(SQLDatabase, long)
+     */
+    private void setCurrent(SQLDatabase db, long sequence, boolean valueOfCurrent) {
         ContentValues updateContent = new ContentValues();
-        updateContent.put("current", currentValue ? 1 : 0);
-        String[] whereArgs = new String[]{String.valueOf(winner.getSequence())};
+        updateContent.put("current", valueOfCurrent ? 1 : 0);
+        String[] whereArgs = new String[]{String.valueOf(sequence)};
         db.update("revs", updateContent, "sequence=?", whereArgs);
     }
 
