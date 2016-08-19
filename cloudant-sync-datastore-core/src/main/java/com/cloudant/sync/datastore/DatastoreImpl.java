@@ -1,4 +1,6 @@
 /**
+ * Copyright © 2016 IBM Corp. All rights reserved.
+ *
  * Original iOS version by  Jens Alfke, ported to Android by Marty Schoch
  * Copyright (c) 2012 Couchbase, Inc. All rights reserved.
  *
@@ -22,8 +24,10 @@ import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.callables.GetAllDocumentIdsCallable;
 import com.cloudant.sync.datastore.callables.GetPossibleAncestorRevisionIdsCallable;
 import com.cloudant.sync.datastore.callables.InsertRevisionCallable;
+import com.cloudant.sync.datastore.callables.PickWinningRevisionCallable;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
+import com.cloudant.sync.datastore.migrations.MigrateDatabase100To200;
 import com.cloudant.sync.datastore.migrations.MigrateDatabase6To100;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.event.EventBus;
@@ -63,8 +67,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -105,20 +107,6 @@ public class DatastoreImpl implements Datastore {
 
     public static final String SQL_CHANGE_IDS_SINCE_LIMIT = "SELECT doc_id, max(sequence) FROM revs " +
             "WHERE sequence > ? AND sequence <= ? GROUP BY doc_id ";
-
-    // get all non-deleted leaf rev ids for a given doc id
-    // gets all revs whose sequence is not a parent of another rev and the rev isn't deleted
-    public static final String GET_NON_DELETED_LEAFS = "SELECT revs.revid, revs.sequence FROM revs " +
-            "WHERE revs.doc_id = ? " +
-            "AND revs.deleted = 0 AND revs.sequence NOT IN " +
-            "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
-
-    // get all leaf rev ids for a given doc id
-    // gets all revs whose sequence is not a parent of another rev
-    public static final String GET_ALL_LEAFS = "SELECT revs.revid, revs.sequence FROM revs " +
-            "WHERE revs.doc_id = ? " +
-            "AND revs.sequence NOT IN " +
-            "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
 
     // † N.B. whilst there should only ever be a single result bugs have resulted in duplicate
     // revision IDs in the tree. Whilst it appears that the lowest sequence number is always
@@ -188,15 +176,18 @@ public class DatastoreImpl implements Datastore {
         int dbVersion = queue.getVersion();
         // Increment the hundreds position if a schema change means that older
         // versions of the code will not be able to read the migrated database.
-        if(dbVersion >= 200){
-            throw new DatastoreException(String.format("Database version is higher than the version supported " +
-                    "by this library, current version %d , highest supported version %d",dbVersion, 99));
+        int highestSupportedVersionExclusive = 300;
+        if (dbVersion >= highestSupportedVersionExclusive) {
+            throw new DatastoreException(String.format("Database version is higher than the " +
+                    "version supported by this library, current version %d , highest supported " +
+                    "version %d", dbVersion, highestSupportedVersionExclusive - 1));
         }
         queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion3()), 3);
         queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion4()), 4);
         queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion5()), 5);
         queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion6()), 6);
         queue.updateSchema(new MigrateDatabase6To100(), 100);
+        queue.updateSchema(new MigrateDatabase100To200(), 200);
         this.eventBus = new EventBus();
 
         this.attachmentsDir = this.extensionDataFolder(ATTACHMENTS_EXTENSION_NAME);
@@ -979,7 +970,7 @@ public class DatastoreImpl implements Datastore {
     /**
      * <p>Returns the current winning revision of a local document.</p>
      *
-     * @param documentId id of the local document
+     * @param docId id of the local document
      * @return {@code LocalDocument} of the document
      * @throws DocumentNotFoundException if the document ID doesn't exist
      */
@@ -1436,81 +1427,15 @@ public class DatastoreImpl implements Datastore {
         return newLeafSeq;
     }
 
-
     private void pickWinnerOfConflicts(SQLDatabase db,
                                        long docNumericId) throws DatastoreException {
-
-        /*
-         Pick winner and mark the appropriate revision with the 'current' flag set
-         - There can only be one winner in a tree (or set of trees - if there is no common root)
-           at any one time, so if there is a new winner, we only have to mark the old winner as
-           no longer 'current'. This is the 'previousWinner' object
-         - The new winner is determined by:
-           * consider only non-deleted leafs
-           * sort according to the CouchDB sorting algorithm: highest rev wins, if there is a tie
-             then do a lexicographical compare of the revision id strings
-           * we do a reverse sort (highest first) and pick the 1st and mark it 'current'
-           * special case: if all leafs are deleted, then apply sorting and selection criteria
-             above to all leafs
-         */
-
-        // first get all non-deleted leafs
-        SortedMap<String, Long> leafs = new TreeMap<String, Long>(new Comparator<String>() {
-            @Override
-            public int compare(String r1, String r2) {
-                int generationCompare = CouchUtils.generationFromRevId(r1) -
-                        CouchUtils.generationFromRevId(r2);
-                // note that the return statements have a unary minus since we are reverse sorting
-                if (generationCompare != 0) {
-                    return -generationCompare;
-                } else {
-                    return -CouchUtils.getRevisionIdSuffix(r1).compareTo(CouchUtils
-                            .getRevisionIdSuffix(r2));
-                }
-            }
-        });
-
-        Cursor cursor = null;
         try {
-            cursor = db.rawQuery(GET_NON_DELETED_LEAFS, new String[]{Long.toString(docNumericId)});
-            while (cursor.moveToNext()) {
-                leafs.put(cursor.getString(0), cursor.getLong(1));
-            }
-        } catch (SQLException sqe) {
-            throw new DatastoreException("Exception thrown whilst trying to fetch non-deleted leaf nodes in pickWinnerOfConflicts", sqe);
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
+            new PickWinningRevisionCallable(docNumericId).call(db);
+        } catch (DatastoreException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DatastoreException(e);
         }
-
-        // this is a corner case - all leaf nodes are deleted
-        // re-get with the same query but without the revs.delete clause
-        if (leafs.size() == 0) {
-            try {
-                cursor = db.rawQuery(GET_ALL_LEAFS, new String[]{Long.toString(docNumericId)});
-                while (cursor.moveToNext()) {
-                    leafs.put(cursor.getString(0), cursor.getLong(1));
-                }
-            } catch (SQLException sqe) {
-                throw new DatastoreException("Exception thrown whilst trying to fetch all leaf nodes in pickWinnerOfConflicts", sqe);
-            } finally {
-                DatabaseUtils.closeCursorQuietly(cursor);
-            }
-        }
-
-        // new winner will be at the top of the list
-        long newWinnerSeq = leafs.get(leafs.firstKey());
-        // set current=1 for winning sequence
-        ContentValues currentTrue = new ContentValues();
-        currentTrue.put("current", 1);
-        db.update("revs", currentTrue,
-                "sequence=?", new String[]{Long.toString(newWinnerSeq)});
-        // set current=0 for all other leaf sequences with this doc_id
-        ContentValues currentFalse = new ContentValues();
-        currentFalse.put("current", 0);
-        db.update("revs", currentFalse,
-                "sequence!=? AND doc_id=? AND sequence NOT IN " +
-                        "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL)",
-                new String[]{Long.toString(newWinnerSeq), Long.toString(docNumericId)});
     }
 
     /**
