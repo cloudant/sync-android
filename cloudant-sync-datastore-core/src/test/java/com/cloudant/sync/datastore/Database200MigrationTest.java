@@ -17,7 +17,10 @@ package com.cloudant.sync.datastore;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 
+import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.migrations.MigrateDatabase100To200;
+import com.cloudant.sync.datastore.migrations.MigrateDatabase6To100;
+import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
@@ -25,6 +28,7 @@ import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.TestUtils;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -55,6 +59,44 @@ public class Database200MigrationTest {
         dir = TestUtils.createTempTestingDir(this.getClass().getName());
         manager = DatastoreManager.getInstance(dir);
         ds = (DatastoreImpl) manager.openDatastore("complexTree");
+
+        // Return DB to schema version 100:
+
+        // This allows these tests to run since they rely on doing things which are not possible in
+        // the latest schema version (200), where extra UNIQUE constraints have been added
+
+        // This is a hack but because we can't control the schema upgrade process (it automatically
+        // happens when the datastore is opened). The easiest way to do it is to drop all tables and
+        // step through the upgrades to the version we want.
+        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+            @Override
+            public Void call(SQLDatabase db) throws Exception {
+                try {
+                    db.execSQL("PRAGMA foreign_keys = OFF");
+                    db.execSQL("DROP TABLE views;");
+                    db.execSQL("DROP TABLE revs;");
+                    db.execSQL("DROP TABLE docs;");
+                    db.execSQL("DROP TABLE attachments;");
+                    db.execSQL("DROP TABLE maps;");
+                    db.execSQL("DROP TABLE replicators;");
+                    db.execSQL("DROP TABLE localdocs;");
+                    db.execSQL("DROP TABLE info;");
+                    db.execSQL("DROP TABLE attachments_key_filename;");
+                    db.execSQL("PRAGMA foreign_keys = ON");
+                    db.execSQL("PRAGMA user_version=0;");
+                } catch (Exception e) {
+                    Assert.fail("Failed to drop tables in setup method: "+e);
+                }
+                return null;
+            }
+        }).get();
+
+        SQLDatabaseQueue q = getQueue();
+        q.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion3()), 3);
+        q.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion4()), 4);
+        q.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion5()), 5);
+        q.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion6()), 6);
+        q.updateSchema(new MigrateDatabase6To100(), 100);
 
         Map<String, String> body = new HashMap<String, String>();
         body.put("hello", "world");
@@ -506,8 +548,76 @@ public class Database200MigrationTest {
     }
 
 
+    /**
+     * <p>
+     * This test is for https://github.com/cloudant/sync-android/issues/326. The test nefariously
+     * creates a tree with two roots with identical revision IDs (replicating the type of tree
+     * created by a bug with parallel replications and force insert). The two revisions have
+     * different bodies to help us assert easily which is which (note that revision IDs were not
+     * calculated based on body content in this library at the time this test was created).
+     * </p>
+     * <p>
+     * Once those two revisions are in place a deletion of the revision ID is force inserted as would
+     * happen during a replication. When the bug was in place pickWinner did not choose a new winner
+     * and the tree was left without a current winner revision for the document. The correct
+     * behaviour is for the non-deleted duplicate revision to win.
+     * </p>
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testPickWinnerOfConflicts_TwoOfSameRoot_OneDeleted() throws Exception {
+
+        final DocumentBodyImpl bodyOne = new DocumentBodyImpl(
+                FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/document_1.json")));
+        final DocumentBodyImpl bodyTwo = new DocumentBodyImpl(
+                FileUtils.readFileToByteArray(TestUtils.loadFixture("fixture/document_2.json")));
+
+        final String OBJECT_ID = "object_id";
+
+        DocumentRevision rev1a = new DocumentRevisionBuilder().setDocId(OBJECT_ID).setRevId("1-x").setBody(bodyOne).build();
+        DocumentRevision rev2 = new DocumentRevisionBuilder().setDocId(OBJECT_ID).setRevId("2-x").setDeleted(true).build();
+
+        // Insert the same document twice, so we have two identical roots
+        // We give them different bodies so we can tell them apart
+
+        // Force insert the first
+        ds.forceInsert(rev1a, "1-x");
+
+        // fetch back the document we just inserted because we need the numeric id
+        final long doc_id = ds.getDocument(OBJECT_ID).getInternalNumericId();
+
+        // Now insert a duplicate (don't use forceInsert because that will protect against
+        // duplicate entries).
+        ds.runOnDbQueue(new SQLQueueCallable<Long>() {
+            @Override
+            public Long call(SQLDatabase db) throws Exception {
+                ContentValues args = new ContentValues();
+                args.put("doc_id", doc_id);
+                args.put("revid", "1-x");
+                args.put("json", bodyTwo.asBytes());
+                return db.insert("revs", args);
+            }
+        }).get();
+
+        // Now force insert the deleted
+        ds.forceInsert(rev2, "1-x", "2-x");
+
+        // Get the document
+        DocumentRevision doc = ds.getDocument(OBJECT_ID);
+        // If there is no winner an exception would be thrown.
+
+        // We favour non-deleted nodes so the winner should be a 1-x
+        Assert.assertEquals("The document winner should be the expected revision", "1-x", doc
+                .getRevision());
+        // The winner should be the one with body two because the 2-x deleted revision should graft
+        // onto the lowest seq of the two identical 1-x revisions.
+        Assert.assertEquals("The document winner should have the expected body", bodyTwo.asMap(),
+                doc.getBody().asMap());
+    }
+
     private void runMigration() throws NoSuchFieldException, IllegalAccessException {
-        getQueue().updateSchema(new MigrateDatabase100To200(), 201);
+        getQueue().updateSchema(new MigrateDatabase100To200(DatastoreConstants.getSchemaVersion200()), 201);
     }
 
     private int revisionCount() throws InterruptedException, ExecutionException {

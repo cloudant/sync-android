@@ -125,4 +125,46 @@ class DatastoreConstants {
         };
     }
 
+    // NB schema version 100 updates are defined in MigrateDatabase6To100 class
+
+    public static String[] getSchemaVersion200() {
+        return new String[]{
+                // migrate revs to new schema which is identical except for added constraint
+                // "UNIQUE (doc_id, revid)"
+                "    CREATE TABLE new_revs ( " +
+                "        sequence INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "        doc_id INTEGER NOT NULL REFERENCES docs(doc_id) ON DELETE CASCADE, " +
+                "        parent INTEGER REFERENCES revs(sequence) ON DELETE SET NULL, " +
+                "        current BOOLEAN, " +
+                "        deleted BOOLEAN DEFAULT 0, " +
+                "        available BOOLEAN DEFAULT 1, " +
+                "        revid TEXT NOT NULL, " +
+                "        json BLOB, " +
+                "        UNIQUE (doc_id, revid)); ",
+                "    INSERT INTO new_revs (sequence, doc_id, parent, current, deleted, available, revid, json) SELECT sequence, doc_id, parent, current, deleted, available, revid, json FROM revs; ",
+                "    DROP TABLE revs; ",
+                "    ALTER TABLE new_revs RENAME TO revs; ",
+                "    CREATE INDEX revs_by_id ON revs(revid, doc_id); ",
+                "    CREATE INDEX revs_current ON revs(doc_id, current); ",
+                "    CREATE INDEX revs_parent ON revs(parent); ",
+                // migrate attachments to new schema which is identical except for added constraint
+                // UNIQUE (sequence, filename)
+                "    CREATE TABLE new_attachments ( " +
+                "        sequence INTEGER NOT NULL REFERENCES revs(sequence) ON DELETE CASCADE, " +
+                "        filename TEXT NOT NULL, " +
+                "        key BLOB NOT NULL, " +
+                "        type TEXT, " +
+                "        length INTEGER NOT NULL, " +
+                "        revpos INTEGER DEFAULT 0, " +
+                "        encoding INTEGER DEFAULT 0, " +
+                "        encoded_length INTEGER DEFAULT 0, " +
+                "        UNIQUE (sequence, filename)); ",
+                "    INSERT INTO new_attachments (sequence, filename, key, type, length, revpos, encoding, encoded_length) SELECT sequence, filename, key, type, length, revpos, encoding, encoded_length FROM attachments; ",
+                "    DROP TABLE attachments; ",
+                "    ALTER TABLE new_attachments RENAME to attachments",
+                "    CREATE INDEX attachments_by_sequence on attachments(sequence, filename); ",
+                "    PRAGMA foreign_key_check; ",
+        };
+    }
+
 }

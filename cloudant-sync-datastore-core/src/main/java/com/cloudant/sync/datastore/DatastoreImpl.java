@@ -187,7 +187,7 @@ public class DatastoreImpl implements Datastore {
         queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion5()), 5);
         queue.updateSchema(new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion6()), 6);
         queue.updateSchema(new MigrateDatabase6To100(), 100);
-        queue.updateSchema(new MigrateDatabase100To200(), 200);
+        queue.updateSchema(new MigrateDatabase100To200(DatastoreConstants.getSchemaVersion200()), 200);
         this.eventBus = new EventBus();
 
         this.attachmentsDir = this.extensionDataFolder(ATTACHMENTS_EXTENSION_NAME);

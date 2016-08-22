@@ -184,13 +184,13 @@ public class SQLDatabaseFactory {
     public static void updateSchema(SQLDatabase database, Migration migration, int version)
             throws SQLException {
         Preconditions.checkArgument(version > 0, "Schema version number must be positive");
-
-        // Stuff we need to do every time the database opens because it is not
-        // persistent in sqlite
+        // ensure foreign keys are enforced in the case that we are up to date and no migration happen
         database.execSQL("PRAGMA foreign_keys = ON;");
         int dbVersion = database.getVersion();
         if(dbVersion < version) {
-
+            // switch off foreign keys during the migration - so that we don't get caught out by
+            // "ON DELETE CASCADE" constraints etc
+            database.execSQL("PRAGMA foreign_keys = OFF;");
             database.beginTransaction();
             try {
                 try {
@@ -206,6 +206,8 @@ public class SQLDatabaseFactory {
                 }
             } finally {
                 database.endTransaction();
+                // re-enable foreign keys
+                database.execSQL("PRAGMA foreign_keys = ON;");
             }
 
         }
