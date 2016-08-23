@@ -36,9 +36,11 @@ import org.junit.experimental.categories.Category;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Category(RequireRunningCouchDB.class)
 public class PullStrategyTest extends ReplicationTestBase {
@@ -403,6 +405,45 @@ public class PullStrategyTest extends ReplicationTestBase {
 
     }
 
+    /**
+     * Test that if two pull replications are run in parallel for the same source and target that
+     * the table constraints cause one replication to error and one to complete, but that the
+     * local database reaches the correct state.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void dual_pull_replications() throws Exception {
+        // Create in remote
+        Bar a = BarUtils.createBar(remoteDb, "alpha", "a", 1);
 
+        // Replicate
+        Replicator replicator1 = super.getPullBuilder().build();
+        Replicator replicator2 = super.getPullBuilder().build();
 
+        replicator1.start();
+        replicator2.start();
+
+        while (replicator1.getState() != Replicator.State.COMPLETE && replicator1.getState() !=
+                Replicator.State.ERROR) {
+            TimeUnit.SECONDS.sleep(1);
+        }
+
+        while (replicator2.getState() != Replicator.State.COMPLETE && replicator2.getState() !=
+                Replicator.State.ERROR) {
+            TimeUnit.SECONDS.sleep(1);
+        }
+
+        // One replication should be complete and one should be error
+        EnumSet<Replicator.State> expectedStates = EnumSet.of(Replicator.State.ERROR,
+                Replicator.State.COMPLETE);
+        EnumSet<Replicator.State> actualStates = EnumSet.of(replicator1.getState(), replicator2
+                .getState());
+        Assert.assertEquals("One replicator should complete and one should error",
+                expectedStates, actualStates);
+
+        // Assert that the number of documents is correct
+        Assert.assertEquals("There should be one document after replication.", 1,
+                datastore.getAllDocumentIds().size());
+    }
 }
