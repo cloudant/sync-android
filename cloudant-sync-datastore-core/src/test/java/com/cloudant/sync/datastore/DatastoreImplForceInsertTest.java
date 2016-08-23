@@ -17,11 +17,16 @@ package com.cloudant.sync.datastore;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.hamcrest.core.Is.is;
 
 import com.cloudant.android.ContentValues;
+import com.cloudant.sync.event.Subscribe;
+import com.cloudant.sync.notifications.DocumentModified;
+import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.CouchUtils;
+import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -251,6 +256,17 @@ public class DatastoreImplForceInsertTest {
         DocumentRevision obj = datastore.getDocument(OBJECT_ID);
         Assert.assertEquals(remoteRevisionId6, obj.getRevision());
         Assert.assertTrue(Arrays.equals(bodyOne.asBytes(), obj.getBody().asBytes()));
+    }
+
+    @Test(expected = DocumentException.class)
+    public void forceInsert_sameRevisionTwice() throws Exception {
+        DocumentRevision rev = createDbObject("1-rev", bodyOne);
+        EventSubscriber eventSubscriber = new EventSubscriber();
+        datastore.getEventBus().register(eventSubscriber);
+        datastore.forceInsert(rev, "1-rev");
+        Assert.assertThat(datastore.getDocumentCount(), is(1));
+        Assert.assertThat(eventSubscriber.eventCount, is(1));
+        datastore.forceInsert(rev, "1-rev");
     }
 
     @Test
@@ -620,4 +636,12 @@ public class DatastoreImplForceInsertTest {
         }
     }
 
+    public static class EventSubscriber {
+        int eventCount = 0;
+
+        @Subscribe
+        public void event(DocumentModified documentModified) {
+            eventCount++;
+        }
+    }
 }
