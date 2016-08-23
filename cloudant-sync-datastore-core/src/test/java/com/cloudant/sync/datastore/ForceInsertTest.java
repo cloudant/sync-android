@@ -50,9 +50,11 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
 
         ArrayList<String> revisionHistory = new ArrayList<String>();
         revisionHistory.add(doc1_rev1.getRevision());
-        
+        revisionHistory.add("2-revision");
+        doc1_rev1.setRevision("2-revision");
+
         // now do a force insert - we should get an updated event as it's already there
-        datastore.forceInsert((DocumentRevision)doc1_rev1, revisionHistory,null, null, false);
+        datastore.forceInsert(doc1_rev1, revisionHistory, null, null, false);
         boolean ok1 = NotificationTestUtils.waitForSignal(documentUpdated);
         Assert.assertTrue("Didn't receive document updated event", ok1);
 
@@ -71,27 +73,35 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         // this test only makes sense if the data is inline base64 (there's no remote server to pull the attachment from)
         boolean pullAttachmentsInline = true;
 
-        // create a document and insert the first revision
+        // create a document and insert the 1-revision
         DocumentRevision doc1_rev1Mut = new DocumentRevision();
         doc1_rev1Mut.setBody(bodyOne);
-        DocumentRevision doc1_rev1 = (DocumentRevision)datastore.createDocumentFromRevision(doc1_rev1Mut);
+        DocumentRevision doc1_rev1 = datastore.createDocumentFromRevision(doc1_rev1Mut);
         Map<String, Object> atts = new HashMap<String, Object>();
         Map<String, Object> att1 = new HashMap<String, Object>();
 
+        // set up attachment dictionary in the form expected by forceInsert
+        // (this is the form returned by CouchDB from the _attachments dictionary)
         atts.put("att1", att1);
         att1.put("data", new String(new Base64().encode("this is some data".getBytes())));
         att1.put("content_type", "text/plain");
 
         ArrayList<String> revisionHistory = new ArrayList<String>();
         revisionHistory.add(doc1_rev1.getRevision());
+        revisionHistory.add("2-revision");
 
-        // now do a force insert and then see if we get the attachment back
-        datastore.forceInsert(doc1_rev1, revisionHistory, atts,null, pullAttachmentsInline);
+        // now create a document and force insert a 2-revision with attachments
+        DocumentRevision rev2 = new DocumentRevision(doc1_rev1.id, "2-revision");
+        rev2.setBody(bodyOne);
 
-        Attachment storedAtt = datastore.getAttachment(doc1_rev1.getId(), doc1_rev1.getRevision(), "att1");
+        datastore.forceInsert(rev2, revisionHistory, atts, null, pullAttachmentsInline);
+
+        // check that we can retrieve attachments from 2-rev after force insert
+        Attachment storedAtt = datastore.getAttachment(rev2.getId(), rev2.getRevision(), "att1");
         Assert.assertNotNull(storedAtt);
 
-        Attachment noSuchAtt = datastore.getAttachment(doc1_rev1.getId(), doc1_rev1.getRevision(), "att2");
+        // check that retrieving a different attachment returns null
+        Attachment noSuchAtt = datastore.getAttachment(rev2.getId(), rev2.getRevision(), "att2");
         Assert.assertNull(noSuchAtt);
     }
 
@@ -110,7 +120,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
 
         DocumentRevision doc1_rev1Mut = new DocumentRevision();
         doc1_rev1Mut.setBody(bodyOne);
-        DocumentRevision doc1_rev1 = (DocumentRevision)datastore.createDocumentFromRevision(doc1_rev1Mut);
+        DocumentRevision doc1_rev1 = datastore.createDocumentFromRevision(doc1_rev1Mut);
         Map<String, Object> atts = new HashMap<String, Object>();
         Map<String, Object> att1 = new HashMap<String, Object>();
 
@@ -149,5 +159,6 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         if (documentUpdated != null)
             documentUpdated.countDown();
     }
-    
+
+
 }

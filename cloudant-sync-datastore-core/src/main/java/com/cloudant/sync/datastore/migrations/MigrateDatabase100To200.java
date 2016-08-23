@@ -49,6 +49,11 @@ public class MigrateDatabase100To200 implements Migration {
     private static final Logger LOGGER = Logger.getLogger(MigrateDatabase100To200.class.getName());
     private static final String ALL_BUT_LOWEST_WITH_ID_REV = "(SELECT sequence FROM revs WHERE " +
             "doc_id = ? AND revid = ? AND sequence != ?)";
+    private String[] schemaUpdates;
+
+    public MigrateDatabase100To200(String[] schemaUpdates) {
+        this.schemaUpdates = schemaUpdates;
+    }
 
     @Override
     public void runMigration(SQLDatabase db) throws Exception {
@@ -167,6 +172,10 @@ public class MigrateDatabase100To200 implements Migration {
                 // Finally resolve the winner for the document based on all the merged branches
                 new PickWinningRevisionCallable(lowest.doc_id).call(db);
             }
+
+            // now we have fixed any duplicates we can migrate the schemas
+            new SchemaOnlyMigration(schemaUpdates).runMigration(db);
+
         } finally {
             DatabaseUtils.closeCursorQuietly(c);
         }
