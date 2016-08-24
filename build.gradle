@@ -45,7 +45,7 @@ subprojects {
     signing {
         // Only apply signing when it is a release and is being published
         required {
-            isReleaseVersion
+            isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives")
         }
 
         // When signing, sign the archives
