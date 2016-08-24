@@ -1,4 +1,4 @@
-# Unreleased
+# 1.1.0 (2016-08-24)
 
 - [NEW] Updated to version 2.5.1 of the `cloudant-http` library. This
   includes optional support for handling HTTP status code 429 `Too
@@ -16,9 +16,18 @@
 - [FIX] Corrected a case where two root nodes with identical revision IDs prevented selection of the
   correct new winning revision.
 - [FIX] Added migration on `Datastore` opening to repair datastores with duplicated revisions or
-  attachments caused by an issue running parallel pull replications with the same source and target.
+  attachments caused by an issue when executing concurrent pull replications with the same source and target.
   Note that in rare circumstances for some documents this may result in a different, but corrected,
-  winning revision than before migration.
+  winning revision after migration.
+- [FIX] Prevent insertion of multiple revisions with the same document
+  ID and revision ID. Previously this could occur when executing
+  concurrent pull replications with the same source and target. A
+  replication encountering this condition will now terminate in the
+  `ERROR` state.
+- [NOTE] Due to migrations outlined above, the first time an existing
+  `Datastore` is opened with this version of the library, users may
+  experience a longer than usual delay before the `Datastore` is
+  ready.
 
 
 # 1.0.0 (2016-05-03)
