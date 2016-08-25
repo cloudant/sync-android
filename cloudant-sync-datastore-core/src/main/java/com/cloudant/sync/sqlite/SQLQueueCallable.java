@@ -22,10 +22,43 @@ import java.util.concurrent.Callable;
  *
  * @api_private
  */
-public abstract class SQLQueueCallable<T> implements Callable<T> {
+class SQLQueueCallable<T> implements Callable<T> {
 
     private SQLDatabase db;
-    private boolean runInTransaction = false;
+    private boolean runInTransaction;
+    private SQLCallable<T> sqlCallable;
+
+    /**
+     * <p>
+     *     Create a SQLQueueCallable object which will invoke the SQLCallable on the SQLDatabase
+     * </p>
+     * <p>
+     *     The SQLCallable will not be invoked in a new transaction
+     * </p>
+     * @param db The SQLDatabase to use for invoking
+     * @param sqlCallable The SQLCallable to invoke
+     */
+    SQLQueueCallable(SQLDatabase db, SQLCallable<T> sqlCallable) {
+        this.db = db;
+        this.sqlCallable = sqlCallable;
+    }
+
+    /**
+     * <p>
+     *     Create a SQLQueueCallable object which will invoke the SQLCallable on the SQLDatabase
+     * </p>
+     * <p>
+     *     The SQLCallable will be invoked in a new transaction if runInTransaction is true
+     * </p>
+     * @param db The SQLDatabase to use for invoking
+     * @param sqlCallable The SQLCallable to invoke
+     * @param runInTransaction Whether to invoke the SQLCallable in a new transaction
+     */
+    SQLQueueCallable(SQLDatabase db, SQLCallable<T> sqlCallable, boolean runInTransaction) {
+        this.db = db;
+        this.runInTransaction = runInTransaction;
+        this.sqlCallable = sqlCallable;
+    }
 
     @Override
     final public T call() throws Exception {
@@ -33,43 +66,15 @@ public abstract class SQLQueueCallable<T> implements Callable<T> {
             try {
                 db.beginTransaction();
                 //call(db) throws an exception if the transaction should be rolled back
-                T returned =  call(db);
+                T returned = sqlCallable.call(db);
                 db.setTransactionSuccessful();
                 return returned;
             } finally {
                 db.endTransaction();
             }
         } else {
-            return call(db);
+            return sqlCallable.call(db);
         }
     }
 
-    /**
-     * Called either within a transaction or not depending on if
-     * {@link com.cloudant.sync.sqlite.SQLDatabaseQueue#submitTransaction(SQLQueueCallable)} or
-     * {@link com.cloudant.sync.sqlite.SQLDatabaseQueue#submit(SQLQueueCallable)} is called
-     *
-     * When called within a transaction, to mark the transaction as successful
-     * simply return from this method, to cause a rollback throw an exception
-     * @param db The SQLDatabase for this transaction
-     * @return The tasks result
-     * @throws Exception If an error occurred and a rollback is needed
-     */
-    public abstract T call(SQLDatabase db) throws Exception;
-
-    /**
-     * Sets the database for this task
-     * @param db The SQLDatabase for this task
-     */
-    final void setDb(SQLDatabase db){
-        this.db = db;
-    }
-
-    /**
-     * Sets if this callable should happen within a transaction
-     * @param runInTransaction whether this should be called in a transaction
-     */
-     final void setRunInTransaction(boolean runInTransaction) {
-        this.runInTransaction = runInTransaction;
-    }
 }

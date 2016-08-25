@@ -14,9 +14,9 @@ package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
@@ -27,9 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -108,7 +106,7 @@ class QueryExecutor {
             return null;
         }
 
-        Future<List<String>> result = queue.submit(new SQLQueueCallable<List<String>>() {
+        Future<List<String>> result = queue.submit(new SQLCallable<List<String>>() {
             @Override
             public List<String> call(SQLDatabase database) throws Exception {
                 Set<String> docIdSet = executeQueryTree(root, database);

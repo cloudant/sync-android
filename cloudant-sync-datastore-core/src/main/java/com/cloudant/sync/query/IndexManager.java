@@ -41,23 +41,18 @@ import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
-import com.cloudant.sync.sqlite.SQLDatabaseFactory;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -139,7 +134,7 @@ public class IndexManager {
      */
     public Map<String, Object> listIndexes() {
         try {
-            return dbQueue.submit(new SQLQueueCallable<Map<String, Object> >() {
+            return dbQueue.submit(new SQLCallable<Map<String, Object> >() {
                 @Override
                 public Map<String, Object> call(SQLDatabase database) throws Exception {
                      return IndexManager.listIndexesInDatabase(database);
@@ -273,7 +268,7 @@ public class IndexManager {
             return false;
         }
 
-        Future<Boolean> result = dbQueue.submit(new SQLQueueCallable<Boolean>() {
+        Future<Boolean> result = dbQueue.submit(new SQLCallable<Boolean>() {
             @Override
             public Boolean call(SQLDatabase database) {
                 Boolean transactionSuccess = true;
@@ -367,7 +362,7 @@ public class IndexManager {
      */
     protected static boolean ftsAvailable(SQLDatabaseQueue q) {
         boolean ftsAvailable = false;
-        Future<Boolean> result = q.submitTransaction(new SQLQueueCallable<Boolean>() {
+        Future<Boolean> result = q.submitTransaction(new SQLCallable<Boolean>() {
             @Override
             public Boolean call(SQLDatabase db) {
                 Boolean transactionSuccess = true;

@@ -15,8 +15,10 @@
 package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.android.ContentValues;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 
+import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
 /**
@@ -24,7 +26,7 @@ import java.util.logging.Logger;
  *
  * @api_private
  */
-public class InsertRevisionCallable {
+public class InsertRevisionCallable implements SQLCallable<Long> {
     private static final Logger logger = Logger.getLogger(InsertRevisionCallable.class.getCanonicalName());
 
     // doc_id in revs table
@@ -50,7 +52,8 @@ public class InsertRevisionCallable {
                 '}';
     }
 
-    public long call(SQLDatabase db) {
+    @Override
+    public Long call(SQLDatabase db) {
         long newSequence;
         ContentValues args = new ContentValues();
         args.put("doc_id", this.docNumericId);

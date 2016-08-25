@@ -20,7 +20,7 @@ import static org.hamcrest.CoreMatchers.not;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.util.Misc;
 import com.cloudant.sync.util.TestUtils;
 
@@ -93,7 +93,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             Assert.fail("FileNotFoundException not thrown");
         } catch (AttachmentException ae) {
             // now check that things got rolled back
-            datastore.runOnDbQueue(new SQLQueueCallable<Object>() {
+            datastore.runOnDbQueue(new SQLCallable<Object>() {
                 @Override
                 public Object call(SQLDatabase db) throws Exception {
                     Cursor c1 = db.rawQuery("select sequence from attachments;", null);

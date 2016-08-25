@@ -17,6 +17,7 @@ package com.cloudant.sync.datastore.callables;
 import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
@@ -32,7 +33,7 @@ import java.util.TreeMap;
  *
  * @api_private
  */
-public class PickWinningRevisionCallable {
+public class PickWinningRevisionCallable implements SQLCallable<Void> {
 
     // get all non-deleted leaf rev ids for a given doc id
     // gets all revs whose sequence is not a parent of another rev and the rev isn't deleted
@@ -64,7 +65,8 @@ public class PickWinningRevisionCallable {
      * @param db the database to execute the callable against
      * @throws DatastoreException
      */
-    public void call(SQLDatabase db) throws DatastoreException {
+    @Override
+    public Void call(SQLDatabase db) throws DatastoreException {
 
          /*
          Pick winner and mark the appropriate revision with the 'current' flag set
@@ -139,5 +141,6 @@ public class PickWinningRevisionCallable {
                 "sequence!=? AND doc_id=? AND sequence NOT IN " +
                         "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL)",
                 new String[]{Long.toString(newWinnerSeq), Long.toString(docNumericId)});
+        return null;
     }
 }

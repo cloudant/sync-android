@@ -17,9 +17,9 @@ import com.cloudant.sync.datastore.Changes;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 
 import java.sql.SQLException;
@@ -27,9 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -135,7 +133,7 @@ class IndexUpdater {
             return false;
         }
 
-        Future<Boolean> result = queue.submitTransaction(new SQLQueueCallable<Boolean>() {
+        Future<Boolean> result = queue.submitTransaction(new SQLCallable<Boolean>() {
             @Override
             public Boolean call(SQLDatabase database) {
                 database.beginTransaction();
@@ -340,7 +338,7 @@ class IndexUpdater {
     }
 
     private long sequenceNumberForIndex(final String indexName) {
-        Future<Long> sequenceNumber = queue.submit( new SQLQueueCallable<Long>() {
+        Future<Long> sequenceNumber = queue.submit( new SQLCallable<Long>() {
             @Override
             public Long call(SQLDatabase database) {
                 long result = 0;
@@ -376,7 +374,7 @@ class IndexUpdater {
     }
 
     private boolean updateMetadataForIndex(final String indexName, final long lastSequence) {
-        Future<Boolean> result = queue.submit(new SQLQueueCallable<Boolean>() {
+        Future<Boolean> result = queue.submit(new SQLCallable<Boolean>() {
             @Override
             public Boolean call(SQLDatabase database) {
                 boolean updateSuccess = true;

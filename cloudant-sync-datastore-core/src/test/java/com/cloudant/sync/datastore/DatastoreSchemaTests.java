@@ -24,7 +24,7 @@ import com.cloudant.sync.datastore.migrations.MigrateDatabase6To100;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -93,7 +93,7 @@ public class DatastoreSchemaTests {
         queue.updateSchema(new MigrateDatabase6To100(), 100);
 
         // Check migration worked
-        queue.submit(new SQLQueueCallable<Object>() {
+        queue.submit(new SQLCallable<Object>() {
             @Override
             public Object call(SQLDatabase db) throws Exception {
 
@@ -198,7 +198,7 @@ public class DatastoreSchemaTests {
 
         try {
             // Check migration worked
-            datastore.runOnDbQueue(new SQLQueueCallable<Object>() {
+            datastore.runOnDbQueue(new SQLCallable<Object>() {
                 @Override
                 public Object call(SQLDatabase db) throws Exception {
                     Assert.assertTrue("DB version should be 100 or more", db.getVersion() >= 100);
@@ -317,7 +317,7 @@ public class DatastoreSchemaTests {
         try {
 
             // Validate that the version was updated
-            Integer version = datastore.runOnDbQueue(new SQLQueueCallable<Integer>() {
+            Integer version = datastore.runOnDbQueue(new SQLCallable<Integer>() {
                 @Override
                 public Integer call(SQLDatabase db) throws Exception {
                     return db.getVersion();
@@ -326,7 +326,7 @@ public class DatastoreSchemaTests {
             Assert.assertTrue("DB version should be 200 or more", version >= 200);
 
             // Validate that there are no documents not marked as current
-            List<Long> result = datastore.runOnDbQueue(new SQLQueueCallable<List<Long>>() {
+            List<Long> result = datastore.runOnDbQueue(new SQLCallable<List<Long>>() {
 
                 @Override
                 public List<Long> call(SQLDatabase db) throws Exception {
@@ -350,7 +350,7 @@ public class DatastoreSchemaTests {
 
             // Validate that there are no documents that have duplicate revision IDs
 
-            result = datastore.runOnDbQueue(new SQLQueueCallable<List<Long>>() {
+            result = datastore.runOnDbQueue(new SQLCallable<List<Long>>() {
 
                 @Override
                 public List<Long> call(SQLDatabase db) throws Exception {
@@ -432,7 +432,7 @@ public class DatastoreSchemaTests {
         try {
 
             // Validate that the version was updated
-            Integer version = datastore.runOnDbQueue(new SQLQueueCallable<Integer>() {
+            Integer version = datastore.runOnDbQueue(new SQLCallable<Integer>() {
                 @Override
                 public Integer call(SQLDatabase db) throws Exception {
                     return db.getVersion();
@@ -441,7 +441,7 @@ public class DatastoreSchemaTests {
             Assert.assertTrue("DB version should be 200 or more", version >= 200);
 
             // Validate that there are no documents not marked as current
-            List<Long> result = datastore.runOnDbQueue(new SQLQueueCallable<List<Long>>() {
+            List<Long> result = datastore.runOnDbQueue(new SQLCallable<List<Long>>() {
 
                 @Override
                 public List<Long> call(SQLDatabase db) throws Exception {
@@ -464,7 +464,7 @@ public class DatastoreSchemaTests {
                     "revision", 0, result.size());
 
             // Validate that there are no documents that have duplicate revision IDs
-            result = datastore.runOnDbQueue(new SQLQueueCallable<List<Long>>() {
+            result = datastore.runOnDbQueue(new SQLCallable<List<Long>>() {
 
                 @Override
                 public List<Long> call(SQLDatabase db) throws Exception {

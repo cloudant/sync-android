@@ -16,8 +16,8 @@ package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 
 import java.sql.SQLException;
@@ -29,7 +29,7 @@ import java.util.List;
  *
  * @api_private
  */
-public class GetAllDocumentIdsCallable extends SQLQueueCallable<List<String>> {
+public class GetAllDocumentIdsCallable implements SQLCallable<List<String>> {
     @Override
     public List<String> call(SQLDatabase db) throws Exception {
         List<String> docIds = new ArrayList<String>();
