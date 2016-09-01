@@ -20,6 +20,7 @@ import com.cloudant.sync.datastore.migrations.Migration;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -104,7 +105,7 @@ public class SQLDatabaseQueue {
      */
     public int getVersion() throws SQLException {
         try {
-            return this.submit(new SQLQueueCallable<Integer>() {
+            return this.submit(new SQLCallable<Integer>() {
                 @Override
                 public Integer call(SQLDatabase db) throws Exception {
                     return db.getVersion();
@@ -126,10 +127,8 @@ public class SQLDatabaseQueue {
      * @throws RejectedExecutionException Thrown when the queue has been shutdown
      * @return Future representing the task to be executed.
      */
-    public <T> Future<T> submit(SQLQueueCallable<T> callable){
-        callable.setDb(db);
-        callable.setRunInTransaction(false);
-        return this.submitTaskToQueue(callable);
+    public <T> Future<T> submit(SQLCallable<T> callable){
+        return this.submitTaskToQueue(new SQLQueueCallable<T>(db, callable));
     }
 
     /**
@@ -139,10 +138,8 @@ public class SQLDatabaseQueue {
      * @throws RejectedExecutionException thrown when the queue has been shutdown
      * @return Future representing the task to be executed.
      */
-    public <T> Future<T> submitTransaction(SQLQueueCallable<T> callable){
-        callable.setDb(db);
-        callable.setRunInTransaction(true);
-        return this.submitTaskToQueue(callable);
+    public <T> Future<T> submitTransaction(SQLCallable<T> callable){
+        return this.submitTaskToQueue(new SQLQueueCallable<T>(db, callable, true));
     }
 
     /**
@@ -205,7 +202,7 @@ public class SQLDatabaseQueue {
 
         if (this.sqliteVersion == null) {
             try {
-                this.sqliteVersion = this.submit(new SQLQueueCallable<String>() {
+                this.sqliteVersion = this.submit(new SQLCallable<String>() {
                     @Override
                     public String call(SQLDatabase db) throws Exception {
                         Cursor cursor = db.rawQuery("SELECT sqlite_version()", null);

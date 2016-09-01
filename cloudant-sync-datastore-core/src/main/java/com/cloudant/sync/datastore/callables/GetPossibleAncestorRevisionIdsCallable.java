@@ -16,8 +16,8 @@ package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
 
@@ -33,7 +33,7 @@ import java.util.List;
  *
  * @api_private
  */
-public class GetPossibleAncestorRevisionIdsCallable extends SQLQueueCallable<List<String>> {
+public class GetPossibleAncestorRevisionIdsCallable implements SQLCallable<List<String>> {
     private final String docId;
     private final String revId;
     private final int limit;

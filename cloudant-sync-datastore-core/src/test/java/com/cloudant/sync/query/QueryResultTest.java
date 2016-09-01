@@ -19,7 +19,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -76,7 +76,7 @@ public class QueryResultTest extends AbstractQueryTestBase {
         query.put("$text", search);
         QueryResult queryResult = im.find(query);
 
-        queue.submit(new SQLQueueCallable<Void>() {
+        queue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL("DROP TABLE IF EXISTS revs");

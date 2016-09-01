@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.hasSize;
 
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
 
@@ -69,7 +69,7 @@ public class DatastoreImplCRUDTest extends BasicDatastoreTestBase {
 
     @Test(expected = IllegalStateException.class)
     public void close_getDocumentCount_exception() throws Exception {
-        datastore.runOnDbQueue(new SQLQueueCallable<Object>()  {
+        datastore.runOnDbQueue(new SQLCallable<Object>()  {
             @Override
             public Object call(SQLDatabase db) throws Exception {
                 Assert.assertTrue(db.isOpen());
@@ -371,7 +371,7 @@ public class DatastoreImplCRUDTest extends BasicDatastoreTestBase {
         String publicUUID = datastore.getPublicIdentifier();
         Assert.assertNotNull(publicUUID);
 
-            datastore.runOnDbQueue(new SQLQueueCallable<Object>() {
+            datastore.runOnDbQueue(new SQLCallable<Object>() {
                 @Override
                 public Object call(SQLDatabase db) throws Exception {
                     Cursor cursor = null;

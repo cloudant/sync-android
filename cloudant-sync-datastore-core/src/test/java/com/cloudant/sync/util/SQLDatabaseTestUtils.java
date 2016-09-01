@@ -15,9 +15,10 @@
 package com.cloudant.sync.util;
 
 import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
+import com.cloudant.sync.sqlite.SQLCallable;
 
 import org.junit.Assert;
 
@@ -32,7 +33,7 @@ import static org.hamcrest.CoreMatchers.not;
 public class SQLDatabaseTestUtils {
 
     public static void assertTablesExist(SQLDatabaseQueue dbQueue, final String... tables) throws ExecutionException, InterruptedException {
-        dbQueue.submit(new SQLQueueCallable<Void>() {
+        dbQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                assertTablesExist(db, tables);
@@ -72,7 +73,7 @@ public class SQLDatabaseTestUtils {
 
     public static Set<String> getCompileOptions(SQLDatabaseQueue dbQueue) throws SQLException,
             ExecutionException, InterruptedException {
-        return dbQueue.submit(new SQLQueueCallable<Set<String>>() {
+        return dbQueue.submit(new SQLCallable<Set<String>>() {
             @Override
             public Set<String> call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;

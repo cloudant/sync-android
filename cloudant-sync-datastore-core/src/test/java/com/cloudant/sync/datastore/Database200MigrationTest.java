@@ -24,7 +24,7 @@ import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -68,7 +68,7 @@ public class Database200MigrationTest {
         // This is a hack but because we can't control the schema upgrade process (it automatically
         // happens when the datastore is opened). The easiest way to do it is to drop all tables and
         // step through the upgrades to the version we want.
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 try {
@@ -132,7 +132,7 @@ public class Database200MigrationTest {
 
         final String updateCurrent = "UPDATE revs SET current=0 where sequence=2";
 
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(duplicateRevs, new String[]{rootRevision.getRevision()});
@@ -173,7 +173,7 @@ public class Database200MigrationTest {
 
         final String updateCurrent = "UPDATE revs SET current=0 where sequence=2";
 
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(duplicateRevs, new String[]{rootRevision.getRevision()});
@@ -189,7 +189,7 @@ public class Database200MigrationTest {
 
 
         final String changeParent = "UPDATE revs SET parent=2 where parent = 1";
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(changeParent, new String[]{});
@@ -225,7 +225,7 @@ public class Database200MigrationTest {
 
         final String updateCurrent = "UPDATE revs SET current=0 where sequence=2 or sequence=3";
 
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(duplicateRevs, new String[]{rootRevision.getRevision()});
@@ -242,7 +242,7 @@ public class Database200MigrationTest {
 
 
         final String changeParent = "UPDATE revs SET parent=2 where parent = 1";
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(changeParent, new String[]{});
@@ -279,7 +279,7 @@ public class Database200MigrationTest {
 
         final String updateCurrent = "UPDATE revs SET current=0 where sequence=2 or sequence=3";
 
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(duplicateRevs, new String[]{rev.getRevision()});
@@ -325,7 +325,7 @@ public class Database200MigrationTest {
                 " json) SELECT doc_id, parent, current, deleted, available, revid, json FROM revs";
         final String updateCurrent = "UPDATE revs SET current=0";
 
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(sql, new String[]{});
@@ -338,7 +338,7 @@ public class Database200MigrationTest {
         final String changeParent = "UPDATE revs SET parent=4 where parent = 1 AND sequence = 5";
         final String changeOtherParent = "UPDATE revs SET parent =5 where parent = 2 AND sequence" +
                 " = 6";
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(changeParent, new String[]{});
@@ -380,7 +380,7 @@ public class Database200MigrationTest {
 
         final String updateCurrent = "UPDATE revs SET current=0";
 
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(duplicateRevs, new String[]{rootRevision.getRevision()});
@@ -393,7 +393,7 @@ public class Database200MigrationTest {
 
 
         final String changeParent = "UPDATE revs SET parent=3 where sequence = 5";
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(changeParent, new String[]{});
@@ -431,7 +431,7 @@ public class Database200MigrationTest {
         final String updateCurrent = "UPDATE revs SET current=0;";
         final String setCurrent = "UPDATE revs SET current=1 where sequence=2";
 
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(duplicateRevs, new String[]{rev.getRevision()});
@@ -447,7 +447,7 @@ public class Database200MigrationTest {
         final DocumentRevision secondUpdate = ds.updateDocumentFromRevision(rev);
         // parent needs to be changed for the above, then a new revision will need to be genreated.
         final String changeParent = "UPDATE revs SET parent=2 where parent = 3";
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(changeParent, new String[]{});
@@ -518,7 +518,7 @@ public class Database200MigrationTest {
 
         final String updateCurrent = "UPDATE revs SET current=0 where sequence=2";
 
-        ds.runOnDbQueue(new SQLQueueCallable<Void>() {
+        ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 db.execSQL(duplicateRevs, new String[]{rootRevision.getRevision()});
@@ -589,7 +589,7 @@ public class Database200MigrationTest {
 
         // Now insert a duplicate (don't use forceInsert because that will protect against
         // duplicate entries).
-        ds.runOnDbQueue(new SQLQueueCallable<Long>() {
+        ds.runOnDbQueue(new SQLCallable<Long>() {
             @Override
             public Long call(SQLDatabase db) throws Exception {
                 ContentValues args = new ContentValues();
@@ -621,7 +621,7 @@ public class Database200MigrationTest {
     }
 
     private int revisionCount() throws InterruptedException, ExecutionException {
-        return ds.runOnDbQueue(new SQLQueueCallable<Integer>() {
+        return ds.runOnDbQueue(new SQLCallable<Integer>() {
             @Override
             public Integer call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -649,7 +649,7 @@ public class Database200MigrationTest {
     }
 
     private List<String> getRevs() throws InterruptedException, ExecutionException {
-        return ds.runOnDbQueue(new SQLQueueCallable<List<String>>() {
+        return ds.runOnDbQueue(new SQLCallable<List<String>>() {
             @Override
             public List<String> call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;

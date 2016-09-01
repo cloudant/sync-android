@@ -25,7 +25,7 @@ import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
-import com.cloudant.sync.sqlite.SQLQueueCallable;
+import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -84,7 +84,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String table = IndexManager.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -112,7 +112,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -147,7 +147,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String table = IndexManager.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -228,7 +228,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         assertThat(getIndexSequenceNumber("basic"), is((long)nDocs*nThreads));
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 int mikes = 0;
@@ -273,7 +273,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String table = IndexManager.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -299,7 +299,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -335,7 +335,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String table = IndexManager.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -369,7 +369,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -409,7 +409,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String table = IndexManager.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -438,7 +438,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -478,7 +478,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String table = IndexManager.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -507,7 +507,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -545,7 +545,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String table = IndexManager.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -574,7 +574,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -613,7 +613,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String table = IndexManager.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -643,7 +643,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -682,7 +682,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String table = IndexManager.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -722,7 +722,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         // Document id123 is successfully indexed. 
         // Document id456 is rejected due to multiple arrays.
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -763,7 +763,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String table = IndexManager.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -791,7 +791,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -831,7 +831,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         String table = IndexManager.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -859,7 +859,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -961,7 +961,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         final String sqlBasic = String.format("SELECT * FROM %s", basicTable);
         final String sqlBasicName = String.format("SELECT * FROM %s", basicNameTable);
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -1006,7 +1006,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(7l));
         assertThat(getIndexSequenceNumber("basicName"), is(7l));
 
-        indexManagerDatabaseQueue.submit(new SQLQueueCallable<Void>() {
+        indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
@@ -1047,7 +1047,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                                    IndexManager.INDEX_METADATA_TABLE_NAME,
                                    where);
 
-       return indexManagerDatabaseQueue.submit(new SQLQueueCallable<Long>() {
+       return indexManagerDatabaseQueue.submit(new SQLCallable<Long>() {
             @Override
             public Long call(SQLDatabase db) throws Exception {
                 Cursor cursor = null;
