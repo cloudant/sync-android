@@ -50,11 +50,11 @@ import java.util.logging.Logger;
  *
  * @api_private
  */
-class AttachmentManager {
+public class AttachmentManager {
 
     private static final Logger logger = Logger.getLogger(AttachmentManager.class.getCanonicalName());
 
-    private static final String SQL_ATTACHMENTS_SELECT = "SELECT sequence, " +
+    public static final String SQL_ATTACHMENTS_SELECT = "SELECT sequence, " +
             "filename, " +
             "key, " +
             "type, " +
@@ -65,7 +65,7 @@ class AttachmentManager {
             "FROM attachments " +
             "WHERE filename = ? and sequence = ?";
 
-    private static final String SQL_ATTACHMENTS_SELECT_ALL = "SELECT sequence, " +
+    public static final String SQL_ATTACHMENTS_SELECT_ALL = "SELECT sequence, " +
             "filename, " +
             "key, " +
             "type, " +
@@ -492,7 +492,7 @@ class AttachmentManager {
      * @throws AttachmentException if a mapping doesn't exist and {@code allowCreateName} is
      *          false or if the name generation process fails.
      */
-    static File fileFromKey(SQLDatabase db, byte[] key, String attachmentsDir,
+    public static File fileFromKey(SQLDatabase db, byte[] key, String attachmentsDir,
                             boolean allowCreateName)
             throws AttachmentException {
 

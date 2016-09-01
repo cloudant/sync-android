@@ -108,8 +108,6 @@ public class DocumentRevision implements Comparable<DocumentRevision> {
         }
     }
 
-
-
     /**
      * @return the unique identifier of the document
      */

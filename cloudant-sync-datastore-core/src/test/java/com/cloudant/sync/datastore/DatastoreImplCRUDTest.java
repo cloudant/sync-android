@@ -23,6 +23,7 @@ import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
+import com.cloudant.sync.util.JSONUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -228,6 +229,11 @@ public class DatastoreImplCRUDTest extends BasicDatastoreTestBase {
         Assert.assertEquals(2, CouchUtils.generationFromRevId(deletedRev.getRevision()));
         Assert.assertTrue(deletedRev.isDeleted());
         Assert.assertTrue(((DocumentRevision)deletedRev).isCurrent());
+        Assert.assertArrayEquals(JSONUtils.emptyJSONObjectAsBytes(), deletedRev.getBody().asBytes());
+        Assert.assertEquals(rev1.getSequence(), deletedRev.getParent());
+        Assert.assertTrue(deletedRev.getSequence() > rev1.getSequence());
+        Assert.assertEquals(rev1.getInternalNumericId(), deletedRev.getInternalNumericId());
+        Assert.assertTrue(deletedRev.isCurrent());
 
         DocumentRevisionTree tree = this.datastore.getAllRevisionsOfDocument(rev1.getId());
         DocumentRevision rev2 = (DocumentRevision) tree.getCurrentRevision();
@@ -266,7 +272,13 @@ public class DatastoreImplCRUDTest extends BasicDatastoreTestBase {
         DocumentRevision rev2a = this.datastore.updateDocumentFromRevision(rev2aMut);
         DocumentRevision rev3b = this.createDetachedDocumentRevision(rev1a.getId(), "3-b", bodyOne);
         this.datastore.forceInsert(rev3b, rev1a.getRevision(), "2-b", "3-b");
-        this.datastore.deleteDocumentFromRevision(rev2a);
+
+        DocumentRevision deletedRev = this.datastore.deleteDocumentFromRevision(rev2a);
+        Assert.assertArrayEquals(JSONUtils.emptyJSONObjectAsBytes(), deletedRev.getBody().asBytes());
+        Assert.assertEquals(rev2a.getSequence(), deletedRev.getParent());
+        Assert.assertTrue(deletedRev.getSequence() > rev2a.getSequence());
+        Assert.assertEquals(rev2a.getInternalNumericId(), deletedRev.getInternalNumericId());
+        Assert.assertFalse(deletedRev.isCurrent());
 
         DocumentRevisionTree tree = this.datastore.getAllRevisionsOfDocument(rev1a.getId());
 

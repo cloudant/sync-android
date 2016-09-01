@@ -45,7 +45,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * @api_private
  */
-class AttachmentStreamFactory {
+public class AttachmentStreamFactory {
 
     /**
      * Byte array if there is a valid AES key, null if attachments
