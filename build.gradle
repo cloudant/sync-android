@@ -87,6 +87,16 @@ subprojects {
         configurations.testCompile.each { File file -> println file.name }
     }
 
+    tasks.withType(Test) {
+        testLogging {
+            // Get full exception info for test failures
+            exceptionFormat = 'full'
+            showExceptions = true
+            showCauses = true
+            showStackTraces = true
+        }
+    }
+
     //findbugs
     apply plugin: 'findbugs'
     findbugs {
