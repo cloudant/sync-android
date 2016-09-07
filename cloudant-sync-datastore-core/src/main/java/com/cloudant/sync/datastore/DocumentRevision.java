@@ -17,6 +17,7 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.common.ChangeNotifyingMap;
 import com.cloudant.common.SimpleChangeNotifyingMap;
 import com.cloudant.sync.util.CouchUtils;
 
@@ -61,8 +62,8 @@ public class DocumentRevision implements Comparable<DocumentRevision> {
 
     protected boolean fullRevision = true;
 
-    SimpleChangeNotifyingMap<String, Attachment> attachments =
-            new SimpleChangeNotifyingMap<String, Attachment>(new HashMap<String, Attachment>());
+    ChangeNotifyingMap<String, Attachment> attachments = SimpleChangeNotifyingMap.wrap(new
+            HashMap<String, Attachment>());
 
     private DocumentBody body;
 
@@ -145,7 +146,7 @@ public class DocumentRevision implements Comparable<DocumentRevision> {
 
     public void setAttachments(Map<String, Attachment> attachments) {
         if (attachments != null) {
-            this.attachments = new SimpleChangeNotifyingMap<String, Attachment>(attachments);
+            this.attachments = SimpleChangeNotifyingMap.wrap(attachments);
         } else {
             // user cleared the dict, we don't want our notifying map to try to forward to null
             this.attachments = null;
@@ -165,7 +166,7 @@ public class DocumentRevision implements Comparable<DocumentRevision> {
             for (Attachment att : attachments) {
                 m.put(att.name, att);
             }
-            this.attachments = new SimpleChangeNotifyingMap<String, Attachment>(m);
+            this.attachments = SimpleChangeNotifyingMap.wrap(m);
         }
     }
 
