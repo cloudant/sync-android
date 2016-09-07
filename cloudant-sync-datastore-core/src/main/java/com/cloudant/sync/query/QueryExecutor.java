@@ -19,7 +19,6 @@ import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Sets;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -228,7 +227,7 @@ class QueryExecutor {
                 if (accumulator == null) {
                     accumulator = new HashSet<String>(childIds);
                 } else {
-                    accumulator = Sets.intersection(accumulator, childIds);
+                    accumulator.retainAll(childIds);
                 }
             }
 
@@ -246,7 +245,7 @@ class QueryExecutor {
                 if (accumulator == null) {
                     accumulator = new HashSet<String>(childIds);
                 } else {
-                    accumulator = Sets.union(accumulator, childIds);
+                    accumulator.addAll(childIds);
                 }
             }
 
