@@ -1,16 +1,16 @@
 /**
  * Copyright © 2016 IBM Corp. All rights reserved.
- * <p/>
+ *
  * Original iOS version by  Jens Alfke, ported to Android by Marty Schoch
  * Copyright (c) 2012 Couchbase, Inc. All rights reserved.
- * <p/>
+ *
  * Modifications for this distribution by Cloudant, Inc., Copyright (c) 2013 Cloudant, Inc.
- * <p/>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
- * <p/>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language governing permissions
@@ -74,6 +74,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -1251,7 +1252,8 @@ public class DatastoreImpl implements Datastore {
     }
 
     /**
-     * Returns the subset of given the document id/revisions that are not stored in the database.
+     * Removes the subset of given the document id/revisions that are stored in the database.
+     * Leaving only the subset of document id/revisions that are not stored.
      *
      * The input revisions is a map, whose key is document id, and value is a list of revisions.
      * An example input could be (in json format):
@@ -1272,8 +1274,8 @@ public class DatastoreImpl implements Datastore {
      * @see
      * <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
      * @param revisions a Multimap of document id → revision id
-     * @return a Map of document id → collection of revision id: the subset of given the document
-     * id/revisions that are not stored in the database
+     * @return the same map as revisions with the subset of given the document
+     * id/revisions that are already stored in the database removed from it
      */
     public Map<String, Collection<String>> revsDiff(final Multimap<String, String> revisions) {
         Misc.checkState(this.isOpen(), "Database is closed");
@@ -1283,17 +1285,25 @@ public class DatastoreImpl implements Datastore {
             return queue.submit(new SQLCallable<Map<String, Collection<String>>>() {
                 @Override
                 public Map<String, Collection<String>> call(SQLDatabase db) throws Exception {
-                    Multimap<String, String> missingRevs = ArrayListMultimap.create();
-                    // Break the potentially big multimap into small ones so for each map,
-                    // a single query can be use to check if the <id, revision> pairs in sqlDb or
-                    // not
-                    List<Multimap<String, String>> batches =
-                            multiMapPartitions(revisions, SQLITE_QUERY_PLACEHOLDERS_LIMIT);
-                    for (Multimap<String, String> batch : batches) {
-                        revsDiffBatch(db, batch);
-                        missingRevs.putAll(batch);
+                    // Break down by docId first to avoid potential rev ID clashes between doc IDs
+                    Set<String> keys = revisions.keySet();
+                    List<String> docIds = new ArrayList<String>(keys.size());
+                    docIds.addAll(keys);
+                    for (String docId : docIds) {
+                        Collection<String> revsCollection = revisions.get(docId);
+                        List<String> revs = new ArrayList(revsCollection.size());
+                        revs.addAll(revsCollection);
+                        // Partition into batches to avoid exceeding placeholder limit
+                        // The doc ID will use one placeholder, so use limit - 1 for the number of
+                        // revs for the remaining placeholders.
+                        List<List<String>> batches = CollectionUtils.partition(revs,
+                                SQLITE_QUERY_PLACEHOLDERS_LIMIT - 1);
+
+                        for (List<String> revsBatch : batches) {
+                            revsDiffBatch(db, docId, revsBatch, revisions);
+                        }
                     }
-                    return missingRevs.asMap();
+                    return revisions.asMap();
                 }
             }).get();
         } catch (InterruptedException e) {
@@ -1305,58 +1315,34 @@ public class DatastoreImpl implements Datastore {
         return null;
     }
 
-    List<Multimap<String, String>> multiMapPartitions(
-            Multimap<String, String> revisions, int size) {
-
-        List<Multimap<String, String>> partitions = new ArrayList<Multimap<String, String>>();
-        Multimap<String, String> current = HashMultimap.create();
-        for (Map.Entry<String, String> e : revisions.entries()) {
-            current.put(e.getKey(), e.getValue());
-            // the query uses below (see revsDiffBatch())
-            // `multimap.size() + multimap.keySet().size()` placeholders
-            // and SQLite has limit on the number of placeholders on a single query.
-            if (current.size() + current.keySet().size() >= size) {
-                partitions.add(current);
-                current = HashMultimap.create();
-            }
-        }
-
-        if (current.size() > 0) {
-            partitions.add(current);
-        }
-
-        return partitions;
-    }
-
     /**
      * Removes revisions present in the datastore from the input map.
      *
-     * @param revisions an multimap from document id to set of revisions. The
+     * @param db        the database to get the revisions from
+     * @param docId     the doc ID to check
+     * @param revs      the rev IDs to check
+     * @param revisions a multimap from document id to set of revisions. The
      *                  map is modified in place for performance consideration.
      */
-    void revsDiffBatch(SQLDatabase db, Multimap<String, String> revisions) throws
-            DatastoreException {
+    void revsDiffBatch(SQLDatabase db, String docId, Collection<String> revs, Multimap<String,
+            String> revisions) throws DatastoreException {
 
         final String sql = String.format(
-                "SELECT docs.docid, revs.revid FROM docs, revs " +
-                        "WHERE docs.doc_id = revs.doc_id AND docs.docid IN (%s) AND revs.revid IN" +
-                        " (%s) " +
-                        "ORDER BY docs.docid",
-                DatabaseUtils.makePlaceholders(revisions.keySet().size()),
-                DatabaseUtils.makePlaceholders(revisions.size()));
+                "SELECT revs.revid FROM docs, revs " +
+                        "WHERE docs.doc_id = revs.doc_id AND docs.docid = ? AND revs.revid IN " +
+                        "(%s) ", DatabaseUtils.makePlaceholders(revs.size()));
 
-        String[] args = new String[revisions.keySet().size() + revisions.size()];
-        String[] keys = revisions.keySet().toArray(new String[revisions.keySet().size()]);
-        String[] values = revisions.values().toArray(new String[revisions.size()]);
-        System.arraycopy(keys, 0, args, 0, revisions.keySet().size());
-        System.arraycopy(values, 0, args, revisions.keySet().size(), revisions.size());
+        String[] args = new String[1 + revs.size()];
+        args[0] = docId;
+        // Copy the revisions into the end of the args array
+        System.arraycopy(revs.toArray(new String[revs.size()]), 0, args, 1,
+                revs.size());
 
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, args);
             while (cursor.moveToNext()) {
-                String docId = cursor.getString(0);
-                String revId = cursor.getString(1);
+                String revId = cursor.getString(cursor.getColumnIndex("revid"));
                 revisions.remove(docId, revId);
             }
         } catch (SQLException e) {
