@@ -15,9 +15,10 @@
 package com.cloudant.library;
 
 import com.cloudant.sync.util.Misc;
-import com.google.common.io.Resources;
 
-import java.net.URL;
+import org.apache.commons.io.IOUtils;
+
+import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -35,13 +36,17 @@ public class LibraryVersion implements com.cloudant.http.Version {
 
     private static String getUserAgentFromResource() {
         final String defaultUserAgent = "CloudantSync";
-        final URL url = LibraryVersion.class.getClassLoader().getResource("mazha.properties");
+        InputStream propertiesInputStream = null;
         final Properties properties = new Properties();
         try {
-            properties.load(Resources.newInputStreamSupplier(url).getInput());
+            propertiesInputStream = LibraryVersion.class.getClassLoader().getResourceAsStream
+                    ("mazha.properties");
+            properties.load(propertiesInputStream);
             return properties.getProperty("user.agent", defaultUserAgent);
         } catch (Exception ex) {
             return defaultUserAgent;
+        } finally {
+            IOUtils.closeQuietly(propertiesInputStream);
         }
     }
 
