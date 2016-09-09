@@ -40,6 +40,7 @@ import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
+import com.cloudant.sync.util.CollectionUtils;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.JSONUtils;
@@ -47,7 +48,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
 import org.apache.commons.io.FilenameUtils;
@@ -557,7 +557,7 @@ public class DatastoreImpl implements Datastore {
         // so we use a value much lower.
         List<DocumentRevision> result = new ArrayList<DocumentRevision>(docIds.size());
 
-        List<List<Long>> batches = Lists.partition(docIds, SQLITE_QUERY_PLACEHOLDERS_LIMIT);
+        List<List<Long>> batches = CollectionUtils.partition(docIds, SQLITE_QUERY_PLACEHOLDERS_LIMIT);
         for (List<Long> batch : batches) {
             String sql = String.format(
                     GET_DOCUMENTS_BY_INTERNAL_IDS,

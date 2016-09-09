@@ -28,9 +28,9 @@ import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.PreparedAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.event.EventBus;
+import com.cloudant.sync.util.CollectionUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.Misc;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
 import org.apache.commons.codec.binary.Hex;
@@ -308,8 +308,8 @@ class PullStrategy implements ReplicationStrategy {
         int changesProcessed = 0;
 
         // Process the changes in batches
-        List<String> ids = Lists.newArrayList(missingRevisions.keySet());
-        List<List<String>> batches = Lists.partition(ids, this.insertBatchSize);
+        List<String> ids = new ArrayList<String>(missingRevisions.keySet());
+        List<List<String>> batches = CollectionUtils.partition(ids, this.insertBatchSize);
 
 
         for (List<String> batch : batches) {

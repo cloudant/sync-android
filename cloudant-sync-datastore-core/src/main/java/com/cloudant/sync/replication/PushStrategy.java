@@ -29,10 +29,10 @@ import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
 import com.cloudant.sync.event.EventBus;
+import com.cloudant.sync.util.CollectionUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.Misc;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 
 import org.apache.commons.codec.binary.Hex;
 
@@ -328,7 +328,7 @@ class PushStrategy implements ReplicationStrategy {
 
         // Process the changes themselves in batches, where we post a batch
         // at a time to the remote database's _bulk_docs endpoint.
-        List<? extends List<DocumentRevision>> batches = Lists.partition(
+        List<? extends List<DocumentRevision>> batches = CollectionUtils.partition(
                 changes.getResults(),
                 this.bulkInsertSize
         );
