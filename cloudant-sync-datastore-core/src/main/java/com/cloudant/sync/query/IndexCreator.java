@@ -17,7 +17,7 @@ import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
-import com.google.common.base.Joiner;
+import com.cloudant.sync.util.Misc;
 
 import org.apache.commons.codec.binary.Hex;
 
@@ -336,8 +336,7 @@ class IndexCreator {
 
     private String createIndexTableStatementForIndex(String indexName, List<String> columns) {
         String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManager.tableNameForIndex(indexName));
-        Joiner joiner = Joiner.on(" NONE,").skipNulls();
-        String cols = joiner.join(columns);
+        String cols = Misc.join(" NONE, ", columns);
 
         return String.format("CREATE TABLE %s ( %s NONE )", tableName, cols);
     }
@@ -345,8 +344,7 @@ class IndexCreator {
     private String createIndexIndexStatementForIndex(String indexName, List<String> columns) {
         String tableName = IndexManager.tableNameForIndex(indexName);
         String sqlIndexName = tableName.concat("_index");
-        Joiner joiner = Joiner.on(",").skipNulls();
-        String cols = joiner.join(columns);
+        String cols = Misc.join(",", columns);
 
         return String.format(Locale.ENGLISH, "CREATE INDEX \"%s\" ON \"%s\" ( %s )", sqlIndexName, tableName, cols);
     }
@@ -367,9 +365,8 @@ class IndexCreator {
                                                        List<String> indexSettings) {
         String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManager
                 .tableNameForIndex(indexName));
-        Joiner joiner = Joiner.on(",").skipNulls();
-        String cols = joiner.join(columns);
-        String settings = joiner.join(indexSettings);
+        String cols = Misc.join(",", columns);
+        String settings = Misc.join(",", indexSettings);
 
         return String.format("CREATE VIRTUAL TABLE %s USING FTS4 ( %s, %s )", tableName,
                                                                               cols,

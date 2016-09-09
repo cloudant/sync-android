@@ -12,9 +12,22 @@
 
 package com.cloudant.sync.query;
 
-import static com.cloudant.sync.query.QueryConstants.*;
+import static com.cloudant.sync.query.QueryConstants.AND;
+import static com.cloudant.sync.query.QueryConstants.EQ;
+import static com.cloudant.sync.query.QueryConstants.EXISTS;
+import static com.cloudant.sync.query.QueryConstants.GT;
+import static com.cloudant.sync.query.QueryConstants.GTE;
+import static com.cloudant.sync.query.QueryConstants.IN;
+import static com.cloudant.sync.query.QueryConstants.LT;
+import static com.cloudant.sync.query.QueryConstants.LTE;
+import static com.cloudant.sync.query.QueryConstants.MOD;
+import static com.cloudant.sync.query.QueryConstants.NOT;
+import static com.cloudant.sync.query.QueryConstants.OR;
+import static com.cloudant.sync.query.QueryConstants.SEARCH;
+import static com.cloudant.sync.query.QueryConstants.SIZE;
+import static com.cloudant.sync.query.QueryConstants.TEXT;
 
-import com.google.common.base.Joiner;
+import com.cloudant.sync.util.Misc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -621,8 +634,7 @@ class QuerySqlTranslator {
                 }
             }
         }
-        Joiner joiner = Joiner.on(" AND ").skipNulls();
-        String where = joiner.join(whereClauses);
+        String where = Misc.join(" AND ", whereClauses);
         String[] parameterArray = new String[sqlParameters.size()];
         int idx = 0;
         for (Object parameter: sqlParameters) {
@@ -640,8 +652,7 @@ class QuerySqlTranslator {
             sqlParameters.add(String.valueOf(value));
         }
 
-        Joiner opJoiner = Joiner.on(", ").skipNulls();
-        return String.format("( %s )", opJoiner.join(inOperands));
+        return String.format("( %s )", Misc.join(", ", inOperands));
     }
 
     /**

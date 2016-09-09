@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.replication;
 
-import com.google.common.base.Joiner;
+import com.cloudant.sync.util.Misc;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -136,7 +136,7 @@ public class PullFilter {
 
             queries.add(0, String.format("filter=%s", this.name));
 
-            return Joiner.on('&').skipNulls().join(queries);
+            return Misc.join("&", queries);
         }
     }
 }

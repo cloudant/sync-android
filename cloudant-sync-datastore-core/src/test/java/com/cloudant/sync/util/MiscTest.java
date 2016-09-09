@@ -17,6 +17,8 @@ package com.cloudant.sync.util;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 public class MiscTest {
 
     @Test
@@ -45,5 +47,31 @@ public class MiscTest {
         } finally {
             System.setProperty("java.runtime.name", p);
         }
+    }
+
+    @Test
+    public void joinSkipsNulls() throws Exception {
+        String joined =
+                Misc.join("##", Arrays.asList(new String[]{"alpha", null, "beta", null, "gamma"}));
+        Assert.assertEquals("The joined string should not have null elements",
+                "alpha##beta##gamma", joined);
+    }
+
+    @Test
+    public void joinDoesNotAppendTrailingSeparator() throws Exception {
+        String joined = Misc.join("##", Arrays.asList(new String[]{"alpha"}));
+        Assert.assertFalse("The joined string should not end with the separator", joined.endsWith
+                ("##"));
+
+        joined = Misc.join("##", Arrays.asList(new String[]{"alpha", "beta"}));
+        Assert.assertFalse("The joined string should not end with the separator", joined.endsWith
+                ("##"));
+    }
+
+    @Test
+    public void basicJoin() throws Exception {
+        String joined = Misc.join(", ", Arrays.asList(new String[]{"alpha", "beta", "gamma"}));
+        Assert.assertEquals("Should get the correct joined string",
+                "alpha, beta, gamma", joined);
     }
 }

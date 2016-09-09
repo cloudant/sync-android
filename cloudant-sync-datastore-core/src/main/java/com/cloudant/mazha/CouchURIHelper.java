@@ -20,12 +20,11 @@ package com.cloudant.mazha;
 
 import com.cloudant.common.CouchConstants;
 import com.cloudant.mazha.json.JSONHelper;
-import com.google.common.base.Joiner;
+import com.cloudant.sync.util.Misc;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -35,8 +34,6 @@ import java.util.Map;
  * @api_private
  */
 public class CouchURIHelper {
-
-    private final static Joiner queryJoiner = Joiner.on('&').skipNulls();
 
     // CouchDB/Cloudant server instance URL. Does not end in /
     private final URI rootUri;
@@ -174,7 +171,7 @@ public class CouchURIHelper {
             String term = String.format("%s=%s", key, value);
             queryParts.add(term);
         }
-        return queryJoiner.join(queryParts);
+        return Misc.join("&", queryParts);
     }
 
     private URI uriFor(String uri) {
