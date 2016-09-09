@@ -21,6 +21,7 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64InputStreamFactory;
 import com.cloudant.android.ContentValues;
+import com.cloudant.common.ValueListMap;
 import com.cloudant.sync.datastore.callables.DeleteDocumentCallable;
 import com.cloudant.sync.datastore.callables.GetAllDocumentIdsCallable;
 import com.cloudant.sync.datastore.callables.GetAllRevisionsOfDocumentCallable;
@@ -50,13 +51,11 @@ import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
+import com.cloudant.sync.util.CollectionUtils;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.Misc;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -69,6 +68,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -1252,8 +1252,7 @@ public class DatastoreImpl implements Datastore {
     }
 
     /**
-     * Removes the subset of given the document id/revisions that are stored in the database.
-     * Leaving only the subset of document id/revisions that are not stored.
+     * Returns the subset of given the document id/revisions that are not stored in the database.
      *
      * The input revisions is a map, whose key is document id, and value is a list of revisions.
      * An example input could be (in json format):
@@ -1274,25 +1273,23 @@ public class DatastoreImpl implements Datastore {
      * @see
      * <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
      * @param revisions a Multimap of document id → revision id
-     * @return the same map as revisions with the subset of given the document
-     * id/revisions that are already stored in the database removed from it
+     * @return the subset of given the document id/revisions that are already stored in the database
      */
-    public Map<String, Collection<String>> revsDiff(final Multimap<String, String> revisions) {
+    public Map<String, List<String>> revsDiff(final Map<String, List<String>> revisions) {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNull(revisions, "Input revisions");
 
         try {
-            return queue.submit(new SQLCallable<Map<String, Collection<String>>>() {
+            return queue.submit(new SQLCallable<Map<String, List<String>>>() {
                 @Override
-                public Map<String, Collection<String>> call(SQLDatabase db) throws Exception {
+                public Map<String, List<String>> call(SQLDatabase db) throws Exception {
+
+                    ValueListMap<String, String> missingRevs = new ValueListMap<String, String>();
+
                     // Break down by docId first to avoid potential rev ID clashes between doc IDs
-                    Set<String> keys = revisions.keySet();
-                    List<String> docIds = new ArrayList<String>(keys.size());
-                    docIds.addAll(keys);
-                    for (String docId : docIds) {
-                        Collection<String> revsCollection = revisions.get(docId);
-                        List<String> revs = new ArrayList(revsCollection.size());
-                        revs.addAll(revsCollection);
+                    for (Map.Entry<String, List<String>> entry : revisions.entrySet()) {
+                        String docId = entry.getKey();
+                        List<String> revs = entry.getValue();
                         // Partition into batches to avoid exceeding placeholder limit
                         // The doc ID will use one placeholder, so use limit - 1 for the number of
                         // revs for the remaining placeholders.
@@ -1300,10 +1297,10 @@ public class DatastoreImpl implements Datastore {
                                 SQLITE_QUERY_PLACEHOLDERS_LIMIT - 1);
 
                         for (List<String> revsBatch : batches) {
-                            revsDiffBatch(db, docId, revsBatch, revisions);
+                            missingRevs.addValuesToKey(docId, revsDiffBatch(db, docId, revsBatch));
                         }
                     }
-                    return revisions.asMap();
+                    return missingRevs;
                 }
             }).get();
         } catch (InterruptedException e) {
@@ -1316,16 +1313,19 @@ public class DatastoreImpl implements Datastore {
     }
 
     /**
-     * Removes revisions present in the datastore from the input map.
+     * Checks the supplied collection of revisions for the given document ID and returns a
+     * collection containing only those entries that are missing from the database.
      *
-     * @param db        the database to get the revisions from
-     * @param docId     the doc ID to check
-     * @param revs      the rev IDs to check
-     * @param revisions a multimap from document id to set of revisions. The
-     *                  map is modified in place for performance consideration.
+     * @param db    the database to get the revisions from
+     * @param docId the doc ID to check
+     * @param revs  the rev IDs to check
+     * @return collection of rev IDs not present in the database
      */
-    void revsDiffBatch(SQLDatabase db, String docId, Collection<String> revs, Multimap<String,
-            String> revisions) throws DatastoreException {
+    Collection<String> revsDiffBatch(SQLDatabase db, String docId, Collection<String> revs)
+            throws DatastoreException {
+
+        // Consider all missing to start
+        Set<String> missingRevs = new HashSet<String>(revs);
 
         final String sql = String.format(
                 "SELECT revs.revid FROM docs, revs " +
@@ -1335,21 +1335,21 @@ public class DatastoreImpl implements Datastore {
         String[] args = new String[1 + revs.size()];
         args[0] = docId;
         // Copy the revisions into the end of the args array
-        System.arraycopy(revs.toArray(new String[revs.size()]), 0, args, 1,
-                revs.size());
+        System.arraycopy(revs.toArray(new String[revs.size()]), 0, args, 1, revs.size());
 
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, args);
             while (cursor.moveToNext()) {
                 String revId = cursor.getString(cursor.getColumnIndex("revid"));
-                revisions.remove(docId, revId);
+                missingRevs.remove(revId);
             }
         } catch (SQLException e) {
             throw new DatastoreException(e);
         } finally {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
+        return missingRevs;
     }
 
     public String extensionDataFolder(String extensionName) {

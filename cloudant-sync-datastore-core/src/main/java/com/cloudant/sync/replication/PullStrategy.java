@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.common.ValueListMap;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.mazha.ChangesResult;
@@ -31,7 +32,6 @@ import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.util.CollectionUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.Misc;
-import com.google.common.collect.Multimap;
 
 import org.apache.commons.codec.binary.Hex;
 
@@ -39,7 +39,6 @@ import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -301,8 +300,8 @@ class PullStrategy implements ReplicationStrategy {
         );
         logger.info(feed);
 
-        Multimap<String, String> openRevs = changeFeeds.openRevisions(0, changeFeeds.size());
-        Map<String, Collection<String>> missingRevisions = this.targetDb.getDbCore().revsDiff
+        Map<String, List<String>> openRevs = changeFeeds.openRevisions(0, changeFeeds.size());
+        Map<String, List<String>> missingRevisions = this.targetDb.getDbCore().revsDiff
                 (openRevs);
 
         int changesProcessed = 0;
@@ -448,7 +447,7 @@ class PullStrategy implements ReplicationStrategy {
     }
 
     public Iterable<DocumentRevsList> createTask(List<String> ids,
-                                                 Map<String, Collection<String>> revisions) {
+                                                 Map<String, List<String>> revisions) {
 
         List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
 
