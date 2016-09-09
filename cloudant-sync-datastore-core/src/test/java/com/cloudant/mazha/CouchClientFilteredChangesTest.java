@@ -14,16 +14,17 @@
 
 package com.cloudant.mazha;
 
+import static org.hamcrest.Matchers.hasSize;
+
+import com.cloudant.common.CollectionFactory;
 import com.cloudant.common.RequireRunningCouchDB;
-import com.google.common.collect.ImmutableMap;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.Map;
-
-import static org.hamcrest.Matchers.hasSize;
 
 @Category(RequireRunningCouchDB.class)
 public class CouchClientFilteredChangesTest extends CouchClientTestBase {
@@ -54,7 +55,7 @@ public class CouchClientFilteredChangesTest extends CouchClientTestBase {
     @Test
     public void changes_filteredWithParameter() {
         String filter = "animal/by_class";
-        Map<String, String> parameters = ImmutableMap.of("class", "mammal");
+        Map<String, String> parameters = CollectionFactory.MAP.of("class", "mammal");
         ChangesResult changes = client.changes(filter, parameters, null, 100);
         Assert.assertThat(changes.getResults(), hasSize(8));
     }

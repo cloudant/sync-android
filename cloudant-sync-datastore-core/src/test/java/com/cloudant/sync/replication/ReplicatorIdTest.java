@@ -16,8 +16,8 @@ package com.cloudant.sync.replication;
 
 import static org.mockito.Mockito.mock;
 
+import com.cloudant.common.CollectionFactory;
 import com.cloudant.sync.datastore.DatastoreImpl;
-import com.google.common.collect.ImmutableMap;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -119,7 +119,7 @@ public class ReplicatorIdTest {
                 .from(new URI
                 ("http://default-host/default-database")).to(mock(DatastoreImpl.class))
                 .filter(new PullFilter("animal/by_class",
-                ImmutableMap.of("class", "mammal"))).build()).strategy;
+                CollectionFactory.MAP.of("class", "mammal"))).build()).strategy;
 
         Assert.assertNotEquals(pull1.getReplicationId(),
                 pull2.getReplicationId());
@@ -132,12 +132,12 @@ public class ReplicatorIdTest {
                 .from(new URI
                 ("http://default-host/default-database")).to(mock(DatastoreImpl.class))
                 .filter(new PullFilter("animal/by_class",
-                ImmutableMap.of("class", "mammal"))).build()).strategy;
+                CollectionFactory.MAP.of("class", "mammal"))).build()).strategy;
         PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
                 ("http://default-host/default-database")).to(mock(DatastoreImpl.class))
                 .filter(new PullFilter("animal/by_class",
-                ImmutableMap.of("class", "bird"))).build()).strategy;
+                CollectionFactory.MAP.of("class", "bird"))).build()).strategy;
 
         Assert.assertNotEquals(pull1.getReplicationId(),
                 pull2.getReplicationId());
