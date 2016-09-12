@@ -19,7 +19,7 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.common.TestOptions;
 import com.cloudant.http.HttpConnectionInterceptorContext;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
-import com.google.common.base.Strings;
+import com.cloudant.sync.util.Misc;
 
 import org.apache.commons.codec.binary.Base64;
 import org.junit.Assert;
@@ -88,7 +88,7 @@ public class HttpRequestsTest extends CouchClientTestBase {
         // in admin party mode)
         org.junit.Assume.assumeTrue("Test skipped because Basic Auth credentials are required to " +
                         "access this server",
-                TestOptions.COOKIE_AUTH && Strings.isNullOrEmpty(customCouchConfig.getRootUri().getUserInfo()));
+                TestOptions.COOKIE_AUTH && Misc.isStringNullOrEmpty(customCouchConfig.getRootUri().getUserInfo()));
 
         try {
             String authString = "foo:bar";

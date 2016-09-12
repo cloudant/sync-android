@@ -15,7 +15,7 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.mazha.DocumentRevs;
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,7 +66,7 @@ public class DocumentRevsList implements Iterable<DocumentRevs> {
     private final List<DocumentRevs> documentRevsList;
 
     public DocumentRevsList(List<DocumentRevs> list) {
-        Preconditions.checkNotNull(list, "DocumentRevs list must not be null");
+        Misc.checkNotNull(list, "DocumentRevs list");
         this.documentRevsList = new ArrayList<DocumentRevs>(list);
 
         // Order of the list decides which DocumentRevs is inserted first in bulkCreateDocs update.

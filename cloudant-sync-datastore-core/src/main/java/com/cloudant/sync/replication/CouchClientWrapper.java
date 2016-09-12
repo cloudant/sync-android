@@ -28,8 +28,7 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.cloudant.sync.util.Misc;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -52,7 +51,7 @@ public class CouchClientWrapper implements CouchDB {
     final CouchClient couchClient;
 
     public CouchClientWrapper(CouchClient client) {
-        Preconditions.checkNotNull(client, "Couch client must not be null");
+        Misc.checkNotNull(client, "Couch client");
         this.couchClient = client;
     }
 
@@ -87,8 +86,7 @@ public class CouchClientWrapper implements CouchDB {
 
     @Override
     public String getCheckpoint(String checkpointId) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(checkpointId),
-                "Checkpoint id must not be empty");
+        Misc.checkNotNullOrEmpty(checkpointId, "Checkpoint id");
         try {
             RemoteCheckpointDoc response = couchClient.getDocument(
                     getCheckpointLocalDocId(checkpointId), RemoteCheckpointDoc.class);
@@ -104,9 +102,8 @@ public class CouchClientWrapper implements CouchDB {
 
     @Override
     public void putCheckpoint(String checkpointId, String sequence) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(checkpointId),
-                "Checkpoint id must not be empty");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(sequence), "Sequence must not be empty");
+        Misc.checkNotNullOrEmpty(checkpointId, "Checkpoint id");
+        Misc.checkNotNullOrEmpty(sequence, "Sequence");
         String replicatorLocalDocId = getCheckpointLocalDocId(checkpointId);
         if (couchClient.contains(replicatorLocalDocId)) {
             updateCheckpoint(replicatorLocalDocId, sequence);

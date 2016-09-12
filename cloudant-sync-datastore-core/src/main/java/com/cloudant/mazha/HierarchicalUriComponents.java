@@ -23,7 +23,7 @@
 
 package com.cloudant.mazha;
 
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
@@ -48,15 +48,15 @@ public class HierarchicalUriComponents {
         if (source == null) {
             return null;
         }
-        Preconditions.checkNotNull(encoding, "Encoding must not be null");
-        Preconditions.checkArgument(!encoding.isEmpty(), "Encoding must not be empty");
+        Misc.checkNotNull(encoding, "Encoding");
+        Misc.checkArgument(!encoding.isEmpty(), "Encoding must not be empty");
         byte[] bytes = encodeBytes(source.getBytes(encoding), type);
         return new String(bytes, "US-ASCII");
     }
 
     private static byte[] encodeBytes(byte[] source, Type type) {
-        Preconditions.checkNotNull(source, "Source must not be null");
-        Preconditions.checkNotNull(type, "Type must not be null");
+        Misc.checkNotNull(source, "Source");
+        Misc.checkNotNull(type, "Type");
         ByteArrayOutputStream bos = new ByteArrayOutputStream(source.length);
         for (byte b : source) {
             if (b < 0) {

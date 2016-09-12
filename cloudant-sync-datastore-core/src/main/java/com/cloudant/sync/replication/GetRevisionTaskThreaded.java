@@ -15,7 +15,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.sync.datastore.DocumentRevsList;
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 
 import java.util.Iterator;
 import java.util.List;
@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -109,11 +108,11 @@ class GetRevisionTaskThreaded implements Iterable<DocumentRevsList> {
     public GetRevisionTaskThreaded(CouchDB sourceDb,
                                    List<BulkGetRequest> requests,
                                    boolean pullAttachmentsInline) {
-        Preconditions.checkNotNull(sourceDb, "sourceDb cannot be null");
-        Preconditions.checkNotNull(requests, "requests cannot be null");
+        Misc.checkNotNull(sourceDb, "sourceDb");
+        Misc.checkNotNull(requests, "requests");
         for (BulkGetRequest request : requests) {
-            Preconditions.checkNotNull(request.id, "id cannot be null");
-            Preconditions.checkNotNull(request.revs, "revs cannot be null");
+            Misc.checkNotNull(request.id, "id");
+            Misc.checkNotNull(request.revs, "revs");
         }
 
         this.sourceDb = sourceDb;

@@ -15,7 +15,7 @@
 package com.cloudant.sync.sqlite.sqlite4java;
 
 import com.cloudant.android.ContentValues;
-import com.google.common.base.Strings;
+import com.cloudant.sync.util.Misc;
 
 import java.util.ArrayList;
 import java.util.regex.Pattern;
@@ -45,7 +45,7 @@ public class QueryBuilder {
             i++;
         }
 
-        if (!Strings.isNullOrEmpty(whereClause)) {
+        if (!Misc.isStringNullOrEmpty(whereClause)) {
             query.append(" WHERE ");
             query.append(whereClause);
         }
@@ -83,11 +83,11 @@ public class QueryBuilder {
     public static String buildSelectQuery(String table, String[] columns, String where,
             String groupBy, String having, String orderBy, String limit) {
 
-        if (Strings.isNullOrEmpty(groupBy) && !Strings.isNullOrEmpty(having)) {
+        if (Misc.isStringNullOrEmpty(groupBy) && !Misc.isStringNullOrEmpty(having)) {
             throw new IllegalArgumentException(
                     "HAVING clauses are only permitted when using a groupBy clause");
         }
-        if (!Strings.isNullOrEmpty(limit) && !sLimitPattern.matcher(limit).matches()) {
+        if (!Misc.isStringNullOrEmpty(limit) && !sLimitPattern.matcher(limit).matches()) {
             throw new IllegalArgumentException("invalid LIMIT clauses:" + limit);
         }
 
@@ -147,7 +147,7 @@ public class QueryBuilder {
     }
 
     static void appendClause(StringBuilder s, String name, String clause) {
-        if (!Strings.isNullOrEmpty(clause)) {
+        if (!Misc.isStringNullOrEmpty(clause)) {
             s.append(name);
             s.append(clause);
         }

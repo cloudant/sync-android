@@ -21,7 +21,6 @@ import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.migrations.Migration;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.Misc;
-import com.google.common.base.Preconditions;
 
 import java.io.File;
 import java.io.IOException;
@@ -183,7 +182,7 @@ public class SQLDatabaseFactory {
      */
     public static void updateSchema(SQLDatabase database, Migration migration, int version)
             throws SQLException {
-        Preconditions.checkArgument(version > 0, "Schema version number must be positive");
+        Misc.checkArgument(version > 0, "Schema version number must be positive");
         // ensure foreign keys are enforced in the case that we are up to date and no migration happen
         database.execSQL("PRAGMA foreign_keys = ON;");
         int dbVersion = database.getVersion();

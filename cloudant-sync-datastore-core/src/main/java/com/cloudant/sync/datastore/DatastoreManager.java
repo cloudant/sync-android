@@ -25,7 +25,7 @@ import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DatabaseCreated;
 import com.cloudant.sync.notifications.DatabaseDeleted;
 import com.cloudant.sync.notifications.DatabaseOpened;
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -252,7 +252,7 @@ public class DatastoreManager {
      */
     public Datastore openDatastore(String dbName, KeyProvider provider) throws
             DatastoreNotCreatedException {
-        Preconditions.checkArgument(dbName.matches(LEGAL_CHARACTERS),
+        Misc.checkArgument(dbName.matches(LEGAL_CHARACTERS),
                 "A database must be named with all lowercase letters (a-z), digits (0-9),"
                         + " or any of the _$()+-/ characters. The name has to start with a"
                         + " lowercase letter (a-z).");
@@ -291,7 +291,7 @@ public class DatastoreManager {
      * @see DatastoreManager#getEventBus() 
      */
     public void deleteDatastore(String dbName) throws IOException {
-        Preconditions.checkNotNull(dbName, "Datastore name must not be null");
+        Misc.checkNotNull(dbName, "Datastore name");
 
         synchronized (openedDatastores) {
             Datastore ds = openedDatastores.remove(dbName);

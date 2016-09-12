@@ -14,11 +14,15 @@
 
 package com.cloudant.mazha;
 
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.startsWith;
+
 import com.cloudant.common.CollectionFactory;
 import com.cloudant.common.CouchConstants;
 import com.cloudant.common.RequireRunningCouchDB;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.cloudant.sync.util.Misc;
+
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -32,10 +36,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.startsWith;
 
 @Category(RequireRunningCouchDB.class)
 public class CouchClientBasicTest extends CouchClientTestBase {
@@ -97,7 +97,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         String dbName = "mazha_test_deletedb_not_exist";
         CouchConfig config = getCouchConfig(dbName);
         CouchClient customClient = new CouchClient(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
-        Preconditions.checkArgument(!isDbExist(dbName), "%s must not exist", dbName);
+        Misc.checkArgument(!isDbExist(dbName), String.format("%s must not exist", dbName));
         customClient.deleteDb();
     }
 
@@ -120,7 +120,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         String dbName = "mazha_test_getdbinfo_dbnotexist";
         CouchConfig config = getCouchConfig(dbName);
         CouchClient customClient = new CouchClient(config.getRootUri(), config.getRequestInterceptors(), config.getResponseInterceptors());
-        Preconditions.checkArgument(!isDbExist(dbName), "%s must not exist", dbName);
+        Misc.checkArgument(!isDbExist(dbName), String.format("%s must not exist", dbName));
         customClient.getDbInfo();
     }
 
@@ -152,8 +152,8 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         doc.put(CouchConstants._id, "SomeUniqueId");
 
         Response res = client.create(doc);
-        Assert.assertTrue(!Strings.isNullOrEmpty(res.getId()));
-        Assert.assertTrue(!Strings.isNullOrEmpty(res.getRev()));
+        Assert.assertTrue(!Misc.isStringNullOrEmpty(res.getId()));
+        Assert.assertTrue(!Misc.isStringNullOrEmpty(res.getRev()));
     }
 
     @Test(expected = DocumentConflictException.class)
@@ -163,8 +163,8 @@ public class CouchClientBasicTest extends CouchClientTestBase {
 
         {
             Response res = client.create(doc);
-            Assert.assertTrue(!Strings.isNullOrEmpty(res.getId()));
-            Assert.assertTrue(!Strings.isNullOrEmpty(res.getRev()));
+            Assert.assertTrue(!Misc.isStringNullOrEmpty(res.getId()));
+            Assert.assertTrue(!Misc.isStringNullOrEmpty(res.getRev()));
         }
 
         {

@@ -21,7 +21,7 @@
 
 package com.cloudant.common;
 
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
@@ -43,7 +43,7 @@ public class RetriableTask<T> implements Callable<T> {
 
     public RetriableTask(Callable<T> task) {
         this(DEFAULT_TRIES, DEFAULT_WAIT_TIME, task);
-        Preconditions.checkNotNull(task, "Task must not be null");
+        Misc.checkNotNull(task, "Task");
     }
 
     public RetriableTask(int totalTries, long timeToWait, Callable<T> task) {

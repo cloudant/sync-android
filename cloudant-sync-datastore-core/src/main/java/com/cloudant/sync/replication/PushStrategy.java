@@ -32,7 +32,6 @@ import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.util.CollectionUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.Misc;
-import com.google.common.base.Strings;
 
 import org.apache.commons.codec.binary.Hex;
 
@@ -447,7 +446,7 @@ class PushStrategy implements ReplicationStrategy {
     private long getLastCheckpointSequence() throws DatastoreException {
         String lastSequence =  targetDb.getCheckpoint(this.getReplicationId());
         // As we are pretty sure the checkpoint is a number
-        return Strings.isNullOrEmpty(lastSequence) ? 0 : Long.parseLong(lastSequence);
+        return Misc.isStringNullOrEmpty(lastSequence) ? 0 : Long.parseLong(lastSequence);
     }
 
     private void putCheckpoint(String checkpoint) throws DatastoreException {

@@ -18,7 +18,7 @@
 
 package com.cloudant.mazha;
 
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 
 import java.util.HashMap;
 import java.util.List;
@@ -83,7 +83,7 @@ public class GetOpenRevisionsResponse {
     private final Map<String, MissingOpenRevision> missingDataMap = new HashMap<String, MissingOpenRevision>();
 
     public GetOpenRevisionsResponse(List<OpenRevision> data) {
-        Preconditions.checkNotNull(data, "Data should not be null");
+        Misc.checkNotNull(data, "Data");
 
         for(OpenRevision d : data) {
             if(d instanceof OkOpenRevision) {
