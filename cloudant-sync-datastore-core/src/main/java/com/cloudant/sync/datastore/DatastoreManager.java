@@ -358,7 +358,8 @@ public class DatastoreManager {
      * {@link com.cloudant.sync.notifications.DatabaseModified Database Notification Events} to.</p>
      * @return the DatastoreManager's EventBus
      *
-     * @see <a href="https://code.google.com/p/guava-libraries/wiki/EventBusExplained">Google Guava EventBus documentation</a>
+     * @see <a href="https://github.com/cloudant/sync-android/blob/master/doc/events.md">
+     *     Events documentation</a>
      */
     public EventBus getEventBus() {
         return eventBus;
