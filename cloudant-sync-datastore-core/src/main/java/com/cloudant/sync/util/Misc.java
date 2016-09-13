@@ -16,6 +16,8 @@ package com.cloudant.sync.util;
 
 import java.io.InputStream;
 import java.security.MessageDigest;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,10 +51,34 @@ public class Misc {
                 sha1.update(buf, 0, bytesRead);
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING,"Problem calacualting SHA1 for stream",e);
+            logger.log(Level.WARNING,"Problem calculating SHA1 for stream",e);
             return null;
         }
         return sha1.digest();
     }
 
+    /**
+     * Utility to join strings with a separator. Skips null strings and does not append a trailing
+     * separator.
+     *
+     * @param separator     the string to use to separate the entries
+     * @param stringsToJoin the strings to join together
+     * @return the joined string
+     */
+    public static String join(String separator, Collection<String> stringsToJoin) {
+        Iterator<String> iterator = stringsToJoin.iterator();
+        StringBuilder builder = new StringBuilder();
+        // Check if there is at least 1 element then use do/while to avoid trailing separator
+        int index = stringsToJoin.size();
+        for (String str : stringsToJoin) {
+            index--;
+            if (str != null) {
+                builder.append(str);
+                if (index > 0) {
+                    builder.append(separator);
+                }
+            }
+        }
+        return builder.toString();
+    }
 }

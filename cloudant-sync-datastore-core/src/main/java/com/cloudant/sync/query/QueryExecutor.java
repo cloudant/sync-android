@@ -18,7 +18,7 @@ import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.DatabaseUtils;
-import com.google.common.base.Joiner;
+import com.cloudant.sync.util.Misc;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -378,7 +378,6 @@ class QueryExecutor {
         List<String> parameterList = new ArrayList<String>();
 
         String whereClause = "";
-        Joiner joiner = Joiner.on(", ").skipNulls();
         if (docIdSet.size() < SMALL_RESULT_SET_SIZE_THRESHOLD) {
             List<String> placeholders = new ArrayList<String>();
             for (String docId : docIdSet) {
@@ -386,10 +385,10 @@ class QueryExecutor {
                 parameterList.add(docId);
             }
 
-            whereClause = String.format("WHERE _id IN (%s)", joiner.join(placeholders));
+            whereClause = String.format("WHERE _id IN (%s)", Misc.join(", ", placeholders));
         }
 
-        String orderBy = joiner.join(orderClauses);
+        String orderBy = Misc.join(", ", orderClauses);
         String sql = String.format("SELECT DISTINCT _id FROM %s %s ORDER BY %s", indexTable,
                                                                                  whereClause,
                                                                                  orderBy);
