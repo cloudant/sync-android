@@ -81,4 +81,78 @@ public class Misc {
         }
         return builder.toString();
     }
+    /**
+     * Check that a parameter is not null and throw IllegalArgumentException with a message of
+     * errorMessagePrefix + " must not be null." if it is null, defaulting to "Parameter must not be
+     * null.".
+     *
+     * @param param              the parameter to check
+     * @param errorMessagePrefix the prefix of the error message to use for the
+     *                           IllegalArgumentException if the parameter was null
+     * @throws NullPointerException if the arg is null.
+     */
+    public static void checkNotNull(Object param, String errorMessagePrefix) throws
+            NullPointerException {
+        if (param == null) {
+            throw new NullPointerException((errorMessagePrefix != null ? errorMessagePrefix :
+                    "Parameter") + " must not be null.");
+        }
+    }
+
+    /**
+     * Check that a string parameter is not null or empty and throw IllegalArgumentException with a
+     * message of errorMessagePrefix + " must not be empty." if it is empty, defaulting to
+     * "Parameter must not be empty".
+     *
+     * @param param              the string to check
+     * @param errorMessagePrefix the prefix of the error message to use for the
+     *                           IllegalArgumentException if the parameter was null or empty
+     * @throws IllegalArgumentException if the string is null or empty
+     */
+    public static void checkNotNullOrEmpty(String param, String errorMessagePrefix) throws
+            IllegalArgumentException {
+        checkArgument(!isStringNullOrEmpty(param), (errorMessagePrefix != null ? errorMessagePrefix :
+                "Parameter") + " must not be " + param == null ? "null." : "empty.");
+    }
+
+    /**
+     * @param param the string to check
+     * @return true if the string is null or emtpy
+     */
+    public static boolean isStringNullOrEmpty(String param) {
+        if (param == null || param.isEmpty()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Check an argument meets a condition and throw an IllegalArgumentException if it doesn't.
+     *
+     * @param argCondition the condition to check
+     * @param errorMessage the error message to use in the IllegalArgumentException
+     * @throws IllegalArgumentException if the argCondition is false
+     */
+    public static void checkArgument(boolean argCondition, String errorMessage) throws
+            IllegalArgumentException {
+        if (!argCondition) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+    }
+
+    /**
+     * Check if a condition is true and throw an IllegalStateException with the given
+     * errorMessage if it is not.
+     *
+     * @param stateCheck   the state condition to check
+     * @param errorMessage the error string to add to the IllegalStateException
+     * @throws IllegalStateException if the stateCheck is false
+     */
+    public static void checkState(boolean stateCheck, String errorMessage) throws
+            IllegalStateException {
+        if (!stateCheck) {
+            throw new IllegalStateException(errorMessage);
+        }
+    }
 }

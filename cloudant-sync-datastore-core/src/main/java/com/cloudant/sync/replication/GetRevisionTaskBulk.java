@@ -15,7 +15,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.sync.datastore.DocumentRevsList;
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 
 import java.util.Iterator;
 import java.util.List;
@@ -68,11 +68,11 @@ class GetRevisionTaskBulk implements Iterable<DocumentRevsList> {
     public GetRevisionTaskBulk(CouchDB sourceDb,
                            List<BulkGetRequest> requests,
                            boolean pullAttachmentsInline) {
-        Preconditions.checkNotNull(sourceDb, "sourceDb cannot be null");
-        Preconditions.checkNotNull(requests, "requests cannot be null");
+        Misc.checkNotNull(sourceDb, "sourceDb");
+        Misc.checkNotNull(requests, "requests");
         for(BulkGetRequest request : requests) {
-            Preconditions.checkNotNull(request.id, "id cannot be null");
-            Preconditions.checkNotNull(request.revs, "revs cannot be null");
+            Misc.checkNotNull(request.id, "id");
+            Misc.checkNotNull(request.revs,"revs");
         }
         this.sourceDb = sourceDb;
         this.requests = requests;

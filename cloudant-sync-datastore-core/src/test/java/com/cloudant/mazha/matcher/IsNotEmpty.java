@@ -14,7 +14,8 @@
 
 package com.cloudant.mazha.matcher;
 
-import com.google.common.base.Strings;
+import com.cloudant.sync.util.Misc;
+
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -24,7 +25,7 @@ public class IsNotEmpty extends TypeSafeMatcher<String> {
 
     @Override
     protected boolean matchesSafely(String item) {
-        return !Strings.isNullOrEmpty(item);
+        return !Misc.isStringNullOrEmpty(item);
     }
 
     @Override

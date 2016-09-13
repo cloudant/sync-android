@@ -16,8 +16,6 @@ package com.cloudant.todo;
 
 import java.util.List;
 
-import com.google.common.base.Preconditions;
-
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.view.LayoutInflater;
@@ -35,8 +33,12 @@ public class TaskAdapter extends BaseAdapter implements ListAdapter {
     private final List<Task> tasks;
 
     public TaskAdapter(Context context, List<Task> tasks) {
-        Preconditions.checkNotNull(context);
-        Preconditions.checkNotNull(tasks);
+        if (context == null) {
+            throw new IllegalArgumentException("Context must not be null.")
+        }
+        if (tasks == null) {
+            throw new IllegalArgumentException("List of tasks must not be null.")
+        }
         this.context = context;
         this.tasks = tasks;
     }

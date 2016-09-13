@@ -18,7 +18,7 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.util.JSONUtils;
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -45,7 +45,8 @@ final class DocumentBodyImpl implements DocumentBody {
     }
 
     protected DocumentBodyImpl(Map map) {
-        Preconditions.checkArgument(map != null);
+        // Note uses checkArgument not checkNotNull to keep IllegalArgumentException not NPE
+        Misc.checkArgument(map != null, "Document body map must not be null.");
         if(JSONUtils.isValidJSON(map)) {
             this.map = map;
         } else {

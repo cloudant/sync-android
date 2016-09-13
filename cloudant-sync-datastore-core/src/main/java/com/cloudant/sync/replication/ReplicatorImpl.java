@@ -18,7 +18,7 @@ import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 
 import java.util.Locale;
 
@@ -143,7 +143,7 @@ public class ReplicatorImpl implements Replicator {
      * Working thread are running when state is either STARTED or STOPPING.
      */
     private void assertRunningState() {
-        Preconditions.checkArgument(this.state == State.STARTED || this.state == State.STOPPING,
+        Misc.checkArgument(this.state == State.STARTED || this.state == State.STOPPING,
                 "Replicate state must be STARTED or STOPPING.");
     }
 

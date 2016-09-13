@@ -15,9 +15,17 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.util.AbstractTreeNode;
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * <p>Describes the document tree for a single
@@ -181,7 +189,7 @@ public class DocumentRevisionTree {
      * @return {@code DocumentRevisionTree} for method chaining
      */
     public DocumentRevisionTree add(DocumentRevision documentRevision) {
-        Preconditions.checkArgument(!sequenceMap.containsKey(documentRevision.getSequence()),
+        Misc.checkArgument(!sequenceMap.containsKey(documentRevision.getSequence()),
                 "The revision must not be added to the tree before.");
 
         if(documentNumericId == -1l && docId == null){
@@ -203,7 +211,7 @@ public class DocumentRevisionTree {
     }
 
     private void addRootDBObject(DocumentRevision documentRevision) {
-        Preconditions.checkArgument(documentRevision.getParent() <= 0,
+        Misc.checkArgument(documentRevision.getParent() <= 0,
                 "The added root DocumentRevision must be a valid root revision.");
 
         DocumentRevisionNode rootNode = new DocumentRevisionNode(documentRevision);
@@ -214,7 +222,7 @@ public class DocumentRevisionTree {
 
     private void addNode(DocumentRevision documentRevision) {
         long parentSequence = documentRevision.getParent();
-        Preconditions.checkArgument(sequenceMap.containsKey(parentSequence),
+        Misc.checkArgument(sequenceMap.containsKey(parentSequence),
             "The given revision's parent must be in the tree already.");
 
         DocumentRevisionNode parent = sequenceMap.get(parentSequence);
@@ -267,8 +275,8 @@ public class DocumentRevisionTree {
      * @return the child with a given revision ID of a {@code DocumentRevision}.
      */
     public DocumentRevision lookupChildByRevId(DocumentRevision parentNode, String childRevision) {
-        Preconditions.checkNotNull(parentNode, "Parent node must not be null.");
-        Preconditions.checkArgument(sequenceMap.containsKey(parentNode.getSequence()),
+        Misc.checkNotNull(parentNode, "Parent node");
+        Misc.checkArgument(sequenceMap.containsKey(parentNode.getSequence()),
                 "The given parent DocumentRevision must be in the tree.");
 
         DocumentRevisionNode p = sequenceMap.get(parentNode.getSequence());
@@ -414,7 +422,7 @@ public class DocumentRevisionTree {
      * to the root of the revision's tree.
      */
     public List<DocumentRevision> getPathForNode(long sequence) {
-        Preconditions.checkArgument(sequenceMap.containsKey(sequence),
+        Misc.checkArgument(sequenceMap.containsKey(sequence),
                 "DocumentRevision for that sequence must be in the tree already.");
         DocumentRevisionNode l = sequenceMap.get(sequence);
         List<DocumentRevision> r = new LinkedList<DocumentRevision>();

@@ -19,8 +19,7 @@ import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
 import com.cloudant.android.ContentValues;
 import com.cloudant.sync.sqlite.SQLDatabase;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.cloudant.sync.util.Misc;
 
 import java.io.File;
 import java.sql.SQLException;
@@ -124,7 +123,7 @@ public class SQLiteWrapper extends SQLDatabase {
 
     @Override
     public void beginTransaction() {
-        Preconditions.checkState(this.isOpen(), "db must be open");
+        Misc.checkState(this.isOpen(), "db must be open");
 
         // All transaction state variables are thread-local,
         // so we don't have to lock.
@@ -152,8 +151,8 @@ public class SQLiteWrapper extends SQLDatabase {
 
     @Override
     public void endTransaction() {
-        Preconditions.checkState(this.isOpen(), "db must be open");
-        Preconditions.checkState(this.transactionStack.size() >= 1,
+        Misc.checkState(this.isOpen(), "db must be open");
+        Misc.checkState(this.transactionStack.size() >= 1,
                 "TransactionStatus stack must not be empty");
 
         // All transaction state variables are thread-local,
@@ -187,7 +186,7 @@ public class SQLiteWrapper extends SQLDatabase {
 
     @Override
     public void setTransactionSuccessful() {
-        Preconditions.checkState(this.isOpen(), "db must be open");
+        Misc.checkState(this.isOpen(), "db must be open");
 
         // Pop the false value off and replace it with true.
         // As the stack is thread-local, this is thread-safe
@@ -209,8 +208,7 @@ public class SQLiteWrapper extends SQLDatabase {
 
     @Override
     public void execSQL(String sql) throws SQLException {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(sql.trim()),
-                "Input SQL can not be empty String.");
+        Misc.checkNotNullOrEmpty(sql.trim(), "Input SQL");
         try {
             getConnection().exec(sql);
         } catch (SQLiteException e) {
@@ -220,8 +218,7 @@ public class SQLiteWrapper extends SQLDatabase {
 
     @Override
     public void execSQL(String sql, Object[] bindArgs) throws SQLException {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(sql.trim()),
-                "Input SQL can not be empty String.");
+        Misc.checkNotNullOrEmpty(sql.trim(), "Input SQL");
         SQLiteStatement stmt = null;
         try {
             stmt = this.getConnection().prepare(sql);
@@ -268,7 +265,7 @@ public class SQLiteWrapper extends SQLDatabase {
             String sql = new StringBuilder("DELETE FROM \"")
                     .append(table)
                     .append("\"")
-                    .append(!Strings.isNullOrEmpty(whereClause) ? " WHERE " +
+                    .append(!Misc.isStringNullOrEmpty(whereClause) ? " WHERE " +
                             whereClause : "")
                     .toString();
             this.executeSQLStatement(sql, whereArgs);

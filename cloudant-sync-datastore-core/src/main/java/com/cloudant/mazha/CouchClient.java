@@ -27,9 +27,8 @@ import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
+import com.cloudant.sync.util.Misc;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 
 import org.apache.commons.io.IOUtils;
 
@@ -309,7 +308,7 @@ public class CouchClient  {
 
     // TODO does this still work the same way we expect it to?
     public boolean contains(String id) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
+        Misc.checkNotNullOrEmpty(id, "id");
         URI doc = this.uriHelper.documentUri(id);
         try {
             HttpConnection connection = Http.HEAD(doc);
@@ -342,8 +341,8 @@ public class CouchClient  {
     }
 
     public InputStream getDocumentStream(String id, String rev) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
+        Misc.checkNotNullOrEmpty(id, "id");
+        Misc.checkNotNullOrEmpty(rev, "rev");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
         final URI doc = this.uriHelper.documentUri(id, queries);
@@ -352,8 +351,8 @@ public class CouchClient  {
     }
 
     public InputStream getAttachmentStream(String id, String rev, String attachmentName, final boolean acceptGzip) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
+        Misc.checkNotNullOrEmpty(id, "id");
+        Misc.checkNotNullOrEmpty(rev, "rev");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
         final URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
@@ -365,8 +364,8 @@ public class CouchClient  {
     }
 
     public void putAttachmentStream(String id, String rev, String attachmentName, String contentType, byte[] attachmentData) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
+        Misc.checkNotNullOrEmpty(id, "id");
+        Misc.checkNotNullOrEmpty(rev, "rev");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
         URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
@@ -405,8 +404,8 @@ public class CouchClient  {
     public List<OpenRevision> getDocWithOpenRevisions(String id, Collection<String> revisions,
                                                       Collection<String> attsSince,
                                                       boolean pullAttachmentsInline) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        Preconditions.checkArgument(revisions.size() > 0, "Need at lease one open revision");
+        Misc.checkNotNullOrEmpty(id, "id");
+        Misc.checkArgument(revisions.size() > 0, "Need at least one open revision");
 
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("revs", true);
@@ -496,8 +495,8 @@ public class CouchClient  {
 
     public <T> T getDocument(final String id, final Map<String, Object> options, final
     TypeReference<T> type) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        Preconditions.checkNotNull(type, "type must not be null");
+        Misc.checkNotNullOrEmpty(id, "id");
+        Misc.checkNotNull(type, "Type");
 
         URI doc = uriHelper.documentUri(id, options);
         InputStream is = null;
@@ -518,9 +517,9 @@ public class CouchClient  {
     }
 
     public <T> T getDocument(String id, String rev, TypeReference<T> type) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "Id must not be empty");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "Id must not be empty");
-        Preconditions.checkNotNull(type, "Type must not be null");
+        Misc.checkNotNullOrEmpty(id, "id");
+        Misc.checkNotNullOrEmpty(rev, "rev");
+        Misc.checkNotNull(type, "Type");
 
         InputStream is = null;
         try {
@@ -555,8 +554,8 @@ public class CouchClient  {
     }
 
     public <T> T getDocRevisions(String id, String rev, TypeReference<T> type) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        Preconditions.checkNotNull(rev, "document must not be null");
+        Misc.checkNotNullOrEmpty(id, "id");
+        Misc.checkNotNull(rev, "Revision ID");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("revs", "true");
         queries.put("rev", rev);
@@ -574,8 +573,8 @@ public class CouchClient  {
 
     // Document should be complete document include "_id" matches id
     public Response update(String id, Object document) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        Preconditions.checkNotNull(document, "document must not be null");
+        Misc.checkNotNullOrEmpty(id, "id");
+        Misc.checkNotNull(document, "Document");
         if (!this.contains(id)) {
             throw new NoResourceException("No document for given id: " + id);
         }
@@ -589,8 +588,8 @@ public class CouchClient  {
     }
 
     public Response delete(String id, String rev) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id must not be empty");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(rev), "rev must not be empty");
+        Misc.checkNotNullOrEmpty(id, "id");
+        Misc.checkNotNullOrEmpty(rev, "rev");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("rev", rev);
         URI doc = this.uriHelper.documentUri(id, queries);
@@ -609,7 +608,7 @@ public class CouchClient  {
     }
 
     private InputStream bulkCreateDocsInputStream(List<?> objects) {
-        Preconditions.checkNotNull(objects, "Object list must not be null.");
+        Misc.checkNotNull(objects, "Object list");
         String newEditsVal = "\"new_edits\": false, ";
         URI uri = this.uriHelper.bulkDocsUri();
         String payload = String.format("{%s%s%s}", newEditsVal, "\"docs\": ",
@@ -655,7 +654,7 @@ public class CouchClient  {
      * @return list of Response
      */
     public List<Response> bulkCreateSerializedDocs(List<String> serializedDocs) {
-        Preconditions.checkNotNull(serializedDocs, "Serialized doc list must not be null.");
+        Misc.checkNotNull(serializedDocs, "Serialized doc list");
         String payload = generateBulkSerializedDocsPayload(serializedDocs);
         URI uri = this.uriHelper.bulkDocsUri();
         InputStream is = null;
@@ -709,7 +708,7 @@ public class CouchClient  {
      * @see <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
      */
     public Map<String, MissingRevisions> revsDiff(Map<String, Set<String>> revisions) {
-        Preconditions.checkNotNull(revisions, "Input revisions must not be null");
+        Misc.checkNotNull(revisions,"Input revisions");
         URI uri = this.uriHelper.revsDiffUri();
         String payload = this.jsonHelper.toJson(revisions);
         InputStream is = null;

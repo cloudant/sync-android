@@ -16,8 +16,7 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.util.CouchUtils;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.cloudant.sync.util.Misc;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,10 +74,8 @@ public class DocumentRevsUtils {
     }
 
     private static void validateDocumentRevs(DocumentRevs documentRevs) {
-        Preconditions.checkNotNull(documentRevs, "DocumentRevs must not be null.");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(documentRevs.getId()),
-                "DocumentRevs.id must not be empty.");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(documentRevs.getRev()),
-                "DocumentRevs.rev must not be empty.");
+        Misc.checkNotNull(documentRevs, "DocumentRevs");
+        Misc.checkNotNullOrEmpty(documentRevs.getId(), "DocumentRevs.id");
+        Misc.checkNotNullOrEmpty(documentRevs.getRev(), "DocumentRevs.rev");
     }
 }

@@ -19,9 +19,9 @@ import com.almworks.sqlite4java.SQLiteException;
 import com.cloudant.android.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.util.Misc;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
-import com.google.common.base.Strings;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -492,7 +492,7 @@ public class SQLiteWrapperTest {
         cursor.moveToNext();
         Assert.assertTrue(2 == cursor.getInt(0));
         Assert.assertTrue("haha".equals(cursor.getString(1)));
-        Assert.assertTrue(Strings.isNullOrEmpty(cursor.getString(2)));
+        Assert.assertTrue(Misc.isStringNullOrEmpty(cursor.getString(2)));
         Assert.assertEquals(-0.09999f, cursor.getFloat(3), 0.000001f);
         Assert.assertTrue(Arrays.equals("this is another blob".getBytes(), cursor.getBlob(4)));
     }

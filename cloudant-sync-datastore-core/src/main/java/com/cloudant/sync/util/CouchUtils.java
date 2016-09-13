@@ -14,8 +14,6 @@
 
 package com.cloudant.sync.util;
 
-import com.google.common.base.Strings;
-
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +31,7 @@ public class CouchUtils {
 
     public static boolean isValidDocumentId(String docId) {
         // http://wiki.apache.org/couch/HTTP_Document_API#Documents
-        if (Strings.isNullOrEmpty(docId)) {
+        if (Misc.isStringNullOrEmpty(docId)) {
             return false;
         }
 
@@ -91,7 +89,7 @@ public class CouchUtils {
     }
 
     public static boolean isValidRevisionId(String revisionId) {
-        if (Strings.isNullOrEmpty(revisionId)) {
+        if (Misc.isStringNullOrEmpty(revisionId)) {
             return false;
         }
         int dashPos = revisionId.indexOf("-");

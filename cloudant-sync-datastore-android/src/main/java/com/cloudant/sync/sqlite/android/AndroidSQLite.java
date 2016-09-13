@@ -20,8 +20,7 @@ import android.database.sqlite.SQLiteDatabase;
 import com.cloudant.android.ContentValues;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.cloudant.sync.util.Misc;
 
 import java.sql.SQLException;
 
@@ -83,15 +82,13 @@ public class AndroidSQLite extends SQLDatabase {
 
     @Override
     public void execSQL(String sql) throws SQLException {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(sql.trim()),
-                "Input SQL can not be empty String.");
+        Misc.checkNotNullOrEmpty(sql.trim(), "Input SQL");
         this.database.execSQL(sql);
     }
 
     @Override
     public void execSQL(String sql, Object[] bindArgs) throws SQLException {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(sql.trim()),
-                "Input SQL can not be empty String.");
+        Misc.checkNotNullOrEmpty(sql.trim(), "Input SQL");
         this.database.execSQL(sql, bindArgs);
     }
 

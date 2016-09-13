@@ -27,8 +27,7 @@ import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.JSONUtils;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.cloudant.sync.util.Misc;
 
 import java.sql.SQLException;
 
@@ -54,23 +53,24 @@ public class DeleteDocumentCallable implements SQLCallable<DocumentRevision> {
         this.prevRevId = prevRevId;
     }
 
-    public DocumentRevision call(SQLDatabase db) throws ConflictException, DocumentNotFoundException, DatastoreException {
+    public DocumentRevision call(SQLDatabase db) throws ConflictException,
+            DocumentNotFoundException, DatastoreException {
 
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
-                "Input document id cannot be empty");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(prevRevId),
-                "Input previous revision id cannot be empty");
+        Misc.checkNotNullOrEmpty(docId, "Input document id");
+        Misc.checkNotNullOrEmpty(prevRevId, "Input previous revision id");
 
         CouchUtils.validateRevisionId(prevRevId);
 
-        // get the sequence, numeric document id, current flag for the given revision - if it's a non-deleted leaf
+        // get the sequence, numeric document id, current flag for the given revision - if it's a
+        // non-deleted leaf
         Cursor c = null;
         long sequence;
         long docNumericId;
         boolean current;
         try {
             // first check if it exists
-            c = db.rawQuery(DatastoreImpl.GET_METADATA_GIVEN_REVISION, new String[]{docId, prevRevId});
+            c = db.rawQuery(DatastoreImpl.GET_METADATA_GIVEN_REVISION, new String[]{docId,
+                    prevRevId});
             boolean exists = c.moveToFirst();
             if (!exists) {
                 throw new DocumentNotFoundException();
@@ -116,11 +116,18 @@ public class DeleteDocumentCallable implements SQLCallable<DocumentRevision> {
         callable.available = false;
         long newSequence = callable.call(db);
 
-        // build up the document to return to the caller - it's quicker than re-querying the database
-        // and we know all the values we need
-        return new DocumentRevisionBuilder().setInternalId(docNumericId).setDocId(docId).setRevId(newRevisionId).setParent(sequence).
-                setDeleted(true).setCurrent(current).setBody(DocumentBodyFactory.create(JSONUtils.emptyJSONObjectAsBytes())).
-                setSequence(newSequence).build();
+        // build up the document to return to the caller - it's quicker than re-querying the
+        // database and we know all the values we need
+        return new DocumentRevisionBuilder()
+                .setInternalId(docNumericId)
+                .setDocId(docId)
+                .setRevId(newRevisionId)
+                .setParent(sequence)
+                .setDeleted(true)
+                .setCurrent(current)
+                .setBody(DocumentBodyFactory.create(JSONUtils.emptyJSONObjectAsBytes()))
+                .setSequence(newSequence)
+                .build();
     }
 
 }

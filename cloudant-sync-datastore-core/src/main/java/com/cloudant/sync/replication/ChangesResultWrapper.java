@@ -15,7 +15,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.mazha.ChangesResult;
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -31,7 +31,7 @@ class ChangesResultWrapper {
     private final ChangesResult changes;
 
     public ChangesResultWrapper(ChangesResult changes) {
-        Preconditions.checkNotNull(changes, "Changes feed can not be null");
+        Misc.checkNotNull(changes, "Changes");
         this.changes = changes;
     }
 
@@ -49,9 +49,10 @@ class ChangesResultWrapper {
     }
 
     public Multimap<String, String> openRevisions(int start, int end) {
-        Preconditions.checkArgument(start >= 0, "Start position must be greater or equal to zero.");
-        Preconditions.checkArgument(end > start, "End position must be greater than start.");
-        Preconditions.checkArgument(end <= this.size(), "End position must be smaller than changes feed size.");
+        Misc.checkArgument(start >= 0, "Start position must be greater or equal to zero.");
+        Misc.checkArgument(end > start, "End position must be greater than start.");
+        Misc.checkArgument(end <= this.size(), "End position must be less than or equal to the " +
+                "changes feed size.");
 
         Multimap<String, String> openRevisions = HashMultimap.create();
         for(int i = start; i < end ; i ++) {

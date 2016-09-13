@@ -50,12 +50,10 @@ import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
-import com.cloudant.sync.util.CollectionUtils;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.JSONUtils;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.cloudant.sync.util.Misc;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -179,14 +177,14 @@ public class DatastoreImpl implements Datastore {
      */
     public DatastoreImpl(String dir, String name, KeyProvider provider) throws SQLException,
             IOException, DatastoreException {
-        Preconditions.checkNotNull(dir);
-        Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(provider);
+        Misc.checkNotNull(dir, "Directory");
+        Misc.checkNotNull(name, "Datastore name");
+        Misc.checkNotNull(provider, "Key provider");
 
         this.keyProvider = provider;
         this.datastoreDir = dir;
         this.datastoreName = name;
-        this.extensionsDir = FilenameUtils.concat(this.datastoreDir, "extensions");
+        this.extensionsDir = FilenameUtils.concat(this.datastoreDir,"extensions");
         final String dbFilename = FilenameUtils.concat(this.datastoreDir, DB_FILE_NAME);
         queue = new SQLDatabaseQueue(dbFilename, provider);
 
@@ -214,7 +212,7 @@ public class DatastoreImpl implements Datastore {
 
     @Override
     public String getDatastoreName() {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         return this.datastoreName;
     }
 
@@ -224,7 +222,7 @@ public class DatastoreImpl implements Datastore {
 
     @Override
     public long getLastSequence() {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
 
         try {
             return queue.submit(new GetLastSequenceCallable()).get();
@@ -245,7 +243,7 @@ public class DatastoreImpl implements Datastore {
 
     @Override
     public int getDocumentCount() {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         try {
             return queue.submit(new GetDocumentCountCallable()).get();
         } catch (InterruptedException e) {
@@ -259,7 +257,7 @@ public class DatastoreImpl implements Datastore {
 
     @Override
     public boolean containsDocument(String docId, String revId) {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         try {
             return getDocument(docId, revId) != null;
         } catch (DocumentNotFoundException e) {
@@ -269,7 +267,7 @@ public class DatastoreImpl implements Datastore {
 
     @Override
     public boolean containsDocument(String docId) {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         try {
             return getDocument(docId) != null;
         } catch (DocumentNotFoundException e) {
@@ -279,16 +277,15 @@ public class DatastoreImpl implements Datastore {
 
     @Override
     public DocumentRevision getDocument(String id) throws DocumentNotFoundException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         return getDocument(id, null);
     }
 
     @Override
     public DocumentRevision getDocument(final String id, final String rev) throws
             DocumentNotFoundException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "DocumentRevisionTree id cannot " +
-                "be empty");
+        Misc.checkState(this.isOpen(), "Database is closed");
+        Misc.checkNotNullOrEmpty(id, "DocumentRevisionTree id");
 
         try {
             return queue.submit(new GetDocumentCallable(id, rev, this.attachmentsDir, this.attachmentStreamFactory)).get();
@@ -324,8 +321,8 @@ public class DatastoreImpl implements Datastore {
 
     @Override
     public Changes changes(long since, final int limit) {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
-        Preconditions.checkArgument(limit > 0, "Limit must be positive number");
+        Misc.checkState(this.isOpen(), "Database is closed");
+        Misc.checkArgument(limit > 0, "Limit must be positive number");
         final long verifiedSince = since >= 0 ? since : 0;
 
         try {
@@ -386,7 +383,7 @@ public class DatastoreImpl implements Datastore {
      * @return list of documents ordered by sequence number
      */
     List<DocumentRevision> getDocumentsWithInternalIds(final List<Long> docIds) {
-        Preconditions.checkNotNull(docIds, "Input document internal id list cannot be null");
+        Misc.checkNotNull(docIds, "Input document internal id list");
 
         try {
             return queue.submit(new GetDocumentsWithInternalIdsCallable(docIds, this.attachmentsDir, this.attachmentStreamFactory)).get();
@@ -401,7 +398,7 @@ public class DatastoreImpl implements Datastore {
     @Override
     public List<DocumentRevision> getAllDocuments(final int offset, final int limit, final
     boolean descending) {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         if (offset < 0) {
             throw new IllegalArgumentException("offset must be >= 0");
         }
@@ -433,7 +430,7 @@ public class DatastoreImpl implements Datastore {
 
     @Override
     public List<String> getAllDocumentIds() {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         try {
             return queue.submit(new GetAllDocumentIdsCallable()).get();
         } catch (InterruptedException e) {
@@ -447,8 +444,8 @@ public class DatastoreImpl implements Datastore {
     @Override
     public List<DocumentRevision> getDocumentsWithIds(final List<String> docIds) throws
             DocumentException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
-        Preconditions.checkNotNull(docIds, "Input document id list cannot be null");
+        Misc.checkState(this.isOpen(), "Database is closed");
+        Misc.checkNotNull(docIds, "Input document id list");
         try {
             return queue.submit(new SQLCallable<List<DocumentRevision>>() {
                 @Override
@@ -519,7 +516,7 @@ public class DatastoreImpl implements Datastore {
      * @throws DocumentNotFoundException if the document ID doesn't exist
      */
     public LocalDocument getLocalDocument(final String docId) throws DocumentNotFoundException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         try {
             return queue.submit(new GetLocalDocumentCallable(docId)).get();
         } catch (InterruptedException e) {
@@ -533,9 +530,9 @@ public class DatastoreImpl implements Datastore {
     private DocumentRevision createDocumentBody(SQLDatabase db, String docId, final DocumentBody
             body)
             throws AttachmentException, ConflictException, DatastoreException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         CouchUtils.validateDocumentId(docId);
-        Preconditions.checkNotNull(body, "Input document body cannot be null");
+        Misc.checkNotNull(body, "Input document body");
         this.validateDBBody(body);
 
         // check if the docid exists first:
@@ -614,9 +611,9 @@ public class DatastoreImpl implements Datastore {
      */
     public LocalDocument insertLocalDocument(final String docId, final DocumentBody body) throws
             DocumentException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         CouchUtils.validateDocumentId(docId);
-        Preconditions.checkNotNull(body, "Input document body cannot be null");
+        Misc.checkNotNull(body, "Input document body");
         try {
             return queue.submitTransaction(new SQLCallable<LocalDocument>() {
                 @Override
@@ -651,12 +648,10 @@ public class DatastoreImpl implements Datastore {
                                                 final DocumentBody body)
             throws ConflictException, AttachmentException, DocumentNotFoundException,
             DatastoreException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
-                "Input document id cannot be empty");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(prevRevId),
-                "Input previous revision id cannot be empty");
-        Preconditions.checkNotNull(body, "Input document body cannot be null");
+        Misc.checkState(this.isOpen(), "Database is closed");
+        Misc.checkNotNullOrEmpty(docId, "Input document id");
+        Misc.checkNotNullOrEmpty(prevRevId, "Input previous revision id");
+        Misc.checkNotNull(body, "Input document body");
 
         this.validateDBBody(body);
         CouchUtils.validateRevisionId(prevRevId);
@@ -680,9 +675,8 @@ public class DatastoreImpl implements Datastore {
      * @throws DocumentNotFoundException if the document ID doesn't exist
      */
     public void deleteLocalDocument(final String docId) throws DocumentNotFoundException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(docId),
-                "Input document id cannot be empty");
+        Misc.checkState(this.isOpen(), "Database is closed");
+        Misc.checkNotNullOrEmpty(docId, "Input document id");
 
         try {
             queue.submit(new SQLCallable<Object>() {
@@ -758,7 +752,7 @@ public class DatastoreImpl implements Datastore {
      * database
      */
     public String getPublicIdentifier() throws DatastoreException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         try {
             return queue.submit(new SQLCallable<String>() {
                 @Override
@@ -865,19 +859,17 @@ public class DatastoreImpl implements Datastore {
      * into the database
      */
     public void forceInsert(final List<ForceInsertItem> items) throws DocumentException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
 
         for (ForceInsertItem item : items) {
-            Preconditions.checkNotNull(item.rev, "Input document revision cannot be null");
-            Preconditions.checkNotNull(item.revisionHistory, "Input revision history must not be " +
-                    "null");
-            Preconditions.checkArgument(item.revisionHistory.size() > 0, "Input revision history " +
+            Misc.checkNotNull(item.rev, "Input document revision");
+            Misc.checkNotNull(item.revisionHistory, "Input revision history");
+            Misc.checkArgument(item.revisionHistory.size() > 0, "Input revision history " +
                     "must not be empty");
 
-            Preconditions.checkArgument(checkCurrentRevisionIsInRevisionHistory(item.rev, item
-                    .revisionHistory),
-                    "Current revision must exist in revision history.");
-            Preconditions.checkArgument(checkRevisionIsInCorrectOrder(item.revisionHistory),
+            Misc.checkArgument(checkCurrentRevisionIsInRevisionHistory(item.rev, item
+                    .revisionHistory), "Current revision must exist in revision history.");
+            Misc.checkArgument(checkRevisionIsInCorrectOrder(item.revisionHistory),
                     "Revision history must be in right order.");
             CouchUtils.validateDocumentId(item.rev.getId());
             CouchUtils.validateRevisionId(item.rev.getRevision());
@@ -1032,7 +1024,7 @@ public class DatastoreImpl implements Datastore {
      */
     public void forceInsert(DocumentRevision rev, String... revisionHistory) throws
             DocumentException {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         this.forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
     }
 
@@ -1069,11 +1061,11 @@ public class DatastoreImpl implements Datastore {
         logger.entering("BasicDatastore",
                 "doForceInsertExistingDocumentWithHistory",
                 new Object[]{newRevision, revisions, attachments});
-        Preconditions.checkNotNull(newRevision, "New document revision must not be null.");
-        Preconditions.checkArgument(new GetDocumentCallable(newRevision.getId(), null, this.attachmentsDir, this.attachmentStreamFactory).call(db) !=
-                null, "DocumentRevisionTree must exist.");
-        Preconditions.checkNotNull(revisions, "Revision history should not be null.");
-        Preconditions.checkArgument(revisions.size() > 0, "Revision history should have at least " +
+        Misc.checkNotNull(newRevision, "New document revision");
+        Misc.checkArgument(new GetDocumentCallable(newRevision.getId(), null, this.attachmentsDir,
+                this.attachmentStreamFactory).call(db) != null, "DocumentRevisionTree must exist.");
+        Misc.checkNotNull(revisions, "Revision history");
+        Misc.checkArgument(revisions.size() > 0, "Revision history should have at least " +
                 "one revision.");
 
         // do we have a common ancestor?
@@ -1098,7 +1090,7 @@ public class DatastoreImpl implements Datastore {
 
         // get info about previous "winning" rev
         long previousLeafSeq = new GetSequenceCallable(newRevision.getId(), null).call(db);
-        Preconditions.checkArgument(previousLeafSeq > 0, "Parent revision must exist");
+        Misc.checkArgument(previousLeafSeq > 0, "Parent revision must exist");
 
         // Insert the new stub revisions, going down the tree
         // at the end of the loop, parentSeq will be the parent of our doc to insert
@@ -1153,7 +1145,7 @@ public class DatastoreImpl implements Datastore {
                                                 List<String> revisions,
                                                 Long docNumericID)
             throws AttachmentException, DocumentNotFoundException, DatastoreException {
-        Preconditions.checkArgument(checkCurrentRevisionIsInRevisionHistory(newRevision, revisions),
+        Misc.checkArgument(checkCurrentRevisionIsInRevisionHistory(newRevision, revisions),
                 "Current revision must exist in revision history.");
 
         // Adding a brand new tree
@@ -1284,8 +1276,8 @@ public class DatastoreImpl implements Datastore {
      * id/revisions that are not stored in the database
      */
     public Map<String, Collection<String>> revsDiff(final Multimap<String, String> revisions) {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
-        Preconditions.checkNotNull(revisions, "Input revisions must not be null");
+        Misc.checkState(this.isOpen(), "Database is closed");
+        Misc.checkNotNull(revisions, "Input revisions");
 
         try {
             return queue.submit(new SQLCallable<Map<String, Collection<String>>>() {
@@ -1375,9 +1367,8 @@ public class DatastoreImpl implements Datastore {
     }
 
     public String extensionDataFolder(String extensionName) {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(extensionName),
-                "extension name cannot be null or empty");
+        Misc.checkState(this.isOpen(), "Database is closed");
+        Misc.checkNotNullOrEmpty(extensionName, "Extension name");
         return FilenameUtils.concat(this.extensionsDir, extensionName);
     }
 
@@ -1654,18 +1645,18 @@ public class DatastoreImpl implements Datastore {
 
     @Override
     public EventBus getEventBus() {
-        Preconditions.checkState(this.isOpen(), "Database is closed");
+        Misc.checkState(this.isOpen(), "Database is closed");
         return eventBus;
     }
 
     @Override
     public DocumentRevision createDocumentFromRevision(final DocumentRevision rev)
             throws DocumentException {
-        Preconditions.checkNotNull(rev, "DocumentRevision cannot be null");
-        Preconditions.checkState(isOpen(), "Datastore is closed");
-        Preconditions.checkArgument(rev.getRevision() == null, "Revision ID must be null for new " +
+        Misc.checkNotNull(rev, "DocumentRevision");
+        Misc.checkState(isOpen(), "Datastore is closed");
+        Misc.checkArgument(rev.getRevision() == null, "Revision ID must be null for new " +
                 "DocumentRevisions");
-        Preconditions.checkArgument(rev.isFullRevision(), "Projected revisions cannot be used to " +
+        Misc.checkArgument(rev.isFullRevision(), "Projected revisions cannot be used to " +
                 "create documents");
         final String docId;
         // create docid if docid is null
@@ -1725,9 +1716,9 @@ public class DatastoreImpl implements Datastore {
     public DocumentRevision updateDocumentFromRevision(final DocumentRevision rev)
             throws DocumentException {
 
-        Preconditions.checkNotNull(rev, "DocumentRevision cannot be null");
-        Preconditions.checkState(isOpen(), "Datastore is closed");
-        Preconditions.checkArgument(rev.isFullRevision(), "Projected revisions cannot be used to " +
+        Misc.checkNotNull(rev, "DocumentRevision");
+        Misc.checkState(isOpen(), "Datastore is closed");
+        Misc.checkArgument(rev.isFullRevision(), "Projected revisions cannot be used to " +
                 "create documents");
 
         // We need to work out which of the attachments for the revision are ones
@@ -1774,7 +1765,7 @@ public class DatastoreImpl implements Datastore {
                                                         List<SavedAttachment> existingAttachments)
             throws ConflictException, AttachmentException, DocumentNotFoundException,
             DatastoreException {
-        Preconditions.checkNotNull(rev, "DocumentRevision cannot be null");
+        Misc.checkNotNull(rev, "DocumentRevision");
 
         DocumentRevision updated = updateDocumentBody(db, rev.getId(), rev.getRevision(), rev
                 .getBody());
@@ -1792,8 +1783,8 @@ public class DatastoreImpl implements Datastore {
     @Override
     public DocumentRevision deleteDocumentFromRevision(final DocumentRevision rev) throws
             ConflictException {
-        Preconditions.checkNotNull(rev, "DocumentRevision cannot be null");
-        Preconditions.checkState(isOpen(), "Datastore is closed");
+        Misc.checkNotNull(rev, "DocumentRevision");
+        Misc.checkState(isOpen(), "Datastore is closed");
 
         try {
             DocumentRevision deletedRevision = queue.submit(new DeleteDocumentCallable(rev.getId(), rev.getRevision())).get();
@@ -1821,7 +1812,7 @@ public class DatastoreImpl implements Datastore {
     @Override
     public List<DocumentRevision> deleteDocument(final String id)
             throws DocumentException {
-        Preconditions.checkNotNull(id, "id cannot be null");
+        Misc.checkNotNull(id, "ID");
         // to return
 
         try {

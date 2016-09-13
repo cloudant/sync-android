@@ -15,7 +15,7 @@
 package com.cloudant.sync.datastore;
 
 
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ public class Changes {
     private final List<DocumentRevision> results;
 
     protected Changes(long lastSequence, List<DocumentRevision> results) {
-        Preconditions.checkNotNull(results, "Changes results must not be null.");
+        Misc.checkNotNull(results, "Changes results");
         this.lastSequence = lastSequence;
         this.results = results;
     }

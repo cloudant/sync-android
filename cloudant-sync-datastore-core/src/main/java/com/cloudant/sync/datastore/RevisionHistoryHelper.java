@@ -19,7 +19,7 @@ import com.cloudant.common.CouchConstants;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.replication.PushAttachmentsInline;
 import com.cloudant.sync.util.CouchUtils;
-import com.google.common.base.Preconditions;
+import com.cloudant.sync.util.Misc;
 
 import org.apache.commons.io.IOUtils;
 
@@ -93,8 +93,8 @@ public class RevisionHistoryHelper {
      * @see com.cloudant.mazha.DocumentRevs
      */
     public static List<String> getRevisionPath(DocumentRevs documentRevs) {
-        Preconditions.checkNotNull(documentRevs, "History must not be null");
-        Preconditions.checkArgument(checkRevisionStart(documentRevs.getRevisions()),
+        Misc.checkNotNull(documentRevs, "History");
+        Misc.checkArgument(checkRevisionStart(documentRevs.getRevisions()),
                 "Revision start must be bigger than revision ids' length");
         List<String> path = new ArrayList<String>();
         int start = documentRevs.getRevisions().getStart();
@@ -145,9 +145,9 @@ public class RevisionHistoryHelper {
                                                             List<? extends Attachment> attachments,
                                                             boolean shouldInline,
                                                             int minRevPos) {
-        Preconditions.checkNotNull(history, "History must not be null");
-        Preconditions.checkArgument(history.size() > 0, "History must have at least one DocumentRevision.");
-        Preconditions.checkArgument(checkHistoryIsInDescendingOrder(history),
+        Misc.checkNotNull(history, "History");
+        Misc.checkArgument(history.size() > 0, "History must have at least one DocumentRevision.");
+        Misc.checkArgument(checkHistoryIsInDescendingOrder(history),
                 "History must be in descending order.");
 
         DocumentRevision currentNode = history.get(0);
