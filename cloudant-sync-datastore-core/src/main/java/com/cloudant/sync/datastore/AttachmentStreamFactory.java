@@ -116,7 +116,7 @@ public class AttachmentStreamFactory {
     /**
      * Get stream for writing attachment data to disk.
      *
-     * Opens the output stream using {@see FileUtils#openOutputStream(File)}.
+     * Opens the output stream using {@link FileUtils#openOutputStream(File)}.
      *
      * Data should be written to the stream unencoded, unencrypted.
      *
@@ -125,6 +125,7 @@ public class AttachmentStreamFactory {
      * @return Stream for writing.
      * @throws IOException if there's a problem writing to disk, including issues with
      *      encryption (bad key length and other key issues).
+     * @see FileUtils#openOutputStream(File)
      */
     public OutputStream getOutputStream(File file, Attachment.Encoding encoding) throws
             IOException {
