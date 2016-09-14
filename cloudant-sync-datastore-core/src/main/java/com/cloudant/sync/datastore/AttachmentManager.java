@@ -197,7 +197,7 @@ public class AttachmentManager {
      * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
      *                  attachment data.
      */
-    protected static PreparedAttachment prepareAttachment(String attachmentsDir,
+    public static PreparedAttachment prepareAttachment(String attachmentsDir,
                                                           AttachmentStreamFactory attachmentStreamFactory,
                                                           Attachment attachment)
             throws AttachmentException {
@@ -232,7 +232,7 @@ public class AttachmentManager {
      * @param attachments Attachments to search.
      * @return List of attachments which already exist in the attachment store, or an empty list if none.
      */
-    protected static List<SavedAttachment> findExistingAttachments(
+    public static List<SavedAttachment> findExistingAttachments(
             Collection<? extends Attachment> attachments) {
         ArrayList<SavedAttachment> list = new ArrayList<SavedAttachment>();
         for (Attachment a : attachments) {
@@ -249,7 +249,7 @@ public class AttachmentManager {
      * @param attachments Attachments to search.
      * @return List of attachments which need adding to the attachment store, or an empty list if none.
      */
-    protected static List<Attachment> findNewAttachments(Collection<? extends Attachment> attachments) {
+    public static List<Attachment> findNewAttachments(Collection<? extends Attachment> attachments) {
         ArrayList<Attachment> list = new ArrayList<Attachment>();
         for (Attachment a : attachments) {
             if (!(a instanceof SavedAttachment)) {
@@ -263,12 +263,13 @@ public class AttachmentManager {
      * Download each attachment in {@code attachments} to a temporary location, and
      * return a list of attachments suitable for passing to {@code setAttachments}.
      *
-     * Typically {@code attachments} is found via a call to {@see findNewAttachments}.
+     * Typically {@code attachments} is found via a call to {@link #findNewAttachments}.
      *
      * @param attachments List of attachments to prepare.
      * @return Attachments prepared for inserting into attachment store.
+     * @see #findNewAttachments
      */
-    protected static List<PreparedAttachment> prepareAttachments(String attachmentsDir,
+    public static List<PreparedAttachment> prepareAttachments(String attachmentsDir,
                                                                  AttachmentStreamFactory attachmentStreamFactory,
                                                                  List<Attachment> attachments)
         throws AttachmentException {
@@ -393,7 +394,7 @@ public class AttachmentManager {
      * @param newSequence identifies sequence number of revision to copy attachment data to
      * @param filename filename of attachment to copy
      */
-    protected static void copyAttachment(SQLDatabase db, long parentSequence, long newSequence,
+    public static void copyAttachment(SQLDatabase db, long parentSequence, long newSequence,
                                          String filename) throws SQLException {
         Cursor c = null;
         try{
@@ -409,7 +410,7 @@ public class AttachmentManager {
      * Called by BasicDatastore on the execution queue, this needs have the db passed ot it
      * @param db database to purge attachments from
      */
-    protected static void purgeAttachments(SQLDatabase db, String attachmentsDir) {
+    public static void purgeAttachments(SQLDatabase db, String attachmentsDir) {
         // it's easier to deal with Strings since java doesn't know how to compare byte[]s
         Set<String> currentKeys = new HashSet<String>();
         Cursor c = null;

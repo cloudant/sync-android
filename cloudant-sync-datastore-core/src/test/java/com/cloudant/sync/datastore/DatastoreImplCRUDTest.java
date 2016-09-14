@@ -590,6 +590,40 @@ public class DatastoreImplCRUDTest extends BasicDatastoreTestBase {
         }
     }
 
+    @Test
+    public void compactConflictedTree() throws Exception {
+        String docId = "document-one";
+
+        // create a root node
+        DocumentRevision root = new DocumentRevision(docId);
+        root.setBody(bodyOne);
+        root = datastore.createDocumentFromRevision(root);
+
+        // create some leaf nodes
+        for (int i=0; i<10; i++) {
+            DocumentRevision leaf = new DocumentRevision(docId);
+            leaf.setBody(bodyOne);
+            leaf.setRevision("2-xyz"+i);
+            datastore.forceInsert(leaf, root.getRevision(), leaf.getRevision());
+        }
+
+        // check root and leafs have bodies before compaction
+        Assert.assertTrue("root body must not be empty before compaction", root.getBody().asMap().size() > 0);
+        for (DocumentRevision leaf : datastore.getAllRevisionsOfDocument(docId).leafRevisions()) {
+            Assert.assertTrue("leaf body must not be empty before compaction", leaf.getBody().asMap().size() > 0);
+        }
+
+        datastore.compact();
+
+        // re-fetch and check root and leafs: root should not have a body but leafs should
+        root = datastore.getDocument(root.getId(), root.getRevision());
+        Assert.assertEquals("root body must be empty after compaction", 0, root.getBody().asMap().size());
+        for (DocumentRevision leaf : datastore.getAllRevisionsOfDocument(docId).leafRevisions()) {
+            Assert.assertTrue("leaf body must not be empty after compaction", leaf.getBody().asMap().size() > 0);
+        }
+
+    }
+
     private void getAllDocuments_testCountAndOffset(int objectCount, List<DocumentRevision> expectedDocumentRevisions, boolean descending) {
 
         int count;

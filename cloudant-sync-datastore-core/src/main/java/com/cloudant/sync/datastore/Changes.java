@@ -35,7 +35,22 @@ public class Changes {
 
     private final List<DocumentRevision> results;
 
-    protected Changes(long lastSequence, List<DocumentRevision> results) {
+    /**
+     * <p>
+     * Construct a list of changes
+     * </p>
+     * <p>
+     * Note that this constructor is for internal use. To get a set of changes from a given sequence
+     * number, use {@link com.cloudant.sync.datastore.Datastore#changes}
+     * </p>
+     * @param lastSequence the last sequence number of this change set
+     * @param results the list of {@code DocumentRevision}s in this change set
+     *
+     * @see com.cloudant.sync.datastore.Datastore#changes
+     *
+     * @api_private
+     */
+    public Changes(long lastSequence, List<DocumentRevision> results) {
         Misc.checkNotNull(results, "Changes results");
         this.lastSequence = lastSequence;
         this.results = results;
