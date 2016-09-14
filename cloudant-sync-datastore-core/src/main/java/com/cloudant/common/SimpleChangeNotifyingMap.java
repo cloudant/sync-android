@@ -19,7 +19,6 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by tomblench on 10/02/16.
@@ -36,15 +35,15 @@ public class SimpleChangeNotifyingMap {
         return (ChangeNotifyingMap<K, V>) Proxy.newProxyInstance(SimpleChangeNotifyingMap.class
                 .getClassLoader(), new Class[]{ChangeNotifyingMap.class}, new InvocationHandler() {
 
-            private final AtomicBoolean hasChanged = new AtomicBoolean();
+            private volatile boolean hasChanged = false;
 
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                 if ("hasChanged".equals(method.getName())) {
-                    return hasChanged.get();
+                    return hasChanged;
                 } else {
                     if (METHODS_OF_CHANGE.contains(method.getName())) {
-                        hasChanged.set(true);
+                        hasChanged = true;
                     }
                     return method.invoke(delegateMap, args);
                 }
