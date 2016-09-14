@@ -14,14 +14,14 @@
 
 package com.cloudant.sync.event;
 
-import com.google.common.eventbus.Subscribe;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A publish/subscribe event bus for sync notifications.
@@ -30,16 +30,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * method for posting an event to the bus. Events are isolated to each specific instance of this
  * class.
  * </p>
+ *
  * @api_public
  */
 public class EventBus {
 
-    // The Guava EventBus that this class delegates to.
-    private final com.google.common.eventbus.EventBus eventBus = new com.google.common.eventbus
-            .EventBus();
-    // A map of listeners to their Guava bus proxies.
-    private final Map<Object, BusProxy> listeners = new ConcurrentHashMap
-            <Object, BusProxy>();
+    private static final Logger LOGGER = Logger.getLogger(EventBus.class.getName());
+
+    // A map of listeners to their subscribed methods.
+    private final Map<Object, List<SubscriberMethod>> listeners = new ConcurrentHashMap
+            <Object, List<SubscriberMethod>>();
 
     /**
      * Post an event to the bus. All subscribers to the event class type posted will be notified.
@@ -47,7 +47,24 @@ public class EventBus {
      * @param event to post to subscribers
      */
     public void post(Object event) {
-        eventBus.post(event);
+        for (Map.Entry<Object, List<SubscriberMethod>> entry : listeners.entrySet()) {
+            for (SubscriberMethod method : entry.getValue()) {
+                if (method.eventTypeToInvokeOn.isInstance(event)) {
+                    try {
+                        method.methodToInvokeOnEvent.invoke(entry.getKey(), event);
+                    } catch (InvocationTargetException e) {
+                        // We log this exception and swallow it because we need to ensure we don't
+                        // prevent completion of notifications if one listener is badly behaved and
+                        // throws an exception of some kind.
+                        LOGGER.log(Level.SEVERE, "Subscriber invocation failed for method \""
+                                + method.toString() + "\"", e);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(EventBus.class.getName() + " could not access " +
+                                "subscriber " + method.toString(), e);
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -60,14 +77,26 @@ public class EventBus {
      * @param object the instance that will be notified when an event is posted
      */
     public void register(Object object) {
-        BusProxy proxy = new BusProxy(object);
-        BusProxy existingProxy = listeners.put(object, proxy);
-        if (existingProxy != null) {
-            // If the same object was registered twice unregister the previous proxy from the Guava
-            // bus to prevent double notifications.
-            eventBus.unregister(existingProxy);
-        }
-        eventBus.register(proxy);
+
+        Class<?> listenerClass = object.getClass();
+
+        List<SubscriberMethod> methods = new ArrayList<SubscriberMethod>();
+        // Do loop to traverse the class hierarchy looking for @Subscribe methods. Using
+        // listenerClass.getMethods() seems preferable as it should include inherited public
+        // methods, but it does not seem to work for some of the mock(listener) types used in
+        // the tests (e.g. mock(StrategyListener.class)).
+        do {
+            for (Method m : listenerClass.getDeclaredMethods()) {
+                if (m.isAnnotationPresent(com.cloudant.sync.event.Subscribe.class)) {
+                    Class[] params = m.getParameterTypes();
+                    if (params.length == 1) {
+                        methods.add(new SubscriberMethod(m, params[0]));
+                    }
+                }
+            }
+        } while ((listenerClass = listenerClass.getSuperclass()) != null);
+
+        listeners.put(object, methods);
     }
 
     /**
@@ -76,72 +105,7 @@ public class EventBus {
      * @param object the instance that will no longer be notified of events
      */
     public void unregister(Object object) {
-        BusProxy proxy = listeners.remove(object);
-        if (proxy != null) {
-            eventBus.unregister(proxy);
-        }
-    }
-
-    /**
-     * This class serves as a proxy for any listener registered with the sync EventBus. The proxy is
-     * registered with the Guava EventBus (using an Object event type to receive all events).
-     * The proxy then filters events as appropriate before passing them on to the methods that were
-     * subscribed using the sync {@link com.cloudant.sync.event.Subscribe} annotation.
-     * <p>
-     * Instances of this class are registered on the Guava event bus for each listener registered on
-     * the sync EventBus class.
-     * </p>
-     */
-    private static final class BusProxy {
-
-        // The instance registered wiht the sync EventBus
-        private final Object listener;
-        // The list of methods in that instance that were annotated with @Subscribe
-        private final List<SubscriberMethod> methods = new ArrayList<SubscriberMethod>();
-
-        // Constructor that reflectively identifies the @Subscribe annotated methods
-        BusProxy(Object listener) {
-            this.listener = listener;
-            Class<?> listenerClass = listener.getClass();
-            // Do loop to traverse the class hierarchy looking for @Subscribe methods. Using
-            // listenerClass.getMethods() seems preferable as it should include inherited public
-            // methods, but it does not seem to work for some of the mock(listener) types used in
-            // the tests (e.g. mock(StrategyListener.class)).
-            do {
-                for (Method m : listenerClass.getDeclaredMethods()) {
-                    if (m.isAnnotationPresent(com.cloudant.sync.event.Subscribe.class)) {
-                        Class[] params = m.getParameterTypes();
-                        if (params.length == 1) {
-                            methods.add(new SubscriberMethod(m, params[0]));
-                        }
-                    }
-                }
-            } while ((listenerClass = listenerClass.getSuperclass()) != null);
-        }
-
-        /**
-         * This method is annotated with Guava's @Subscribe annotation and uses an Object type so it
-         * receives all notifications. It performs an instance check on received events and
-         * invokes the appropriate proxy subscriber methods.
-         *
-         * @param o
-         */
-        @Subscribe
-        public void onEvent(Object o) {
-            for (SubscriberMethod method : methods) {
-                if (method.eventTypeToInvokeOn.isInstance(o)) {
-                    try {
-                        method.methodToInvokeOnEvent.invoke(listener, o);
-                    } catch (InvocationTargetException e) {
-                        throw new RuntimeException(EventBus.class.getName() + " could not invoke " +
-                                "subscriber " + method.toString(), e);
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(EventBus.class.getName() + " could not access " +
-                                "subscriber " + method.toString(), e);
-                    }
-                }
-            }
-        }
+        listeners.remove(object);
     }
 
     /**
@@ -155,6 +119,11 @@ public class EventBus {
         private SubscriberMethod(Method methodToInvokeOnEvent, Class<?> eventTypeToInvokeOn) {
             this.methodToInvokeOnEvent = methodToInvokeOnEvent;
             this.eventTypeToInvokeOn = eventTypeToInvokeOn;
+        }
+
+        @Override
+        public String toString() {
+            return methodToInvokeOnEvent.toString();
         }
     }
 }
