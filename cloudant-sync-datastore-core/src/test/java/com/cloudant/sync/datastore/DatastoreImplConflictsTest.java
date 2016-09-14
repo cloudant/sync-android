@@ -285,6 +285,32 @@ public class DatastoreImplConflictsTest extends BasicDatastoreTestBase {
         Assert.assertNotNull(newWinner.getAttachments().get("att1"));
     }
 
+    @Test
+    public void resolveConflictsForDocument_twoConflictAndNewWinner_newWinnerInsertedWithModifiedAttachments()
+            throws Exception {
+        String docId = this.createConflictedDocument();
+        DocumentRevisionTree oldTree = this.datastore.getAllRevisionsOfDocument(docId);
+        Assert.assertTrue(oldTree.hasConflicts());
+        long expectedSequence = this.datastore.getLastSequence() + 2;
+
+        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+            @Override
+            public DocumentRevision resolve(String docId, List<DocumentRevision> conflicts) {
+                Assert.assertEquals(2, conflicts.size());
+                DocumentRevision rev = conflicts.get(0);
+                rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "att1", "text/plain"));
+                return rev;
+            }
+        });
+        long actualSequence = this.datastore.getLastSequence();
+        Assert.assertEquals(expectedSequence, actualSequence);
+
+        DocumentRevisionTree newTree = this.datastore.getAllRevisionsOfDocument(docId);
+        Assert.assertFalse(newTree.hasConflicts());
+        DocumentRevision newWinner = newTree.getCurrentRevision();
+        Assert.assertNotNull(newWinner.getAttachments().get("att1"));
+    }
+
     // test to ensure correct failure mode when user returns a new ('unrooted') mutable document
     @Test
     public void resolveConflictsForDocument_twoConflictAndNewWinner_newWinnerInsertedNewMutableFails()
