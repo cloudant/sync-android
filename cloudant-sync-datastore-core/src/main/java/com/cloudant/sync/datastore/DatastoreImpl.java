@@ -1,16 +1,16 @@
 /**
  * Copyright © 2016 IBM Corp. All rights reserved.
- * <p/>
+ *
  * Original iOS version by  Jens Alfke, ported to Android by Marty Schoch
  * Copyright (c) 2012 Couchbase, Inc. All rights reserved.
- * <p/>
+ *
  * Modifications for this distribution by Cloudant, Inc., Copyright (c) 2013 Cloudant, Inc.
- * <p/>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
- * <p/>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language governing permissions
@@ -21,6 +21,7 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.android.Base64InputStreamFactory;
 import com.cloudant.android.ContentValues;
+import com.cloudant.common.ValueListMap;
 import com.cloudant.sync.datastore.callables.DeleteDocumentCallable;
 import com.cloudant.sync.datastore.callables.GetAllDocumentIdsCallable;
 import com.cloudant.sync.datastore.callables.GetAllRevisionsOfDocumentCallable;
@@ -50,13 +51,11 @@ import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
+import com.cloudant.sync.util.CollectionUtils;
 import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.Misc;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -69,11 +68,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -1272,28 +1273,34 @@ public class DatastoreImpl implements Datastore {
      * @see
      * <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
      * @param revisions a Multimap of document id → revision id
-     * @return a Map of document id → collection of revision id: the subset of given the document
-     * id/revisions that are not stored in the database
+     * @return the subset of given the document id/revisions that are already stored in the database
      */
-    public Map<String, Collection<String>> revsDiff(final Multimap<String, String> revisions) {
+    public Map<String, List<String>> revsDiff(final Map<String, List<String>> revisions) {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNull(revisions, "Input revisions");
 
         try {
-            return queue.submit(new SQLCallable<Map<String, Collection<String>>>() {
+            return queue.submit(new SQLCallable<Map<String, List<String>>>() {
                 @Override
-                public Map<String, Collection<String>> call(SQLDatabase db) throws Exception {
-                    Multimap<String, String> missingRevs = ArrayListMultimap.create();
-                    // Break the potentially big multimap into small ones so for each map,
-                    // a single query can be use to check if the <id, revision> pairs in sqlDb or
-                    // not
-                    List<Multimap<String, String>> batches =
-                            multiMapPartitions(revisions, SQLITE_QUERY_PLACEHOLDERS_LIMIT);
-                    for (Multimap<String, String> batch : batches) {
-                        revsDiffBatch(db, batch);
-                        missingRevs.putAll(batch);
+                public Map<String, List<String>> call(SQLDatabase db) throws Exception {
+
+                    ValueListMap<String, String> missingRevs = new ValueListMap<String, String>();
+
+                    // Break down by docId first to avoid potential rev ID clashes between doc IDs
+                    for (Map.Entry<String, List<String>> entry : revisions.entrySet()) {
+                        String docId = entry.getKey();
+                        List<String> revs = entry.getValue();
+                        // Partition into batches to avoid exceeding placeholder limit
+                        // The doc ID will use one placeholder, so use limit - 1 for the number of
+                        // revs for the remaining placeholders.
+                        List<List<String>> batches = CollectionUtils.partition(revs,
+                                SQLITE_QUERY_PLACEHOLDERS_LIMIT - 1);
+
+                        for (List<String> revsBatch : batches) {
+                            missingRevs.addValuesToKey(docId, revsDiffBatch(db, docId, revsBatch));
+                        }
                     }
-                    return missingRevs.asMap();
+                    return missingRevs;
                 }
             }).get();
         } catch (InterruptedException e) {
@@ -1305,65 +1312,44 @@ public class DatastoreImpl implements Datastore {
         return null;
     }
 
-    List<Multimap<String, String>> multiMapPartitions(
-            Multimap<String, String> revisions, int size) {
-
-        List<Multimap<String, String>> partitions = new ArrayList<Multimap<String, String>>();
-        Multimap<String, String> current = HashMultimap.create();
-        for (Map.Entry<String, String> e : revisions.entries()) {
-            current.put(e.getKey(), e.getValue());
-            // the query uses below (see revsDiffBatch())
-            // `multimap.size() + multimap.keySet().size()` placeholders
-            // and SQLite has limit on the number of placeholders on a single query.
-            if (current.size() + current.keySet().size() >= size) {
-                partitions.add(current);
-                current = HashMultimap.create();
-            }
-        }
-
-        if (current.size() > 0) {
-            partitions.add(current);
-        }
-
-        return partitions;
-    }
-
     /**
-     * Removes revisions present in the datastore from the input map.
+     * Checks the supplied collection of revisions for the given document ID and returns a
+     * collection containing only those entries that are missing from the database.
      *
-     * @param revisions an multimap from document id to set of revisions. The
-     *                  map is modified in place for performance consideration.
+     * @param db    the database to get the revisions from
+     * @param docId the doc ID to check
+     * @param revs  the rev IDs to check
+     * @return collection of rev IDs not present in the database
      */
-    void revsDiffBatch(SQLDatabase db, Multimap<String, String> revisions) throws
-            DatastoreException {
+    Collection<String> revsDiffBatch(SQLDatabase db, String docId, Collection<String> revs)
+            throws DatastoreException {
+
+        // Consider all missing to start
+        Set<String> missingRevs = new HashSet<String>(revs);
 
         final String sql = String.format(
-                "SELECT docs.docid, revs.revid FROM docs, revs " +
-                        "WHERE docs.doc_id = revs.doc_id AND docs.docid IN (%s) AND revs.revid IN" +
-                        " (%s) " +
-                        "ORDER BY docs.docid",
-                DatabaseUtils.makePlaceholders(revisions.keySet().size()),
-                DatabaseUtils.makePlaceholders(revisions.size()));
+                "SELECT revs.revid FROM docs, revs " +
+                        "WHERE docs.doc_id = revs.doc_id AND docs.docid = ? AND revs.revid IN " +
+                        "(%s) ", DatabaseUtils.makePlaceholders(revs.size()));
 
-        String[] args = new String[revisions.keySet().size() + revisions.size()];
-        String[] keys = revisions.keySet().toArray(new String[revisions.keySet().size()]);
-        String[] values = revisions.values().toArray(new String[revisions.size()]);
-        System.arraycopy(keys, 0, args, 0, revisions.keySet().size());
-        System.arraycopy(values, 0, args, revisions.keySet().size(), revisions.size());
+        String[] args = new String[1 + revs.size()];
+        args[0] = docId;
+        // Copy the revisions into the end of the args array
+        System.arraycopy(revs.toArray(new String[revs.size()]), 0, args, 1, revs.size());
 
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, args);
             while (cursor.moveToNext()) {
-                String docId = cursor.getString(0);
-                String revId = cursor.getString(1);
-                revisions.remove(docId, revId);
+                String revId = cursor.getString(cursor.getColumnIndex("revid"));
+                missingRevs.remove(revId);
             }
         } catch (SQLException e) {
             throw new DatastoreException(e);
         } finally {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
+        return missingRevs;
     }
 
     public String extensionDataFolder(String extensionName) {

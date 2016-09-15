@@ -15,10 +15,9 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.mazha.ChangesResult;
-import com.cloudant.mazha.OpenRevision;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
-import com.google.common.collect.Multimap;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Before;
@@ -26,13 +25,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.hasItems;
 
 public class ChangesResultWrapperTest {
 
@@ -61,10 +55,10 @@ public class ChangesResultWrapperTest {
         ChangesResult data = getChangeResultFromFile(TestUtils.loadFixture("fixture/change_feed_0.json"));
         ChangesResultWrapper changes = new ChangesResultWrapper(data);
 
-        Multimap<String, String> openRevisionsList1 = changes.openRevisions(0, 1);
+        Map<String, List<String>> openRevisionsList1 = changes.openRevisions(0, 1);
         Assert.assertEquals(1, openRevisionsList1.size());
 
-        Multimap<String, String> openRevisionsList2 = changes.openRevisions(0, 2);
+        Map<String, List<String>> openRevisionsList2 = changes.openRevisions(0, 2);
         Assert.assertEquals(2, openRevisionsList2.size());
     }
 
