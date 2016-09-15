@@ -21,8 +21,8 @@ import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.util.CollectionUtils;
 import com.cloudant.sync.util.DatabaseUtils;
-import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +31,7 @@ import java.util.List;
 
 /**
  * Get a list of the winning (current) Revisions matching a list of internal (numeric) Document IDs
+ *
  * @api_private
  */
 public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<DocumentRevision>> {
@@ -51,15 +52,16 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Doc
         this.attachmentStreamFactory = attachmentStreamFactory;
     }
 
-    public List<DocumentRevision> call(SQLDatabase db) throws DatastoreException, DocumentException {
+    public List<DocumentRevision> call(SQLDatabase db) throws DatastoreException,
+            DocumentException {
 
         if (docIds.size() == 0) {
             return Collections.emptyList();
         }
 
-        final String GET_DOCUMENTS_BY_INTERNAL_IDS = "SELECT " + DatastoreImpl.FULL_DOCUMENT_COLS + " FROM " +
-                "revs, docs " +
-                "WHERE revs.doc_id IN ( %s ) AND current = 1 AND docs.doc_id = revs.doc_id";
+        final String GET_DOCUMENTS_BY_INTERNAL_IDS = "SELECT " + DatastoreImpl.FULL_DOCUMENT_COLS
+                + " FROM revs, docs WHERE revs.doc_id IN ( %s ) AND current = 1 AND docs.doc_id =" +
+                " revs.doc_id";
 
         // Split into batches because SQLite has a limit on the number
         // of placeholders we can use in a single query. 999 is the default
@@ -67,7 +69,8 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Doc
         // so we use a value much lower.
         List<DocumentRevision> result = new ArrayList<DocumentRevision>(docIds.size());
 
-        List<List<Long>> batches = Lists.partition(docIds, DatastoreImpl.SQLITE_QUERY_PLACEHOLDERS_LIMIT);
+        List<List<Long>> batches = CollectionUtils.partition(docIds,
+                DatastoreImpl.SQLITE_QUERY_PLACEHOLDERS_LIMIT);
         for (List<Long> batch : batches) {
             String sql = String.format(
                     GET_DOCUMENTS_BY_INTERNAL_IDS,
@@ -77,7 +80,8 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Doc
             for (int i = 0; i < batch.size(); i++) {
                 args[i] = Long.toString(batch.get(i));
             }
-            result.addAll(DatastoreImpl.getRevisionsFromRawQuery(db, sql, args, attachmentsDir, attachmentStreamFactory));
+            result.addAll(DatastoreImpl.getRevisionsFromRawQuery(db, sql, args, attachmentsDir,
+                    attachmentStreamFactory));
         }
 
         // Contract is to sort by sequence number, which we need to do
