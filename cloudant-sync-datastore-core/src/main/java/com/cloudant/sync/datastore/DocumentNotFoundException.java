@@ -47,11 +47,11 @@ public class DocumentNotFoundException extends DocumentException {
         super(s);
     }
 
-    public DocumentNotFoundException(String s, Exception e) {
+    public DocumentNotFoundException(String s, Throwable e) {
         super(s, e);
     }
 
-    public DocumentNotFoundException(String docId,String revId, Exception e){
+    public DocumentNotFoundException(String docId,String revId, Throwable e){
         super(createMessage(docId, revId),e);
     }
 

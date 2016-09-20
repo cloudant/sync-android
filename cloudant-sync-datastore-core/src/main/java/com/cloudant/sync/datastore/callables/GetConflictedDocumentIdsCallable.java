@@ -16,57 +16,55 @@ package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DatastoreImpl;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentNotFoundException;
-import com.cloudant.sync.datastore.LocalDocument;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.DatabaseUtils;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Get the local Document for a given Document ID
+ * Get all document IDs of Documents having conflicted Revisions: more than one non-deleted leaf
+ * Revision
  *
  * @api_private
  */
-public class GetLocalDocumentCallable implements SQLCallable<LocalDocument> {
-
-    private String docId;
+public class GetConflictedDocumentIdsCallable implements SQLCallable<List<String>> {
 
     private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
 
-    /**
-     * @param docId Document to fetch the local Document for
-     */
-    public GetLocalDocumentCallable(String docId) {
-        this.docId = docId;
-    }
-
     @Override
-    public LocalDocument call(SQLDatabase database) throws DatastoreException, DocumentNotFoundException {
+    public List<String> call(SQLDatabase db) throws Exception {
+        // the "SELECT DISTINCT ..." subquery selects all the parent
+        // sequence, and so the outer "SELECT ..." practically selects
+        // all the leaf nodes. The "GROUP BY" and "HAVING COUNT(*) > 1"
+        // make sure only those document with more than one leafs are
+        // returned.
+        final String sql = "SELECT docs.docid, COUNT(*) FROM docs,revs " +
+                "WHERE revs.doc_id = docs.doc_id " +
+                "AND deleted = 0 AND revs.sequence NOT IN " +
+                "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) " +
+                "GROUP BY docs.docid HAVING COUNT(*) > 1";
+
+        List<String> conflicts = new ArrayList<String>();
         Cursor cursor = null;
         try {
-            String[] args = {docId};
-            cursor = database.rawQuery("SELECT json FROM localdocs WHERE docid=?", args);
-            if (cursor.moveToFirst()) {
-                byte[] json = cursor.getBlob(0);
-
-                return new LocalDocument(docId, DocumentBodyFactory.create(json));
-            } else {
-                throw new DocumentNotFoundException(String.format("No local document found with " +
-                        "id: %s", docId));
+            cursor = db.rawQuery(sql, new String[]{});
+            while (cursor.moveToNext()) {
+                String docId = cursor.getString(0);
+                conflicts.add(docId);
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, String.format("Error getting local document with id: %s",
-                    docId), e);
-            throw new DatastoreException("Error getting local document with id: " + docId, e);
+            logger.log(Level.SEVERE, "Error getting conflicted document: ", e);
+            throw new DatastoreException(e);
         } finally {
             DatabaseUtils.closeCursorQuietly(cursor);
         }
+        return conflicts;
 
     }
 }

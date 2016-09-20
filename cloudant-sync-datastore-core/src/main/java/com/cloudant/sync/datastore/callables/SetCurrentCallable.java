@@ -41,7 +41,7 @@ public class SetCurrentCallable implements SQLCallable<Void> {
      * @param sequence       Sequence number of revision
      * @param valueOfCurrent New value of {@code current} (true/false)
      *
-     * @see com.cloudant.sync.datastore.DatastoreImpl#pickWinnerOfConflicts(long)
+     * @see PickWinningRevisionCallable
      */
     public SetCurrentCallable(long sequence, boolean valueOfCurrent) {
         this.sequence = sequence;

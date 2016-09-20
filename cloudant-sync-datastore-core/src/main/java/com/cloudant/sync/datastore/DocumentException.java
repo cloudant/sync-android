@@ -31,11 +31,11 @@ public class DocumentException extends Exception {
         super(message);
     }
 
-    public DocumentException(Exception causedBy){
+    public DocumentException(Throwable causedBy){
         super(causedBy);
     }
 
-    public DocumentException(String message,Exception causedBy){
+    public DocumentException(String message,Throwable causedBy){
         super(message,causedBy);
     }
 

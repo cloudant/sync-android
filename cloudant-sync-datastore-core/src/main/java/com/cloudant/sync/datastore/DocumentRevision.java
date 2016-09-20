@@ -312,6 +312,16 @@ public class DocumentRevision implements Comparable<DocumentRevision> {
         }
     }
 
+    /**
+     * @return Whether the body has been modified since this DocumentRevision was constructed or
+     * retrieved from the Datastore. For internal use only.
+     *
+     * @api_private
+     */
+    public boolean isBodyModified() {
+        return bodyModified;
+    }
+
     @Override
     public String toString() {
         return "{ id: " + this.id + ", rev: " + this.revision + ", seq: " + sequence + ", parent: " + parent + ", current: " + current + ", deleted " + deleted +" }";

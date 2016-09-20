@@ -63,7 +63,7 @@ public class GetDocumentCallable implements SQLCallable<DocumentRevision> {
     private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
 
 
-    public DocumentRevision call(SQLDatabase db) throws DocumentNotFoundException, AttachmentException, DatastoreException{
+    public DocumentRevision call(SQLDatabase db) throws DocumentNotFoundException, AttachmentException, DatastoreException {
 
         Cursor cursor = null;
         try {

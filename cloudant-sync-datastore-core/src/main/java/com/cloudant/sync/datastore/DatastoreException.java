@@ -24,16 +24,15 @@ public class DatastoreException extends Exception {
     public DatastoreException(){
 
     }
-
     public DatastoreException(String message){
         super(message);
     }
 
-    public DatastoreException(Exception causedBy){
+    public DatastoreException(Throwable causedBy){
         super(causedBy);
     }
 
-    public DatastoreException(String message, Exception causedBy){
+    public DatastoreException(String message, Throwable causedBy){
         super(message,causedBy);
     }
 
