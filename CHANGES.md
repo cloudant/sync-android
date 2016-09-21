@@ -1,4 +1,5 @@
 # Unreleased
+- [UPGRADED] Upgraded to version 2.6.2 of the `cloudant-http` library.
 - [REMOVED] Removed com.google.guava:guava:15.0 dependency applications may need to update their own
   dependency tree to include guava if they are using it directly, but were relying on this library
   to include it.
