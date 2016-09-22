@@ -12,7 +12,7 @@
  *  and limitations under the License.
  */
 
-package com.cloudant.library;
+package com.cloudant.sync.library;
 
 import com.cloudant.sync.util.Misc;
 
