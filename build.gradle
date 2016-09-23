@@ -42,6 +42,8 @@ subprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
 
+    ext.clientName = 'CloudantSync' // used in user-agent - not 'sync-android' for historical reasons
+
     signing {
         // Only apply signing when it is a release and is being published
         required {
