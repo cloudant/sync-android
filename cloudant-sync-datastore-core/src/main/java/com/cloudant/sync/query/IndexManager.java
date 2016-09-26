@@ -37,6 +37,7 @@
 package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
@@ -47,6 +48,7 @@ import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.DatabaseUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -92,7 +94,7 @@ public class IndexManager {
      *  Constructs a new IndexManager which indexes documents in 'datastore'
      *  @param datastore The {@link Datastore} to index
      */
-    public IndexManager(Datastore datastore) {
+    public IndexManager(Datastore datastore) throws IOException, SQLException {
         this.datastore = datastore;
         validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
 
@@ -102,15 +104,10 @@ public class IndexManager {
 
         SQLDatabaseQueue queue = null;
 
-        try {
-            queue = new SQLDatabaseQueue(filename, keyProvider);
-            queue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
-            queue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
-            textSearchEnabled = ftsAvailable(queue);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to open database", e);
-            queue = null;
-        }
+        queue = new SQLDatabaseQueue(filename, keyProvider);
+        queue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
+        queue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
+        textSearchEnabled = ftsAvailable(queue);
 
         dbQueue = queue;
 
