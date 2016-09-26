@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.1.0'
+        classpath 'com.android.tools.build:gradle:2.2.0'
     }
 }
 apply plugin: 'com.android.application'
@@ -24,11 +24,11 @@ dependencies {
 }
 
 android {
-    compileSdkVersion 19
+    compileSdkVersion 21
     defaultConfig {
         minSdkVersion 14
     }
-    buildToolsVersion "19.1"
+    buildToolsVersion "21.0"
 
     packagingOptions {
         exclude 'META-INF/LICENSE.txt'

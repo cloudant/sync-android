@@ -34,10 +34,10 @@ public class TaskAdapter extends BaseAdapter implements ListAdapter {
 
     public TaskAdapter(Context context, List<Task> tasks) {
         if (context == null) {
-            throw new IllegalArgumentException("Context must not be null.")
+            throw new IllegalArgumentException("Context must not be null.");
         }
         if (tasks == null) {
-            throw new IllegalArgumentException("List of tasks must not be null.")
+            throw new IllegalArgumentException("List of tasks must not be null.");
         }
         this.context = context;
         this.tasks = tasks;
