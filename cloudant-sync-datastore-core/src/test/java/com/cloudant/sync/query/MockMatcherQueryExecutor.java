@@ -12,19 +12,13 @@
 
 package com.cloudant.sync.query;
 
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
-import com.cloudant.sync.util.DatabaseUtils;
 
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 
 /**
  * This sub class of the {@link com.cloudant.sync.query.QueryExecutor} along with
@@ -39,9 +33,9 @@ public class MockMatcherQueryExecutor extends QueryExecutor{
 
     private final Set<String> docIds;
 
-    MockMatcherQueryExecutor(Datastore datastore, SQLDatabaseQueue queue) {
-        super(datastore, queue);
-        docIds = new HashSet<String>(datastore.getAllDocumentIds());
+    MockMatcherQueryExecutor(Database database, SQLDatabaseQueue queue) {
+        super(database, queue);
+        docIds = new HashSet<String>(database.getAllDocumentIds());
     }
 
     // return just a blank node (we don't execute it anyway).

@@ -52,7 +52,7 @@ public class SQLiteWrapperUtils {
             if (stmt.step()) {
                 return stmt.columnLong(0);
             } else {
-                throw new IllegalStateException("Query failed to return any result: " + query);
+                throw new IllegalStateException("query failed to return any result: " + query);
             }
         } finally {
             SQLiteWrapperUtils.disposeQuietly(stmt);
@@ -70,7 +70,7 @@ public class SQLiteWrapperUtils {
             if (stmt.step()) {
                 return stmt.columnInt(0);
             } else {
-                throw new IllegalStateException("Query failed to return any result: " + query);
+                throw new IllegalStateException("query failed to return any result: " + query);
             }
         } finally {
             SQLiteWrapperUtils.disposeQuietly(stmt);

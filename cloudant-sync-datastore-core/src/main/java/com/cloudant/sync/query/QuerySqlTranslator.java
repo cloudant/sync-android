@@ -42,7 +42,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *  This class translates Cloudant Query selectors into the SQL we need to use
+ *  This class translates Cloudant query selectors into the SQL we need to use
  *  to query our indexes.
  *
  *  It creates a tree structure which contains AND/OR nodes, along with the SQL which
@@ -124,7 +124,7 @@ class QuerySqlTranslator {
             logger.log(Level.SEVERE, msg);
             return null;
         } else if (state.textIndexRequired && state.atLeastOneIndexMissing) {
-            String msg = String.format("Query %s contains a text search but is missing \"json\"" +
+            String msg = String.format("query %s contains a text search but is missing \"json\"" +
                                        " index(es).  All indexes must exist in order to execute a" +
                                        " query containing a text search.  Create all necessary" +
                                        " indexes for the query and re-execute.",

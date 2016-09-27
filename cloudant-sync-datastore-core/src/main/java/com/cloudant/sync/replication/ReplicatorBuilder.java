@@ -17,7 +17,7 @@ package com.cloudant.sync.replication;
 import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -84,7 +84,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
     /**
      * A Push Replication Builder
      */
-    public static class Push extends ReplicatorBuilder<Datastore, URI, Push> {
+    public static class Push extends ReplicatorBuilder<Database, URI, Push> {
 
         private int changeLimitPerBatch = 500;
 
@@ -178,7 +178,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
     /**
      * A Pull Replication Builder
      */
-    public static class Pull extends ReplicatorBuilder<URI, Datastore, Pull> {
+    public static class Pull extends ReplicatorBuilder<URI, Database, Pull> {
 
         private PullFilter pullPullFilter = null;
 

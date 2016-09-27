@@ -16,8 +16,8 @@ package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.AttachmentException;
 import com.cloudant.sync.datastore.AttachmentStreamFactory;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentNotFoundException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.SQLCallable;
@@ -36,7 +36,7 @@ import java.util.logging.Logger;
  */
 public class DoForceInsertExistingDocumentWithHistoryCallable implements SQLCallable<Long> {
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     private DocumentRevision newRevision;
     private long docNumericId;

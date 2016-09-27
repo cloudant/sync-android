@@ -14,8 +14,8 @@
 
 package com.cloudant.sync.datastore.callables;
 
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  */
 public class InsertDocumentHistoryToNewTreeCallable implements SQLCallable<Long> {
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     private DocumentRevision newRevision;
     private List<String> revisions;
@@ -53,7 +53,7 @@ public class InsertDocumentHistoryToNewTreeCallable implements SQLCallable<Long>
 
     @Override
     public Long call(SQLDatabase db) throws DatastoreException {
-        Misc.checkArgument(DatastoreImpl.checkCurrentRevisionIsInRevisionHistory(newRevision, revisions),
+        Misc.checkArgument(DatabaseImpl.checkCurrentRevisionIsInRevisionHistory(newRevision, revisions),
                 "Current revision must exist in revision history.");
 
         // Adding a brand new tree
@@ -61,7 +61,7 @@ public class InsertDocumentHistoryToNewTreeCallable implements SQLCallable<Long>
         long parentSequence = 0L;
         for (int i = 0; i < revisions.size() - 1; i++) {
             //we copy attachments here so allow the exception to propagate
-            parentSequence = DatastoreImpl.insertStubRevisionAdaptor(docNumericID, revisions.get(i), parentSequence).call(db);
+            parentSequence = DatabaseImpl.insertStubRevisionAdaptor(docNumericID, revisions.get(i), parentSequence).call(db);
         }
         // don't copy attachments
         String newLeafRev = newRevision.getRevision();

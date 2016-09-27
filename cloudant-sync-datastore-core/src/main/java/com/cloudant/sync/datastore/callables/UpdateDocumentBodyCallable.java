@@ -16,7 +16,7 @@ package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.AttachmentStreamFactory;
 import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.SQLCallable;
@@ -54,7 +54,7 @@ public class UpdateDocumentBodyCallable implements SQLCallable<DocumentRevision>
         Misc.checkNotNullOrEmpty(prevRevId, "Input previous revision id cannot be empty");
         Misc.checkNotNull(body, "Input document body");
 
-        DatastoreImpl.validateDBBody(body);
+        DatabaseImpl.validateDBBody(body);
         CouchUtils.validateRevisionId(prevRevId);
 
         // TODO quicker way of finding if current than fetching whole revision
@@ -65,7 +65,7 @@ public class UpdateDocumentBodyCallable implements SQLCallable<DocumentRevision>
         }
 
         new SetCurrentCallable(preRevision.getSequence(), false).call(db);
-        InsertRevisionCallable insertRevisionCallable = DatastoreImpl.insertNewWinnerRevisionAdaptor(body, preRevision);
+        InsertRevisionCallable insertRevisionCallable = DatabaseImpl.insertNewWinnerRevisionAdaptor(body, preRevision);
         String newRevisionId = insertRevisionCallable.revId;
         insertRevisionCallable.call(db);
         // TODO build the new DocumentRevision instead of retrieving the whole document again

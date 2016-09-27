@@ -28,25 +28,25 @@ public class ProjectedDocumentRevision extends DocumentRevision {
 
     private static final Logger logger = Logger.getLogger(ProjectedDocumentRevision.class.getCanonicalName());
 
-    Datastore datastore;
+    Database database;
 
     ProjectedDocumentRevision(String docId,
                               String revId,
                               boolean deleted,
                               List<? extends Attachment> attachments,
                               DocumentBody body,
-                              Datastore datastore) {
+                              Database database) {
         super(docId, revId,body);
 
         super.setDeleted(deleted);
         super.setAttachmentsInternal(attachments);
-        this.datastore = datastore;
+        this.database = database;
         this.fullRevision = false;
     }
 
     @Override
     public DocumentRevision toFullRevision() throws DocumentNotFoundException {
-        return this.datastore.getDocument(this.id,this.revision);
+        return this.database.getDocument(this.id,this.revision);
     }
 
 
