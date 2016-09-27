@@ -14,7 +14,7 @@ package com.cloudant.sync.query;
 
 import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.Changes;
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
@@ -37,7 +37,7 @@ import java.util.logging.Logger;
  */
 class IndexUpdater {
 
-    private final Datastore datastore;
+    private final Database database;
 
     private final SQLDatabaseQueue queue;
 
@@ -47,8 +47,8 @@ class IndexUpdater {
      *  Constructs a new CDTQQueryExecutor using the indexes in 'database' to index documents from
      *  'datastore'.
      */
-    public IndexUpdater(Datastore datastore, SQLDatabaseQueue queue) {
-        this.datastore = datastore;
+    public IndexUpdater(Database database, SQLDatabaseQueue queue) {
+        this.database = database;
         this.queue = queue;
     }
 
@@ -58,14 +58,14 @@ class IndexUpdater {
      *  These indexes are assumed to already exist.
      *
      *  @param indexes Map of indexes and their definitions.
-     *  @param datastore The local datastore
+     *  @param database The local datastore
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
     public static boolean updateAllIndexes(Map<String, Object> indexes,
-                                           Datastore datastore,
+                                           Database database,
                                            SQLDatabaseQueue queue) {
-        IndexUpdater updater = new IndexUpdater(datastore, queue);
+        IndexUpdater updater = new IndexUpdater(database, queue);
 
         return updater.updateAllIndexes(indexes);
     }
@@ -77,15 +77,15 @@ class IndexUpdater {
      *
      *  @param indexName Name of index to update
      *  @param fieldNames List of field names in the sort format
-     *  @param datastore The local datastore
+     *  @param database The local datastore
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
     public static boolean updateIndex(String indexName,
                                       List<String> fieldNames,
-                                      Datastore datastore,
+                                      Database database,
                                       SQLDatabaseQueue queue) {
-        IndexUpdater updater = new IndexUpdater(datastore, queue);
+        IndexUpdater updater = new IndexUpdater(database, queue);
 
         return updater.updateIndex(indexName, fieldNames);
     }
@@ -112,7 +112,7 @@ class IndexUpdater {
         long lastSequence = sequenceNumberForIndex(indexName);
 
         do {
-            changes = datastore.changes(lastSequence, 10000);
+            changes = database.changes(lastSequence, 10000);
             success = updateIndex(indexName, fieldNames, changes, lastSequence);
             lastSequence = changes.getLastSequence();
         } while (success && changes.size() > 0);

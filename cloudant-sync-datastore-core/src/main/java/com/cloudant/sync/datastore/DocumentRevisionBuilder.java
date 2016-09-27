@@ -54,7 +54,7 @@ public class DocumentRevisionBuilder {
     private long docInternalId = -1;
     private long parent = -1;
     private List<? extends Attachment> attachments = null;
-    private Datastore datastore = null;
+    private Database database = null;
 
     /**
      * <p>Builds and returns the {@link DocumentRevision} for this builder.</p>
@@ -163,11 +163,11 @@ public class DocumentRevisionBuilder {
 
     /**
      * <p>Sets the datastore for this builder.</p>
-     * @param datastore the datastore
+     * @param database the datastore
      * @return the builder object for chained calls
      */
-    public DocumentRevisionBuilder setDatastore(Datastore datastore) {
-        this.datastore = datastore;
+    public DocumentRevisionBuilder setDatabase(Database database) {
+        this.database = database;
         return this;
     }
 
@@ -177,7 +177,7 @@ public class DocumentRevisionBuilder {
      * @return {@link com.cloudant.sync.datastore.ProjectedDocumentRevision} for this builder.
      */
     public ProjectedDocumentRevision buildProjected() {
-        return new ProjectedDocumentRevision(docId, revId, deleted, attachments, body, datastore);
+        return new ProjectedDocumentRevision(docId, revId, deleted, attachments, body, database);
     }
 
 

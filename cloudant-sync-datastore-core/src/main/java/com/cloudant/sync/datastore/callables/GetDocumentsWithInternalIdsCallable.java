@@ -16,7 +16,7 @@ package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.AttachmentStreamFactory;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.SQLCallable;
@@ -59,7 +59,7 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Doc
             return Collections.emptyList();
         }
 
-        final String GET_DOCUMENTS_BY_INTERNAL_IDS = "SELECT " + DatastoreImpl.FULL_DOCUMENT_COLS
+        final String GET_DOCUMENTS_BY_INTERNAL_IDS = "SELECT " + DatabaseImpl.FULL_DOCUMENT_COLS
                 + " FROM revs, docs WHERE revs.doc_id IN ( %s ) AND current = 1 AND docs.doc_id =" +
                 " revs.doc_id";
 
@@ -70,7 +70,7 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Doc
         List<DocumentRevision> result = new ArrayList<DocumentRevision>(docIds.size());
 
         List<List<Long>> batches = CollectionUtils.partition(docIds,
-                DatastoreImpl.SQLITE_QUERY_PLACEHOLDERS_LIMIT);
+                DatabaseImpl.SQLITE_QUERY_PLACEHOLDERS_LIMIT);
         for (List<Long> batch : batches) {
             String sql = String.format(
                     GET_DOCUMENTS_BY_INTERNAL_IDS,
@@ -80,7 +80,7 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Doc
             for (int i = 0; i < batch.size(); i++) {
                 args[i] = Long.toString(batch.get(i));
             }
-            result.addAll(DatastoreImpl.getRevisionsFromRawQuery(db, sql, args, attachmentsDir,
+            result.addAll(DatabaseImpl.getRevisionsFromRawQuery(db, sql, args, attachmentsDir,
                     attachmentStreamFactory));
         }
 

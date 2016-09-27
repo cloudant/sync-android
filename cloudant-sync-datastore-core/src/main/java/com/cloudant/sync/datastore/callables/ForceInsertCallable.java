@@ -17,8 +17,7 @@ package com.cloudant.sync.datastore.callables;
 import com.cloudant.android.Base64InputStreamFactory;
 import com.cloudant.sync.datastore.AttachmentManager;
 import com.cloudant.sync.datastore.AttachmentStreamFactory;
-import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentNotFoundException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.ForceInsertItem;
@@ -45,7 +44,7 @@ import java.util.logging.Logger;
  */
 public class ForceInsertCallable implements SQLCallable<List<DocumentModified>> {
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     private List<ForceInsertItem> items;
 

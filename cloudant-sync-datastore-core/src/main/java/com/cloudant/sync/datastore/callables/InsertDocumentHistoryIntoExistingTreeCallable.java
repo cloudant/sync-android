@@ -15,8 +15,8 @@
 package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.AttachmentManager;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -37,7 +37,7 @@ import java.util.logging.Logger;
  */
 public class InsertDocumentHistoryIntoExistingTreeCallable implements SQLCallable<Long> {
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     private DocumentRevision newRevision;
     private List<String> revisions;
@@ -68,7 +68,7 @@ public class InsertDocumentHistoryIntoExistingTreeCallable implements SQLCallabl
             String revId = revisions.get(i);
             long seq = new GetSequenceCallable(newRevision.getId(), revId).call(db);
             if (seq == -1) {
-                seq = DatastoreImpl.insertStubRevisionAdaptor(docNumericID, revId, parentSeq).call(db);
+                seq = DatabaseImpl.insertStubRevisionAdaptor(docNumericID, revId, parentSeq).call(db);
                 new SetCurrentCallable(parentSeq, false).call(db);
             }
             parentSeq = seq;

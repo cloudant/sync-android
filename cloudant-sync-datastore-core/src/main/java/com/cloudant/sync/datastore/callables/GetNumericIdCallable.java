@@ -14,8 +14,8 @@
 
 package com.cloudant.sync.datastore.callables;
 
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -34,7 +34,7 @@ public class GetNumericIdCallable implements SQLCallable<Long> {
 
     private String id;
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     /**
      * @param id Document ID to fetch the internal numeric ID for
@@ -46,7 +46,7 @@ public class GetNumericIdCallable implements SQLCallable<Long> {
     public Long call(SQLDatabase db) throws DatastoreException {
         Cursor cursor = null;
         try {
-            String sql = DatastoreImpl.GET_DOC_NUMERIC_ID;
+            String sql = DatabaseImpl.GET_DOC_NUMERIC_ID;
             cursor = db.rawQuery(sql, new String[]{id});
             if (cursor.moveToFirst()) {
                 long sequence = cursor.getLong(0);

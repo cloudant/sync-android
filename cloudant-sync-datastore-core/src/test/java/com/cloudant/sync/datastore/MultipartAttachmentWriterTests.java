@@ -42,7 +42,7 @@ public class MultipartAttachmentWriterTests {
 
     String datastore_manager_dir;
     DatastoreManager datastoreManager;
-    Datastore datastore = null;
+    Database database = null;
 
     byte[] jsonData = null;
     DocumentBody bodyOne = null;
@@ -61,14 +61,14 @@ public class MultipartAttachmentWriterTests {
     public void setUp() throws Exception {
         datastore_manager_dir = TestUtils.createTempTestingDir(this.getClass().getName());
         datastoreManager = DatastoreManager.getInstance(this.datastore_manager_dir);
-        datastore = (this.datastoreManager.openDatastore(getClass().getSimpleName()));
+        database = (this.datastoreManager.openDatastore(getClass().getSimpleName())).database;
         jsonData = "{\"body\":\"This is a body.\"}".getBytes();
         bodyOne = DocumentBodyImpl.bodyWith(jsonData);
     }
 
     @After
     public void tearDown() throws Exception {
-        datastore.close();
+        database.close();
         TestUtils.deleteTempTestingDir(datastore_manager_dir);
     }
 
@@ -76,7 +76,7 @@ public class MultipartAttachmentWriterTests {
     public void Add1000TextAttachmentsTest() throws Exception {
         DocumentRevision docMut = new DocumentRevision();
         docMut.setBody(bodyOne);
-        DocumentRevision doc = datastore.createDocumentFromRevision(docMut);
+        DocumentRevision doc = database.createDocumentFromRevision(docMut);
 
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
         mpw.setBody(doc.asMap());
@@ -115,7 +115,7 @@ public class MultipartAttachmentWriterTests {
     public void AddImageAttachmentTest() throws Exception {
         DocumentRevision docMut = new DocumentRevision();
         docMut.setBody(bodyOne);
-        DocumentRevision doc = datastore.createDocumentFromRevision(docMut);
+        DocumentRevision doc = database.createDocumentFromRevision(docMut);
 
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
         mpw.setBody(doc.asMap());

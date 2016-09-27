@@ -22,7 +22,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Map;
 
-public class DatastoreImplRevsDiffTest extends BasicDatastoreTestBase{
+public class DatabaseImplRevsDiffTest extends BasicDatastoreTestBase{
 
     @Test
     public void revsDiff_emptyInput_returnEmpty() {

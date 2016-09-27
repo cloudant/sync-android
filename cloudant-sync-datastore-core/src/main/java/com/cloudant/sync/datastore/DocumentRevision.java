@@ -178,7 +178,7 @@ public class DocumentRevision implements Comparable<DocumentRevision> {
     /**
      * Returns true if this revision is a full revision. A full revision is a revision which
      * contains all the data related to the revision. For example
-     * revisions returned from Query where only select fields have been included
+     * revisions returned from query where only select fields have been included
      * is <strong>not</strong> regarded as a full revision.
      *
      * @return {@code true} if this revision is a full revision.

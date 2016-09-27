@@ -16,7 +16,7 @@ package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentNotFoundException;
 import com.cloudant.sync.datastore.DocumentRevision;
@@ -69,14 +69,14 @@ public class DeleteDocumentCallable implements SQLCallable<DocumentRevision> {
         boolean current;
         try {
             // first check if it exists
-            c = db.rawQuery(DatastoreImpl.GET_METADATA_GIVEN_REVISION, new String[]{docId,
+            c = db.rawQuery(DatabaseImpl.GET_METADATA_GIVEN_REVISION, new String[]{docId,
                     prevRevId});
             boolean exists = c.moveToFirst();
             if (!exists) {
                 throw new DocumentNotFoundException();
             }
             // now check it's a leaf revision
-            String leafQuery = "SELECT " + DatastoreImpl.METADATA_COLS + " FROM revs, docs WHERE " +
+            String leafQuery = "SELECT " + DatabaseImpl.METADATA_COLS + " FROM revs, docs WHERE " +
                     "docs.docid=? AND revs.doc_id=docs.doc_id AND revid=? AND revs.sequence NOT " +
                     "IN (SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
             c = db.rawQuery(leafQuery, new String[]{docId, prevRevId});

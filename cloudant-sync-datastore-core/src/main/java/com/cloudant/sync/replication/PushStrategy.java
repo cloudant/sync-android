@@ -21,9 +21,9 @@ import com.cloudant.mazha.json.JSONHelper;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.AttachmentException;
 import com.cloudant.sync.datastore.Changes;
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
@@ -95,11 +95,11 @@ class PushStrategy implements ReplicationStrategy {
 
     public PushAttachmentsInline pushAttachmentsInline = PushAttachmentsInline.Small;
 
-    public PushStrategy(Datastore source,
+    public PushStrategy(Database source,
                         URI target,
                         List<HttpConnectionRequestInterceptor> requestInterceptors,
                         List<HttpConnectionResponseInterceptor> responseInterceptors) {
-        this.sourceDb = new DatastoreWrapper((DatastoreImpl) source);
+        this.sourceDb = new DatastoreWrapper((DatabaseImpl) source);
         this.targetDb = new CouchClientWrapper(new CouchClient(target, requestInterceptors, responseInterceptors));
         String replicatorName = String.format("%s <-- %s ", target, source.getDatastoreName());
         this.name = String.format("%s [%s]", LOG_TAG, replicatorName);
