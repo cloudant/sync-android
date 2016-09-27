@@ -55,7 +55,7 @@ public class DatabaseNotificationsTest {
     @Test
     public void notification_database_opened() throws Exception{
         databaseOpened = new CountDownLatch(1);
-        Datastore ds = datastoreManager.openDatastore("test123");
+        Database ds = datastoreManager.openDatastore("test123").database;
         try {
             boolean ok = NotificationTestUtils.waitForSignal(databaseOpened);
             Assert.assertTrue("Didn't receive database opened event", ok);
@@ -67,7 +67,7 @@ public class DatabaseNotificationsTest {
     @Test
     public void notification_database_created() throws Exception {
         databaseCreated = new CountDownLatch(1);
-        Datastore ds = datastoreManager.openDatastore("test123");
+        Database ds = datastoreManager.openDatastore("test123").database;
         try {
             boolean ok = NotificationTestUtils.waitForSignal(databaseCreated);
             Assert.assertTrue("Didn't receive database created event", ok);
@@ -92,7 +92,7 @@ public class DatabaseNotificationsTest {
     @Test
     public void notification_database_closed() throws Exception{
         databaseClosed = new CountDownLatch((1));
-        Datastore ds = datastoreManager.openDatastore("testDatabaseClosed");
+        Database ds = datastoreManager.openDatastore("testDatabaseClosed").database;
         ds.getEventBus().register(this);
         ds.close();
         boolean ok = NotificationTestUtils.waitForSignal(databaseClosed);
@@ -102,7 +102,7 @@ public class DatabaseNotificationsTest {
     @Test
     public void notification_databaseClosed_databaseManagerShouldPostDatabaseClosedEvent() throws Exception{
         databaseClosed = new CountDownLatch((1));
-        Datastore ds = datastoreManager.openDatastore("testDatabaseClosed");
+        Database ds = datastoreManager.openDatastore("testDatabaseClosed").database;
         datastoreManager.getEventBus().register(this);
         ds.close();
         boolean ok = NotificationTestUtils.waitForSignal(databaseClosed);

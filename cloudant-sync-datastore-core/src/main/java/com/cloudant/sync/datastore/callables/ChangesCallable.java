@@ -16,7 +16,7 @@ package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.AttachmentStreamFactory;
 import com.cloudant.sync.datastore.Changes;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
@@ -65,7 +65,7 @@ public class ChangesCallable implements SQLCallable<Changes> {
         try {
             Long lastSequence = since;
             List<Long> ids = new ArrayList<Long>();
-            cursor = db.rawQuery(DatastoreImpl.SQL_CHANGE_IDS_SINCE_LIMIT, args);
+            cursor = db.rawQuery(DatabaseImpl.SQL_CHANGE_IDS_SINCE_LIMIT, args);
             while (cursor.moveToNext()) {
                 ids.add(cursor.getLong(0));
                 lastSequence = Math.max(lastSequence, cursor.getLong(1));

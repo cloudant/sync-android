@@ -13,7 +13,7 @@
 package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
@@ -38,20 +38,20 @@ public class QueryResult implements Iterable<DocumentRevision> {
     private final static int DEFAULT_BATCH_SIZE = 50;
 
     private final List<String> originalDocIds;
-    private final Datastore datastore;
+    private final Database database;
     private final List<String> fields;
     private final long skip;
     private final long limit;
     private final UnindexedMatcher matcher;
 
     public QueryResult(List<String> originalDocIds,
-                       Datastore datastore,
+                       Database database,
                        List<String> fields,
                        long skip,
                        long limit,
                        UnindexedMatcher matcher) {
         this.originalDocIds = originalDocIds;
-        this.datastore = datastore;
+        this.database = database;
         this.fields = fields;
         this.skip = skip;
         this.limit = limit;
@@ -151,7 +151,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
                     range.length = Math.min(DEFAULT_BATCH_SIZE, originalDocIds.size() - range.location);
                     List<String> batch = originalDocIds.subList(range.location,
                         range.location + range.length);
-                    List<DocumentRevision> docs = datastore.getDocumentsWithIds(batch);
+                    List<DocumentRevision> docs = database.getDocumentsWithIds(batch);
                     for (DocumentRevision rev : docs) {
                         DocumentRevision innerRev;
                         innerRev = rev;  // Allows us to replace later if projecting
@@ -168,7 +168,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
                         }
 
                         if (fields != null && !fields.isEmpty()) {
-                            innerRev = projectFields(fields, rev, datastore);
+                            innerRev = projectFields(fields, rev, database);
                         }
 
                         docList.add(innerRev);
@@ -200,7 +200,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
 
     private DocumentRevision projectFields(List<String> fields,
                                            DocumentRevision rev,
-                                           Datastore datastore) {
+                                           Database database) {
         // grab the map filter fields and rebuild object
         Map<String, Object> originalBody = rev.getBody().asMap();
         Map<String, Object> body = new HashMap<String, Object>();
@@ -216,7 +216,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
         revBuilder.setBody(DocumentBodyFactory.create(body));
         revBuilder.setDeleted(rev.isDeleted());
         revBuilder.setAttachments(new ArrayList<Attachment>(rev.getAttachments().values()));
-        revBuilder.setDatastore(datastore);
+        revBuilder.setDatabase(database);
 
         return revBuilder.buildProjected();
     }

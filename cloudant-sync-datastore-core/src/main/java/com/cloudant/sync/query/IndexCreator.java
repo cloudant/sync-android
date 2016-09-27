@@ -13,7 +13,7 @@
 package com.cloudant.sync.query;
 
 import com.cloudant.android.ContentValues;
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
@@ -40,22 +40,22 @@ import java.util.logging.Logger;
  */
 class IndexCreator {
 
-    private final Datastore datastore;
+    private final Database database;
     private static Random indexNameRandom = new Random();
 
     private final SQLDatabaseQueue queue;
 
     private static final Logger logger = Logger.getLogger(IndexCreator.class.getName());
 
-    public IndexCreator(Datastore datastore, SQLDatabaseQueue queue) {
-        this.datastore = datastore;
+    public IndexCreator(Database database, SQLDatabaseQueue queue) {
+        this.database = database;
         this.queue = queue;
     }
 
     protected static String ensureIndexed(Index index,
-                                          Datastore datastore,
+                                          Database database,
                                           SQLDatabaseQueue queue) {
-        IndexCreator executor = new IndexCreator(datastore, queue);
+        IndexCreator executor = new IndexCreator(database, queue);
 
         return executor.ensureIndexed(index);
     }
@@ -149,7 +149,7 @@ class IndexCreator {
                         proposedIndex.compareIndexTypeTo(existingType, existingSettings)) {
                     boolean success = IndexUpdater.updateIndex(proposedIndex.indexName,
                                                                fieldNamesList,
-                                                               datastore,
+                            database,
                                                                queue);
                     return success ? proposedIndex.indexName : null;
                 }
@@ -242,7 +242,7 @@ class IndexCreator {
         if (success) {
             success = IndexUpdater.updateIndex(index.indexName,
                                                fieldNamesList,
-                                               datastore,
+                    database,
                                                queue);
         }
 

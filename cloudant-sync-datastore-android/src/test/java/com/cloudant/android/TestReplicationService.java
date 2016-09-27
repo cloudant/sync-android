@@ -1,19 +1,9 @@
 package com.cloudant.android;
 
 import android.content.Context;
-import android.util.Log;
 
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.sync.datastore.DatastoreNotCreatedException;
 import com.cloudant.sync.replication.WifiPeriodicReplicationReceiver;
 import com.cloudant.sync.replication.PeriodicReplicationService;
-import com.cloudant.sync.replication.Replicator;
-import com.cloudant.sync.replication.ReplicatorBuilder;
-
-import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 public class TestReplicationService extends PeriodicReplicationService {
 

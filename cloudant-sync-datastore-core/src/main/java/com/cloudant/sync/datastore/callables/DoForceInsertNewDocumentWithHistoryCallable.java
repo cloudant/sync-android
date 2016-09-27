@@ -15,8 +15,8 @@
 package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.AttachmentException;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -33,7 +33,7 @@ import java.util.logging.Logger;
  */
 public class DoForceInsertNewDocumentWithHistoryCallable implements SQLCallable<Long> {
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     private DocumentRevision rev;
     private List<String> revHistory;
@@ -60,7 +60,7 @@ public class DoForceInsertNewDocumentWithHistoryCallable implements SQLCallable<
         long parentSequence = 0L;
         for (int i = 0; i < revHistory.size() - 1; i++) {
             // Insert stub node
-            parentSequence = DatastoreImpl.insertStubRevisionAdaptor(docNumericID, revHistory.get(i),
+            parentSequence = DatabaseImpl.insertStubRevisionAdaptor(docNumericID, revHistory.get(i),
                     parentSequence).call(db);
         }
         // Insert the leaf node (don't copy attachments)

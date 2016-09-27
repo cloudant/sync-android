@@ -14,10 +14,12 @@
 
 package com.cloudant.sync.notifications;
 
+import com.cloudant.sync.datastore.Database;
+
 /**
  * <p>Event for database closed</p>
  *
- * <p>This event is posted by {@link com.cloudant.sync.datastore.Datastore#close()}</p>
+ * <p>This event is posted by {@link Database#close()}</p>
  *
  * @api_public
  */
