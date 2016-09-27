@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 /**
- * <p>Manages a set of {@link Datastore} objects, with their underlying disk
+ * <p>Manages a set of {@link Database} objects, with their underlying disk
  * storage residing in a given directory.</p>
  *
  * <p>In general, a directory used for storing datastores -- that is, managed
@@ -68,7 +68,7 @@ public class DatastoreManager {
     private final String path;
 
     /* This map should only be accessed inside synchronized(openDatastores) blocks */
-    private final Map<String, Datastore> openedDatastores = new HashMap<String, Datastore>();
+    private final Map<String, CloudantSync> openedDatastores = new HashMap<String, CloudantSync>();
 
     /**
      * The regex used to validate a datastore name, {@value}.
@@ -76,40 +76,6 @@ public class DatastoreManager {
     protected static final String LEGAL_CHARACTERS = "^[a-zA-Z]+[a-zA-Z0-9_\\Q-$()/\\E]*";
 
     private final EventBus eventBus = new EventBus();
-
-    /**
-     * <p>Constructs a {@code DatastoreManager} to manage a directory.</p>
-     * <p>Datastores are created within the {@code directoryPath} directory.
-     * In general, this folder should be under the control of, and only used
-     * by, a single {@code DatastoreManager} object at any time.</p>
-     *
-     * @param directoryPath root directory to manage
-     * @see DatastoreManager#DatastoreManager(java.io.File)
-     * @deprecated Use {@link DatastoreManager#getInstance(String)} to guarantee only a
-     * single DatastoreManager instance is created per storage path.
-     */
-    public DatastoreManager(String directoryPath) {
-        this(new File(directoryPath), false);
-    }
-
-    /**
-     * <p>Constructs a {@code DatastoreManager} to manage a directory.</p>
-     *
-     * <p>Datastores are created within the {@code directoryPath} directory.
-     * In general, this folder should be under the control of, and only used
-     * by, a single {@code DatastoreManager} object at any time.</p>
-     *
-     * @param directoryPath root directory to manage
-     *
-     * @throws IllegalArgumentException if the {@code directoryPath} is not a
-     *          directory or isn't writable.
-     *
-     * @deprecated Use {@link DatastoreManager#getInstance(File)} to guarantee only a single
-     * DatastoreManager instance is created per storage path.
-     */
-    public DatastoreManager(File directoryPath) {
-        this(directoryPath, false);
-    }
 
     /**
      * <p>Constructs a {@code DatastoreManager} to manage a directory.</p>
@@ -121,14 +87,12 @@ public class DatastoreManager {
      * Internal use only, external callers should use DatastoreManager.getInstance().
      *</P>
      * @param directoryPath root directory to manage
-     * @param unused parameter to distinguish the private constructor from the deprecated public one
-     *               to be removed when deprecated constructors are removed.
-     *
+
      * @throws IllegalArgumentException if the {@code directoryPath} is not a
      *          directory or isn't writable.
      *
      */
-    private DatastoreManager(File directoryPath, boolean unused) {
+    private DatastoreManager(File directoryPath) {
         logger.fine("Datastore path: " + directoryPath);
 
         if(!directoryPath.exists()){
@@ -175,15 +139,15 @@ public class DatastoreManager {
      */
     public static DatastoreManager getInstance(File directoryPath) {
         // Uses the deprecated public constructor until we can change it to a private constructor.
-        DatastoreManager manager = new DatastoreManager(directoryPath, false);
+        DatastoreManager manager = new DatastoreManager(directoryPath);
         DatastoreManager existingManager = datastoreManagers.putIfAbsent(directoryPath, manager);
         return (existingManager == null) ? manager : existingManager;
     }
 
     /**
-     * Lists all the names of {@link com.cloudant.sync.datastore.Datastore Datastores} managed by this DatastoreManager
+     * Lists all the names of {@link Database Datastores} managed by this DatastoreManager
      *
-     * @return List of {@link com.cloudant.sync.datastore.Datastore Datastores} names.
+     * @return List of {@link Database Datastores} names.
      */
     public List<String> listAllDatastores() {
         List<String> datastores = new ArrayList<String>();
@@ -221,7 +185,7 @@ public class DatastoreManager {
      *
      * @see DatastoreManager#getEventBus() 
      */
-    public Datastore openDatastore(String dbName) throws DatastoreNotCreatedException {
+    public CloudantSync openDatastore(String dbName) throws DatastoreNotCreatedException {
         return this.openDatastore(dbName, new NullKeyProvider());
     }
 
@@ -239,7 +203,7 @@ public class DatastoreManager {
      * created, a {@link DatabaseOpened DatabaseOpened} event is posted on the event bus.</p>
      *
      * <p>Datastores are uniqued: calling this method with the name of an already open datastore
-     * will return the existing {@link Datastore} object.</p>
+     * will return the existing {@link Database} object.</p>
      *
      * @param dbName name of datastore to open
      * @param provider  KeyProvider object; use a NullKeyProvider if database shouldn't be encrypted.
@@ -250,17 +214,17 @@ public class DatastoreManager {
      *
      * @see DatastoreManager#getEventBus()
      */
-    public Datastore openDatastore(String dbName, KeyProvider provider) throws
+    public CloudantSync openDatastore(String dbName, KeyProvider provider) throws
             DatastoreNotCreatedException {
         Misc.checkArgument(dbName.matches(LEGAL_CHARACTERS),
                 "A database must be named with all lowercase letters (a-z), digits (0-9),"
                         + " or any of the _$()+-/ characters. The name has to start with a"
                         + " lowercase letter (a-z).");
         synchronized (openedDatastores) {
-            Datastore ds = openedDatastores.get(dbName);
+            CloudantSync ds = openedDatastores.get(dbName);
             if (ds == null) {
                 ds = createDatastore(dbName, provider);
-                ds.getEventBus().register(this);
+                ds.database.getEventBus().register(this);
                 openedDatastores.put(dbName, ds);
             }
             return ds;
@@ -274,7 +238,7 @@ public class DatastoreManager {
      * a not undo-able. To confirm, this only deletes local data; data
      * replicated to remote databases is not affected.</p>
      *
-     * <p>Any {@link Datastore} objects referring to the deleted files will be
+     * <p>Any {@link Database} objects referring to the deleted files will be
      * in an unknown state. Therefore, they should be disposed of prior to
      * deleting the data. Currently, no checks for open datastores are carried
      * out before attempting the delete.</p>
@@ -294,9 +258,10 @@ public class DatastoreManager {
         Misc.checkNotNull(dbName, "Datastore name");
 
         synchronized (openedDatastores) {
-            Datastore ds = openedDatastores.remove(dbName);
+            CloudantSync ds = openedDatastores.remove(dbName);
             if (ds != null) {
-                ds.close();
+                ds.database.close();
+                ds.query.close();
             }
             String dbDirectory = getDatastoreDirectory(dbName);
             File dir = new File(dbDirectory);
@@ -322,7 +287,7 @@ public class DatastoreManager {
      * @return initialise datastore object
      * @throws DatastoreNotCreatedException if the database cannot be opened
      */
-    private Datastore createDatastore(String dbName, KeyProvider provider) throws DatastoreNotCreatedException {
+    private CloudantSync createDatastore(String dbName, KeyProvider provider) throws DatastoreNotCreatedException {
         try {
             String dbDirectory = this.getDatastoreDirectory(dbName);
             boolean dbDirectoryExist = new File(dbDirectory).exists();
@@ -333,7 +298,7 @@ public class DatastoreManager {
             // if it does not exist
 
             //Pass database directory, database name, and SQLCipher key provider
-            DatastoreImpl ds = new DatastoreImpl(dbDirectory, dbName, provider);
+            CloudantSync ds = new CloudantSync(dbDirectory, dbName, provider);
 
             if(!dbDirectoryExist) {
                 this.eventBus.post(new DatabaseCreated(dbName));

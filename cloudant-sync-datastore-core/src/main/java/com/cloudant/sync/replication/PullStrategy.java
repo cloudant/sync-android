@@ -14,16 +14,15 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.common.ValueListMap;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.mazha.ChangesResult;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.PreparedAttachment;
@@ -98,14 +97,14 @@ class PullStrategy implements ReplicationStrategy {
     public boolean pullAttachmentsInline = false;
 
     public PullStrategy(URI source,
-                        Datastore target,
+                        Database target,
                         PullFilter filter,
                         List<HttpConnectionRequestInterceptor> requestInterceptors,
                         List<HttpConnectionResponseInterceptor> responseInterceptors) {
         this.filter = filter;
         this.sourceDb = new CouchClientWrapper(new CouchClient(source, requestInterceptors,
                 responseInterceptors));
-        this.targetDb = new DatastoreWrapper((DatastoreImpl) target);
+        this.targetDb = new DatastoreWrapper((DatabaseImpl) target);
         String replicatorName;
         if (filter == null) {
             replicatorName = String.format("%s <-- %s ", target.getDatastoreName(), source);

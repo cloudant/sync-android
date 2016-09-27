@@ -18,7 +18,7 @@ import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.AttachmentException;
 import com.cloudant.sync.datastore.AttachmentManager;
 import com.cloudant.sync.datastore.AttachmentStreamFactory;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.SavedAttachment;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
@@ -43,7 +43,7 @@ public class AttachmentsForRevisionCallable implements SQLCallable<List<? extend
     private AttachmentStreamFactory attachmentStreamFactory;
     private long sequence;
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     /**
      * @param attachmentsDir          Location of attachments

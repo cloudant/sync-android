@@ -192,9 +192,9 @@ public class DatastoreSchemaTests {
         Assert.assertTrue(unzipToDirectory(zippedVersion6, temp_folder));
 
         // Datastore manager the temp folder
-        DatastoreImpl datastore = (DatastoreImpl) DatastoreManager.getInstance(
+        DatabaseImpl datastore = (DatabaseImpl) DatastoreManager.getInstance(
                 new File(temp_folder, "datastores").getAbsolutePath())
-                .openDatastore("testdb");
+                .openDatastore("testdb").database;
 
         try {
             // Check migration worked
@@ -310,9 +310,9 @@ public class DatastoreSchemaTests {
         Assert.assertTrue(unzipToDirectory(zippedWithDups, temp_folder));
 
         // Open the v100WithDuplicates datastore. Opening should perform the 100 to 200 migration.
-        DatastoreImpl datastore = (DatastoreImpl) DatastoreManager.getInstance(
+        DatabaseImpl datastore = (DatabaseImpl) DatastoreManager.getInstance(
                 new File(temp_folder, "datastores").getAbsolutePath())
-                .openDatastore("v100DBWithDuplicates");
+                .openDatastore("v100DBWithDuplicates").database;
 
         try {
 
@@ -425,9 +425,9 @@ public class DatastoreSchemaTests {
         Assert.assertTrue(unzipToDirectory(zippedComplexDatabase, temp_folder));
 
         // Open the v100WithDuplicates datastore. Opening should perform the 100 to 200 migration.
-        DatastoreImpl datastore = (DatastoreImpl) DatastoreManager.getInstance(
+        DatabaseImpl datastore = (DatabaseImpl) DatastoreManager.getInstance(
                 new File(temp_folder, "datastores").getAbsolutePath())
-                .openDatastore("v100ComplexWithoutDuplicates");
+                .openDatastore("v100ComplexWithoutDuplicates").database;
 
         try {
 
@@ -594,21 +594,21 @@ public class DatastoreSchemaTests {
     }
 
     // utility methods used by tests
-    private void assertLeafCount(Datastore datastore, String docId, int expectedLeafCount) {
-        int actualLeafCount = ((DatastoreImpl)datastore).getAllRevisionsOfDocument(docId).
+    private void assertLeafCount(Database database, String docId, int expectedLeafCount) {
+        int actualLeafCount = ((DatabaseImpl) database).getAllRevisionsOfDocument(docId).
                 leafRevisions().size();
         Assert.assertEquals("Should get the expected number of leaf revisions", expectedLeafCount,
                 actualLeafCount);
     }
 
-    private void assertAttachmentCount(Datastore datastore, String docId,
+    private void assertAttachmentCount(Database database, String docId,
                                        int expectedAttachmentCount) {
         int actualAttachmentCount = 0;
-        Set<String> revIds = ((DatastoreImpl)datastore).getAllRevisionsOfDocument(docId).
+        Set<String> revIds = ((DatabaseImpl) database).getAllRevisionsOfDocument(docId).
                 leafRevisionIds();
         for (String revId : revIds) {
             try {
-                actualAttachmentCount += datastore.getDocument(docId, revId).attachments.size();
+                actualAttachmentCount += database.getDocument(docId, revId).attachments.size();
             } catch (DocumentNotFoundException dnfe) {
                 Assert.fail("Failed to find revision for document ID " + docId + " and revision ID "
                         + revId);
@@ -619,9 +619,9 @@ public class DatastoreSchemaTests {
                 actualAttachmentCount);
     }
 
-    private void assertWinner(Datastore datastore, String docId, String expectedRevId) {
+    private void assertWinner(Database database, String docId, String expectedRevId) {
         try {
-            String actualRevId = datastore.getDocument(docId).getRevision();
+            String actualRevId = database.getDocument(docId).getRevision();
             Assert.assertEquals("Should get the expected winning revision ID", expectedRevId,
                     actualRevId);
         } catch (DocumentNotFoundException dnfe) {

@@ -119,7 +119,7 @@ public class PullFilter {
      * String are the same for different calls. This is important
      * because the String can therefore be part of the replication ID.</p>
      *
-     * @return Query string like representation of the filter
+     * @return query string like representation of the filter
      *
      * @see PullStrategy#getReplicationId()
      */

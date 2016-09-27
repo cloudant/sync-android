@@ -43,7 +43,7 @@ public interface ConflictResolver {
      *                  current winner
      * @return resolved DocumentRevision
      *
-     * @see com.cloudant.sync.datastore.Datastore#resolveConflictsForDocument(String, ConflictResolver)
+     * @see Database#resolveConflictsForDocument(String, ConflictResolver)
      */
     DocumentRevision resolve(String docId, List<DocumentRevision> conflicts);
 }

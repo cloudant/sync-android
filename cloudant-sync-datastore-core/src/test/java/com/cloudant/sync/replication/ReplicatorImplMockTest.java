@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.event.Subscribe;
 
@@ -43,7 +43,7 @@ import java.net.URISyntaxException;
 public class ReplicatorImplMockTest {
 
     URI uri;
-    DatastoreImpl mockDatastore;
+    DatabaseImpl mockDatastore;
     ReplicationStrategy mockStrategy;
     Listener mockListener;
     TestReplicatorImpl replicator;
@@ -51,7 +51,7 @@ public class ReplicatorImplMockTest {
     @Before
     public void setUp() throws Exception {
         uri = new URI("http://127.0.0.1:5984/db1");
-        mockDatastore = mock(DatastoreImpl.class);
+        mockDatastore = mock(DatabaseImpl.class);
         mockStrategy = mock(ReplicationStrategy.class);
         when(mockStrategy.getEventBus()).thenReturn(new EventBus());
         mockListener = mock(Listener.class);

@@ -290,7 +290,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
 
         // query - { "$text" : { "$search" : "Remus OR Romulus" } }
-        // - Enhanced Query Syntax - logical operators must be uppercase otherwise they will
+        // - Enhanced query Syntax - logical operators must be uppercase otherwise they will
         //   be treated as a search token
         Map<String, Object> search = new HashMap<String, Object>();
         search.put("$search", "Remus OR Romulus");
@@ -309,7 +309,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
             assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
 
             // query - { "$text" : { "$search" : "Remus NOT Romulus" } }
-            // - Enhanced Query Syntax - logical operators must be uppercase otherwise they will
+            // - Enhanced query Syntax - logical operators must be uppercase otherwise they will
             //   be treated as a search token
             // - NOT operator only works between tokens as in (token1 NOT token2)
             Map<String, Object> search = new HashMap<String, Object>();
