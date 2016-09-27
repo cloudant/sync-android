@@ -36,8 +36,8 @@
 
 package com.cloudant.sync.query;
 
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.Database;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.sqlite.Cursor;
@@ -81,7 +81,7 @@ public class IndexManager {
 
     private static final Logger logger = Logger.getLogger(IndexManager.class.getName());
 
-    private final Datastore datastore;
+    private final Database database;
     private final Pattern validFieldName;
 
     private final SQLDatabaseQueue dbQueue;
@@ -90,15 +90,15 @@ public class IndexManager {
 
     /**
      *  Constructs a new IndexManager which indexes documents in 'datastore'
-     *  @param datastore The {@link Datastore} to index
+     *  @param database The {@link Database} to index
      */
-    public IndexManager(Datastore datastore) {
-        this.datastore = datastore;
+    public IndexManager(Database database) {
+        this.database = database;
         validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
 
-        final String filename = ((DatastoreImpl)datastore).extensionDataFolder(EXTENSION_NAME) + File.separator
+        final String filename = ((DatabaseImpl) database).extensionDataFolder(EXTENSION_NAME) + File.separator
                                                                               + "indexes.sqlite";
-        final KeyProvider keyProvider = ((DatastoreImpl)datastore).getKeyProvider();
+        final KeyProvider keyProvider = ((DatabaseImpl) database).getKeyProvider();
 
         SQLDatabaseQueue queue = null;
 
@@ -214,7 +214,7 @@ public class IndexManager {
      */
     public String ensureIndexed(List<Object> fieldNames, String indexName) {
         return IndexCreator.ensureIndexed(Index.getInstance(fieldNames, indexName),
-                datastore,
+                database,
                 dbQueue);
     }
 
@@ -252,7 +252,7 @@ public class IndexManager {
                         indexName,
                         indexType,
                         indexSettings),
-                datastore,
+                database,
                 dbQueue);
     }
 
@@ -320,7 +320,7 @@ public class IndexManager {
     public boolean updateAllIndexes() {
         Map<String, Object> indexes = listIndexes();
 
-        return IndexUpdater.updateAllIndexes(indexes, datastore, dbQueue);
+        return IndexUpdater.updateAllIndexes(indexes, database, dbQueue);
     }
 
     public QueryResult find(Map<String, Object> query) {
@@ -341,7 +341,7 @@ public class IndexManager {
             return null;
         }
 
-        QueryExecutor queryExecutor = new QueryExecutor(datastore, dbQueue);
+        QueryExecutor queryExecutor = new QueryExecutor(database, dbQueue);
         Map<String, Object> indexes = listIndexes();
 
         return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
@@ -351,8 +351,8 @@ public class IndexManager {
         return INDEX_TABLE_PREFIX.concat(indexName);
     }
 
-    protected Datastore getDatastore() {
-        return datastore;
+    protected Database getDatabase() {
+        return database;
     }
 
     /**

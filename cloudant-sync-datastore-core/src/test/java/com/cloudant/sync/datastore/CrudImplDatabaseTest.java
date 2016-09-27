@@ -37,7 +37,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
-public class DatastoreImplCRUDTest extends BasicDatastoreTestBase {
+public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
 
     public ArrayList<DocumentBody> generateDocuments(int count) {
         ArrayList<DocumentBody> result = new ArrayList<DocumentBody>(count);
@@ -309,7 +309,7 @@ public class DatastoreImplCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void getLastSequence_noDocuments_ShouldBeMinusOne() {
-        Assert.assertEquals(DatastoreImpl.SEQUENCE_NUMBER_START, datastore.getLastSequence());
+        Assert.assertEquals(DatabaseImpl.SEQUENCE_NUMBER_START, datastore.getLastSequence());
     }
 
     @Test
@@ -579,14 +579,14 @@ public class DatastoreImplCRUDTest extends BasicDatastoreTestBase {
 
     @Test
     public void createDbWithSlashAndCreateDocument() throws Exception {
-        Datastore datastore = datastoreManager.openDatastore("dbwith/aslash");
+        Database database = datastoreManager.openDatastore("dbwith/aslash").database;
         try {
             DocumentRevision rev = new DocumentRevision();
             rev.setBody(bodyOne);
-            DocumentRevision doc = datastore.createDocumentFromRevision(rev);
+            DocumentRevision doc = database.createDocumentFromRevision(rev);
             validateNewlyCreatedDocument(doc);
         } finally {
-            datastore.close();
+            database.close();
         }
     }
 

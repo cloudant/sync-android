@@ -32,7 +32,7 @@ public class BasicDBCoreObservableTest {
     String documentTwoFile = "fixture/document_2.json";
 
     SQLDatabase database = null;
-    DatastoreImpl core = null;
+    DatabaseImpl core = null;
     byte[] jsonData = null;
     DocumentBody bodyOne = null;
     DocumentBody bodyTwo = null;
@@ -53,7 +53,7 @@ public class BasicDBCoreObservableTest {
     @Test
     public void createDocument_bodyOnly_success() throws Exception {
 
-        this.core = new DatastoreImpl(database_dir, "test");
+        this.core = new DatabaseImpl(database_dir, "test");
 
         this.jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         this.bodyOne = new DocumentBodyImpl(jsonData);
@@ -89,8 +89,8 @@ public class BasicDBCoreObservableTest {
     }
 
     public static class TestObserver {        
-        Datastore core ;
-        public TestObserver(Datastore core) {
+        Database core ;
+        public TestObserver(Database core) {
             this.core = core;
         }
 

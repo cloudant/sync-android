@@ -15,7 +15,7 @@
 package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.AttachmentStreamFactory;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -44,13 +44,13 @@ public class GetDocumentsWithIdsCallable implements SQLCallable<List<DocumentRev
 
     @Override
     public List<DocumentRevision> call(SQLDatabase db) throws Exception {
-        String sql = String.format("SELECT " + DatastoreImpl.FULL_DOCUMENT_COLS + " FROM revs, docs" +
+        String sql = String.format("SELECT " + DatabaseImpl.FULL_DOCUMENT_COLS + " FROM revs, docs" +
                 " WHERE docid IN ( %1$s ) AND current = 1 AND docs.doc_id = revs.doc_id " +
                 " ORDER BY docs.doc_id ", DatabaseUtils.makePlaceholders(docIds.size
                 ()));
         String[] args = docIds.toArray(new String[docIds.size()]);
-        List<DocumentRevision> docs = DatastoreImpl.getRevisionsFromRawQuery(db, sql, args, attachmentsDir, attachmentStreamFactory);
+        List<DocumentRevision> docs = DatabaseImpl.getRevisionsFromRawQuery(db, sql, args, attachmentsDir, attachmentStreamFactory);
         // Sort in memory since seems not able to sort them using SQL
-        return DatastoreImpl.sortDocumentsAccordingToIdList(docIds, docs);
+        return DatabaseImpl.sortDocumentsAccordingToIdList(docIds, docs);
     }
 }

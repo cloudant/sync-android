@@ -12,7 +12,7 @@
 
 package com.cloudant.sync.query;
 
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.util.TestUtils;
 
 import java.util.List;
@@ -29,8 +29,8 @@ import java.util.Map;
  */
 public class MockMatcherIndexManager extends IndexManager {
 
-    public MockMatcherIndexManager(Datastore datastore) {
-        super(datastore);
+    public MockMatcherIndexManager(Database database) {
+        super(database);
     }
 
     @Override
@@ -49,7 +49,7 @@ public class MockMatcherIndexManager extends IndexManager {
 
         MockMatcherQueryExecutor queryExecutor = null;
         try {
-            queryExecutor = new MockMatcherQueryExecutor(getDatastore(),
+            queryExecutor = new MockMatcherQueryExecutor(getDatabase(),
                     TestUtils.getDBQueue(this));
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -23,7 +23,7 @@ import static org.junit.Assert.fail;
 
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DatastoreNotCreatedException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
@@ -92,7 +92,7 @@ public class EndToEndEncryptionTest {
 
     String datastoreManagerDir;
     DatastoreManager datastoreManager;
-    Datastore datastore;
+    Database database;
 
     // Magic bytes are "SQLite format 3" + null-terminator
     byte[] sqlCipherMagicBytes = hexStringToByteArray("53514c69746520666f726d6174203300");
@@ -104,16 +104,16 @@ public class EndToEndEncryptionTest {
         datastoreManager = DatastoreManager.getInstance(this.datastoreManagerDir);
 
         if(dataShouldBeEncrypted) {
-            this.datastore = this.datastoreManager.openDatastore(getClass().getSimpleName(),
+            this.database = this.datastoreManager.openDatastore(getClass().getSimpleName(),
                     new SimpleKeyProvider(KEY));
         } else {
-            this.datastore = this.datastoreManager.openDatastore(getClass().getSimpleName());
+            this.database = this.datastoreManager.openDatastore(getClass().getSimpleName());
         }
     }
 
     @After
     public void tearDown() {
-        datastore.close();
+        database.close();
         TestUtils.deleteTempTestingDir(datastoreManagerDir);
     }
 
@@ -127,7 +127,7 @@ public class EndToEndEncryptionTest {
         // database operation to ensure the database exists on disk before we look at
         // it.
 
-        IndexManager im = new IndexManager(this.datastore);
+        IndexManager im = new IndexManager(this.database);
         try {
             im.ensureIndexed(Arrays.<Object>asList("name", "age"));
         } finally {
@@ -152,7 +152,7 @@ public class EndToEndEncryptionTest {
     @Test
     public void indexDataEncrypted() throws IOException {
 
-        IndexManager im = new IndexManager(this.datastore);
+        IndexManager im = new IndexManager(this.database);
         try {
             im.ensureIndexed(Arrays.<Object>asList("name", "age"));
         } finally {
@@ -193,7 +193,7 @@ public class EndToEndEncryptionTest {
                 expectedPlainText, "text/plain");
         rev.getAttachments().put("EncryptedAttachmentTest_plainText", attachment);
 
-        datastore.createDocumentFromRevision(rev);
+        database.createDocumentFromRevision(rev);
 
         File attachmentsFolder = new File(datastoreManagerDir
                 + File.separator + "EndToEndEncryptionTest"
@@ -232,7 +232,7 @@ public class EndToEndEncryptionTest {
 
         // First close the datastore, as otherwise DatastoreManager's uniquing just
         // gives us back the existing instance which has the correct key.
-        datastore.close();
+        database.close();
 
         this.datastoreManager.openDatastore(getClass().getSimpleName(),
                 new SimpleKeyProvider(WRONG_KEY));
@@ -255,11 +255,11 @@ public class EndToEndEncryptionTest {
         // Create
         DocumentRevision rev = new DocumentRevision(documentId);
         rev.setBody(DocumentBodyFactory.create(documentBody));
-        DocumentRevision saved = datastore.createDocumentFromRevision(rev);
+        DocumentRevision saved = database.createDocumentFromRevision(rev);
         assertNotNull(saved);
 
         // Read
-        DocumentRevision retrieved = datastore.getDocument(documentId);
+        DocumentRevision retrieved = database.getDocument(documentId);
         assertNotNull(retrieved);
         Map<String, Object> retrievedBody = retrieved.getBody().asMap();
         assertEquals("mike", retrievedBody.get("name"));
@@ -272,7 +272,7 @@ public class EndToEndEncryptionTest {
         Map<String, Object> updateBody = retrieved.getBody().asMap();
         updateBody.put("name", "fred");
         update.setBody(DocumentBodyFactory.create(updateBody));
-        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        DocumentRevision updated = database.updateDocumentFromRevision(update);
         assertNotNull(updated);
         Map<String, Object> updatedBody = updated.getBody().asMap();
         assertEquals("fred", updatedBody.get("name"));
@@ -290,7 +290,7 @@ public class EndToEndEncryptionTest {
         atts.put("non-ascii", new UnsavedStreamAttachment(
                 new ByteArrayInputStream(nonAsciiText.getBytes()),
                 "non-ascii", "text/plain"));
-        DocumentRevision updatedWithAttachment = datastore.updateDocumentFromRevision(attachmentRevision);
+        DocumentRevision updatedWithAttachment = database.updateDocumentFromRevision(attachmentRevision);
         InputStream in = updatedWithAttachment.getAttachments().get(attachmentName).getInputStream();
         assertTrue("Saved attachment did not read correctly",
                 IOUtils.contentEquals(new FileInputStream(expectedPlainText), in));
@@ -299,7 +299,7 @@ public class EndToEndEncryptionTest {
                 IOUtils.contentEquals(new ByteArrayInputStream(nonAsciiText.getBytes()), in));
 
         // perform a query to ensure we can use special chars
-        IndexManager indexManager = new IndexManager(datastore);
+        IndexManager indexManager = new IndexManager(database);
         try {
             assertNotNull(indexManager.ensureIndexed(Arrays.<Object>asList("name", "pet"), "my index"));
 
@@ -313,12 +313,12 @@ public class EndToEndEncryptionTest {
         }
         // Delete
         try {
-            datastore.deleteDocumentFromRevision(saved);
+            database.deleteDocumentFromRevision(saved);
             fail("Deleting document from old revision succeeded");
         } catch (ConflictException ex) {
             // Expected exception
         }
-        DocumentRevision deleted = datastore.deleteDocumentFromRevision(updatedWithAttachment);
+        DocumentRevision deleted = database.deleteDocumentFromRevision(updatedWithAttachment);
         assertNotNull(deleted);
         assertEquals(true, deleted.isDeleted());
     }
