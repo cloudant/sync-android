@@ -31,7 +31,7 @@ import java.util.TreeMap;
  * <p>Describes the document tree for a single
  * document within the datastore.</p>
  *
- * <p>A document within a {@link Datastore} is actually a collection of trees
+ * <p>A document within a {@link Database} is actually a collection of trees
  * of revisions. These trees describe the history of the document, and are the
  * core of the MVCC data model which allows data to be safely replicated
  * between datastores. Replication consists of copying parts of the tree
@@ -77,13 +77,13 @@ import java.util.TreeMap;
  * <p>In this case, to resolve the conflict the application would need to:</p>
  *
  * <ol>
- *     <li>Call {@link Datastore#getDocument(String, String)} to get the
+ *     <li>Call {@link Database#getDocument(String, String)} to get the
  *     revisions {@code 4} and {@code 3^}.</li>
  *     <li>Merge these documents together in some way.</li>
  *     <li>Save a new revision in the {@code 4} branch using
- *     {@link Datastore#updateDocumentFromRevision(DocumentRevision)}</li>
+ *     {@link Database#updateDocumentFromRevision(DocumentRevision)}</li>
  *     <li>Delete the {@code 3^} revision using
- *     {@link Datastore#deleteDocumentFromRevision(DocumentRevision)}</li>
+ *     {@link Database#deleteDocumentFromRevision(DocumentRevision)}</li>
  * </ol>
  *
  * <p>This process leaves us still with two branches. Because only one
@@ -135,7 +135,7 @@ import java.util.TreeMap;
  *
  *  <p><strong>Note: This class is not thread safe.</strong></p>
  *
- * @see com.cloudant.sync.datastore.Datastore#resolveConflictsForDocument(String, ConflictResolver)
+ * @see Database#resolveConflictsForDocument(String, ConflictResolver)
  * @see com.cloudant.sync.datastore.ConflictResolver
  *
  * @api_private

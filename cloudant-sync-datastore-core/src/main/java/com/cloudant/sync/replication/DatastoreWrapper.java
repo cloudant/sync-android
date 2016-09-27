@@ -17,8 +17,8 @@ package com.cloudant.sync.replication;
 import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.AttachmentException;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentNotFoundException;
@@ -42,13 +42,13 @@ class DatastoreWrapper {
 
     private final static Logger logger = Logger.getLogger(DatastoreWrapper.class.getCanonicalName());
 
-    private DatastoreImpl dbCore;
+    private DatabaseImpl dbCore;
 
-    public DatastoreWrapper(DatastoreImpl dbCore) {
+    public DatastoreWrapper(DatabaseImpl dbCore) {
         this.dbCore = dbCore;
     }
 
-    public DatastoreImpl getDbCore() {
+    public DatabaseImpl getDbCore() {
         return dbCore;
     }
 

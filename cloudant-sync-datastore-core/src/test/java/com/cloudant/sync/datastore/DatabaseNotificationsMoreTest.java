@@ -64,7 +64,7 @@ public class DatabaseNotificationsMoreTest {
 
     @Test
     public void notification_database_opened() throws Exception{
-        Datastore ds = datastoreManager.openDatastore("test123");
+        Database ds = datastoreManager.openDatastore("test123").database;
         try {
             Assert.assertThat(databaseCreated, hasSize(1));
             Assert.assertThat(databaseOpened, hasSize(1));
@@ -77,8 +77,8 @@ public class DatabaseNotificationsMoreTest {
 
     @Test
     public void notification_database_openedTwice() throws Exception {
-        Datastore ds = datastoreManager.openDatastore("test123");
-        Datastore ds1 = null ;
+        Database ds = datastoreManager.openDatastore("test123").database;
+        Database ds1 = null ;
         try {
             Assert.assertNotNull(ds);
             Assert.assertThat(databaseCreated, hasSize(1));
@@ -86,7 +86,7 @@ public class DatabaseNotificationsMoreTest {
             Assert.assertEquals("test123", databaseCreated.get(0).dbName);
             Assert.assertEquals("test123", databaseOpened.get(0).dbName);
 
-            ds1 = datastoreManager.openDatastore("test123");
+            ds1 = datastoreManager.openDatastore("test123").database;
             Assert.assertThat(databaseCreated, hasSize(1));
             Assert.assertThat(databaseOpened, hasSize(1));
             Assert.assertNotNull(ds1);
@@ -97,7 +97,7 @@ public class DatabaseNotificationsMoreTest {
 
     @Test
     public void notification_databaseOpenCloseAndThenOpenedAgain_databaseCreatedEventShouldBeOnlyFireOnce() throws Exception {
-        Datastore ds = datastoreManager.openDatastore("test123");
+        Database ds = datastoreManager.openDatastore("test123").database;
         Assert.assertThat(databaseCreated, hasSize(1));
         Assert.assertThat(databaseOpened, hasSize(1));
         Assert.assertThat(databaseClosed, hasSize(0));
@@ -115,7 +115,7 @@ public class DatabaseNotificationsMoreTest {
         // DatabaseOpened event should be fired, but the
         // DatabaseCreated event should NOT be fired.
         this.clearAllEventList();
-        Datastore ds1 = datastoreManager.openDatastore("test123");
+        Database ds1 = datastoreManager.openDatastore("test123").database;
         try {
             Assert.assertNotNull(ds1);
             Assert.assertThat(databaseCreated, hasSize(0));

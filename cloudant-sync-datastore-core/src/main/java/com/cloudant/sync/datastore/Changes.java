@@ -24,7 +24,7 @@ import java.util.List;
  * <p>{@code Changes} objects describe a list of changes to the datastore.</p>
  *
  * <p>The object contains a list of the changes between some sequence number
- * (passed to the {@link Datastore#changes(long, int)} method) and
+ * (passed to the {@link Database#changes(long, int)} method) and
  * the {@link Changes#lastSequence} field of the object.</p>
  *
  * @api_public
@@ -41,12 +41,12 @@ public class Changes {
      * </p>
      * <p>
      * Note that this constructor is for internal use. To get a set of changes from a given sequence
-     * number, use {@link com.cloudant.sync.datastore.Datastore#changes}
+     * number, use {@link Database#changes}
      * </p>
      * @param lastSequence the last sequence number of this change set
      * @param results the list of {@code DocumentRevision}s in this change set
      *
-     * @see com.cloudant.sync.datastore.Datastore#changes
+     * @see Database#changes
      *
      * @api_private
      */

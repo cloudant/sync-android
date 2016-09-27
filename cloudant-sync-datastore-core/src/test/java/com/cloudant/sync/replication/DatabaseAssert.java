@@ -26,7 +26,7 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.OkOpenRevision;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.sync.datastore.Changes;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
@@ -80,7 +80,7 @@ public class DatabaseAssert {
             this.row = row;
         }
 
-        public String[] openRevisions(DatastoreImpl datastore) {
+        public String[] openRevisions(DatabaseImpl datastore) {
             if (documentRevision != null) {
                 return getAllOpenRevisions(datastore, this.id);
             } else if (row != null) {
@@ -97,7 +97,7 @@ public class DatabaseAssert {
      * @param datastore
      * @param client
      */
-    public static void assertPushed(DatastoreImpl datastore, CouchClient client) throws Exception {
+    public static void assertPushed(DatabaseImpl datastore, CouchClient client) throws Exception {
         logger.entering("DatabaseAssert","assertPushed",new Object[]{datastore,client});
         Long start = System.currentTimeMillis();
 
@@ -130,7 +130,7 @@ public class DatabaseAssert {
      * @param client
      * @param datastore
      */
-    public static void assertPulled(CouchClient client, DatastoreImpl datastore) throws Exception {
+    public static void assertPulled(CouchClient client, DatabaseImpl datastore) throws Exception {
         logger.entering("DatabaseAssert","assertPulled", new Object[]{client,datastore});
         Long start = System.currentTimeMillis();
 
@@ -163,7 +163,7 @@ public class DatabaseAssert {
      * @param datastore
      */
     private static void checkChangeRow(ChangeRowAdaptor document,
-                                       CouchClient client, DatastoreImpl datastore) throws Exception{
+                                       CouchClient client, DatabaseImpl datastore) throws Exception{
         String id = document.id;
 
         logger.info("Checking document: "+id);
@@ -185,7 +185,7 @@ public class DatabaseAssert {
     /**
      * Assert the specified document is deleted in both remote CouchDb and local datastore.
      */
-    static void checkBothDeleted(String id, DatastoreImpl datastore, CouchClient client) throws Exception {
+    static void checkBothDeleted(String id, DatabaseImpl datastore, CouchClient client) throws Exception {
         DocumentRevision documentRevision = datastore.getDocument(id);
         Assert.assertTrue(documentRevision.isDeleted());
 
@@ -199,7 +199,7 @@ public class DatabaseAssert {
      * source database, which is remote db for pull, local db for push.
      */
     static void checkOpenRevisionsAreIdentical(String documentId, String[] openRevisions,
-                                               DatastoreImpl datastore, CouchClient client) {
+                                               DatabaseImpl datastore, CouchClient client) {
         boolean pullAttachmentsInline = false;
 
         ArrayList<String> attsSince = new ArrayList<String>();
@@ -239,7 +239,7 @@ public class DatabaseAssert {
     /**
      * Assert the current document are the same in both remote CouchDB and local datastore.
      */
-    static void checkWinningRevisionSame(String documentId, DatastoreImpl datastore,
+    static void checkWinningRevisionSame(String documentId, DatabaseImpl datastore,
                                          CouchClient client) throws Exception{
         Map<String, Object> doc1 = ((DocumentRevision)datastore.getDocument(documentId)).asMap();
         Map<String, Object> doc2 = client.getDocument(documentId);
@@ -288,7 +288,7 @@ public class DatabaseAssert {
         Assert.assertThat(map2.entrySet(), everyItem(isIn(map1.entrySet())));
     }
 
-    private static String[] getAllOpenRevisions(DatastoreImpl datastore, String objectId) {
+    private static String[] getAllOpenRevisions(DatabaseImpl datastore, String objectId) {
         DocumentRevisionTree tree = datastore.getAllRevisionsOfDocument(objectId);
         List<String> list = new ArrayList<String>();
         list.addAll(tree.leafRevisionIds());

@@ -24,7 +24,7 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.AnimalDb;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.Response;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.query.IndexManager;
@@ -194,7 +194,7 @@ public class PullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_localDbError_replicationAbort() throws Exception {
-        DatastoreImpl localDb = mock(DatastoreImpl.class);
+        DatabaseImpl localDb = mock(DatabaseImpl.class);
 
         PullStrategy replication = super.getPullStrategy();
         replication.targetDb = new DatastoreWrapper(localDb);

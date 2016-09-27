@@ -14,13 +14,15 @@
 
 package com.cloudant.sync.notifications;
 
+import com.cloudant.sync.datastore.Database;
+
 /**
  * <p>Event for database opened.</p>
  *
  * <p>The event is only posted the first time a database is opened for
  * a given {@link com.cloudant.sync.datastore.DatastoreManager}</p>
  *
- * <p>When closed Database (by calling {@link com.cloudant.sync.datastore.Datastore#close()})
+ * <p>When closed Database (by calling {@link Database#close()})
  * is opened again, the event is also fired.</p>
  *
  * <p>This event is posted by

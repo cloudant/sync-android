@@ -15,7 +15,7 @@
 package com.cloudant.sync.query;
 
 /**
- * Denotes the type for an Query Index.
+ * Denotes the type for an query Index.
  *
  * @api_public
  */

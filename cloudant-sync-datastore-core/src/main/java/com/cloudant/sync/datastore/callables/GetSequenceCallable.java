@@ -14,8 +14,8 @@
 
 package com.cloudant.sync.datastore.callables;
 
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -35,7 +35,7 @@ public class GetSequenceCallable implements SQLCallable<Long> {
     private String id;
     private String rev;
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     /**
      * @param id  Document ID of the revision to fetch the sequence for
@@ -50,8 +50,8 @@ public class GetSequenceCallable implements SQLCallable<Long> {
         Cursor cursor = null;
         try {
             String[] args = (rev == null) ? new String[]{id} : new String[]{id, rev};
-            String sql = (rev == null) ? DatastoreImpl.GET_METADATA_CURRENT_REVISION :
-                    DatastoreImpl.GET_METADATA_GIVEN_REVISION;
+            String sql = (rev == null) ? DatabaseImpl.GET_METADATA_CURRENT_REVISION :
+                    DatabaseImpl.GET_METADATA_GIVEN_REVISION;
             cursor = db.rawQuery(sql, args);
             if (cursor.moveToFirst()) {
                 long sequence = cursor.getLong(cursor.getColumnIndex("sequence"));

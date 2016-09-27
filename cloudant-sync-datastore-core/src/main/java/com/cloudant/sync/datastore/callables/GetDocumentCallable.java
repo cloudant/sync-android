@@ -16,11 +16,9 @@ package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.AttachmentException;
-import com.cloudant.sync.datastore.AttachmentManager;
 import com.cloudant.sync.datastore.AttachmentStreamFactory;
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentNotFoundException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
@@ -60,7 +58,7 @@ public class GetDocumentCallable implements SQLCallable<DocumentRevision> {
         this.attachmentStreamFactory = attachmentStreamFactory;
     }
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
 
     public DocumentRevision call(SQLDatabase db) throws DocumentNotFoundException, AttachmentException, DatastoreException {
@@ -68,14 +66,14 @@ public class GetDocumentCallable implements SQLCallable<DocumentRevision> {
         Cursor cursor = null;
         try {
             String[] args = (rev == null) ? new String[]{id} : new String[]{id, rev};
-            String sql = (rev == null) ? DatastoreImpl.GET_DOCUMENT_CURRENT_REVISION :
-                    DatastoreImpl.GET_DOCUMENT_GIVEN_REVISION;
+            String sql = (rev == null) ? DatabaseImpl.GET_DOCUMENT_CURRENT_REVISION :
+                    DatabaseImpl.GET_DOCUMENT_GIVEN_REVISION;
             cursor = db.rawQuery(sql, args);
             if (cursor.moveToFirst()) {
                 long sequence = cursor.getLong(3);
                 List<? extends Attachment> atts = new AttachmentsForRevisionCallable(
                         this.attachmentsDir, this.attachmentStreamFactory, sequence).call(db);
-                return DatastoreImpl.getFullRevisionFromCurrentCursor(cursor, atts);
+                return DatabaseImpl.getFullRevisionFromCurrentCursor(cursor, atts);
             } else {
                 throw new DocumentNotFoundException(id, rev);
             }

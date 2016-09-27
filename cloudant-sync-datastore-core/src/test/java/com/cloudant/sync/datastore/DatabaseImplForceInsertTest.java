@@ -19,14 +19,10 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.Is.is;
 
-import com.cloudant.android.ContentValues;
 import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.DocumentModified;
-import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
-import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.util.CouchUtils;
-import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -43,7 +39,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
-public class DatastoreImplForceInsertTest {
+public class DatabaseImplForceInsertTest {
 
     public static final String OBJECT_ID = "object_id";
     String database_dir ;
@@ -51,15 +47,15 @@ public class DatastoreImplForceInsertTest {
     String documentTwoFile = "fixture/document_2.json";
 
     SQLDatabase database = null;
-    DatastoreImpl datastore = null;
+    DatabaseImpl datastore = null;
     byte[] jsonData = null;
     DocumentBody bodyOne = null;
     DocumentBody bodyTwo = null;
 
     @Before
     public void setUp() throws Exception {
-        database_dir = TestUtils.createTempTestingDir(DatastoreImplForceInsertTest.class.getName());
-        datastore = new DatastoreImpl(database_dir, "test");
+        database_dir = TestUtils.createTempTestingDir(DatabaseImplForceInsertTest.class.getName());
+        datastore = new DatabaseImpl(database_dir, "test");
 
         jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         bodyOne = new DocumentBodyImpl(jsonData);
