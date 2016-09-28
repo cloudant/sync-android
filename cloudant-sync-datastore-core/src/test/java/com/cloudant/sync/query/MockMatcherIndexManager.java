@@ -43,9 +43,7 @@ public class MockMatcherIndexManager extends IndexManagerImpl {
             return null;
         }
 
-        if (!updateAllIndexes()) {
-            return null;
-        }
+        updateAllIndexes();
 
         MockMatcherQueryExecutor queryExecutor = null;
         try {
@@ -54,7 +52,7 @@ public class MockMatcherIndexManager extends IndexManagerImpl {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        Map<String, Object> indexes = listIndexes();
+        Map<String, Map<String, Object>> indexes = listIndexes();
         return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
     }
 }
