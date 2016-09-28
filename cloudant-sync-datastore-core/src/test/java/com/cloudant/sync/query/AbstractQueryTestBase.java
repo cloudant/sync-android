@@ -46,7 +46,7 @@ public abstract class AbstractQueryTestBase {
     String factoryPath = null;
     DatastoreManager factory = null;
     DatabaseImpl ds = null;
-    IndexManager im = null;
+    IndexManagerImpl im = null;
     SQLDatabaseQueue indexManagerDatabaseQueue;
 
     @Before
@@ -125,8 +125,8 @@ public abstract class AbstractQueryTestBase {
         ds.createDocumentFromRevision(rev);
 
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic"), is("basic"));
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "pet"), is("pet"));
     }
 
     // Used to setup document data testing:
@@ -134,9 +134,9 @@ public abstract class AbstractQueryTestBase {
     public void setUpDottedQueryData() throws Exception {
         setUpSharedDocs();
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet.name", "pet.species"), "pet"),
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet.name"), new FieldSort("pet.species")), "pet"),
                 is("pet"));
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet.name.first"), "firstname"),
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet.name.first")), "firstname"),
                 is("firstname"));
     }
 
@@ -208,11 +208,11 @@ public abstract class AbstractQueryTestBase {
     public void setUpOrQueryData() throws Exception {
         setUpSharedDocs();
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet", "name"), "basic"),
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new FieldSort("name")), "basic"),
                 is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet.name", "pet.species"), "pet"),
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet.name"), new FieldSort("pet.species")), "pet"),
                 is("pet"));
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet.name.first"), "firstname"),
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet.name.first")), "firstname"),
                 is("firstname"));
     }
 
@@ -266,7 +266,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("age", "pet", "name"), "basic"),
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new FieldSort("name")), "basic"),
                 is("basic"));
     }
 
@@ -278,7 +278,7 @@ public abstract class AbstractQueryTestBase {
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
-        bodyMap.put("pet", Arrays.<Object>asList("cat", "dog"));
+        bodyMap.put("pet", Arrays.<FieldSort>asList(new FieldSort("cat"), new FieldSort("dog")));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
@@ -294,7 +294,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 34);
-        bodyMap.put("pet", Arrays.<Object>asList("cat", "dog", "fish"));
+        bodyMap.put("pet", Arrays.<FieldSort>asList(new FieldSort("cat"), new FieldSort("dog"), new FieldSort("fish")));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
@@ -309,7 +309,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("age", 44);
-        bodyMap.put("pet", Arrays.<Object>asList("hamster", "snake"));
+        bodyMap.put("pet", Arrays.<FieldSort>asList(new FieldSort("hamster"), new FieldSort("snake")));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
@@ -321,7 +321,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age"), "pet"),
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("age")), "pet"),
                 is("pet"));
     }
 
@@ -398,7 +398,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "score"), "name_score"),
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("score")), "name_score"),
                                     is("name_score"));
     }
 
@@ -413,7 +413,7 @@ public abstract class AbstractQueryTestBase {
             rev.setBody(DocumentBodyFactory.create(bodyMap));
             ds.createDocumentFromRevision(rev);
         }
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("large_field", "idx"), "large"),
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("large_field"), new FieldSort("idx")), "large"),
                 is("large"));
     }
 
@@ -462,8 +462,8 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic"), is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet"), "pet"), is("pet"));
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic"), is("basic"));
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "pet"), is("pet"));
     }
 
     // Used to setup document data testing for queries containing a $size operator:
@@ -532,7 +532,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age"), "basic"), is("basic"));
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("age")), "basic"), is("basic"));
     }
 
     // Used to setup document data testing for sorting:
@@ -542,7 +542,7 @@ public abstract class AbstractQueryTestBase {
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
-        bodyMap.put("age", Arrays.<Object>asList("cat", "dog"));
+        bodyMap.put("age", Arrays.<FieldSort>asList(new FieldSort("cat"), new FieldSort("dog")));
         bodyMap.put("same", "all");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
@@ -565,7 +565,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "pet", "age", "same"), "pet"),
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("age"), new FieldSort("same")), "pet"),
                 is("pet"));
     }
 

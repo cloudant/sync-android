@@ -19,15 +19,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This sub class of the {@link com.cloudant.sync.query.IndexManager} along with
+ * This sub class of the {@link IndexManagerImpl} along with
  * {@link com.cloudant.sync.query.MockMatcherQueryExecutor} is used by query
  * executor tests to force the tests to exclusively exercise the post hoc matcher logic.
  * This class is used for testing purposes only.
  *
- * @see com.cloudant.sync.query.IndexManager
+ * @see IndexManagerImpl
  * @see com.cloudant.sync.query.MockMatcherQueryExecutor
  */
-public class MockMatcherIndexManager extends IndexManager {
+public class MockMatcherIndexManager extends IndexManagerImpl {
 
     public MockMatcherIndexManager(Database database) {
         super(database);
@@ -43,9 +43,7 @@ public class MockMatcherIndexManager extends IndexManager {
             return null;
         }
 
-        if (!updateAllIndexes()) {
-            return null;
-        }
+        updateAllIndexes();
 
         MockMatcherQueryExecutor queryExecutor = null;
         try {
@@ -54,7 +52,7 @@ public class MockMatcherIndexManager extends IndexManager {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        Map<String, Object> indexes = listIndexes();
+        Map<String, Map<String, Object>> indexes = listIndexes();
         return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
     }
 }

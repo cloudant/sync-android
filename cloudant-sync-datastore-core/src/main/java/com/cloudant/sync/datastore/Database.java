@@ -18,6 +18,7 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.event.EventBus;
+import com.cloudant.sync.query.IndexManagerImpl;
 
 import java.util.Iterator;
 import java.util.List;
@@ -32,7 +33,7 @@ import java.util.List;
  * is the document ID combined with a (sometimes optional) revision ID.</p>
  *
  * <p>For a more advanced way of querying the Datastore, see the
- * {@link com.cloudant.sync.query.IndexManager} class</p>
+ * {@link IndexManagerImpl} class</p>
  *
  * <p>Each document consists of a set of revisions, hence most methods within
  * this class operating on {@link DocumentRevision} objects, which carry both a
@@ -51,7 +52,7 @@ import java.util.List;
  * peers.</p>
  *
  * @see DocumentRevision
- * @see com.cloudant.sync.query.IndexManager
+ * @see IndexManagerImpl
  * @api_public
  *
  */

@@ -76,7 +76,7 @@ class IndexCreator {
         }
 
         if (proposedIndex.indexType == IndexType.TEXT) {
-            if (!IndexManager.ftsAvailable(queue)) {
+            if (!IndexManagerImpl.ftsAvailable(queue)) {
                 logger.log(Level.SEVERE, "Text search not supported.  To add support for text " +
                                          "search, enable FTS compile options in SQLite.");
                 return null;
@@ -114,7 +114,7 @@ class IndexCreator {
         // else fail.
         try {
 
-            Map<String, Object> existingIndexes = listIndexesInDatabaseQueue();
+            Map<String, Map<String, Object>> existingIndexes = listIndexesInDatabaseQueue();
 
             if(proposedIndex.indexName == null){
                 // generate a name for the index.
@@ -177,7 +177,7 @@ class IndexCreator {
                     parameters.put("index_settings", index.settingsAsJSON());
                     parameters.put("field_name", fieldName);
                     parameters.put("last_sequence", 0);
-                    long rowId = database.insert(IndexManager.INDEX_METADATA_TABLE_NAME,
+                    long rowId = database.insert(IndexManagerImpl.INDEX_METADATA_TABLE_NAME,
                                                  parameters);
                     if (rowId < 0) {
                         transactionSuccess = false;
@@ -272,21 +272,11 @@ class IndexCreator {
      *  We don't support directions on field names, but they are an optimisation so
      *  we can discard them safely.
      */
-    protected static List<String> removeDirectionsFromFields(List<Object> fieldNames) {
+    protected static List<String> removeDirectionsFromFields(List<FieldSort> fieldNames) {
         List<String> result = new ArrayList<String>();
 
-        for (Object field: fieldNames) {
-            if (field instanceof Map) {
-                Map specifier = (Map) field;
-                if (specifier.size() == 1) {
-                    for (Object key: specifier.keySet()) {
-                        // This will iterate only once
-                        result.add((String) key);
-                    }
-                }
-            } else if (field instanceof String) {
-                result.add((String) field);
-            }
+        for (FieldSort field: fieldNames) {
+            result.add(field.field);
         }
 
         return result;
@@ -302,9 +292,9 @@ class IndexCreator {
      * @return whether the index limit has been reached
      */
     @SuppressWarnings("unchecked")
-    protected static boolean indexLimitReached(Index index, Map<String, Object> existingIndexes) {
+    protected static boolean indexLimitReached(Index index, Map<String, Map<String, Object>> existingIndexes) {
         if (index.indexType == IndexType.TEXT) {
-            for (Map.Entry<String, Object> entry : existingIndexes.entrySet()) {
+            for (Map.Entry<String, Map<String, Object>> entry : existingIndexes.entrySet()) {
                 String name = entry.getKey();
                 Map<String, Object> existingIndex = (Map<String, Object>) entry.getValue();
                 IndexType type = (IndexType) existingIndex.get("type");
@@ -322,12 +312,12 @@ class IndexCreator {
         return false;
     }
 
-    private Map<String, Object> listIndexesInDatabaseQueue() throws ExecutionException,
+    private Map<String, Map<String, Object>> listIndexesInDatabaseQueue() throws ExecutionException,
                                                                     InterruptedException {
-        Future<Map<String, Object>> indexes = queue.submit(new SQLCallable<Map<String,Object>>() {
+        Future<Map<String, Map<String, Object>>> indexes = queue.submit(new SQLCallable<Map<String,Map<String, Object>>>() {
             @Override
-            public Map<String, Object> call(SQLDatabase database) {
-                return IndexManager.listIndexesInDatabase(database);
+            public Map<String, Map<String, Object>> call(SQLDatabase database) {
+                return IndexManagerImpl.listIndexesInDatabase(database);
             }
         });
 
@@ -335,14 +325,14 @@ class IndexCreator {
     }
 
     private String createIndexTableStatementForIndex(String indexName, List<String> columns) {
-        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManager.tableNameForIndex(indexName));
+        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManagerImpl.tableNameForIndex(indexName));
         String cols = Misc.join(" NONE, ", columns);
 
         return String.format("CREATE TABLE %s ( %s NONE )", tableName, cols);
     }
 
     private String createIndexIndexStatementForIndex(String indexName, List<String> columns) {
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = IndexManagerImpl.tableNameForIndex(indexName);
         String sqlIndexName = tableName.concat("_index");
         String cols = Misc.join(",", columns);
 
@@ -363,7 +353,7 @@ class IndexCreator {
     private String createVirtualTableStatementForIndex(String indexName,
                                                        List<String> columns,
                                                        List<String> indexSettings) {
-        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManager
+        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManagerImpl
                 .tableNameForIndex(indexName));
         String cols = Misc.join(",", columns);
         String settings = Misc.join(",", indexSettings);

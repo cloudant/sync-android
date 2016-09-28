@@ -62,7 +62,7 @@ class IndexUpdater {
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
-    public static boolean updateAllIndexes(Map<String, Object> indexes,
+    public static boolean updateAllIndexes(Map<String, Map<String, Object>> indexes,
                                            Database database,
                                            SQLDatabaseQueue queue) {
         IndexUpdater updater = new IndexUpdater(database, queue);
@@ -91,11 +91,11 @@ class IndexUpdater {
     }
 
     @SuppressWarnings("unchecked")
-    private boolean updateAllIndexes(Map<String, Object> indexes) {
+    private boolean updateAllIndexes(Map<String, Map<String, Object>> indexes) {
         boolean success = true;
 
-        for (Map.Entry<String, Object> entry: indexes.entrySet()) {
-            Map<String, Object> index = (Map<String, Object>) entry.getValue();
+        for (Map.Entry<String, Map<String, Object>> entry: indexes.entrySet()) {
+            Map<String, Object> index = entry.getValue();
             List<String> fields = (ArrayList<String>) index.get("fields");
             success = updateIndex(entry.getKey(), fields);
             if (!success) {
@@ -139,7 +139,7 @@ class IndexUpdater {
                 database.beginTransaction();
                 for (DocumentRevision rev: changes.getResults()) {
                     // Delete existing values
-                    String tableName = IndexManager.tableNameForIndex(indexName);
+                    String tableName = IndexManagerImpl.tableNameForIndex(indexName);
                     database.delete(tableName, " _id = ? ", new String[]{rev.getId()});
 
                     // Insert new values if the rev isn't deleted
@@ -332,7 +332,7 @@ class IndexUpdater {
             }
             argIndex = argIndex + 1;
         }
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = IndexManagerImpl.tableNameForIndex(indexName);
 
         return new DBParameter(tableName, contentValues);
     }
@@ -343,7 +343,7 @@ class IndexUpdater {
             public Long call(SQLDatabase database) {
                 long result = 0;
                 String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = ?",
-                                           IndexManager.INDEX_METADATA_TABLE_NAME);
+                                           IndexManagerImpl.INDEX_METADATA_TABLE_NAME);
                 Cursor cursor = null;
                 try {
                     cursor = database.rawQuery(sql, new String[]{ indexName });
@@ -380,7 +380,7 @@ class IndexUpdater {
                 boolean updateSuccess = true;
                 ContentValues v = new ContentValues();
                 v.put("last_sequence", lastSequence);
-                int row = database.update(IndexManager.INDEX_METADATA_TABLE_NAME,
+                int row = database.update(IndexManagerImpl.INDEX_METADATA_TABLE_NAME,
                                           v,
                                           " index_name = ? ",
                                           new String[]{ indexName });
