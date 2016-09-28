@@ -2,7 +2,6 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.query.IndexManager;
-import com.cloudant.sync.query.IndexManagerImpl;
 
 import java.io.IOException;
 import java.sql.SQLException;

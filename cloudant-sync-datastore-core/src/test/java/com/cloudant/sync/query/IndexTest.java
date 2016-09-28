@@ -28,12 +28,12 @@ import java.util.Map;
 
 public class IndexTest {
 
-    private List<Object> fieldNames;
+    private List<FieldSort> fieldNames;
     private String indexName;
 
     @Before
     public void setUp() {
-        fieldNames = Arrays.<Object>asList("name", "age");
+        fieldNames = Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"));
         indexName = "basic";
 
     }
@@ -42,7 +42,7 @@ public class IndexTest {
     public void constructsIndexWithDefaultType() {
         Index index = Index.getInstance(fieldNames, indexName);
         assertThat(index.indexName, is("basic"));
-        assertThat(index.fieldNames, is(Arrays.<Object>asList("name", "age")));
+        assertThat(index.fieldNames, is(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"))));
         assertThat(index.indexType, is(IndexType.JSON));
         assertThat(index.indexSettings, is(nullValue()));
     }
@@ -51,7 +51,7 @@ public class IndexTest {
     public void constructsIndexWithTextTypeDefaultSettings() {
         Index index = Index.getInstance(fieldNames, indexName, IndexType.TEXT);
         assertThat(index.indexName, is("basic"));
-        assertThat(index.fieldNames, is(Arrays.<Object>asList("name", "age")));
+        assertThat(index.fieldNames, is(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"))));
         assertThat(index.indexType, is(IndexType.TEXT));
         assertThat(index.indexSettings.size(), is(1));
         assertThat(index.indexSettings.get("tokenize"), is("simple"));
@@ -62,7 +62,7 @@ public class IndexTest {
         Index index = Index.getInstance(null, indexName);
         assertThat(index, is(nullValue()));
 
-        index = Index.getInstance(new ArrayList<Object>(), indexName);
+        index = Index.getInstance(new ArrayList<FieldSort>(), indexName);
         assertThat(index, is(nullValue()));
     }
 
