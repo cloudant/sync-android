@@ -56,6 +56,7 @@ import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
 import com.cloudant.sync.notifications.DocumentModified;
+import com.cloudant.sync.notifications.DocumentPurged;
 import com.cloudant.sync.notifications.DocumentUpdated;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
@@ -1249,6 +1250,12 @@ public class DatabaseImpl implements Database {
             logger.log(Level.SEVERE, "Re-throwing InterruptedException as ExecutionException");
             throw new ExecutionException(e);
         }
+    }
+
+    @Override
+    public void purge(DocumentRevision revision) {
+        // TODO actually do the purge
+        this.eventBus.post(new DocumentPurged(revision));
     }
 
 

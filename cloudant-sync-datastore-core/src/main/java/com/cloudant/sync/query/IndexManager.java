@@ -40,6 +40,8 @@ import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
+import com.cloudant.sync.event.Subscribe;
+import com.cloudant.sync.notifications.DocumentPurged;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -114,9 +116,12 @@ public class IndexManager {
 
         dbQueue = queue;
 
+        // register so we can receive purge events
+        this.database.getEventBus().register(this);
     }
 
     public void close() {
+        this.database.getEventBus().unregister(this);
         dbQueue.shutdown();
     }
 
@@ -410,6 +415,11 @@ public class IndexManager {
                     "the full text search compile options enabled.");
         }
         return textSearchEnabled;
+    }
+
+    @Subscribe
+    public void onPurge(DocumentPurged documentPurged) {
+        // TODO remove from index
     }
 
 }

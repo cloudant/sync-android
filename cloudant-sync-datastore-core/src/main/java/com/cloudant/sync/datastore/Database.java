@@ -339,5 +339,7 @@ public interface Database {
      */
     void compact();
 
+    void purge(DocumentRevision revision);
+
 }
 
