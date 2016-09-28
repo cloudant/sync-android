@@ -40,6 +40,8 @@ import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
+import com.cloudant.sync.event.Subscribe;
+import com.cloudant.sync.notifications.DocumentPurged;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -114,9 +116,12 @@ public class IndexManagerImpl implements IndexManager {
 
         dbQueue = queue;
 
+        // register so we can receive purge events
+        this.database.getEventBus().register(this);
     }
 
     public void close() {
+        this.database.getEventBus().unregister(this);
         dbQueue.shutdown();
     }
 
@@ -132,13 +137,12 @@ public class IndexManagerImpl implements IndexManager {
      *
      *  @return Map of indexes in the database.
      */
-
     @Override
-    public Map<String, Object> listIndexes() {
+    public Map<String, Map<String, Object>> listIndexes() {
         try {
-            return dbQueue.submit(new SQLCallable<Map<String, Object> >() {
+            return dbQueue.submit(new SQLCallable<Map<String, Map<String, Object>> >() {
                 @Override
-                public Map<String, Object> call(SQLDatabase database) throws Exception {
+                public Map<String, Map<String, Object>> call(SQLDatabase database) throws Exception {
                      return IndexManagerImpl.listIndexesInDatabase(database);
                 }
             }).get();
@@ -152,18 +156,18 @@ public class IndexManagerImpl implements IndexManager {
 
     }
 
-    protected static Map<String, Object> listIndexesInDatabase(SQLDatabase db) {
+    protected static Map<String, Map<String, Object>> listIndexesInDatabase(SQLDatabase db) {
         // Accumulate indexes and definitions into a map
         String sql;
         sql = String.format("SELECT index_name, index_type, field_name, index_settings FROM %s",
                              INDEX_METADATA_TABLE_NAME);
-        Map<String, Object> indexes = null;
+        Map<String, Map<String, Object>> indexes = null;
         Map<String, Object> index;
         List<String> fields = null;
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});
-            indexes = new HashMap<String, Object>();
+            indexes = new HashMap<String, Map<String, Object>>();
             while (cursor.moveToNext()) {
                 String rowIndex = cursor.getString(0);
                 IndexType rowType = IndexType.enumValue(cursor.getString(1));
@@ -201,9 +205,8 @@ public class IndexManagerImpl implements IndexManager {
      *  @param fieldNames List of field names in the sort format
      *  @return name of created index
      */
-
     @Override
-    public String ensureIndexed(List<Object> fieldNames) {
+    public String ensureIndexed(List<FieldSort> fieldNames) {
         return this.ensureIndexed(fieldNames, null);
     }
 
@@ -216,9 +219,8 @@ public class IndexManagerImpl implements IndexManager {
      *  @param indexName Name of index to create or null to generate an index name.
      *  @return name of created index
      */
-
     @Override
-    public String ensureIndexed(List<Object> fieldNames, String indexName) {
+    public String ensureIndexed(List<FieldSort> fieldNames, String indexName) {
         return IndexCreator.ensureIndexed(Index.getInstance(fieldNames, indexName),
                 database,
                 dbQueue);
@@ -234,9 +236,8 @@ public class IndexManagerImpl implements IndexManager {
      *  @param indexType The type of index (json or text currently supported)
      *  @return name of created index
      */
-
     @Override
-    public String ensureIndexed(List<Object> fieldNames, String indexName, IndexType indexType) {
+    public String ensureIndexed(List<FieldSort> fieldNames, String indexName, IndexType indexType) {
         return ensureIndexed(fieldNames, indexName, indexType, null);
     }
 
@@ -252,9 +253,8 @@ public class IndexManagerImpl implements IndexManager {
      *                       Only text indexes support settings - Ex. { "tokenize" : "simple" }
      *  @return name of created index
      */
-
     @Override
-    public String ensureIndexed(List<Object> fieldNames,
+    public String ensureIndexed(List<FieldSort> fieldNames,
                                 String indexName,
                                 IndexType indexType,
                                 Map<String, String> indexSettings) {
@@ -272,12 +272,11 @@ public class IndexManagerImpl implements IndexManager {
      *  @param indexName Name of index to delete
      *  @return deletion status as true/false
      */
-
     @Override
-    public boolean deleteIndexNamed(final String indexName) {
+    public void deleteIndex(final String indexName) {
         if (indexName == null || indexName.isEmpty()) {
             logger.log(Level.WARNING, "TO delete an index, index name should be provided.");
-            return false;
+            // TODO throw exception
         }
 
         Future<Boolean> result = dbQueue.submit(new SQLCallable<Boolean>() {
@@ -315,13 +314,12 @@ public class IndexManagerImpl implements IndexManager {
             success = result.get();
         } catch (ExecutionException e) {
             logger.log(Level.SEVERE, "Execution error during index deletion:", e);
-            return false;
+            // TODO throw exception
         } catch (InterruptedException e) {
             logger.log(Level.SEVERE, "Execution interrupted error during index deletion:", e);
-            return false;
+            // TODO throw exception
         }
 
-        return success;
     }
 
     /**
@@ -329,32 +327,33 @@ public class IndexManagerImpl implements IndexManager {
      *
      *  @return update status as true/false
      */
-    public boolean updateAllIndexes() {
-        Map<String, Object> indexes = listIndexes();
+    @Override
+    public void updateAllIndexes() {
+        Map<String, Map<String, Object>> indexes = listIndexes();
 
-        return IndexUpdater.updateAllIndexes(indexes, database, dbQueue);
+        IndexUpdater.updateAllIndexes(indexes, database, dbQueue);
     }
 
+    @Override
     public QueryResult find(Map<String, Object> query) {
         return find(query, 0, 0, null, null);
     }
 
+    @Override
     public QueryResult find(Map<String, Object> query,
                             long skip,
                             long limit,
                             List<String> fields,
-                            List<Map<String, String>> sortDocument) {
+                            List<FieldSort> sortDocument) {
         if (query == null) {
             logger.log(Level.SEVERE, "-find called with null selector; bailing.");
             return null;
         }
 
-        if (!updateAllIndexes()) {
-            return null;
-        }
+        updateAllIndexes();
 
         QueryExecutor queryExecutor = new QueryExecutor(database, dbQueue);
-        Map<String, Object> indexes = listIndexes();
+        Map<String, Map<String, Object>> indexes = listIndexes();
 
         return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
     }
@@ -423,6 +422,11 @@ public class IndexManagerImpl implements IndexManager {
                     "the full text search compile options enabled.");
         }
         return textSearchEnabled;
+    }
+
+    @Subscribe
+    public void onPurge(DocumentPurged documentPurged) {
+        // TODO remove from index
     }
 
 }

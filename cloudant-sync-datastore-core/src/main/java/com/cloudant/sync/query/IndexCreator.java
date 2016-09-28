@@ -114,7 +114,7 @@ class IndexCreator {
         // else fail.
         try {
 
-            Map<String, Object> existingIndexes = listIndexesInDatabaseQueue();
+            Map<String, Map<String, Object>> existingIndexes = listIndexesInDatabaseQueue();
 
             if(proposedIndex.indexName == null){
                 // generate a name for the index.
@@ -272,21 +272,11 @@ class IndexCreator {
      *  We don't support directions on field names, but they are an optimisation so
      *  we can discard them safely.
      */
-    protected static List<String> removeDirectionsFromFields(List<Object> fieldNames) {
+    protected static List<String> removeDirectionsFromFields(List<FieldSort> fieldNames) {
         List<String> result = new ArrayList<String>();
 
-        for (Object field: fieldNames) {
-            if (field instanceof Map) {
-                Map specifier = (Map) field;
-                if (specifier.size() == 1) {
-                    for (Object key: specifier.keySet()) {
-                        // This will iterate only once
-                        result.add((String) key);
-                    }
-                }
-            } else if (field instanceof String) {
-                result.add((String) field);
-            }
+        for (FieldSort field: fieldNames) {
+            result.add(field.field);
         }
 
         return result;
@@ -302,9 +292,9 @@ class IndexCreator {
      * @return whether the index limit has been reached
      */
     @SuppressWarnings("unchecked")
-    protected static boolean indexLimitReached(Index index, Map<String, Object> existingIndexes) {
+    protected static boolean indexLimitReached(Index index, Map<String, Map<String, Object>> existingIndexes) {
         if (index.indexType == IndexType.TEXT) {
-            for (Map.Entry<String, Object> entry : existingIndexes.entrySet()) {
+            for (Map.Entry<String, Map<String, Object>> entry : existingIndexes.entrySet()) {
                 String name = entry.getKey();
                 Map<String, Object> existingIndex = (Map<String, Object>) entry.getValue();
                 IndexType type = (IndexType) existingIndex.get("type");
@@ -322,11 +312,11 @@ class IndexCreator {
         return false;
     }
 
-    private Map<String, Object> listIndexesInDatabaseQueue() throws ExecutionException,
+    private Map<String, Map<String, Object>> listIndexesInDatabaseQueue() throws ExecutionException,
                                                                     InterruptedException {
-        Future<Map<String, Object>> indexes = queue.submit(new SQLCallable<Map<String,Object>>() {
+        Future<Map<String, Map<String, Object>>> indexes = queue.submit(new SQLCallable<Map<String,Map<String, Object>>>() {
             @Override
-            public Map<String, Object> call(SQLDatabase database) {
+            public Map<String, Map<String, Object>> call(SQLDatabase database) {
                 return IndexManagerImpl.listIndexesInDatabase(database);
             }
         });

@@ -37,7 +37,7 @@ class Index {
 
     private static final List<String> validSettings = Arrays.asList(TEXT_TOKENIZE);
 
-    protected final List<Object> fieldNames;
+    protected final List<FieldSort> fieldNames;
 
     protected final String indexName;
 
@@ -47,7 +47,7 @@ class Index {
 
     private ObjectMapper objectMapper;
 
-    private Index(List<Object> fieldNames,
+    private Index(List<FieldSort> fieldNames,
                   String indexName,
                   IndexType indexType,
                   Map<String, String> indexSettings) {
@@ -64,11 +64,11 @@ class Index {
      * @param indexName the index name or null
      * @return the Index object or null if arguments passed in were invalid.
      */
-    public static Index getInstance(List<Object> fieldNames, String indexName) {
+    public static Index getInstance(List<FieldSort> fieldNames, String indexName) {
         return getInstance(fieldNames, indexName, IndexType.JSON);
     }
 
-    public static Index getInstance(List<Object> fieldNames, String indexName, IndexType indexType) {
+    public static Index getInstance(List<FieldSort> fieldNames, String indexName, IndexType indexType) {
         return getInstance(fieldNames, indexName, indexType, null);
     }
 
@@ -83,7 +83,7 @@ class Index {
      *                      Only supported parameter is 'tokenize' for text indexes only.
      * @return the Index object or null if arguments passed in were invalid.
      */
-    public static Index getInstance(List<Object> fieldNames,
+    public static Index getInstance(List<FieldSort> fieldNames,
                               String indexName,
                               IndexType indexType,
                               Map<String, String> indexSettings) {

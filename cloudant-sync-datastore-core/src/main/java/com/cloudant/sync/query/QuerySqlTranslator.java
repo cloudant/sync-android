@@ -114,7 +114,7 @@ class QuerySqlTranslator {
     private static final Logger logger = Logger.getLogger(QuerySqlTranslator.class.getName());
 
     public static QueryNode translateQuery(Map<String, Object> query,
-                                           Map<String, Object> indexes,
+                                           Map<String, Map<String, Object>> indexes,
                                            Boolean[] indexesCoverQuery) {
         TranslatorState state = new TranslatorState();
         QueryNode node = translateQuery(query, indexes, state);
@@ -159,7 +159,7 @@ class QuerySqlTranslator {
 
     @SuppressWarnings("unchecked")
     private static QueryNode translateQuery(Map<String, Object> query,
-                                           Map<String, Object> indexes,
+                                           Map<String, Map<String, Object>> indexes,
                                            TranslatorState state) {
         // At this point we will have a root compound predicate, AND or OR, and
         // the query will be reduced to a single entry:
@@ -371,7 +371,7 @@ class QuerySqlTranslator {
     }
 
     protected static String chooseIndexForAndClause(List<Object> clause,
-                                                    Map<String, Object> indexes) {
+                                                    Map<String, Map<String, Object>> indexes) {
         if (clause == null || clause.isEmpty()) {
             return null;
         }
@@ -401,10 +401,10 @@ class QuerySqlTranslator {
 
     @SuppressWarnings("unchecked")
     protected static String chooseIndexForFields(Set<String> neededFields,
-                                                 Map<String, Object> indexes) {
+                                                 Map<String, Map<String, Object>> indexes) {
         String chosenIndex = null;
-        for (Map.Entry<String, Object> entry: indexes.entrySet()) {
-            Map<String, Object> indexDefinition = (Map<String, Object>) entry.getValue();
+        for (Map.Entry<String, Map<String, Object>> entry: indexes.entrySet()) {
+            Map<String, Object> indexDefinition = entry.getValue();
 
             // Don't choose a text index for a non-text query clause
             IndexType indexType = (IndexType) indexDefinition.get("type");
@@ -424,10 +424,10 @@ class QuerySqlTranslator {
     }
 
     @SuppressWarnings("unchecked")
-    private static String getTextIndex(Map<String, Object> indexes) {
+    private static String getTextIndex(Map<String, Map<String, Object>> indexes) {
         String textIndex = null;
-        for (Map.Entry<String, Object> entry: indexes.entrySet()) {
-            Map<String, Object> indexDefinition = (Map<String, Object>) entry.getValue();
+        for (Map.Entry<String, Map<String, Object>> entry: indexes.entrySet()) {
+            Map<String, Object> indexDefinition = entry.getValue();
             IndexType indexType = (IndexType) indexDefinition.get("type");
             if (indexType == IndexType.TEXT) {
                 textIndex = entry.getKey();
