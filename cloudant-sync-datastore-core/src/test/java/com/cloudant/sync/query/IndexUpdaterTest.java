@@ -68,13 +68,13 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateIndexNoIndexName() throws Exception {
-        createIndex("basic", Arrays.<Object>asList("name"));
+        createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name")));
         assertThat(IndexUpdater.updateIndex(null, fields, ds, indexManagerDatabaseQueue), is(false));
     }
 
     @Test
     public void updateOneFieldIndex() throws Exception {
-        createIndex("basic", Arrays.<Object>asList("name"));
+        createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name")));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
@@ -137,7 +137,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateOneFieldIndexMultithreaded() throws Exception {
-        createIndex("basic", Arrays.<Object>asList("name"));
+        createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name")));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
@@ -263,7 +263,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateTwoFieldIndex() throws Exception {
-        createIndex("basic", Arrays.<Object>asList("name", "age"));
+        createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
@@ -325,7 +325,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateMultiFieldIndex() throws Exception {
-        createIndex("basic", Arrays.<Object>asList("name", "age", "pet", "car"));
+        createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("pet"), new FieldSort("car")));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
@@ -399,7 +399,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateMultiFieldIndexMissingFields() throws Exception {
-        createIndex("basic", Arrays.<Object>asList("name", "age", "pet", "car"));
+        createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("pet"), new FieldSort("car")));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
@@ -468,7 +468,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void updateMultiFieldIndexWithBlankRow() throws Exception {
-        createIndex("basic", Arrays.<Object>asList("car", "van"));
+        createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("car"), new FieldSort("van")));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
@@ -533,7 +533,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void indexSingleArrayFieldWhenIndexingArrays() throws Exception {
-        createIndex("basic", Arrays.<Object>asList("name", "pet"));
+        createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
@@ -603,7 +603,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void indexSingleArrayFieldWhenIndexingArraysInSubDoc() throws Exception {
-        createIndex("basic", Arrays.<Object>asList("name", "pet.species"));
+        createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet.species")));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
@@ -672,7 +672,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void rejectsDocsWithMultipleArrays() throws Exception {
-        createIndex("basic", Arrays.<Object>asList("name", "pet", "pet2"));
+        createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("pet2")));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
@@ -753,7 +753,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void indexSingleArrayFieldWithEmptyValue() throws Exception {
-        createIndex("basic", Arrays.<Object>asList("name", "car", "pet"));
+        createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("car"), new FieldSort("pet")));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
@@ -821,7 +821,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     @Test
     public void indexSingleArrayFieldInSubDocWithEmptyValue() throws Exception {
-        createIndex("basic", Arrays.<Object>asList("name", "car", "pet.species"));
+        createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("car"), new FieldSort("pet.species")));
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
@@ -942,11 +942,11 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         // Test index updates for multiple json indexes as well as
         // index updates for co-existing json and text indexes.
         if (testType.equals(TEXT_INDEX_EXECUTION)) {
-            createIndex("basic", Arrays.<Object>asList("age", "pet", "name"), IndexType.TEXT);
+            createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new FieldSort("name")), IndexType.TEXT);
         } else {
-            createIndex("basic", Arrays.<Object>asList("age", "pet", "name"), IndexType.JSON);
+            createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new FieldSort("name")), IndexType.JSON);
         }
-        createIndex("basicName", Arrays.<Object>asList("name"), IndexType.JSON);
+        createIndex("basicName", Arrays.<FieldSort>asList(new FieldSort("name")), IndexType.JSON);
 
         im.updateAllIndexes();
 
@@ -1063,7 +1063,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }).get();
     }
 
-    private void createIndex(String indexName, List<Object> fieldNames) {
+    private void createIndex(String indexName, List<FieldSort> fieldNames) {
         if (testType.equals(TEXT_INDEX_EXECUTION)) {
             createIndex(indexName, fieldNames, IndexType.TEXT);
         } else {
@@ -1072,13 +1072,13 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @SuppressWarnings("unchecked")
-    private void createIndex(String indexName, List<Object> fieldNames, IndexType indexType) {
+    private void createIndex(String indexName, List<FieldSort> fieldNames, IndexType indexType) {
         assertThat(im.ensureIndexed(fieldNames, indexName, indexType), is(indexName));
 
-        Map<String, Object> indexes = im.listIndexes();
+        Map<String, Map<String, Object>> indexes = im.listIndexes();
         assertThat(indexes, hasKey(indexName));
 
-        Map<String, Object> index = (Map<String, Object>) indexes.get(indexName);
+        Map<String, Object> index = indexes.get(indexName);
         fields = (List<String>) index.get("fields");
         assertThat(fields.size(), is(fieldNames.size() + 2));
         assertThat(fields, hasItems(Arrays.copyOf(fieldNames.toArray(),

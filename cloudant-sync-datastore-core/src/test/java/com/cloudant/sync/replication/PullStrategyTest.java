@@ -27,6 +27,7 @@ import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
+import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.IndexManagerImpl;
 import com.cloudant.sync.query.QueryResult;
 
@@ -388,7 +389,7 @@ public class PullStrategyTest extends ReplicationTestBase {
 
         IndexManagerImpl im = new IndexManagerImpl(datastore);
         try {
-            im.ensureIndexed(Arrays.<Object>asList("diet"), "diet");
+            im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("diet")), "diet");
 
             AnimalDb.populateWithoutFilter(remoteDb.couchClient);
             this.pull(replicator, 10);
