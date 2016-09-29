@@ -195,7 +195,7 @@ public class EndToEndEncryptionTest {
                 expectedPlainText, "text/plain");
         rev.getAttachments().put("EncryptedAttachmentTest_plainText", attachment);
 
-        database.createDocumentFromRevision(rev);
+        database.database.createDocumentFromRevision(rev);
 
         File attachmentsFolder = new File(datastoreManagerDir
                 + File.separator + "EndToEndEncryptionTest"
