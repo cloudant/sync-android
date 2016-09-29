@@ -31,4 +31,12 @@ public interface IndexManager {
     // TODO we may not want to expose this publicly
     void close();
 
+    QueryResult find(Map<String, Object> query);
+
+    QueryResult find(Map<String, Object> query,
+                            long skip,
+                            long limit,
+                            List<String> fields,
+                            List<Map<String, String>> sortDocument);
+
 }
