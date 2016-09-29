@@ -249,7 +249,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
     @Test
     public void canQueryORWithoutAnyIndexes() throws Exception {
         setUpWithoutCoveringIndexesQueryData();
-        im.deleteIndexNamed("pet");
+        im.deleteIndex("pet");
         assertThat(im.listIndexes().keySet(), contains("basic"));
         // query - { "$or" : [ { "pet" : { "$eq" : "cat" } }, { "town" : { "$eq" : "bristol" } } ] }
         // indexes - { "basic" : { "name" : "basic", "type" : "json", "fields" : [ "_id",
@@ -467,8 +467,8 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
         // query - { "town" : "bristol" }
         // indexes - No user defined indexes found.  Retrieves
         //           document ids directly from the datastore.
-        assertThat(im.deleteIndexNamed("basic"), is(true));
-        assertThat(im.deleteIndexNamed("pet"), is(true));
+        im.deleteIndex("basic");
+        im.deleteIndex("pet");
         assertThat(im.listIndexes().keySet(), is(empty()));
 
         Map<String, Object> query = new HashMap<String, Object>();
