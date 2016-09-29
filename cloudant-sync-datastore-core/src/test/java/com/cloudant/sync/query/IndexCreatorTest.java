@@ -26,13 +26,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
     public void emptyIndexList() {
-        Map<String, Object> indexes = im.listIndexes();
+        Map<String, Map<String, Object>> indexes = im.listIndexes();
         assertThat(indexes, is(notNullValue()));
         assertThat(indexes.isEmpty(), is(true));
     }
@@ -252,7 +251,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     @Test
     public void createIndexUsingNonAsciiText() {
         // can create indexes successfully
-        String indexName = im.ensureIndexed(Arrays.<Object>asList("اسم", "datatype", "ages"),
+        String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("اسم"), new FieldSort("datatype"), new FieldSort("ages")),
                                             "basic");
         assertThat(indexName, is("basic"));
     }
@@ -266,9 +265,9 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
         // removes directions from the field specifiers
         List<String> fields;
-        fields = IndexCreator.removeDirectionsFromFields(Arrays.<Object>asList(nameField,
-                                                                               petField,
-                                                                               "age"));
+        fields = IndexCreator.removeDirectionsFromFields(Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction.ASCENDING),
+                                                                               new FieldSort("pet", FieldSort.Direction.DESCENDING),
+                                                                               new FieldSort("age")));
         assertThat(fields, containsInAnyOrder("name", "pet", "age"));
     }
 
