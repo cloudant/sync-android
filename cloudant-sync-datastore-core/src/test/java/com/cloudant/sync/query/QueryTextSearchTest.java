@@ -157,11 +157,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         search.put("$search", "best friend");
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("$text", search);
-        List<Map<String, String>> sortDocument = new ArrayList<Map<String, String>>();
-        Map<String, String> sortByName = new HashMap<String, String>();
-        sortByName.put("name", "asc");
-        sortDocument.add(sortByName);
-        QueryResult queryResult = im.find(query, 0, 0, null, sortDocument);
+        QueryResult queryResult = im.find(query, 0, 0, null, Arrays.asList(new FieldSort("name", FieldSort.Direction.ASCENDING)));
         assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "fred12"));
         assertThat(queryResult.documentIds().get(0), is("fred12"));
         assertThat(queryResult.documentIds().get(1), is("mike12"));

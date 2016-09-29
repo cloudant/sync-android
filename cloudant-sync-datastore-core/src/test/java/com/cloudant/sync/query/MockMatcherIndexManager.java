@@ -38,7 +38,7 @@ public class MockMatcherIndexManager extends IndexManagerImpl {
                             long skip,
                             long limit,
                             List<String> fields,
-                            List<Map<String, String>> sortDocument) {
+                            List<FieldSort> sortDocument) {
         if (query == null) {
             return null;
         }
