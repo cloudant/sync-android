@@ -1099,7 +1099,7 @@ public class DatabaseImpl implements Database {
 
     @Override
     public EventBus getEventBus() {
-        Misc.checkState(this.isOpen(), "Database is closed");
+//        Misc.checkState(this.isOpen(), "Database is closed");
         return eventBus;
     }
 

@@ -1471,7 +1471,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         setUpArrayIndexingData();
         // query - { "pet" : { "$in" : [ "fish", "hamster" ] } }
         Map<String, Object> op = new HashMap<String, Object>();
-        op.put("$in", Arrays.<FieldSort>asList(new FieldSort("fish"), new FieldSort("hamster")));
+        op.put("$in", Arrays.<String>asList("fish", "hamster"));
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("pet", op);
         QueryResult queryResult = im.find(query);
@@ -1483,7 +1483,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         setUpArrayIndexingData();
         // query - { "pet" : { "$in" : [ "parrot", "turtle" ] } }
         Map<String, Object> op = new HashMap<String, Object>();
-        op.put("$in", Arrays.<FieldSort>asList(new FieldSort("parrot"), new FieldSort("turtle")));
+        op.put("$in", Arrays.<String>asList("parrot", "turtle"));
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("pet", op);
         QueryResult queryResult = im.find(query);
@@ -1495,7 +1495,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         setUpArrayIndexingData();
         // query - { "pet" : { "$in" : [ "cat", "dog" ] } }
         Map<String, Object> op = new HashMap<String, Object>();
-        op.put("$in", Arrays.<FieldSort>asList(new FieldSort("cat"), new FieldSort("dog")));
+        op.put("$in", Arrays.<String>asList("cat", "dog"));
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("pet", op);
         QueryResult queryResult = im.find(query);
@@ -1507,7 +1507,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         setUpArrayIndexingData();
         // query - { "pet" : { "$in" : [ "turtle", "pig" ] } }
         Map<String, Object> op = new HashMap<String, Object>();
-        //op.put("$in", Arrays.<FieldSort>asList(new FieldSort("turtle"), new FieldSort("pig")));
+        op.put("$in", Arrays.<String>asList("turtle", "pig"));
         op.put("$eq", "turtle");
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("pet", op);
@@ -1520,7 +1520,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         setUpArrayIndexingData();
         // query - { "pet" : { "$not" : { "$in" : [ "cat", "dog" ] } } }
         Map<String, Object> op = new HashMap<String, Object>();
-        op.put("$in", Arrays.<FieldSort>asList(new FieldSort("cat"), new FieldSort("dog")));
+        op.put("$in", Arrays.<String>asList("cat", "dog"));
         Map<String, Object> notOp = new HashMap<String, Object>();
         notOp.put("$not", op);
         Map<String, Object> query = new HashMap<String, Object>();

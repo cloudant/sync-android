@@ -13,6 +13,7 @@
 package com.cloudant.sync.query;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasKey;
@@ -28,6 +29,7 @@ import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -1081,9 +1083,9 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         Map<String, Object> index = indexes.get(indexName);
         fields = (List<String>) index.get("fields");
         assertThat(fields.size(), is(fieldNames.size() + 2));
-        assertThat(fields, hasItems(Arrays.copyOf(fieldNames.toArray(),
-                fieldNames.size(),
-                String[].class)));
+        for (FieldSort fieldSort : fieldNames) {
+            assertThat(fields, Matchers.hasItem(fieldSort.field));
+        }
         assertThat(fields, hasItems("_id", "_rev"));
     }
 
