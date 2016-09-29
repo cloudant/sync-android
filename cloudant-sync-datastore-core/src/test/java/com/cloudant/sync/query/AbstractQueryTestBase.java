@@ -278,7 +278,7 @@ public abstract class AbstractQueryTestBase {
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 12);
-        bodyMap.put("pet", Arrays.<FieldSort>asList(new FieldSort("cat"), new FieldSort("dog")));
+        bodyMap.put("pet", Arrays.<String>asList("cat", "dog"));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
@@ -294,7 +294,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.clear();
         bodyMap.put("name", "mike");
         bodyMap.put("age", 34);
-        bodyMap.put("pet", Arrays.<FieldSort>asList(new FieldSort("cat"), new FieldSort("dog"), new FieldSort("fish")));
+        bodyMap.put("pet", Arrays.<String>asList("cat", "dog", "fish"));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
@@ -309,7 +309,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("age", 44);
-        bodyMap.put("pet", Arrays.<FieldSort>asList(new FieldSort("hamster"), new FieldSort("snake")));
+        bodyMap.put("pet", Arrays.<String>asList("hamster", "snake"));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
 
