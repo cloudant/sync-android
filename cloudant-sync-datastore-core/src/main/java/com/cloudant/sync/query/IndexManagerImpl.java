@@ -270,7 +270,6 @@ public class IndexManagerImpl implements IndexManager {
      *  Delete an index.
      *
      *  @param indexName Name of index to delete
-     *  @return deletion status as true/false
      */
     @Override
     public void deleteIndex(final String indexName) {
@@ -325,7 +324,6 @@ public class IndexManagerImpl implements IndexManager {
     /**
      *  Update all indexes.
      *
-     *  @return update status as true/false
      */
     @Override
     public void updateAllIndexes() {
