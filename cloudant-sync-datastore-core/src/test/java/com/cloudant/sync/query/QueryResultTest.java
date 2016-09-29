@@ -66,7 +66,7 @@ public class QueryResultTest extends AbstractQueryTestBase {
     @Test(expected = QueryException.class)
     public void testQueryGetDocumentsWithIdsFails() throws InterruptedException,
         ExecutionException {
-        List<Object> fields = Collections.<Object>singletonList("pet");
+        List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("pet"));
         assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
 
         // query - { "$text" : { "$search" : "cat" } }

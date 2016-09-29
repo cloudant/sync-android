@@ -18,6 +18,7 @@ import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -41,7 +42,7 @@ public class MockMatcherQueryExecutor extends QueryExecutor{
     // return just a blank node (we don't execute it anyway).
     @Override
     protected ChildrenQueryNode translateQuery(Map<String, Object> query,
-                                               Map<String, Object> indexes,
+                                               Map<String, Map<String, Object>> indexes,
                                                Boolean[] indexesCoverQuery) {
         return new AndQueryNode();
     }
