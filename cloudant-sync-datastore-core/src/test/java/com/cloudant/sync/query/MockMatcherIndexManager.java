@@ -38,9 +38,9 @@ public class MockMatcherIndexManager extends IndexManagerImpl {
                             long skip,
                             long limit,
                             List<String> fields,
-                            List<FieldSort> sortDocument) {
+                            List<FieldSort> sortDocument) throws QueryException {
         if (query == null) {
-            return null;
+            throw new QueryException("Query must not be null");
         }
 
         updateAllIndexes();
