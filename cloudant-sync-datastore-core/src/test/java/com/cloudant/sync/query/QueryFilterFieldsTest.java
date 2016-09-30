@@ -54,7 +54,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     // When filtering fields on find
 
     @Test
-    public void returnsFieldSpecifiedOnly() {
+    public void returnsFieldSpecifiedOnly() throws QueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
@@ -66,7 +66,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsAllFieldsWhenFieldsArrayEmpty() {
+    public void returnsAllFieldsWhenFieldsArrayEmpty() throws QueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
@@ -78,7 +78,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsAllFieldsWhenFieldsArrayNull() {
+    public void returnsAllFieldsWhenFieldsArrayNull() throws QueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
@@ -90,7 +90,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsNullWhenUsingDottedNotation() {
+    public void returnsNullWhenUsingDottedNotation() throws QueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
@@ -103,7 +103,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsOnlyFieldsSpecified() {
+    public void returnsOnlyFieldsSpecified() throws QueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");

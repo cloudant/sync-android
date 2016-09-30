@@ -1,19 +1,22 @@
 package com.cloudant.sync.query;
 
+import com.cloudant.sync.datastore.DatastoreException;
+
 /**
- * This unchecked exception is used to wrap another exception so
- * we can pass meaningful exception traces over the {@link QueryResult#iterator()}
- * boundary as we can't change the signature of {@link QueryResult#iterator} to
- * add a checked exception.
- *
+
  * @api_public
  */
-public class QueryException extends RuntimeException {
-    public QueryException(Exception causedBy){
+public class QueryException extends DatastoreException {
+    public QueryException(Throwable causedBy){
         super(causedBy);
     }
 
-    public QueryException(String messaage){
-        super(messaage);
+    public QueryException(String message){
+        super(message);
     }
+
+    public QueryException(String message, Throwable causedBy) {
+        super(message, causedBy);
+    }
+
 }
