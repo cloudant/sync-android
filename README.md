@@ -90,7 +90,7 @@ Add the maven repo and a compile time dependency on the appropriate datastore ar
         </dependencies>
     </project>
     ```
-1. Target is Android and you want datastore encryption. 
+1. Target is Android and you want datastore encryption.
     * Gradle
     ```groovy
     repositories {
@@ -148,7 +148,7 @@ Add the maven repo and a compile time dependency on the appropriate datastore ar
         </dependencies>
     </project>
     ```
-    
+
 You can see a fuller example in the sample application's [build.gradle][sabg].
 
 [sabg]: https://github.com/cloudant/sync-android/blob/master/sample/todo-sync/build.gradle
@@ -265,6 +265,27 @@ replicator.start();
 
 Read more in [the replication docs](https://github.com/cloudant/sync-android/blob/master/doc/replication.md).
 
+### Authentication
+
+Sync-android uses session cookies by default to authenticate with the server if
+credentials are provided with in the URL. If you want more fine-grained control over authentication, provide an interceptor to perform the authentication for each request. For example, if you are using middleware such as [Envoy][envoy], you can use
+the `BasicAuthInterceptor` to add basic authentication to requests.
+
+Example:
+
+```java
+Replicator replicator = ReplicatorBuilder.push()
+  .from(ds)
+  .to(uri)
+  .addRequestInterceptors(new BasicAuthInterceptor("yourUsername:yourPassword"))
+  .build();
+```
+Other authentication mechanisms such as proxy authentication can also used by
+either using the in built interceptors (see the `com.cloudant.http.interceptors`
+package) or by creating your own class which conforms to
+`HttpConnectionRequestInterceptor` or `HttpConnectionResponseInterceptor`.
+
+[envoy]: https://github.com/cloudant-labs/envoy
 ### Finding data
 
 Once you have thousands of documents in a database, it's important to have
