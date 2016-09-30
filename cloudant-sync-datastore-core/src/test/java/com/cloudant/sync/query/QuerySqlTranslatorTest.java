@@ -1230,7 +1230,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void nullWhenTextSearchDoesNotFindTextIndex() {
+    public void nullWhenTextSearchDoesNotFindTextIndex() throws QueryException {
         im.deleteIndex("basic_text");
         // query - { "$text" : { "$search" : "foo bar baz" } }
         Map<String, Object> searchMap = new HashMap<String, Object>();
@@ -1246,7 +1246,7 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void nullWhenCompoundQueryIncludesTextSearchDoesNotFindJsonIndex() {
+    public void nullWhenCompoundQueryIncludesTextSearchDoesNotFindJsonIndex() throws QueryException {
         im.deleteIndex("basic");
         // query - { "$and" : [ { "name" : "mike" }, { "$text" : { "$search" : "foo bar baz" } } ] }
         Map<String, Object> nameMap = new HashMap<String, Object>();

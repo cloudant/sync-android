@@ -204,7 +204,7 @@ public class IndexManagerImpl implements IndexManager {
      *  @return name of created index
      */
     @Override
-    public String ensureIndexed(List<FieldSort> fieldNames) {
+    public String ensureIndexed(List<FieldSort> fieldNames) throws QueryException {
         return this.ensureIndexed(fieldNames, null);
     }
 
@@ -218,7 +218,7 @@ public class IndexManagerImpl implements IndexManager {
      *  @return name of created index
      */
     @Override
-    public String ensureIndexed(List<FieldSort> fieldNames, String indexName) {
+    public String ensureIndexed(List<FieldSort> fieldNames, String indexName) throws QueryException {
         return IndexCreator.ensureIndexed(Index.getInstance(fieldNames, indexName),
                 database,
                 dbQueue);
@@ -235,7 +235,7 @@ public class IndexManagerImpl implements IndexManager {
      *  @return name of created index
      */
     @Override
-    public String ensureIndexed(List<FieldSort> fieldNames, String indexName, IndexType indexType) {
+    public String ensureIndexed(List<FieldSort> fieldNames, String indexName, IndexType indexType) throws QueryException {
         return ensureIndexed(fieldNames, indexName, indexType, null);
     }
 
@@ -255,7 +255,7 @@ public class IndexManagerImpl implements IndexManager {
     public String ensureIndexed(List<FieldSort> fieldNames,
                                 String indexName,
                                 IndexType indexType,
-                                Map<String, String> indexSettings) {
+                                Map<String, String> indexSettings) throws QueryException {
         return IndexCreator.ensureIndexed(Index.getInstance(fieldNames,
                         indexName,
                         indexType,
@@ -270,18 +270,14 @@ public class IndexManagerImpl implements IndexManager {
      *  @param indexName Name of index to delete
      */
     @Override
-    public void deleteIndex(final String indexName) {
+    public void deleteIndex(final String indexName) throws QueryException {
         if (indexName == null || indexName.isEmpty()) {
-            logger.log(Level.WARNING, "TO delete an index, index name should be provided.");
-            // TODO throw exception
+            throw new QueryException("TO delete an index, index name should be provided.");
         }
 
-        Future<Boolean> result = dbQueue.submit(new SQLCallable<Boolean>() {
+        Future<Void> result = dbQueue.submitTransaction(new SQLCallable<Void>() {
             @Override
-            public Boolean call(SQLDatabase database) {
-                Boolean transactionSuccess = true;
-                database.beginTransaction();
-
+            public Void call(SQLDatabase database) throws QueryException {
                 try {
                     // Drop the index table
                     String tableName = tableNameForIndex(indexName);
@@ -293,28 +289,18 @@ public class IndexManagerImpl implements IndexManager {
                     database.delete(INDEX_METADATA_TABLE_NAME, where, new String[]{ indexName });
                 } catch (SQLException e) {
                     String msg = String.format("Failed to delete index: %s",indexName);
-                    logger.log(Level.SEVERE, msg, e);
-                    transactionSuccess = false;
+                    throw new QueryException(msg, e);
                 }
-
-                if (transactionSuccess) {
-                    database.setTransactionSuccessful();
-                }
-                database.endTransaction();
-
-                return transactionSuccess;
+                return null;
             }
         });
 
-        boolean success;
         try {
-            success = result.get();
+            result.get();
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error during index deletion:", e);
-            // TODO throw exception
+            throw new QueryException("Execution error during index deletion:", e);
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error during index deletion:", e);
-            // TODO throw exception
+            throw new QueryException("Execution interrupted error during index deletion:", e);
         }
 
     }
@@ -324,14 +310,14 @@ public class IndexManagerImpl implements IndexManager {
      *
      */
     @Override
-    public void updateAllIndexes() {
+    public void updateAllIndexes() throws QueryException {
         Map<String, Map<String, Object>> indexes = listIndexes();
 
         IndexUpdater.updateAllIndexes(indexes, database, dbQueue);
     }
 
     @Override
-    public QueryResult find(Map<String, Object> query) {
+    public QueryResult find(Map<String, Object> query) throws QueryException {
         return find(query, 0, 0, null, null);
     }
 
@@ -340,10 +326,9 @@ public class IndexManagerImpl implements IndexManager {
                             long skip,
                             long limit,
                             List<String> fields,
-                            List<FieldSort> sortDocument) {
+                            List<FieldSort> sortDocument) throws QueryException {
         if (query == null) {
-            logger.log(Level.SEVERE, "-find called with null selector; bailing.");
-            return null;
+            throw new QueryException("Query must not be null");
         }
 
         updateAllIndexes();

@@ -62,12 +62,12 @@ class IndexUpdater {
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
-    public static boolean updateAllIndexes(Map<String, Map<String, Object>> indexes,
+    public static void updateAllIndexes(Map<String, Map<String, Object>> indexes,
                                            Database database,
-                                           SQLDatabaseQueue queue) {
+                                           SQLDatabaseQueue queue) throws QueryException {
         IndexUpdater updater = new IndexUpdater(database, queue);
 
-        return updater.updateAllIndexes(indexes);
+        updater.updateAllIndexes(indexes);
     }
 
     /**
@@ -81,61 +81,47 @@ class IndexUpdater {
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
-    public static boolean updateIndex(String indexName,
+    public static void updateIndex(String indexName,
                                       List<String> fieldNames,
                                       Database database,
-                                      SQLDatabaseQueue queue) {
+                                      SQLDatabaseQueue queue) throws QueryException {
         IndexUpdater updater = new IndexUpdater(database, queue);
 
-        return updater.updateIndex(indexName, fieldNames);
+        updater.updateIndex(indexName, fieldNames);
     }
 
     @SuppressWarnings("unchecked")
-    private boolean updateAllIndexes(Map<String, Map<String, Object>> indexes) {
-        boolean success = true;
+    private void updateAllIndexes(Map<String, Map<String, Object>> indexes) throws QueryException {
 
         for (Map.Entry<String, Map<String, Object>> entry: indexes.entrySet()) {
             Map<String, Object> index = entry.getValue();
             List<String> fields = (ArrayList<String>) index.get("fields");
-            success = updateIndex(entry.getKey(), fields);
-            if (!success) {
-                break;
-            }
+            updateIndex(entry.getKey(), fields);
         }
-
-        return success;
     }
 
-    private boolean updateIndex(String indexName, List<String> fieldNames) {
-        boolean success;
+    private void updateIndex(String indexName, List<String> fieldNames) throws QueryException {
         Changes changes;
         long lastSequence = sequenceNumberForIndex(indexName);
 
         do {
             changes = database.changes(lastSequence, 10000);
-            success = updateIndex(indexName, fieldNames, changes, lastSequence);
+            updateIndex(indexName, fieldNames, changes, lastSequence);
             lastSequence = changes.getLastSequence();
-        } while (success && changes.size() > 0);
-
-        // raise error
-        if (!success) {
-            logger.log(Level.SEVERE, String.format("Problem updating index %s", indexName));
-        }
-
-        return success;
+        } while (changes.size() > 0);
     }
 
-    private boolean updateIndex(final String indexName,
+    private void updateIndex(final String indexName,
                                 final List<String> fieldNames,
                                 final Changes changes,
-                                long lastSequence) {
+                                long lastSequence) throws QueryException {
         if (indexName == null || indexName.isEmpty()) {
-            return false;
+            throw new QueryException("Index name was null or empty");
         }
 
-        Future<Boolean> result = queue.submitTransaction(new SQLCallable<Boolean>() {
+        Future<Void> result = queue.submitTransaction(new SQLCallable<Void>() {
             @Override
-            public Boolean call(SQLDatabase database) {
+            public Void call(SQLDatabase database) throws QueryException {
                 for (DocumentRevision rev: changes.getResults()) {
                     // Delete existing values
                     String tableName = IndexManagerImpl.tableNameForIndex(indexName);
@@ -157,7 +143,6 @@ class IndexUpdater {
                                                              parameter.contentValues);
                                 if (rowId < 0) {
                                     String msg = String.format("Updating index %s failed.", indexName);
-                                    logger.log(Level.SEVERE, msg);
                                     throw new QueryException(msg);
                                 }
                             }
@@ -165,27 +150,23 @@ class IndexUpdater {
                     }
                 }
 
-                return true;
+                return null;
             }
         });
 
-        boolean success;
         try {
-            success = result.get();
+            result.get();
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error encountered:", e);
-            success = false;
+            throw new QueryException("Execution error encountered:", e);
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
-            success = false;
+            throw new QueryException("Execution interrupted error encountered:",e);
         }
 
-        // if there was a problem, we rolled back, so the sequence won't be updated
-        if (success) {
-            success = updateMetadataForIndex(indexName, lastSequence);
-        }
+        // if there was a problem, we rolled back, and threw an exception, so the sequence won't be
+        // updated. otherwise if we got here we can update the sequence.
+        updateMetadataForIndex(indexName, lastSequence);
 
-        return success;
+
     }
 
     /**
@@ -336,7 +317,7 @@ class IndexUpdater {
         return new DBParameter(tableName, contentValues);
     }
 
-    private long sequenceNumberForIndex(final String indexName) {
+    private long sequenceNumberForIndex(final String indexName) throws QueryException {
         Future<Long> sequenceNumber = queue.submit( new SQLCallable<Long>() {
             @Override
             public Long call(SQLDatabase database) {
@@ -364,19 +345,18 @@ class IndexUpdater {
         try {
             lastSequenceNumber = sequenceNumber.get();
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error encountered:", e);
+            throw new QueryException("Execution error encountered:", e);
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
+            throw new QueryException("Execution interrupted error encountered:", e);
         }
 
         return lastSequenceNumber;
     }
 
-    private boolean updateMetadataForIndex(final String indexName, final long lastSequence) {
-        Future<Boolean> result = queue.submit(new SQLCallable<Boolean>() {
+    private void updateMetadataForIndex(final String indexName, final long lastSequence) throws QueryException {
+        Future<Void> result = queue.submit(new SQLCallable<Void>() {
             @Override
-            public Boolean call(SQLDatabase database) {
-                boolean updateSuccess = true;
+            public Void call(SQLDatabase database) throws QueryException {
                 ContentValues v = new ContentValues();
                 v.put("last_sequence", lastSequence);
                 int row = database.update(IndexManagerImpl.INDEX_METADATA_TABLE_NAME,
@@ -384,24 +364,19 @@ class IndexUpdater {
                                           " index_name = ? ",
                                           new String[]{ indexName });
                 if (row <= 0) {
-                    updateSuccess = false;
+                    throw new QueryException("Failed to update index metadata for index "+indexName);
                 }
-                return updateSuccess;
+                return null;
             }
         });
 
-        boolean success;
         try {
-            success = result.get();
+            result.get();
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error encountered:", e);
-            success = false;
+            throw new QueryException("Execution error encountered:", e);
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
-            success = false;
+            throw new QueryException("Execution interrupted error encountered:", e);
         }
-
-        return success;
     }
 
     private static class DBParameter {
