@@ -54,7 +54,7 @@ class IndexCreator {
 
     protected static String ensureIndexed(Index index,
                                           Database database,
-                                          SQLDatabaseQueue queue) {
+                                          SQLDatabaseQueue queue) throws QueryException {
         IndexCreator executor = new IndexCreator(database, queue);
 
         return executor.ensureIndexed(index);
@@ -70,16 +70,16 @@ class IndexCreator {
      *  @return name of created index
      */
     @SuppressWarnings("unchecked")
-    private String ensureIndexed(Index proposedIndex) {
+    private String ensureIndexed(Index proposedIndex) throws QueryException {
         if (proposedIndex == null) {
-            return null;
+            throw new QueryException("TODO message");
         }
 
         if (proposedIndex.indexType == IndexType.TEXT) {
             if (!IndexManagerImpl.ftsAvailable(queue)) {
                 logger.log(Level.SEVERE, "Text search not supported.  To add support for text " +
                                          "search, enable FTS compile options in SQLite.");
-                return null;
+                throw new QueryException("TODO message");
             }
         }
 
@@ -88,7 +88,7 @@ class IndexCreator {
         for (String fieldName: fieldNamesList) {
             if (!validFieldName(fieldName)) {
                 // Logging handled in validFieldName
-                return null;
+                throw new QueryException("TODO message");
             }
         }
 
@@ -98,6 +98,7 @@ class IndexCreator {
             String msg = String.format("Cannot create index with duplicated field names %s"
                                        , proposedIndex.fieldNames);
             logger.log(Level.SEVERE, msg);
+            throw new QueryException(msg);
         }
 
         // Prepend _id and _rev if it's not in the array
@@ -147,27 +148,26 @@ class IndexCreator {
                 Set<String> newFields = new HashSet<String>(fieldNamesList);
                 if (existingFields.equals(newFields) &&
                         proposedIndex.compareIndexTypeTo(existingType, existingSettings)) {
-                    boolean success = IndexUpdater.updateIndex(proposedIndex.indexName,
-                                                               fieldNamesList,
+                    // index name and fields match existing index, update index and return
+                    IndexUpdater.updateIndex(proposedIndex.indexName,
+                            fieldNamesList,
                             database,
-                                                               queue);
-                    return success ? proposedIndex.indexName : null;
+                            queue);
+                    return proposedIndex.indexName;
                 }
             }
         } catch (ExecutionException e) {
             logger.log(Level.SEVERE, "Execution error encountered:", e);
-            return null;
+            throw new QueryException("TODO message", e);
         } catch (InterruptedException e) {
             logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
-            return null;
+            throw new QueryException("TODO message", e);
         }
 
         final Index index = proposedIndex;
-        Future<Boolean> result = queue.submit(new SQLCallable<Boolean>() {
+        Future<Void> result = queue.submitTransaction(new SQLCallable<Void>() {
             @Override
-            public Boolean call(SQLDatabase database) {
-                Boolean transactionSuccess = true;
-                database.beginTransaction();
+            public Void call(SQLDatabase database) throws QueryException {
 
                 // Insert metadata table entries
                 for (String fieldName: fieldNamesList) {
@@ -180,8 +180,7 @@ class IndexCreator {
                     long rowId = database.insert(IndexManagerImpl.INDEX_METADATA_TABLE_NAME,
                                                  parameters);
                     if (rowId < 0) {
-                        transactionSuccess = false;
-                        break;
+                        throw new QueryException("Error inserting index metadata");
                     }
                 }
 
@@ -212,41 +211,28 @@ class IndexCreator {
                         database.execSQL(statement);
                     } catch (SQLException e) {
                         String msg = String.format("Index creation error occurred (%s):",statement);
-                        logger.log(Level.SEVERE, msg, e);
-                        transactionSuccess = false;
-                        break;
+                        throw new QueryException(msg, e);
                     }
                 }
-
-                if (transactionSuccess) {
-                    database.setTransactionSuccessful();
-                }
-                database.endTransaction();
-
-                return transactionSuccess;
+                return null;
             }
         });
 
         // Update the new index if it's been created
-        boolean success;
         try {
-            success = result.get();
+            result.get();
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error encountered:", e);
-            return null;
+            throw new QueryException("Execution error encountered:", e);
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
-            return null;
+            throw new QueryException("Execution interrupted error encountered:", e);
         }
 
-        if (success) {
-            success = IndexUpdater.updateIndex(index.indexName,
-                                               fieldNamesList,
-                    database,
-                                               queue);
-        }
+        IndexUpdater.updateIndex(index.indexName,
+                fieldNamesList,
+                database,
+                queue);
 
-        return success ? index.indexName : null;
+        return index.indexName;
     }
 
     /**
