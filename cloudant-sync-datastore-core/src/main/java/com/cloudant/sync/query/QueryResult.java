@@ -62,7 +62,6 @@ public class QueryResult implements Iterable<DocumentRevision> {
      *  Returns the number of documents in this query result.
      *
      *  @return the number of documents {@code DocumentRevision} in this query result.
-     *  @throws QueryException if the document ids for this query cannot be retrieved
      */
     public int size() {
         return documentIds().size();
@@ -75,7 +74,6 @@ public class QueryResult implements Iterable<DocumentRevision> {
      *  consistent with the iterator results.
      *
      *  @return list of the document ids
-     *  @throws QueryException if the document ids for this query cannot be retrieved
      */
     public List<String> documentIds() {
         List<String> documentIds = new ArrayList<String>();
@@ -88,7 +86,6 @@ public class QueryResult implements Iterable<DocumentRevision> {
 
     /**
      * @return a newly created Iterator over the query results
-     * @throws QueryException if the document ids for this query cannot be retrieved
      */
     @Override
     public Iterator<DocumentRevision> iterator() {
@@ -193,7 +190,8 @@ public class QueryResult implements Iterable<DocumentRevision> {
                 }
                 return docList.iterator();
             } catch (DocumentException e) {
-                throw new QueryException(e);
+                // TODO - not sure what the right thing is here
+                throw new NoSuchElementException(e.toString());
             }
         }
     }
