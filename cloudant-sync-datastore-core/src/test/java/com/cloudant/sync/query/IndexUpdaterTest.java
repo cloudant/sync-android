@@ -71,7 +71,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     @Test
     public void updateIndexNoIndexName() throws Exception {
         createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name")));
-        assertThat(IndexUpdater.updateIndex(null, fields, ds, indexManagerDatabaseQueue), is(false));
+        try {
+            IndexUpdater.updateIndex(null, fields, ds, indexManagerDatabaseQueue);
+            Assert.fail("Expected ensureIndexed to throw a QueryException");
+        } catch (QueryException qe) {
+            ;
+        }
     }
 
     @Test
@@ -108,7 +113,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         saved = ds.createDocumentFromRevision(rev);
 
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
+        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -295,7 +300,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
+        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -365,7 +370,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
+        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -434,7 +439,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
+        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -503,7 +508,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
+        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -570,7 +575,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
+        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -639,7 +644,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
+        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -716,7 +721,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         saved = ds.createDocumentFromRevision(goodRev);
         ds.createDocumentFromRevision(badRev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
+        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(2l));
 
         // Document id123 is successfully indexed. 
@@ -787,7 +792,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
+        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -855,7 +860,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         final DocumentRevision saved;
         saved = ds.createDocumentFromRevision(rev);
 
-        assertThat(IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue), is(true));
+        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -1065,7 +1070,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }).get();
     }
 
-    private void createIndex(String indexName, List<FieldSort> fieldNames) {
+    private void createIndex(String indexName, List<FieldSort> fieldNames) throws QueryException {
         if (testType.equals(TEXT_INDEX_EXECUTION)) {
             createIndex(indexName, fieldNames, IndexType.TEXT);
         } else {
@@ -1074,7 +1079,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     @SuppressWarnings("unchecked")
-    private void createIndex(String indexName, List<FieldSort> fieldNames, IndexType indexType) {
+    private void createIndex(String indexName, List<FieldSort> fieldNames, IndexType indexType) throws QueryException{
         assertThat(im.ensureIndexed(fieldNames, indexName, indexType), is(indexName));
 
         Map<String, Map<String, Object>> indexes = im.listIndexes();

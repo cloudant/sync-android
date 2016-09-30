@@ -26,6 +26,7 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -96,7 +97,12 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     @Test
     public void returnsNullForNoQuery() throws Exception {
         setUpBasicQueryData();
-        assertThat(im.find(null), is(nullValue()));
+        try {
+            im.find(null);
+            Assert.fail("find should throw QueryException");
+        } catch (QueryException qe) {
+            ;
+        }
     }
 
     @Test

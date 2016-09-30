@@ -34,6 +34,7 @@ import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.IndexManagerImpl;
+import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.TestUtils;
 
@@ -120,7 +121,7 @@ public class EndToEndEncryptionTest {
     }
 
     @Test
-    public void jsonDataEncrypted() throws IOException {
+    public void jsonDataEncrypted() throws IOException, QueryException {
         File jsonDatabase = new File(datastoreManagerDir
                 + File.separator + "EndToEndEncryptionTest"
                 + File.separator + "db.sync");
@@ -152,7 +153,7 @@ public class EndToEndEncryptionTest {
     }
 
     @Test
-    public void indexDataEncrypted() throws IOException {
+    public void indexDataEncrypted() throws IOException, QueryException {
 
         IndexManagerImpl im = this.database.query;
         try {
@@ -244,7 +245,7 @@ public class EndToEndEncryptionTest {
      * A basic check things round trip successfully.
      */
     @Test
-    public void readAndWriteDocument() throws DocumentException, IOException {
+    public void readAndWriteDocument() throws DocumentException, IOException, QueryException {
 
         String documentId = "a-test-document";
         final String nonAsciiText = "摇;摃:xx\uD83D\uDC79⌚️\uD83D\uDC7D";
