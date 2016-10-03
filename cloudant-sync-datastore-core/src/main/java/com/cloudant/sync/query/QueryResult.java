@@ -28,9 +28,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- *  Iterable result of a query executed with {@link IndexManager}.
+ *  Iterable result of a query executed with {@link IndexManagerImpl}.
  *
- *  @see IndexManager
+ *  @see IndexManagerImpl
  *  @api_public
  */
 public class QueryResult implements Iterable<DocumentRevision> {

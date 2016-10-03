@@ -31,7 +31,7 @@ import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
-import com.cloudant.sync.query.IndexManager;
+import com.cloudant.sync.query.IndexManagerImpl;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.TestUtils;
 
@@ -127,7 +127,7 @@ public class EndToEndEncryptionTest {
         // database operation to ensure the database exists on disk before we look at
         // it.
 
-        IndexManager im = new IndexManager(this.database);
+        IndexManagerImpl im = new IndexManagerImpl(this.database);
         try {
             im.ensureIndexed(Arrays.<Object>asList("name", "age"));
         } finally {
@@ -152,7 +152,7 @@ public class EndToEndEncryptionTest {
     @Test
     public void indexDataEncrypted() throws IOException {
 
-        IndexManager im = new IndexManager(this.database);
+        IndexManagerImpl im = new IndexManagerImpl(this.database);
         try {
             im.ensureIndexed(Arrays.<Object>asList("name", "age"));
         } finally {
@@ -299,7 +299,7 @@ public class EndToEndEncryptionTest {
                 IOUtils.contentEquals(new ByteArrayInputStream(nonAsciiText.getBytes()), in));
 
         // perform a query to ensure we can use special chars
-        IndexManager indexManager = new IndexManager(database);
+        IndexManagerImpl indexManager = new IndexManagerImpl(database);
         try {
             assertNotNull(indexManager.ensureIndexed(Arrays.<Object>asList("name", "pet"), "my index"));
 
