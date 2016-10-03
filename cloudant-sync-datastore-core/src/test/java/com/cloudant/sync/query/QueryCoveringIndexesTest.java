@@ -46,12 +46,12 @@ import java.util.Map;
  *  the same test execution pipeline contained within this class using
  *  {@link com.cloudant.sync.query.MockMatcherIndexManager} which in turn
  *  exercises the post hoc matcher matching functionality.  Finally we test the
- *  execution pipeline with {@link com.cloudant.sync.query.IndexManager}
+ *  execution pipeline with {@link IndexManagerImpl}
  *  which tests query functionality under standard "production" conditions.
  *
  *  @see com.cloudant.sync.query.MockSQLOnlyIndexManager
  *  @see com.cloudant.sync.query.MockMatcherIndexManager
- *  @see com.cloudant.sync.query.IndexManager
+ *  @see IndexManagerImpl
  */
 @RunWith(Parameterized.class)
 public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
@@ -82,12 +82,12 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         } else if (testType.equals(MATCHER_EXECUTION)) {
             im = new MockMatcherIndexManager(ds);
         } else if (testType.equals(STANDARD_EXECUTION)) {
-            im = new IndexManager(ds);
+            im = new IndexManagerImpl(ds);
         }
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
         assertThat(indexManagerDatabaseQueue, is(notNullValue()));
-        String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
+        String[] metadataTableList = new String[] { IndexManagerImpl.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(TestUtils.getDBQueue(im), metadataTableList);
     }
 
