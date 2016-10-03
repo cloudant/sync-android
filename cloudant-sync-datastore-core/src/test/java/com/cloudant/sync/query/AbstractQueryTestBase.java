@@ -46,7 +46,7 @@ public abstract class AbstractQueryTestBase {
     String factoryPath = null;
     DatastoreManager factory = null;
     DatabaseImpl ds = null;
-    IndexManager im = null;
+    IndexManagerImpl im = null;
     SQLDatabaseQueue indexManagerDatabaseQueue;
 
     @Before

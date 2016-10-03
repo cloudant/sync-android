@@ -27,21 +27,18 @@ import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.util.DatabaseUtils;
-import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 
 @RunWith(Parameterized.class)
 public class IndexUpdaterTest extends AbstractIndexTestBase {
@@ -81,7 +78,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
-        String table = IndexManager.tableNameForIndex("basic");
+        String table = IndexManagerImpl.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -144,7 +141,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
-        String table = IndexManager.tableNameForIndex("basic");
+        String table = IndexManagerImpl.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -270,7 +267,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
-        String table = IndexManager.tableNameForIndex("basic");
+        String table = IndexManagerImpl.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -332,7 +329,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
-        String table = IndexManager.tableNameForIndex("basic");
+        String table = IndexManagerImpl.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -406,7 +403,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
-        String table = IndexManager.tableNameForIndex("basic");
+        String table = IndexManagerImpl.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -475,7 +472,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
-        String table = IndexManager.tableNameForIndex("basic");
+        String table = IndexManagerImpl.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -542,7 +539,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         Assert.assertEquals(0, getIndexSequenceNumber("basic"));
 
-        String table = IndexManager.tableNameForIndex("basic");
+        String table = IndexManagerImpl.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -610,7 +607,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
-        String table = IndexManager.tableNameForIndex("basic");
+        String table = IndexManagerImpl.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -679,7 +676,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
-        String table = IndexManager.tableNameForIndex("basic");
+        String table = IndexManagerImpl.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -760,7 +757,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
-        String table = IndexManager.tableNameForIndex("basic");
+        String table = IndexManagerImpl.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -828,7 +825,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         assertThat(getIndexSequenceNumber("basic"), is(0l));
 
-        String table = IndexManager.tableNameForIndex("basic");
+        String table = IndexManagerImpl.tableNameForIndex("basic");
         final String sql = String.format("SELECT * FROM %s", table);
 
         indexManagerDatabaseQueue.submit(new SQLCallable<Void>() {
@@ -956,8 +953,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         assertThat(getIndexSequenceNumber("basic"), is(6l));
         assertThat(getIndexSequenceNumber("basicName"), is(6l));
 
-        String basicTable = IndexManager.tableNameForIndex("basic");
-        String basicNameTable = IndexManager.tableNameForIndex("basicName");
+        String basicTable = IndexManagerImpl.tableNameForIndex("basic");
+        String basicNameTable = IndexManagerImpl.tableNameForIndex("basicName");
         final String sqlBasic = String.format("SELECT * FROM %s", basicTable);
         final String sqlBasicName = String.format("SELECT * FROM %s", basicNameTable);
 
@@ -1044,7 +1041,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     private long getIndexSequenceNumber(String indexName) throws Exception {
         String where = String.format("index_name = \"%s\" group by last_sequence", indexName);
         final String sql = String.format("SELECT last_sequence FROM %s where %s",
-                                   IndexManager.INDEX_METADATA_TABLE_NAME,
+                                   IndexManagerImpl.INDEX_METADATA_TABLE_NAME,
                                    where);
 
        return indexManagerDatabaseQueue.submit(new SQLCallable<Long>() {

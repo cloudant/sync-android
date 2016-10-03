@@ -19,6 +19,7 @@ package com.cloudant.sync.datastore;
 
 import com.cloudant.common.ChangeNotifyingMap;
 import com.cloudant.common.SimpleChangeNotifyingMap;
+import com.cloudant.sync.query.IndexManagerImpl;
 import com.cloudant.sync.util.CouchUtils;
 
 import java.util.HashMap;
@@ -192,7 +193,7 @@ public class DocumentRevision implements Comparable<DocumentRevision> {
      *
      * A full document revision is a revision which contains all the information associated with it.
      * For example when a document is returned from
-     * {@link com.cloudant.sync.query.IndexManager#find(Map, long, long, List, List)} using the
+     * {@link IndexManagerImpl#find(Map, long, long, List, List)} using the
      * {@code fields} option to limit the fields returned, a revision will be missing data so it
      * cannot be regarded as a full revision. If the document is a full revision, this method will
      * only attempt to load the full revision from the datastore if {@link DocumentRevision#isFullRevision()}
