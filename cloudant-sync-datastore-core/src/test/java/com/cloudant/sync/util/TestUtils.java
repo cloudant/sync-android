@@ -17,7 +17,7 @@ package com.cloudant.sync.util;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
-import com.cloudant.sync.query.IndexManager;
+import com.cloudant.sync.query.IndexManagerImpl;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseFactory;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
@@ -64,8 +64,8 @@ public class TestUtils {
         }
     }
 
-    public static SQLDatabaseQueue getDBQueue(IndexManager indexManager) throws Exception {
-        Class clazz =  IndexManager.class;
+    public static SQLDatabaseQueue getDBQueue(IndexManagerImpl indexManager) throws Exception {
+        Class clazz =  IndexManagerImpl.class;
         Field dbQueue = clazz.getDeclaredField("dbQueue");
         dbQueue.setAccessible(true);
         return (SQLDatabaseQueue) dbQueue.get(indexManager);
