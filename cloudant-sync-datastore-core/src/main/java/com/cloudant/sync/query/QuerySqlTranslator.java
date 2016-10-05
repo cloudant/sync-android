@@ -42,7 +42,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *  This class translates Cloudant Query selectors into the SQL we need to use
+ *  This class translates Cloudant query selectors into the SQL we need to use
  *  to query our indexes.
  *
  *  It creates a tree structure which contains AND/OR nodes, along with the SQL which
@@ -124,7 +124,7 @@ class QuerySqlTranslator {
             logger.log(Level.SEVERE, msg);
             return null;
         } else if (state.textIndexRequired && state.atLeastOneIndexMissing) {
-            String msg = String.format("Query %s contains a text search but is missing \"json\"" +
+            String msg = String.format("query %s contains a text search but is missing \"json\"" +
                                        " index(es).  All indexes must exist in order to execute a" +
                                        " query containing a text search.  Create all necessary" +
                                        " indexes for the query and re-execute.",
@@ -141,7 +141,7 @@ class QuerySqlTranslator {
             String allDocsIndex = chooseIndexForFields(neededFields, indexes);
 
             if (allDocsIndex != null && !allDocsIndex.isEmpty()) {
-                String tableName = IndexManager.tableNameForIndex(allDocsIndex);
+                String tableName = IndexManagerImpl.tableNameForIndex(allDocsIndex);
                 String sql = String.format(Locale.ENGLISH, "SELECT _id FROM \"%s\"", tableName);
                 sqlNode.sql = SqlParts.partsForSql(sql, new String[]{});
             }
@@ -453,7 +453,7 @@ class QuerySqlTranslator {
             return null;
         }
 
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = IndexManagerImpl.tableNameForIndex(indexName);
 
         String sql = String.format(Locale.ENGLISH,
                                    "SELECT _id FROM \"%s\" WHERE %s",
@@ -480,7 +480,7 @@ class QuerySqlTranslator {
         Map<String, Object> textClause = (Map<String, Object>) clause;
         Map<String, String> searchClause = (Map<String, String>) textClause.get(TEXT);
 
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = IndexManagerImpl.tableNameForIndex(indexName);
         String search = searchClause.get(SEARCH);
         search = search.replace("'", "''");
 
@@ -563,7 +563,7 @@ class QuerySqlTranslator {
                 } else {
                     String whereClause;
                     String sqlOperator = operatorMap.get(operator);
-                    String tableName = IndexManager.tableNameForIndex(indexName);
+                    String tableName = IndexManagerImpl.tableNameForIndex(indexName);
                     String placeholder;
                     if (operator.equals(IN)) {
                         // The predicate map value must be a List here.

@@ -13,7 +13,7 @@
 package com.cloudant.sync.query;
 
 import com.cloudant.android.ContentValues;
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
@@ -40,22 +40,22 @@ import java.util.logging.Logger;
  */
 class IndexCreator {
 
-    private final Datastore datastore;
+    private final Database database;
     private static Random indexNameRandom = new Random();
 
     private final SQLDatabaseQueue queue;
 
     private static final Logger logger = Logger.getLogger(IndexCreator.class.getName());
 
-    public IndexCreator(Datastore datastore, SQLDatabaseQueue queue) {
-        this.datastore = datastore;
+    public IndexCreator(Database database, SQLDatabaseQueue queue) {
+        this.database = database;
         this.queue = queue;
     }
 
     protected static String ensureIndexed(Index index,
-                                          Datastore datastore,
+                                          Database database,
                                           SQLDatabaseQueue queue) {
-        IndexCreator executor = new IndexCreator(datastore, queue);
+        IndexCreator executor = new IndexCreator(database, queue);
 
         return executor.ensureIndexed(index);
     }
@@ -76,7 +76,7 @@ class IndexCreator {
         }
 
         if (proposedIndex.indexType == IndexType.TEXT) {
-            if (!IndexManager.ftsAvailable(queue)) {
+            if (!IndexManagerImpl.ftsAvailable(queue)) {
                 logger.log(Level.SEVERE, "Text search not supported.  To add support for text " +
                                          "search, enable FTS compile options in SQLite.");
                 return null;
@@ -149,7 +149,7 @@ class IndexCreator {
                         proposedIndex.compareIndexTypeTo(existingType, existingSettings)) {
                     boolean success = IndexUpdater.updateIndex(proposedIndex.indexName,
                                                                fieldNamesList,
-                                                               datastore,
+                            database,
                                                                queue);
                     return success ? proposedIndex.indexName : null;
                 }
@@ -177,7 +177,7 @@ class IndexCreator {
                     parameters.put("index_settings", index.settingsAsJSON());
                     parameters.put("field_name", fieldName);
                     parameters.put("last_sequence", 0);
-                    long rowId = database.insert(IndexManager.INDEX_METADATA_TABLE_NAME,
+                    long rowId = database.insert(IndexManagerImpl.INDEX_METADATA_TABLE_NAME,
                                                  parameters);
                     if (rowId < 0) {
                         transactionSuccess = false;
@@ -242,7 +242,7 @@ class IndexCreator {
         if (success) {
             success = IndexUpdater.updateIndex(index.indexName,
                                                fieldNamesList,
-                                               datastore,
+                    database,
                                                queue);
         }
 
@@ -327,7 +327,7 @@ class IndexCreator {
         Future<Map<String, Object>> indexes = queue.submit(new SQLCallable<Map<String,Object>>() {
             @Override
             public Map<String, Object> call(SQLDatabase database) {
-                return IndexManager.listIndexesInDatabase(database);
+                return IndexManagerImpl.listIndexesInDatabase(database);
             }
         });
 
@@ -335,14 +335,14 @@ class IndexCreator {
     }
 
     private String createIndexTableStatementForIndex(String indexName, List<String> columns) {
-        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManager.tableNameForIndex(indexName));
+        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManagerImpl.tableNameForIndex(indexName));
         String cols = Misc.join(" NONE, ", columns);
 
         return String.format("CREATE TABLE %s ( %s NONE )", tableName, cols);
     }
 
     private String createIndexIndexStatementForIndex(String indexName, List<String> columns) {
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = IndexManagerImpl.tableNameForIndex(indexName);
         String sqlIndexName = tableName.concat("_index");
         String cols = Misc.join(",", columns);
 
@@ -363,7 +363,7 @@ class IndexCreator {
     private String createVirtualTableStatementForIndex(String indexName,
                                                        List<String> columns,
                                                        List<String> indexSettings) {
-        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManager
+        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManagerImpl
                 .tableNameForIndex(indexName));
         String cols = Misc.join(",", columns);
         String settings = Misc.join(",", indexSettings);

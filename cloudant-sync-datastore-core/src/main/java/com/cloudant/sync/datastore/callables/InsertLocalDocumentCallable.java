@@ -15,8 +15,8 @@
 package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.android.ContentValues;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.LocalDocument;
@@ -32,7 +32,7 @@ import java.util.logging.Logger;
  */
 public class InsertLocalDocumentCallable implements SQLCallable<LocalDocument> {
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     private String docId;
     private DocumentBody body;

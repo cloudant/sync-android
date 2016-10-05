@@ -24,10 +24,10 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.AnimalDb;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.Response;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
-import com.cloudant.sync.query.IndexManager;
+import com.cloudant.sync.query.IndexManagerImpl;
 import com.cloudant.sync.query.QueryResult;
 
 import org.junit.Assert;
@@ -195,7 +195,7 @@ public class PullStrategyTest extends ReplicationTestBase {
 
     @Test
     public void pull_localDbError_replicationAbort() throws Exception {
-        DatastoreImpl localDb = mock(DatastoreImpl.class);
+        DatabaseImpl localDb = mock(DatabaseImpl.class);
 
         PullStrategy replication = super.getPullStrategy();
         replication.targetDb = new DatastoreWrapper(localDb);
@@ -386,7 +386,7 @@ public class PullStrategyTest extends ReplicationTestBase {
 
         Assert.assertEquals(0, datastore.getDocumentCount());
 
-        IndexManager im = new IndexManager(datastore);
+        IndexManagerImpl im = new IndexManagerImpl(datastore);
         try {
             im.ensureIndexed(Arrays.<Object>asList("diet"), "diet");
 

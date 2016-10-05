@@ -14,8 +14,8 @@
 
 package com.cloudant.sync.datastore.callables;
 
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentNotFoundException;
 import com.cloudant.sync.datastore.LocalDocument;
@@ -37,7 +37,7 @@ public class GetLocalDocumentCallable implements SQLCallable<LocalDocument> {
 
     private String docId;
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     /**
      * @param docId Document to fetch the local Document for

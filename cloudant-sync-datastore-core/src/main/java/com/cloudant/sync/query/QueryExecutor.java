@@ -12,7 +12,7 @@
 
 package com.cloudant.sync.query;
 
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -36,7 +36,7 @@ import java.util.logging.Logger;
  */
 class QueryExecutor {
 
-    private final Datastore datastore;
+    private final Database database;
     private final SQLDatabaseQueue queue;
 
     private static final Logger logger = Logger.getLogger(QueryExecutor.class.getName());
@@ -47,8 +47,8 @@ class QueryExecutor {
      *  Constructs a new QueryExecutor using the indexes in 'database' to find documents from
      *  'datastore'.
      */
-    QueryExecutor(Datastore datastore, SQLDatabaseQueue queue) {
-        this.datastore = datastore;
+    QueryExecutor(Database database, SQLDatabaseQueue queue) {
+        this.database = database;
         this.queue = queue;
     }
 
@@ -140,13 +140,13 @@ class QueryExecutor {
         UnindexedMatcher matcher = matcherForIndexCoverage(indexesCoverQuery, query);
 
         if (matcher != null) {
-            String msg = "Query could not be executed using indexes alone; falling back to ";
+            String msg = "query could not be executed using indexes alone; falling back to ";
             msg += "filtering documents themselves. This will be VERY SLOW as each candidate ";
             msg += "document is loaded from the datastore and matched against the query selector.";
             logger.log(Level.WARNING, msg);
         }
 
-        return new QueryResult(docIds, datastore, fields, skip, limit, matcher);
+        return new QueryResult(docIds, database, fields, skip, limit, matcher);
     }
 
     protected ChildrenQueryNode translateQuery(Map<String, Object> query,
@@ -271,7 +271,7 @@ class QueryExecutor {
             } else {
                 // No SQL exists so we are now forced to go directly to the
                 // document datastore to retrieve the list of document ids.
-                docIds = datastore.getAllDocumentIds();
+                docIds = database.getAllDocumentIds();
             }
 
             return new HashSet<String>(docIds);
@@ -357,7 +357,7 @@ class QueryExecutor {
             return null;
         }
 
-        String indexTable = IndexManager.tableNameForIndex(chosenIndex);
+        String indexTable = IndexManagerImpl.tableNameForIndex(chosenIndex);
 
         // for small result sets:
         // SELECT _id FROM idx WHERE _id IN (?, ?) ORDER BY fieldName ASC, fieldName2 DESC

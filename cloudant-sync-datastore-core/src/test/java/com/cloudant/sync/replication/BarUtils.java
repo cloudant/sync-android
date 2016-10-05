@@ -17,7 +17,7 @@ package com.cloudant.sync.replication;
 import com.cloudant.common.CouchConstants;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.Response;
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.util.CouchUtils;
@@ -61,7 +61,7 @@ public class BarUtils {
         return savedBar;
     }
 
-    public static Bar createBar(Datastore db, String id, String name, int age) {
+    public static Bar createBar(Database db, String id, String name, int age) {
         Bar bar = new Bar();
         bar.setId(id);
         bar.setName(name);
@@ -80,7 +80,7 @@ public class BarUtils {
         return null;
     }
 
-    public static Bar createBar(Datastore db, String name, int age) throws Exception {
+    public static Bar createBar(Database db, String name, int age) throws Exception {
         Bar bar = new Bar();
         bar.setName(name);
         bar.setAge(age);
@@ -112,7 +112,7 @@ public class BarUtils {
         return updatedBar;
     }
 
-    public static Bar updateBar(Datastore db, String id, String name, int age) throws Exception {
+    public static Bar updateBar(Database db, String id, String name, int age) throws Exception {
         Bar bar = new Bar();
         bar.setName(name);
         bar.setAge(age);
@@ -144,7 +144,7 @@ public class BarUtils {
         return res;
     }
 
-    public static void deleteBar(Datastore db, String id) throws Exception {
+    public static void deleteBar(Database db, String id) throws Exception {
         db.deleteDocument(id);
     }
 

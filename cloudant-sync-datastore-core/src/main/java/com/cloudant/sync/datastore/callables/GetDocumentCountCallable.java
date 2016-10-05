@@ -15,7 +15,7 @@
 package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -34,7 +34,7 @@ import java.util.logging.Logger;
  */
 public class GetDocumentCountCallable implements SQLCallable<Integer> {
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     @Override
     public Integer call(SQLDatabase db) throws Exception {
