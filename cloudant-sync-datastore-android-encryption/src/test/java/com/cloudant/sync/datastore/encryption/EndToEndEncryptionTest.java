@@ -32,6 +32,7 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.query.FieldSort;
+import com.cloudant.sync.query.IndexManager;
 import com.cloudant.sync.query.IndexManagerImpl;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.TestUtils;
