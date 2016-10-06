@@ -1,9 +1,9 @@
 # Example application: Todo Sync
 
-** The latest released sample version can be downloaded from the
+**The latest released sample version can be downloaded from the
 [GitHub releases page][latest].**
 
-[latest]: https://github.com/cloudant/releases/latest
+[latest]: https://github.com/cloudant/sync-android/releases/latest
 
 The _todo-sync_ Android application shows how to do basic CRUD
 (create, read, update, delete) with the local Datastore and how to
