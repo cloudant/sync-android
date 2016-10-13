@@ -12,15 +12,9 @@
 
 package com.cloudant.sync.query;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,31 +25,25 @@ class Index {
 
     private static final Logger logger = Logger.getLogger(Index.class.getCanonicalName());
 
-    private static final String TEXT_TOKENIZE = "tokenize";
+  //  private static final String TEXT_TOKENIZE = "tokenize";
 
     private static final String TEXT_DEFAULT_TOKENIZER = "simple";
 
-    private static final List<String> validSettings = Arrays.asList(TEXT_TOKENIZE);
+    //private static final List<String> validSettings = Arrays.asList(TEXT_TOKENIZE);
 
-    protected final List<FieldSort> fieldNames;
+    public final List<FieldSort> fieldNames;
 
-    protected final String indexName;
+    public final String indexName;
 
-    protected final IndexType indexType;
+    public final IndexType indexType;
 
-    protected final Map<String, String> indexSettings;
+    // TODO remove
+//    public final Map<String, String> indexSettings;
 
-    private ObjectMapper objectMapper;
+    // TODO should this be an enum
+    public final String tokenize;
 
-    private Index(List<FieldSort> fieldNames,
-                  String indexName,
-                  IndexType indexType,
-                  Map<String, String> indexSettings) {
-        this.fieldNames = fieldNames;
-        this.indexName = indexName;
-        this.indexType = indexType;
-        this.indexSettings = indexSettings;
-    }
+
 
     /**
      * This method sets the index type to the default setting of "json"
@@ -64,12 +52,8 @@ class Index {
      * @param indexName the index name or null
      * @return the Index object or null if arguments passed in were invalid.
      */
-    public static Index getInstance(List<FieldSort> fieldNames, String indexName) {
-        return getInstance(fieldNames, indexName, IndexType.JSON);
-    }
-
-    public static Index getInstance(List<FieldSort> fieldNames, String indexName, IndexType indexType) {
-        return getInstance(fieldNames, indexName, indexType, null);
+    public Index (List<FieldSort> fieldNames, String indexName) {
+        this(fieldNames, indexName, IndexType.JSON);
     }
 
     /**
@@ -79,84 +63,61 @@ class Index {
      * @param fieldNames the field names in the index
      * @param indexName the index name or null
      * @param indexType the index type (json or text)
-     * @param indexSettings the optional settings used to configure the index.
-     *                      Only supported parameter is 'tokenize' for text indexes only.
      * @return the Index object or null if arguments passed in were invalid.
      */
-    public static Index getInstance(List<FieldSort> fieldNames,
-                              String indexName,
-                              IndexType indexType,
-                              Map<String, String> indexSettings) {
-        if (fieldNames == null || fieldNames.isEmpty()) {
-            logger.log(Level.SEVERE, "No field names were provided.");
-            return null;
-        }
-
-        if(indexName != null && indexName.isEmpty()){
-            return null;
-        }
-
-        if (indexType == IndexType.JSON && indexSettings != null) {
-            logger.log(Level.WARNING, String.format("Index type is %s, index settings %s ignored.",
-                                                    indexType,
-                                                    indexSettings.toString()));
-            indexSettings = null;
-        } else if (indexType == IndexType.TEXT) {
-            if (indexSettings == null) {
-                indexSettings = new HashMap<String, String>();
-                indexSettings.put(TEXT_TOKENIZE, TEXT_DEFAULT_TOKENIZER);
-                logger.log(Level.FINE, String.format("Index type is %s, defaulting settings to %s.",
-                        indexType,
-                        indexSettings.toString()));
-            } else {
-                for (String parameter : indexSettings.keySet()) {
-                    if (!validSettings.contains(parameter.toLowerCase())) {
-                        String msg = String.format("Invalid parameter %s in index settings %s.",
-                                                   parameter,
-                                                   indexSettings);
-                        logger.log(Level.SEVERE, msg);
-                        return null;
-                    }
-                }
-            }
-        }
-
-        return new Index(fieldNames, indexName, indexType, indexSettings);
+    public Index (List<FieldSort> fieldNames, String indexName, IndexType indexType) {
+        this(fieldNames, indexName, indexType, TEXT_DEFAULT_TOKENIZER);
     }
 
     /**
-     * Compares the index type and accompanying settings with the passed in arguments.
+     * This method handles index specific validation and ensures that the constructed
+     * Index object is valid.
      *
-     * @param indexType the index type to compare to
-     * @param indexSettings the indexSettings to compare to
-     * @return true/false - whether there is a match
+     * @param fieldNames the field names in the index
+     * @param indexName the index name or null
+     * @param indexType the index type (json or text)
+     * @param tokenize  for text indexes only.
+     * @return the Index object or null if arguments passed in were invalid.
      */
-    protected boolean compareIndexTypeTo(IndexType indexType, String indexSettings) {
-        if (this.indexType != indexType) {
-            return false;
+    public Index(List<FieldSort> fieldNames,
+                 String indexName,
+                 IndexType indexType,
+                 String tokenize) {
+
+        if (tokenize == null) {
+            System.out.println("null");
         }
 
-        if (this.indexSettings == null && indexSettings == null) {
-            return true;
-        } else if (this.indexSettings == null || indexSettings == null) {
-            return false;
+        if (fieldNames == null || fieldNames.isEmpty()) {
+            logger.log(Level.SEVERE, "No field names were provided.");
+            throw new IllegalArgumentException("No field names were provided.");
         }
 
-        Map<String, Object> settings;
-        try {
-            settings = getObjectMapper().readValue(indexSettings,
-                    new TypeReference<Map<String, Object>>() {
-                    });
-        } catch (IOException e) {
-            String msg = String.format("Error processing index settings %s",
-                                       this.indexSettings.toString());
-            logger.log(Level.SEVERE, msg, e);
-            return false;
+        if(indexName != null && indexName.isEmpty()){
+            throw new IllegalArgumentException("No index name was provided.");
         }
 
-        // We perform a deep comparison of hash maps to ensure that both objects
-        // and any sub-objects are equal regardless of order within the maps.
-        return this.indexSettings.equals(settings);
+        this.fieldNames = new ArrayList<FieldSort>(fieldNames);
+        this.indexName = indexName;
+        this.indexType = indexType;
+
+        if (indexType == IndexType.TEXT) {
+            if (tokenize == null) {
+                this.tokenize = TEXT_DEFAULT_TOKENIZER;
+            } else {
+                this.tokenize = tokenize;
+            }
+        } else {
+            // ignore tokenize if we're not doing text indexing
+            this.tokenize = null;
+        }
+
+        //if (tokenize == null) {
+            // TODO
+//            this.tokenize = TEXT_DEFAULT_TOKENIZER;
+        //} else {
+            //this.tokenize = tokenize;
+        //}
     }
 
     /**
@@ -165,24 +126,46 @@ class Index {
      * @return the JSON representation of the index settings
      */
     protected String settingsAsJSON() {
-        String json = null;
-        if (indexSettings != null) {
-            try {
-                json = getObjectMapper().writeValueAsString(indexSettings);
-            } catch (JsonProcessingException e) {
-                String msg = String.format("Error processing index settings %s",
-                                           this.indexSettings.toString());
-                logger.log(Level.SEVERE, msg, e);
-            }
+        if (tokenize == null) {
+            return "{}";
         }
-        return json;
+        return "{\"tokenize\":\""+tokenize+"\"}";
     }
 
-    private ObjectMapper getObjectMapper() {
-        if (objectMapper == null) {
-            objectMapper = new ObjectMapper();
+    @Override
+    public boolean equals(Object o) {
+
+        System.out.println(this.toString() + " equals " + o.toString());
+
+        if (this == o) {
+            return true;
         }
-        return objectMapper;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Index index = (Index) o;
+
+        // field order shouldn't matter
+        if (!(fieldNames.size() == index.fieldNames.size() && fieldNames.containsAll(index.fieldNames))) {
+            return false;
+        }
+        if (!indexName.equals(index.indexName)) {
+            return false;
+        }
+        if (indexType != index.indexType) {
+            return false;
+        }
+        return tokenize == null ? index.tokenize == null : tokenize.equals(index.tokenize);
+
     }
 
+    @Override
+    public int hashCode() {
+        int result = fieldNames.hashCode();
+        result = 31 * result + indexName.hashCode();
+        result = 31 * result + indexType.hashCode();
+        result = 31 * result + (tokenize != null ? tokenize.hashCode() : 0);
+        return result;
+    }
 }

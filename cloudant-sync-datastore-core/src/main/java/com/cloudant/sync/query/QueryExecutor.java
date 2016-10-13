@@ -67,7 +67,7 @@ class QueryExecutor {
      *  @return the query result
      */
     public QueryResult find(Map<String, Object> query,
-                            final Map<String, Map<String, Object>> indexes,
+                            final List<Index> indexes,
                             long skip,
                             long limit,
                             List<String> fields,
@@ -150,7 +150,7 @@ class QueryExecutor {
     }
 
     protected ChildrenQueryNode translateQuery(Map<String, Object> query,
-                                               Map<String, Map<String, Object>> indexes,
+                                               List<Index> indexes,
                                                Boolean[] indexesCoverQuery) {
         return (ChildrenQueryNode) QuerySqlTranslator.translateQuery(query,
                                                                      indexes,
@@ -278,7 +278,7 @@ class QueryExecutor {
      */
     private List<String> sortIds(Set<String> docIdSet,
                                  List<FieldSort> sortDocument,
-                                 Map<String, Map<String, Object>> indexes,
+                                 List<Index> indexes,
                                  SQLDatabase db) {
         boolean smallResultSet = (docIdSet.size() < SMALL_RESULT_SET_SIZE_THRESHOLD);
         SqlParts orderBy = sqlToSortIds(docIdSet, sortDocument, indexes);
@@ -333,7 +333,7 @@ class QueryExecutor {
      */
     protected static SqlParts sqlToSortIds(Set<String> docIdSet,
                                   List<FieldSort> sortDocument,
-                                  Map<String, Map<String, Object>> indexes) {
+                                  List<Index> indexes) {
         String chosenIndex = chooseIndexForSort(sortDocument, indexes);
         if (chosenIndex == null) {
             String msg = String.format("No single index can satisfy order %s", sortDocument);
@@ -382,7 +382,7 @@ class QueryExecutor {
 
     @SuppressWarnings("unchecked")
     private static String chooseIndexForSort(List<FieldSort> sortDocument,
-                                      Map<String, Map<String, Object>> indexes) {
+                                      List<Index> indexes) {
         if (indexes == null || indexes.isEmpty()) {
             return null;  // Can't choose an index if one does not exist.
         }
@@ -398,11 +398,13 @@ class QueryExecutor {
         }
 
         String chosenIndex = null;
-        for (Map.Entry<String, Map<String, Object>> entry : indexes.entrySet()) {
-            Map<String, Object> index = entry.getValue();
-            Set<String> providedFields = new HashSet<String>((List<String>) index.get("fields"));
+        for (Index index : indexes) {
+            Set<String> providedFields = new HashSet<String>();
+            for (FieldSort field : index.fieldNames) {
+                providedFields.add(field.field);
+            }
             if (providedFields.containsAll(neededFields)) {
-                chosenIndex = entry.getKey();
+                chosenIndex = index.indexName;
                 break;
             }
         }

@@ -24,6 +24,7 @@ import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +34,7 @@ import java.util.Set;
 
 public class QuerySortTest extends AbstractQueryTestBase {
 
-    Map<String, Map<String, Object>> indexes;
+    List<Index> indexes;
     Set<String> smallDocIdSet;
     Set<String> largeDocIdSet;
 
@@ -47,17 +48,11 @@ public class QuerySortTest extends AbstractQueryTestBase {
         String[] metadataTableList = new String[] { IndexManagerImpl.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue, metadataTableList);
 
-        Map<String, Object> indexA = new HashMap<String, Object>();
-        indexA.put("name", "a");
-        indexA.put("type", "json");
-        indexA.put("fields", Arrays.<Object>asList("name", "age", "pet"));
-        Map<String, Object> indexB = new HashMap<String, Object>();
-        indexB.put("name", "b");
-        indexB.put("type", "json");
-        indexB.put("fields", Arrays.<Object>asList("x", "y", "z"));
-        indexes = new HashMap<String, Map<String, Object>>();
-        indexes.put("a", indexA);
-        indexes.put("b", indexB);
+        Index indexA = new Index(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("pet")), "a", IndexType.JSON, null);
+        Index indexB = new Index(Arrays.<FieldSort>asList(new FieldSort("x"), new FieldSort("y"), new FieldSort("z")), "b", IndexType.JSON, null);
+        indexes = new ArrayList<Index>();
+        indexes.add(indexA);
+        indexes.add(indexB);
         smallDocIdSet = new HashSet<String>(Arrays.asList("mike", "john"));
         largeDocIdSet = new HashSet<String>();
         for (int i = 0; i < 501; i++) {  // 500 max id set for placeholders
@@ -240,7 +235,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     @Test
     public void returnsNullWhenNoIndexes() {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING));
-        assertThat(sqlToSortIds(smallDocIdSet, order, new HashMap<String, Map<String, Object>>()),
+        assertThat(sqlToSortIds(smallDocIdSet, order, new ArrayList<Index>()),
                 is(nullValue()));
         assertThat(sqlToSortIds(smallDocIdSet, order, null), is(nullValue()));
     }

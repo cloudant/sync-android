@@ -52,7 +52,7 @@ public class MockSQLOnlyIndexManager extends IndexManagerImpl {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        Map<String, Map<String, Object>> indexes = listIndexes();
+        List<Index> indexes = listIndexes();
         return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
     }
 }
