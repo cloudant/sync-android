@@ -114,7 +114,7 @@ class QuerySqlTranslator {
     private static final Logger logger = Logger.getLogger(QuerySqlTranslator.class.getName());
 
     public static QueryNode translateQuery(Map<String, Object> query,
-                                           Map<String, Map<String, Object>> indexes,
+                                           List<Index> indexes,
                                            Boolean[] indexesCoverQuery) {
         TranslatorState state = new TranslatorState();
         QueryNode node = translateQuery(query, indexes, state);
@@ -159,7 +159,7 @@ class QuerySqlTranslator {
 
     @SuppressWarnings("unchecked")
     private static QueryNode translateQuery(Map<String, Object> query,
-                                           Map<String, Map<String, Object>> indexes,
+                                           List<Index> indexes,
                                            TranslatorState state) {
         // At this point we will have a root compound predicate, AND or OR, and
         // the query will be reduced to a single entry:
@@ -371,7 +371,7 @@ class QuerySqlTranslator {
     }
 
     protected static String chooseIndexForAndClause(List<Object> clause,
-                                                    Map<String, Map<String, Object>> indexes) {
+                                                    List<Index>indexes) {
         if (clause == null || clause.isEmpty()) {
             return null;
         }
@@ -401,21 +401,23 @@ class QuerySqlTranslator {
 
     @SuppressWarnings("unchecked")
     protected static String chooseIndexForFields(Set<String> neededFields,
-                                                 Map<String, Map<String, Object>> indexes) {
+                                                 List<Index> indexes) {
         String chosenIndex = null;
-        for (Map.Entry<String, Map<String, Object>> entry: indexes.entrySet()) {
-            Map<String, Object> indexDefinition = entry.getValue();
+        for (Index index : indexes) {
 
             // Don't choose a text index for a non-text query clause
-            IndexType indexType = (IndexType) indexDefinition.get("type");
+            IndexType indexType = index.indexType;
             if (indexType == IndexType.TEXT) {
                 continue;
             }
 
-            List<String> fieldList = (List<String>) indexDefinition.get("fields");
-            Set<String> providedFields = new HashSet<String>(fieldList);
+            Set<String> providedFields = new HashSet<String>();
+            for (FieldSort f : index.fieldNames) {
+                providedFields.add(f.field);
+            }
+
             if (providedFields.containsAll(neededFields)) {
-                chosenIndex = entry.getKey();
+                chosenIndex = index.indexName;
                 break;
             }
         }
@@ -424,13 +426,12 @@ class QuerySqlTranslator {
     }
 
     @SuppressWarnings("unchecked")
-    private static String getTextIndex(Map<String, Map<String, Object>> indexes) {
+    private static String getTextIndex(List<Index> indexes) {
         String textIndex = null;
-        for (Map.Entry<String, Map<String, Object>> entry: indexes.entrySet()) {
-            Map<String, Object> indexDefinition = entry.getValue();
-            IndexType indexType = (IndexType) indexDefinition.get("type");
+        for (Index index : indexes) {
+            IndexType indexType = index.indexType;
             if (indexType == IndexType.TEXT) {
-                textIndex = entry.getKey();
+                textIndex = index.indexName;
             }
         }
 
