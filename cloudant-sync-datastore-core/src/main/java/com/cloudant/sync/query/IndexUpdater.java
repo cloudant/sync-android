@@ -62,7 +62,7 @@ class IndexUpdater {
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
-    public static void updateAllIndexes(Map<String, Map<String, Object>> indexes,
+    public static void updateAllIndexes(List<Index> indexes,
                                            Database database,
                                            SQLDatabaseQueue queue) throws QueryException {
         IndexUpdater updater = new IndexUpdater(database, queue);
@@ -82,7 +82,7 @@ class IndexUpdater {
      *  @return index update success status (true/false)
      */
     public static void updateIndex(String indexName,
-                                      List<String> fieldNames,
+                                      List<FieldSort> fieldNames,
                                       Database database,
                                       SQLDatabaseQueue queue) throws QueryException {
         IndexUpdater updater = new IndexUpdater(database, queue);
@@ -91,16 +91,14 @@ class IndexUpdater {
     }
 
     @SuppressWarnings("unchecked")
-    private void updateAllIndexes(Map<String, Map<String, Object>> indexes) throws QueryException {
+    private void updateAllIndexes(List<Index> indexes) throws QueryException {
 
-        for (Map.Entry<String, Map<String, Object>> entry: indexes.entrySet()) {
-            Map<String, Object> index = entry.getValue();
-            List<String> fields = (ArrayList<String>) index.get("fields");
-            updateIndex(entry.getKey(), fields);
+        for (Index index : indexes) {
+            updateIndex(index.indexName, index.fieldNames);
         }
     }
 
-    private void updateIndex(String indexName, List<String> fieldNames) throws QueryException {
+    private void updateIndex(String indexName, List<FieldSort> fieldNames) throws QueryException {
         Changes changes;
         long lastSequence = sequenceNumberForIndex(indexName);
 
@@ -112,7 +110,7 @@ class IndexUpdater {
     }
 
     private void updateIndex(final String indexName,
-                                final List<String> fieldNames,
+                                final List<FieldSort> fieldNames,
                                 final Changes changes,
                                 long lastSequence) throws QueryException {
         if (indexName == null || indexName.isEmpty()) {
@@ -179,26 +177,29 @@ class IndexUpdater {
     @SuppressWarnings("unchecked")
     private List<DBParameter> parametersToIndexRevision (DocumentRevision rev,
                                                          String indexName,
-                                                         List<String> fieldNames) {
+                                                         List<FieldSort> fieldNames) {
         if (rev == null) {
+            // TODO throw ex
             return null;
         }
 
         if(indexName == null) {
+            // TODO throw ex
             return null;
         }
 
         if (fieldNames == null) {
+            // TODO throw ex
             return null;
         }
 
         int arrayCount = 0;
         String arrayFieldName = null; // only record the last, as error if more than one
-        for (String fieldName: fieldNames) {
-            Object value = ValueExtractor.extractValueForFieldName(fieldName, rev.getBody());
+        for (FieldSort fieldName: fieldNames) {
+            Object value = ValueExtractor.extractValueForFieldName(fieldName.field, rev.getBody());
             if (value != null && value instanceof List) {
                 arrayCount = arrayCount + 1;
-                arrayFieldName = fieldName;
+                arrayFieldName = fieldName.field;
             }
         }
 
@@ -224,9 +225,9 @@ class IndexUpdater {
                 // of the INSERT statement along with _id and _rev, followed by the other
                 // fields. _id and _rev are special fields in that they don't appear in the
                 // body, so they need special-casing to get the values.
-                List<String> initialIncludedFields = Arrays.asList("_id",
-                                                                   "_rev",
-                                                                   arrayFieldName);
+                List<FieldSort> initialIncludedFields = Arrays.asList(new FieldSort("_id"),
+                                                                   new FieldSort("_rev"),
+                                                                   new FieldSort(arrayFieldName));
                 List<Object> initialArgs = Arrays.asList(rev.getId(), rev.getRevision(), value);
                 DBParameter parameter = populateDBParameter(fieldNames,
                                                             initialIncludedFields,
@@ -243,7 +244,7 @@ class IndexUpdater {
             // We just need to index the fields in the index now. _id and _rev are special
             // fields because they don't appear in the document body, so they need
             // special-casing to get the values.
-            List<String> initialIncludedFields = Arrays.asList("_id", "_rev");
+            List<FieldSort> initialIncludedFields = Arrays.asList(new FieldSort("_id"), new FieldSort("_rev"));
             List<Object> initialArgs = Arrays.<Object>asList(rev.getId(), rev.getRevision());
             DBParameter parameter = populateDBParameter(fieldNames,
                                                         initialIncludedFields,
@@ -259,34 +260,35 @@ class IndexUpdater {
         return parameters;
     }
 
-    private DBParameter populateDBParameter(List<String> fieldNames,
-                                            List<String> initialIncludedFields,
+    private DBParameter populateDBParameter(List<FieldSort> fieldNames,
+                                            List<FieldSort> initialIncludedFields,
                                             List<Object> initialArgs,
                                             String indexName,
                                             DocumentRevision rev) {
-        List<String> includeFieldNames = new ArrayList<String>();
+        List<FieldSort> includeFieldNames = new ArrayList<FieldSort>();
         includeFieldNames.addAll(initialIncludedFields);
         List<Object> args = new ArrayList<Object>();
         args.addAll(initialArgs);
 
-        for (String fieldName: fieldNames) {
+        for (FieldSort fieldName: fieldNames) {
             // Fields in initialIncludedFields already have values in the other initial* array,
             // so it need not be included again.
             if (initialIncludedFields.contains(fieldName)) {
                 continue;
             }
 
-            Object value = ValueExtractor.extractValueForFieldName(fieldName, rev.getBody());
+            Object value = ValueExtractor.extractValueForFieldName(fieldName.field, rev.getBody());
             if (value != null && !(value instanceof List && ((List) value).size() == 0)) {
                 // Only include a field with a value or a field with a populated list
-                includeFieldNames.add(fieldName);
+                includeFieldNames.add(new FieldSort(fieldName.field));
                 args.add(value);
             }
         }
 
         ContentValues contentValues = new ContentValues();
         int argIndex = 0;
-        for (String fieldName: includeFieldNames) {
+        for (FieldSort f: includeFieldNames) {
+            String fieldName = f.field;
             fieldName = String.format("\"%s\"", fieldName);
             Object argument = args.get(argIndex);
             if (argument instanceof Boolean) {
@@ -308,11 +310,14 @@ class IndexUpdater {
             } else if (argument instanceof String) {
                 contentValues.put(fieldName, (String) argument);
             } else {
+                System.out.println("**** null ***" + argument);
                 contentValues.put(fieldName, (String) null);
             }
             argIndex = argIndex + 1;
         }
         String tableName = IndexManagerImpl.tableNameForIndex(indexName);
+
+        System.out.println("populate "+tableName+", "+contentValues);
 
         return new DBParameter(tableName, contentValues);
     }
