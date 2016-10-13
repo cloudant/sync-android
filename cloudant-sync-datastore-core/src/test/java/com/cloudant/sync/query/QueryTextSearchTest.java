@@ -479,8 +479,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     public void canQueryUsingPorterTokenizerStemmer() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
         Map<String, String> indexSettings = new HashMap<String, String>();
-        indexSettings.put("tokenize", "porter");
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT, indexSettings), is("basic_text"));
+        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT, "porter"), is("basic_text"));
 
         // query - { "$text" : { "$search" : "live" } }
         Map<String, Object> search = new HashMap<String, Object>();

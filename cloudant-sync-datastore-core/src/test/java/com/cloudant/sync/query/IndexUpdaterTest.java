@@ -52,7 +52,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     private String testType = null;
 
-    List<String> fields;
+    List<FieldSort> fields;
 
     @Parameterized.Parameters(name = "{0}")
     public static Iterable<Object[]> data() throws Exception {
@@ -1194,16 +1194,20 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     private void createIndex(String indexName, List<FieldSort> fieldNames, IndexType indexType) throws QueryException{
         assertThat(im.ensureIndexed(fieldNames, indexName, indexType), is(indexName));
 
-        Map<String, Map<String, Object>> indexes = im.listIndexes();
-        assertThat(indexes, hasKey(indexName));
-
-        Map<String, Object> index = indexes.get(indexName);
-        fields = (List<String>) index.get("fields");
-        assertThat(fields.size(), is(fieldNames.size() + 2));
-        for (FieldSort fieldSort : fieldNames) {
-            assertThat(fields, Matchers.hasItem(fieldSort.field));
+        List<Index> indexes = im.listIndexes();
+        // TODO use custom/better hamcrest matcher rather than interating through
+        for(Index index : indexes) {
+            if (index.indexName.equals(indexName)) {
+                assertThat(index.fieldNames.size(), is(fieldNames.size() + 2));
+                for (FieldSort fieldSort : fieldNames) {
+                    assertThat(index.fieldNames, Matchers.hasItem(fieldSort));
+                }
+                assertThat(index.fieldNames, hasItems(new FieldSort("_id"), new FieldSort("_rev")));
+                this.fields = index.fieldNames;
+                return;
+            }
         }
-        assertThat(fields, hasItems("_id", "_rev"));
+        Assert.fail("Didn't find expected index "+indexName);
     }
 
 }
