@@ -43,7 +43,6 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         assertThat(indexes.isEmpty(), is(true));
     }
 
-    // TODO check that these exceptions are correct
     @Test
     public void preconditionsToCreatingIndexes() throws QueryException {
         // doesn't create an index on null fields
@@ -85,8 +84,8 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
             fieldNames = Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new
                     FieldSort("age"));
             im.ensureIndexed(fieldNames, "basic");
-            Assert.fail("Expected ensureIndexed to throw a QueryException");
-        } catch (QueryException qe) {
+            Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
+        } catch (IllegalArgumentException qe) {
             ;
         }
 
@@ -267,12 +266,11 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 //        assertThat(indexes.keySet(), containsInAnyOrder("textIndex", "jsonIndex"));
     }
 
-    @Test
+    @Test(expected = QueryException.class)
     public void correctlyLimitsTextIndexesToOne() throws QueryException {
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic", IndexType.TEXT);
         assertThat(indexName, is("basic"));
         indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "anotherIndex", IndexType.TEXT);
-        assertThat(indexName, is(nullValue()));
     }
 
     @Test
@@ -304,8 +302,8 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         // rejects indexes with $ at start
         try {
             im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("$name"), new FieldSort("datatype")), "basic");
-            Assert.fail("Expected ensureIndexed to throw a QueryException");
-        } catch (QueryException qe) {
+            Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
+        } catch (IllegalArgumentException qe) {
             ;
         }
 
