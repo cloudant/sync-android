@@ -132,6 +132,7 @@ class IndexUpdater {
                                                                                  indexName,
                                                                                  fieldNames);
                         if (parameters == null) {
+                            // non-fatal error found with this rev, but we can carry on indexing
                             continue;
                         }
                         for (DBParameter parameter: parameters) {
@@ -196,11 +197,14 @@ class IndexUpdater {
             }
         }
 
-        Misc.checkState(arrayCount <= 1, String.format("Indexing %s in index %s includes > 1 " +
-                "array field; " +
-                        "Only one array field per index allowed.",
-                rev.getId(),
-                indexName));
+        if (arrayCount > 1) {
+            String msg = String.format("Indexing %s in index %s includes > 1 array field; " +
+                            "Only one array field per index allowed.",
+                    rev.getId(),
+                    indexName);
+            logger.log(Level.SEVERE, msg);
+            return null;
+        }
 
         List<DBParameter> parameters = new ArrayList<DBParameter>();
         List<Object> arrayFieldValues = null;
