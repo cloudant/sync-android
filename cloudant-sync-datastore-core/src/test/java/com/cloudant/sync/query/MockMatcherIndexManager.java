@@ -12,25 +12,25 @@
 
 package com.cloudant.sync.query;
 
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.util.TestUtils;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * This sub class of the {@link com.cloudant.sync.query.IndexManager} along with
+ * This sub class of the {@link IndexManagerImpl} along with
  * {@link com.cloudant.sync.query.MockMatcherQueryExecutor} is used by query
  * executor tests to force the tests to exclusively exercise the post hoc matcher logic.
  * This class is used for testing purposes only.
  *
- * @see com.cloudant.sync.query.IndexManager
+ * @see IndexManagerImpl
  * @see com.cloudant.sync.query.MockMatcherQueryExecutor
  */
-public class MockMatcherIndexManager extends IndexManager {
+public class MockMatcherIndexManager extends IndexManagerImpl {
 
-    public MockMatcherIndexManager(Datastore datastore) {
-        super(datastore);
+    public MockMatcherIndexManager(Database database) {
+        super(database);
     }
 
     @Override
@@ -38,23 +38,21 @@ public class MockMatcherIndexManager extends IndexManager {
                             long skip,
                             long limit,
                             List<String> fields,
-                            List<Map<String, String>> sortDocument) {
+                            List<FieldSort> sortDocument) throws QueryException {
         if (query == null) {
-            return null;
+            throw new QueryException("Query must not be null");
         }
 
-        if (!updateAllIndexes()) {
-            return null;
-        }
+        updateAllIndexes();
 
         MockMatcherQueryExecutor queryExecutor = null;
         try {
-            queryExecutor = new MockMatcherQueryExecutor(getDatastore(),
+            queryExecutor = new MockMatcherQueryExecutor(getDatabase(),
                     TestUtils.getDBQueue(this));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        Map<String, Object> indexes = listIndexes();
+        List<Index> indexes = listIndexes();
         return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
     }
 }

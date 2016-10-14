@@ -41,11 +41,11 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        im = new IndexManager(ds);
+        im = new IndexManagerImpl(ds);
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
         assertThat(indexManagerDatabaseQueue, is(notNullValue()));
-        String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
+        String[] metadataTableList = new String[] { IndexManagerImpl.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue, metadataTableList);
 
         setUpBasicQueryData();
@@ -54,7 +54,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     // When filtering fields on find
 
     @Test
-    public void returnsFieldSpecifiedOnly() {
+    public void returnsFieldSpecifiedOnly() throws QueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
@@ -66,7 +66,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsAllFieldsWhenFieldsArrayEmpty() {
+    public void returnsAllFieldsWhenFieldsArrayEmpty() throws QueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
@@ -78,7 +78,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsAllFieldsWhenFieldsArrayNull() {
+    public void returnsAllFieldsWhenFieldsArrayNull() throws QueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
@@ -90,7 +90,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsNullWhenUsingDottedNotation() {
+    public void returnsNullWhenUsingDottedNotation() throws QueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
@@ -103,7 +103,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void returnsOnlyFieldsSpecified() {
+    public void returnsOnlyFieldsSpecified() throws QueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");

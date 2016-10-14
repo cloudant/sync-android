@@ -42,7 +42,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *  This class translates Cloudant Query selectors into the SQL we need to use
+ *  This class translates Cloudant query selectors into the SQL we need to use
  *  to query our indexes.
  *
  *  It creates a tree structure which contains AND/OR nodes, along with the SQL which
@@ -114,7 +114,7 @@ class QuerySqlTranslator {
     private static final Logger logger = Logger.getLogger(QuerySqlTranslator.class.getName());
 
     public static QueryNode translateQuery(Map<String, Object> query,
-                                           Map<String, Object> indexes,
+                                           List<Index> indexes,
                                            Boolean[] indexesCoverQuery) {
         TranslatorState state = new TranslatorState();
         QueryNode node = translateQuery(query, indexes, state);
@@ -124,7 +124,7 @@ class QuerySqlTranslator {
             logger.log(Level.SEVERE, msg);
             return null;
         } else if (state.textIndexRequired && state.atLeastOneIndexMissing) {
-            String msg = String.format("Query %s contains a text search but is missing \"json\"" +
+            String msg = String.format("query %s contains a text search but is missing \"json\"" +
                                        " index(es).  All indexes must exist in order to execute a" +
                                        " query containing a text search.  Create all necessary" +
                                        " indexes for the query and re-execute.",
@@ -141,7 +141,7 @@ class QuerySqlTranslator {
             String allDocsIndex = chooseIndexForFields(neededFields, indexes);
 
             if (allDocsIndex != null && !allDocsIndex.isEmpty()) {
-                String tableName = IndexManager.tableNameForIndex(allDocsIndex);
+                String tableName = IndexManagerImpl.tableNameForIndex(allDocsIndex);
                 String sql = String.format(Locale.ENGLISH, "SELECT _id FROM \"%s\"", tableName);
                 sqlNode.sql = SqlParts.partsForSql(sql, new String[]{});
             }
@@ -159,7 +159,7 @@ class QuerySqlTranslator {
 
     @SuppressWarnings("unchecked")
     private static QueryNode translateQuery(Map<String, Object> query,
-                                           Map<String, Object> indexes,
+                                           List<Index> indexes,
                                            TranslatorState state) {
         // At this point we will have a root compound predicate, AND or OR, and
         // the query will be reduced to a single entry:
@@ -371,7 +371,7 @@ class QuerySqlTranslator {
     }
 
     protected static String chooseIndexForAndClause(List<Object> clause,
-                                                    Map<String, Object> indexes) {
+                                                    List<Index>indexes) {
         if (clause == null || clause.isEmpty()) {
             return null;
         }
@@ -401,21 +401,23 @@ class QuerySqlTranslator {
 
     @SuppressWarnings("unchecked")
     protected static String chooseIndexForFields(Set<String> neededFields,
-                                                 Map<String, Object> indexes) {
+                                                 List<Index> indexes) {
         String chosenIndex = null;
-        for (Map.Entry<String, Object> entry: indexes.entrySet()) {
-            Map<String, Object> indexDefinition = (Map<String, Object>) entry.getValue();
+        for (Index index : indexes) {
 
             // Don't choose a text index for a non-text query clause
-            IndexType indexType = (IndexType) indexDefinition.get("type");
+            IndexType indexType = index.indexType;
             if (indexType == IndexType.TEXT) {
                 continue;
             }
 
-            List<String> fieldList = (List<String>) indexDefinition.get("fields");
-            Set<String> providedFields = new HashSet<String>(fieldList);
+            Set<String> providedFields = new HashSet<String>();
+            for (FieldSort f : index.fieldNames) {
+                providedFields.add(f.field);
+            }
+
             if (providedFields.containsAll(neededFields)) {
-                chosenIndex = entry.getKey();
+                chosenIndex = index.indexName;
                 break;
             }
         }
@@ -424,13 +426,12 @@ class QuerySqlTranslator {
     }
 
     @SuppressWarnings("unchecked")
-    private static String getTextIndex(Map<String, Object> indexes) {
+    private static String getTextIndex(List<Index> indexes) {
         String textIndex = null;
-        for (Map.Entry<String, Object> entry: indexes.entrySet()) {
-            Map<String, Object> indexDefinition = (Map<String, Object>) entry.getValue();
-            IndexType indexType = (IndexType) indexDefinition.get("type");
+        for (Index index : indexes) {
+            IndexType indexType = index.indexType;
             if (indexType == IndexType.TEXT) {
-                textIndex = entry.getKey();
+                textIndex = index.indexName;
             }
         }
 
@@ -453,7 +454,7 @@ class QuerySqlTranslator {
             return null;
         }
 
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = IndexManagerImpl.tableNameForIndex(indexName);
 
         String sql = String.format(Locale.ENGLISH,
                                    "SELECT _id FROM \"%s\" WHERE %s",
@@ -480,7 +481,7 @@ class QuerySqlTranslator {
         Map<String, Object> textClause = (Map<String, Object>) clause;
         Map<String, String> searchClause = (Map<String, String>) textClause.get(TEXT);
 
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = IndexManagerImpl.tableNameForIndex(indexName);
         String search = searchClause.get(SEARCH);
         search = search.replace("'", "''");
 
@@ -563,7 +564,7 @@ class QuerySqlTranslator {
                 } else {
                     String whereClause;
                     String sqlOperator = operatorMap.get(operator);
-                    String tableName = IndexManager.tableNameForIndex(indexName);
+                    String tableName = IndexManagerImpl.tableNameForIndex(indexName);
                     String placeholder;
                     if (operator.equals(IN)) {
                         // The predicate map value must be a List here.

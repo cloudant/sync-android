@@ -46,7 +46,7 @@ import java.util.concurrent.ExecutionException;
  */
 public class Database200MigrationTest {
 
-    private DatastoreImpl ds;
+    private DatabaseImpl ds;
     private DatastoreManager manager;
     private DocumentRevision rootRevision;
     private String dir;
@@ -58,7 +58,7 @@ public class Database200MigrationTest {
     public void setUp() throws Exception {
         dir = TestUtils.createTempTestingDir(this.getClass().getName());
         manager = DatastoreManager.getInstance(dir);
-        ds = (DatastoreImpl) manager.openDatastore("complexTree");
+        ds = (DatabaseImpl) manager.openDatastore("complexTree").database;
 
         // Return DB to schema version 100:
 
@@ -143,7 +143,7 @@ public class Database200MigrationTest {
 
         DocumentRevision rev = new DocumentRevision(rootRevision.id, "1-abc");
         rev.setBody(rootRevision.getBody());
-        ((DatastoreImpl) ds).forceInsert(rev, "1-abc");
+        ((DatabaseImpl) ds).forceInsert(rev, "1-abc");
         runMigration();
 
 
@@ -642,7 +642,7 @@ public class Database200MigrationTest {
 
 
     private SQLDatabaseQueue getQueue() throws NoSuchFieldException, IllegalAccessException {
-        Class<? extends Datastore> clazz = ds.getClass();
+        Class<? extends Database> clazz = ds.getClass();
         Field field = clazz.getDeclaredField("queue");
         field.setAccessible(true);
         return (SQLDatabaseQueue) field.get(ds);

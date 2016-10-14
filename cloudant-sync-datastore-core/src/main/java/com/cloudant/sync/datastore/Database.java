@@ -18,6 +18,7 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.event.EventBus;
+import com.cloudant.sync.query.IndexManagerImpl;
 
 import java.util.Iterator;
 import java.util.List;
@@ -32,7 +33,7 @@ import java.util.List;
  * is the document ID combined with a (sometimes optional) revision ID.</p>
  *
  * <p>For a more advanced way of querying the Datastore, see the
- * {@link com.cloudant.sync.query.IndexManager} class</p>
+ * {@link IndexManagerImpl} class</p>
  *
  * <p>Each document consists of a set of revisions, hence most methods within
  * this class operating on {@link DocumentRevision} objects, which carry both a
@@ -44,18 +45,18 @@ import java.util.List;
  * the same document in-between replications. MVCC exposes these branches as
  * conflicted documents. These conflicts should be resolved by user-code, by
  * marking all but one of the leaf nodes of the branches as "deleted", using
- * the {@link Datastore#deleteDocumentFromRevision(DocumentRevision)}
+ * the {@link Database#deleteDocumentFromRevision(DocumentRevision)}
  * method. When the
  * datastore is next replicated with a remote datastore, this fix will be
  * propagated, thereby resolving the conflicted document across the set of
  * peers.</p>
  *
  * @see DocumentRevision
- * @see com.cloudant.sync.query.IndexManager
+ * @see IndexManagerImpl
  * @api_public
  *
  */
-public interface Datastore {
+public interface Database {
 
     /**
      * The sequence number of the datastore when no updates have been made,
@@ -74,7 +75,7 @@ public interface Datastore {
      * <p>Returns the current winning revision of a document.</p>
      *
      * <p>Previously deleted documents can be retrieved
-     * (via tombstones, see {@link Datastore#deleteDocumentFromRevision(DocumentRevision)})
+     * (via tombstones, see {@link Database#deleteDocumentFromRevision(DocumentRevision)})
      * </p>
      *
      * @param documentId ID of document to retrieve.
@@ -91,7 +92,7 @@ public interface Datastore {
      * revision may contain the metadata but not content of the revision.</p>
      *
      * <p>Previously deleted documents can be retrieved
-     * (via tombstones, see {@link Datastore#deleteDocumentFromRevision(DocumentRevision)})
+     * (via tombstones, see {@link Database#deleteDocumentFromRevision(DocumentRevision)})
      * </p>
      *
      * @param documentId ID of the document
@@ -268,7 +269,7 @@ public interface Datastore {
      * @return a <code>DocumentRevision</code> - the newly created document
      * @throws com.cloudant.sync.datastore.AttachmentException if there was an error saving any new attachments
      * @throws com.cloudant.sync.datastore.DocumentException if there was an error creating the document
-     * @see Datastore#getEventBus()
+     * @see Database#getEventBus()
      */
     DocumentRevision createDocumentFromRevision(DocumentRevision rev) throws DocumentException;
 
@@ -288,7 +289,7 @@ public interface Datastore {
      * @throws ConflictException <code>rev</code> is not a current revision for this document
      * @throws com.cloudant.sync.datastore.AttachmentException if there was an error saving the attachments
      * @throws com.cloudant.sync.datastore.DocumentException if there was an error updating the document
-     * @see Datastore#getEventBus()
+     * @see Database#getEventBus()
      */
     DocumentRevision updateDocumentFromRevision(DocumentRevision rev) throws DocumentException;
 
@@ -306,7 +307,7 @@ public interface Datastore {
      * <p>If the input revision is already deleted, nothing will be changed. </p>
      *
      * <p>When resolving conflicts, this method can be used to delete any non-deleted
-     * leaf revision of a document. {@link Datastore#resolveConflictsForDocument} handles this
+     * leaf revision of a document. {@link Database#resolveConflictsForDocument} handles this
      * deletion step during conflict resolution, so it's not usually necessary to call this
      * method in this way from client code. See the doc/conflicts.md document for
      * more details.</p>
@@ -314,8 +315,8 @@ public interface Datastore {
      * @param rev the <code>DocumentRevision</code> to be deleted
      * @return a <code>DocumentRevision</code> - the deleted or "tombstone" document
      * @throws ConflictException if the <code>sourceRevisionId</code> is not the current revision
-     * @see Datastore#getEventBus()
-     * @see Datastore#resolveConflictsForDocument
+     * @see Database#getEventBus()
+     * @see Database#resolveConflictsForDocument
      */
     DocumentRevision deleteDocumentFromRevision(DocumentRevision rev) throws ConflictException;
 
@@ -323,14 +324,14 @@ public interface Datastore {
      * <p>Delete all leaf revisions for the document</p>
      *
      * <p>This is equivalent to calling
-     * {@link com.cloudant.sync.datastore.Datastore#deleteDocumentFromRevision(DocumentRevision)
+     * {@link Database#deleteDocumentFromRevision(DocumentRevision)
      * deleteDocumentFromRevision} on all leaf revisions</p>
      *
      * @param id the ID of the document to delete leaf nodes for
      * @return a List of a <code>DocumentRevision</code>s - the deleted or "tombstone" documents
      * @throws com.cloudant.sync.datastore.DocumentException if there was an error deleting the document
-     * @see Datastore#getEventBus()
-     * @see com.cloudant.sync.datastore.Datastore#deleteDocumentFromRevision(DocumentRevision)
+     * @see Database#getEventBus()
+     * @see Database#deleteDocumentFromRevision(DocumentRevision)
      */
     List<DocumentRevision> deleteDocument(String id) throws DocumentException;
 
@@ -338,6 +339,8 @@ public interface Datastore {
      * Compacts the sqlDatabase storage by removing the bodies and attachments of obsolete revisions.
      */
     void compact();
+
+    void purge(DocumentRevision revision);
 
 }
 

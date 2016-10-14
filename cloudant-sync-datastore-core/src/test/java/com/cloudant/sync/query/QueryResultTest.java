@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
 public class QueryResultTest extends AbstractQueryTestBase {
@@ -40,11 +41,11 @@ public class QueryResultTest extends AbstractQueryTestBase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        im = new IndexManager(ds);
+        im = new IndexManagerImpl(ds);
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
         assertThat(indexManagerDatabaseQueue, is(notNullValue()));
-        String[] metadataTableList = new String[]{IndexManager.INDEX_METADATA_TABLE_NAME};
+        String[] metadataTableList = new String[]{IndexManagerImpl.INDEX_METADATA_TABLE_NAME};
         SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue, metadataTableList);
 
         queue = new SQLDatabaseQueue(factoryPath + "/" + factory.listAllDatastores().get(0) +
@@ -63,10 +64,10 @@ public class QueryResultTest extends AbstractQueryTestBase {
      * Perform a simple query then drop the revs table from the database before attempting
      * to get the document ids from the QueryResult.
      */
-    @Test(expected = QueryException.class)
+    @Test(expected = NoSuchElementException.class)
     public void testQueryGetDocumentsWithIdsFails() throws InterruptedException,
-        ExecutionException {
-        List<Object> fields = Collections.<Object>singletonList("pet");
+        ExecutionException, QueryException {
+        List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("pet"));
         assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
 
         // query - { "$text" : { "$search" : "cat" } }
@@ -85,7 +86,7 @@ public class QueryResultTest extends AbstractQueryTestBase {
         }).get();
 
         // Attempt to retrieve the document ids. This should fail with an
-        // UncheckedDocumentException because the revs table has been dropped.
+        // NoSuchElementException because the revs table has been dropped.
         queryResult.documentIds();
     }
 }

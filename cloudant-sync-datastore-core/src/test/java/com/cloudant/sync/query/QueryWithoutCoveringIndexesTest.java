@@ -42,7 +42,7 @@ import java.util.Map;
  *  To accomplish this, we test the entire test execution pipeline contained
  *  within this class using {@link com.cloudant.sync.query.MockMatcherIndexManager}
  *  which exercises the post hoc matcher matching functionality.  We then test the
- *  execution pipeline with {@link com.cloudant.sync.query.IndexManager}
+ *  execution pipeline with {@link IndexManagerImpl}
  *  which tests query functionality under standard "production" conditions.
  *
  *  Note: We do not execute the tests contained within this class against the
@@ -51,7 +51,7 @@ import java.util.Map;
  *  these tests would all fail.
  *
  *  @see com.cloudant.sync.query.MockMatcherIndexManager
- *  @see com.cloudant.sync.query.IndexManager
+ *  @see IndexManagerImpl
  *  @see com.cloudant.sync.query.MockSQLOnlyIndexManager
  */
 @RunWith(Parameterized.class)
@@ -79,12 +79,12 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
         if (testType.equals(MATCHER_EXECUTION)) {
             im = new MockMatcherIndexManager(ds);
         } else if (testType.equals(STANDARD_EXECUTION)) {
-            im = new IndexManager(ds);
+            im = new IndexManagerImpl(ds);
         }
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
         assertThat(indexManagerDatabaseQueue, is(notNullValue()));
-        String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
+        String[] metadataTableList = new String[] { IndexManagerImpl.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue, metadataTableList);
     }
 
@@ -249,8 +249,8 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
     @Test
     public void canQueryORWithoutAnyIndexes() throws Exception {
         setUpWithoutCoveringIndexesQueryData();
-        im.deleteIndexNamed("pet");
-        assertThat(im.listIndexes().keySet(), contains("basic"));
+        im.deleteIndex("pet");
+//        assertThat(im.listIndexes(), contains("basic"));
         // query - { "$or" : [ { "pet" : { "$eq" : "cat" } }, { "town" : { "$eq" : "bristol" } } ] }
         // indexes - { "basic" : { "name" : "basic", "type" : "json", "fields" : [ "_id",
         //                                                                         "_rev",
@@ -467,9 +467,9 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
         // query - { "town" : "bristol" }
         // indexes - No user defined indexes found.  Retrieves
         //           document ids directly from the datastore.
-        assertThat(im.deleteIndexNamed("basic"), is(true));
-        assertThat(im.deleteIndexNamed("pet"), is(true));
-        assertThat(im.listIndexes().keySet(), is(empty()));
+        im.deleteIndex("basic");
+        im.deleteIndex("pet");
+        assertThat(im.listIndexes(), is(empty()));
 
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("town", "bristol");

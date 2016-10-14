@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class DatastoreManagerTest {
+public class DatabaseManagerTest {
 
     public static String TEST_PATH = null;
     public DatastoreManager manager = null;
@@ -99,12 +99,12 @@ public class DatastoreManagerTest {
 
     @Test
     public void openDatastore_name_dbShouldBeCreated() throws Exception {
-        Datastore ds = createAndAssertDatastore();
+        Database ds = createAndAssertDatastore();
         ds.close();
     }
 
-    private Datastore createAndAssertDatastore() throws Exception {
-        Datastore ds = manager.openDatastore("mydatastore");
+    private Database createAndAssertDatastore() throws Exception {
+        Database ds = manager.openDatastore("mydatastore").database;
         Assert.assertNotNull(ds);
         boolean assertsFailed = true;
         try {
@@ -126,7 +126,7 @@ public class DatastoreManagerTest {
 
     @Test
     public void deleteDatastore_dbExist_dbShouldBeDeleted() throws Exception {
-        Datastore ds = createAndAssertDatastore();
+        Database ds = createAndAssertDatastore();
 
         manager.deleteDatastore("mydatastore");
         String dbDir = TEST_PATH + "/mydatastore";
@@ -140,7 +140,7 @@ public class DatastoreManagerTest {
 
     @Test(expected = IllegalStateException.class)
     public void deleteDatastore_createDocumentUsingDeletedDatastore_exception() throws Exception {
-        Datastore ds = createAndAssertDatastore();
+        Database ds = createAndAssertDatastore();
         DocumentRevision object = ds.createDocumentFromRevision(createDBBody("Tom"));
         Assert.assertNotNull(object);
 
@@ -161,7 +161,7 @@ public class DatastoreManagerTest {
 
     @Test
     public void createDatastoreWithForwardSlashChar() throws Exception {
-        Datastore ds = manager.openDatastore("datastore/mynewdatastore");
+        Database ds = manager.openDatastore("datastore/mynewdatastore").database;
         try {
             String dbDir = TEST_PATH + "/datastore.mynewdatastore";
             Assert.assertTrue(new File(dbDir).exists());
@@ -178,11 +178,11 @@ public class DatastoreManagerTest {
 
     @Test
     public void list5Datastores() throws Exception {
-        List<Datastore> opened = new ArrayList<Datastore>();
+        List<Database> opened = new ArrayList<Database>();
 
         try {
             for (int i = 0; i < 5; i++) {
-                opened.add(manager.openDatastore("datastore" + i));
+                opened.add(manager.openDatastore("datastore" + i).database);
             }
 
             List<String> datastores = manager.listAllDatastores();
@@ -192,7 +192,7 @@ public class DatastoreManagerTest {
                 Assert.assertTrue(datastores.contains("datastore" + i));
             }
         } finally {
-            for (Datastore ds : opened) {
+            for (Database ds : opened) {
                 ds.close();
             }
         }
@@ -201,7 +201,7 @@ public class DatastoreManagerTest {
 
     @Test
     public void listDatastoresWithSlashes() throws Exception {
-        Datastore ds = manager.openDatastore("datastore/mynewdatastore");
+        Database ds = manager.openDatastore("datastore/mynewdatastore").database;
         try {
             List<String> datastores = manager.listAllDatastores();
 
@@ -221,30 +221,30 @@ public class DatastoreManagerTest {
 
     @Test
     public void multithreadedDatastoreCreation() throws Exception {
-        new MultiThreadedTestHelper<Datastore>(25) {
+        new MultiThreadedTestHelper<Database>(25) {
 
             @Override
             protected void doAssertions() throws Exception {
-                Datastore ds0 = results.get(0);
+                Database ds0 = results.get(0);
                 try {
-                    for (Datastore ds : results) {
+                    for (Database ds : results) {
                         Assert.assertSame("The datastore instances should all be the same", ds0, ds);
 
                     }
                 } finally {
-                    for (Datastore ds : results) {
+                    for (Database ds : results) {
                         if (ds != null) ds.close();
                     }
                 }
             }
 
             @Override
-            protected Callable<Datastore> getCallable() {
+            protected Callable<Database> getCallable() {
                 return new
-                        Callable<Datastore>() {
+                        Callable<Database>() {
                             @Override
-                            public Datastore call() throws Exception {
-                                return manager.openDatastore("sameDatastoreName");
+                            public Database call() throws Exception {
+                                return manager.openDatastore("sameDatastoreName").database;
                             }
                         };
             }
@@ -253,14 +253,14 @@ public class DatastoreManagerTest {
 
     @Test
     public void datastoreInstanceNotReusedAfterClose() throws Exception {
-        Datastore ds1 = null, ds2 = null;
+        Database ds1 = null, ds2 = null;
         try {
-            ds1 = manager.openDatastore("ds1");
+            ds1 = manager.openDatastore("ds1").database;
         } finally {
             if (ds1 != null) ds1.close();
         }
         try {
-            ds2 = manager.openDatastore("ds1");
+            ds2 = manager.openDatastore("ds1").database;
             Assert.assertNotSame("The Datastore instances should not be the same.", ds1, ds2);
         } finally {
             if (ds2 != null) ds2.close();

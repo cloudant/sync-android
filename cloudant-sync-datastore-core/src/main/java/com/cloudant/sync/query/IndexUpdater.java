@@ -14,13 +14,14 @@ package com.cloudant.sync.query;
 
 import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.Changes;
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.DatabaseUtils;
+import com.cloudant.sync.util.Misc;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ import java.util.logging.Logger;
  */
 class IndexUpdater {
 
-    private final Datastore datastore;
+    private final Database database;
 
     private final SQLDatabaseQueue queue;
 
@@ -47,8 +48,8 @@ class IndexUpdater {
      *  Constructs a new CDTQQueryExecutor using the indexes in 'database' to index documents from
      *  'datastore'.
      */
-    public IndexUpdater(Datastore datastore, SQLDatabaseQueue queue) {
-        this.datastore = datastore;
+    public IndexUpdater(Database database, SQLDatabaseQueue queue) {
+        this.database = database;
         this.queue = queue;
     }
 
@@ -58,16 +59,16 @@ class IndexUpdater {
      *  These indexes are assumed to already exist.
      *
      *  @param indexes Map of indexes and their definitions.
-     *  @param datastore The local datastore
+     *  @param database The local datastore
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
-    public static boolean updateAllIndexes(Map<String, Object> indexes,
-                                           Datastore datastore,
-                                           SQLDatabaseQueue queue) {
-        IndexUpdater updater = new IndexUpdater(datastore, queue);
+    public static void updateAllIndexes(List<Index> indexes,
+                                           Database database,
+                                           SQLDatabaseQueue queue) throws QueryException {
+        IndexUpdater updater = new IndexUpdater(database, queue);
 
-        return updater.updateAllIndexes(indexes);
+        updater.updateAllIndexes(indexes);
     }
 
     /**
@@ -77,69 +78,50 @@ class IndexUpdater {
      *
      *  @param indexName Name of index to update
      *  @param fieldNames List of field names in the sort format
-     *  @param datastore The local datastore
+     *  @param database The local datastore
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
-    public static boolean updateIndex(String indexName,
-                                      List<String> fieldNames,
-                                      Datastore datastore,
-                                      SQLDatabaseQueue queue) {
-        IndexUpdater updater = new IndexUpdater(datastore, queue);
+    public static void updateIndex(String indexName,
+                                      List<FieldSort> fieldNames,
+                                      Database database,
+                                      SQLDatabaseQueue queue) throws QueryException {
+        IndexUpdater updater = new IndexUpdater(database, queue);
 
-        return updater.updateIndex(indexName, fieldNames);
+        updater.updateIndex(indexName, fieldNames);
     }
 
     @SuppressWarnings("unchecked")
-    private boolean updateAllIndexes(Map<String, Object> indexes) {
-        boolean success = true;
+    private void updateAllIndexes(List<Index> indexes) throws QueryException {
 
-        for (Map.Entry<String, Object> entry: indexes.entrySet()) {
-            Map<String, Object> index = (Map<String, Object>) entry.getValue();
-            List<String> fields = (ArrayList<String>) index.get("fields");
-            success = updateIndex(entry.getKey(), fields);
-            if (!success) {
-                break;
-            }
+        for (Index index : indexes) {
+            updateIndex(index.indexName, index.fieldNames);
         }
-
-        return success;
     }
 
-    private boolean updateIndex(String indexName, List<String> fieldNames) {
-        boolean success;
+    private void updateIndex(String indexName, List<FieldSort> fieldNames) throws QueryException {
         Changes changes;
         long lastSequence = sequenceNumberForIndex(indexName);
 
         do {
-            changes = datastore.changes(lastSequence, 10000);
-            success = updateIndex(indexName, fieldNames, changes, lastSequence);
+            changes = database.changes(lastSequence, 10000);
+            updateIndex(indexName, fieldNames, changes, lastSequence);
             lastSequence = changes.getLastSequence();
-        } while (success && changes.size() > 0);
-
-        // raise error
-        if (!success) {
-            logger.log(Level.SEVERE, String.format("Problem updating index %s", indexName));
-        }
-
-        return success;
+        } while (changes.size() > 0);
     }
 
-    private boolean updateIndex(final String indexName,
-                                final List<String> fieldNames,
+    private void updateIndex(final String indexName,
+                                final List<FieldSort> fieldNames,
                                 final Changes changes,
-                                long lastSequence) {
-        if (indexName == null || indexName.isEmpty()) {
-            return false;
-        }
+                                long lastSequence) throws QueryException {
+        Misc.checkNotNullOrEmpty(indexName, "indexName");
 
-        Future<Boolean> result = queue.submitTransaction(new SQLCallable<Boolean>() {
+        Future<Void> result = queue.submitTransaction(new SQLCallable<Void>() {
             @Override
-            public Boolean call(SQLDatabase database) {
-                database.beginTransaction();
+            public Void call(SQLDatabase database) throws QueryException {
                 for (DocumentRevision rev: changes.getResults()) {
                     // Delete existing values
-                    String tableName = IndexManager.tableNameForIndex(indexName);
+                    String tableName = IndexManagerImpl.tableNameForIndex(indexName);
                     database.delete(tableName, " _id = ? ", new String[]{rev.getId()});
 
                     // Insert new values if the rev isn't deleted
@@ -150,6 +132,7 @@ class IndexUpdater {
                                                                                  indexName,
                                                                                  fieldNames);
                         if (parameters == null) {
+                            // non-fatal error found with this rev, but we can carry on indexing
                             continue;
                         }
                         for (DBParameter parameter: parameters) {
@@ -158,7 +141,6 @@ class IndexUpdater {
                                                              parameter.contentValues);
                                 if (rowId < 0) {
                                     String msg = String.format("Updating index %s failed.", indexName);
-                                    logger.log(Level.SEVERE, msg);
                                     throw new QueryException(msg);
                                 }
                             }
@@ -166,27 +148,28 @@ class IndexUpdater {
                     }
                 }
 
-                return true;
+                return null;
             }
         });
 
-        boolean success;
         try {
-            success = result.get();
+            result.get();
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error encountered:", e);
-            success = false;
+            // TODO we should unwrarp executionexception
+            String message = String.format("Execution error encountered whilst updating index %s", indexName);
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
-            success = false;
+            String message = String.format("Execution interrupted error encountered whilst updating index %s", indexName);
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         }
 
-        // if there was a problem, we rolled back, so the sequence won't be updated
-        if (success) {
-            success = updateMetadataForIndex(indexName, lastSequence);
-        }
+        // if there was a problem, we rolled back, and threw an exception, so the sequence won't be
+        // updated. otherwise if we got here we can update the sequence.
+        updateMetadataForIndex(indexName, lastSequence);
 
-        return success;
+
     }
 
     /**
@@ -199,34 +182,26 @@ class IndexUpdater {
     @SuppressWarnings("unchecked")
     private List<DBParameter> parametersToIndexRevision (DocumentRevision rev,
                                                          String indexName,
-                                                         List<String> fieldNames) {
-        if (rev == null) {
-            return null;
-        }
-
-        if(indexName == null) {
-            return null;
-        }
-
-        if (fieldNames == null) {
-            return null;
-        }
+                                                         List<FieldSort> fieldNames) {
+        Misc.checkNotNull(rev, "rev");
+        Misc.checkNotNull(indexName, "indexName");
+        Misc.checkNotNull(fieldNames, "fieldNames");
 
         int arrayCount = 0;
         String arrayFieldName = null; // only record the last, as error if more than one
-        for (String fieldName: fieldNames) {
-            Object value = ValueExtractor.extractValueForFieldName(fieldName, rev.getBody());
+        for (FieldSort fieldName: fieldNames) {
+            Object value = ValueExtractor.extractValueForFieldName(fieldName.field, rev.getBody());
             if (value != null && value instanceof List) {
                 arrayCount = arrayCount + 1;
-                arrayFieldName = fieldName;
+                arrayFieldName = fieldName.field;
             }
         }
 
         if (arrayCount > 1) {
             String msg = String.format("Indexing %s in index %s includes > 1 array field; " +
-                                       "Only one array field per index allowed.",
-                                       rev.getId(),
-                                       indexName);
+                            "Only one array field per index allowed.",
+                    rev.getId(),
+                    indexName);
             logger.log(Level.SEVERE, msg);
             return null;
         }
@@ -244,9 +219,9 @@ class IndexUpdater {
                 // of the INSERT statement along with _id and _rev, followed by the other
                 // fields. _id and _rev are special fields in that they don't appear in the
                 // body, so they need special-casing to get the values.
-                List<String> initialIncludedFields = Arrays.asList("_id",
-                                                                   "_rev",
-                                                                   arrayFieldName);
+                List<FieldSort> initialIncludedFields = Arrays.asList(new FieldSort("_id"),
+                                                                   new FieldSort("_rev"),
+                                                                   new FieldSort(arrayFieldName));
                 List<Object> initialArgs = Arrays.asList(rev.getId(), rev.getRevision(), value);
                 DBParameter parameter = populateDBParameter(fieldNames,
                                                             initialIncludedFields,
@@ -263,7 +238,7 @@ class IndexUpdater {
             // We just need to index the fields in the index now. _id and _rev are special
             // fields because they don't appear in the document body, so they need
             // special-casing to get the values.
-            List<String> initialIncludedFields = Arrays.asList("_id", "_rev");
+            List<FieldSort> initialIncludedFields = Arrays.asList(new FieldSort("_id"), new FieldSort("_rev"));
             List<Object> initialArgs = Arrays.<Object>asList(rev.getId(), rev.getRevision());
             DBParameter parameter = populateDBParameter(fieldNames,
                                                         initialIncludedFields,
@@ -279,34 +254,35 @@ class IndexUpdater {
         return parameters;
     }
 
-    private DBParameter populateDBParameter(List<String> fieldNames,
-                                            List<String> initialIncludedFields,
+    private DBParameter populateDBParameter(List<FieldSort> fieldNames,
+                                            List<FieldSort> initialIncludedFields,
                                             List<Object> initialArgs,
                                             String indexName,
                                             DocumentRevision rev) {
-        List<String> includeFieldNames = new ArrayList<String>();
+        List<FieldSort> includeFieldNames = new ArrayList<FieldSort>();
         includeFieldNames.addAll(initialIncludedFields);
         List<Object> args = new ArrayList<Object>();
         args.addAll(initialArgs);
 
-        for (String fieldName: fieldNames) {
+        for (FieldSort fieldName: fieldNames) {
             // Fields in initialIncludedFields already have values in the other initial* array,
             // so it need not be included again.
             if (initialIncludedFields.contains(fieldName)) {
                 continue;
             }
 
-            Object value = ValueExtractor.extractValueForFieldName(fieldName, rev.getBody());
+            Object value = ValueExtractor.extractValueForFieldName(fieldName.field, rev.getBody());
             if (value != null && !(value instanceof List && ((List) value).size() == 0)) {
                 // Only include a field with a value or a field with a populated list
-                includeFieldNames.add(fieldName);
+                includeFieldNames.add(new FieldSort(fieldName.field));
                 args.add(value);
             }
         }
 
         ContentValues contentValues = new ContentValues();
         int argIndex = 0;
-        for (String fieldName: includeFieldNames) {
+        for (FieldSort f: includeFieldNames) {
+            String fieldName = f.field;
             fieldName = String.format("\"%s\"", fieldName);
             Object argument = args.get(argIndex);
             if (argument instanceof Boolean) {
@@ -328,22 +304,25 @@ class IndexUpdater {
             } else if (argument instanceof String) {
                 contentValues.put(fieldName, (String) argument);
             } else {
+                System.out.println("**** null ***" + argument);
                 contentValues.put(fieldName, (String) null);
             }
             argIndex = argIndex + 1;
         }
-        String tableName = IndexManager.tableNameForIndex(indexName);
+        String tableName = IndexManagerImpl.tableNameForIndex(indexName);
+
+        System.out.println("populate "+tableName+", "+contentValues);
 
         return new DBParameter(tableName, contentValues);
     }
 
-    private long sequenceNumberForIndex(final String indexName) {
+    private long sequenceNumberForIndex(final String indexName) throws QueryException {
         Future<Long> sequenceNumber = queue.submit( new SQLCallable<Long>() {
             @Override
             public Long call(SQLDatabase database) {
                 long result = 0;
                 String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = ?",
-                                           IndexManager.INDEX_METADATA_TABLE_NAME);
+                                           IndexManagerImpl.INDEX_METADATA_TABLE_NAME);
                 Cursor cursor = null;
                 try {
                     cursor = database.rawQuery(sql, new String[]{ indexName });
@@ -365,44 +344,42 @@ class IndexUpdater {
         try {
             lastSequenceNumber = sequenceNumber.get();
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error encountered:", e);
+            throw new QueryException("Execution error encountered:", e);
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
+            throw new QueryException("Execution interrupted error encountered:", e);
         }
 
         return lastSequenceNumber;
     }
 
-    private boolean updateMetadataForIndex(final String indexName, final long lastSequence) {
-        Future<Boolean> result = queue.submit(new SQLCallable<Boolean>() {
+    private void updateMetadataForIndex(final String indexName, final long lastSequence) throws QueryException {
+        Future<Void> result = queue.submit(new SQLCallable<Void>() {
             @Override
-            public Boolean call(SQLDatabase database) {
-                boolean updateSuccess = true;
+            public Void call(SQLDatabase database) throws QueryException {
                 ContentValues v = new ContentValues();
                 v.put("last_sequence", lastSequence);
-                int row = database.update(IndexManager.INDEX_METADATA_TABLE_NAME,
+                int row = database.update(IndexManagerImpl.INDEX_METADATA_TABLE_NAME,
                                           v,
                                           " index_name = ? ",
                                           new String[]{ indexName });
                 if (row <= 0) {
-                    updateSuccess = false;
+                    throw new QueryException("Failed to update index metadata for index "+indexName);
                 }
-                return updateSuccess;
+                return null;
             }
         });
 
-        boolean success;
         try {
-            success = result.get();
+            result.get();
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error encountered:", e);
-            success = false;
+            String message = String.format("Execution error encountered whilst updating index metadata for index %s", indexName);
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
-            success = false;
+            String message = String.format("Execution interrupted error encountered whilst updating index metadata for index %s", indexName);
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         }
-
-        return success;
     }
 
     private static class DBParameter {

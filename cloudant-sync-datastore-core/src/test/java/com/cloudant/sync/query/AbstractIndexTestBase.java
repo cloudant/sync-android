@@ -16,9 +16,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
@@ -30,8 +29,8 @@ public abstract class AbstractIndexTestBase {
 
     String factoryPath = null;
     DatastoreManager factory = null;
-    DatastoreImpl ds = null;
-    IndexManager im = null;
+    DatabaseImpl ds = null;
+    IndexManagerImpl im = null;
     SQLDatabaseQueue indexManagerDatabaseQueue;
 
     @Before
@@ -40,13 +39,13 @@ public abstract class AbstractIndexTestBase {
         assertThat(factoryPath, is(notNullValue()));
         factory = DatastoreManager.getInstance(factoryPath);
         assertThat(factory, is(notNullValue()));
-        ds = (DatastoreImpl) factory.openDatastore(AbstractIndexTestBase.class.getSimpleName());
+        ds = (DatabaseImpl) factory.openDatastore(AbstractIndexTestBase.class.getSimpleName()).database;
         assertThat(ds, is(notNullValue()));
-        im = new IndexManager(ds);
+        im = new IndexManagerImpl(ds);
         assertThat(im, is(notNullValue()));
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(indexManagerDatabaseQueue, is(notNullValue()));
-        String[] metadataTableList = new String[] { IndexManager.INDEX_METADATA_TABLE_NAME };
+        String[] metadataTableList = new String[] { IndexManagerImpl.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue,
                                                metadataTableList);
     }

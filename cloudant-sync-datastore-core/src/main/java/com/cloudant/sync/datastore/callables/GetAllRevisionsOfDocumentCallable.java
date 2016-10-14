@@ -16,10 +16,9 @@ package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.AttachmentException;
-import com.cloudant.sync.datastore.AttachmentManager;
 import com.cloudant.sync.datastore.AttachmentStreamFactory;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.sqlite.Cursor;
@@ -46,7 +45,7 @@ public class GetAllRevisionsOfDocumentCallable implements SQLCallable<DocumentRe
     private String attachmentsDir;
     private AttachmentStreamFactory attachmentStreamFactory;
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     /**
      * @param docId                   The Document ID to get the Document for
@@ -61,7 +60,7 @@ public class GetAllRevisionsOfDocumentCallable implements SQLCallable<DocumentRe
     }
 
     public DocumentRevisionTree call(SQLDatabase db) throws DatastoreException, AttachmentException {
-        String sql = "SELECT " + DatastoreImpl.FULL_DOCUMENT_COLS + " FROM revs, docs " +
+        String sql = "SELECT " + DatabaseImpl.FULL_DOCUMENT_COLS + " FROM revs, docs " +
                 "WHERE docs.docid=? AND revs.doc_id = docs.doc_id ORDER BY sequence ASC";
 
         String[] args = {docId};
@@ -74,7 +73,7 @@ public class GetAllRevisionsOfDocumentCallable implements SQLCallable<DocumentRe
                 long sequence = cursor.getLong(3);
                 List<? extends Attachment> atts = new AttachmentsForRevisionCallable(
                         this.attachmentsDir, this.attachmentStreamFactory, sequence).call(db);
-                DocumentRevision rev = DatastoreImpl.getFullRevisionFromCurrentCursor(cursor, atts);
+                DocumentRevision rev = DatabaseImpl.getFullRevisionFromCurrentCursor(cursor, atts);
                 logger.finer("Rev: " + rev);
                 tree.add(rev);
             }

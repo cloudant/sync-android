@@ -16,7 +16,7 @@ package com.cloudant.sync.datastore.callables;
 
 import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.AttachmentManager;
-import com.cloudant.sync.datastore.DatastoreImpl;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 
@@ -28,7 +28,7 @@ import java.util.logging.Logger;
  */
 public class CompactCallable implements SQLCallable<Void> {
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     private String attachmentsDir;
 

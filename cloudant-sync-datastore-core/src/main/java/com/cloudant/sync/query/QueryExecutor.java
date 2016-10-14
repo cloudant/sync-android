@@ -12,7 +12,7 @@
 
 package com.cloudant.sync.query;
 
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -36,7 +36,7 @@ import java.util.logging.Logger;
  */
 class QueryExecutor {
 
-    private final Datastore datastore;
+    private final Database database;
     private final SQLDatabaseQueue queue;
 
     private static final Logger logger = Logger.getLogger(QueryExecutor.class.getName());
@@ -47,8 +47,8 @@ class QueryExecutor {
      *  Constructs a new QueryExecutor using the indexes in 'database' to find documents from
      *  'datastore'.
      */
-    QueryExecutor(Datastore datastore, SQLDatabaseQueue queue) {
-        this.datastore = datastore;
+    QueryExecutor(Database database, SQLDatabaseQueue queue) {
+        this.database = database;
         this.queue = queue;
     }
 
@@ -67,11 +67,11 @@ class QueryExecutor {
      *  @return the query result
      */
     public QueryResult find(Map<String, Object> query,
-                            final Map<String, Object> indexes,
+                            final List<Index> indexes,
                             long skip,
                             long limit,
                             List<String> fields,
-                            final List<Map<String, String>> sortDocument) {
+                            final List<FieldSort> sortDocument) {
         //
         // Validate inputs
         //
@@ -140,17 +140,17 @@ class QueryExecutor {
         UnindexedMatcher matcher = matcherForIndexCoverage(indexesCoverQuery, query);
 
         if (matcher != null) {
-            String msg = "Query could not be executed using indexes alone; falling back to ";
+            String msg = "query could not be executed using indexes alone; falling back to ";
             msg += "filtering documents themselves. This will be VERY SLOW as each candidate ";
             msg += "document is loaded from the datastore and matched against the query selector.";
             logger.log(Level.WARNING, msg);
         }
 
-        return new QueryResult(docIds, datastore, fields, skip, limit, matcher);
+        return new QueryResult(docIds, database, fields, skip, limit, matcher);
     }
 
     protected ChildrenQueryNode translateQuery(Map<String, Object> query,
-                                               Map<String, Object> indexes,
+                                               List<Index> indexes,
                                                Boolean[] indexesCoverQuery) {
         return (ChildrenQueryNode) QuerySqlTranslator.translateQuery(query,
                                                                      indexes,
@@ -162,25 +162,9 @@ class QueryExecutor {
         return indexesCoverQuery[0] ? null : UnindexedMatcher.matcherWithSelector(selector);
     }
 
-    private boolean validateSortDocument(List<Map<String, String>> sortDocument) {
-        if (sortDocument == null || sortDocument.isEmpty()) {
-            return true; // empty or null sort docs just mean "don't sort", so are valid
-        }
+    // TODO - remove - not needed now sorts aren't expressed as maps
+    private boolean validateSortDocument(List<FieldSort> sortDocument) {
 
-        for (Map<String, String> clause: sortDocument) {
-            if (clause.size() > 1) {
-                logger.log(Level.SEVERE, "Each order clause can only be a single field");
-                return false;
-            }
-            String fieldName = (String) clause.keySet().toArray()[0];
-            String direction = clause.get(fieldName);
-            if (!direction.equalsIgnoreCase("ASC") && !direction.equalsIgnoreCase("DESC")) {
-                String msg = String.format("Order direction %s not valid, use 'asc' or 'desc'",
-                                           direction);
-                logger.log(Level.SEVERE, msg);
-                return false;
-            }
-        }
 
         return true;
     }
@@ -271,7 +255,7 @@ class QueryExecutor {
             } else {
                 // No SQL exists so we are now forced to go directly to the
                 // document datastore to retrieve the list of document ids.
-                docIds = datastore.getAllDocumentIds();
+                docIds = database.getAllDocumentIds();
             }
 
             return new HashSet<String>(docIds);
@@ -293,8 +277,8 @@ class QueryExecutor {
      *  @return an ordered list of document IDs using provided indexes.
      */
     private List<String> sortIds(Set<String> docIdSet,
-                                 List<Map<String, String>> sortDocument,
-                                 Map<String, Object> indexes,
+                                 List<FieldSort> sortDocument,
+                                 List<Index> indexes,
                                  SQLDatabase db) {
         boolean smallResultSet = (docIdSet.size() < SMALL_RESULT_SET_SIZE_THRESHOLD);
         SqlParts orderBy = sqlToSortIds(docIdSet, sortDocument, indexes);
@@ -348,8 +332,8 @@ class QueryExecutor {
      *  @return the SQL containing the order by clause
      */
     protected static SqlParts sqlToSortIds(Set<String> docIdSet,
-                                  List<Map<String, String>> sortDocument,
-                                  Map<String, Object> indexes) {
+                                  List<FieldSort> sortDocument,
+                                  List<Index> indexes) {
         String chosenIndex = chooseIndexForSort(sortDocument, indexes);
         if (chosenIndex == null) {
             String msg = String.format("No single index can satisfy order %s", sortDocument);
@@ -357,7 +341,7 @@ class QueryExecutor {
             return null;
         }
 
-        String indexTable = IndexManager.tableNameForIndex(chosenIndex);
+        String indexTable = IndexManagerImpl.tableNameForIndex(chosenIndex);
 
         // for small result sets:
         // SELECT _id FROM idx WHERE _id IN (?, ?) ORDER BY fieldName ASC, fieldName2 DESC
@@ -365,9 +349,9 @@ class QueryExecutor {
         // SELECT _id FROM idx ORDER BY fieldName ASC, fieldName2 DESC
 
         List<String> orderClauses = new ArrayList<String>();
-        for (Map<String, String> clause : sortDocument) {
-            String fieldName = (String) clause.keySet().toArray()[0];
-            String direction = clause.get(fieldName);
+        for (FieldSort clause : sortDocument) {
+            String fieldName = clause.field;
+            String direction = clause.sort == FieldSort.Direction.ASCENDING ? "asc" : "desc";
 
             String orderClause = String.format("\"%s\" %s", fieldName, direction.toUpperCase());
             orderClauses.add(orderClause);
@@ -397,16 +381,16 @@ class QueryExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    private static String chooseIndexForSort(List<Map<String, String>> sortDocument,
-                                      Map<String, Object> indexes) {
+    private static String chooseIndexForSort(List<FieldSort> sortDocument,
+                                      List<Index> indexes) {
         if (indexes == null || indexes.isEmpty()) {
             return null;  // Can't choose an index if one does not exist.
         }
         Set<String> neededFields = new HashSet<String>();
         // Each orderSpecifier in the sortDocument is validated and normalised
         // already to be a Map with one key.
-        for (Map<String, String> orderSpecifier : sortDocument) {
-            neededFields.add((String) orderSpecifier.keySet().toArray()[0]);
+        for (FieldSort orderSpecifier : sortDocument) {
+            neededFields.add(orderSpecifier.field);
         }
 
         if (neededFields.isEmpty()) {
@@ -414,11 +398,13 @@ class QueryExecutor {
         }
 
         String chosenIndex = null;
-        for (Map.Entry<String, Object> entry : indexes.entrySet()) {
-            Map<String, Object> index = (Map<String, Object>) entry.getValue();
-            Set<String> providedFields = new HashSet<String>((List<String>) index.get("fields"));
+        for (Index index : indexes) {
+            Set<String> providedFields = new HashSet<String>();
+            for (FieldSort field : index.fieldNames) {
+                providedFields.add(field.field);
+            }
             if (providedFields.containsAll(neededFields)) {
-                chosenIndex = entry.getKey();
+                chosenIndex = index.indexName;
                 break;
             }
         }

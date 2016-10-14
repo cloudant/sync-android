@@ -33,7 +33,7 @@ import java.util.Map;
 
 public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
-    Map<String, Object> indexes;
+    List<Index> indexes;
     Boolean[] indexesCoverQuery;
     String indexName;
     String indexTable;
@@ -43,9 +43,9 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        indexName = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet"), "basic");
+        indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("pet")), "basic");
         assertThat(indexName, is("basic"));
-        textIndexName = im.ensureIndexed(Arrays.<Object>asList("comments"), "basic_text", IndexType.TEXT);
+        textIndexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("comments")), "basic_text", IndexType.TEXT);
         assertThat(textIndexName, is("basic_text"));
         indexes = im.listIndexes();
         assertThat(indexes.size(), is(2));
@@ -482,39 +482,38 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
 
     @Test
     public void indexSelectionFailsWhenNoQueryKeys() {
-        Map<String, Object> indexes = new HashMap<String, Object>();
-        indexes.put("named", Arrays.<Object>asList("name", "age", "pet"));
-        assertThat(QuerySqlTranslator.chooseIndexForAndClause(null, indexes), is(nullValue()));
+        Index index = new Index(Arrays.<FieldSort>asList(new FieldSort("name"),
+                new FieldSort("age"),
+                new FieldSort("pet")),
+                "named");
+
+        assertThat(QuerySqlTranslator.chooseIndexForAndClause(null, Collections.<Index>singletonList(index)), is(nullValue()));
         assertThat(QuerySqlTranslator.chooseIndexForAndClause(new ArrayList<Object>(), null),
                    is(nullValue()));
     }
 
     @Test
     public void selectsIndexForSingleFieldQuery() {
-        Map<String, Object> indexes = new HashMap<String, Object>();
-        Map<String, Object> index = new HashMap<String, Object>();
-        index.put("name", "named");
-        index.put("type", IndexType.JSON);
-        index.put("fields", Arrays.<Object>asList("name"));
-        indexes.put("named", index);
+        Index index = new Index(Arrays.<FieldSort>asList(new FieldSort("name")),
+                "named",
+                IndexType.JSON);
 
         Map<String, Object> eq = new HashMap<String, Object>();
         eq.put("$eq", "mike");
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", eq);
 
-        String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(name), indexes);
+        String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(name), Collections.<Index>singletonList(index));
         assertThat(idx, is("named"));
     }
 
     @Test
     public void selectsIndexForMultiFieldQuery() {
-        Map<String, Object> indexes = new HashMap<String, Object>();
-        Map<String, Object> index = new HashMap<String, Object>();
-        index.put("name", "named");
-        index.put("type", IndexType.JSON);
-        index.put("fields", Arrays.<Object>asList("name", "age", "pet"));
-        indexes.put("named", index);
+        Index index = new Index(Arrays.<FieldSort>asList(new FieldSort("name"),
+                new FieldSort("age"),
+                new FieldSort("pet")),
+                "named",
+                IndexType.JSON);
 
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", "mike");
@@ -522,32 +521,26 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         pet.put("pet", "cat");
 
         String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(name, pet),
-                                                                indexes);
+                                                                Collections.<Index>singletonList(index));
         assertThat(idx, is("named"));
     }
 
     @Test
     public void selectsIndexFromMultipleIndexesForMultiFieldQuery() {
-        Map<String, Object> indexes = new HashMap<String, Object>();
+        Index index0 = new Index(Arrays.<FieldSort>asList(new FieldSort("name"),
+                new FieldSort("age"),
+                new FieldSort("pet")),
+                "named",
+                IndexType.JSON);
 
-        Map<String, Object> named = new HashMap<String, Object>();
-        named.put("name", "named");
-        named.put("type", IndexType.JSON);
-        named.put("fields", Arrays.<Object>asList("name", "age", "pet"));
+        Index index1 = new Index(Arrays.<FieldSort>asList(new FieldSort("house_number"),
+                new FieldSort("pet")),
+                "bopped",
+                IndexType.JSON);
 
-        Map<String, Object> bopped = new HashMap<String, Object>();
-        bopped.put("name", "bopped");
-        bopped.put("type", IndexType.JSON);
-        bopped.put("fields", Arrays.<Object>asList("house_number", "pet"));
-
-        Map<String, Object> unsuitable = new HashMap<String, Object>();
-        unsuitable.put("name", "unsuitable");
-        unsuitable.put("type", IndexType.JSON);
-        unsuitable.put("fields", Arrays.<Object>asList("name"));
-
-        indexes.put("named", named);
-        indexes.put("bopped", bopped);
-        indexes.put("unsuitable", unsuitable);
+        Index index2 = new Index(Arrays.<FieldSort>asList(new FieldSort("name")),
+                "unsuitable",
+                IndexType.JSON);
 
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", "mike");
@@ -555,38 +548,27 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         pet.put("pet", "cat");
 
         String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(name, pet),
-                                                                indexes);
+                                                                Arrays.<Index>asList(index0, index1, index2));
         assertThat(idx, is("named"));
     }
 
     @Test
     public void selectsCorrectIndexWhenSeveralMatch() {
-        Map<String, Object> indexes = new HashMap<String, Object>();
+        Index index0 = new Index(Arrays.<FieldSort>asList(new FieldSort("name"),
+                new FieldSort("age"),
+                new FieldSort("pet")),
+                "named",
+                IndexType.JSON);
 
-        Map<String, Object> named = new HashMap<String, Object>();
-        named.put("name", "named");
-        named.put("type", IndexType.JSON);
-        named.put("fields", Arrays.<Object>asList("name", "age", "pet"));
+        Index index1 = new Index(Arrays.<FieldSort>asList(new FieldSort("name"),
+                new FieldSort("age"),
+                new FieldSort("pet")),
+                "bopped",
+                IndexType.JSON);
 
-        Map<String, Object> bopped = new HashMap<String, Object>();
-        bopped.put("name", "bopped");
-        bopped.put("type", "json");
-        bopped.put("fields", Arrays.<Object>asList("name", "age", "pet"));
-
-        Map<String, Object> manyField = new HashMap<String, Object>();
-        manyField.put("name", "manyField");
-        manyField.put("type", IndexType.JSON);
-        manyField.put("fields", Arrays.<Object>asList("name", "age", "pet"));
-
-        Map<String, Object> unsuitable = new HashMap<String, Object>();
-        unsuitable.put("name", "unsuitable");
-        unsuitable.put("type", IndexType.JSON);
-        unsuitable.put("fields", Arrays.<Object>asList("name"));
-
-        indexes.put("named", named);
-        indexes.put("bopped", bopped);
-        indexes.put("manyField", manyField);
-        indexes.put("unsuitable", unsuitable);
+        Index index2 = new Index(Arrays.<FieldSort>asList(new FieldSort("name")),
+                "unsuitable",
+                IndexType.JSON);
 
         Map<String, Object> name = new HashMap<String, Object>();
         name.put("name", "mike");
@@ -594,31 +576,25 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
         pet.put("pet", "cat");
 
         String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(name, pet),
-                                                                indexes);
+                                                                Arrays.<Index>asList(index0, index1, index2));
         assertThat(Arrays.asList("named", "bopped").contains(idx), is(true));
     }
 
     @Test
     public void nullWhenNoSuitableIndexAvailable() {
-        Map<String, Object> indexes = new HashMap<String, Object>();
+        Index index0 = new Index(Arrays.<FieldSort>asList(new FieldSort("name"),
+                new FieldSort("age")),
+                "named",
+                IndexType.JSON);
 
-        Map<String, Object> named = new HashMap<String, Object>();
-        named.put("name", "named");
-        named.put("type", IndexType.JSON);
-        named.put("fields", Arrays.<Object>asList("name", "age"));
-
-        Map<String, Object> unsuitable = new HashMap<String, Object>();
-        unsuitable.put("name", "unsuitable");
-        unsuitable.put("type", IndexType.JSON);
-        unsuitable.put("fields", Arrays.<Object>asList("name"));
-
-        indexes.put("named", named);
-        indexes.put("unsuitable", unsuitable);
+        Index index1 = new Index(Arrays.<FieldSort>asList(new FieldSort("name")),
+                "unsuitable",
+                IndexType.JSON);
 
         Map<String, Object> pet = new HashMap<String, Object>();
         pet.put("pet", "cat");
 
-        String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(pet), indexes);
+        String idx = QuerySqlTranslator.chooseIndexForAndClause(Arrays.<Object>asList(pet), Arrays.<Index>asList(index0, index1));
 
         assertThat(idx, is(nullValue()));
     }
@@ -1226,8 +1202,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void nullWhenTextSearchDoesNotFindTextIndex() {
-        assertThat(im.deleteIndexNamed("basic_text"), is(true));
+    public void nullWhenTextSearchDoesNotFindTextIndex() throws QueryException {
+        im.deleteIndex("basic_text");
         // query - { "$text" : { "$search" : "foo bar baz" } }
         Map<String, Object> searchMap = new HashMap<String, Object>();
         searchMap.put("$search", "foo bar baz");
@@ -1242,8 +1218,8 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void nullWhenCompoundQueryIncludesTextSearchDoesNotFindJsonIndex() {
-        assertThat(im.deleteIndexNamed("basic"), is(true));
+    public void nullWhenCompoundQueryIncludesTextSearchDoesNotFindJsonIndex() throws QueryException {
+        im.deleteIndex("basic");
         // query - { "$and" : [ { "name" : "mike" }, { "$text" : { "$search" : "foo bar baz" } } ] }
         Map<String, Object> nameMap = new HashMap<String, Object>();
         nameMap.put("name", "mike");

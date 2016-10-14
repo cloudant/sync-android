@@ -14,11 +14,12 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.event.EventBus;
 
 /**
  * <p>Manages replication between a local
- * {@link com.cloudant.sync.datastore.Datastore} and a remote Cloudant or
+ * {@link Database} and a remote Cloudant or
  * CouchDB database.</p>
  *
  * <p>Create instances using the {@link ReplicatorBuilder} class.</p>

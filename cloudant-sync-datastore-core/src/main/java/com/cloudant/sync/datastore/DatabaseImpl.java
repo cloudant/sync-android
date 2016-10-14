@@ -56,6 +56,7 @@ import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
 import com.cloudant.sync.notifications.DocumentModified;
+import com.cloudant.sync.notifications.DocumentPurged;
 import com.cloudant.sync.notifications.DocumentUpdated;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
@@ -87,9 +88,9 @@ import java.util.logging.Logger;
 /**
  * @api_private
  */
-public class DatastoreImpl implements Datastore {
+public class DatabaseImpl implements Database {
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     // for building up the strings below
     public static final String METADATA_COLS = "docs.docid, docs.doc_id, revid, sequence, " +
@@ -167,7 +168,7 @@ public class DatastoreImpl implements Datastore {
      */
     private final AttachmentStreamFactory attachmentStreamFactory;
 
-    public DatastoreImpl(String dir, String name) throws SQLException, IOException,
+    protected DatabaseImpl(String dir, String name) throws SQLException, IOException,
             DatastoreException {
         this(dir, name, new NullKeyProvider());
     }
@@ -180,7 +181,7 @@ public class DatastoreImpl implements Datastore {
      * @throws SQLException
      * @throws IOException
      */
-    public DatastoreImpl(String dir, String name, KeyProvider provider) throws SQLException,
+    protected DatabaseImpl(String dir, String name, KeyProvider provider) throws SQLException,
             IOException, DatastoreException {
         Misc.checkNotNull(dir, "Directory");
         Misc.checkNotNull(name, "Datastore name");
@@ -713,7 +714,7 @@ public class DatastoreImpl implements Datastore {
      * </li>
      * </ul>
      *
-     * @see Datastore#getEventBus()
+     * @see Database#getEventBus()
      * @throws DocumentException if there was an error inserting the revision or its attachments
      * into the database
      */
@@ -767,7 +768,7 @@ public class DatastoreImpl implements Datastore {
      *                        including the rev ID of {@code rev}. This list
      *                        needs to be sorted in ascending order
      *
-     * @see DatastoreImpl#forceInsert(DocumentRevision, List, Map, Map, boolean)
+     * @see DatabaseImpl#forceInsert(DocumentRevision, List, Map, Map, boolean)
      * @throws DocumentException if there was an error inserting the revision into the database
      */
     public void forceInsert(DocumentRevision rev, String... revisionHistory) throws
@@ -1098,7 +1099,7 @@ public class DatastoreImpl implements Datastore {
 
     @Override
     public EventBus getEventBus() {
-        Misc.checkState(this.isOpen(), "Database is closed");
+//        Misc.checkState(this.isOpen(), "Database is closed");
         return eventBus;
     }
 
@@ -1249,6 +1250,12 @@ public class DatastoreImpl implements Datastore {
             logger.log(Level.SEVERE, "Re-throwing InterruptedException as ExecutionException");
             throw new ExecutionException(e);
         }
+    }
+
+    @Override
+    public void purge(DocumentRevision revision) {
+        // TODO actually do the purge
+        this.eventBus.post(new DocumentPurged(revision));
     }
 
 

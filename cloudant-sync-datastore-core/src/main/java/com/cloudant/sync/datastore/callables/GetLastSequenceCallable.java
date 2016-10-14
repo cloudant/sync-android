@@ -14,9 +14,9 @@
 
 package com.cloudant.sync.datastore.callables;
 
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.datastore.Database;
+import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreImpl;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -33,7 +33,7 @@ import java.util.logging.Logger;
  */
 public class GetLastSequenceCallable implements SQLCallable<Long> {
 
-    private static final Logger logger = Logger.getLogger(DatastoreImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     @Override
     public Long call(SQLDatabase db) throws Exception {
@@ -46,7 +46,7 @@ public class GetLastSequenceCallable implements SQLCallable<Long> {
                 if (cursor.columnType(0) == Cursor.FIELD_TYPE_INTEGER) {
                     result = cursor.getLong(0);
                 } else if (cursor.columnType(0) == Cursor.FIELD_TYPE_NULL) {
-                    result = Datastore.SEQUENCE_NUMBER_START;
+                    result = Database.SEQUENCE_NUMBER_START;
                 } else {
                     throw new IllegalStateException("SQLite return an unexpected value.");
                 }
