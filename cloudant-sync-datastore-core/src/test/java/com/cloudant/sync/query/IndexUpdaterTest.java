@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.fail;
 
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
@@ -70,15 +71,10 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         fields = null;
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void updateIndexNoIndexName() throws Exception {
         createIndex("basic", Arrays.<FieldSort>asList(new FieldSort("name")));
-        try {
-            IndexUpdater.updateIndex(null, fields, ds, indexManagerDatabaseQueue);
-            Assert.fail("Expected ensureIndexed to throw a QueryException");
-        } catch (QueryException qe) {
-            ;
-        }
+        IndexUpdater.updateIndex(null, fields, ds, indexManagerDatabaseQueue);
     }
 
     @Test
@@ -185,7 +181,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                 try {
                     latch.await();
                 } catch (InterruptedException e) {
-                    Assert.fail(e.toString());
+                    fail(e.toString());
                 }
                 for (int i = 0; i < nDocs; i++) {
                     DocumentRevision rev = new DocumentRevision(String.format("id_%d_%s",i,Thread.currentThread().getName()));
@@ -199,7 +195,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                     try {
                         ds.createDocumentFromRevision(rev);
                     } catch (DocumentException de) {
-                        Assert.fail("Exception thrown when creating revision " + de);
+                        fail("Exception thrown when creating revision " + de);
                     }
                     // batch up index updates
                     if (i % nUpdates == nUpdates-1) {
@@ -723,7 +719,13 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         saved = ds.createDocumentFromRevision(goodRev);
         ds.createDocumentFromRevision(badRev);
 
-        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
+        try {
+            IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
+            fail("Expected IllegalStateException to be thrown");
+        } catch (IllegalStateException ise) {
+            // Document id456 is rejected due to multiple arrays
+            ;
+        }
         assertThat(getIndexSequenceNumber("basic"), is(2l));
 
         // Document id123 is successfully indexed. 
@@ -1207,7 +1209,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                 return;
             }
         }
-        Assert.fail("Didn't find expected index "+indexName);
+        fail("Didn't find expected index "+indexName);
     }
 
 }

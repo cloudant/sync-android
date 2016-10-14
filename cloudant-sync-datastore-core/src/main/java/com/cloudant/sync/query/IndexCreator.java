@@ -73,15 +73,14 @@ class IndexCreator {
      */
     @SuppressWarnings("unchecked")
     private String ensureIndexed(Index proposedIndex) throws QueryException {
-        if (proposedIndex == null) {
-            throw new QueryException("TODO message");
-        }
+        Misc.checkNotNull(proposedIndex, "proposedIndex");
 
         if (proposedIndex.indexType == IndexType.TEXT) {
             if (!IndexManagerImpl.ftsAvailable(queue)) {
-                logger.log(Level.SEVERE, "Text search not supported.  To add support for text " +
-                                         "search, enable FTS compile options in SQLite.");
-                throw new QueryException("TODO message");
+                String message = "Text search not supported.  To add support for text " +
+                        "search, enable FTS compile options in SQLite.";
+                logger.log(Level.SEVERE, message);
+                throw new QueryException(message);
             }
         }
 
@@ -97,19 +96,12 @@ class IndexCreator {
         Set<String> uniqueNames = new HashSet<String>();
         for (FieldSort fieldName: fieldNamesList) {
             uniqueNames.add(fieldName.field);
-            if (!validFieldName(fieldName.field)) {
-                // Logging handled in validFieldName
-                throw new QueryException("TODO message");
-            }
+            Misc.checkArgument(validFieldName(fieldName.field), "Field "+fieldName.field+" is not valid");
         }
 
         // Check there are no duplicate field names in the array
-        if (uniqueNames.size() != fieldNamesList.size()) {
-            String msg = String.format("Cannot create index with duplicated field names %s"
-                                       , proposedIndex.fieldNames);
-            logger.log(Level.SEVERE, msg);
-            throw new QueryException(msg);
-        }
+        Misc.checkArgument(uniqueNames.size() == fieldNamesList.size(), String.format("Cannot create index with duplicated field names %s"
+                , proposedIndex.fieldNames));
 
         // Prepend _id and _rev if it's not in the array
         if (!uniqueNames.contains("_rev")) {
@@ -135,8 +127,9 @@ class IndexCreator {
                 // generate a name for the index.
                 String indexName = IndexCreator.generateIndexName(existingIndexNames.keySet());
                 if(indexName == null){
-                    logger.warning("Failed to generate unique index name");
-                    return null;
+                    String message = "Failed to generate unique index name";
+                    logger.warning(message);
+                    throw new QueryException(message);
                 }
 
                 proposedIndex = new Index(proposedIndex.fieldNames,
@@ -149,7 +142,7 @@ class IndexCreator {
                 String msg = String.format("Index limit reached.  Cannot create index %s.",
                                            proposedIndex.indexName);
                 logger.log(Level.SEVERE, msg);
-                return null;
+                throw new QueryException(msg);
             }
             if (existingIndexNames.containsKey(proposedIndex.indexName)) {
                 Index existingIndex = existingIndexNames.get(proposedIndex.indexName);
@@ -165,11 +158,13 @@ class IndexCreator {
                 }
             }
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error encountered:", e);
-            throw new QueryException("TODO message", e);
+            String message = "Execution error encountered in listIndexesInDatabaseQueue";
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
-            throw new QueryException("TODO message", e);
+            String message = "Execution interrupted error encountered in listIndexesInDatabaseQueue";
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         }
 
         final Index index = proposedIndex;
@@ -226,9 +221,13 @@ class IndexCreator {
         try {
             result.get();
         } catch (ExecutionException e) {
-            throw new QueryException("Execution error encountered:", e);
+            String message = "Execution error encountered whilst inserting index metadata";
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         } catch (InterruptedException e) {
-            throw new QueryException("Execution interrupted error encountered:", e);
+            String message = "Execution interrupted error encountered whilst inserting index metadata";
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         }
 
         IndexUpdater.updateIndex(index.indexName,
