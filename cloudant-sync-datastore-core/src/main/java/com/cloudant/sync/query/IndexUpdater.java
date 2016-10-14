@@ -21,6 +21,7 @@ import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.DatabaseUtils;
+import com.cloudant.sync.util.Misc;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -113,9 +114,7 @@ class IndexUpdater {
                                 final List<FieldSort> fieldNames,
                                 final Changes changes,
                                 long lastSequence) throws QueryException {
-        if (indexName == null || indexName.isEmpty()) {
-            throw new QueryException("Index name was null or empty");
-        }
+        Misc.checkNotNullOrEmpty(indexName, "indexName");
 
         Future<Void> result = queue.submitTransaction(new SQLCallable<Void>() {
             @Override
@@ -155,9 +154,14 @@ class IndexUpdater {
         try {
             result.get();
         } catch (ExecutionException e) {
-            throw new QueryException("Execution error encountered:", e);
+            // TODO we should unwrarp executionexception
+            String message = String.format("Execution error encountered whilst updating index %s", indexName);
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         } catch (InterruptedException e) {
-            throw new QueryException("Execution interrupted error encountered:",e);
+            String message = String.format("Execution interrupted error encountered whilst updating index %s", indexName);
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         }
 
         // if there was a problem, we rolled back, and threw an exception, so the sequence won't be
@@ -178,20 +182,9 @@ class IndexUpdater {
     private List<DBParameter> parametersToIndexRevision (DocumentRevision rev,
                                                          String indexName,
                                                          List<FieldSort> fieldNames) {
-        if (rev == null) {
-            // TODO throw ex
-            return null;
-        }
-
-        if(indexName == null) {
-            // TODO throw ex
-            return null;
-        }
-
-        if (fieldNames == null) {
-            // TODO throw ex
-            return null;
-        }
+        Misc.checkNotNull(rev, "rev");
+        Misc.checkNotNull(indexName, "indexName");
+        Misc.checkNotNull(fieldNames, "fieldNames");
 
         int arrayCount = 0;
         String arrayFieldName = null; // only record the last, as error if more than one
@@ -203,14 +196,11 @@ class IndexUpdater {
             }
         }
 
-        if (arrayCount > 1) {
-            String msg = String.format("Indexing %s in index %s includes > 1 array field; " +
-                                       "Only one array field per index allowed.",
-                                       rev.getId(),
-                                       indexName);
-            logger.log(Level.SEVERE, msg);
-            return null;
-        }
+        Misc.checkState(arrayCount <= 1, String.format("Indexing %s in index %s includes > 1 " +
+                "array field; " +
+                        "Only one array field per index allowed.",
+                rev.getId(),
+                indexName));
 
         List<DBParameter> parameters = new ArrayList<DBParameter>();
         List<Object> arrayFieldValues = null;
@@ -378,9 +368,13 @@ class IndexUpdater {
         try {
             result.get();
         } catch (ExecutionException e) {
-            throw new QueryException("Execution error encountered:", e);
+            String message = String.format("Execution error encountered whilst updating index metadata for index %s", indexName);
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         } catch (InterruptedException e) {
-            throw new QueryException("Execution interrupted error encountered:", e);
+            String message = String.format("Execution interrupted error encountered whilst updating index metadata for index %s", indexName);
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         }
     }
 

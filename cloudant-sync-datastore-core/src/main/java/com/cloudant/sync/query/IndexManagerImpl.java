@@ -307,9 +307,13 @@ public class IndexManagerImpl implements IndexManager {
         try {
             result.get();
         } catch (ExecutionException e) {
-            throw new QueryException("Execution error during index deletion:", e);
+            String message = "Execution error during index deletion";
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         } catch (InterruptedException e) {
-            throw new QueryException("Execution interrupted error during index deletion:", e);
+            String message = "Execution interrupted error during index deletion";
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         }
 
     }
