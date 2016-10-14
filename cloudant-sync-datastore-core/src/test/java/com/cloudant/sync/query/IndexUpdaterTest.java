@@ -717,13 +717,9 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         saved = ds.createDocumentFromRevision(goodRev);
         ds.createDocumentFromRevision(badRev);
 
-        try {
-            IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
-            fail("Expected IllegalStateException to be thrown");
-        } catch (IllegalStateException ise) {
-            // Document id456 is rejected due to multiple arrays
-            ;
-        }
+        // TODO should the index updating continue once it's encountered a document with multiple arrays?
+
+        IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(2l));
 
         // Document id123 is successfully indexed. 
