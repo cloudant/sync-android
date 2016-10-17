@@ -155,7 +155,7 @@ public class IndexManagerImpl implements IndexManager {
 
     }
 
-    protected static List<Index> listIndexesInDatabase(SQLDatabase db) {
+    protected static List<Index> listIndexesInDatabase(SQLDatabase db) throws SQLException {
         // Accumulate indexes and definitions into a map
         String sqlIndexNames = String.format("SELECT DISTINCT index_name FROM %s", INDEX_METADATA_TABLE_NAME);
         Cursor cursorIndexNames = null;
@@ -194,9 +194,6 @@ public class IndexManagerImpl implements IndexManager {
 
 
             }
-        } catch (SQLException sqe) {
-            // TODO
-            System.out.println("ERROR "+sqe);
         } finally {
             DatabaseUtils.closeCursorQuietly(cursorIndexNames);
         }

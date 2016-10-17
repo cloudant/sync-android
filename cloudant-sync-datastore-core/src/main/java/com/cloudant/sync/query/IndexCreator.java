@@ -146,7 +146,6 @@ class IndexCreator {
             }
             if (existingIndexNames.containsKey(proposedIndex.indexName)) {
                 Index existingIndex = existingIndexNames.get(proposedIndex.indexName);
-                // TODO need to compare ignoring direction
                 if (proposedIndex.equals(existingIndex)) {
                     System.out.println("EQUALS");
                     // index name and fields match existing index, update index and return
@@ -289,7 +288,7 @@ class IndexCreator {
                                                                     InterruptedException {
         Future<List<Index>> indexes = queue.submit(new SQLCallable<List<Index>>() {
             @Override
-            public List<Index> call(SQLDatabase database) {
+            public List<Index> call(SQLDatabase database) throws SQLException {
                 return IndexManagerImpl.listIndexesInDatabase(database);
             }
         });
