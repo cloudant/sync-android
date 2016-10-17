@@ -147,7 +147,6 @@ class IndexCreator {
             if (existingIndexNames.containsKey(proposedIndex.indexName)) {
                 Index existingIndex = existingIndexNames.get(proposedIndex.indexName);
                 if (proposedIndex.equals(existingIndex)) {
-                    System.out.println("EQUALS");
                     // index name and fields match existing index, update index and return
                     IndexUpdater.updateIndex(proposedIndex.indexName,
                             fieldNamesList,

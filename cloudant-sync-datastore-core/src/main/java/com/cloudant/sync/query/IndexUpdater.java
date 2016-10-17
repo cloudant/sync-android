@@ -303,14 +303,13 @@ class IndexUpdater {
             } else if (argument instanceof String) {
                 contentValues.put(fieldName, (String) argument);
             } else {
-                System.out.println("**** null ***" + argument);
+                // TODO it shouldn't be possible to get here and adding null to contentValues is not
+                // the right thing to do!
                 contentValues.put(fieldName, (String) null);
             }
             argIndex = argIndex + 1;
         }
         String tableName = IndexManagerImpl.tableNameForIndex(indexName);
-
-        System.out.println("populate "+tableName+", "+contentValues);
 
         return new DBParameter(tableName, contentValues);
     }
