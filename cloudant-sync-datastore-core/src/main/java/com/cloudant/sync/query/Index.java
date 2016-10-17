@@ -115,8 +115,6 @@ class Index {
     @Override
     public boolean equals(Object o) {
 
-        System.out.println(this.toString() + " equals " + o.toString());
-
         if (this == o) {
             return true;
         }
