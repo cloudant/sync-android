@@ -1,3 +1,7 @@
+# Unreleased
+- [FIXED] Issue that was preventing index updates from being persisted that was impacting query
+  performance.
+
 # 1.1.1 (2016-10-05)
 
 - [UPGRADED] Upgraded to version 2.6.2 of the `cloudant-http` library.
