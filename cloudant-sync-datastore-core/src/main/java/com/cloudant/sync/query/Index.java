@@ -13,6 +13,8 @@
 package com.cloudant.sync.query;
 
 
+import com.cloudant.sync.util.Misc;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -25,11 +27,7 @@ class Index {
 
     private static final Logger logger = Logger.getLogger(Index.class.getCanonicalName());
 
-  //  private static final String TEXT_TOKENIZE = "tokenize";
-
     private static final String TEXT_DEFAULT_TOKENIZER = "simple";
-
-    //private static final List<String> validSettings = Arrays.asList(TEXT_TOKENIZE);
 
     public final List<FieldSort> fieldNames;
 
@@ -37,13 +35,7 @@ class Index {
 
     public final IndexType indexType;
 
-    // TODO remove
-//    public final Map<String, String> indexSettings;
-
-    // TODO should this be an enum
     public final String tokenize;
-
-
 
     /**
      * This method sets the index type to the default setting of "json"
@@ -84,18 +76,10 @@ class Index {
                  IndexType indexType,
                  String tokenize) {
 
-        if (tokenize == null) {
-            System.out.println("null");
-        }
-
-        if (fieldNames == null || fieldNames.isEmpty()) {
-            logger.log(Level.SEVERE, "No field names were provided.");
-            throw new IllegalArgumentException("No field names were provided.");
-        }
-
-        if(indexName != null && indexName.isEmpty()){
-            throw new IllegalArgumentException("No index name was provided.");
-        }
+        Misc.checkNotNull(fieldNames, "fieldNames");
+        Misc.checkArgument(!fieldNames.isEmpty(), "fieldNames isEmpty()");
+        // NB indexName can be null (IndexCreator will generate one if needed) but not empty
+        Misc.checkArgument((indexName == null || !indexName.isEmpty()), "indexName");
 
         this.fieldNames = new ArrayList<FieldSort>(fieldNames);
         this.indexName = indexName;
@@ -103,6 +87,7 @@ class Index {
 
         if (indexType == IndexType.TEXT) {
             if (tokenize == null) {
+                // set default tokenizer if one wasn't set
                 this.tokenize = TEXT_DEFAULT_TOKENIZER;
             } else {
                 this.tokenize = tokenize;
@@ -112,12 +97,6 @@ class Index {
             this.tokenize = null;
         }
 
-        //if (tokenize == null) {
-            // TODO
-//            this.tokenize = TEXT_DEFAULT_TOKENIZER;
-        //} else {
-            //this.tokenize = tokenize;
-        //}
     }
 
     /**
@@ -126,6 +105,7 @@ class Index {
      * @return the JSON representation of the index settings
      */
     protected String settingsAsJSON() {
+        // this is a trivial enough operation that we don't need a JSON serializer
         if (tokenize == null) {
             return "{}";
         }

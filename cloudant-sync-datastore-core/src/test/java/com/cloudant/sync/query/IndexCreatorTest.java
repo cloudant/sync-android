@@ -48,8 +48,8 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         // doesn't create an index on null fields
         try {
             im.ensureIndexed(null, "basic");
-            Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
-        } catch (IllegalArgumentException qe) {
+            Assert.fail("Expected ensureIndexed to throw a NullPointerException");
+        } catch (NullPointerException npe) {
             ;
         }
 
@@ -110,9 +110,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         List<Index> indexes = im.listIndexes();
         assertThat(indexes, contains(getIndexNameMatcher("basic")));
 
-//        Map<String, Object> index = indexes.get("basic");
-//        List<String> fields = (List<String>) index.get("fields");
-//        assertThat(fields, containsInAnyOrder("_id", "_rev", "name", "age"));
+        assertThat(getIndexNamed("basic", indexes), getFields("_id", "_rev", "name", "age"));
     }
 
     @Test
@@ -124,9 +122,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         List<Index> indexes = im.listIndexes();
         assertThat(indexes, contains(getIndexNameMatcher("basic")));
 
-//        Map<String, Object> index = indexes.get("basic");
-//        List<String> fields = (List<String>) index.get("fields");
-//        assertThat(fields, containsInAnyOrder("_id", "_rev", "name.first", "age.years"));
+        assertThat(getIndexNamed("basic", indexes), getFields("_id", "_rev", "name.first", "age.years"));
     }
 
     @Test
@@ -142,19 +138,9 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
                 getIndexNameMatcher("another"),
                 getIndexNameMatcher("petname")));
 
-        /* TODO
-
-        Map<String, Object> index = indexes.get("basic");
-        List<String> fields = (List<String>) index.get("fields");
-        assertThat(fields, containsInAnyOrder("_id", "_rev", "name", "age"));
-
-        index = (Map<String, Object>) indexes.get("another");
-        fields = (List<String>) index.get("fields");
-        assertThat(fields, containsInAnyOrder("_id", "_rev", "name", "age"));
-
-        index = (Map<String, Object>) indexes.get("petname");
-        fields = (List<String>) index.get("fields");
-        assertThat(fields, containsInAnyOrder("_id", "_rev", "cat")); */
+        assertThat(getIndexNamed("basic", indexes), getFields("_id", "_rev", "name", "age"));
+        assertThat(getIndexNamed("another", indexes), getFields("_id", "_rev", "name", "age"));
+        assertThat(getIndexNamed("petname", indexes), getFields("_id", "_rev", "cat"));
     }
 
     @Test
@@ -167,17 +153,11 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         List<Index> indexes = im.listIndexes();
         assertThat(indexes, contains(getIndexNameMatcher("basic")));
 
-//        Map<String, Object> index = indexes.get("basic");
-//        List<String> fields = (List<String>) index.get("fields");
-//        assertThat(fields, containsInAnyOrder("_id", "_rev", "name", "age"));
+        assertThat(getIndexNamed("basic", indexes), getFields("_id", "_rev", "name", "age"));
     }
 
     @Test
     public void createIndexWhenIndexNameExistsIdxDefinitionSame() throws QueryException {
-        // TODO these don't have the same Index definition according to equals() because DESCENDING
-        // isn't saved to the database and round trips as ASCENDING
-        // --
-        // this means that fieldsort needs to be set for ASCENDING when used for index definition
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(
                 new FieldSort("name", FieldSort.Direction.ASCENDING),
                 new FieldSort("age", FieldSort.Direction.DESCENDING)), "basic");
@@ -218,10 +198,10 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
                                             IndexType.JSON);
         assertThat(indexName, is("basic"));
         List<Index> indexes = im.listIndexes();
-        assertThat(indexes.size(), is(1));
-//        Map<String, Object> index = indexes.get("basic");
-//        assertThat((IndexType) index.get("type"), is(IndexType.JSON));
-//        assertThat(index.get("settings"), is(nullValue()));
+        assertThat(indexes, contains(getIndexNameMatcher("basic")));
+        Index i = getIndexNamed("basic", indexes);
+        assertThat(i.indexType, is(IndexType.JSON));
+        assertThat(i.tokenize, is(nullValue()));
     }
 
     @Test
@@ -233,10 +213,9 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
                                             IndexType.TEXT);
         assertThat(indexName, is("basic"));
         List<Index> indexes = im.listIndexes();
-        assertThat(indexes.size(), is(1));
-//        Map<String, Object> index = indexes.get("basic");
-//        assertThat((IndexType) index.get("type"), is(IndexType.TEXT));
-//        assertThat((String) index.get("settings"), is("{\"tokenize\":\"simple\"}"));
+        Index i = getIndexNamed("basic", indexes);
+        assertThat(i.indexType, is(IndexType.TEXT));
+        assertThat(i.tokenize, is("simple"));
     }
 
     @Test
@@ -247,10 +226,9 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
                 "porter");
         assertThat(indexName, is("basic"));
         List<Index> indexes = im.listIndexes();
-        assertThat(indexes.size(), is(1));
-//          Map<String, Object> index = indexes.get("basic");
-//        assertThat((IndexType) index.get("type"), is(IndexType.TEXT));
-//        assertThat((String) index.get("settings"), is("{\"tokenize\":\"porter\"}"));
+        Index i = getIndexNamed("basic", indexes);
+        assertThat(i.indexType, is(IndexType.TEXT));
+        assertThat(i.tokenize, is("porter"));
     }
 
     @Test
@@ -263,7 +241,8 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "jsonIndex");
         assertThat(indexName, is("jsonIndex"));
         List<Index> indexes = im.listIndexes();
-//        assertThat(indexes.keySet(), containsInAnyOrder("textIndex", "jsonIndex"));
+        assertThat(indexes, containsInAnyOrder(getIndexNameMatcher("textIndex"),
+                getIndexNameMatcher("jsonIndex")));
     }
 
     @Test(expected = QueryException.class)
@@ -279,21 +258,6 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("اسم"), new FieldSort("datatype"), new FieldSort("ages")),
                                             "basic");
         assertThat(indexName, is("basic"));
-    }
-
-    @Test
-    public void normalizeIndexFields() {
-        HashMap<String, String> nameField = new HashMap<String, String>();
-        nameField.put("name", "asc");
-        HashMap<String, String> petField = new HashMap<String, String>();
-        petField.put("pet", "desc");
-
-        // removes directions from the field specifiers
-//        List<String> fields;
-//        fields = IndexCreator.removeDirectionsFromFields(Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction.ASCENDING),
-//                                                                               new FieldSort("pet", FieldSort.Direction.DESCENDING),
-//                                                                               new FieldSort("age")));
-//        assertThat(fields, containsInAnyOrder("name", "pet", "age"));
     }
 
     @Test
