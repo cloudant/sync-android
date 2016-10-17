@@ -56,7 +56,7 @@ public class IndexTest {
         assertThat(index.tokenize, is("simple"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = NullPointerException.class)
     public void returnsNullWhenNoFields() {
         Index index = new Index(null, indexName);
         assertThat(index, is(nullValue()));
