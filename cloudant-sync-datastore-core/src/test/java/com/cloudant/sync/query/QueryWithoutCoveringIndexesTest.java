@@ -12,6 +12,7 @@
 
 package com.cloudant.sync.query;
 
+import static com.cloudant.sync.query.MatcherHelper.getIndexNameMatcher;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -250,7 +251,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
     public void canQueryORWithoutAnyIndexes() throws Exception {
         setUpWithoutCoveringIndexesQueryData();
         im.deleteIndex("pet");
-//        assertThat(im.listIndexes(), contains("basic"));
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
         // query - { "$or" : [ { "pet" : { "$eq" : "cat" } }, { "town" : { "$eq" : "bristol" } } ] }
         // indexes - { "basic" : { "name" : "basic", "type" : "json", "fields" : [ "_id",
         //                                                                         "_rev",
