@@ -155,7 +155,6 @@ class IndexUpdater {
         try {
             result.get();
         } catch (ExecutionException e) {
-            // TODO we should unwrarp executionexception
             String message = String.format("Execution error encountered whilst updating index %s", indexName);
             logger.log(Level.SEVERE, message, e);
             throw new QueryException(message, e);
