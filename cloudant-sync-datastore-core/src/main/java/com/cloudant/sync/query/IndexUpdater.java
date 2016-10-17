@@ -136,7 +136,6 @@ class IndexUpdater {
         Future<Boolean> result = queue.submitTransaction(new SQLCallable<Boolean>() {
             @Override
             public Boolean call(SQLDatabase database) {
-                database.beginTransaction();
                 for (DocumentRevision rev: changes.getResults()) {
                     // Delete existing values
                     String tableName = IndexManager.tableNameForIndex(indexName);
