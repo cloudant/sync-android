@@ -67,11 +67,11 @@ class QueryExecutor {
      *  @return the query result
      */
     public QueryResult find(Map<String, Object> query,
-                            final Map<String, Object> indexes,
+                            final Map<String, Map<String, Object>> indexes,
                             long skip,
                             long limit,
                             List<String> fields,
-                            final List<Map<String, String>> sortDocument) {
+                            final List<FieldSort> sortDocument) {
         //
         // Validate inputs
         //
@@ -150,7 +150,7 @@ class QueryExecutor {
     }
 
     protected ChildrenQueryNode translateQuery(Map<String, Object> query,
-                                               Map<String, Object> indexes,
+                                               Map<String, Map<String, Object>> indexes,
                                                Boolean[] indexesCoverQuery) {
         return (ChildrenQueryNode) QuerySqlTranslator.translateQuery(query,
                                                                      indexes,
@@ -162,25 +162,9 @@ class QueryExecutor {
         return indexesCoverQuery[0] ? null : UnindexedMatcher.matcherWithSelector(selector);
     }
 
-    private boolean validateSortDocument(List<Map<String, String>> sortDocument) {
-        if (sortDocument == null || sortDocument.isEmpty()) {
-            return true; // empty or null sort docs just mean "don't sort", so are valid
-        }
+    // TODO - remove - not needed now sorts aren't expressed as maps
+    private boolean validateSortDocument(List<FieldSort> sortDocument) {
 
-        for (Map<String, String> clause: sortDocument) {
-            if (clause.size() > 1) {
-                logger.log(Level.SEVERE, "Each order clause can only be a single field");
-                return false;
-            }
-            String fieldName = (String) clause.keySet().toArray()[0];
-            String direction = clause.get(fieldName);
-            if (!direction.equalsIgnoreCase("ASC") && !direction.equalsIgnoreCase("DESC")) {
-                String msg = String.format("Order direction %s not valid, use 'asc' or 'desc'",
-                                           direction);
-                logger.log(Level.SEVERE, msg);
-                return false;
-            }
-        }
 
         return true;
     }
@@ -293,8 +277,8 @@ class QueryExecutor {
      *  @return an ordered list of document IDs using provided indexes.
      */
     private List<String> sortIds(Set<String> docIdSet,
-                                 List<Map<String, String>> sortDocument,
-                                 Map<String, Object> indexes,
+                                 List<FieldSort> sortDocument,
+                                 Map<String, Map<String, Object>> indexes,
                                  SQLDatabase db) {
         boolean smallResultSet = (docIdSet.size() < SMALL_RESULT_SET_SIZE_THRESHOLD);
         SqlParts orderBy = sqlToSortIds(docIdSet, sortDocument, indexes);
@@ -348,8 +332,8 @@ class QueryExecutor {
      *  @return the SQL containing the order by clause
      */
     protected static SqlParts sqlToSortIds(Set<String> docIdSet,
-                                  List<Map<String, String>> sortDocument,
-                                  Map<String, Object> indexes) {
+                                  List<FieldSort> sortDocument,
+                                  Map<String, Map<String, Object>> indexes) {
         String chosenIndex = chooseIndexForSort(sortDocument, indexes);
         if (chosenIndex == null) {
             String msg = String.format("No single index can satisfy order %s", sortDocument);
@@ -365,9 +349,9 @@ class QueryExecutor {
         // SELECT _id FROM idx ORDER BY fieldName ASC, fieldName2 DESC
 
         List<String> orderClauses = new ArrayList<String>();
-        for (Map<String, String> clause : sortDocument) {
-            String fieldName = (String) clause.keySet().toArray()[0];
-            String direction = clause.get(fieldName);
+        for (FieldSort clause : sortDocument) {
+            String fieldName = clause.field;
+            String direction = clause.sort == FieldSort.Direction.ASCENDING ? "asc" : "desc";
 
             String orderClause = String.format("\"%s\" %s", fieldName, direction.toUpperCase());
             orderClauses.add(orderClause);
@@ -397,16 +381,16 @@ class QueryExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    private static String chooseIndexForSort(List<Map<String, String>> sortDocument,
-                                      Map<String, Object> indexes) {
+    private static String chooseIndexForSort(List<FieldSort> sortDocument,
+                                      Map<String, Map<String, Object>> indexes) {
         if (indexes == null || indexes.isEmpty()) {
             return null;  // Can't choose an index if one does not exist.
         }
         Set<String> neededFields = new HashSet<String>();
         // Each orderSpecifier in the sortDocument is validated and normalised
         // already to be a Map with one key.
-        for (Map<String, String> orderSpecifier : sortDocument) {
-            neededFields.add((String) orderSpecifier.keySet().toArray()[0]);
+        for (FieldSort orderSpecifier : sortDocument) {
+            neededFields.add(orderSpecifier.field);
         }
 
         if (neededFields.isEmpty()) {
@@ -414,8 +398,8 @@ class QueryExecutor {
         }
 
         String chosenIndex = null;
-        for (Map.Entry<String, Object> entry : indexes.entrySet()) {
-            Map<String, Object> index = (Map<String, Object>) entry.getValue();
+        for (Map.Entry<String, Map<String, Object>> entry : indexes.entrySet()) {
+            Map<String, Object> index = entry.getValue();
             Set<String> providedFields = new HashSet<String>((List<String>) index.get("fields"));
             if (providedFields.containsAll(neededFields)) {
                 chosenIndex = entry.getKey();

@@ -24,7 +24,6 @@ import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,7 +33,7 @@ import java.util.Set;
 
 public class QuerySortTest extends AbstractQueryTestBase {
 
-    Map<String, Object> indexes;
+    Map<String, Map<String, Object>> indexes;
     Set<String> smallDocIdSet;
     Set<String> largeDocIdSet;
 
@@ -56,7 +55,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
         indexB.put("name", "b");
         indexB.put("type", "json");
         indexB.put("fields", Arrays.<Object>asList("x", "y", "z"));
-        indexes = new HashMap<String, Object>();
+        indexes = new HashMap<String, Map<String, Object>>();
         indexes.put("a", indexA);
         indexes.put("b", indexB);
         smallDocIdSet = new HashSet<String>(Arrays.asList("mike", "john"));
@@ -73,10 +72,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
         setUpSortingQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("same", "all");
-        Map<String, String> sortName = new HashMap<String, String>();
-        sortName.put("name", "asc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortName);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction.ASCENDING));
         QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, null, order);
         assertThat(queryResult.documentIds(), contains("fred11", "fred34", "mike12"));
     }
@@ -86,13 +82,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
         setUpSortingQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("same", "all");
-        Map<String, String> sortName = new HashMap<String, String>();
-        sortName.put("name", "asc");
-        Map<String, String> sortAge = new HashMap<String, String>();
-        sortAge.put("age", "desc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortName);
-        order.add(sortAge);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction.ASCENDING), new FieldSort("age", FieldSort.Direction.DESCENDING));
         QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, null, order);
         assertThat(queryResult.documentIds(), contains("fred34", "fred11", "mike12"));
     }
@@ -102,40 +92,18 @@ public class QuerySortTest extends AbstractQueryTestBase {
         setUpSortingQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("same", "all");
-        Map<String, String> sortPet = new HashMap<String, String>();
-        sortPet.put("pet", "asc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortPet);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("pet", FieldSort.Direction.ASCENDING));
         QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, null, order);
         assertThat(queryResult.documentIds(), contains("mike12", "fred11", "fred34"));
     }
 
-    @Test
-    public void returnsNullWhenNotUsingAscOrDesc() throws Exception {
-        setUpSortingQueryData();
-        Map<String, Object> query = new HashMap<String, Object>();
-        query.put("same", "all");
-        Map<String, String> sortName = new HashMap<String, String>();
-        sortName.put("name", "blah");
-        Map<String, String> sortAge = new HashMap<String, String>();
-        sortAge.put("age", "desc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortName);
-        order.add(sortAge);
-        QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, null, order);
-        assertThat(queryResult, is(nullValue()));
-    }
-
-    @Test
+    // TODO check test can be deleted - i think it relates to the way the sort document is built up which is no longer relevant
+//    @Test
     public void returnsNullWhenTooManyClauses() throws Exception{
         setUpSortingQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("same", "all");
-        Map<String, String> sort = new HashMap<String, String>();
-        sort.put("name", "asc");
-        sort.put("age", "desc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sort);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction.ASCENDING), new FieldSort("age", FieldSort.Direction.DESCENDING));
         QueryResult queryResult = im.find(query, 0, Long.MAX_VALUE, null, order);
         assertThat(queryResult, is(nullValue()));
     }
@@ -144,10 +112,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
 
     @Test
     public void smallDocSetForSingleFieldUsingAsc() {
-        Map<String, String> sortName = new HashMap<String, String>();
-        sortName.put("name", "asc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortName);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_a";
         String where = "WHERE _id IN (?, ?) ORDER BY \"name\" ASC";
@@ -159,10 +124,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
 
     @Test
     public void smallDocSetForSingleFieldUsingDesc() {
-        Map<String, String> sortY = new HashMap<String, String>();
-        sortY.put("y", "desc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortY);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
         String where = "WHERE _id IN (?, ?) ORDER BY \"y\" DESC";
@@ -174,13 +136,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
 
     @Test
     public void smallDocSetForMultipleFieldUsingAsc() {
-        Map<String, String> sortY = new HashMap<String, String>();
-        sortY.put("y", "asc");
-        Map<String, String> sortX = new HashMap<String, String>();
-        sortX.put("x", "asc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortY);
-        order.add(sortX);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.ASCENDING), new FieldSort("x", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
         String where = "WHERE _id IN (?, ?) ORDER BY \"y\" ASC, \"x\" ASC";
@@ -192,13 +148,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
 
     @Test
     public void smallDocSetForMultipleFieldUsingDesc() {
-        Map<String, String> sortY = new HashMap<String, String>();
-        sortY.put("y", "desc");
-        Map<String, String> sortX = new HashMap<String, String>();
-        sortX.put("x", "desc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortY);
-        order.add(sortX);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING), new FieldSort("x", FieldSort.Direction.DESCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
         String where = "WHERE _id IN (?, ?) ORDER BY \"y\" DESC, \"x\" DESC";
@@ -210,13 +160,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
 
     @Test
     public void smallDocSetForMultipleFieldUsingMixed() {
-        Map<String, String> sortY = new HashMap<String, String>();
-        sortY.put("y", "desc");
-        Map<String, String> sortX = new HashMap<String, String>();
-        sortX.put("x", "asc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortY);
-        order.add(sortX);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING), new FieldSort("x", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
         String where = "WHERE _id IN (?, ?) ORDER BY \"y\" DESC, \"x\" ASC";
@@ -228,10 +172,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
 
     @Test
     public void largeDocSetForSingleFieldUsingAsc() {
-        Map<String, String> sortName = new HashMap<String, String>();
-        sortName.put("name", "asc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortName);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_a";
         String orderBy = "ORDER BY \"name\" ASC";
@@ -242,10 +183,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
 
     @Test
     public void largeDocSetForSingleFieldUsingDesc() {
-        Map<String, String> sortY = new HashMap<String, String>();
-        sortY.put("y", "desc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortY);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
         String orderBy = "ORDER BY \"y\" DESC";
@@ -256,13 +194,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
 
     @Test
     public void largeDocSetForMultipleFieldUsingAsc() {
-        Map<String, String> sortY = new HashMap<String, String>();
-        sortY.put("y", "asc");
-        Map<String, String> sortX = new HashMap<String, String>();
-        sortX.put("x", "asc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortY);
-        order.add(sortX);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.ASCENDING), new FieldSort("x", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
         String orderBy = "ORDER BY \"y\" ASC, \"x\" ASC";
@@ -273,13 +205,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
 
     @Test
     public void largeDocSetForMultipleFieldUsingDesc() {
-        Map<String, String> sortY = new HashMap<String, String>();
-        sortY.put("y", "desc");
-        Map<String, String> sortX = new HashMap<String, String>();
-        sortX.put("x", "desc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortY);
-        order.add(sortX);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING), new FieldSort("x", FieldSort.Direction.DESCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
         String orderBy = "ORDER BY \"y\" DESC, \"x\" DESC";
@@ -290,13 +216,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
 
     @Test
     public void largeDocSetForMultipleFieldUsingMixed() {
-        Map<String, String> sortY = new HashMap<String, String>();
-        sortY.put("y", "desc");
-        Map<String, String> sortX = new HashMap<String, String>();
-        sortX.put("x", "asc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortY);
-        order.add(sortX);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING), new FieldSort("x", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
         String orderBy = "ORDER BY \"y\" DESC, \"x\" ASC";
@@ -307,32 +227,20 @@ public class QuerySortTest extends AbstractQueryTestBase {
 
     @Test
     public void failsWhenUsingUnindexedField() {
-        Map<String, String> sortApples = new HashMap<String, String>();
-        sortApples.put("apples", "asc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortApples);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("apples", FieldSort.Direction.ASCENDING));
         assertThat(sqlToSortIds(smallDocIdSet, order, indexes), is(nullValue()));
     }
 
     @Test
     public void failsWhenFieldsNotInSingleIndex() {
-        Map<String, String> sortX = new HashMap<String, String>();
-        sortX.put("x", "asc");
-        Map<String, String> sortAge = new HashMap<String, String>();
-        sortAge.put("age", "asc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortX);
-        order.add(sortAge);
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("x", FieldSort.Direction.ASCENDING), new FieldSort("age", FieldSort.Direction.ASCENDING));
         assertThat(sqlToSortIds(smallDocIdSet, order, indexes), is(nullValue()));
     }
 
     @Test
     public void returnsNullWhenNoIndexes() {
-        Map<String, String> sortY = new HashMap<String, String>();
-        sortY.put("y", "desc");
-        List<Map<String, String>> order = new ArrayList<Map<String, String>>();
-        order.add(sortY);
-        assertThat(sqlToSortIds(smallDocIdSet, order, new HashMap<String, Object>()),
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING));
+        assertThat(sqlToSortIds(smallDocIdSet, order, new HashMap<String, Map<String, Object>>()),
                 is(nullValue()));
         assertThat(sqlToSortIds(smallDocIdSet, order, null), is(nullValue()));
     }

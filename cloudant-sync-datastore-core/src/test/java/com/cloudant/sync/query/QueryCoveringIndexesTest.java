@@ -125,7 +125,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         bodyMap.put("married", true);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age", "married"), "married"), is("married"));
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("married")), "married"), is("married"));
         // query - { "married" : { "eq" : true } }
         Map<String, Object> marriedOperator = new HashMap<String, Object>();
         marriedOperator.put("$eq", true);
@@ -145,7 +145,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.createDocumentFromRevision(rev);
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name", "age"), "basic index"), is
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic index"), is
                 ("basic index"));
 
         // query - { "name" : "mike" }
@@ -655,7 +655,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     @Test
     public void canQueryForNonAsciiValues() throws Exception {
         setUpNonAsciiQueryData();
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("name"), "nonascii"), is("nonascii"));
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name")), "nonascii"), is("nonascii"));
         // query - { "name" : { "$eq" : "اسم" } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$eq", "اسم");
@@ -668,7 +668,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     @Test
     public void canQueryUsingFieldsWithOddNames() throws Exception {
         setUpNonAsciiQueryData();
-        assertThat(im.ensureIndexed(Arrays.<Object>asList("اسم", "datatype", "age"), "nonascii"),
+        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("اسم"), new FieldSort("datatype"), new FieldSort("age")), "nonascii"),
                 is("nonascii"));
         // query - { "اسم" : { "$eq" : "fred" }, "age" : { "$eq" : 12 } }
         Map<String, Object> op1 = new HashMap<String, Object>();
@@ -1471,7 +1471,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         setUpArrayIndexingData();
         // query - { "pet" : { "$in" : [ "fish", "hamster" ] } }
         Map<String, Object> op = new HashMap<String, Object>();
-        op.put("$in", Arrays.<Object>asList("fish", "hamster"));
+        op.put("$in", Arrays.<String>asList("fish", "hamster"));
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("pet", op);
         QueryResult queryResult = im.find(query);
@@ -1483,7 +1483,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         setUpArrayIndexingData();
         // query - { "pet" : { "$in" : [ "parrot", "turtle" ] } }
         Map<String, Object> op = new HashMap<String, Object>();
-        op.put("$in", Arrays.<Object>asList("parrot", "turtle"));
+        op.put("$in", Arrays.<String>asList("parrot", "turtle"));
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("pet", op);
         QueryResult queryResult = im.find(query);
@@ -1495,7 +1495,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         setUpArrayIndexingData();
         // query - { "pet" : { "$in" : [ "cat", "dog" ] } }
         Map<String, Object> op = new HashMap<String, Object>();
-        op.put("$in", Arrays.<Object>asList("cat", "dog"));
+        op.put("$in", Arrays.<String>asList("cat", "dog"));
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("pet", op);
         QueryResult queryResult = im.find(query);
@@ -1507,7 +1507,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         setUpArrayIndexingData();
         // query - { "pet" : { "$in" : [ "turtle", "pig" ] } }
         Map<String, Object> op = new HashMap<String, Object>();
-        //op.put("$in", Arrays.<Object>asList("turtle", "pig"));
+        op.put("$in", Arrays.<String>asList("turtle", "pig"));
         op.put("$eq", "turtle");
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("pet", op);
@@ -1520,7 +1520,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         setUpArrayIndexingData();
         // query - { "pet" : { "$not" : { "$in" : [ "cat", "dog" ] } } }
         Map<String, Object> op = new HashMap<String, Object>();
-        op.put("$in", Arrays.<Object>asList("cat", "dog"));
+        op.put("$in", Arrays.<String>asList("cat", "dog"));
         Map<String, Object> notOp = new HashMap<String, Object>();
         notOp.put("$not", op);
         Map<String, Object> query = new HashMap<String, Object>();
@@ -1545,11 +1545,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         setUpLargeResultSetQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("large_field", "cat");
-        Map<String, String> sort = new HashMap<String, String>();
-        sort.put("idx", "asc");
-        List<Map<String, String>> sortDoc = new ArrayList<Map<String, String>>();
-        sortDoc.add(sort);
-        QueryResult queryResult = im.find(query, 90, 20, null, sortDoc);
+        QueryResult queryResult = im.find(query, 90, 20, null, Arrays.<FieldSort>asList(new FieldSort("idx", FieldSort.Direction.ASCENDING)));
         List<String> expected = new ArrayList<String>();
         for (int i = 90; i < 110; i++) {
             expected.add(String.format("d%d", i));

@@ -62,7 +62,7 @@ class IndexUpdater {
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
-    public static boolean updateAllIndexes(Map<String, Object> indexes,
+    public static boolean updateAllIndexes(Map<String, Map<String, Object>> indexes,
                                            Database database,
                                            SQLDatabaseQueue queue) {
         IndexUpdater updater = new IndexUpdater(database, queue);
@@ -91,11 +91,11 @@ class IndexUpdater {
     }
 
     @SuppressWarnings("unchecked")
-    private boolean updateAllIndexes(Map<String, Object> indexes) {
+    private boolean updateAllIndexes(Map<String, Map<String, Object>> indexes) {
         boolean success = true;
 
-        for (Map.Entry<String, Object> entry: indexes.entrySet()) {
-            Map<String, Object> index = (Map<String, Object>) entry.getValue();
+        for (Map.Entry<String, Map<String, Object>> entry: indexes.entrySet()) {
+            Map<String, Object> index = entry.getValue();
             List<String> fields = (ArrayList<String>) index.get("fields");
             success = updateIndex(entry.getKey(), fields);
             if (!success) {

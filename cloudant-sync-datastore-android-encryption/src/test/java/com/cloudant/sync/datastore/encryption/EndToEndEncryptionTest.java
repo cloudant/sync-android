@@ -31,7 +31,9 @@ import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
+import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.IndexManager;
+import com.cloudant.sync.query.IndexManagerImpl;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.TestUtils;
 
@@ -129,7 +131,7 @@ public class EndToEndEncryptionTest {
 
         IndexManager im = this.database.query;
         try {
-            im.ensureIndexed(Arrays.<Object>asList("name", "age"));
+            im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
         } finally {
             im.close();
         }
@@ -154,7 +156,7 @@ public class EndToEndEncryptionTest {
 
         IndexManager im = this.database.query;
         try {
-            im.ensureIndexed(Arrays.<Object>asList("name", "age"));
+            im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
         } finally {
             im.close();
         }
@@ -301,7 +303,7 @@ public class EndToEndEncryptionTest {
         // perform a query to ensure we can use special chars
         IndexManager indexManager = database.query;
         try {
-            assertNotNull(indexManager.ensureIndexed(Arrays.<Object>asList("name", "pet"), "my index"));
+            assertNotNull(indexManager.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "my index"));
 
             // query for the name fred and check that docs are returned.
             Map<String, Object> selector = new HashMap<String, Object>();
