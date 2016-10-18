@@ -1061,9 +1061,11 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         } finally {
             im.close();
         }
-        // Now get a new IndexManager and queue and update the test fields accordingly
+
+        // Get a new IndexManager instance and extract its queue
         im = new IndexManager(ds);
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
+
         // Check that the updates are still there
         try {
             // Assert that the index made is still there
@@ -1104,7 +1106,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             im.close();
         }
 
-        // Now get a new IndexManager and queue and update the test fields accordingly
+        // Get a new IndexManager instance and extract its queue
         im = new IndexManager(ds);
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
 
@@ -1127,7 +1129,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             im.close();
         }
 
-        // Now get a new IndexManager and queue and update the test fields accordingly
+        // Get a new IndexManager instance and extract its queue
         im = new IndexManager(ds);
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         // Check that the updates are still there
