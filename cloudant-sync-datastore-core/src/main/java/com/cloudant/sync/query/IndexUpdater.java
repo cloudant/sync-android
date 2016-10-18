@@ -99,6 +99,9 @@ class IndexUpdater {
     }
 
     private void updateIndex(String indexName, List<FieldSort> fieldNames) throws QueryException {
+
+        Misc.checkNotNullOrEmpty(indexName, "indexName");
+
         Changes changes;
         long lastSequence = sequenceNumberForIndex(indexName);
 
@@ -113,7 +116,6 @@ class IndexUpdater {
                                 final List<FieldSort> fieldNames,
                                 final Changes changes,
                                 long lastSequence) throws QueryException {
-        Misc.checkNotNullOrEmpty(indexName, "indexName");
 
         Future<Void> result = queue.submitTransaction(new SQLCallable<Void>() {
             @Override
