@@ -91,7 +91,6 @@ class IndexUpdater {
         updater.updateIndex(indexName, fieldNames);
     }
 
-    @SuppressWarnings("unchecked")
     private void updateAllIndexes(List<Index> indexes) throws QueryException {
 
         for (Index index : indexes) {
@@ -136,13 +135,11 @@ class IndexUpdater {
                             continue;
                         }
                         for (DBParameter parameter: parameters) {
-                            if (parameter != null) {
-                                long rowId = database.insert(parameter.tableName,
-                                                             parameter.contentValues);
-                                if (rowId < 0) {
-                                    String msg = String.format("Updating index %s failed.", indexName);
-                                    throw new QueryException(msg);
-                                }
+                            long rowId = database.insert(parameter.tableName,
+                                    parameter.contentValues);
+                            if (rowId < 0) {
+                                String msg = String.format("Updating index %s failed.", indexName);
+                                throw new QueryException(msg);
                             }
                         }
                     }
@@ -302,11 +299,8 @@ class IndexUpdater {
                 contentValues.put(fieldName, (Short) argument);
             } else if (argument instanceof String) {
                 contentValues.put(fieldName, (String) argument);
-            } else {
-                // TODO it shouldn't be possible to get here and adding null to contentValues is not
-                // the right thing to do!
-                contentValues.put(fieldName, (String) null);
             }
+            // NB there is no default case - if the type isn't supported, it doesn't get indexed
             argIndex = argIndex + 1;
         }
         String tableName = IndexManagerImpl.tableNameForIndex(indexName);
