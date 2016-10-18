@@ -399,7 +399,6 @@ class QuerySqlTranslator {
         return chooseIndexForFields(neededFields, indexes);
     }
 
-    @SuppressWarnings("unchecked")
     protected static String chooseIndexForFields(Set<String> neededFields,
                                                  List<Index> indexes) {
         String chosenIndex = null;
@@ -425,7 +424,6 @@ class QuerySqlTranslator {
         return chosenIndex;
     }
 
-    @SuppressWarnings("unchecked")
     private static String getTextIndex(List<Index> indexes) {
         String textIndex = null;
         for (Index index : indexes) {

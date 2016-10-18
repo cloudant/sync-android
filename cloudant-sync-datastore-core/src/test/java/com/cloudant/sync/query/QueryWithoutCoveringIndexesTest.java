@@ -12,7 +12,7 @@
 
 package com.cloudant.sync.query;
 
-import static com.cloudant.sync.query.MatcherHelper.getIndexNameMatcher;
+import static com.cloudant.sync.query.IndexMatcherHelpers.getIndexNameMatcher;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;

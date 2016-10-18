@@ -71,7 +71,6 @@ class IndexCreator {
      *  @param proposedIndex The object that defines an index.  Includes field list, name, type and options.
      *  @return name of created index
      */
-    @SuppressWarnings("unchecked")
     private String ensureIndexed(Index proposedIndex) throws QueryException {
         Misc.checkNotNull(proposedIndex, "proposedIndex");
 
@@ -264,7 +263,6 @@ class IndexCreator {
      * @param existingIndexes the list of already existing indexes
      * @return whether the index limit has been reached
      */
-    @SuppressWarnings("unchecked")
     protected static boolean indexLimitReached(Index index, List<Index> existingIndexes) {
         if (index.indexType == IndexType.TEXT) {
             for (Index existingIndex : existingIndexes) {

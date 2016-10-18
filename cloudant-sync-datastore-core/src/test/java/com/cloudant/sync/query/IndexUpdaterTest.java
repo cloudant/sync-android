@@ -12,9 +12,13 @@
 
 package com.cloudant.sync.query;
 
+import static com.cloudant.sync.query.IndexMatcherHelpers.hasFieldsInAnyOrder;
+import static com.cloudant.sync.query.IndexMatcherHelpers.getIndexNameMatcher;
+import static com.cloudant.sync.query.IndexMatcherHelpers.getIndexNamed;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
@@ -30,7 +34,6 @@ import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.util.DatabaseUtils;
 
-import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -1076,24 +1079,20 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void createIndex(String indexName, List<FieldSort> fieldNames, IndexType indexType) throws QueryException{
         assertThat(im.ensureIndexed(fieldNames, indexName, indexType), is(indexName));
 
         List<Index> indexes = im.listIndexes();
-        // TODO use custom/better hamcrest matcher rather than interating through
-        for(Index index : indexes) {
-            if (index.indexName.equals(indexName)) {
-                assertThat(index.fieldNames.size(), is(fieldNames.size() + 2));
-                for (FieldSort fieldSort : fieldNames) {
-                    assertThat(index.fieldNames, Matchers.hasItem(fieldSort));
-                }
-                assertThat(index.fieldNames, hasItems(new FieldSort("_id"), new FieldSort("_rev")));
-                this.fields = index.fieldNames;
-                return;
-            }
+        assertThat(indexes, hasItem(getIndexNameMatcher(indexName)));
+        Index index = getIndexNamed(indexName, indexes);
+        List<String> fieldNamesPlus = new ArrayList<String>();
+        fieldNamesPlus.add("_id");
+        fieldNamesPlus.add("_rev");
+        for (FieldSort f : fieldNames) {
+            fieldNamesPlus.add(f.field);
         }
-        fail("Didn't find expected index "+indexName);
+        assertThat(index, hasFieldsInAnyOrder(fieldNamesPlus.toArray(new String[]{})));
+        this.fields = index.fieldNames;
     }
 
 }
