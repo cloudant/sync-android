@@ -90,31 +90,34 @@ public class IndexTest {
         Index index = new Index(fieldNames, indexName, IndexType.TEXT, "porter");
         assertThat(index.tokenize, is("porter"));
     }
-    // TODO these should test that .equals() does the right thing
-/*
+
     @Test
     public void comparesIndexTypeAndReturnsInEquality() {
         Index index = new Index(fieldNames, indexName);
-        assertThat(index.compareIndexTypeTo(IndexType.TEXT, null), is(false));
+        Index index2 = new Index(fieldNames, indexName, IndexType.TEXT, null);
+        assertThat(index.equals(index2), is(false));
     }
 
     @Test
     public void comparesIndexTypeAndReturnsEquality() {
         Index index = new Index(fieldNames, indexName);
-        assertThat(index.compareIndexTypeTo(IndexType.JSON, null), is(true));
+        Index index2 = new Index(fieldNames, indexName, IndexType.JSON, null);
+        assertThat(index.equals(index2), is(true));
     }
 
     @Test
     public void comparesIndexSettingsAndReturnsInEquality() {
         Index index = new Index(fieldNames, indexName, IndexType.TEXT);
-        assertThat(index.compareIndexTypeTo(IndexType.TEXT, "{\"tokenize\":\"porter\"}"), is(false));
+        Index index2 = new Index(fieldNames, indexName, IndexType.TEXT, "porter");
+        assertThat(index.equals(index2), is(false));
     }
 
     @Test
     public void comparesIndexSettingsAndReturnsEquality() {
         Index index = new Index(fieldNames, indexName, IndexType.TEXT);
-        assertThat(index.compareIndexTypeTo(IndexType.TEXT, "{\"tokenize\":\"simple\"}"), is(true));
-    }*/
+        Index index2 = new Index(fieldNames, indexName, IndexType.TEXT, "simple");
+        assertThat(index.equals(index2), is(true));
+    }
 
     @Test
     public void returnsIndexSettingsAsAString() {
