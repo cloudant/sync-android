@@ -12,27 +12,22 @@
 
 package com.cloudant.sync.query;
 
-import static com.cloudant.sync.query.MatcherHelper.getFields;
-import static com.cloudant.sync.query.MatcherHelper.getIndexNameMatcher;
-import static com.cloudant.sync.query.MatcherHelper.getIndexNamed;
+import static com.cloudant.sync.query.IndexMatcherHelpers.hasFieldsInAnyOrder;
+import static com.cloudant.sync.query.IndexMatcherHelpers.getIndexNameMatcher;
+import static com.cloudant.sync.query.IndexMatcherHelpers.getIndexNamed;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.core.IsEqual.equalTo;
 
-import org.hamcrest.FeatureMatcher;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class IndexCreatorTest extends AbstractIndexTestBase {
 
@@ -43,52 +38,47 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         assertThat(indexes.isEmpty(), is(true));
     }
 
-    @Test
-    public void preconditionsToCreatingIndexes() throws QueryException {
+    @Test(expected = NullPointerException.class)
+    public void preconditionsToCreatingIndexesNullFields() throws QueryException {
         // doesn't create an index on null fields
-        try {
-            im.ensureIndexed(null, "basic");
-            Assert.fail("Expected ensureIndexed to throw a NullPointerException");
-        } catch (NullPointerException npe) {
-            ;
-        }
+        im.ensureIndexed(null, "basic");
+        Assert.fail("Expected ensureIndexed to throw a NullPointerException");
+    }
 
-        List<FieldSort> fieldNames = null;
+    @Test(expected = IllegalArgumentException.class)
+    public void preconditionsToCreatingIndexesNoFields() throws QueryException {
+        List<FieldSort> fieldNames;
         // doesn't create an index on no fields
-        try {
-            fieldNames = new ArrayList<FieldSort>();
-            im.ensureIndexed(fieldNames, "basic");
-            Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
-        } catch (IllegalArgumentException qe) {
-            ;
-        }
+        fieldNames = new ArrayList<FieldSort>();
+        im.ensureIndexed(fieldNames, "basic");
+        Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
+    }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void preconditionsToCreatingIndexesNoName() throws QueryException {
+        List<FieldSort> fieldNames = null;
         // doesn't create an index without a name
-        try {
-            im.ensureIndexed(fieldNames, "");
-            Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
-        } catch (IllegalArgumentException qe) {
-            ;
-        }
+        fieldNames = new ArrayList<FieldSort>();
+        im.ensureIndexed(fieldNames, "");
+        Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
+    }
 
+    @Test(expected = NullPointerException.class)
+    public void preconditionsToCreatingIndexesNullType() throws QueryException {
+        List<FieldSort> fieldNames = null;
         // doesn't create an index on null index type
-        try {
-            im.ensureIndexed(fieldNames, "basic", null);
-            Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
-        } catch (IllegalArgumentException qe) {
-            ;
-        }
+        im.ensureIndexed(fieldNames, "basic", null);
+        Assert.fail("Expected ensureIndexed to throw a NullPointerException");
+    }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void preconditionsToCreatingIndexesDuplicateFields() throws QueryException {
+        List<FieldSort> fieldNames;
         // doesn't create an index if duplicate fields
-        try {
-            fieldNames = Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new
-                    FieldSort("age"));
-            im.ensureIndexed(fieldNames, "basic");
-            Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
-        } catch (IllegalArgumentException qe) {
-            ;
-        }
-
+        fieldNames = Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new
+                FieldSort("age"));
+        im.ensureIndexed(fieldNames, "basic");
+        Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
     }
 
     @Test
@@ -99,7 +89,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         List<Index> indexes = im.listIndexes();
         assertThat(indexes, contains(getIndexNameMatcher("basic")));
 
-        assertThat(getIndexNamed("basic", indexes), getFields("_id", "_rev", "name"));
+        assertThat(getIndexNamed("basic", indexes), hasFieldsInAnyOrder("_id", "_rev", "name"));
     }
 
     @Test
@@ -110,7 +100,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         List<Index> indexes = im.listIndexes();
         assertThat(indexes, contains(getIndexNameMatcher("basic")));
 
-        assertThat(getIndexNamed("basic", indexes), getFields("_id", "_rev", "name", "age"));
+        assertThat(getIndexNamed("basic", indexes), hasFieldsInAnyOrder("_id", "_rev", "name", "age"));
     }
 
     @Test
@@ -122,7 +112,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         List<Index> indexes = im.listIndexes();
         assertThat(indexes, contains(getIndexNameMatcher("basic")));
 
-        assertThat(getIndexNamed("basic", indexes), getFields("_id", "_rev", "name.first", "age.years"));
+        assertThat(getIndexNamed("basic", indexes), hasFieldsInAnyOrder("_id", "_rev", "name.first", "age.years"));
     }
 
     @Test
@@ -138,9 +128,9 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
                 getIndexNameMatcher("another"),
                 getIndexNameMatcher("petname")));
 
-        assertThat(getIndexNamed("basic", indexes), getFields("_id", "_rev", "name", "age"));
-        assertThat(getIndexNamed("another", indexes), getFields("_id", "_rev", "name", "age"));
-        assertThat(getIndexNamed("petname", indexes), getFields("_id", "_rev", "cat"));
+        assertThat(getIndexNamed("basic", indexes), hasFieldsInAnyOrder("_id", "_rev", "name", "age"));
+        assertThat(getIndexNamed("another", indexes), hasFieldsInAnyOrder("_id", "_rev", "name", "age"));
+        assertThat(getIndexNamed("petname", indexes), hasFieldsInAnyOrder("_id", "_rev", "cat"));
     }
 
     @Test
@@ -153,7 +143,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         List<Index> indexes = im.listIndexes();
         assertThat(indexes, contains(getIndexNameMatcher("basic")));
 
-        assertThat(getIndexNamed("basic", indexes), getFields("_id", "_rev", "name", "age"));
+        assertThat(getIndexNamed("basic", indexes), hasFieldsInAnyOrder("_id", "_rev", "name", "age"));
     }
 
     @Test
