@@ -250,17 +250,13 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         assertThat(indexName, is("basic"));
     }
 
-    @Test
-    public void createIndexWhereFieldNameContainsDollarSign() throws QueryException {
-
+    @Test(expected = IllegalArgumentException.class)
+    public void createIndexWhereFieldNameContainsDollarSignAtStart() throws QueryException {
         // rejects indexes with $ at start
-        try {
-            im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("$name"), new FieldSort("datatype")), "basic");
-            Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
-        } catch (IllegalArgumentException qe) {
-            ;
-        }
-
+       im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("$name"), new FieldSort("datatype")), "basic");
+    }
+    @Test
+    public void createIndexWhereFieldNameContainsDollarSignNotAtStart() throws QueryException {
         // creates indexes with $ not at start
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("na$me"), new FieldSort("datatype$")), "basic");
         assertThat(indexName, is("basic"));
