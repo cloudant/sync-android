@@ -72,16 +72,14 @@ public class IndexTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void returnsNullWhenNoIndexName() {
+    public void throwsWhenNoIndexName() {
         Index index = new Index(fieldNames, "");
-        assertThat(index, is(nullValue()));
     }
 
-    @Test
-    public void correctlyIgnoresIndexSettings() {
-        // json indexes do not support index settings.  Index settings will be ignored.
+    @Test(expected = IllegalArgumentException.class)
+    public void throwsWhenTokenizeSetForJson() {
+        // json indexes do not support tokenize setting.
         Index index = new Index(fieldNames, indexName, IndexType.JSON, "porter");
-        assertThat(index.tokenize, is(nullValue()));
     }
 
     @Test

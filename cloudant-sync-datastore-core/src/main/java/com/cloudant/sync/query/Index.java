@@ -58,7 +58,7 @@ class Index {
      * @return the Index object or null if arguments passed in were invalid.
      */
     public Index (List<FieldSort> fieldNames, String indexName, IndexType indexType) {
-        this(fieldNames, indexName, indexType, TEXT_DEFAULT_TOKENIZER);
+        this(fieldNames, indexName, indexType, null);
     }
 
     /**
@@ -93,8 +93,9 @@ class Index {
                 this.tokenize = tokenize;
             }
         } else {
-            // ignore tokenize if we're not doing text indexing
-            this.tokenize = null;
+            // tokenize isn't valid if we're not doing text indexing
+            Misc.checkArgument(tokenize == null, "tokenize must not be null if indexType is JSON");
+            this.tokenize = tokenize;
         }
 
     }
