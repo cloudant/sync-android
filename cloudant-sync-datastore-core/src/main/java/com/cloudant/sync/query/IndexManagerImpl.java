@@ -170,15 +170,16 @@ public class IndexManagerImpl implements IndexManager {
                 Cursor cursorIndexes = null;
                 try {
                     cursorIndexes = db.rawQuery(sqlIndexes, new String[]{indexName});
-                    int i=0;
                     IndexType indexType = null;
                     String settings = null;
                     ArrayList<FieldSort> fieldNames = new ArrayList<FieldSort>();
+                    boolean first = true;
                     while (cursorIndexes.moveToNext()) {
-                        if (i++ == 0) {
+                        if (first) {
                             // first time round
                             indexType = IndexType.enumValue(cursorIndexes.getString(0));
                             settings = cursorIndexes.getString(2);
+                            first = false;
                         }
                         fieldNames.add(new FieldSort(cursorIndexes.getString(1)));
                     }
