@@ -94,7 +94,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
 
     // When executing AND queries
 
-    @Test(expected = QueryException.class)
+    @Test(expected = NullPointerException.class)
     public void returnsNullForNoQuery() throws Exception {
         setUpBasicQueryData();
         im.find(null);
