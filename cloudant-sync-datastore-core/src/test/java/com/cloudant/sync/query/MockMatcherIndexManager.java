@@ -13,6 +13,7 @@
 package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.Database;
+import com.cloudant.sync.util.Misc;
 import com.cloudant.sync.util.TestUtils;
 
 import java.util.List;
@@ -39,9 +40,7 @@ public class MockMatcherIndexManager extends IndexManagerImpl {
                             long limit,
                             List<String> fields,
                             List<FieldSort> sortDocument) throws QueryException {
-        if (query == null) {
-            throw new QueryException("Query must not be null");
-        }
+        Misc.checkNotNull(query, "query");
 
         updateAllIndexes();
 
