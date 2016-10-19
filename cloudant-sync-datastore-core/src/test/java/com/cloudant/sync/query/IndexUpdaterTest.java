@@ -722,8 +722,6 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         saved = ds.createDocumentFromRevision(goodRev);
         ds.createDocumentFromRevision(badRev);
 
-        // TODO should the index updating continue once it's encountered a document with multiple arrays?
-
         IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(2l));
 

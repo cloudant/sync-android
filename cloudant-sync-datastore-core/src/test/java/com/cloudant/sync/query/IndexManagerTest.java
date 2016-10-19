@@ -43,16 +43,16 @@ public class IndexManagerTest extends AbstractIndexTestBase {
 
         try {
             im.deleteIndex(null);
-            Assert.fail("Expected deleteIndex to throw a QueryException");
-        } catch (QueryException qe) {
+            Assert.fail("Expected deleteIndex to throw a IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
             ;
         }
         assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
 
         try {
             im.deleteIndex("");
-            Assert.fail("Expected deleteIndex to throw a QueryException");
-        } catch (QueryException qe) {
+            Assert.fail("Expected deleteIndex to throw a IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
             ;
         }
 
