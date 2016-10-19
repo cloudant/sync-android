@@ -40,105 +40,93 @@ public class IndexTest {
 
     @Test
     public void constructsIndexWithDefaultType() {
-        Index index = Index.getInstance(fieldNames, indexName);
+        Index index = new Index(fieldNames, indexName);
         assertThat(index.indexName, is("basic"));
         assertThat(index.fieldNames, is(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"))));
         assertThat(index.indexType, is(IndexType.JSON));
-        assertThat(index.indexSettings, is(nullValue()));
+        assertThat(index.tokenize, is(nullValue()));
     }
 
     @Test
     public void constructsIndexWithTextTypeDefaultSettings() {
-        Index index = Index.getInstance(fieldNames, indexName, IndexType.TEXT);
+        Index index = new Index(fieldNames, indexName, IndexType.TEXT);
         assertThat(index.indexName, is("basic"));
         assertThat(index.fieldNames, is(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"))));
         assertThat(index.indexType, is(IndexType.TEXT));
-        assertThat(index.indexSettings.size(), is(1));
-        assertThat(index.indexSettings.get("tokenize"), is("simple"));
+        assertThat(index.tokenize, is("simple"));
     }
 
-    @Test
+    @Test(expected = NullPointerException.class)
     public void returnsNullWhenNoFields() {
-        Index index = Index.getInstance(null, indexName);
+        Index index = new Index(null, indexName);
         assertThat(index, is(nullValue()));
 
-        index = Index.getInstance(new ArrayList<FieldSort>(), indexName);
+        index = new Index(new ArrayList<FieldSort>(), indexName);
         assertThat(index, is(nullValue()));
     }
 
     @Test
     public void returnsValueWhenIndexNameIsNull(){
-        Index index = Index.getInstance(fieldNames, null);
+        Index index = new Index(fieldNames, null);
         assertThat(index, is(notNullValue()));
     }
 
-    @Test
-    public void returnsNullWhenNoIndexName() {
-        Index index = Index.getInstance(fieldNames, "");
-        assertThat(index, is(nullValue()));
+    @Test(expected = IllegalArgumentException.class)
+    public void throwsWhenNoIndexName() {
+        Index index = new Index(fieldNames, "");
     }
 
-    @Test
-    public void returnsNullWhenInvalidIndexSettings() {
-        Map<String, String> indexSettings = new HashMap<String, String>();
-        indexSettings.put("foo", "bar");
-        Index index = Index.getInstance(fieldNames, indexName, IndexType.TEXT, indexSettings);
-        assertThat(index, is(nullValue()));
-    }
-
-    @Test
-    public void correctlyIgnoresIndexSettings() {
-        Map<String, String> indexSettings = new HashMap<String, String>();
-        indexSettings.put("tokenize", "porter");
-        // json indexes do not support index settings.  Index settings will be ignored.
-        Index index = Index.getInstance(fieldNames, indexName, IndexType.JSON, indexSettings);
-        assertThat(index.indexSettings, is(nullValue()));
+    @Test(expected = IllegalArgumentException.class)
+    public void throwsWhenTokenizeSetForJson() {
+        // json indexes do not support tokenize setting.
+        Index index = new Index(fieldNames, indexName, IndexType.JSON, "porter");
     }
 
     @Test
     public void correctlySetsIndexSettings() {
-        Map<String, String> indexSettings = new HashMap<String, String>();
-        indexSettings.put("tokenize", "porter");
         // text indexes support the tokenize setting.
-        Index index = Index.getInstance(fieldNames, indexName, IndexType.TEXT, indexSettings);
-        assertThat(index.indexSettings.size(), is(1));
-        assertThat(index.indexSettings.get("tokenize"), is("porter"));
+        Index index = new Index(fieldNames, indexName, IndexType.TEXT, "porter");
+        assertThat(index.tokenize, is("porter"));
     }
 
     @Test
     public void comparesIndexTypeAndReturnsInEquality() {
-        Index index = Index.getInstance(fieldNames, indexName);
-        assertThat(index.compareIndexTypeTo(IndexType.TEXT, null), is(false));
+        Index index = new Index(fieldNames, indexName);
+        Index index2 = new Index(fieldNames, indexName, IndexType.TEXT, null);
+        assertThat(index.equals(index2), is(false));
     }
 
     @Test
     public void comparesIndexTypeAndReturnsEquality() {
-        Index index = Index.getInstance(fieldNames, indexName);
-        assertThat(index.compareIndexTypeTo(IndexType.JSON, null), is(true));
+        Index index = new Index(fieldNames, indexName);
+        Index index2 = new Index(fieldNames, indexName, IndexType.JSON, null);
+        assertThat(index.equals(index2), is(true));
     }
 
     @Test
     public void comparesIndexSettingsAndReturnsInEquality() {
-        Index index = Index.getInstance(fieldNames, indexName, IndexType.TEXT);
-        assertThat(index.compareIndexTypeTo(IndexType.TEXT, "{\"tokenize\":\"porter\"}"), is(false));
+        Index index = new Index(fieldNames, indexName, IndexType.TEXT);
+        Index index2 = new Index(fieldNames, indexName, IndexType.TEXT, "porter");
+        assertThat(index.equals(index2), is(false));
     }
 
     @Test
     public void comparesIndexSettingsAndReturnsEquality() {
-        Index index = Index.getInstance(fieldNames, indexName, IndexType.TEXT);
-        assertThat(index.compareIndexTypeTo(IndexType.TEXT, "{\"tokenize\":\"simple\"}"), is(true));
+        Index index = new Index(fieldNames, indexName, IndexType.TEXT);
+        Index index2 = new Index(fieldNames, indexName, IndexType.TEXT, "simple");
+        assertThat(index.equals(index2), is(true));
     }
 
     @Test
     public void returnsIndexSettingsAsAString() {
-        Index index = Index.getInstance(fieldNames, indexName, IndexType.TEXT);
+        Index index = new Index(fieldNames, indexName, IndexType.TEXT);
         assertThat(index.settingsAsJSON(), is("{\"tokenize\":\"simple\"}"));
     }
 
     @Test
     public void returnsNullIndexSettingsAsAString() {
-        Index index = Index.getInstance(fieldNames, indexName);
-        assertThat(index.settingsAsJSON(), is(nullValue()));
+        Index index = new Index(fieldNames, indexName);
+        assertThat(index.settingsAsJSON(), is("{}"));
     }
 
 }

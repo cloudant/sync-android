@@ -12,6 +12,7 @@
 
 package com.cloudant.sync.query;
 
+import static com.cloudant.sync.query.IndexMatcherHelpers.getIndexNameMatcher;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -21,6 +22,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -30,84 +32,99 @@ import java.util.Map;
 public class IndexManagerTest extends AbstractIndexTestBase {
 
     @Test
-    public void enusureIndexedGeneratesIndexName() {
+    public void enusureIndexedGeneratesIndexName() throws QueryException {
         assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"))), is(notNullValue()));
     }
 
     @Test
-    public void deleteFailOnNoIndexName() {
+    public void deleteFailOnNoIndexName() throws QueryException {
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
-        assertThat(im.listIndexes().keySet(), contains("basic"));
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
 
-        // TODO assert exception
-        im.deleteIndex(null);
-        assertThat(im.listIndexes().keySet(), contains("basic"));
+        try {
+            im.deleteIndex(null);
+            Assert.fail("Expected deleteIndex to throw a IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+            ;
+        }
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
 
-        // TODO assert exception
-        im.deleteIndex("");
-        assertThat(im.listIndexes().keySet(), contains("basic"));
+        try {
+            im.deleteIndex("");
+            Assert.fail("Expected deleteIndex to throw a IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+            ;
+        }
+
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
     }
 
     @Test
-    public void deleteFailOnInvalidIndexName() {
+    public void deleteFailOnInvalidIndexName() throws QueryException {
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
-        assertThat(im.listIndexes().keySet(), contains("basic"));
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
 
-        // TODO assert exception
-        im.deleteIndex("invalid");
-        assertThat(im.listIndexes().keySet(), contains("basic"));
+        try {
+            im.deleteIndex("invalid");
+            Assert.fail("Expected deleteIndex to throw a QueryException");
+        } catch (QueryException qe) {
+            ;
+        }
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
     }
 
     @Test
-    public void createIndexWithSpaceInName() {
+    public void createIndexWithSpaceInName() throws QueryException {
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic index");
-        assertThat(im.listIndexes().keySet(), contains("basic index"));
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic index")));
     }
 
     @Test
-         public void createIndexWithSingleQuoteInName() {
+         public void createIndexWithSingleQuoteInName() throws QueryException {
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic'index");
-        assertThat(im.listIndexes().keySet(), contains("basic'index"));
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic'index")));
     }
 
     @Test
-    public void createIndexWithSemiColonQuoteInName() {
+    public void createIndexWithSemiColonQuoteInName() throws QueryException {
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic;index");
-        assertThat(im.listIndexes().keySet(), contains("basic;index"));
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic;index")));
     }
 
     @Test
-    public void createIndexWithBracketsInName() {
+    public void createIndexWithBracketsInName() throws QueryException {
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic(index)");
-        assertThat(im.listIndexes().keySet(), contains("basic(index)"));
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic(index)")));
     }
 
     @Test
-    public void createIndexWithKeyWordName() {
+    public void createIndexWithKeyWordName() throws QueryException {
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "INSERT INDEX");
-        assertThat(im.listIndexes().keySet(), contains("INSERT INDEX"));
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("INSERT INDEX")));
     }
 
 
 
     @Test
-     public void deleteEmptyIndex() {
+     public void deleteEmptyIndex() throws QueryException {
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
-        assertThat(im.listIndexes().keySet(), contains("basic"));
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
 
         im.deleteIndex("basic");
         assertThat(im.listIndexes().isEmpty(), is(true));
     }
 
     @Test
-    public void deleteTheCorrectEmptyIndex() {
+    public void deleteTheCorrectEmptyIndex() throws QueryException {
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic2");
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name")), "basic3");
-        assertThat(im.listIndexes().keySet(), containsInAnyOrder("basic", "basic2", "basic3"));
+        assertThat(im.listIndexes().size(), is(3));
+        assertThat(im.listIndexes(), containsInAnyOrder(getIndexNameMatcher("basic"), getIndexNameMatcher("basic2"), getIndexNameMatcher("basic3")));
 
         im.deleteIndex("basic2");
-        assertThat(im.listIndexes().keySet(), containsInAnyOrder("basic", "basic3"));
+        assertThat(im.listIndexes().size(), is(2));
+        assertThat(im.listIndexes(), containsInAnyOrder(getIndexNameMatcher("basic"), getIndexNameMatcher("basic3")));
     }
 
     @Test
@@ -126,7 +143,7 @@ public class IndexManagerTest extends AbstractIndexTestBase {
         }
 
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
-        assertThat(im.listIndexes().keySet(), contains("basic"));
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
         im.deleteIndex("basic");
         assertThat(im.listIndexes().isEmpty(), is(true));
     }
@@ -149,10 +166,12 @@ public class IndexManagerTest extends AbstractIndexTestBase {
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic2");
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name")), "basic3");
-        assertThat(im.listIndexes().keySet(), containsInAnyOrder("basic", "basic2", "basic3"));
+        assertThat(im.listIndexes().size(), is(3));
+        assertThat(im.listIndexes(), containsInAnyOrder(getIndexNameMatcher("basic"), getIndexNameMatcher("basic2"), getIndexNameMatcher("basic3")));
 
         im.deleteIndex("basic2");
-        assertThat(im.listIndexes().keySet(), containsInAnyOrder("basic", "basic3"));
+        assertThat(im.listIndexes().size(), is(2));
+        assertThat(im.listIndexes(), containsInAnyOrder(getIndexNameMatcher("basic"), getIndexNameMatcher("basic3")));
     }
 
     @Test
@@ -171,7 +190,7 @@ public class IndexManagerTest extends AbstractIndexTestBase {
         }
 
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic", IndexType.TEXT);
-        assertThat(im.listIndexes().keySet(), contains("basic"));
+        assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
 
         im.deleteIndex("basic");
         assertThat(im.listIndexes().isEmpty(), is(true));

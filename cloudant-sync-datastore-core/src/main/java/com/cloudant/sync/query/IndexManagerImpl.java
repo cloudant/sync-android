@@ -45,11 +45,13 @@ import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.DatabaseUtils;
+import com.cloudant.sync.util.JSONUtils;
+import com.cloudant.sync.util.Misc;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -136,11 +138,11 @@ public class IndexManagerImpl implements IndexManager {
      *  @return Map of indexes in the database.
      */
     @Override
-    public Map<String, Map<String, Object>> listIndexes() {
+    public List<Index> listIndexes() {
         try {
-            return dbQueue.submit(new SQLCallable<Map<String, Map<String, Object>> >() {
+            return dbQueue.submit(new SQLCallable<List<Index>>() {
                 @Override
-                public Map<String, Map<String, Object>> call(SQLDatabase database) throws Exception {
+                public List<Index> call(SQLDatabase database) throws Exception {
                      return IndexManagerImpl.listIndexesInDatabase(database);
                 }
             }).get();
@@ -154,42 +156,48 @@ public class IndexManagerImpl implements IndexManager {
 
     }
 
-    protected static Map<String, Map<String, Object>> listIndexesInDatabase(SQLDatabase db) {
+    protected static List<Index> listIndexesInDatabase(SQLDatabase db) throws SQLException {
         // Accumulate indexes and definitions into a map
-        String sql;
-        sql = String.format("SELECT index_name, index_type, field_name, index_settings FROM %s",
-                             INDEX_METADATA_TABLE_NAME);
-        Map<String, Map<String, Object>> indexes = null;
-        Map<String, Object> index;
-        List<String> fields = null;
-        Cursor cursor = null;
+        String sqlIndexNames = String.format("SELECT DISTINCT index_name FROM %s", INDEX_METADATA_TABLE_NAME);
+        Cursor cursorIndexNames = null;
+        ArrayList<Index> indexes = new ArrayList<Index>();
         try {
-            cursor = db.rawQuery(sql, new String[]{});
-            indexes = new HashMap<String, Map<String, Object>>();
-            while (cursor.moveToNext()) {
-                String rowIndex = cursor.getString(0);
-                IndexType rowType = IndexType.enumValue(cursor.getString(1));
-                String rowField = cursor.getString(2);
-                String rowSettings = cursor.getString(3);
-                if (!indexes.containsKey(rowIndex)) {
-                    index = new HashMap<String, Object>();
-                    fields = new ArrayList<String>();
-                    index.put("type", rowType);
-                    index.put("name", rowIndex);
-                    index.put("fields", fields);
-                    if (rowSettings != null && !rowSettings.isEmpty()) {
-                        index.put("settings", rowSettings);
+            cursorIndexNames = db.rawQuery(sqlIndexNames, new String[]{});
+            while (cursorIndexNames.moveToNext()) {
+                String indexName = cursorIndexNames.getString(0);
+                String sqlIndexes = String.format("SELECT index_type, field_name, index_settings FROM %s "+
+                        "WHERE index_name = ?",
+                        INDEX_METADATA_TABLE_NAME);
+                Cursor cursorIndexes = null;
+                try {
+                    cursorIndexes = db.rawQuery(sqlIndexes, new String[]{indexName});
+                    IndexType indexType = null;
+                    String settings = null;
+                    ArrayList<FieldSort> fieldNames = new ArrayList<FieldSort>();
+                    boolean first = true;
+                    while (cursorIndexes.moveToNext()) {
+                        if (first) {
+                            // first time round
+                            indexType = IndexType.enumValue(cursorIndexes.getString(0));
+                            settings = cursorIndexes.getString(2);
+                            first = false;
+                        }
+                        fieldNames.add(new FieldSort(cursorIndexes.getString(1)));
                     }
-                    indexes.put(rowIndex, index);
+                    Map<String, Object> settingsMap = JSONUtils.deserialize(settings.getBytes(Charset.forName("UTF-8")));
+                    if (settingsMap.containsKey("tokenize") && settingsMap.get("tokenize") instanceof String) {
+                        indexes.add(new Index(fieldNames, indexName, indexType, (String)settingsMap.get("tokenize")));
+                    } else {
+                        indexes.add(new Index(fieldNames, indexName, indexType));
+                    }
+                } finally {
+                    DatabaseUtils.closeCursorQuietly(cursorIndexes);
                 }
-                if (fields != null) {
-                    fields.add(rowField);
-                }
+
+
             }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Failed to get a list of indexes in the database.", e);
         } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
+            DatabaseUtils.closeCursorQuietly(cursorIndexNames);
         }
 
         return indexes;
@@ -204,7 +212,7 @@ public class IndexManagerImpl implements IndexManager {
      *  @return name of created index
      */
     @Override
-    public String ensureIndexed(List<FieldSort> fieldNames) {
+    public String ensureIndexed(List<FieldSort> fieldNames) throws QueryException {
         return this.ensureIndexed(fieldNames, null);
     }
 
@@ -218,8 +226,8 @@ public class IndexManagerImpl implements IndexManager {
      *  @return name of created index
      */
     @Override
-    public String ensureIndexed(List<FieldSort> fieldNames, String indexName) {
-        return IndexCreator.ensureIndexed(Index.getInstance(fieldNames, indexName),
+    public String ensureIndexed(List<FieldSort> fieldNames, String indexName) throws QueryException {
+        return IndexCreator.ensureIndexed(new Index(fieldNames, indexName),
                 database,
                 dbQueue);
     }
@@ -235,7 +243,7 @@ public class IndexManagerImpl implements IndexManager {
      *  @return name of created index
      */
     @Override
-    public String ensureIndexed(List<FieldSort> fieldNames, String indexName, IndexType indexType) {
+    public String ensureIndexed(List<FieldSort> fieldNames, String indexName, IndexType indexType) throws QueryException {
         return ensureIndexed(fieldNames, indexName, indexType, null);
     }
 
@@ -247,7 +255,7 @@ public class IndexManagerImpl implements IndexManager {
      *  @param fieldNames List of field names in the sort format
      *  @param indexName Name of index to create or null to generate an index name.
      *  @param indexType The type of index (json or text currently supported)
-     *  @param indexSettings The optional settings to be applied to an index
+     *  @param tokenize
      *                       Only text indexes support settings - Ex. { "tokenize" : "simple" }
      *  @return name of created index
      */
@@ -255,11 +263,11 @@ public class IndexManagerImpl implements IndexManager {
     public String ensureIndexed(List<FieldSort> fieldNames,
                                 String indexName,
                                 IndexType indexType,
-                                Map<String, String> indexSettings) {
-        return IndexCreator.ensureIndexed(Index.getInstance(fieldNames,
+                                String tokenize) throws QueryException {
+        return IndexCreator.ensureIndexed(new Index(fieldNames,
                         indexName,
                         indexType,
-                        indexSettings),
+                        tokenize),
                 database,
                 dbQueue);
     }
@@ -270,18 +278,12 @@ public class IndexManagerImpl implements IndexManager {
      *  @param indexName Name of index to delete
      */
     @Override
-    public void deleteIndex(final String indexName) {
-        if (indexName == null || indexName.isEmpty()) {
-            logger.log(Level.WARNING, "TO delete an index, index name should be provided.");
-            // TODO throw exception
-        }
+    public void deleteIndex(final String indexName) throws QueryException {
+        Misc.checkNotNullOrEmpty(indexName, "indexName");
 
-        Future<Boolean> result = dbQueue.submit(new SQLCallable<Boolean>() {
+        Future<Void> result = dbQueue.submitTransaction(new SQLCallable<Void>() {
             @Override
-            public Boolean call(SQLDatabase database) {
-                Boolean transactionSuccess = true;
-                database.beginTransaction();
-
+            public Void call(SQLDatabase database) throws QueryException {
                 try {
                     // Drop the index table
                     String tableName = tableNameForIndex(indexName);
@@ -293,28 +295,22 @@ public class IndexManagerImpl implements IndexManager {
                     database.delete(INDEX_METADATA_TABLE_NAME, where, new String[]{ indexName });
                 } catch (SQLException e) {
                     String msg = String.format("Failed to delete index: %s",indexName);
-                    logger.log(Level.SEVERE, msg, e);
-                    transactionSuccess = false;
+                    throw new QueryException(msg, e);
                 }
-
-                if (transactionSuccess) {
-                    database.setTransactionSuccessful();
-                }
-                database.endTransaction();
-
-                return transactionSuccess;
+                return null;
             }
         });
 
-        boolean success;
         try {
-            success = result.get();
+            result.get();
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error during index deletion:", e);
-            // TODO throw exception
+            String message = "Execution error during index deletion";
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error during index deletion:", e);
-            // TODO throw exception
+            String message = "Execution interrupted error during index deletion";
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e);
         }
 
     }
@@ -324,14 +320,14 @@ public class IndexManagerImpl implements IndexManager {
      *
      */
     @Override
-    public void updateAllIndexes() {
-        Map<String, Map<String, Object>> indexes = listIndexes();
+    public void updateAllIndexes() throws QueryException {
+        List<Index> indexes = listIndexes();
 
         IndexUpdater.updateAllIndexes(indexes, database, dbQueue);
     }
 
     @Override
-    public QueryResult find(Map<String, Object> query) {
+    public QueryResult find(Map<String, Object> query) throws QueryException {
         return find(query, 0, 0, null, null);
     }
 
@@ -340,16 +336,13 @@ public class IndexManagerImpl implements IndexManager {
                             long skip,
                             long limit,
                             List<String> fields,
-                            List<FieldSort> sortDocument) {
-        if (query == null) {
-            logger.log(Level.SEVERE, "-find called with null selector; bailing.");
-            return null;
-        }
+                            List<FieldSort> sortDocument) throws QueryException {
+        Misc.checkNotNull(query, "query");
 
         updateAllIndexes();
 
         QueryExecutor queryExecutor = new QueryExecutor(database, dbQueue);
-        Map<String, Map<String, Object>> indexes = listIndexes();
+        List<Index> indexes = listIndexes();
 
         return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
     }

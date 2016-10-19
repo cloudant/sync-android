@@ -12,143 +12,142 @@
 
 package com.cloudant.sync.query;
 
+import static com.cloudant.sync.query.IndexMatcherHelpers.hasFieldsInAnyOrder;
+import static com.cloudant.sync.query.IndexMatcherHelpers.getIndexNameMatcher;
+import static com.cloudant.sync.query.IndexMatcherHelpers.getIndexNamed;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
     public void emptyIndexList() {
-        Map<String, Map<String, Object>> indexes = im.listIndexes();
+        List<Index> indexes = im.listIndexes();
         assertThat(indexes, is(notNullValue()));
         assertThat(indexes.isEmpty(), is(true));
     }
 
-    @Test
-    public void preconditionsToCreatingIndexes() {
+    @Test(expected = NullPointerException.class)
+    public void preconditionsToCreatingIndexesNullFields() throws QueryException {
         // doesn't create an index on null fields
-        String name = im.ensureIndexed(null, "basic");
-        assertThat(name, is(nullValue()));
+        im.ensureIndexed(null, "basic");
+        Assert.fail("Expected ensureIndexed to throw a NullPointerException");
+    }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void preconditionsToCreatingIndexesNoFields() throws QueryException {
+        List<FieldSort> fieldNames;
         // doesn't create an index on no fields
-        List<FieldSort> fieldNames = new ArrayList<FieldSort>();
-        name = im.ensureIndexed(fieldNames, "basic");
-        assertThat(name, is(nullValue()));
+        fieldNames = new ArrayList<FieldSort>();
+        im.ensureIndexed(fieldNames, "basic");
+        Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
+    }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void preconditionsToCreatingIndexesNoName() throws QueryException {
+        List<FieldSort> fieldNames = null;
         // doesn't create an index without a name
-        name = im.ensureIndexed(fieldNames, "");
-        assertThat(name, is(nullValue()));
+        fieldNames = new ArrayList<FieldSort>();
+        im.ensureIndexed(fieldNames, "");
+        Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
+    }
 
+    @Test(expected = NullPointerException.class)
+    public void preconditionsToCreatingIndexesNullType() throws QueryException {
+        List<FieldSort> fieldNames = null;
         // doesn't create an index on null index type
-        name = im.ensureIndexed(fieldNames, "basic", null);
-        assertThat(name, is(nullValue()));
+        im.ensureIndexed(fieldNames, "basic", null);
+        Assert.fail("Expected ensureIndexed to throw a NullPointerException");
+    }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void preconditionsToCreatingIndexesDuplicateFields() throws QueryException {
+        List<FieldSort> fieldNames;
         // doesn't create an index if duplicate fields
-        fieldNames = Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new FieldSort("age"));
-        name = im.ensureIndexed(fieldNames, "basic");
-        assertThat(name, is(nullValue()));
+        fieldNames = Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new
+                FieldSort("age"));
+        im.ensureIndexed(fieldNames, "basic");
+        Assert.fail("Expected ensureIndexed to throw a IllegalArgumentException");
     }
 
     @Test
-    public void createIndexOverOneField() {
+    public void createIndexOverOneField() throws QueryException {
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name")), "basic");
         assertThat(indexName, is("basic"));
 
-        Map<String, Map<String, Object>> indexes = im.listIndexes();
-        assertThat(indexes, hasKey("basic"));
+        List<Index> indexes = im.listIndexes();
+        assertThat(indexes, contains(getIndexNameMatcher("basic")));
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> index = indexes.get("basic");
-        @SuppressWarnings("unchecked")
-        List<String> fields = (List<String>) index.get("fields");
-        assertThat(fields, containsInAnyOrder("_id", "_rev", "name"));
+        assertThat(getIndexNamed("basic", indexes), hasFieldsInAnyOrder("_id", "_rev", "name"));
     }
 
     @Test
-    public void createIndexOverTwoFields() {
+    public void createIndexOverTwoFields() throws QueryException {
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic");
         assertThat(indexName, is("basic"));
 
-        Map<String, Map<String, Object>> indexes = im.listIndexes();
-        assertThat(indexes, hasKey("basic"));
+        List<Index> indexes = im.listIndexes();
+        assertThat(indexes, contains(getIndexNameMatcher("basic")));
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> index = indexes.get("basic");
-        @SuppressWarnings("unchecked")
-        List<String> fields = (List<String>) index.get("fields");
-        assertThat(fields, containsInAnyOrder("_id", "_rev", "name", "age"));
+        assertThat(getIndexNamed("basic", indexes), hasFieldsInAnyOrder("_id", "_rev", "name", "age"));
     }
 
     @Test
-    public void createIndexUsingDottedNotation() {
+    public void createIndexUsingDottedNotation() throws QueryException {
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name.first"), new FieldSort("age.years")),
                                             "basic");
         assertThat(indexName, is("basic"));
 
-        Map<String, Map<String, Object>> indexes = im.listIndexes();
-        assertThat(indexes, hasKey("basic"));
+        List<Index> indexes = im.listIndexes();
+        assertThat(indexes, contains(getIndexNameMatcher("basic")));
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> index = indexes.get("basic");
-        @SuppressWarnings("unchecked")
-        List<String> fields = (List<String>) index.get("fields");
-        assertThat(fields, containsInAnyOrder("_id", "_rev", "name.first", "age.years"));
+        assertThat(getIndexNamed("basic", indexes), hasFieldsInAnyOrder("_id", "_rev", "name.first", "age.years"));
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    public void createMultipleIndexes() {
+    public void createMultipleIndexes() throws QueryException {
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic");
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "another");
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("cat")), "petname");
 
-        Map<String, Map<String, Object>> indexes = im.listIndexes();
-        assertThat(indexes.keySet(), containsInAnyOrder("basic", "another", "petname"));
 
-        Map<String, Object> index = indexes.get("basic");
-        List<String> fields = (List<String>) index.get("fields");
-        assertThat(fields, containsInAnyOrder("_id", "_rev", "name", "age"));
+        List<Index> indexes = im.listIndexes();
+        assertThat(indexes, containsInAnyOrder(getIndexNameMatcher("basic"),
+                getIndexNameMatcher("another"),
+                getIndexNameMatcher("petname")));
 
-        index = (Map<String, Object>) indexes.get("another");
-        fields = (List<String>) index.get("fields");
-        assertThat(fields, containsInAnyOrder("_id", "_rev", "name", "age"));
-
-        index = (Map<String, Object>) indexes.get("petname");
-        fields = (List<String>) index.get("fields");
-        assertThat(fields, containsInAnyOrder("_id", "_rev", "cat"));
+        assertThat(getIndexNamed("basic", indexes), hasFieldsInAnyOrder("_id", "_rev", "name", "age"));
+        assertThat(getIndexNamed("another", indexes), hasFieldsInAnyOrder("_id", "_rev", "name", "age"));
+        assertThat(getIndexNamed("petname", indexes), hasFieldsInAnyOrder("_id", "_rev", "cat"));
     }
 
     @Test
-    public void createIndexSpecifiedWithAscOrDesc() {
+    public void createIndexSpecifiedWithAscOrDesc() throws QueryException {
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(
                 new FieldSort("name", FieldSort.Direction.ASCENDING),
                 new FieldSort("age", FieldSort.Direction.DESCENDING)), "basic");
         assertThat(indexName, is("basic"));
 
-        Map<String, Map<String, Object>> indexes = im.listIndexes();
-        assertThat(indexes, hasKey("basic"));
+        List<Index> indexes = im.listIndexes();
+        assertThat(indexes, contains(getIndexNameMatcher("basic")));
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> index = indexes.get("basic");
-        @SuppressWarnings("unchecked")
-        List<String> fields = (List<String>) index.get("fields");
-        assertThat(fields, containsInAnyOrder("_id", "_rev", "name", "age"));
+        assertThat(getIndexNamed("basic", indexes), hasFieldsInAnyOrder("_id", "_rev", "name", "age"));
     }
 
     @Test
-    public void createIndexWhenIndexNameExistsIdxDefinitionSame() {
+    public void createIndexWhenIndexNameExistsIdxDefinitionSame() throws QueryException {
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(
                 new FieldSort("name", FieldSort.Direction.ASCENDING),
                 new FieldSort("age", FieldSort.Direction.DESCENDING)), "basic");
@@ -162,21 +161,25 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     }
 
     @Test
-    public void createIndexWhenIndexNameExistsIdxDefinitionDifferent() {
+    public void createIndexWhenIndexNameExistsIdxDefinitionDifferent() throws QueryException {
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(
                 new FieldSort("name", FieldSort.Direction.ASCENDING),
                 new FieldSort("age", FieldSort.Direction.DESCENDING)), "basic");
         assertThat(indexName, is("basic"));
 
         // fails when the index definition is different
-        indexName = im.ensureIndexed(Arrays.<FieldSort>asList(
-                new FieldSort("name", FieldSort.Direction.ASCENDING),
-                new FieldSort("pet", FieldSort.Direction.DESCENDING)), "basic");
-        assertThat(indexName, is(nullValue()));
+        try {
+            indexName = im.ensureIndexed(Arrays.<FieldSort>asList(
+                    new FieldSort("name", FieldSort.Direction.ASCENDING),
+                    new FieldSort("pet", FieldSort.Direction.DESCENDING)), "basic");
+            Assert.fail("ensureIndexed should throw QueryException");
+        } catch (QueryException qe) {
+            ;
+        }
     }
 
     @Test
-    public void createIndexWithJsonType() {
+    public void createIndexWithJsonType() throws QueryException {
         // supports using the json type
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(
                 new FieldSort("name", FieldSort.Direction.ASCENDING),
@@ -184,101 +187,78 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
                                             "basic",
                                             IndexType.JSON);
         assertThat(indexName, is("basic"));
-        Map<String, Map<String, Object>> indexes = im.listIndexes();
-        assertThat(indexes.size(), is(1));
-        @SuppressWarnings("unchecked")
-        Map<String, Object> index = indexes.get("basic");
-        assertThat((IndexType) index.get("type"), is(IndexType.JSON));
-        assertThat(index.get("settings"), is(nullValue()));
+        List<Index> indexes = im.listIndexes();
+        assertThat(indexes, contains(getIndexNameMatcher("basic")));
+        Index i = getIndexNamed("basic", indexes);
+        assertThat(i.indexType, is(IndexType.JSON));
+        assertThat(i.tokenize, is(nullValue()));
     }
 
     @Test
-    public void createIndexWithTextType() {
+    public void createIndexWithTextType() throws QueryException {
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(
                 new FieldSort("name", FieldSort.Direction.ASCENDING),
                 new FieldSort("age", FieldSort.Direction.DESCENDING)),
                                             "basic",
                                             IndexType.TEXT);
         assertThat(indexName, is("basic"));
-        Map<String, Map<String, Object>> indexes = im.listIndexes();
-        assertThat(indexes.size(), is(1));
-        @SuppressWarnings("unchecked")
-        Map<String, Object> index = indexes.get("basic");
-        assertThat((IndexType) index.get("type"), is(IndexType.TEXT));
-        assertThat((String) index.get("settings"), is("{\"tokenize\":\"simple\"}"));
+        List<Index> indexes = im.listIndexes();
+        Index i = getIndexNamed("basic", indexes);
+        assertThat(i.indexType, is(IndexType.TEXT));
+        assertThat(i.tokenize, is("simple"));
     }
 
     @Test
-    public void createIndexWithTextTypeAndTokenizeSetting() {
-        Map<String, String> settings = new HashMap<String, String>();
-        settings.put("tokenize", "porter");
+    public void createIndexWithTextTypeAndTokenizeSetting() throws QueryException {
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")),
                 "basic",
                 IndexType.TEXT,
-                settings);
+                "porter");
         assertThat(indexName, is("basic"));
-        Map<String, Map<String, Object>> indexes = im.listIndexes();
-        assertThat(indexes.size(), is(1));
-        @SuppressWarnings("unchecked")
-        Map<String, Object> index = indexes.get("basic");
-        assertThat((IndexType) index.get("type"), is(IndexType.TEXT));
-        assertThat((String) index.get("settings"), is("{\"tokenize\":\"porter\"}"));
+        List<Index> indexes = im.listIndexes();
+        Index i = getIndexNamed("basic", indexes);
+        assertThat(i.indexType, is(IndexType.TEXT));
+        assertThat(i.tokenize, is("porter"));
     }
 
     @Test
-    public void indexAndTextIndexCanCoexist() {
-        Map<String, String> settings = new HashMap<String, String>();
-        settings.put("tokenize", "porter");
+    public void indexAndTextIndexCanCoexist() throws QueryException {
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")),
                                             "textIndex",
                                             IndexType.TEXT,
-                                            settings);
+                                            "porter");
         assertThat(indexName, is("textIndex"));
         indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "jsonIndex");
         assertThat(indexName, is("jsonIndex"));
-        Map<String, Map<String, Object>> indexes = im.listIndexes();
-        assertThat(indexes.keySet(), containsInAnyOrder("textIndex", "jsonIndex"));
+        List<Index> indexes = im.listIndexes();
+        assertThat(indexes, containsInAnyOrder(getIndexNameMatcher("textIndex"),
+                getIndexNameMatcher("jsonIndex")));
     }
 
-    @Test
-    public void correctlyLimitsTextIndexesToOne() {
+    @Test(expected = QueryException.class)
+    public void correctlyLimitsTextIndexesToOne() throws QueryException {
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic", IndexType.TEXT);
         assertThat(indexName, is("basic"));
         indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "anotherIndex", IndexType.TEXT);
-        assertThat(indexName, is(nullValue()));
     }
 
     @Test
-    public void createIndexUsingNonAsciiText() {
+    public void createIndexUsingNonAsciiText() throws QueryException {
         // can create indexes successfully
         String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("اسم"), new FieldSort("datatype"), new FieldSort("ages")),
                                             "basic");
         assertThat(indexName, is("basic"));
     }
 
-    @Test
-    public void normalizeIndexFields() {
-        HashMap<String, String> nameField = new HashMap<String, String>();
-        nameField.put("name", "asc");
-        HashMap<String, String> petField = new HashMap<String, String>();
-        petField.put("pet", "desc");
-
-        // removes directions from the field specifiers
-        List<String> fields;
-        fields = IndexCreator.removeDirectionsFromFields(Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction.ASCENDING),
-                                                                               new FieldSort("pet", FieldSort.Direction.DESCENDING),
-                                                                               new FieldSort("age")));
-        assertThat(fields, containsInAnyOrder("name", "pet", "age"));
-    }
-
-    @Test
-    public void createIndexWhereFieldNameContainsDollarSign() {
+    @Test(expected = IllegalArgumentException.class)
+    public void createIndexWhereFieldNameContainsDollarSignAtStart() throws QueryException {
         // rejects indexes with $ at start
-        String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("$name"), new FieldSort("datatype")), "basic");
-        assertThat(indexName, is(nullValue()));
-
+       im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("$name"), new FieldSort("datatype")), "basic");
+    }
+    @Test
+    public void createIndexWhereFieldNameContainsDollarSignNotAtStart() throws QueryException {
         // creates indexes with $ not at start
-        indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("na$me"), new FieldSort("datatype$")), "basic");
+        String indexName = im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("na$me"), new FieldSort("datatype$")), "basic");
         assertThat(indexName, is("basic"));
     }
 

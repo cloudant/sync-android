@@ -10,9 +10,9 @@ import java.util.Map;
 public interface IndexManager {
 
 
-    Map<String, Map<String, Object>> listIndexes() throws QueryException;
+    List<Index> listIndexes() throws QueryException;
 
-    String ensureIndexed(List<FieldSort> fieldNames);
+    String ensureIndexed(List<FieldSort> fieldNames) throws QueryException;
 
     String ensureIndexed(List<FieldSort> fieldNames, String indexName) throws QueryException;
 
@@ -22,12 +22,12 @@ public interface IndexManager {
     String ensureIndexed(List<FieldSort> fieldNames,
                          String indexName,
                          IndexType indexType,
-                         Map<String, String> IndexSettings) throws QueryException;
+                         String tokenize) throws QueryException;
 
 
     void deleteIndex(String indexName) throws QueryException;
 
-    void updateAllIndexes(); // not sure if this should throw or not.
+    void updateAllIndexes() throws QueryException; // not sure if this should throw or not.
 
     QueryResult find(Map<String, Object> query) throws QueryException;
 
