@@ -46,6 +46,7 @@ import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.JSONUtils;
+import com.cloudant.sync.util.Misc;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -278,9 +279,7 @@ public class IndexManagerImpl implements IndexManager {
      */
     @Override
     public void deleteIndex(final String indexName) throws QueryException {
-        if (indexName == null || indexName.isEmpty()) {
-            throw new QueryException("TO delete an index, index name should be provided.");
-        }
+        Misc.checkNotNullOrEmpty(indexName, "indexName");
 
         Future<Void> result = dbQueue.submitTransaction(new SQLCallable<Void>() {
             @Override
@@ -338,9 +337,7 @@ public class IndexManagerImpl implements IndexManager {
                             long limit,
                             List<String> fields,
                             List<FieldSort> sortDocument) throws QueryException {
-        if (query == null) {
-            throw new QueryException("Query must not be null");
-        }
+        Misc.checkNotNull(query, "query");
 
         updateAllIndexes();
 
