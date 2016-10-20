@@ -1,14 +1,16 @@
-//  Copyright (c) 2014 Cloudant. All rights reserved.
-//
-//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
-//  except in compliance with the License. You may obtain a copy of the License at
-//
-//    http://www.apache.org/licenses/LICENSE-2.0
-//
-//  Unless required by applicable law or agreed to in writing, software distributed under the
-//  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-//  either express or implied. See the License for the specific language governing permissions
-//  and limitations under the License.
+/*
+ * Copyright © 2014, 2016 IBM Corp. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
 
 //
 // The metadata for an index is represented in the database table as follows:
@@ -70,12 +72,12 @@ import java.util.regex.Pattern;
  *  - execute queries
  *  - update indexes (usually done automatically)
  *
+ *
  *  @api_public
  */
 public class IndexManagerImpl implements IndexManager {
 
     private static final String INDEX_TABLE_PREFIX = "_t_cloudant_sync_query_index_";
-    private static final String FTS_CHECK_TABLE_NAME = "_t_cloudant_sync_query_fts_check";
     public static final String INDEX_METADATA_TABLE_NAME = "_t_cloudant_sync_query_metadata";
 
     private static final String EXTENSION_NAME = "com.cloudant.sync.query";
@@ -87,8 +89,6 @@ public class IndexManagerImpl implements IndexManager {
     private final Pattern validFieldName;
 
     private final SQLDatabaseQueue dbQueue;
-
-    private boolean textSearchEnabled;
 
     /**
      *  Constructs a new IndexManager which indexes documents in 'datastore'
@@ -108,7 +108,6 @@ public class IndexManagerImpl implements IndexManager {
             queue = new SQLDatabaseQueue(filename, keyProvider);
             queue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
             queue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
-            textSearchEnabled = ftsAvailable(queue);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to open database", e);
             queue = null;
@@ -355,62 +354,5 @@ public class IndexManagerImpl implements IndexManager {
         return database;
     }
 
-    /**
-     * Check that support for text search exists in SQLite by building a VIRTUAL table.
-     *
-     * @return text search enabled setting
-     */
-    protected static boolean ftsAvailable(SQLDatabaseQueue q) {
-        boolean ftsAvailable = false;
-        Future<Boolean> result = q.submitTransaction(new SQLCallable<Boolean>() {
-            @Override
-            public Boolean call(SQLDatabase db) {
-                Boolean transactionSuccess = true;
-                db.beginTransaction();
-                List<String> statements = new ArrayList<String>();
-                statements.add(String.format("CREATE VIRTUAL TABLE %s USING FTS4 ( col )",
-                                             FTS_CHECK_TABLE_NAME));
-                statements.add(String.format("DROP TABLE %s", FTS_CHECK_TABLE_NAME));
-
-                for (String statement : statements) {
-                    try {
-                        db.execSQL(statement);
-                    } catch (SQLException e) {
-                        // An exception here means that FTS is not enabled in SQLite.
-                        // Logging happens in calling method.
-                        transactionSuccess = false;
-                        break;
-                    }
-                }
-
-                if (transactionSuccess) {
-                    db.setTransactionSuccessful();
-                }
-                db.endTransaction();
-
-                return  transactionSuccess;
-            }
-        });
-
-        try {
-            ftsAvailable = result.get();
-        } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error encountered:", e);
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
-        }
-
-        return ftsAvailable;
-    }
-
-    @Override
-    public boolean isTextSearchEnabled() {
-        if (!textSearchEnabled) {
-            logger.log(Level.INFO, "Text search is currently not supported.  " +
-                    "To enable text search recompile SQLite with " +
-                    "the full text search compile options enabled.");
-        }
-        return textSearchEnabled;
-    }
 
 }
