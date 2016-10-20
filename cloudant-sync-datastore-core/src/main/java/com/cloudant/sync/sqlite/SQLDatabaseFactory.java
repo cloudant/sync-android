@@ -1,4 +1,6 @@
 /**
+ * Copyright © 2013, 2016 IBM Corp. All rights reserved.
+ *
  * Original iOS version by  Jens Alfke, ported to Android by Marty Schoch
  * Copyright (c) 2012 Couchbase, Inc. All rights reserved.
  *
@@ -18,6 +20,7 @@
 package com.cloudant.sync.sqlite;
 
 import com.cloudant.sync.datastore.encryption.KeyProvider;
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.datastore.migrations.Migration;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.Misc;
@@ -35,7 +38,36 @@ import java.util.logging.Logger;
  */
 public class SQLDatabaseFactory {
 
+    public static final boolean FTS_AVAILABLE;
+    private static final String FTS_CHECK_TABLE_NAME = "_t_cloudant_sync_query_fts_check";
     private final static Logger logger = Logger.getLogger(SQLDatabaseFactory.class.getCanonicalName());
+
+    static {
+        FTS_AVAILABLE = isFtsAvailable();
+    }
+
+    private static boolean isFtsAvailable() {
+        SQLDatabase tempInMemoryDB = null;
+        try {
+            tempInMemoryDB = internalCreateSQLDatabase(null, new NullKeyProvider());
+            tempInMemoryDB.beginTransaction();
+            try {
+                tempInMemoryDB.execSQL(String.format("CREATE VIRTUAL TABLE %s USING FTS4 ( col )",
+                        FTS_CHECK_TABLE_NAME));
+                return true;
+            } finally {
+                // End the transaction and rollback the virtual table we created because we never
+                // set transaction success.
+                tempInMemoryDB.endTransaction();
+            }
+        } catch (SQLException sqle) {
+            return false;
+        } finally {
+            if (tempInMemoryDB != null) {
+                tempInMemoryDB.close();
+            }
+        }
+    }
 
     /**
      * SQLCipher-based implementation for creating database.
@@ -48,11 +80,25 @@ public class SQLDatabaseFactory {
      * @throws SQLException if the database cannot be opened.
      */
     public static SQLDatabase createSQLDatabase(String dbFilename, KeyProvider provider) throws IOException, SQLException {
+        makeSureFileExists(dbFilename);
+        return internalCreateSQLDatabase(dbFilename, provider);
+    }
+
+    /**
+     * Internal method for creating a SQLDatabase that allows a null filename to create an in-memory
+     * database which can be useful for performing checks, but creating in-memory databases is not
+     * permitted from outside of this class hence the private visibility.
+     *
+     * @param dbFilename full file path of the db file or {@code null} for an in-memory database
+     * @param provider Key provider or {@link NullKeyProvider}. Must be {@link NullKeyProvider}
+     *                 if dbFilename is {@code null} i.e. for internal in-memory databases.
+     * @return {@code SQLDatabase} for the given filename
+     * @throws SQLException - if the database cannot be opened
+     */
+    private static SQLDatabase internalCreateSQLDatabase(String dbFilename, KeyProvider provider) throws SQLException {
 
         boolean runningOnAndroid =  Misc.isRunningOnAndroid();
         boolean useSqlCipher = (provider.getEncryptionKey() != null);
-
-        makeSureFileExists(dbFilename);
 
         try {
 
@@ -80,7 +126,6 @@ public class SQLDatabaseFactory {
             logger.log(Level.SEVERE, "Failed to load database module", e);
             throw new SQLException("Failed to load database module", e);
         }
-
     }
 
     /**
