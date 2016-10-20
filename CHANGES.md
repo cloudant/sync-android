@@ -1,6 +1,6 @@
-# Unreleased
-- [FIXED] Issue that was preventing index updates from being persisted that was impacting query
-  performance.
+# 1.1.2 (2016-10-20)
+- [FIXED] Issue preventing index updates from being persisted that
+  impacted query performance
 
 # 1.1.1 (2016-10-05)
 
