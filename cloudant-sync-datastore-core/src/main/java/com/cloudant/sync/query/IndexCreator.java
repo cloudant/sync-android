@@ -1,14 +1,16 @@
-//  Copyright (c) 2014 Cloudant. All rights reserved.
-//
-//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
-//  except in compliance with the License. You may obtain a copy of the License at
-//
-//    http://www.apache.org/licenses/LICENSE-2.0
-//
-//  Unless required by applicable law or agreed to in writing, software distributed under the
-//  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-//  either express or implied. See the License for the specific language governing permissions
-//  and limitations under the License.
+/*
+ * Copyright © 2014, 2016 IBM Corp. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
 
 package com.cloudant.sync.query;
 
@@ -16,6 +18,7 @@ import com.cloudant.android.ContentValues;
 import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
+import com.cloudant.sync.sqlite.SQLDatabaseFactory;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.Misc;
 
@@ -29,7 +32,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -75,7 +77,7 @@ class IndexCreator {
         Misc.checkNotNull(proposedIndex, "proposedIndex");
 
         if (proposedIndex.indexType == IndexType.TEXT) {
-            if (!IndexManagerImpl.ftsAvailable(queue)) {
+            if (!SQLDatabaseFactory.FTS_AVAILABLE) {
                 String message = "Text search not supported.  To add support for text " +
                         "search, enable FTS compile options in SQLite.";
                 logger.log(Level.SEVERE, message);
