@@ -21,7 +21,7 @@ import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.CouchConfig;
 import com.cloudant.sync.datastore.CloudantSync;
 import com.cloudant.sync.datastore.DatabaseImpl;
-import com.cloudant.sync.datastore.DatastoreManager;
+import com.cloudant.sync.datastore.DocumentStore;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.TestUtils;
 
@@ -29,16 +29,15 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.List;
 
 public abstract class ReplicationTestBase extends CouchTestBase {
 
     public String datastoreManagerPath = null;
-
-    protected DatastoreManager datastoreManager = null;
-    protected CloudantSync cloudantSync = null;
     protected DatabaseImpl datastore = null;
+    protected DocumentStore documentStore = null;
     protected SQLDatabase database = null;
     protected DatastoreWrapper datastoreWrapper = null;
 
@@ -67,9 +66,8 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     protected void createDatastore() throws Exception {
         datastoreManagerPath = TestUtils.createTempTestingDir(this.getClass().getName());
-        datastoreManager = DatastoreManager.getInstance(this.datastoreManagerPath);
-        cloudantSync = datastoreManager.openDatastore(getClass().getSimpleName());
-        datastore = (DatabaseImpl) cloudantSync.database;
+        documentStore = DocumentStore.getInstance(new File(this.datastoreManagerPath, this.getClass().getSimpleName()));
+        datastore = (DatabaseImpl)documentStore.database;
         datastoreWrapper = new DatastoreWrapper(datastore);
     }
 

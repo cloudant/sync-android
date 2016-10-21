@@ -34,6 +34,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,7 +48,6 @@ import java.util.concurrent.ExecutionException;
 public class Database200MigrationTest {
 
     private DatabaseImpl ds;
-    private DatastoreManager manager;
     private DocumentRevision rootRevision;
     private String dir;
     private final String duplicateRevs = "INSERT INTO revs (doc_id, parent, current, deleted, " +
@@ -57,8 +57,8 @@ public class Database200MigrationTest {
     @Before
     public void setUp() throws Exception {
         dir = TestUtils.createTempTestingDir(this.getClass().getName());
-        manager = DatastoreManager.getInstance(dir);
-        ds = (DatabaseImpl) manager.openDatastore("complexTree").database;
+
+        ds = (DatabaseImpl) (DocumentStore.getInstance(new File(dir, "complexTree"))).database;
 
         // Return DB to schema version 100:
 
