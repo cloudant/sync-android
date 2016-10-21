@@ -251,11 +251,6 @@ public interface Database {
         throws ConflictException;
 
     /**
-     * Close the datastore
-     */
-    void close();
-
-    /**
      * <p>Adds a new document with body and attachments from <code>rev</code>.</p>
      *
      * <p>If the ID in <code>rev</code> is null, the document's ID will be auto-generated,

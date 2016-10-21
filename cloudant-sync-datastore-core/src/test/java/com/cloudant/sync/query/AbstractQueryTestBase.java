@@ -18,15 +18,16 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import com.cloudant.sync.datastore.CloudantSync;
 import com.cloudant.sync.datastore.DatabaseImpl;
-import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.DocumentStore;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.After;
 import org.junit.Before;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,8 +46,6 @@ import java.util.Map;
 public abstract class AbstractQueryTestBase {
 
     String factoryPath = null;
-    DatastoreManager factory = null;
-    CloudantSync cloudantSync = null;
     DatabaseImpl ds = null;
     IndexManagerImpl im = null;
     SQLDatabaseQueue indexManagerDatabaseQueue;
@@ -55,12 +54,10 @@ public abstract class AbstractQueryTestBase {
     public void setUp() throws Exception {
         factoryPath = TestUtils.createTempTestingDir(AbstractQueryTestBase.class.getName());
         assertThat(factoryPath, is(notNullValue()));
-        factory = DatastoreManager.getInstance(factoryPath);
-        assertThat(factory, is(notNullValue()));
         String datastoreName = AbstractQueryTestBase.class.getSimpleName();
-        cloudantSync = factory.openDatastore(datastoreName);
-        ds = (DatabaseImpl) cloudantSync.database;
-        im = (IndexManagerImpl) cloudantSync.query;
+        DocumentStore documentStore = DocumentStore.getInstance(new File(factoryPath));
+        ds = (DatabaseImpl) documentStore.database;
+        im = (IndexManagerImpl) documentStore.query;
         assertThat(ds, is(notNullValue()));
     }
 
@@ -73,7 +70,6 @@ public abstract class AbstractQueryTestBase {
 
         im = null;
         ds = null;
-        factory = null;
         factoryPath = null;
     }
 
