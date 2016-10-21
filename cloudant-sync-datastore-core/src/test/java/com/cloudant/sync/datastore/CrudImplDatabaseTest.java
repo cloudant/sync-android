@@ -57,7 +57,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
 
     @Test
     public void extensionsDir() {
-        String expected = this.datastore.datastoreDir + File.separator + "extensions";
+        File expected = new File(this.datastore.datastoreDir, "extensions");
         Assert.assertEquals(expected, this.datastore.extensionsDir);
     }
 
@@ -575,19 +575,6 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         datastore.createDocumentFromRevision(rev);
         Assert.assertThat(datastore.getAllDocumentIds(), containsInAnyOrder("document-one",
                                                                             "document-two"));
-    }
-
-    @Test
-    public void createDbWithSlashAndCreateDocument() throws Exception {
-        Database database = datastoreManager.openDatastore("dbwith/aslash").database;
-        try {
-            DocumentRevision rev = new DocumentRevision();
-            rev.setBody(bodyOne);
-            DocumentRevision doc = database.createDocumentFromRevision(rev);
-            validateNewlyCreatedDocument(doc);
-        } finally {
-            database.close();
-        }
     }
 
     @Test

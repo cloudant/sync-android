@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.mazha.Document;
 import com.cloudant.sync.util.MultiThreadedTestHelper;
 
 import org.apache.commons.io.FileUtils;
@@ -32,29 +33,31 @@ import java.util.concurrent.Callable;
 
 public class DatabaseManagerTest {
 
-    public static String TEST_PATH = null;
-    public DatastoreManager manager = null;
+    public static File TEST_PATH = null;
+
 
     @Before
     public void setUp() {
-        TEST_PATH = FileUtils.getTempDirectory().getAbsolutePath() + File.separator +
-                "DatastoreManagerTest";
-        new File(TEST_PATH).mkdirs();
-        manager = DatastoreManager.getInstance(TEST_PATH);
+        TEST_PATH = new File(FileUtils.getTempDirectory().getAbsolutePath(),
+                "DatastoreManagerTest");
+        System.out.println("*** "+TEST_PATH);
     }
 
     @After
     public void tearDown() {
-        FileUtils.deleteQuietly(new File(TEST_PATH));
+        System.out.println(TEST_PATH.list());
+        FileUtils.deleteQuietly(TEST_PATH);
+        System.out.println(TEST_PATH.list());
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void nonWritableDatastoreManagerPathThrows() {
+    public void nonWritableDatastoreManagerPathThrows() throws DatastoreNotCreatedException {
         File f = new File(TEST_PATH, "c_root_test");
         try {
             f.mkdir();
             f.setReadOnly();
-            manager = DatastoreManager.getInstance(f.getAbsolutePath());
+            DocumentStore ds = DocumentStore.getInstance(f);
+            ds.close();
         } finally {
             f.setWritable(true);
             f.delete();
@@ -62,53 +65,40 @@ public class DatabaseManagerTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void createFailsIfMissingIntermediates(){
-        File f = new File(TEST_PATH, "missing_inter/missing_test");
-        try {
-            manager = DatastoreManager.getInstance(f.getAbsolutePath());
-        } finally {
-            f.delete();
-        }
-    }
-
-    @Test
-    public void createDirectoryIfMissing(){
+    public void createFailsIfMissingIntermediates() throws DatastoreNotCreatedException {
         File f = new File(TEST_PATH, "missing_test");
         try {
-            manager = DatastoreManager.getInstance(f.getAbsolutePath());
+            DocumentStore ds = DocumentStore.getInstance(f);
+            ds.close();
         } finally {
             f.delete();
         }
     }
 
     @Test
-    public void getDatastorePath() {
-        Assert.assertEquals(TEST_PATH, manager.getPath());
-    }
-
-    @Test
-    public void test_possible_filenames() {
-        Assert.assertTrue("Aalfd_sn9".matches(DatastoreManager.LEGAL_CHARACTERS));
-        Assert.assertTrue("a_alf_dsn9".matches(DatastoreManager.LEGAL_CHARACTERS));
-        Assert.assertFalse("0Aalfdsn9".matches(DatastoreManager.LEGAL_CHARACTERS));
-        Assert.assertTrue("Aa-lfdsn9".matches(DatastoreManager.LEGAL_CHARACTERS));
-        Assert.assertTrue("Aa/lfdsn9".matches(DatastoreManager.LEGAL_CHARACTERS));
-        Assert.assertFalse("Aa lfdsn9".matches(DatastoreManager.LEGAL_CHARACTERS));
-        Assert.assertFalse("".matches(DatastoreManager.LEGAL_CHARACTERS));
+    public void createDirectoryIfMissing() throws DatastoreNotCreatedException {
+        File f = TEST_PATH;
+        try {
+            DocumentStore ds = DocumentStore.getInstance(f);
+            ds.close();
+        } finally {
+            f.delete();
+        }
     }
 
     @Test
     public void openDatastore_name_dbShouldBeCreated() throws Exception {
-        Database ds = createAndAssertDatastore();
-        ds.close();
+        DocumentStore ds = createAndAssertDatastore();
+        // TODO assert?
     }
 
-    private Database createAndAssertDatastore() throws Exception {
-        Database ds = manager.openDatastore("mydatastore").database;
+    private DocumentStore createAndAssertDatastore() throws Exception {
+        DocumentStore d = DocumentStore.getInstance(TEST_PATH);
+        Database ds = d.database;
         Assert.assertNotNull(ds);
         boolean assertsFailed = true;
         try {
-            String dbDir = TEST_PATH + "/mydatastore";
+            String dbDir = TEST_PATH.getAbsolutePath();
             Assert.assertTrue(new File(dbDir).exists());
             Assert.assertTrue(new File(dbDir).isDirectory());
 
@@ -118,37 +108,39 @@ public class DatabaseManagerTest {
             assertsFailed = false;
         } finally {
             if (assertsFailed) {
-                ds.close();
+                d.close();
             }
         }
-        return ds;
+        return d;
     }
 
     @Test
     public void deleteDatastore_dbExist_dbShouldBeDeleted() throws Exception {
-        Database ds = createAndAssertDatastore();
-
-        manager.deleteDatastore("mydatastore");
-        String dbDir = TEST_PATH + "/mydatastore";
+        DocumentStore ds = createAndAssertDatastore();
+        ds.delete();
+        String dbDir = TEST_PATH.getAbsolutePath();
         Assert.assertFalse(new File(dbDir).exists());
     }
 
     @Test(expected = IOException.class)
     public void deleteDatastore_dbNotExist_nothing() throws Exception {
-        manager.deleteDatastore("db_not_exist");
+        DocumentStore ds = createAndAssertDatastore();
+        ds.delete();
+        // should be an error to try and delete twice
+        ds.delete();
     }
 
     @Test(expected = IllegalStateException.class)
     public void deleteDatastore_createDocumentUsingDeletedDatastore_exception() throws Exception {
-        Database ds = createAndAssertDatastore();
-        DocumentRevision object = ds.createDocumentFromRevision(createDBBody("Tom"));
+        DocumentStore ds = createAndAssertDatastore();
+        DocumentRevision object = ds.database.createDocumentFromRevision(createDBBody("Tom"));
         Assert.assertNotNull(object);
 
-        manager.deleteDatastore("mydatastore");
-        String dbDir = TEST_PATH + "/mydatastore";
+        ds.delete();
+        String dbDir = TEST_PATH.getAbsolutePath();
         Assert.assertFalse(new File(dbDir).exists());
 
-        ds.createDocumentFromRevision(createDBBody("Jerry"));
+        ds.database.createDocumentFromRevision(createDBBody("Jerry"));
     }
 
     public DocumentRevision createDBBody(String name) throws IOException {
@@ -160,39 +152,25 @@ public class DatabaseManagerTest {
     }
 
     @Test
-    public void createDatastoreWithForwardSlashChar() throws Exception {
-        Database ds = manager.openDatastore("datastore/mynewdatastore").database;
-        try {
-            String dbDir = TEST_PATH + "/datastore.mynewdatastore";
-            Assert.assertTrue(new File(dbDir).exists());
-            Assert.assertTrue(new File(dbDir).isDirectory());
-            String dbFile = dbDir + "/db.sync";
-            Assert.assertTrue(new File(dbFile).exists());
-            Assert.assertTrue(new File(dbFile).isFile());
-        } finally {
-            ds.close();
-        }
-
-
-    }
-
-    @Test
     public void list5Datastores() throws Exception {
-        List<Database> opened = new ArrayList<Database>();
+        List<DocumentStore> opened = new ArrayList<DocumentStore>();
 
         try {
             for (int i = 0; i < 5; i++) {
-                opened.add(manager.openDatastore("datastore" + i).database);
+                // getinstance will only create one level of directories so we have to create this dir first
+                TEST_PATH.mkdir();
+                File f = new File(TEST_PATH, "datastore"+i);
+                opened.add(DocumentStore.getInstance(f));
             }
 
-            List<String> datastores = manager.listAllDatastores();
+            List<File> datastores = DocumentStore.listInstances();
 
             Assert.assertEquals(5, datastores.size());
             for (int i = 0; i < 5; i++) {
-                Assert.assertTrue(datastores.contains("datastore" + i));
+                Assert.assertTrue(datastores.contains(new File(TEST_PATH, "datastore" + i)));
             }
         } finally {
-            for (Database ds : opened) {
+            for (DocumentStore ds : opened) {
                 ds.close();
             }
         }
@@ -200,51 +178,37 @@ public class DatabaseManagerTest {
     }
 
     @Test
-    public void listDatastoresWithSlashes() throws Exception {
-        Database ds = manager.openDatastore("datastore/mynewdatastore").database;
-        try {
-            List<String> datastores = manager.listAllDatastores();
-
-            Assert.assertEquals(1, datastores.size());
-            Assert.assertEquals("datastore/mynewdatastore", datastores.get(0));
-        } finally {
-            ds.close();
-        }
-
-    }
-
-    @Test
     public void listEmptyDatastore() throws Exception {
-        List<String> datastores = manager.listAllDatastores();
+        List<File> datastores = DocumentStore.listInstances();
         Assert.assertEquals(0, datastores.size());
     }
 
     @Test
     public void multithreadedDatastoreCreation() throws Exception {
-        new MultiThreadedTestHelper<Database>(25) {
+        new MultiThreadedTestHelper<DocumentStore>(25) {
 
             @Override
             protected void doAssertions() throws Exception {
-                Database ds0 = results.get(0);
+                DocumentStore ds0 = results.get(0);
                 try {
-                    for (Database ds : results) {
+                    for (DocumentStore ds : results) {
                         Assert.assertSame("The datastore instances should all be the same", ds0, ds);
 
                     }
                 } finally {
-                    for (Database ds : results) {
+                    for (DocumentStore ds : results) {
                         if (ds != null) ds.close();
                     }
                 }
             }
 
             @Override
-            protected Callable<Database> getCallable() {
+            protected Callable<DocumentStore> getCallable() {
                 return new
-                        Callable<Database>() {
+                        Callable<DocumentStore>() {
                             @Override
-                            public Database call() throws Exception {
-                                return manager.openDatastore("sameDatastoreName").database;
+                            public DocumentStore call() throws Exception {
+                                return DocumentStore.getInstance(TEST_PATH);
                             }
                         };
             }
@@ -253,15 +217,16 @@ public class DatabaseManagerTest {
 
     @Test
     public void datastoreInstanceNotReusedAfterClose() throws Exception {
-        Database ds1 = null, ds2 = null;
+        DocumentStore ds1 = null, ds2 = null;
         try {
-            ds1 = manager.openDatastore("ds1").database;
+            ds1 = DocumentStore.getInstance(TEST_PATH);
         } finally {
             if (ds1 != null) ds1.close();
         }
         try {
-            ds2 = manager.openDatastore("ds1").database;
-            Assert.assertNotSame("The Datastore instances should not be the same.", ds1, ds2);
+            ds2 = DocumentStore.getInstance(TEST_PATH);
+            Assert.assertNotSame("The documentstore instances should not be the same.", ds1, ds2);
+            Assert.assertNotSame("The database instances should not be the same.", ds1.database, ds2.database);
         } finally {
             if (ds2 != null) ds2.close();
         }
@@ -269,38 +234,36 @@ public class DatabaseManagerTest {
 
     @Test
     public void assertFactoryReturnsSameInstanceString() throws Exception {
-        DatastoreManager manager2 = DatastoreManager.getInstance(manager.getPath());
-        Assert.assertSame("The DatastoreManager instances should be the same.", manager, manager2);
-    }
-
-    @Test
-    public void assertFactoryReturnsSameInstanceFile() throws Exception {
-        DatastoreManager manager2 = DatastoreManager.getInstance(new File(manager.getPath()));
+        DocumentStore manager = DocumentStore.getInstance(TEST_PATH);
+        DocumentStore manager2 = DocumentStore.getInstance(TEST_PATH);
         Assert.assertSame("The DatastoreManager instances should be the same.", manager, manager2);
     }
 
     @Test
     public void multithreadedDatastoreManagerAccess() throws Exception {
-        new MultiThreadedTestHelper<DatastoreManager>(25) {
+        final DocumentStore manager = DocumentStore.getInstance(TEST_PATH);
+
+        new MultiThreadedTestHelper<DocumentStore>(25) {
 
             @Override
             protected void doAssertions() throws Exception {
-                for (DatastoreManager gotManager : results) {
+                for (DocumentStore gotManager : results) {
                     Assert.assertSame("The datastore manager instances should all be the same",
                             manager, gotManager);
                 }
             }
 
             @Override
-            protected Callable<DatastoreManager> getCallable() {
+            protected Callable<DocumentStore> getCallable() {
                 return new
-                        Callable<DatastoreManager>() {
+                        Callable<DocumentStore>() {
                             @Override
-                            public DatastoreManager call() throws Exception {
-                                return DatastoreManager.getInstance(manager.getPath());
+                            public DocumentStore call() throws Exception {
+                                return DocumentStore.getInstance(TEST_PATH);
                             }
                         };
             }
         }.run();
     }
+
 }

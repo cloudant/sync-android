@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.CloudantSync;
+import com.cloudant.sync.datastore.DocumentStore;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DatastoreNotCreatedException;
@@ -33,7 +33,6 @@ import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.IndexManager;
-import com.cloudant.sync.query.IndexManagerImpl;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.TestUtils;
@@ -95,7 +94,7 @@ public class EndToEndEncryptionTest {
 
     String datastoreManagerDir;
     DatastoreManager datastoreManager;
-    CloudantSync database;
+    DocumentStore database;
 
     // Magic bytes are "SQLite format 3" + null-terminator
     byte[] sqlCipherMagicBytes = hexStringToByteArray("53514c69746520666f726d6174203300");

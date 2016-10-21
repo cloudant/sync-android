@@ -40,7 +40,4 @@ public interface IndexManager {
 
     boolean isTextSearchEnabled();
 
-    // TODO we may not want to expose this publicly
-    void close();
-
 }

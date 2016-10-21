@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.datastore;
 
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.DocumentModified;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -24,6 +25,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
 
 public class BasicDBCoreObservableTest {
 
@@ -53,7 +56,7 @@ public class BasicDBCoreObservableTest {
     @Test
     public void createDocument_bodyOnly_success() throws Exception {
 
-        this.core = new DatabaseImpl(database_dir, "test");
+        this.core = new DatabaseImpl(new File(database_dir, "test"), new NullKeyProvider());
 
         this.jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         this.bodyOne = new DocumentBodyImpl(jsonData);

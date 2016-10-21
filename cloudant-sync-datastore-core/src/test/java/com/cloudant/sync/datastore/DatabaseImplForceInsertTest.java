@@ -19,6 +19,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.Is.is;
 
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.DocumentModified;
 import com.cloudant.sync.sqlite.SQLDatabase;
@@ -32,6 +33,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,7 +57,7 @@ public class DatabaseImplForceInsertTest {
     @Before
     public void setUp() throws Exception {
         database_dir = TestUtils.createTempTestingDir(DatabaseImplForceInsertTest.class.getName());
-        datastore = new DatabaseImpl(database_dir, "test");
+        datastore = new DatabaseImpl(new File(database_dir, "test"), new NullKeyProvider());
 
         jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         bodyOne = new DocumentBodyImpl(jsonData);
