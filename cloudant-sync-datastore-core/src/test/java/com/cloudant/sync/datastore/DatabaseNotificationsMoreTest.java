@@ -27,6 +27,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,26 +46,25 @@ public class DatabaseNotificationsMoreTest {
     List<DatabaseCreated> databaseCreated = new ArrayList<DatabaseCreated>();
     List<DatabaseOpened> databaseOpened = new ArrayList<DatabaseOpened>();
     List<DatabaseClosed> databaseClosed = new ArrayList<DatabaseClosed>();
-    DatastoreManager datastoreManager;
     String datastoreManagerDir;
 
     @Before
     public void setUp() throws Exception {
+        DocumentStore.getEventBus().register(this);
         datastoreManagerDir = TestUtils
                 .createTempTestingDir(DatabaseNotificationsMoreTest.class.getName());
-        datastoreManager = DatastoreManager.getInstance(datastoreManagerDir);
-        datastoreManager.getEventBus().register(this);
         this.clearAllEventList();
     }
 
     @After
     public void setDown() {
         TestUtils.deleteTempTestingDir(datastoreManagerDir);
+        DocumentStore.getEventBus().unregister(this);
     }
 
     @Test
     public void notification_database_opened() throws Exception{
-        Database ds = datastoreManager.openDatastore("test123").database;
+        DocumentStore ds = DocumentStore.getInstance(new File(datastoreManagerDir, "test123"));
         try {
             Assert.assertThat(databaseCreated, hasSize(1));
             Assert.assertThat(databaseOpened, hasSize(1));
@@ -77,7 +77,7 @@ public class DatabaseNotificationsMoreTest {
 
     @Test
     public void notification_database_openedTwice() throws Exception {
-        Database ds = datastoreManager.openDatastore("test123").database;
+        DocumentStore ds = DocumentStore.getInstance(new File(datastoreManagerDir, "test123"));
         Database ds1 = null ;
         try {
             Assert.assertNotNull(ds);
@@ -86,7 +86,7 @@ public class DatabaseNotificationsMoreTest {
             Assert.assertEquals("test123", databaseCreated.get(0).dbName);
             Assert.assertEquals("test123", databaseOpened.get(0).dbName);
 
-            ds1 = datastoreManager.openDatastore("test123").database;
+            ds1 = DocumentStore.getInstance(new File(datastoreManagerDir, "test123")).database;
             Assert.assertThat(databaseCreated, hasSize(1));
             Assert.assertThat(databaseOpened, hasSize(1));
             Assert.assertNotNull(ds1);
@@ -97,7 +97,7 @@ public class DatabaseNotificationsMoreTest {
 
     @Test
     public void notification_databaseOpenCloseAndThenOpenedAgain_databaseCreatedEventShouldBeOnlyFireOnce() throws Exception {
-        Database ds = datastoreManager.openDatastore("test123").database;
+        DocumentStore ds = DocumentStore.getInstance(new File(datastoreManagerDir, "test123"));
         Assert.assertThat(databaseCreated, hasSize(1));
         Assert.assertThat(databaseOpened, hasSize(1));
         Assert.assertThat(databaseClosed, hasSize(0));
@@ -115,7 +115,7 @@ public class DatabaseNotificationsMoreTest {
         // DatabaseOpened event should be fired, but the
         // DatabaseCreated event should NOT be fired.
         this.clearAllEventList();
-        Database ds1 = datastoreManager.openDatastore("test123").database;
+        DocumentStore ds1 = DocumentStore.getInstance(new File(datastoreManagerDir, "test123"));
         try {
             Assert.assertNotNull(ds1);
             Assert.assertThat(databaseCreated, hasSize(0));

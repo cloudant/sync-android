@@ -41,8 +41,8 @@ import java.util.UUID;
 public class MultipartAttachmentWriterTests {
 
     String datastore_manager_dir;
-    DatastoreManager datastoreManager;
     Database database = null;
+    DocumentStore documentStore = null;
 
     byte[] jsonData = null;
     DocumentBody bodyOne = null;
@@ -60,15 +60,15 @@ public class MultipartAttachmentWriterTests {
     @Before
     public void setUp() throws Exception {
         datastore_manager_dir = TestUtils.createTempTestingDir(this.getClass().getName());
-        datastoreManager = DatastoreManager.getInstance(this.datastore_manager_dir);
-        database = (this.datastoreManager.openDatastore(getClass().getSimpleName())).database;
+        documentStore = DocumentStore.getInstance(new File(datastore_manager_dir, this.getClass().getName()));
+        database = documentStore.database;
         jsonData = "{\"body\":\"This is a body.\"}".getBytes();
         bodyOne = DocumentBodyImpl.bodyWith(jsonData);
     }
 
     @After
     public void tearDown() throws Exception {
-        database.close();
+        documentStore.close();
         TestUtils.deleteTempTestingDir(datastore_manager_dir);
     }
 

@@ -20,6 +20,7 @@ import com.cloudant.sync.datastore.ConflictResolver;
 import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.DocumentStore;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.util.TestUtils;
 
@@ -28,6 +29,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,9 +68,9 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         );
         this.datastore.updateDocumentFromRevision(rev2);
         this.push();
-
-        this.datastoreManager.deleteDatastore(this.datastore.getDatastoreName());
-        this.datastore = (DatabaseImpl)this.datastoreManager.openDatastore("foo-bar-baz").database;
+        this.documentStore.delete();
+        this.documentStore = DocumentStore.getInstance(new File(this.datastoreManagerPath, "foo-bar-baz"));
+        this.datastore = (DatabaseImpl)documentStore.database;
         try {
             this.pull();
 
@@ -122,9 +124,9 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         });
         this.push();
         this.pull();
-
-        this.datastoreManager.deleteDatastore(this.datastore.getDatastoreName());
-        this.datastore = (DatabaseImpl)this.datastoreManager.openDatastore("foo-bar-baz").database;
+        this.documentStore.delete();
+        this.documentStore = DocumentStore.getInstance(new File(this.datastoreManagerPath, "foo-bar-baz"));
+        this.datastore = (DatabaseImpl)documentStore.database;
         try {
             this.pull();
 
