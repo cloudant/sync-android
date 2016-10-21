@@ -26,21 +26,19 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 public class DatabaseNotificationsTest {
 
     CountDownLatch databaseCreated, databaseOpened, databaseDeleted, databaseClosed;
-    DatastoreManager datastoreManager;
     String datastoreManagerDir;
 
     @Before
     public void setUpClass() throws Exception {
         datastoreManagerDir = TestUtils
                 .createTempTestingDir(DatabaseNotificationsTest.class.getName());
-        datastoreManager = DatastoreManager.getInstance(datastoreManagerDir);
-        datastoreManager.getEventBus().register(this);
     }
 
     @After
@@ -55,33 +53,35 @@ public class DatabaseNotificationsTest {
     @Test
     public void notification_database_opened() throws Exception{
         databaseOpened = new CountDownLatch(1);
-        Database ds = datastoreManager.openDatastore("test123").database;
+        DocumentStore.getEventBus().register(this);
+        DocumentStore documentStore = DocumentStore.getInstance(new File(datastoreManagerDir, "test123"));
         try {
             boolean ok = NotificationTestUtils.waitForSignal(databaseOpened);
             Assert.assertTrue("Didn't receive database opened event", ok);
         } finally {
-            ds.close();
+            documentStore.close();
         }
     }
 
     @Test
     public void notification_database_created() throws Exception {
         databaseCreated = new CountDownLatch(1);
-        Database ds = datastoreManager.openDatastore("test123").database;
+        DocumentStore.getEventBus().register(this);
+        DocumentStore documentStore = DocumentStore.getInstance(new File(datastoreManagerDir, "test123"));
         try {
             boolean ok = NotificationTestUtils.waitForSignal(databaseCreated);
             Assert.assertTrue("Didn't receive database created event", ok);
         } finally {
-            ds.close();
+            documentStore.close();
         }
     }
 
     @Test
     public void notification_database_deleted() throws Exception {
         databaseDeleted = new CountDownLatch(1);
-        datastoreManager.openDatastore("test1234");
+        DocumentStore ds = DocumentStore.getInstance(new File(datastoreManagerDir, "test1234"));
         try {
-            datastoreManager.deleteDatastore("test1234");
+            ds.delete();
         } catch (IOException e) {
             Assert.fail("Got IOException when deleting " + e);
         }
@@ -92,9 +92,9 @@ public class DatabaseNotificationsTest {
     @Test
     public void notification_database_closed() throws Exception{
         databaseClosed = new CountDownLatch((1));
-        Database ds = datastoreManager.openDatastore("testDatabaseClosed").database;
-        ds.getEventBus().register(this);
-        ds.close();
+        DocumentStore documentStore = DocumentStore.getInstance(new File(datastoreManagerDir, "testDatabaseClosed"));
+        documentStore.database.getEventBus().register(this);
+        documentStore.close();
         boolean ok = NotificationTestUtils.waitForSignal(databaseClosed);
         Assert.assertTrue("Did not received database closed event", ok);
     }
@@ -102,9 +102,9 @@ public class DatabaseNotificationsTest {
     @Test
     public void notification_databaseClosed_databaseManagerShouldPostDatabaseClosedEvent() throws Exception{
         databaseClosed = new CountDownLatch((1));
-        Database ds = datastoreManager.openDatastore("testDatabaseClosed").database;
-        datastoreManager.getEventBus().register(this);
-        ds.close();
+        DocumentStore documentStore = DocumentStore.getInstance(new File(datastoreManagerDir, "testDatabaseClosed"));
+        documentStore.database.getEventBus().register(this);
+        documentStore.close();
         boolean ok = NotificationTestUtils.waitForSignal(databaseClosed);
         Assert.assertTrue("Did not received database closed event", ok);
     }

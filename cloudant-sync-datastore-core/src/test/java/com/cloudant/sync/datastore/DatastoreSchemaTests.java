@@ -192,9 +192,8 @@ public class DatastoreSchemaTests {
         Assert.assertTrue(unzipToDirectory(zippedVersion6, temp_folder));
 
         // Datastore manager the temp folder
-        DatabaseImpl datastore = (DatabaseImpl) DatastoreManager.getInstance(
-                new File(temp_folder, "datastores").getAbsolutePath())
-                .openDatastore("testdb").database;
+        DatabaseImpl datastore = (DatabaseImpl) DocumentStore.getInstance(
+                new File(temp_folder+"/datastores", "testdb")).database;
 
         try {
             // Check migration worked
@@ -310,9 +309,8 @@ public class DatastoreSchemaTests {
         Assert.assertTrue(unzipToDirectory(zippedWithDups, temp_folder));
 
         // Open the v100WithDuplicates datastore. Opening should perform the 100 to 200 migration.
-        DatabaseImpl datastore = (DatabaseImpl) DatastoreManager.getInstance(
-                new File(temp_folder, "datastores").getAbsolutePath())
-                .openDatastore("v100DBWithDuplicates").database;
+        DatabaseImpl datastore = (DatabaseImpl) DocumentStore.getInstance(
+                new File(temp_folder + "/datastores", "v100DBWithDuplicates")).database;
 
         try {
 
@@ -425,9 +423,8 @@ public class DatastoreSchemaTests {
         Assert.assertTrue(unzipToDirectory(zippedComplexDatabase, temp_folder));
 
         // Open the v100WithDuplicates datastore. Opening should perform the 100 to 200 migration.
-        DatabaseImpl datastore = (DatabaseImpl) DatastoreManager.getInstance(
-                new File(temp_folder, "datastores").getAbsolutePath())
-                .openDatastore("v100ComplexWithoutDuplicates").database;
+        DatabaseImpl datastore = (DatabaseImpl) DocumentStore.getInstance(
+                new File(temp_folder + "/datastores", "v100ComplexWithoutDuplicates")).database;
 
         try {
 
