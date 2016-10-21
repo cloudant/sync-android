@@ -69,6 +69,7 @@ import com.cloudant.sync.util.Misc;
 
 import org.apache.commons.io.FilenameUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -136,11 +137,10 @@ public class DatabaseImpl implements Database {
     // http://www.sqlite.org/limits.html
     public static final int SQLITE_QUERY_PLACEHOLDERS_LIMIT = 500;
 
-    private final String datastoreName;
     private final EventBus eventBus;
 
-    final String datastoreDir;
-    final String extensionsDir;
+    final File datastoreDir;
+    final File extensionsDir;
 
     private static final String DB_FILE_NAME = "db.sync";
 
@@ -166,31 +166,28 @@ public class DatabaseImpl implements Database {
      * reading to and from disk.
      */
     private final AttachmentStreamFactory attachmentStreamFactory;
-
+/*
     protected DatabaseImpl(String dir, String name) throws SQLException, IOException,
             DatastoreException {
         this(dir, name, new NullKeyProvider());
     }
-
+*/
     /**
      * Constructor for single thread SQLCipher-based datastore.
      * @param dir The directory where the datastore will be created
-     * @param name The user-defined name of the datastore
      * @param provider The key provider object that contains the user-defined SQLCipher key
      * @throws SQLException
      * @throws IOException
      */
-    protected DatabaseImpl(String dir, String name, KeyProvider provider) throws SQLException,
+    protected DatabaseImpl(File dir, KeyProvider provider) throws SQLException,
             IOException, DatastoreException {
         Misc.checkNotNull(dir, "Directory");
-        Misc.checkNotNull(name, "Datastore name");
         Misc.checkNotNull(provider, "Key provider");
 
         this.keyProvider = provider;
         this.datastoreDir = dir;
-        this.datastoreName = name;
-        this.extensionsDir = FilenameUtils.concat(this.datastoreDir,"extensions");
-        final String dbFilename = FilenameUtils.concat(this.datastoreDir, DB_FILE_NAME);
+        this.extensionsDir = new File(dir, "extensions");
+        final String dbFilename = new File(this.datastoreDir, DB_FILE_NAME).getAbsolutePath();
         queue = new SQLDatabaseQueue(dbFilename, provider);
 
         int dbVersion = queue.getVersion();
@@ -217,8 +214,7 @@ public class DatabaseImpl implements Database {
 
     @Override
     public String getDatastoreName() {
-        Misc.checkState(this.isOpen(), "Database is closed");
-        return this.datastoreName;
+        return this.datastoreDir.getName();
     }
 
     public KeyProvider getKeyProvider() {
@@ -804,11 +800,9 @@ public class DatabaseImpl implements Database {
 
     }
 
-    @Override
     public void close() {
         queue.shutdown();
-        eventBus.post(new DatabaseClosed(datastoreName));
-
+        eventBus.post(new DatabaseClosed(getDatastoreName()));
     }
 
     boolean isOpen() {
@@ -878,7 +872,7 @@ public class DatabaseImpl implements Database {
     public String extensionDataFolder(String extensionName) {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNullOrEmpty(extensionName, "Extension name");
-        return FilenameUtils.concat(this.extensionsDir, extensionName);
+        return new File(this.extensionsDir, extensionName).getAbsolutePath();
     }
 
     @Override
