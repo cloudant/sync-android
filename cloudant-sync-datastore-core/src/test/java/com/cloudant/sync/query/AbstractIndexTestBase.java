@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 import com.cloudant.sync.datastore.DatabaseImpl;
-import com.cloudant.sync.datastore.DatastoreManager;
+import com.cloudant.sync.datastore.DocumentStore;
 import com.cloudant.sync.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
@@ -25,10 +25,11 @@ import com.cloudant.sync.util.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 
+import java.io.File;
+
 public abstract class AbstractIndexTestBase {
 
     String factoryPath = null;
-    DatastoreManager factory = null;
     DatabaseImpl ds = null;
     IndexManagerImpl im = null;
     SQLDatabaseQueue indexManagerDatabaseQueue;
@@ -37,9 +38,7 @@ public abstract class AbstractIndexTestBase {
     public void setUp() throws Exception {
         factoryPath = TestUtils.createTempTestingDir(AbstractIndexTestBase.class.getName());
         assertThat(factoryPath, is(notNullValue()));
-        factory = DatastoreManager.getInstance(factoryPath);
-        assertThat(factory, is(notNullValue()));
-        ds = (DatabaseImpl) factory.openDatastore(AbstractIndexTestBase.class.getSimpleName()).database;
+        ds = (DatabaseImpl) DocumentStore.getInstance(new File(factoryPath)).database;
         assertThat(ds, is(notNullValue()));
         im = new IndexManagerImpl(ds);
         assertThat(im, is(notNullValue()));
@@ -59,7 +58,6 @@ public abstract class AbstractIndexTestBase {
 
         im = null;
         ds = null;
-        factory = null;
         factoryPath = null;
     }
 
