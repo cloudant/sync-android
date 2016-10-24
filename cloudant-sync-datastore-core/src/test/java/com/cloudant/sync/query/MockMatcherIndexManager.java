@@ -12,7 +12,6 @@
 
 package com.cloudant.sync.query;
 
-import com.cloudant.sync.datastore.Database;
 import com.cloudant.sync.util.Misc;
 import com.cloudant.sync.util.TestUtils;
 
@@ -28,12 +27,15 @@ import java.util.Map;
  * @see IndexManagerImpl
  * @see com.cloudant.sync.query.MockMatcherQueryExecutor
  */
-public class MockMatcherIndexManager extends IndexManagerImpl {
+public class MockMatcherIndexManager extends DelegatingMockIndexManager {
 
-    public MockMatcherIndexManager(Database database) {
-        super(database);
+    public MockMatcherIndexManager(IndexManagerImpl im) {
+        super(im);
     }
 
+    /*
+     * Override this one variant of find to use the MockMatcherQueryExecutor.
+     */
     @Override
     public QueryResult find(Map<String, Object> query,
                             long skip,
@@ -46,8 +48,8 @@ public class MockMatcherIndexManager extends IndexManagerImpl {
 
         MockMatcherQueryExecutor queryExecutor = null;
         try {
-            queryExecutor = new MockMatcherQueryExecutor(getDatabase(),
-                    TestUtils.getDBQueue(this));
+            queryExecutor = new MockMatcherQueryExecutor(delegate.getDatabase(),
+                    TestUtils.getDBQueue(delegate));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
