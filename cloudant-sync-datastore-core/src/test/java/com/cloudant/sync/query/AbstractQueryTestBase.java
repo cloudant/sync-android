@@ -16,6 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
+import com.cloudant.sync.datastore.CloudantSync;
 import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
@@ -45,6 +46,7 @@ public abstract class AbstractQueryTestBase {
 
     String factoryPath = null;
     DatastoreManager factory = null;
+    CloudantSync cloudantSync = null;
     DatabaseImpl ds = null;
     IndexManagerImpl im = null;
     SQLDatabaseQueue indexManagerDatabaseQueue;
@@ -56,7 +58,9 @@ public abstract class AbstractQueryTestBase {
         factory = DatastoreManager.getInstance(factoryPath);
         assertThat(factory, is(notNullValue()));
         String datastoreName = AbstractQueryTestBase.class.getSimpleName();
-        ds = (DatabaseImpl) factory.openDatastore(datastoreName).database;
+        cloudantSync = factory.openDatastore(datastoreName);
+        ds = (DatabaseImpl) cloudantSync.database;
+        im = (IndexManagerImpl) cloudantSync.query;
         assertThat(ds, is(notNullValue()));
     }
 
