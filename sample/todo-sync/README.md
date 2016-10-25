@@ -1,5 +1,10 @@
 # Example application: Todo Sync
 
+**The latest released sample version can be downloaded from the
+[GitHub releases page][latest].**
+
+[latest]: https://github.com/cloudant/sync-android/releases/latest
+
 The _todo-sync_ Android application shows how to do basic CRUD
 (create, read, update, delete) with the local Datastore and how to
 replicate between a remote Cloudant database and a local Datastore.
@@ -59,7 +64,7 @@ there are two ways to do this:
 export ANDROID_HOME=/Users/mike/Code/android/android-sdk-macosx
 ```
 
-_or_ 
+_or_
 
 - Set up a `local.properties` file in the `todo-sync` directory with
   the location of your Android SDK:
@@ -78,7 +83,7 @@ application using:
 ../../gradlew installDebug
 ```
 
-Once installed, the default settings entered in the XML file above should appear in the Settings screen of the application. 
+Once installed, the default settings entered in the XML file above should appear in the Settings screen of the application.
 
 To test your connection, add a couple of tasks and hit "Upload (Push)" from the menu in the top right. You should see the JSON documents appear in your Cloudant database. Changes to the documents in the Cloudant database will be replicated back to the device when you tap "Download (Pull)".
 
