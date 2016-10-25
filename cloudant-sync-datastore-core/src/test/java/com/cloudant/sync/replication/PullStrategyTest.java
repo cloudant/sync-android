@@ -70,8 +70,7 @@ public class PullStrategyTest extends ReplicationTestBase {
         TestStrategyListener listener = new TestStrategyListener();
         replicator.getEventBus().register(listener);
         replicator.run();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
+        listener.assertReplicationCompletedOrThrow();
         Assert.assertEquals(expectedDocs, listener.documentsReplicated);
     }
 

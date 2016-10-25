@@ -148,8 +148,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         PushStrategy replicator = this.getPushStrategy();
         replicator.getEventBus().register(listener);
         replicator.run();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
+        listener.assertReplicationCompletedOrThrow();
         return new PushResult(replicator, listener);
     }
 
@@ -158,8 +157,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         PullStrategy replicator = this.getPullStrategy();
         replicator.getEventBus().register(listener);
         replicator.run();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
+        listener.assertReplicationCompletedOrThrow();
         return new PullResult(replicator, listener);
     }
 
@@ -168,8 +166,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         PullStrategy replicator = this.getPullStrategy(filter);
         replicator.getEventBus().register(listener);
         replicator.run();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
+        listener.assertReplicationCompletedOrThrow();
         return new PullResult(replicator, listener);
     }
 
