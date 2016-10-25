@@ -45,10 +45,12 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     protected CouchConfig couchConfig = null;
 
-    private long dbSuffix = System.currentTimeMillis();
+    private long dbSuffix;
 
     @Before
     public void setUp() throws Exception {
+        // Use a unique suffix for each test
+        dbSuffix = System.currentTimeMillis();
         this.createDatastore();
         this.createRemoteDB();
     }
@@ -57,7 +59,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     public void tearDown() throws Exception {
         datastore.close();
         TestUtils.deleteDatabaseQuietly(database);
-        cleanUpTempFiles();
+        cleanUpTempFilesAndDeleteRemote();
     }
 
 
@@ -78,7 +80,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         couchClient = remoteDb.getCouchClient();
     }
 
-    protected void cleanUpTempFiles() {
+    protected void cleanUpTempFilesAndDeleteRemote() {
         TestUtils.deleteTempTestingDir(datastoreManagerPath);
         CouchClientWrapperDbUtils.deleteDbQuietly(remoteDb);
     }
