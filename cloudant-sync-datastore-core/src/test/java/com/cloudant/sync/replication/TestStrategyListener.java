@@ -16,6 +16,8 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.sync.event.Subscribe;
 
+import org.junit.Assert;
+
 /**
  * Simple implementation of <code>StrategyListener</code>. It can be checked if the complete() or
  * error() has been called or not.
@@ -23,6 +25,7 @@ import com.cloudant.sync.event.Subscribe;
 
 public class TestStrategyListener {
 
+    public ErrorInfo errorInfo = null;
     public boolean errorCalled = false;
     public boolean finishCalled = false;
     public int documentsReplicated = 0;
@@ -38,5 +41,14 @@ public class TestStrategyListener {
     @Subscribe
     public void error(ReplicationStrategyErrored re) {
         errorCalled = true;
+        errorInfo = re.errorInfo;
+    }
+
+    public void assertReplicationCompletedOrThrow() throws Exception {
+        if (errorCalled) {
+            throw new Exception("Replication errored", errorInfo.getException());
+        } else {
+            Assert.assertTrue("The replication should finish.", finishCalled);
+        }
     }
 }

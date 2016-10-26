@@ -204,8 +204,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         Thread t = new Thread(push);
         t.start();
         t.join();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
+        listener.assertReplicationCompletedOrThrow();
         push.eventBus.unregister(listener);
     }
 
@@ -215,8 +214,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
         Thread t = new Thread(pull);
         t.start();
         t.join();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
+        listener.assertReplicationCompletedOrThrow();
         pull.getEventBus().unregister(listener);
     }
 

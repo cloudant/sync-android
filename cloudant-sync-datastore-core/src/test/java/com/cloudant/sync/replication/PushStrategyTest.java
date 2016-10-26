@@ -40,8 +40,7 @@ public class PushStrategyTest extends ReplicationTestBase {
         TestStrategyListener listener = new TestStrategyListener();
         replicator.eventBus.register(listener);
         replicator.run();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
+        listener.assertReplicationCompletedOrThrow();
         Assert.assertEquals(expectedDocs, listener.documentsReplicated);
     }
 

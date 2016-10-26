@@ -315,8 +315,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
                 (pullAttachmentsInline).build();
         pull.strategy.getEventBus().register(listener);
         pull.strategy.run();
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
+        listener.assertReplicationCompletedOrThrow();
         return new PullResult((PullStrategy) pull.strategy, listener);
     }
 
