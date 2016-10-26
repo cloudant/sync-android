@@ -45,12 +45,12 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     protected CouchConfig couchConfig = null;
 
-    private long dbSuffix;
+    private String dbSuffix;
 
     @Before
     public void setUp() throws Exception {
         // Use a unique suffix for each test
-        dbSuffix = System.currentTimeMillis();
+        dbSuffix = System.currentTimeMillis() + "" + System.nanoTime();
         this.createDatastore();
         this.createRemoteDB();
     }
