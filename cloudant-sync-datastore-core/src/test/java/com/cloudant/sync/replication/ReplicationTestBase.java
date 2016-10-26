@@ -102,8 +102,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         }
 
         Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
-        Assert.assertFalse(listener.errorCalled);
-        Assert.assertTrue(listener.finishCalled);
+        listener.assertReplicationCompletedOrThrow();
     }
 
     protected ReplicatorBuilder.Push getPushBuilder() {

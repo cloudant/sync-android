@@ -54,7 +54,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
     }
 
     @Test
-    public void start_StartedThenComplete() throws InterruptedException {
+    public void start_StartedThenComplete() throws Exception {
         Replicator replicator = super.getPullBuilder().build();
 
         TestReplicationListener listener = new TestReplicationListener();
@@ -70,8 +70,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
         Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
         Assert.assertEquals(2, datastore.getDocumentCount());
 
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
+        listener.assertReplicationCompletedOrThrow();
     }
 
     @Test
@@ -173,8 +172,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
         }
 
         Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
-        Assert.assertFalse(listener.errorCalled);
-        Assert.assertTrue(listener.finishCalled);
+        listener.assertReplicationCompletedOrThrow();
 
         //check that the response and request interceptors have been called.
         Assert.assertTrue(interceptorCallCounter.interceptorResponseTimesCalled >= 1);
