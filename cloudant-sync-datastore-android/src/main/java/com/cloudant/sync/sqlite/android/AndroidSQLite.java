@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+ * Copyright © 2013, 2016 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -33,7 +33,12 @@ public class AndroidSQLite extends SQLDatabase {
 
 
     public static AndroidSQLite createAndroidSQLite(String path) {
-        SQLiteDatabase db = SQLiteDatabase.openDatabase(path, null, SQLiteDatabase.CREATE_IF_NECESSARY);
+        SQLiteDatabase db;
+        if (path != null) {
+            db = SQLiteDatabase.openDatabase(path, null, SQLiteDatabase.CREATE_IF_NECESSARY);
+        } else {
+            db = SQLiteDatabase.create(null);
+        }
         return new AndroidSQLite(db);
     }
 
