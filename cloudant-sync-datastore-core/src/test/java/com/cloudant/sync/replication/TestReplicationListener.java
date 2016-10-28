@@ -17,25 +17,20 @@ package com.cloudant.sync.replication;
 import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.ReplicationCompleted;
 import com.cloudant.sync.notifications.ReplicationErrored;
+import com.cloudant.sync.util.TestEventListener;
 
-public class TestReplicationListener {
-
-    public boolean errorCalled = false;
-    public boolean finishCalled = false;
-    public Throwable exception = null;
-    public int batches = 0;
-    public int docs = 0;
+public class TestReplicationListener extends TestEventListener {
 
     @Subscribe
     public void complete(ReplicationCompleted rc) {
         finishCalled = true;
-        batches = rc.batchesReplicated;
-        docs = rc.documentsReplicated;
+        batchesReplicated = rc.batchesReplicated;
+        documentsReplicated = rc.documentsReplicated;
     }
 
     @Subscribe
     public void error(ReplicationErrored re) {
         errorCalled = true;
-        exception = re.errorInfo.getException();
+        errorInfo = re.errorInfo;
     }
 }

@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software distributed under the
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language governing permissions
@@ -42,7 +42,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
     public void start_StartedThenComplete() throws Exception {
         prepareTwoDocumentsInLocalDB();
 
-        ReplicatorImpl replicator = (ReplicatorImpl)super.getPushBuilder().build();
+        ReplicatorImpl replicator = (ReplicatorImpl) super.getPushBuilder().build();
 
         TestReplicationListener listener = new TestReplicationListener();
         Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
@@ -50,15 +50,14 @@ public class PushReplicatorTest extends ReplicationTestBase {
         replicator.start();
         Assert.assertEquals(Replicator.State.STARTED, replicator.getState());
 
-        while(replicator.getState() != Replicator.State.COMPLETE) {
+        while (replicator.getState() != Replicator.State.COMPLETE) {
             Thread.sleep(1000);
         }
 
         Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
-        Assert.assertEquals(2,  remoteDb.changes("0", 100).size());
+        Assert.assertEquals(2, remoteDb.changes("0", 100).size());
 
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
+        listener.assertReplicationCompletedOrThrow();
     }
 
     @Test
@@ -69,7 +68,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
             BarUtils.createBar(datastore, "docnum", i);
         }
 
-        ReplicatorImpl replicator = (ReplicatorImpl)super.getPushBuilder().build();
+        ReplicatorImpl replicator = (ReplicatorImpl) super.getPushBuilder().build();
 
         TestReplicationListener listener = new TestReplicationListener();
         Assert.assertEquals(Replicator.State.PENDING, replicator.getState());
@@ -80,7 +79,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
         replicator.stop();
 
         //force wait for the replicator to finish stopping before making tests.
-        int maxTries = 1000*60; //60 seconds is the longest we'll wait
+        int maxTries = 1000 * 60; //60 seconds is the longest we'll wait
         int haveBeenWaiting = 0;
         while (!listener.finishCalled && !listener.errorCalled) {
             Thread.sleep(1000);
@@ -91,13 +90,11 @@ public class PushReplicatorTest extends ReplicationTestBase {
             haveBeenWaiting += 1000;
         }
 
-        Assert.assertTrue(listener.finishCalled);
-        Assert.assertFalse(listener.errorCalled);
+        listener.assertReplicationCompletedOrThrow();
 
         if (count != remoteDb.changes("0", 10000).size()) {
             Assert.assertEquals(Replicator.State.STOPPED, replicator.getState());
-        }
-        else {
+        } else {
             Assert.assertEquals(Replicator.State.COMPLETE, replicator.getState());
             Assert.fail("replicator did not stop before all docs were pushed");
         }
@@ -134,19 +131,21 @@ public class PushReplicatorTest extends ReplicationTestBase {
         prepareTwoDocumentsInLocalDB();
         ReplicatorBuilder replicatorBuilder = super.getPushBuilder();
         Replicator replicator = replicatorBuilder.build();
-        ReplicationStrategy replicationStrategy = ((ReplicatorImpl)replicator).strategy;
+        ReplicationStrategy replicationStrategy = ((ReplicatorImpl) replicator).strategy;
         replicator.start();
         // replicate 2 docs created above
-        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+        while (replicator.getState() != Replicator.State.COMPLETE && replicator.getState() !=
+                Replicator.State.ERROR) {
             Thread.sleep(50);
         }
         // check document counter has been incremented
         Assert.assertEquals(2, replicationStrategy.getDocumentCounter());
         Bar bar3 = BarUtils.createBar(datastore, "Test", 52);
         replicator.start();
-        ReplicationStrategy replicationStrategy2 = ((ReplicatorImpl)replicator).strategy;
+        ReplicationStrategy replicationStrategy2 = ((ReplicatorImpl) replicator).strategy;
         // replicate 3rd doc
-        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+        while (replicator.getState() != Replicator.State.COMPLETE && replicator.getState() !=
+                Replicator.State.ERROR) {
             Thread.sleep(50);
         }
         // check document counter has been reset since last replication and incremented
@@ -160,7 +159,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
         ReplicatorBuilder.Push p = ReplicatorBuilder.push().
                 from(datastore).
                 to(new URI("http://🍶:🍶@some-host:123/path%2Fsome-path-日本"));
-        ReplicatorImpl r = (ReplicatorImpl)p.build();
+        ReplicatorImpl r = (ReplicatorImpl) p.build();
         // check that user/pass has been removed
         Assert.assertEquals("http://some-host:123/path%2Fsome-path-日本",
                 (((CouchClientWrapper) (((PushStrategy) r.strategy).targetDb)).
@@ -176,10 +175,10 @@ public class PushReplicatorTest extends ReplicationTestBase {
         ReplicatorBuilder.Push p = ReplicatorBuilder.push().
                 from(datastore).
                 to(new URI("http://🍶:🍶@some-host/path%2Fsome-path-日本"));
-        ReplicatorImpl r = (ReplicatorImpl)p.build();
+        ReplicatorImpl r = (ReplicatorImpl) p.build();
         // check that user/pass has been removed
         Assert.assertEquals("http://some-host:80/path%2Fsome-path-日本",
-                (((CouchClientWrapper)(((PushStrategy)r.strategy).targetDb)).
+                (((CouchClientWrapper) (((PushStrategy) r.strategy).targetDb)).
                         getCouchClient().
                         getRootUri()).
                         toString()
@@ -331,7 +330,8 @@ public class PushReplicatorTest extends ReplicationTestBase {
                 .COMPLETE, replicator.getState());
 
         // Expect 3 batches, 2 with 1 change each, and a third with no changes.
-        Assert.assertEquals("There should be three batches processed.", 3, listener.batches);
+        Assert.assertEquals("There should be three batches processed.", 3, listener
+                .batchesReplicated);
 
         assertLastSequence(replicator);
     }

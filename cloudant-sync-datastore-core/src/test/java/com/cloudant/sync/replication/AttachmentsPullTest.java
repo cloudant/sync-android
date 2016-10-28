@@ -63,11 +63,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     @Test
     public void pullRevisionsWithAttachments() throws Exception {
         createRevisionAndAttachment();
-        try {
-            pull();
-        } catch (Exception e) {
-            Assert.fail("Pull error " + e);
-        }
+        pull();
         Attachment a = datastore.getAttachment(id, rev, attachmentName);
         Assert.assertNotNull("Attachment is null", a);
         Assert.assertEquals(attachmentName, a.name);
@@ -80,11 +76,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         // update revision and attachment on remote (same id) - this tests the other code path of
         // updating the sequence on the rev
         updateRevisionAndAttachment();
-        try {
-            pull();
-        } catch (Exception e) {
-            Assert.fail("Pull error " + e);
-        }
+        pull();
         Attachment a2 = datastore.getAttachment(id, rev, attachmentName);
         Assert.assertNotNull("Attachment is null", a2);
         Assert.assertEquals(attachmentName, a2.name);
@@ -98,12 +90,8 @@ public class AttachmentsPullTest extends ReplicationTestBase {
 
     @Test
     public void pullRevisionsWithBigAttachments() throws Exception {
-        try {
-            createRevisionAndBigAttachment();
-            pull();
-        } catch (Exception e) {
-            Assert.fail("Create/pull error " + e);
-        }
+        createRevisionAndBigAttachment();
+        pull();
         Attachment a = datastore.getAttachment(id, rev, bigAttachmentName);
         Assert.assertNotNull("Attachment is null", a);
         Assert.assertEquals(bigAttachmentName, a.name);
@@ -117,12 +105,8 @@ public class AttachmentsPullTest extends ReplicationTestBase {
 
     @Test
     public void pullRevisionsWithBigTextAttachments() throws Exception {
-        try {
-            createRevisionAndBigTextAttachment();
-            pull();
-        } catch (Exception e) {
-            Assert.fail("Create/pull error " + e);
-        }
+        createRevisionAndBigTextAttachment();
+        pull();
         Attachment a = datastore.getAttachment(id, rev, bigTextAttachmentName);
         Assert.assertNotNull("Attachment is null", a);
         Assert.assertEquals(bigTextAttachmentName, a.name);
@@ -162,41 +146,30 @@ public class AttachmentsPullTest extends ReplicationTestBase {
     }
 
     @Test
-    public void dontPullAttachmentNoLongerExists() {
-        try {
-            // create a rev with an attachment, then update it without attachment
-            // ensure updated version no longer has attachment associated with it locally
-            createRevisionAndBigTextAttachment();
-            pull();
-            Attachment a1 = datastore.getAttachment(id, rev, bigTextAttachmentName);
-            updateRevision();
-            pull();
-            Attachment a2 = datastore.getAttachment(id, rev, bigTextAttachmentName);
-            Assert.assertNull(a2);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail("Create/pull error " + e);
-        }
+    public void dontPullAttachmentNoLongerExists() throws Exception {
+        // create a rev with an attachment, then update it without attachment
+        // ensure updated version no longer has attachment associated with it locally
+        createRevisionAndBigTextAttachment();
+        pull();
+        Attachment a1 = datastore.getAttachment(id, rev, bigTextAttachmentName);
+        updateRevision();
+        pull();
+        Attachment a2 = datastore.getAttachment(id, rev, bigTextAttachmentName);
+        Assert.assertNull(a2);
     }
 
     @Test
-    public void dontPullAttachmentAlreadyPulled() {
-        try {
-            // create a rev with an attachment, then update it keeping attachment
-            // TODO we need to somehow check the attachment wasn't re-downloaded
-            createRevisionAndBigTextAttachment();
-            pull();
-            Attachment a1 = datastore.getAttachment(id, rev, bigTextAttachmentName);
-            updateRevisionAndKeepAttachment();
-            updateRevisionAndKeepAttachment();
-            pull();
-            Attachment a2 = datastore.getAttachment(id, rev, bigTextAttachmentName);
-            Assert.assertNotNull(a2);
-
-        } catch (Exception e) {
-            Assert.fail("Create/pull error " + e);
-        }
+    public void dontPullAttachmentAlreadyPulled() throws Exception {
+        // create a rev with an attachment, then update it keeping attachment
+        // TODO we need to somehow check the attachment wasn't re-downloaded
+        createRevisionAndBigTextAttachment();
+        pull();
+        Attachment a1 = datastore.getAttachment(id, rev, bigTextAttachmentName);
+        updateRevisionAndKeepAttachment();
+        updateRevisionAndKeepAttachment();
+        pull();
+        Attachment a2 = datastore.getAttachment(id, rev, bigTextAttachmentName);
+        Assert.assertNotNull(a2);
     }
 
 
