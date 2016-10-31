@@ -166,12 +166,7 @@ public class DatabaseImpl implements Database {
      * reading to and from disk.
      */
     private final AttachmentStreamFactory attachmentStreamFactory;
-/*
-    protected DatabaseImpl(String dir, String name) throws SQLException, IOException,
-            DatastoreException {
-        this(dir, name, new NullKeyProvider());
-    }
-*/
+
     /**
      * Constructor for single thread SQLCipher-based datastore.
      * @param dir The directory where the datastore will be created
