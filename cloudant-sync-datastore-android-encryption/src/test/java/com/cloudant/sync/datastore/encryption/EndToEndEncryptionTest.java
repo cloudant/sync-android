@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
 import com.cloudant.sync.datastore.Attachment;
 import com.cloudant.sync.datastore.DocumentStore;
 import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DatastoreNotCreatedException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
@@ -93,7 +92,6 @@ public class EndToEndEncryptionTest {
     public boolean dataShouldBeEncrypted;
 
     String datastoreManagerDir;
-    DatastoreManager datastoreManager;
     DocumentStore database;
 
     // Magic bytes are "SQLite format 3" + null-terminator
@@ -103,19 +101,18 @@ public class EndToEndEncryptionTest {
     @Before
     public void setUp() throws DatastoreNotCreatedException {
         datastoreManagerDir = TestUtils.createTempTestingDir(this.getClass().getName());
-        datastoreManager = DatastoreManager.getInstance(this.datastoreManagerDir);
 
-        if(dataShouldBeEncrypted) {
-            this.database = this.datastoreManager.openDatastore(getClass().getSimpleName(),
-                    new SimpleKeyProvider(KEY));
+        if (dataShouldBeEncrypted) {
+            this.database = DocumentStore.getInstance(new File(this.datastoreManagerDir), new
+                    SimpleKeyProvider(KEY));
         } else {
-            this.database = this.datastoreManager.openDatastore(getClass().getSimpleName());
+            this.database = DocumentStore.getInstance(new File(this.datastoreManagerDir));
         }
     }
 
     @After
     public void tearDown() {
-        database.database.close();
+        database.close();
         TestUtils.deleteTempTestingDir(datastoreManagerDir);
     }
 
@@ -234,9 +231,9 @@ public class EndToEndEncryptionTest {
 
         // First close the datastore, as otherwise DatastoreManager's uniquing just
         // gives us back the existing instance which has the correct key.
-        database.database.close();
+        database.close();
 
-        this.datastoreManager.openDatastore(getClass().getSimpleName(),
+        DocumentStore.getInstance(new File(getClass().getSimpleName()),
                 new SimpleKeyProvider(WRONG_KEY));
     }
 
