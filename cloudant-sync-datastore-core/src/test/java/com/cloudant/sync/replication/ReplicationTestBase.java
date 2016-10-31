@@ -19,7 +19,6 @@ import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.mazha.CouchClient;
 import com.cloudant.mazha.CouchConfig;
-import com.cloudant.sync.datastore.CloudantSync;
 import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentStore;
 import com.cloudant.sync.sqlite.SQLDatabase;
