@@ -3,7 +3,6 @@ package com.cloudant.sync.datastore;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.event.EventBus;
-import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DatabaseCreated;
 import com.cloudant.sync.notifications.DatabaseDeleted;
@@ -11,21 +10,17 @@ import com.cloudant.sync.notifications.DatabaseOpened;
 import com.cloudant.sync.query.IndexManager;
 import com.cloudant.sync.query.IndexManagerImpl;
 import com.cloudant.sync.util.Misc;
-import com.sun.javafx.scene.shape.PathUtils;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Logger;
 
 /**
  * Created by tomblench on 27/09/2016.
@@ -42,6 +37,8 @@ public class DocumentStore {
     private static final Map<File, DocumentStore> documentStores = new HashMap<File, DocumentStore>();
 
     private static EventBus eventBus = new EventBus();
+
+    private static final Logger logger = Logger.getLogger(DocumentStore.class.getCanonicalName());
 
     private DocumentStore(File location, KeyProvider keyProvider) throws DatastoreException, IOException, SQLException {
         this.location = location;
@@ -82,7 +79,7 @@ public class DocumentStore {
     }
 
     private static boolean checkPathAndCreateIfNeeded(File location) {
-        //logger.fine("Datastore path: " + directoryPath);
+        logger.fine("Datastore path: " + location);
 
         boolean created = false;
         if(!location.exists()){
@@ -98,12 +95,13 @@ public class DocumentStore {
         synchronized (documentStores) {
             DocumentStore ds = documentStores.get(location);
             if (ds != null) {
-                System.out.println("removing "+location);
                 ((DatabaseImpl)database).close();
                 ((IndexManagerImpl)query).close();
                 documentStores.remove(location);
             }
-            // TODO warn if not in map?
+            else {
+                throw new IllegalStateException("DocumentStore "+location+" already closed");
+            }
         }
         eventBus.post(new DatabaseClosed(databaseName));
     }
@@ -119,6 +117,7 @@ public class DocumentStore {
                 String msg = String.format(
                         "Datastore %s doesn't exist on disk", location
                 );
+                logger.warning(msg);
                 throw new IOException(msg);
             } else {
                 FileUtils.deleteDirectory(location);
