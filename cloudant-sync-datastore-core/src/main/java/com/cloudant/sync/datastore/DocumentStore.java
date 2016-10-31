@@ -126,10 +126,6 @@ public class DocumentStore {
         }
     }
 
-    public static List<File> listInstances() {
-        return new ArrayList<File>(documentStores.keySet());
-    }
-
     public static EventBus getEventBus() {
         return eventBus;
     }
