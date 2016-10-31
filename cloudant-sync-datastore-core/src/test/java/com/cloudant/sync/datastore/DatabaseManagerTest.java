@@ -150,38 +150,6 @@ public class DatabaseManagerTest {
     }
 
     @Test
-    public void list5Datastores() throws Exception {
-        List<DocumentStore> opened = new ArrayList<DocumentStore>();
-
-        try {
-            for (int i = 0; i < 5; i++) {
-                // getinstance will only create one level of directories so we have to create this dir first
-                TEST_PATH.mkdir();
-                File f = new File(TEST_PATH, "datastore"+i);
-                opened.add(DocumentStore.getInstance(f));
-            }
-
-            List<File> datastores = DocumentStore.listInstances();
-
-            Assert.assertEquals(5, datastores.size());
-            for (int i = 0; i < 5; i++) {
-                Assert.assertTrue(datastores.contains(new File(TEST_PATH, "datastore" + i)));
-            }
-        } finally {
-            for (DocumentStore ds : opened) {
-                ds.close();
-            }
-        }
-
-    }
-
-    @Test
-    public void listEmptyDatastore() throws Exception {
-        List<File> datastores = DocumentStore.listInstances();
-        Assert.assertEquals(0, datastores.size());
-    }
-
-    @Test
     public void multithreadedDatastoreCreation() throws Exception {
         new MultiThreadedTestHelper<DocumentStore>(25) {
 
