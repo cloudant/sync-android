@@ -14,19 +14,21 @@
 
 package com.cloudant.sync.notifications;
 
-import com.cloudant.sync.datastore.Database;
+import com.cloudant.sync.datastore.DocumentStore;
+import com.cloudant.sync.datastore.encryption.KeyProvider;
+
+import java.io.File;
 
 /**
- * <p>Event for database opened.</p>
+ * <p>Event for DocumentStore opened.</p>
  *
- * <p>The event is only posted the first time a database is opened for
- * a given {@link com.cloudant.sync.datastore.DatastoreManager}</p>
- *
- * <p>When closed Database (by calling {@link Database#close()})
- * is opened again, the event is also fired.</p>
+ * <p>This event is posted the first time a {@link com.cloudant.sync.datastore.DocumentStore}
+ * is opened during the lifetime of a program; or if {@link DocumentStore#close()} is called and a
+ * DocumentStore is subsequently re-opened.</p>
  *
  * <p>This event is posted by
- * {@link com.cloudant.sync.datastore.DatastoreManager#openDatastore(String) openDatastore(String)}
+ * {@link com.cloudant.sync.datastore.DocumentStore#getInstance(File)} and
+ * {@link com.cloudant.sync.datastore.DocumentStore#getInstance(File, KeyProvider)}
  * </p>
  *
  * @api_public
@@ -34,10 +36,10 @@ import com.cloudant.sync.datastore.Database;
 public class DatabaseOpened extends DatabaseModified {
 
     /**
-     * Event for database opened.
+     * Event for DocumentStore opened.
      *
      * @param dbName
-     *            The name of the datastore that was opened
+     *            The name of the DocumentStore that was opened
      */
     public DatabaseOpened(String dbName) {
         super(dbName);
