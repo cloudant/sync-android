@@ -797,7 +797,6 @@ public class DatabaseImpl implements Database {
 
     public void close() {
         queue.shutdown();
-        eventBus.post(new DatabaseClosed(getDatastoreName()));
     }
 
     boolean isOpen() {
