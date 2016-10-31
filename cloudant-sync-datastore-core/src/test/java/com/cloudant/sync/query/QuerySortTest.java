@@ -41,7 +41,6 @@ public class QuerySortTest extends AbstractQueryTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        im = (IndexManagerImpl) cloudantSync.query;
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
         assertThat(TestUtils.getDBQueue(im), is(notNullValue()));

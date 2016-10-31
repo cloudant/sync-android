@@ -84,7 +84,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         } else if (testType.equals(MATCHER_EXECUTION)) {
             idxMgr = new MockMatcherIndexManager(im);
         } else if (testType.equals(STANDARD_EXECUTION)) {
-            idxMgr = cloudantSync.query;
+            idxMgr = im;
         }
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
