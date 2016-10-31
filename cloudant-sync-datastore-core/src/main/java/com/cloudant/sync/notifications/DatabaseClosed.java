@@ -14,22 +14,22 @@
 
 package com.cloudant.sync.notifications;
 
-import com.cloudant.sync.datastore.Database;
+import com.cloudant.sync.datastore.DocumentStore;
 
 /**
- * <p>Event for database closed</p>
+ * <p>Event for DocumentStore closed.</p>
  *
- * <p>This event is posted by {@link Database#close()}</p>
+ * <p>This event is posted by {@link DocumentStore#close()}</p>
  *
  * @api_public
  */
 public class DatabaseClosed extends DatabaseModified {
 
     /**
-     * <p>Event for database closed</p>
+     * Event for DocumentStore closed
      *
      * @param dbName
-     *            The name of the Datastore that was closed
+     *            The name of the DocumentStore that was closed
      */
     public DatabaseClosed(String dbName) {
         super(dbName);
