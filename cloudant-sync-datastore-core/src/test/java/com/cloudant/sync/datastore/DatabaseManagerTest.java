@@ -35,12 +35,10 @@ public class DatabaseManagerTest {
 
     public static File TEST_PATH = null;
 
-
     @Before
     public void setUp() {
         TEST_PATH = new File(FileUtils.getTempDirectory().getAbsolutePath(),
                 "DatastoreManagerTest");
-        System.out.println("*** "+TEST_PATH);
     }
 
     @After
@@ -264,6 +262,14 @@ public class DatabaseManagerTest {
                         };
             }
         }.run();
+    }
+
+    // closing an already closed datastore should raise an IllegalStateException
+    @Test(expected = IllegalStateException.class)
+    public void closeTwice() throws DatastoreNotCreatedException {
+        DocumentStore ds = DocumentStore.getInstance(TEST_PATH);
+        ds.close();
+        ds.close();
     }
 
 }
