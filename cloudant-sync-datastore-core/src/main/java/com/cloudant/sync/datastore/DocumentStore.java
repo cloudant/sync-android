@@ -16,9 +16,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -91,6 +89,7 @@ public class DocumentStore {
         return created;
     }
 
+    @SuppressWarnings("unchecked")
     public void close() {
         synchronized (documentStores) {
             DocumentStore ds = documentStores.get(location);
@@ -106,6 +105,7 @@ public class DocumentStore {
         eventBus.post(new DatabaseClosed(databaseName));
     }
 
+    @SuppressWarnings("unchecked")
     public void delete() throws IOException {
         synchronized (documentStores) {
             DocumentStore ds = documentStores.remove(location);
