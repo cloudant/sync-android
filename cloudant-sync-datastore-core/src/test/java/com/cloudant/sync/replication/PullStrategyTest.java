@@ -387,7 +387,7 @@ public class PullStrategyTest extends ReplicationTestBase {
 
         Assert.assertEquals(0, datastore.getDocumentCount());
 
-        IndexManagerImpl im = (IndexManagerImpl) cloudantSync.query;
+        IndexManagerImpl im = (IndexManagerImpl) documentStore.query;
         try {
             im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("diet")), "diet");
 
