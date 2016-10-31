@@ -174,7 +174,7 @@ public class DatabaseImpl implements Database {
      * @throws SQLException
      * @throws IOException
      */
-    protected DatabaseImpl(File dir, KeyProvider provider) throws SQLException,
+    DatabaseImpl(File dir, KeyProvider provider) throws SQLException,
             IOException, DatastoreException {
         Misc.checkNotNull(dir, "Directory");
         Misc.checkNotNull(provider, "Key provider");
