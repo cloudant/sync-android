@@ -22,9 +22,35 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by tomblench on 27/09/2016.
+ * <p>
+ * Class representing a local store of JSON documents, attachments, query indexes, etc.
+ * </p>
+ *
+ * <p>
+ * Users should create new stores or open existing stores using the static {@link #getInstance(File)}
+ * or {@link #getInstance(File, KeyProvider)} methods.
+ * </p>
+ *
+ * <p>
+ * Users can perform CRUD (create, read, update, delete) operations on JSON documents and attachments
+ * by invoking methods on the {@link #database} member.
+ * </p>
+ *
+ * <p>
+ * Users can perform index and query operations on JSON documents by invoking methods on the
+ * {@link #query} member.
+ * </p>
+ *
+ * <p>
+ * In most cases, users are advised to open store instances and use them for the entire lifetime of
+ * their application. This is more efficient than opening and closing instances for the same
+ * underlying file system location multiple times throughout the lifetime of the application.
+ * Users should call {@link #close()} after using a store to shut down in an orderly manner and free
+ * up resources.
+ * </p>
+ *
+ * @api_public
  */
-
 public class DocumentStore {
 
     public final Database database;
@@ -48,10 +74,40 @@ public class DocumentStore {
         this.query = new IndexManagerImpl(database);
     }
 
+    /**
+     * <p>
+     * Get an instance of an existing or newly created store.
+     * </p>
+     * <p>
+     * Equivalent to calling {@link #getInstance(File, KeyProvider)} getInstance} with a
+     * {@link NullKeyProvider}.
+     * </p>
+     * @param location The location on the file system where the underlying files should be stored.
+     *                 Must be a directory.
+     * @return An existing or newly created store.
+     * @throws DatastoreNotCreatedException if the database cannot be opened
+     */
     public static DocumentStore getInstance(File location) throws DatastoreNotCreatedException {
         return getInstance(location, new NullKeyProvider());
     }
 
+    /**
+     * <p>
+     * Get an instance of an existing or newly created store.
+     * </p>
+     * <p>
+     * If encryption is enabled for this platform, passing a {@link KeyProvider} containing a non-null
+     * key will open or create an encrypted database. If opening a database, the key used to
+     * create the database must be used. If encryption is not enabled for this platform, returning
+     * a non-null key will result in an exception.
+     * </p>
+     * @param location The location on the file system where the underlying files should be stored.
+     *                 Must be a directory.
+     * @param provider KeyProvider object. Use a {@link NullKeyProvider} if the database shouldn't
+     *                 be encrypted.
+     * @return An existing or newly created store.
+     * @throws DatastoreNotCreatedException if the database cannot be opened
+     */
     public static DocumentStore getInstance(File location, KeyProvider provider) throws DatastoreNotCreatedException {
         try {
             synchronized (documentStores) {
