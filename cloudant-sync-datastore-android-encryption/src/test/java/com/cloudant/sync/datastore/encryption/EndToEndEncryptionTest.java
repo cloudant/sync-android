@@ -237,7 +237,7 @@ public class EndToEndEncryptionTest {
         // gives us back the existing instance which has the correct key.
         database.close();
 
-        DocumentStore.getInstance(new File(getClass().getSimpleName()),
+        DocumentStore.getInstance(new File(this.datastoreManagerDir, "EndToEndEncryptionTest"),
                 new SimpleKeyProvider(WRONG_KEY));
     }
 
