@@ -80,6 +80,7 @@ public class DatabaseNotificationsTest {
     public void notification_database_deleted() throws Exception {
         databaseDeleted = new CountDownLatch(1);
         DocumentStore ds = DocumentStore.getInstance(new File(datastoreManagerDir, "test1234"));
+        DocumentStore.getEventBus().register(this);
         try {
             ds.delete();
         } catch (IOException e) {
@@ -93,17 +94,7 @@ public class DatabaseNotificationsTest {
     public void notification_database_closed() throws Exception{
         databaseClosed = new CountDownLatch((1));
         DocumentStore documentStore = DocumentStore.getInstance(new File(datastoreManagerDir, "testDatabaseClosed"));
-        documentStore.database.getEventBus().register(this);
-        documentStore.close();
-        boolean ok = NotificationTestUtils.waitForSignal(databaseClosed);
-        Assert.assertTrue("Did not received database closed event", ok);
-    }
-
-    @Test
-    public void notification_databaseClosed_databaseManagerShouldPostDatabaseClosedEvent() throws Exception{
-        databaseClosed = new CountDownLatch((1));
-        DocumentStore documentStore = DocumentStore.getInstance(new File(datastoreManagerDir, "testDatabaseClosed"));
-        documentStore.database.getEventBus().register(this);
+        DocumentStore.getEventBus().register(this);
         documentStore.close();
         boolean ok = NotificationTestUtils.waitForSignal(databaseClosed);
         Assert.assertTrue("Did not received database closed event", ok);
