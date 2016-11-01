@@ -93,11 +93,10 @@ public class DocumentStore {
     @SuppressWarnings("unchecked")
     public void close() {
         synchronized (documentStores) {
-            DocumentStore ds = documentStores.get(location);
+            DocumentStore ds = documentStores.remove(location);
             if (ds != null) {
                 ((DatabaseImpl)database).close();
                 ((IndexManagerImpl)query).close();
-                documentStores.remove(location);
             }
             else {
                 throw new IllegalStateException("DocumentStore "+location+" already closed");
