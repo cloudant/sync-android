@@ -53,11 +53,12 @@ public class DocumentStore {
     }
 
     public static DocumentStore getInstance(File location, KeyProvider provider) throws DatastoreNotCreatedException {
-        boolean created = checkPathAndCreateIfNeeded(location);
         try {
             synchronized (documentStores) {
                 DocumentStore ds = documentStores.get(location);
+                boolean created = false;
                 if (ds == null) {
+                    created = checkPathAndCreateIfNeeded(location);
                     ds = new DocumentStore(location, provider);
                     documentStores.put(location, ds);
                     eventBus.post(new DatabaseOpened(ds.databaseName));
@@ -122,6 +123,14 @@ public class DocumentStore {
         }
     }
 
+    /**
+     * <p>Returns the EventBus which this Datastore posts
+     * {@link com.cloudant.sync.notifications.DatabaseModified Database Notification Events} to.</p>
+     * @return the DocumentStore's EventBus
+     *
+     * @see <a href="https://github.com/cloudant/sync-android/blob/master/doc/events.md">
+     *     Events documentation</a>
+     */
     public static EventBus getEventBus() {
         return eventBus;
     }
