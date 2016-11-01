@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -105,24 +106,20 @@ public class DocumentStore {
         eventBus.post(new DatabaseClosed(databaseName));
     }
 
-    @SuppressWarnings("unchecked")
     public void delete() throws IOException {
-        synchronized (documentStores) {
-            DocumentStore ds = documentStores.remove(location);
-            if (ds != null) {
-                ((DatabaseImpl)database).close();
-                ((IndexManagerImpl)query).close();
-            }
-            if (!location.exists()) {
-                String msg = String.format(
-                        "Datastore %s doesn't exist on disk", location
-                );
-                logger.warning(msg);
-                throw new IOException(msg);
-            } else {
-                FileUtils.deleteDirectory(location);
-                eventBus.post(new DatabaseDeleted(databaseName));
-            }
+        try {
+            this.close();
+        } catch (Exception e) {
+            // caught exception could be something benign like datastore already closed, so just log
+            logger.log(Level.WARNING, "Caught exception whilst closing DocumentStore in delete()", e);
+        }
+        if (!location.exists()) {
+            String msg = String.format("Datastore %s doesn't exist on disk", location);
+            logger.warning(msg);
+            throw new IOException(msg);
+        } else {
+            FileUtils.deleteDirectory(location);
+            eventBus.post(new DatabaseDeleted(databaseName));
         }
     }
 
