@@ -103,16 +103,20 @@ public class EndToEndEncryptionTest {
         datastoreManagerDir = TestUtils.createTempTestingDir(this.getClass().getName());
 
         if (dataShouldBeEncrypted) {
-            this.database = DocumentStore.getInstance(new File(this.datastoreManagerDir), new
+            this.database = DocumentStore.getInstance(new File(this.datastoreManagerDir, "EndToEndEncryptionTest"), new
                     SimpleKeyProvider(KEY));
         } else {
-            this.database = DocumentStore.getInstance(new File(this.datastoreManagerDir));
+            this.database = DocumentStore.getInstance(new File(this.datastoreManagerDir, "EndToEndEncryptionTest"));
         }
     }
 
     @After
     public void tearDown() {
-        database.close();
+        try {
+            database.close();
+        } catch (Exception e) {
+            // ignore "documentstore already closed" exceptions
+        }
         TestUtils.deleteTempTestingDir(datastoreManagerDir);
     }
 
