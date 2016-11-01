@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 public class DatabaseManagerTest {
@@ -38,14 +39,12 @@ public class DatabaseManagerTest {
     @Before
     public void setUp() {
         TEST_PATH = new File(FileUtils.getTempDirectory().getAbsolutePath(),
-                "DatastoreManagerTest");
+                "DatastoreManagerTest" + UUID.randomUUID());
     }
 
     @After
     public void tearDown() {
-        System.out.println(TEST_PATH.list());
         FileUtils.deleteQuietly(TEST_PATH);
-        System.out.println(TEST_PATH.list());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -87,6 +86,7 @@ public class DatabaseManagerTest {
     @Test
     public void openDatastore_name_dbShouldBeCreated() throws Exception {
         DocumentStore ds = createAndAssertDatastore();
+        ds.close();
         // TODO assert?
     }
 
@@ -162,9 +162,9 @@ public class DatabaseManagerTest {
 
                     }
                 } finally {
-                    for (DocumentStore ds : results) {
-                        if (ds != null) ds.close();
-                    }
+                    // only call close() on the first one - subsequent calls to close() would
+                    // result in an IllegalStateException
+                    ds0.close();
                 }
             }
 
@@ -203,6 +203,7 @@ public class DatabaseManagerTest {
         DocumentStore manager = DocumentStore.getInstance(TEST_PATH);
         DocumentStore manager2 = DocumentStore.getInstance(TEST_PATH);
         Assert.assertSame("The DatastoreManager instances should be the same.", manager, manager2);
+        manager.close();
     }
 
     @Test
