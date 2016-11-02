@@ -69,8 +69,6 @@ public class DocumentStore {
         this.location = location;
         this.databaseName = location.getName();
         this.database = new DatabaseImpl(location, keyProvider);
-        // this will be used to observe purge() events from database and forward them to indexmanager
-        this.database.getEventBus().register(this);
         this.query = new IndexManagerImpl(database);
     }
 
