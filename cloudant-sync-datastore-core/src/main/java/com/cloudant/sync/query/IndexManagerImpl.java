@@ -51,6 +51,7 @@ import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.Misc;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -94,7 +95,7 @@ public class IndexManagerImpl implements IndexManager {
      *  Constructs a new IndexManager which indexes documents in 'datastore'
      *  @param database The {@link Database} to index
      */
-    public IndexManagerImpl(Database database) {
+    public IndexManagerImpl(Database database) throws IOException, SQLException {
         this.database = database;
         validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
 
@@ -102,18 +103,9 @@ public class IndexManagerImpl implements IndexManager {
                                                                               + "indexes.sqlite";
         final KeyProvider keyProvider = ((DatabaseImpl) database).getKeyProvider();
 
-        SQLDatabaseQueue queue = null;
-
-        try {
-            queue = new SQLDatabaseQueue(filename, keyProvider);
-            queue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
-            queue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to open database", e);
-            queue = null;
-        }
-
-        dbQueue = queue;
+        dbQueue = new SQLDatabaseQueue(filename, keyProvider);
+        dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
+        dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
 
         // register so we can receive purge events
         this.database.getEventBus().register(this);
