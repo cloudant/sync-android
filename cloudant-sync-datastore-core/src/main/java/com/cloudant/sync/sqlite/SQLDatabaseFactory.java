@@ -25,6 +25,8 @@ import com.cloudant.sync.datastore.migrations.Migration;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.Misc;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -49,7 +51,7 @@ public class SQLDatabaseFactory {
     private static boolean isFtsAvailable() {
         SQLDatabase tempInMemoryDB = null;
         try {
-            tempInMemoryDB = internalCreateSQLDatabase(null, new NullKeyProvider());
+            tempInMemoryDB = internalOpenOrCreateSQLDatabase(null, new NullKeyProvider());
             tempInMemoryDB.beginTransaction();
             try {
                 tempInMemoryDB.execSQL(String.format("CREATE VIRTUAL TABLE %s USING FTS4 ( col )",
@@ -70,18 +72,30 @@ public class SQLDatabaseFactory {
     }
 
     /**
-     * SQLCipher-based implementation for creating database.
-     * @param dbFilename full file path of the db file
+     * <p>
+     * Open or create a database file, and return a connection to it, optionally backed by a
+     * SQLCipher enabled database.
+     * </p>
+     * <p>
+     * If the database file does not exist, it will be created, and any intermediate directories
+     * will be created as necessary.
+     * </p>
+     * @param dbFile full file path of the db file
      * @param provider Key provider object storing the SQLCipher key
      *                 Supply a NullKeyProvider to use a non-encrypted database.
      * @return {@code SQLDatabase} for the given filename
-     * @throws IOException if the file does not exists, and also
-     *         can not be created
+     * @throws IOException if the file cannot be opened, or the database files or its intermediate
+     *                     directories cannot be created.
      * @throws SQLException if the database cannot be opened.
      */
-    public static SQLDatabase createSQLDatabase(String dbFilename, KeyProvider provider) throws IOException, SQLException {
-        makeSureFileExists(dbFilename);
-        return internalCreateSQLDatabase(dbFilename, provider);
+    public static SQLDatabase openOrCreateSQLDatabase(File dbFile, KeyProvider provider) throws IOException, SQLException {
+        Misc.checkNotNull(dbFile, "dbFile");
+        System.out.println("*** creating "+dbFile.getParentFile());
+        File dbDirectory = dbFile.getParentFile();
+        FileUtils.forceMkdir(dbDirectory);
+        Misc.checkArgument(dbDirectory.isDirectory(), "Input path is not a valid directory");
+        Misc.checkArgument(dbDirectory.canWrite(), "Datastore directory is not writable");
+        return internalOpenOrCreateSQLDatabase(dbFile, provider);
     }
 
     /**
@@ -89,13 +103,15 @@ public class SQLDatabaseFactory {
      * database which can be useful for performing checks, but creating in-memory databases is not
      * permitted from outside of this class hence the private visibility.
      *
-     * @param dbFilename full file path of the db file or {@code null} for an in-memory database
+     * @param dbFile full file path of the db file or {@code null} for an in-memory database
      * @param provider Key provider or {@link NullKeyProvider}. Must be {@link NullKeyProvider}
      *                 if dbFilename is {@code null} i.e. for internal in-memory databases.
      * @return {@code SQLDatabase} for the given filename
      * @throws SQLException - if the database cannot be opened
      */
-    private static SQLDatabase internalCreateSQLDatabase(String dbFilename, KeyProvider provider) throws SQLException {
+    private static SQLDatabase internalOpenOrCreateSQLDatabase(File dbFile, KeyProvider provider) throws SQLException {
+
+
 
         boolean runningOnAndroid =  Misc.isRunningOnAndroid();
         boolean useSqlCipher = (provider.getEncryptionKey() != null);
@@ -105,71 +121,20 @@ public class SQLDatabaseFactory {
             if (runningOnAndroid) {
                 if (useSqlCipher) {
                     return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLCipherSQLite")
-                            .getMethod("createAndroidSQLite", String.class, KeyProvider.class)
-                            .invoke(null, new Object[]{dbFilename, provider});
+                            .getMethod("openOrCreate", File.class, KeyProvider.class)
+                            .invoke(null, new Object[]{dbFile, provider});
                 } else {
                     return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLite")
-                            .getMethod("createAndroidSQLite", String.class)
-                            .invoke(null, dbFilename);
+                            .getMethod("openOrCreate", File.class)
+                            .invoke(null, dbFile);
                 }
             } else {
                 if (useSqlCipher) {
                     throw new UnsupportedOperationException("No SQLCipher-based database implementation for Java SE");
                 } else {
                     return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper")
-                            .getMethod("openSQLiteWrapper", String.class)
-                            .invoke(null, dbFilename);
-                }
-            }
-
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to load database module", e);
-            throw new SQLException("Failed to load database module", e);
-        }
-    }
-
-    /**
-     * SQLCipher-based implementation for opening database.
-     * @param dbFilename full file path of the db file
-     * @param provider Key provider object storing the SQLCipher key
-     *                 Supply a NullKeyProvider to use a non-encrypted database.
-     * @return {@code SQLDatabase} for the given filename
-     * @throws IOException if the file does not exists, and also
-     *         can not be created
-     * @throws SQLException If the database could not be opened.
-     */
-    public static SQLDatabase openSqlDatabase(String dbFilename, KeyProvider provider) throws IOException, SQLException {
-
-        boolean runningOnAndroid =  Misc.isRunningOnAndroid();
-        boolean useSqlCipher = (provider.getEncryptionKey() != null);
-
-        makeSureFileExists(dbFilename);
-
-        try {
-
-            if (runningOnAndroid) {
-                if (useSqlCipher) {
-                    SQLDatabase result = (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLCipherSQLite")
-                            .getMethod("openAndroidSQLite", String.class, KeyProvider.class)
-                            .invoke(null, new Object[]{dbFilename, provider});
-
-                    if (validateOpenedDatabase(result)) {
-                        return result;
-                    } else {
-                        throw new SQLException("Database could not be opened, invalid key.");
-                    }
-                } else {
-                    return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLite")
-                            .getMethod("createAndroidSQLite", String.class)
-                            .invoke(null, dbFilename);
-                }
-            } else {
-                if (useSqlCipher) {
-                    throw new UnsupportedOperationException("No SQLCipher-based database implementation for Java SE");
-                } else {
-                    return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper")
-                            .getMethod("openSQLiteWrapper", String.class)
-                            .invoke(null, dbFilename);
+                            .getMethod("openOrCreate", File.class)
+                            .invoke(null, dbFile);
                 }
             }
 
@@ -257,18 +222,4 @@ public class SQLDatabaseFactory {
         }
     }
 
-    private static void makeSureFileExists(String dbFilename) throws IOException {
-        File dbFile = new File(dbFilename);
-        File dbDir = dbFile.getParentFile();
-        if(!dbDir.exists()) {
-            if(!dbDir.mkdirs()) {
-                throw new IOException("Can not create the directory for datastore.");
-            }
-        }
-        if (!dbFile.exists()) {
-            if(!dbFile.createNewFile()){
-                throw new IOException("Can not create datastore.");
-            }
-        }
-    }
 }

@@ -83,8 +83,8 @@ public class DatabaseNotificationsTest {
         DocumentStore.getEventBus().register(this);
         try {
             ds.delete();
-        } catch (IOException e) {
-            Assert.fail("Got IOException when deleting " + e);
+        } catch (DatastoreException e) {
+            Assert.fail("Got DatastoreException when deleting " + e);
         }
         boolean ok = NotificationTestUtils.waitForSignal(databaseDeleted);
         Assert.assertTrue("Didn't receive database deleted event", ok);

@@ -42,7 +42,7 @@ public class SQLiteWrapper extends SQLDatabase {
     private static final String[] CONFLICT_VALUES = new String[]
             {"", " OR ROLLBACK ", " OR ABORT ", " OR FAIL ", " OR IGNORE ", " OR REPLACE "};
 
-    private final String databaseFilePath;
+    private final File databaseFile;
 
     private SQLiteConnection localConnection;
 
@@ -60,18 +60,14 @@ public class SQLiteWrapper extends SQLDatabase {
      */
     private Stack<Boolean> transactionStack = new Stack<Boolean>();
 
-    public SQLiteWrapper(String databaseFilePath) {
-        this.databaseFilePath = databaseFilePath;
+    public SQLiteWrapper(File databaseFile) {
+        this.databaseFile = databaseFile;
     }
 
-    public static SQLiteWrapper openSQLiteWrapper(String databaseFilePath) {
-        SQLiteWrapper db = new SQLiteWrapper(databaseFilePath);
+    public static SQLiteWrapper openOrCreate(File databaseFile) {
+        SQLiteWrapper db = new SQLiteWrapper(databaseFile);
         db.open();
         return db;
-    }
-
-    public String getDatabaseFile() {
-        return this.databaseFilePath;
     }
 
     SQLiteConnection getConnection() {
@@ -85,12 +81,13 @@ public class SQLiteWrapper extends SQLDatabase {
     SQLiteConnection createNewConnection() {
         try {
             SQLiteConnection conn;
-            if (this.databaseFilePath != null) {
-                conn = new SQLiteConnection(new File(this.databaseFilePath));
+            if (this.databaseFile != null) {
+                conn = new SQLiteConnection(this.databaseFile);
             } else {
                 conn = new SQLiteConnection();
             }
-            conn.open();
+            // open with "open or create" flag
+            conn.open(true);
             conn.setBusyTimeout(30*1000);
             return conn;
         } catch (SQLiteException ex) {
