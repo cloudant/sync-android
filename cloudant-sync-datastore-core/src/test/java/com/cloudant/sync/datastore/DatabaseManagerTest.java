@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.datastore;
 
-import com.cloudant.mazha.Document;
 import com.cloudant.sync.util.MultiThreadedTestHelper;
 
 import org.apache.commons.io.FileUtils;
@@ -25,9 +24,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -47,11 +44,11 @@ public class DatabaseManagerTest {
         FileUtils.deleteQuietly(TEST_PATH);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void nonWritableDatastoreManagerPathThrows() throws DatastoreNotCreatedException {
+    @Test(expected = DatastoreNotOpenedException.class)
+    public void nonWritableDatastoreManagerPathThrows() throws DatastoreNotOpenedException, IOException {
         File f = new File(TEST_PATH, "c_root_test");
         try {
-            f.mkdir();
+            FileUtils.forceMkdir(f);
             f.setReadOnly();
             DocumentStore ds = DocumentStore.getInstance(f);
             ds.close();
@@ -61,9 +58,10 @@ public class DatabaseManagerTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void createFailsIfMissingIntermediates() throws DatastoreNotCreatedException {
-        File f = new File(TEST_PATH, "missing_test");
+    @Test
+    public void createDirectoryIfMissing() throws DatastoreNotOpenedException {
+        File f = TEST_PATH;
+        Assert.assertTrue(!(f.exists() && f.isDirectory()));
         try {
             DocumentStore ds = DocumentStore.getInstance(f);
             ds.close();
@@ -73,8 +71,9 @@ public class DatabaseManagerTest {
     }
 
     @Test
-    public void createDirectoryIfMissing() throws DatastoreNotCreatedException {
-        File f = TEST_PATH;
+    public void createIntermediateDirectoriesIfMissing() throws DatastoreNotOpenedException {
+        File f = new File(TEST_PATH, "a/b/c/d/e/missing_test");
+        Assert.assertTrue(!(f.exists() && f.isDirectory()));
         try {
             DocumentStore ds = DocumentStore.getInstance(f);
             ds.close();
@@ -82,6 +81,7 @@ public class DatabaseManagerTest {
             f.delete();
         }
     }
+
 
     @Test
     public void openDatastore_name_dbShouldBeCreated() throws Exception {
@@ -120,7 +120,7 @@ public class DatabaseManagerTest {
         Assert.assertFalse(new File(dbDir).exists());
     }
 
-    @Test(expected = IOException.class)
+    @Test(expected = DatastoreNotDeletedException.class)
     public void deleteDatastore_dbNotExist_nothing() throws Exception {
         DocumentStore ds = createAndAssertDatastore();
         ds.delete();
@@ -235,7 +235,7 @@ public class DatabaseManagerTest {
 
     // closing an already closed datastore should raise an IllegalStateException
     @Test(expected = IllegalStateException.class)
-    public void closeTwice() throws DatastoreNotCreatedException {
+    public void closeTwice() throws DatastoreNotOpenedException {
         DocumentStore ds = DocumentStore.getInstance(TEST_PATH);
         ds.close();
         ds.close();

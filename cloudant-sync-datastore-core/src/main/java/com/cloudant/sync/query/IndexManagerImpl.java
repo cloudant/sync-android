@@ -99,11 +99,11 @@ public class IndexManagerImpl implements IndexManager {
         this.database = database;
         validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
 
-        final String filename = ((DatabaseImpl) database).extensionDataFolder(EXTENSION_NAME) + File.separator
-                                                                              + "indexes.sqlite";
+        final File file = new File(((DatabaseImpl) database).extensionDataFolder(EXTENSION_NAME), "indexes.sqlite");
+
         final KeyProvider keyProvider = ((DatabaseImpl) database).getKeyProvider();
 
-        dbQueue = new SQLDatabaseQueue(filename, keyProvider);
+        dbQueue = new SQLDatabaseQueue(file, keyProvider);
         dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
         dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
 

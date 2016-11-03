@@ -34,6 +34,8 @@ import com.cloudant.sync.util.Misc;
 import net.sqlcipher.database.SQLiteConstraintException;
 import net.sqlcipher.database.SQLiteDatabase;
 
+import java.io.File;
+
 /**
  * @api_private
  */
@@ -47,24 +49,9 @@ public class AndroidSQLCipherSQLite extends SQLDatabase {
      * @param provider Provider object that contains the key to encrypt the SQLCipher database
      * @return
      */
-    public static AndroidSQLCipherSQLite createAndroidSQLite(String path, KeyProvider provider) {
+    public static AndroidSQLCipherSQLite openOrCreate(File path, KeyProvider provider) {
 
         //Call SQLCipher-based method for opening database, or creating if database not found
-        SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(path,
-                KeyUtils.sqlCipherKeyForKeyProvider(provider), null);
-
-        return new AndroidSQLCipherSQLite(db);
-    }
-
-    /**
-     * Constructor for opening SQLCipher-based SQLite database.
-     * @param path full file path of the db file
-     * @param provider Provider object that contains the key to encrypt the SQLCipher database
-     * @return
-     */
-    public static AndroidSQLCipherSQLite openAndroidSQLite(String path, KeyProvider provider) {
-
-        //Call SQLCipher-based method for opening (or creating) database
         SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(path,
                 KeyUtils.sqlCipherKeyForKeyProvider(provider), null);
 

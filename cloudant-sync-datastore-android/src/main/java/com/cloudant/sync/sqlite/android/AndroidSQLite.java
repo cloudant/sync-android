@@ -22,6 +22,7 @@ import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.Misc;
 
+import java.io.File;
 import java.sql.SQLException;
 
 /**
@@ -31,11 +32,10 @@ public class AndroidSQLite extends SQLDatabase {
 
     android.database.sqlite.SQLiteDatabase database = null;
 
-
-    public static AndroidSQLite createAndroidSQLite(String path) {
+    public static AndroidSQLite openOrCreate(File path) {
         SQLiteDatabase db;
         if (path != null) {
-            db = SQLiteDatabase.openDatabase(path, null, SQLiteDatabase.CREATE_IF_NECESSARY);
+            db = SQLiteDatabase.openOrCreateDatabase(path, null);
         } else {
             db = SQLiteDatabase.create(null);
         }

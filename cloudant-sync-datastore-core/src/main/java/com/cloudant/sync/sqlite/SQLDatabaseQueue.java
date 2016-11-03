@@ -18,9 +18,9 @@ import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.datastore.migrations.Migration;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,30 +48,30 @@ public class SQLDatabaseQueue {
     private String sqliteVersion = null;
     /**
      * Creates an SQLQueue for the database specified.
-     * @param filename The file where the database is located
+     * @param file The file where the database is located
      * @throws IOException If an problem is encountered creating the DB
      * @throws SQLException If the database cannot be opened.
      */
-    public SQLDatabaseQueue(String filename) throws IOException, SQLException {
-        this(filename, new NullKeyProvider());
+    public SQLDatabaseQueue(File file) throws IOException, SQLException {
+        this(file, new NullKeyProvider());
     }
 
     /**
      * Creates an SQLQueue for the SQLCipher-based database specified.
-     * @param filename The file where the database is located
+     * @param file The file where the database is located
      * @param provider The key provider object that contains the user-defined SQLCipher key.
      *                 Supply a NullKeyProvider to use a non-encrypted database.
      * @throws IOException If a problem occurs creating the database
      * @throws SQLException If the database cannot be opened.
      */
-    public SQLDatabaseQueue(final String filename, KeyProvider provider) throws IOException, SQLException {
+    public SQLDatabaseQueue(final File file, KeyProvider provider) throws IOException, SQLException {
         queue = Executors.newSingleThreadExecutor(new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
-                return new Thread(r, "SQLDatabaseQueue - "+ filename);
+                return new Thread(r, "SQLDatabaseQueue - "+ file);
             }
         });
-        this.db = SQLDatabaseFactory.createSQLDatabase(filename, provider);
+        this.db = SQLDatabaseFactory.openOrCreateSQLDatabase(file, provider);
         queue.submit(new Runnable() {
             @Override
             public void run() {
