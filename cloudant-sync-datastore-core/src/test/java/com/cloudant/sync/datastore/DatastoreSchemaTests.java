@@ -87,7 +87,7 @@ public class DatastoreSchemaTests {
         File zippedVersion6 = f("fixture/datastores-user_version6.zip");
         Assert.assertTrue(unzipToDirectory(zippedVersion6, temp_folder));
 
-        final String dbPath = j(temp_folder.getAbsolutePath(), "datastores", "testdb", "db.sync");
+        final File dbPath = new File(j(temp_folder.getAbsolutePath(), "datastores", "testdb", "db.sync"));
         SQLDatabaseQueue queue = new SQLDatabaseQueue(dbPath, new NullKeyProvider());
 
         queue.updateSchema(new MigrateDatabase6To100(), 100);
@@ -183,7 +183,7 @@ public class DatastoreSchemaTests {
      * fixture/datastores-user_version6.zip contains a known database, at version 6 and
      * with two attachments.
      */
-    public void migrationToAtLeast100OnDatastoreOpen() throws DatastoreNotCreatedException,
+    public void migrationToAtLeast100OnDatastoreOpen() throws DatastoreException,
             ExecutionException,
             InterruptedException, IOException {
         // Extract database to temp folder

@@ -27,6 +27,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -47,8 +48,7 @@ public class QueryResultTest extends AbstractQueryTestBase {
         String[] metadataTableList = new String[]{IndexManagerImpl.INDEX_METADATA_TABLE_NAME};
         SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue, metadataTableList);
 
-        queue = new SQLDatabaseQueue(factoryPath +
-            "/db.sync", new NullKeyProvider());
+        queue = new SQLDatabaseQueue(new File(factoryPath, "/db.sync"), new NullKeyProvider());
 
         setUpBasicQueryData();
     }

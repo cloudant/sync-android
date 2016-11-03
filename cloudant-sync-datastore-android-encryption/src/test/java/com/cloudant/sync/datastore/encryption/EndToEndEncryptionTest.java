@@ -22,9 +22,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.cloudant.sync.datastore.Attachment;
+import com.cloudant.sync.datastore.DatastoreNotOpenedException;
 import com.cloudant.sync.datastore.DocumentStore;
 import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.DatastoreNotCreatedException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
@@ -99,7 +99,7 @@ public class EndToEndEncryptionTest {
     byte[] expectedFirstAttachmentByte = new byte[]{ 1 };
 
     @Before
-    public void setUp() throws DatastoreNotCreatedException {
+    public void setUp() throws DatastoreNotOpenedException {
         datastoreManagerDir = TestUtils.createTempTestingDir(this.getClass().getName());
 
         if (dataShouldBeEncrypted) {
@@ -230,8 +230,8 @@ public class EndToEndEncryptionTest {
      * supplying the wrong key will result in attempting to decrypt using that key,
      * which should fail in both cases.
      */
-    @Test(expected = DatastoreNotCreatedException.class)
-    public void testCannotOpenDatabaseWithWrongKey() throws DatastoreNotCreatedException {
+    @Test(expected = DatastoreNotOpenedException.class)
+    public void testCannotOpenDatabaseWithWrongKey() throws DatastoreNotOpenedException {
 
         // First close the datastore, as otherwise DatastoreManager's uniquing just
         // gives us back the existing instance which has the correct key.
