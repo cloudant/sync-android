@@ -21,9 +21,6 @@ package com.cloudant.sync.datastore;
  */
 public class DatastoreException extends Exception {
 
-    public DatastoreException(){
-
-    }
     public DatastoreException(String message){
         super(message);
     }
@@ -35,6 +32,5 @@ public class DatastoreException extends Exception {
     public DatastoreException(String message, Throwable causedBy){
         super(message,causedBy);
     }
-
 
 }

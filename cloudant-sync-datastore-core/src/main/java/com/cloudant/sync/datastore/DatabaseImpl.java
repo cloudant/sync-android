@@ -182,8 +182,8 @@ public class DatabaseImpl implements Database {
         this.keyProvider = provider;
         this.datastoreDir = dir;
         this.extensionsDir = new File(dir, "extensions");
-        final String dbFilename = new File(this.datastoreDir, DB_FILE_NAME).getAbsolutePath();
-        queue = new SQLDatabaseQueue(dbFilename, provider);
+        final File dbFile = new File(this.datastoreDir, DB_FILE_NAME);
+        queue = new SQLDatabaseQueue(dbFile, provider);
 
         int dbVersion = queue.getVersion();
         // Increment the hundreds position if a schema change means that older
@@ -209,7 +209,7 @@ public class DatabaseImpl implements Database {
 
     @Override
     public String getDatastoreName() {
-        return this.datastoreDir.getName();
+        return this.datastoreDir.toString();
     }
 
     public KeyProvider getKeyProvider() {

@@ -9,7 +9,6 @@ import com.cloudant.sync.notifications.DatabaseDeleted;
 import com.cloudant.sync.notifications.DatabaseOpened;
 import com.cloudant.sync.query.IndexManager;
 import com.cloudant.sync.query.IndexManagerImpl;
-import com.cloudant.sync.util.Misc;
 
 import org.apache.commons.io.FileUtils;
 
@@ -67,7 +66,7 @@ public class DocumentStore {
 
     private DocumentStore(File location, KeyProvider keyProvider) throws DatastoreException, IOException, SQLException {
         this.location = location;
-        this.databaseName = location.getName();
+        this.databaseName = location.toString();
         this.database = new DatabaseImpl(location, keyProvider);
         this.query = new IndexManagerImpl(database);
     }
@@ -83,9 +82,11 @@ public class DocumentStore {
      * @param location The location on the file system where the underlying files should be stored.
      *                 Must be a directory.
      * @return An existing or newly created store.
-     * @throws DatastoreNotCreatedException if the database cannot be opened
+     * @throws DatastoreNotOpenedException if the database located at {@code location} cannot be
+     *                                     opened (if it already exists) or created.
      */
-    public static DocumentStore getInstance(File location) throws DatastoreNotCreatedException {
+    public static DocumentStore getInstance(File location) throws
+        DatastoreNotOpenedException {
         return getInstance(location, new NullKeyProvider());
     }
 
@@ -104,45 +105,41 @@ public class DocumentStore {
      * @param provider KeyProvider object. Use a {@link NullKeyProvider} if the database shouldn't
      *                 be encrypted.
      * @return An existing or newly created store.
-     * @throws DatastoreNotCreatedException if the database cannot be opened
+     * @throws DatastoreNotOpenedException if the database located at {@code location} cannot be
+     *                                     opened (if it already exists) or created.
      */
-    public static DocumentStore getInstance(File location, KeyProvider provider) throws DatastoreNotCreatedException {
+    public static DocumentStore getInstance(File location, KeyProvider provider) throws DatastoreNotOpenedException {
         try {
             synchronized (documentStores) {
                 DocumentStore ds = documentStores.get(location);
-                boolean created = false;
+                // See if the file exists already, so we can raise the right event.
+                // SQLDatabaseFactory.openOrCreateSQLDatabase will create directories and file if
+                // required.
+                boolean created = !location.exists();
                 if (ds == null) {
-                    created = checkPathAndCreateIfNeeded(location);
                     ds = new DocumentStore(location, provider);
                     documentStores.put(location, ds);
+                    if (created) {
+                        eventBus.post(new DatabaseCreated(ds.databaseName));
+                    }
                     eventBus.post(new DatabaseOpened(ds.databaseName));
-                }
-                if (created) {
-                    eventBus.post(new DatabaseCreated(ds.databaseName));
                 }
                 return ds;
             }
         }
         catch (IOException e) {
-            throw new DatastoreNotCreatedException("Database not found: " + location, e);
+            throw new DatastoreNotOpenedException("Database not found: " + location, e);
         } catch (SQLException e) {
-            throw new DatastoreNotCreatedException("Database not initialized correctly: " + location, e);
+            // thrown during schema upgrades, etc
+            throw new DatastoreNotOpenedException("Database not initialized correctly: " + location, e);
+        } catch (IllegalArgumentException e) {
+            // thrown by SQLDatabaseFactory if directory is not writable
+            throw new DatastoreNotOpenedException("Database location not accessible: " + location, e);
+        } catch (DatastoreNotOpenedException e) {
+            throw e;
         } catch (DatastoreException e) {
-            throw new DatastoreNotCreatedException("Datastore not initialized correctly: " + location, e);
+            throw new DatastoreNotOpenedException("Datastore not initialized correctly: " + location, e);
         }
-    }
-
-    private static boolean checkPathAndCreateIfNeeded(File location) {
-        logger.fine("Datastore path: " + location);
-
-        boolean created = false;
-        if(!location.exists()){
-            created = location.mkdir();
-        }
-
-        Misc.checkArgument(location.isDirectory(), "Input path is not a valid directory");
-        Misc.checkArgument(location.canWrite(), "Datastore directory is not writable");
-        return created;
     }
 
     @SuppressWarnings("unchecked")
@@ -160,7 +157,7 @@ public class DocumentStore {
         eventBus.post(new DatabaseClosed(databaseName));
     }
 
-    public void delete() throws IOException {
+    public void delete() throws DatastoreNotDeletedException {
         try {
             this.close();
         } catch (Exception e) {
@@ -170,9 +167,15 @@ public class DocumentStore {
         if (!location.exists()) {
             String msg = String.format("Datastore %s doesn't exist on disk", location);
             logger.warning(msg);
-            throw new IOException(msg);
+            throw new DatastoreNotDeletedException(msg);
         } else {
-            FileUtils.deleteDirectory(location);
+            try {
+                FileUtils.deleteDirectory(location);
+            } catch (IOException ioe) {
+                String msg = String.format("Datastore %s not deleted", location);
+                logger.log(Level.WARNING, msg, ioe);
+                throw new DatastoreNotDeletedException(msg, ioe);
+            }
             eventBus.post(new DatabaseDeleted(databaseName));
         }
     }
