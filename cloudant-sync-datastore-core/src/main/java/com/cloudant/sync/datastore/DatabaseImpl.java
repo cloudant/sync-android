@@ -208,8 +208,8 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public String getDatastoreName() {
-        return this.datastoreDir.toString();
+    public File getPath() {
+        return this.datastoreDir;
     }
 
     public KeyProvider getKeyProvider() {
