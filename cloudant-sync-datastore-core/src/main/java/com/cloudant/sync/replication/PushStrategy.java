@@ -101,7 +101,7 @@ class PushStrategy implements ReplicationStrategy {
                         List<HttpConnectionResponseInterceptor> responseInterceptors) {
         this.sourceDb = new DatastoreWrapper((DatabaseImpl) source);
         this.targetDb = new CouchClientWrapper(new CouchClient(target, requestInterceptors, responseInterceptors));
-        String replicatorName = String.format("%s <-- %s ", target, source.getDatastoreName());
+        String replicatorName = String.format("%s <-- %s ", target, source.getPath());
         this.name = String.format("%s [%s]", LOG_TAG, replicatorName);
     }
 
