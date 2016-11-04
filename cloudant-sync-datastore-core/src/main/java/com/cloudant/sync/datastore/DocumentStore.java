@@ -52,10 +52,13 @@ import java.util.logging.Logger;
  */
 public class DocumentStore {
 
+    private static final String EXTENSIONS_LOCATION_NAME = "extensions";
+
     public final Database database;
     public final IndexManager query;
     protected final String databaseName; // only used for events
-    private final File location; // needed for close
+    private final File location; // needed for close/delete
+    private final File extensionsLocation; // for extensions: currently attachments and indexes
 
     /* This map should only be accessed inside synchronized(openDatastores) blocks */
     private static final Map<File, DocumentStore> documentStores = new HashMap<File, DocumentStore>();
@@ -67,9 +70,10 @@ public class DocumentStore {
     private DocumentStore(File location, KeyProvider keyProvider) throws DatastoreException, IOException, SQLException {
         try {
             this.location = location;
+            this.extensionsLocation = new File(location, EXTENSIONS_LOCATION_NAME);
             this.databaseName = location.toString();
-            this.database = new DatabaseImpl(location, keyProvider);
-            this.query = new IndexManagerImpl(database);
+            this.database = new DatabaseImpl(location, extensionsLocation, keyProvider);
+            this.query = new IndexManagerImpl(database, extensionsLocation);
         } catch (DatastoreException e) {
             closeQuietlyOnException();
             throw e;
