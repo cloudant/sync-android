@@ -56,7 +56,9 @@ public class BasicDBCoreObservableTest {
     @Test
     public void createDocument_bodyOnly_success() throws Exception {
 
-        this.core = new DatabaseImpl(new File(database_dir, "test"), new NullKeyProvider());
+        File location = new File(database_dir, "test");
+        File extensionsLocation = new File(location, "extensions");
+        this.core = new DatabaseImpl(location, extensionsLocation, new NullKeyProvider());
 
         this.jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         this.bodyOne = new DocumentBodyImpl(jsonData);

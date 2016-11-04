@@ -50,24 +50,6 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         return result;
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void extensionsFolderDir_null_exception() {
-        this.datastore.extensionDataFolder(null);
-    }
-
-    @Test
-    public void extensionsDir() {
-        File expected = new File(this.datastore.datastoreDir, "extensions");
-        Assert.assertEquals(expected, this.datastore.extensionsDir);
-    }
-
-    @Test
-    public void extensionsFolderDir_extensionName_correctFolderName() {
-        String actual = this.datastore.extensionDataFolder("ext1");
-        String expected = this.datastore.extensionsDir + File.separator + "ext1";
-        Assert.assertEquals(expected, actual);
-    }
-
     @Test(expected = IllegalStateException.class)
     public void close_getDocumentCount_exception() throws Exception {
         datastore.runOnDbQueue(new SQLCallable<Object>()  {
