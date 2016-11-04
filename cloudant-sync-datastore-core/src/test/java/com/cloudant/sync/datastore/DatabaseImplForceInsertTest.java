@@ -57,7 +57,9 @@ public class DatabaseImplForceInsertTest {
     @Before
     public void setUp() throws Exception {
         database_dir = TestUtils.createTempTestingDir(DatabaseImplForceInsertTest.class.getName());
-        datastore = new DatabaseImpl(new File(database_dir, "test"), new NullKeyProvider());
+        File location = new File(database_dir, "test");
+        File extensionsLocation = new File(location, "extensions");
+        datastore = new DatabaseImpl(location, extensionsLocation, new NullKeyProvider());
 
         jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         bodyOne = new DocumentBodyImpl(jsonData);

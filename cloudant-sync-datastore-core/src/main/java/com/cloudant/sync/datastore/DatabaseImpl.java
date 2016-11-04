@@ -140,7 +140,6 @@ public class DatabaseImpl implements Database {
     private final EventBus eventBus;
 
     final File datastoreDir;
-    final File extensionsDir;
 
     private static final String DB_FILE_NAME = "db.sync";
 
@@ -169,19 +168,22 @@ public class DatabaseImpl implements Database {
 
     /**
      * Constructor for single thread SQLCipher-based datastore.
-     * @param dir The directory where the datastore will be created
+     * @param location The location where the datastore will be opened/created
+     * @param extensionsLocation The location where the datastore's extensions are stored
      * @param provider The key provider object that contains the user-defined SQLCipher key
      * @throws SQLException
      * @throws IOException
      */
-    DatabaseImpl(File dir, KeyProvider provider) throws SQLException,
+    DatabaseImpl(File location, File extensionsLocation, KeyProvider provider) throws SQLException,
             IOException, DatastoreException {
-        Misc.checkNotNull(dir, "Directory");
+        Misc.checkNotNull(location, "location");
+        Misc.checkNotNull(extensionsLocation, "extensionsLocation");
         Misc.checkNotNull(provider, "Key provider");
 
         this.keyProvider = provider;
-        this.datastoreDir = dir;
-        this.extensionsDir = new File(dir, "extensions");
+        this.datastoreDir = location;
+        this.attachmentsDir = new File(extensionsLocation, ATTACHMENTS_EXTENSION_NAME).getAbsolutePath();
+
         final File dbFile = new File(this.datastoreDir, DB_FILE_NAME);
         queue = new SQLDatabaseQueue(dbFile, provider);
 
@@ -203,7 +205,6 @@ public class DatabaseImpl implements Database {
                 200);
         this.eventBus = new EventBus();
 
-        this.attachmentsDir = this.extensionDataFolder(ATTACHMENTS_EXTENSION_NAME);
         this.attachmentStreamFactory = new AttachmentStreamFactory(this.getKeyProvider());
     }
 
@@ -861,12 +862,6 @@ public class DatabaseImpl implements Database {
         }
 
         return null;
-    }
-
-    public String extensionDataFolder(String extensionName) {
-        Misc.checkState(this.isOpen(), "Database is closed");
-        Misc.checkNotNullOrEmpty(extensionName, "Extension name");
-        return new File(this.extensionsDir, extensionName).getAbsolutePath();
     }
 
     @Override
