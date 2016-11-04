@@ -107,9 +107,9 @@ class PullStrategy implements ReplicationStrategy {
         this.targetDb = new DatastoreWrapper((DatabaseImpl) target);
         String replicatorName;
         if (filter == null) {
-            replicatorName = String.format("%s <-- %s ", target.getDatastoreName(), source);
+            replicatorName = String.format("%s <-- %s ", target.getPath(), source);
         } else {
-            replicatorName = String.format("%s <-- %s (%s)", target.getDatastoreName(), source,
+            replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source,
                     filter.getName());
         }
         this.name = String.format("%s [%s]", LOG_TAG, replicatorName);
