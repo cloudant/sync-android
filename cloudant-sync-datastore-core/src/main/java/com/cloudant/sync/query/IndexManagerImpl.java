@@ -97,14 +97,12 @@ public class IndexManagerImpl implements IndexManager {
      *  Constructs a new IndexManager which indexes documents in 'datastore'
      *  @param database The {@link Database} to index
      */
-    public IndexManagerImpl(Database database, File extensionsLocation) throws IOException, SQLException {
+    public IndexManagerImpl(Database database, File extensionsLocation, KeyProvider keyProvider) throws IOException, SQLException {
         this.database = database;
         validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
 
         File indexesLocation = new File(extensionsLocation, EXTENSION_NAME);
         File indexesDatabaseFile = new File(indexesLocation, DB_FILE_NAME);
-
-        final KeyProvider keyProvider = ((DatabaseImpl) database).getKeyProvider();
 
         dbQueue = new SQLDatabaseQueue(indexesDatabaseFile, keyProvider);
         dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
