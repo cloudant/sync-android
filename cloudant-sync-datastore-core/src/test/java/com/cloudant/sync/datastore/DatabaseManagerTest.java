@@ -48,7 +48,7 @@ public class DatabaseManagerTest {
     public void nonWritableDatastoreManagerPathThrows() throws DatastoreNotOpenedException, IOException {
         File f = new File(TEST_PATH, "c_root_test");
         try {
-            FileUtils.forceMkdir(f);
+            f.mkdirs();
             f.setReadOnly();
             DocumentStore ds = DocumentStore.getInstance(f);
             ds.close();
