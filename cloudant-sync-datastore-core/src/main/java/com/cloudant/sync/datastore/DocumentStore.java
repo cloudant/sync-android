@@ -65,10 +65,30 @@ public class DocumentStore {
     private static final Logger logger = Logger.getLogger(DocumentStore.class.getCanonicalName());
 
     private DocumentStore(File location, KeyProvider keyProvider) throws DatastoreException, IOException, SQLException {
-        this.location = location;
-        this.databaseName = location.toString();
-        this.database = new DatabaseImpl(location, keyProvider);
-        this.query = new IndexManagerImpl(database);
+        try {
+            this.location = location;
+            this.databaseName = location.toString();
+            this.database = new DatabaseImpl(location, keyProvider);
+            this.query = new IndexManagerImpl(database);
+        } catch (DatastoreException e) {
+            closeQuietlyOnException();
+            throw e;
+        } catch (IOException e) {
+            closeQuietlyOnException();
+            throw e;
+        } catch (SQLException e) {
+            closeQuietlyOnException();
+            throw e;
+        }
+    }
+
+    private void closeQuietlyOnException() {
+        if (database != null) {
+            ((DatabaseImpl) database).close();
+        }
+        if (query != null) {
+            ((IndexManagerImpl) query).close();
+        }
     }
 
     /**
