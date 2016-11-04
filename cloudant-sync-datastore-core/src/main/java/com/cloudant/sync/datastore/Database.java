@@ -20,6 +20,7 @@ package com.cloudant.sync.datastore;
 import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.query.IndexManagerImpl;
 
+import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 
@@ -65,11 +66,11 @@ public interface Database {
     long SEQUENCE_NUMBER_START = -1l;
 
     /**
-     * <p>Returns the name of this datastore.</p>
+     * <p>Returns the path where this Database is stored.</p>
      *
-     * @return the name of this datastore
+     * @return The path where this Database is stored.
      */
-    String getDatastoreName();
+    File getPath();
 
     /**
      * <p>Returns the current winning revision of a document.</p>
