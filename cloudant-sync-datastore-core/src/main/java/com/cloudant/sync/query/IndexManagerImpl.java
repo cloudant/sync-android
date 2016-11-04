@@ -78,6 +78,8 @@ import java.util.regex.Pattern;
  */
 public class IndexManagerImpl implements IndexManager {
 
+    private static final String DB_FILE_NAME = "indexes.sqlite";
+
     private static final String INDEX_TABLE_PREFIX = "_t_cloudant_sync_query_index_";
     public static final String INDEX_METADATA_TABLE_NAME = "_t_cloudant_sync_query_metadata";
 
@@ -95,15 +97,16 @@ public class IndexManagerImpl implements IndexManager {
      *  Constructs a new IndexManager which indexes documents in 'datastore'
      *  @param database The {@link Database} to index
      */
-    public IndexManagerImpl(Database database) throws IOException, SQLException {
+    public IndexManagerImpl(Database database, File extensionsLocation) throws IOException, SQLException {
         this.database = database;
         validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
 
-        final File file = new File(((DatabaseImpl) database).extensionDataFolder(EXTENSION_NAME), "indexes.sqlite");
+        File indexesLocation = new File(extensionsLocation, EXTENSION_NAME);
+        File indexesDatabaseFile = new File(indexesLocation, DB_FILE_NAME);
 
         final KeyProvider keyProvider = ((DatabaseImpl) database).getKeyProvider();
 
-        dbQueue = new SQLDatabaseQueue(file, keyProvider);
+        dbQueue = new SQLDatabaseQueue(indexesDatabaseFile, keyProvider);
         dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
         dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion2()), 2);
 
