@@ -92,7 +92,7 @@ public class SQLDatabaseFactory {
         Misc.checkNotNull(dbFile, "dbFile");
         System.out.println("*** creating "+dbFile.getParentFile());
         File dbDirectory = dbFile.getParentFile();
-        FileUtils.forceMkdir(dbDirectory);
+        dbDirectory.mkdirs();
         Misc.checkArgument(dbDirectory.isDirectory(), "Input path is not a valid directory");
         Misc.checkArgument(dbDirectory.canWrite(), "Datastore directory is not writable");
         return internalOpenOrCreateSQLDatabase(dbFile, provider);
