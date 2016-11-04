@@ -73,7 +73,7 @@ public class DocumentStore {
             this.extensionsLocation = new File(location, EXTENSIONS_LOCATION_NAME);
             this.databaseName = location.toString();
             this.database = new DatabaseImpl(location, extensionsLocation, keyProvider);
-            this.query = new IndexManagerImpl(database, extensionsLocation);
+            this.query = new IndexManagerImpl(database, extensionsLocation, keyProvider);
         } catch (DatastoreException e) {
             closeQuietlyOnException();
             throw e;
