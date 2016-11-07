@@ -90,7 +90,6 @@ public class SQLDatabaseFactory {
      */
     public static SQLDatabase openOrCreateSQLDatabase(File dbFile, KeyProvider provider) throws IOException, SQLException {
         Misc.checkNotNull(dbFile, "dbFile");
-        System.out.println("*** creating "+dbFile.getParentFile());
         File dbDirectory = dbFile.getParentFile();
         dbDirectory.mkdirs();
         Misc.checkArgument(dbDirectory.isDirectory(), "Input path is not a valid directory");
