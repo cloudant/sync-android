@@ -47,7 +47,7 @@ public class TestUtils {
     public static SQLDatabase createEmptyDatabase(String database_dir, String database_file) throws IOException, SQLException {
         File dbFile = new File(database_dir + File.separator + database_file + DATABASE_FILE_EXT);
         FileUtils.touch(dbFile);
-        SQLDatabase database = SQLDatabaseFactory.openOrCreateSQLDatabase(dbFile,
+        SQLDatabase database = SQLDatabaseFactory.openSQLDatabase(dbFile,
                 new NullKeyProvider());
         return database;
     }

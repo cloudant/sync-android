@@ -71,7 +71,7 @@ public class SQLDatabaseQueue {
                 return new Thread(r, "SQLDatabaseQueue - "+ file);
             }
         });
-        this.db = SQLDatabaseFactory.openOrCreateSQLDatabase(file, provider);
+        this.db = SQLDatabaseFactory.openSQLDatabase(file, provider);
         queue.submit(new Runnable() {
             @Override
             public void run() {

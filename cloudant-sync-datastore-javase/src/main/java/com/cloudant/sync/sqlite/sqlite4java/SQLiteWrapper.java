@@ -64,7 +64,7 @@ public class SQLiteWrapper extends SQLDatabase {
         this.databaseFile = databaseFile;
     }
 
-    public static SQLiteWrapper openOrCreate(File databaseFile) {
+    public static SQLiteWrapper open(File databaseFile) {
         SQLiteWrapper db = new SQLiteWrapper(databaseFile);
         db.open();
         return db;
