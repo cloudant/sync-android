@@ -49,7 +49,7 @@ public class AndroidSQLCipherSQLite extends SQLDatabase {
      * @param provider Provider object that contains the key to encrypt the SQLCipher database
      * @return
      */
-    public static AndroidSQLCipherSQLite openOrCreate(File path, KeyProvider provider) {
+    public static AndroidSQLCipherSQLite open(File path, KeyProvider provider) {
 
         //Call SQLCipher-based method for opening database, or creating if database not found
         SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(path,
