@@ -36,7 +36,7 @@ public class DatastoreTestUtils {
         String path = database_dir + File.separator + database_file + DATABASE_FILE_EXT;
         File dbFile = new File(path);
         FileUtils.touch(dbFile);
-        SQLDatabase database = SQLDatabaseFactory.openOrCreateSQLDatabase(dbFile,
+        SQLDatabase database = SQLDatabaseFactory.openSQLDatabase(dbFile,
                 new NullKeyProvider());
         SQLDatabaseFactory.updateSchema(database,
                 new SchemaOnlyMigration(DatastoreConstants.getSchemaVersion3()), 3);

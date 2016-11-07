@@ -51,7 +51,7 @@ public class SQLDatabaseFactory {
     private static boolean isFtsAvailable() {
         SQLDatabase tempInMemoryDB = null;
         try {
-            tempInMemoryDB = internalOpenOrCreateSQLDatabase(null, new NullKeyProvider());
+            tempInMemoryDB = internalOpenSQLDatabase(null, new NullKeyProvider());
             tempInMemoryDB.beginTransaction();
             try {
                 tempInMemoryDB.execSQL(String.format("CREATE VIRTUAL TABLE %s USING FTS4 ( col )",
@@ -88,13 +88,13 @@ public class SQLDatabaseFactory {
      *                     directories cannot be created.
      * @throws SQLException if the database cannot be opened.
      */
-    public static SQLDatabase openOrCreateSQLDatabase(File dbFile, KeyProvider provider) throws IOException, SQLException {
+    public static SQLDatabase openSQLDatabase(File dbFile, KeyProvider provider) throws IOException, SQLException {
         Misc.checkNotNull(dbFile, "dbFile");
         File dbDirectory = dbFile.getParentFile();
         dbDirectory.mkdirs();
         Misc.checkArgument(dbDirectory.isDirectory(), "Input path is not a valid directory");
         Misc.checkArgument(dbDirectory.canWrite(), "Datastore directory is not writable");
-        return internalOpenOrCreateSQLDatabase(dbFile, provider);
+        return internalOpenSQLDatabase(dbFile, provider);
     }
 
     /**
@@ -108,9 +108,7 @@ public class SQLDatabaseFactory {
      * @return {@code SQLDatabase} for the given filename
      * @throws SQLException - if the database cannot be opened
      */
-    private static SQLDatabase internalOpenOrCreateSQLDatabase(File dbFile, KeyProvider provider) throws SQLException {
-
-
+    private static SQLDatabase internalOpenSQLDatabase(File dbFile, KeyProvider provider) throws SQLException {
 
         boolean runningOnAndroid =  Misc.isRunningOnAndroid();
         boolean useSqlCipher = (provider.getEncryptionKey() != null);
@@ -120,11 +118,11 @@ public class SQLDatabaseFactory {
             if (runningOnAndroid) {
                 if (useSqlCipher) {
                     return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLCipherSQLite")
-                            .getMethod("openOrCreate", File.class, KeyProvider.class)
+                            .getMethod("open", File.class, KeyProvider.class)
                             .invoke(null, new Object[]{dbFile, provider});
                 } else {
                     return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.android.AndroidSQLite")
-                            .getMethod("openOrCreate", File.class)
+                            .getMethod("open", File.class)
                             .invoke(null, dbFile);
                 }
             } else {
@@ -132,7 +130,7 @@ public class SQLDatabaseFactory {
                     throw new UnsupportedOperationException("No SQLCipher-based database implementation for Java SE");
                 } else {
                     return (SQLDatabase) Class.forName("com.cloudant.sync.sqlite.sqlite4java.SQLiteWrapper")
-                            .getMethod("openOrCreate", File.class)
+                            .getMethod("open", File.class)
                             .invoke(null, dbFile);
                 }
             }

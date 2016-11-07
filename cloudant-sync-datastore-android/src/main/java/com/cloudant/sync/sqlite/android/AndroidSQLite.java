@@ -32,7 +32,7 @@ public class AndroidSQLite extends SQLDatabase {
 
     android.database.sqlite.SQLiteDatabase database = null;
 
-    public static AndroidSQLite openOrCreate(File path) {
+    public static AndroidSQLite open(File path) {
         SQLiteDatabase db;
         if (path != null) {
             db = SQLiteDatabase.openOrCreateDatabase(path, null);
