@@ -29,16 +29,19 @@ import static org.junit.Assert.fail;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.sqlite.Cursor;
 import com.cloudant.sync.sqlite.SQLCallable;
 import com.cloudant.sync.sqlite.SQLDatabase;
 import com.cloudant.sync.util.DatabaseUtils;
+import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1059,7 +1062,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             rev.setBody(DocumentBodyFactory.create(bodyMap));
             ds.createDocumentFromRevision(rev);
 
-            createIndex("testIndex", Collections.singletonList((Object) "name"));
+            createIndex("testIndex", Collections.singletonList((FieldSort) new FieldSort("name")));
             exepctedSequence = getIndexSequenceNumber("testIndex");
             Assert.assertEquals("The expected sequence should be 1 for 1 document created.", 1,
                     exepctedSequence);
@@ -1068,20 +1071,17 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }
 
         // Get a new IndexManager instance and extract its queue
-        im = new IndexManager(ds);
+        im = new IndexManagerImpl(ds, new File(ds.getPath(), "extensions"), new NullKeyProvider());
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
 
         // Check that the updates are still there
         try {
             // Assert that the index made is still there
-            Set<Map.Entry<String, Object>> entries = im.listIndexes().entrySet();
+            List<Index> entries = im.listIndexes();
             Assert.assertEquals("There should be 1 index.", 1, entries.size());
-            Map.Entry<String, Object> actualIndex = entries.iterator().next();
-            Assert.assertEquals("There should be the named index.", "testIndex", actualIndex
-                    .getKey());
-            Map<String, Object> actualIndexMetadata = (Map<String, Object>) actualIndex.getValue();
-            Assert.assertEquals("The name property of the index should be correct.", "testIndex",
-                    actualIndexMetadata.get("name"));
+            Index actualIndex = entries.get(0);
+            Assert.assertEquals("There should be the named index.", "testIndex",
+                    actualIndex.indexName);
             long actualSequence = getIndexSequenceNumber("testIndex");
             Assert.assertEquals("The sequence should still be 1 for 1 document created.", 1,
                     actualSequence);
@@ -1103,7 +1103,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             rev.setBody(DocumentBodyFactory.create(bodyMap));
             ds.createDocumentFromRevision(rev);
 
-            createIndex("testIndex", Collections.singletonList((Object) "name"));
+            createIndex("testIndex", Collections.singletonList((FieldSort) new FieldSort("name")));
             exepctedSequence = getIndexSequenceNumber("testIndex");
             Assert.assertEquals("The expected sequence should be 1 for 1 document created.", 1,
                     exepctedSequence);
@@ -1112,7 +1112,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }
 
         // Get a new IndexManager instance and extract its queue
-        im = new IndexManager(ds);
+        im = new IndexManagerImpl(ds, new File(ds.getPath(), "extensions"),  new NullKeyProvider());
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
 
         try {
@@ -1135,19 +1135,16 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }
 
         // Get a new IndexManager instance and extract its queue
-        im = new IndexManager(ds);
+        im = new IndexManagerImpl(ds, new File(ds.getPath(), "extensions"),  new NullKeyProvider());
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         // Check that the updates are still there
         try {
             // Assert that the index made is still there
-            Set<Map.Entry<String, Object>> entries = im.listIndexes().entrySet();
+            List<Index> entries = im.listIndexes();
             Assert.assertEquals("There should be 1 index.", 1, entries.size());
-            Map.Entry<String, Object> actualIndex = entries.iterator().next();
-            Assert.assertEquals("There should be the named index.", "testIndex", actualIndex
-                    .getKey());
-            Map<String, Object> actualIndexMetadata = (Map<String, Object>) actualIndex.getValue();
-            Assert.assertEquals("The name property of the index should be correct.", "testIndex",
-                    actualIndexMetadata.get("name"));
+            Index actualIndex = entries.get(0);
+            Assert.assertEquals("There should be the named index.", "testIndex",
+                    actualIndex.indexName);
             long actualSequence = getIndexSequenceNumber("testIndex");
             Assert.assertEquals("The sequence should still be 2 for 2 documents created.", 2,
                     actualSequence);
