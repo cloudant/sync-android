@@ -47,12 +47,10 @@ import com.cloudant.sync.datastore.callables.RevsDiffBatchCallable;
 import com.cloudant.sync.datastore.callables.SetCurrentCallable;
 import com.cloudant.sync.datastore.callables.UpdateDocumentFromRevisionCallable;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
-import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.datastore.migrations.MigrateDatabase100To200;
 import com.cloudant.sync.datastore.migrations.MigrateDatabase6To100;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.event.EventBus;
-import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DocumentCreated;
 import com.cloudant.sync.notifications.DocumentDeleted;
 import com.cloudant.sync.notifications.DocumentModified;
@@ -66,8 +64,6 @@ import com.cloudant.sync.util.CouchUtils;
 import com.cloudant.sync.util.DatabaseUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.Misc;
-
-import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.io.IOException;

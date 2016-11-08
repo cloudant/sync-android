@@ -14,32 +14,20 @@
 
 package com.cloudant.sync.notifications;
 
-import com.cloudant.sync.datastore.encryption.KeyProvider;
-
-import java.io.File;
-
 /**
- * <p>Event for DocumentStore created.</p>
- *
- * <p>The event is posted when the underlying database is created on the disk.</p>
- *
- * <p>This event is posted by
- * {@link com.cloudant.sync.datastore.DocumentStore#getInstance(File)} and
- * {@link com.cloudant.sync.datastore.DocumentStore#getInstance(File, KeyProvider)}
- * </p>
- *
  * @api_public
  */
-public class DatabaseCreated extends DatabaseModified {
+public class DocumentStoreModified {
 
     /**
-     * Event for DocumentStore created.
-     *
+     * Generic event for database create/delete
+     * 
      * @param dbName
-     *            The name of the DocumentStore that was created
+     *            The name of the Datastore that was created or deleted
      */
-    public DatabaseCreated(String dbName) {
-        super(dbName);
+    public DocumentStoreModified(String dbName) {
+        this.dbName = dbName;
     }
 
+    public final String dbName;
 }
