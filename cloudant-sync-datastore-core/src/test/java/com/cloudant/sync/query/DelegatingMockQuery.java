@@ -70,7 +70,6 @@ public abstract class DelegatingMockQuery implements Query {
         return delegate.find(query, skip, limit, fields, sortDocument);
     }
 
-    @Override
     public void close() {
         delegate.close();
     }
