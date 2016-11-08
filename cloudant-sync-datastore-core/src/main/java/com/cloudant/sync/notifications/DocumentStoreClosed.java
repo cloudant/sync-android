@@ -17,22 +17,21 @@ package com.cloudant.sync.notifications;
 import com.cloudant.sync.datastore.DocumentStore;
 
 /**
- * <p>Event for database deleted.</p>
+ * <p>Event for DocumentStore closed.</p>
  *
- * <p>This event is posted by
- * {@link DocumentStore#delete()}</p>
+ * <p>This event is posted by {@link DocumentStore#close()}</p>
  *
  * @api_public
  */
-public class DatabaseDeleted extends DatabaseModified {
+public class DocumentStoreClosed extends DocumentStoreModified {
 
     /**
-     * Event for DocumentStore deleted.
-     * 
+     * Event for DocumentStore closed
+     *
      * @param dbName
-     *            The name of the DocumentStore that was deleted
+     *            The name of the DocumentStore that was closed
      */
-    public DatabaseDeleted(String dbName) {
+    public DocumentStoreClosed(String dbName) {
         super(dbName);
     }
 }
