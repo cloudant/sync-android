@@ -18,9 +18,9 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.hasSize;
 
 import com.cloudant.sync.event.Subscribe;
-import com.cloudant.sync.notifications.DatabaseClosed;
-import com.cloudant.sync.notifications.DatabaseCreated;
-import com.cloudant.sync.notifications.DatabaseOpened;
+import com.cloudant.sync.notifications.DocumentStoreClosed;
+import com.cloudant.sync.notifications.DocumentStoreCreated;
+import com.cloudant.sync.notifications.DocumentStoreOpened;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.After;
@@ -44,9 +44,9 @@ import java.util.List;
  */
 public class DatabaseNotificationsMoreTest {
 
-    List<DatabaseCreated> databaseCreated = new ArrayList<DatabaseCreated>();
-    List<DatabaseOpened> databaseOpened = new ArrayList<DatabaseOpened>();
-    List<DatabaseClosed> databaseClosed = new ArrayList<DatabaseClosed>();
+    List<DocumentStoreCreated> documentStoreCreated = new ArrayList<DocumentStoreCreated>();
+    List<DocumentStoreOpened> databaseOpened = new ArrayList<DocumentStoreOpened>();
+    List<DocumentStoreClosed> documentStoreClosed = new ArrayList<DocumentStoreClosed>();
     String datastoreManagerDir;
 
     @Before
@@ -67,9 +67,9 @@ public class DatabaseNotificationsMoreTest {
     public void notification_database_opened() throws Exception{
         DocumentStore ds = DocumentStore.getInstance(new File(datastoreManagerDir, "test123"));
         try {
-            Assert.assertThat(databaseCreated, hasSize(1));
+            Assert.assertThat(documentStoreCreated, hasSize(1));
             Assert.assertThat(databaseOpened, hasSize(1));
-            Assert.assertThat(databaseCreated.get(0).dbName, endsWith("test123"));
+            Assert.assertThat(documentStoreCreated.get(0).dbName, endsWith("test123"));
             Assert.assertThat(databaseOpened.get(0).dbName, endsWith("test123"));
         } finally {
             ds.close();
@@ -82,13 +82,13 @@ public class DatabaseNotificationsMoreTest {
         Database ds1 = null ;
         try {
             Assert.assertNotNull(ds);
-            Assert.assertThat(databaseCreated, hasSize(1));
+            Assert.assertThat(documentStoreCreated, hasSize(1));
             Assert.assertThat(databaseOpened, hasSize(1));
-            Assert.assertThat(databaseCreated.get(0).dbName, endsWith("test123"));
+            Assert.assertThat(documentStoreCreated.get(0).dbName, endsWith("test123"));
             Assert.assertThat(databaseOpened.get(0).dbName, endsWith("test123"));
 
             ds1 = DocumentStore.getInstance(new File(datastoreManagerDir, "test123")).database;
-            Assert.assertThat(databaseCreated, hasSize(1));
+            Assert.assertThat(documentStoreCreated, hasSize(1));
             Assert.assertThat(databaseOpened, hasSize(1));
             Assert.assertNotNull(ds1);
         } finally {
@@ -99,18 +99,18 @@ public class DatabaseNotificationsMoreTest {
     @Test
     public void notification_databaseOpenCloseAndThenOpenedAgain_databaseCreatedEventShouldBeOnlyFireOnce() throws Exception {
         DocumentStore ds = DocumentStore.getInstance(new File(datastoreManagerDir, "test123"));
-        Assert.assertThat(databaseCreated, hasSize(1));
+        Assert.assertThat(documentStoreCreated, hasSize(1));
         Assert.assertThat(databaseOpened, hasSize(1));
-        Assert.assertThat(databaseClosed, hasSize(0));
-        Assert.assertThat(databaseCreated.get(0).dbName, endsWith("test123"));
+        Assert.assertThat(documentStoreClosed, hasSize(0));
+        Assert.assertThat(documentStoreCreated.get(0).dbName, endsWith("test123"));
         Assert.assertThat(databaseOpened.get(0).dbName, endsWith("test123"));
 
         this.clearAllEventList();
         ds.close();
-        Assert.assertThat(databaseCreated, hasSize(0));
+        Assert.assertThat(documentStoreCreated, hasSize(0));
         Assert.assertThat(databaseOpened, hasSize(0));
-        Assert.assertThat(databaseClosed, hasSize(1));
-        Assert.assertThat(databaseClosed.get(0).dbName, endsWith("test123"));
+        Assert.assertThat(documentStoreClosed, hasSize(1));
+        Assert.assertThat(documentStoreClosed.get(0).dbName, endsWith("test123"));
 
         // After database is closed, when it is opened, the
         // DatabaseOpened event should be fired, but the
@@ -119,9 +119,9 @@ public class DatabaseNotificationsMoreTest {
         DocumentStore ds1 = DocumentStore.getInstance(new File(datastoreManagerDir, "test123"));
         try {
             Assert.assertNotNull(ds1);
-            Assert.assertThat(databaseCreated, hasSize(0));
+            Assert.assertThat(documentStoreCreated, hasSize(0));
             Assert.assertThat(databaseOpened, hasSize(1));
-            Assert.assertThat(databaseClosed, hasSize(0));
+            Assert.assertThat(documentStoreClosed, hasSize(0));
             Assert.assertThat(databaseOpened.get(0).dbName, endsWith("test123"));
         } finally {
             ds1.close();
@@ -129,24 +129,24 @@ public class DatabaseNotificationsMoreTest {
     }
 
     private void clearAllEventList() {
-        databaseCreated.clear();
-        databaseClosed.clear();
+        documentStoreCreated.clear();
+        documentStoreClosed.clear();
         databaseOpened.clear();
     }
 
     @Subscribe
-    public void onDatabaseOpened(DatabaseCreated dc) {
-        this.databaseCreated.add(dc);
+    public void onDatabaseOpened(DocumentStoreCreated dc) {
+        this.documentStoreCreated.add(dc);
     }
 
     @Subscribe
-    public void onDatabaseOpened(DatabaseOpened dd) {
+    public void onDatabaseOpened(DocumentStoreOpened dd) {
         this.databaseOpened.add(dd);
     }
 
     @Subscribe
-    public void onDatabaseClosed(DatabaseClosed dc) {
-        this.databaseClosed.add(dc);
+    public void onDatabaseClosed(DocumentStoreClosed dc) {
+        this.documentStoreClosed.add(dc);
     }
 
 }

@@ -17,10 +17,11 @@ package com.cloudant.sync.datastore;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.encryption.NullKeyProvider;
 import com.cloudant.sync.event.EventBus;
-import com.cloudant.sync.notifications.DatabaseClosed;
-import com.cloudant.sync.notifications.DatabaseCreated;
-import com.cloudant.sync.notifications.DatabaseDeleted;
-import com.cloudant.sync.notifications.DatabaseOpened;
+import com.cloudant.sync.notifications.DocumentStoreClosed;
+import com.cloudant.sync.notifications.DocumentStoreCreated;
+import com.cloudant.sync.notifications.DocumentStoreDeleted;
+import com.cloudant.sync.notifications.DocumentStoreOpened;
+import com.cloudant.sync.notifications.DocumentStoreModified;
 import com.cloudant.sync.query.Query;
 import com.cloudant.sync.query.QueryImpl;
 
@@ -158,9 +159,9 @@ public class DocumentStore {
                     ds = new DocumentStore(location, provider);
                     documentStores.put(location, ds);
                     if (created) {
-                        eventBus.post(new DatabaseCreated(ds.databaseName));
+                        eventBus.post(new DocumentStoreCreated(ds.databaseName));
                     }
-                    eventBus.post(new DatabaseOpened(ds.databaseName));
+                    eventBus.post(new DocumentStoreOpened(ds.databaseName));
                 }
                 return ds;
             }
@@ -192,7 +193,7 @@ public class DocumentStore {
                 throw new IllegalStateException("DocumentStore "+location+" already closed");
             }
         }
-        eventBus.post(new DatabaseClosed(databaseName));
+        eventBus.post(new DocumentStoreClosed(databaseName));
     }
 
     public void delete() throws DatastoreNotDeletedException {
@@ -214,13 +215,13 @@ public class DocumentStore {
                 logger.log(Level.WARNING, msg, ioe);
                 throw new DatastoreNotDeletedException(msg, ioe);
             }
-            eventBus.post(new DatabaseDeleted(databaseName));
+            eventBus.post(new DocumentStoreDeleted(databaseName));
         }
     }
 
     /**
      * <p>Returns the EventBus which this Datastore posts
-     * {@link com.cloudant.sync.notifications.DatabaseModified Database Notification Events} to.</p>
+     * {@link DocumentStoreModified Database Notification Events} to.</p>
      * @return the DocumentStore's EventBus
      *
      * @see <a href="https://github.com/cloudant/sync-android/blob/master/doc/events.md">
