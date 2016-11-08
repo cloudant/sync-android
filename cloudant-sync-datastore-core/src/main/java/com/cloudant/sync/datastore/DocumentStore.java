@@ -21,8 +21,8 @@ import com.cloudant.sync.notifications.DatabaseClosed;
 import com.cloudant.sync.notifications.DatabaseCreated;
 import com.cloudant.sync.notifications.DatabaseDeleted;
 import com.cloudant.sync.notifications.DatabaseOpened;
-import com.cloudant.sync.query.IndexManager;
-import com.cloudant.sync.query.IndexManagerImpl;
+import com.cloudant.sync.query.Query;
+import com.cloudant.sync.query.QueryImpl;
 
 import org.apache.commons.io.FileUtils;
 
@@ -69,7 +69,7 @@ public class DocumentStore {
     private static final String EXTENSIONS_LOCATION_NAME = "extensions";
 
     public final Database database;
-    public final IndexManager query;
+    public final Query query;
     protected final String databaseName; // only used for events
     private final File location; // needed for close/delete
     private final File extensionsLocation; // for extensions: currently attachments and indexes
@@ -87,7 +87,7 @@ public class DocumentStore {
             this.extensionsLocation = new File(location, EXTENSIONS_LOCATION_NAME);
             this.databaseName = location.toString();
             this.database = new DatabaseImpl(location, extensionsLocation, keyProvider);
-            this.query = new IndexManagerImpl(database, extensionsLocation, keyProvider);
+            this.query = new QueryImpl(database, extensionsLocation, keyProvider);
         } catch (DatastoreException e) {
             closeQuietlyOnException();
             throw e;
@@ -105,7 +105,7 @@ public class DocumentStore {
             ((DatabaseImpl) database).close();
         }
         if (query != null) {
-            ((IndexManagerImpl) query).close();
+            ((QueryImpl) query).close();
         }
     }
 
@@ -186,7 +186,7 @@ public class DocumentStore {
             DocumentStore ds = documentStores.remove(location);
             if (ds != null) {
                 ((DatabaseImpl)database).close();
-                ((IndexManagerImpl)query).close();
+                ((QueryImpl)query).close();
             }
             else {
                 throw new IllegalStateException("DocumentStore "+location+" already closed");

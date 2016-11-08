@@ -52,7 +52,7 @@ final class QueryConstants {
 
     public static String[] getSchemaVersion1() {
         return new String[] {
-                "CREATE TABLE " + IndexManagerImpl.INDEX_METADATA_TABLE_NAME + " ( " +
+                "CREATE TABLE " + QueryImpl.INDEX_METADATA_TABLE_NAME + " ( " +
                 "        index_name TEXT NOT NULL, " +
                 "        index_type TEXT NOT NULL, " +
                 "        field_name TEXT NOT NULL, " +
@@ -62,7 +62,7 @@ final class QueryConstants {
 
     public static String[] getSchemaVersion2() {
         return new String[] {
-                "ALTER TABLE " + IndexManagerImpl.INDEX_METADATA_TABLE_NAME +
+                "ALTER TABLE " + QueryImpl.INDEX_METADATA_TABLE_NAME +
                 "        ADD COLUMN index_settings TEXT NULL;"
         };
     }

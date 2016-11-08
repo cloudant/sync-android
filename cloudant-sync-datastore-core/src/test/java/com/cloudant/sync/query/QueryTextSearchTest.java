@@ -44,7 +44,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
         assertThat(indexManagerDatabaseQueue, is(notNullValue()));
-        String[] metadataTableList = new String[] { IndexManagerImpl.INDEX_METADATA_TABLE_NAME };
+        String[] metadataTableList = new String[] { QueryImpl.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue, metadataTableList);
 
         DocumentRevision rev = new DocumentRevision("mike12");

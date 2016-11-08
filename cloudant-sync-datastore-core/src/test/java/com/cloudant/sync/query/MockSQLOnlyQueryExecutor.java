@@ -19,12 +19,12 @@ import java.util.Map;
 
 /**
  * This sub class of the {@link com.cloudant.sync.query.QueryExecutor} along with
- * {@link com.cloudant.sync.query.MockSQLOnlyIndexManager} is used by query
+ * {@link MockSQLOnlyQuery} is used by query
  * executor tests to force the tests to exclusively exercise the SQL engine logic.
  * This class is used for testing purposes only.
  *
  * @see com.cloudant.sync.query.QueryExecutor
- * @see com.cloudant.sync.query.MockSQLOnlyIndexManager
+ * @see MockSQLOnlyQuery
  */
 public class MockSQLOnlyQueryExecutor extends QueryExecutor{
 

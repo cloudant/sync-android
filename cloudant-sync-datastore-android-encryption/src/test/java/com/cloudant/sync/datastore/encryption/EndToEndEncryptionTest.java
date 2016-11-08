@@ -31,7 +31,7 @@ import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.UnsavedFileAttachment;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.query.FieldSort;
-import com.cloudant.sync.query.IndexManager;
+import com.cloudant.sync.query.Query;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.TestUtils;
@@ -130,7 +130,7 @@ public class EndToEndEncryptionTest {
         // database operation to ensure the database exists on disk before we look at
         // it.
 
-        IndexManager im = this.database.query;
+        Query im = this.database.query;
         try {
             im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
         } finally {
@@ -155,7 +155,7 @@ public class EndToEndEncryptionTest {
     @Test
     public void indexDataEncrypted() throws IOException, QueryException {
 
-        IndexManager im = this.database.query;
+        Query im = this.database.query;
         try {
             im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
         } finally {
@@ -302,17 +302,17 @@ public class EndToEndEncryptionTest {
                 IOUtils.contentEquals(new ByteArrayInputStream(nonAsciiText.getBytes()), in));
 
         // perform a query to ensure we can use special chars
-        IndexManager indexManager = database.query;
+        Query query = database.query;
         try {
-            assertNotNull(indexManager.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "my index"));
+            assertNotNull(query.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "my index"));
 
             // query for the name fred and check that docs are returned.
             Map<String, Object> selector = new HashMap<String, Object>();
             selector.put("name", "fred");
-            QueryResult queryResult = indexManager.find(selector);
+            QueryResult queryResult = query.find(selector);
             assertNotNull(queryResult);
         } finally {
-            indexManager.close();
+            query.close();
         }
         // Delete
         try {

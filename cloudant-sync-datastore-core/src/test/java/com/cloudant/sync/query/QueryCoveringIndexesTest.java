@@ -41,17 +41,17 @@ import java.util.Map;
  *  same as the SQL query engine.
  *
  *  To accomplish this, we test the entire test execution pipeline contained
- *  within this class using {@link com.cloudant.sync.query.MockSQLOnlyIndexManager}
+ *  within this class using {@link MockSQLOnlyQuery}
  *  which exercises the SQL query engine matching functionality.  We then test
  *  the same test execution pipeline contained within this class using
- *  {@link com.cloudant.sync.query.MockMatcherIndexManager} which in turn
+ *  {@link MockMatcherQuery} which in turn
  *  exercises the post hoc matcher matching functionality.  Finally we test the
- *  execution pipeline with {@link IndexManagerImpl}
+ *  execution pipeline with {@link QueryImpl}
  *  which tests query functionality under standard "production" conditions.
  *
- *  @see com.cloudant.sync.query.MockSQLOnlyIndexManager
- *  @see com.cloudant.sync.query.MockMatcherIndexManager
- *  @see IndexManagerImpl
+ *  @see MockSQLOnlyQuery
+ *  @see MockMatcherQuery
+ *  @see QueryImpl
  */
 @RunWith(Parameterized.class)
 public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
@@ -63,7 +63,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
 
     private String testType = null;
 
-    private IndexManager idxMgr = null;
+    private Query idxMgr = null;
 
     @Parameters(name = "{0}")
     public static Iterable<Object[]> data() throws Exception {
@@ -80,16 +80,16 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     public void setUp() throws Exception{
         super.setUp();
         if (testType.equals(SQL_ONLY_EXECUTION)) {
-            idxMgr = new MockSQLOnlyIndexManager(im);
+            idxMgr = new MockSQLOnlyQuery(im);
         } else if (testType.equals(MATCHER_EXECUTION)) {
-            idxMgr = new MockMatcherIndexManager(im);
+            idxMgr = new MockMatcherQuery(im);
         } else if (testType.equals(STANDARD_EXECUTION)) {
             idxMgr = im;
         }
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
         assertThat(indexManagerDatabaseQueue, is(notNullValue()));
-        String[] metadataTableList = new String[] { IndexManagerImpl.INDEX_METADATA_TABLE_NAME };
+        String[] metadataTableList = new String[] { QueryImpl.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(TestUtils.getDBQueue(im), metadataTableList);
     }
 

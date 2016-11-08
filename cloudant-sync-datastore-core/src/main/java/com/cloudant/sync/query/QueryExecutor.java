@@ -341,7 +341,7 @@ class QueryExecutor {
             return null;
         }
 
-        String indexTable = IndexManagerImpl.tableNameForIndex(chosenIndex);
+        String indexTable = QueryImpl.tableNameForIndex(chosenIndex);
 
         // for small result sets:
         // SELECT _id FROM idx WHERE _id IN (?, ?) ORDER BY fieldName ASC, fieldName2 DESC

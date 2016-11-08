@@ -141,7 +141,7 @@ class QuerySqlTranslator {
             String allDocsIndex = chooseIndexForFields(neededFields, indexes);
 
             if (allDocsIndex != null && !allDocsIndex.isEmpty()) {
-                String tableName = IndexManagerImpl.tableNameForIndex(allDocsIndex);
+                String tableName = QueryImpl.tableNameForIndex(allDocsIndex);
                 String sql = String.format(Locale.ENGLISH, "SELECT _id FROM \"%s\"", tableName);
                 sqlNode.sql = SqlParts.partsForSql(sql, new String[]{});
             }
@@ -452,7 +452,7 @@ class QuerySqlTranslator {
             return null;
         }
 
-        String tableName = IndexManagerImpl.tableNameForIndex(indexName);
+        String tableName = QueryImpl.tableNameForIndex(indexName);
 
         String sql = String.format(Locale.ENGLISH,
                                    "SELECT _id FROM \"%s\" WHERE %s",
@@ -479,7 +479,7 @@ class QuerySqlTranslator {
         Map<String, Object> textClause = (Map<String, Object>) clause;
         Map<String, String> searchClause = (Map<String, String>) textClause.get(TEXT);
 
-        String tableName = IndexManagerImpl.tableNameForIndex(indexName);
+        String tableName = QueryImpl.tableNameForIndex(indexName);
         String search = searchClause.get(SEARCH);
         search = search.replace("'", "''");
 
@@ -562,7 +562,7 @@ class QuerySqlTranslator {
                 } else {
                     String whereClause;
                     String sqlOperator = operatorMap.get(operator);
-                    String tableName = IndexManagerImpl.tableNameForIndex(indexName);
+                    String tableName = QueryImpl.tableNameForIndex(indexName);
                     String placeholder;
                     if (operator.equals(IN)) {
                         // The predicate map value must be a List here.

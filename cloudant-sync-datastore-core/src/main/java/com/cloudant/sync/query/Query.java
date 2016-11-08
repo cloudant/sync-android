@@ -20,7 +20,7 @@ import java.util.Map;
  * Created by tomblench on 28/09/2016.
  */
 
-public interface IndexManager {
+public interface Query {
 
 
     List<Index> listIndexes() throws QueryException;
