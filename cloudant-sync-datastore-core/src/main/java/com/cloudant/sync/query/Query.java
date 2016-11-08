@@ -40,7 +40,7 @@ public interface Query {
 
     void deleteIndex(String indexName) throws QueryException;
 
-    void updateAllIndexes() throws QueryException; // not sure if this should throw or not.
+    void updateAllIndexes() throws QueryException;
 
     QueryResult find(Map<String, Object> query) throws QueryException;
 
@@ -50,8 +50,5 @@ public interface Query {
                      List<String> fields,
                      List<FieldSort> sortDocument)
             throws QueryException;
-
-    // TODO we may not want to expose this publicly
-    void close();
 
 }
