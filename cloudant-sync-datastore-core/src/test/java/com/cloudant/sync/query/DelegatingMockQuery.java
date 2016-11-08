@@ -17,11 +17,11 @@ package com.cloudant.sync.query;
 import java.util.List;
 import java.util.Map;
 
-public abstract class DelegatingMockIndexManager implements IndexManager {
+public abstract class DelegatingMockQuery implements Query {
 
-    protected final IndexManagerImpl delegate;
+    protected final QueryImpl delegate;
 
-    DelegatingMockIndexManager(IndexManagerImpl delegate) {
+    DelegatingMockQuery(QueryImpl delegate) {
         this.delegate = delegate;
     }
 

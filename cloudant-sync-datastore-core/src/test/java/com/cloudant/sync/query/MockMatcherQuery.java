@@ -19,17 +19,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This sub class of the {@link IndexManagerImpl} along with
+ * This sub class of the {@link QueryImpl} along with
  * {@link com.cloudant.sync.query.MockMatcherQueryExecutor} is used by query
  * executor tests to force the tests to exclusively exercise the post hoc matcher logic.
  * This class is used for testing purposes only.
  *
- * @see IndexManagerImpl
+ * @see QueryImpl
  * @see com.cloudant.sync.query.MockMatcherQueryExecutor
  */
-public class MockMatcherIndexManager extends DelegatingMockIndexManager {
+public class MockMatcherQuery extends DelegatingMockQuery {
 
-    public MockMatcherIndexManager(IndexManagerImpl im) {
+    public MockMatcherQuery(QueryImpl im) {
         super(im);
     }
 

@@ -179,7 +179,7 @@ class IndexCreator {
                     parameters.put("index_settings", index.settingsAsJSON());
                     parameters.put("field_name", fieldName.field);
                     parameters.put("last_sequence", 0);
-                    long rowId = database.insert(IndexManagerImpl.INDEX_METADATA_TABLE_NAME,
+                    long rowId = database.insert(QueryImpl.INDEX_METADATA_TABLE_NAME,
                                                  parameters);
                     if (rowId < 0) {
                         throw new QueryException("Error inserting index metadata");
@@ -288,7 +288,7 @@ class IndexCreator {
         Future<List<Index>> indexes = queue.submit(new SQLCallable<List<Index>>() {
             @Override
             public List<Index> call(SQLDatabase database) throws SQLException {
-                return IndexManagerImpl.listIndexesInDatabase(database);
+                return QueryImpl.listIndexesInDatabase(database);
             }
         });
 
@@ -296,14 +296,14 @@ class IndexCreator {
     }
 
     private String createIndexTableStatementForIndex(String indexName, List<String> columns) {
-        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManagerImpl.tableNameForIndex(indexName));
+        String tableName = String.format(Locale.ENGLISH, "\"%s\"", QueryImpl.tableNameForIndex(indexName));
         String cols = Misc.join(" NONE, ", columns);
 
         return String.format("CREATE TABLE %s ( %s NONE )", tableName, cols);
     }
 
     private String createIndexIndexStatementForIndex(String indexName, List<String> columns) {
-        String tableName = IndexManagerImpl.tableNameForIndex(indexName);
+        String tableName = QueryImpl.tableNameForIndex(indexName);
         String sqlIndexName = tableName.concat("_index");
         String cols = Misc.join(",", columns);
 
@@ -324,7 +324,7 @@ class IndexCreator {
     private String createVirtualTableStatementForIndex(String indexName,
                                                        List<String> columns,
                                                        List<String> indexSettings) {
-        String tableName = String.format(Locale.ENGLISH, "\"%s\"", IndexManagerImpl
+        String tableName = String.format(Locale.ENGLISH, "\"%s\"", QueryImpl
                 .tableNameForIndex(indexName));
         String cols = Misc.join(",", columns);
         String settings = Misc.join(",", indexSettings);

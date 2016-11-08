@@ -23,12 +23,12 @@ import java.util.Set;
 
 /**
  * This sub class of the {@link com.cloudant.sync.query.QueryExecutor} along with
- * {@link com.cloudant.sync.query.MockMatcherIndexManager} is used by query
+ * {@link MockMatcherQuery} is used by query
  * executor tests to force the tests to exclusively exercise the post hoc matcher logic.
  * This class is used for testing purposes only.
  *
  * @see com.cloudant.sync.query.QueryExecutor
- * @see com.cloudant.sync.query.MockMatcherIndexManager
+ * @see MockMatcherQuery
  */
 public class MockMatcherQueryExecutor extends QueryExecutor{
 

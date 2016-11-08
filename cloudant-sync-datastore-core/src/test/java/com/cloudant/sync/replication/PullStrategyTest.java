@@ -28,7 +28,7 @@ import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.query.FieldSort;
-import com.cloudant.sync.query.IndexManagerImpl;
+import com.cloudant.sync.query.QueryImpl;
 import com.cloudant.sync.query.QueryResult;
 
 import org.junit.Assert;
@@ -386,7 +386,7 @@ public class PullStrategyTest extends ReplicationTestBase {
 
         Assert.assertEquals(0, datastore.getDocumentCount());
 
-        IndexManagerImpl im = (IndexManagerImpl) documentStore.query;
+        QueryImpl im = (QueryImpl) documentStore.query;
         try {
             im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("diet")), "diet");
 
