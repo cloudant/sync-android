@@ -31,7 +31,7 @@ public abstract class AbstractIndexTestBase {
 
     String factoryPath = null;
     DatabaseImpl ds = null;
-    IndexManagerImpl im = null;
+    QueryImpl im = null;
     SQLDatabaseQueue indexManagerDatabaseQueue;
 
     @Before
@@ -41,11 +41,11 @@ public abstract class AbstractIndexTestBase {
         DocumentStore documentStore = DocumentStore.getInstance(new File(factoryPath));
         ds = (DatabaseImpl) documentStore.database;
         assertThat(ds, is(notNullValue()));
-        im = (IndexManagerImpl) documentStore.query;
+        im = (QueryImpl) documentStore.query;
         assertThat(im, is(notNullValue()));
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(indexManagerDatabaseQueue, is(notNullValue()));
-        String[] metadataTableList = new String[] { IndexManagerImpl.INDEX_METADATA_TABLE_NAME };
+        String[] metadataTableList = new String[] { QueryImpl.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue,
                                                metadataTableList);
     }

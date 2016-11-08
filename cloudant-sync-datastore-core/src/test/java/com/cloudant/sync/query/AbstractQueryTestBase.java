@@ -46,7 +46,7 @@ public abstract class AbstractQueryTestBase {
 
     String factoryPath = null;
     DatabaseImpl ds = null;
-    IndexManagerImpl im = null;
+    QueryImpl im = null;
     SQLDatabaseQueue indexManagerDatabaseQueue;
 
     @Before
@@ -56,7 +56,7 @@ public abstract class AbstractQueryTestBase {
         String datastoreName = AbstractQueryTestBase.class.getSimpleName();
         DocumentStore documentStore = DocumentStore.getInstance(new File(factoryPath));
         ds = (DatabaseImpl) documentStore.database;
-        im = (IndexManagerImpl) documentStore.query;
+        im = (QueryImpl) documentStore.query;
         assertThat(ds, is(notNullValue()));
     }
 

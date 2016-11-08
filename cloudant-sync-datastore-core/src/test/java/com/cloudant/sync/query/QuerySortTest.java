@@ -44,7 +44,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
         assertThat(TestUtils.getDBQueue(im), is(notNullValue()));
-        String[] metadataTableList = new String[] { IndexManagerImpl.INDEX_METADATA_TABLE_NAME };
+        String[] metadataTableList = new String[] { QueryImpl.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue, metadataTableList);
 
         Index indexA = new Index(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("pet")), "a", IndexType.JSON, null);

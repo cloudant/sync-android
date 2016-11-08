@@ -27,7 +27,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -122,7 +121,7 @@ class IndexUpdater {
             public Void call(SQLDatabase database) throws QueryException {
                 for (DocumentRevision rev: changes.getResults()) {
                     // Delete existing values
-                    String tableName = IndexManagerImpl.tableNameForIndex(indexName);
+                    String tableName = QueryImpl.tableNameForIndex(indexName);
                     database.delete(tableName, " _id = ? ", new String[]{rev.getId()});
 
                     // Insert new values if the rev isn't deleted
@@ -305,7 +304,7 @@ class IndexUpdater {
             // NB there is no default case - if the type isn't supported, it doesn't get indexed
             argIndex = argIndex + 1;
         }
-        String tableName = IndexManagerImpl.tableNameForIndex(indexName);
+        String tableName = QueryImpl.tableNameForIndex(indexName);
 
         return new DBParameter(tableName, contentValues);
     }
@@ -316,7 +315,7 @@ class IndexUpdater {
             public Long call(SQLDatabase database) {
                 long result = 0;
                 String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = ?",
-                                           IndexManagerImpl.INDEX_METADATA_TABLE_NAME);
+                                           QueryImpl.INDEX_METADATA_TABLE_NAME);
                 Cursor cursor = null;
                 try {
                     cursor = database.rawQuery(sql, new String[]{ indexName });
@@ -352,7 +351,7 @@ class IndexUpdater {
             public Void call(SQLDatabase database) throws QueryException {
                 ContentValues v = new ContentValues();
                 v.put("last_sequence", lastSequence);
-                int row = database.update(IndexManagerImpl.INDEX_METADATA_TABLE_NAME,
+                int row = database.update(QueryImpl.INDEX_METADATA_TABLE_NAME,
                                           v,
                                           " index_name = ? ",
                                           new String[]{ indexName });
