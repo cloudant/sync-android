@@ -15,10 +15,10 @@
 package com.cloudant.sync.datastore;
 
 import com.cloudant.sync.event.Subscribe;
-import com.cloudant.sync.notifications.DatabaseClosed;
-import com.cloudant.sync.notifications.DatabaseCreated;
-import com.cloudant.sync.notifications.DatabaseDeleted;
-import com.cloudant.sync.notifications.DatabaseOpened;
+import com.cloudant.sync.notifications.DocumentStoreClosed;
+import com.cloudant.sync.notifications.DocumentStoreCreated;
+import com.cloudant.sync.notifications.DocumentStoreDeleted;
+import com.cloudant.sync.notifications.DocumentStoreOpened;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.After;
@@ -27,7 +27,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 public class DatabaseNotificationsTest {
@@ -101,28 +100,28 @@ public class DatabaseNotificationsTest {
     }
 
     @Subscribe
-    public void onDatabaseCreated(DatabaseCreated dc) {
+    public void onDatabaseCreated(DocumentStoreCreated dc) {
         if(databaseCreated != null) {
             databaseCreated.countDown();
         }
     }
 
     @Subscribe
-    public void onDatabaseOpened(DatabaseOpened dd) {
+    public void onDatabaseOpened(DocumentStoreOpened dd) {
         if(databaseOpened != null) {
             databaseOpened.countDown();
         }
     }
 
     @Subscribe
-    public void onDatabaseDeleted(DatabaseDeleted dd) {
+    public void onDatabaseDeleted(DocumentStoreDeleted dd) {
         if(databaseDeleted != null) {
             databaseDeleted.countDown();
         }
     }
 
     @Subscribe
-    public void onDatabaseClosed(DatabaseClosed dc) {
+    public void onDatabaseClosed(DocumentStoreClosed dc) {
         if(databaseClosed != null) {
             databaseClosed.countDown();
         }
