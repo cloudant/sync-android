@@ -39,7 +39,6 @@
 package com.cloudant.sync.query;
 
 import com.cloudant.sync.datastore.Database;
-import com.cloudant.sync.datastore.DatabaseImpl;
 import com.cloudant.sync.datastore.encryption.KeyProvider;
 import com.cloudant.sync.datastore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.sqlite.Cursor;
@@ -81,7 +80,7 @@ import java.util.regex.Pattern;
  *
  *  @api_public
  */
-public class IndexManagerImpl implements IndexManager {
+public class QueryImpl implements Query {
 
     private static final String DB_FILE_NAME = "indexes.sqlite";
 
@@ -91,7 +90,7 @@ public class IndexManagerImpl implements IndexManager {
     private static final String EXTENSION_NAME = "com.cloudant.sync.query";
     private static final String INDEX_FIELD_NAME_PATTERN = "^[a-zA-Z][a-zA-Z0-9_]*$";
 
-    private static final Logger logger = Logger.getLogger(IndexManagerImpl.class.getName());
+    private static final Logger logger = Logger.getLogger(QueryImpl.class.getName());
 
     private final Database database;
     private final Pattern validFieldName;
@@ -102,7 +101,7 @@ public class IndexManagerImpl implements IndexManager {
      *  Constructs a new IndexManager which indexes documents in 'datastore'
      *  @param database The {@link Database} to index
      */
-    public IndexManagerImpl(Database database, File extensionsLocation, KeyProvider keyProvider) throws IOException, SQLException {
+    public QueryImpl(Database database, File extensionsLocation, KeyProvider keyProvider) throws IOException, SQLException {
         this.database = database;
         validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
 
@@ -140,7 +139,7 @@ public class IndexManagerImpl implements IndexManager {
             return dbQueue.submit(new SQLCallable<List<Index>>() {
                 @Override
                 public List<Index> call(SQLDatabase database) throws Exception {
-                     return IndexManagerImpl.listIndexesInDatabase(database);
+                     return QueryImpl.listIndexesInDatabase(database);
                 }
             }).get();
         } catch (InterruptedException e) {
