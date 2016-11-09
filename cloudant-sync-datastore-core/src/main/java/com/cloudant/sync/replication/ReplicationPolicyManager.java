@@ -1,8 +1,8 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.sync.event.Subscribe;
-import com.cloudant.sync.notifications.ReplicationCompleted;
-import com.cloudant.sync.notifications.ReplicationErrored;
+import com.cloudant.sync.event.notifications.ReplicationCompleted;
+import com.cloudant.sync.event.notifications.ReplicationErrored;
 
 import java.util.ArrayList;
 import java.util.Arrays;

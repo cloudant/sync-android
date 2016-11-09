@@ -16,6 +16,9 @@ package com.cloudant.sync.datastore.encryption;
 
 import android.content.Context;
 
+import com.cloudant.sync.documentstore.encryption.EncryptionKey;
+import com.cloudant.sync.documentstore.encryption.KeyProvider;
+
 import java.util.logging.Logger;
 
 /**

@@ -14,10 +14,12 @@
 
 package com.cloudant.sync.datastore.encryption;
 
+import com.cloudant.sync.documentstore.encryption.EncryptionKey;
+import com.cloudant.sync.documentstore.encryption.KeyProvider;
+
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
-import java.security.Key;
 /**
  * Hold constants used for encryption tests, including well-known keys.
  */

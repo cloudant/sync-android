@@ -17,7 +17,10 @@ package com.cloudant.sync.replication;
 import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
-import com.cloudant.sync.datastore.Database;
+import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.internal.replication.PullStrategy;
+import com.cloudant.sync.internal.replication.PushStrategy;
+import com.cloudant.sync.internal.replication.ReplicatorImpl;
 
 import java.net.URI;
 import java.net.URISyntaxException;

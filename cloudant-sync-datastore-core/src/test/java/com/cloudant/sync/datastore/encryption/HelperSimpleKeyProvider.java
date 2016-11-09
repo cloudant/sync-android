@@ -13,6 +13,8 @@
  */
 package com.cloudant.sync.datastore.encryption;
 
+import com.cloudant.sync.documentstore.encryption.SimpleKeyProvider;
+
 /**
  * Class provides SQLCipher key for test cases.
  * Created by estebanmlaver.

@@ -15,7 +15,7 @@
 package com.cloudant.common;
 
 import com.cloudant.http.Http;
-import com.cloudant.sync.replication.ReplicationTestBase;
+import com.cloudant.sync.internal.replication.ReplicationTestBase;
 
 import java.net.URL;
 

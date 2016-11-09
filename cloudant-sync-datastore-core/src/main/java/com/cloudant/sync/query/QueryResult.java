@@ -12,13 +12,15 @@
 
 package com.cloudant.sync.query;
 
-import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.Database;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.datastore.DocumentRevisionBuilder;
-import com.cloudant.sync.util.CollectionUtils;
+import com.cloudant.sync.documentstore.Attachment;
+import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
+import com.cloudant.sync.documentstore.DocumentException;
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.datastore.DocumentRevisionBuilder;
+import com.cloudant.sync.internal.query.QueryImpl;
+import com.cloudant.sync.internal.query.UnindexedMatcher;
+import com.cloudant.sync.internal.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -14,9 +14,9 @@ import com.cloudant.common.CouchTestBase;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.common.TestOptions;
 import com.cloudant.http.interceptors.CookieInterceptor;
-import com.cloudant.mazha.CouchClient;
-import com.cloudant.mazha.CouchConfig;
-import com.cloudant.mazha.json.JSONHelper;
+import com.cloudant.sync.internal.mazha.CouchClient;
+import com.cloudant.sync.internal.mazha.CouchConfig;
+import com.cloudant.sync.internal.mazha.json.JSONHelper;
 
 import org.junit.Assert;
 import org.junit.Test;

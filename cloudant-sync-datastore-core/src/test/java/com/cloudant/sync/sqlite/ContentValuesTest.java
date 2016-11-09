@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.sqlite;
 
-import com.cloudant.android.ContentValues;
+import com.cloudant.sync.internal.android.ContentValues;
 
 import org.junit.Assert;
 import org.junit.Test;

@@ -16,6 +16,8 @@ package com.cloudant.sync.util;
 
 import static org.junit.Assert.assertEquals;
 
+import com.cloudant.sync.internal.util.CollectionUtils;
+
 import org.junit.Test;
 
 import java.util.ArrayList;

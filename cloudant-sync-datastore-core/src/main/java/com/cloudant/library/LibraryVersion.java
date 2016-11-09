@@ -14,7 +14,7 @@
 
 package com.cloudant.library;
 
-import com.cloudant.sync.util.Misc;
+import com.cloudant.sync.internal.util.Misc;
 
 import org.apache.commons.io.IOUtils;
 

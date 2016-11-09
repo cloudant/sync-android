@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.datastore.encryption;
 
+import com.cloudant.sync.internal.datastore.encryption.EncryptedAttachmentOutputStream;
 import com.cloudant.sync.util.TestUtils;
 
 import org.apache.commons.io.IOUtils;

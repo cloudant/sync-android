@@ -14,6 +14,8 @@
 
 package com.cloudant.sync.util;
 
+import com.cloudant.sync.internal.util.Misc;
+
 import org.junit.Assert;
 import org.junit.Test;
 

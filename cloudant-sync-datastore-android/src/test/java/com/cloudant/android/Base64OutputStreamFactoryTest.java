@@ -14,6 +14,8 @@
 
 package com.cloudant.android;
 
+import com.cloudant.sync.internal.android.Base64OutputStreamFactory;
+
 import org.junit.Assert;
 import org.junit.Test;
 
