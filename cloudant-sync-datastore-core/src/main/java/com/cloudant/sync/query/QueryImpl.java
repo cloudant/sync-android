@@ -78,7 +78,7 @@ import java.util.regex.Pattern;
  *  - update indexes (usually done automatically)
  *
  *
- *  @api_public
+ *  @api_private
  */
 public class QueryImpl implements Query {
 

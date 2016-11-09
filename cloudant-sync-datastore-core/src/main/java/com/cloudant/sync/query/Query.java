@@ -18,6 +18,8 @@ import java.util.Map;
 
 /**
  * Created by tomblench on 28/09/2016.
+ *
+ * @api_public
  */
 
 public interface Query {
