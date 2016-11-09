@@ -2,7 +2,7 @@ package com.cloudant.sync.datastore.encryption;
 
 import android.content.Context;
 
-import com.cloudant.sync.util.Misc;
+import com.cloudant.sync.internal.util.Misc;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

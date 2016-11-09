@@ -21,16 +21,19 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.DatastoreNotOpenedException;
-import com.cloudant.sync.datastore.DocumentStore;
-import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.datastore.UnsavedFileAttachment;
-import com.cloudant.sync.datastore.UnsavedStreamAttachment;
-import com.cloudant.sync.query.FieldSort;
+import com.cloudant.sync.documentstore.Attachment;
+import com.cloudant.sync.documentstore.DocumentStoreNotOpenedException;
+import com.cloudant.sync.documentstore.DocumentStore;
+import com.cloudant.sync.documentstore.ConflictException;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
+import com.cloudant.sync.documentstore.DocumentException;
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.encryption.SimpleKeyProvider;
+import com.cloudant.sync.internal.datastore.encryption.EncryptedAttachmentInputStream;
+import com.cloudant.sync.internal.datastore.UnsavedFileAttachment;
+import com.cloudant.sync.internal.datastore.UnsavedStreamAttachment;
+import com.cloudant.sync.internal.query.FieldSort;
+import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.query.Query;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
@@ -99,7 +102,7 @@ public class EndToEndEncryptionTest {
     byte[] expectedFirstAttachmentByte = new byte[]{ 1 };
 
     @Before
-    public void setUp() throws DatastoreNotOpenedException {
+    public void setUp() throws DocumentStoreNotOpenedException {
         datastoreManagerDir = TestUtils.createTempTestingDir(this.getClass().getName());
 
         if (dataShouldBeEncrypted) {
@@ -134,7 +137,7 @@ public class EndToEndEncryptionTest {
         try {
             im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
         } finally {
-            im.close();
+            ((QueryImpl)im).close();
         }
 
         InputStream in = new FileInputStream(jsonDatabase);
@@ -159,7 +162,7 @@ public class EndToEndEncryptionTest {
         try {
             im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
         } finally {
-            im.close();
+            ((QueryImpl)im).close();
         }
 
         File jsonDatabase = new File(datastoreManagerDir
@@ -230,8 +233,8 @@ public class EndToEndEncryptionTest {
      * supplying the wrong key will result in attempting to decrypt using that key,
      * which should fail in both cases.
      */
-    @Test(expected = DatastoreNotOpenedException.class)
-    public void testCannotOpenDatabaseWithWrongKey() throws DatastoreNotOpenedException {
+    @Test(expected = DocumentStoreNotOpenedException.class)
+    public void testCannotOpenDatabaseWithWrongKey() throws DocumentStoreNotOpenedException {
 
         // First close the datastore, as otherwise DatastoreManager's uniquing just
         // gives us back the existing instance which has the correct key.
@@ -312,7 +315,7 @@ public class EndToEndEncryptionTest {
             QueryResult queryResult = query.find(selector);
             assertNotNull(queryResult);
         } finally {
-            query.close();
+            ((QueryImpl)query).close();
         }
         // Delete
         try {

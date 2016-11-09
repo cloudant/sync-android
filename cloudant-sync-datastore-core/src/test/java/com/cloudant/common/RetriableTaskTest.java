@@ -22,6 +22,8 @@ import java.util.concurrent.Callable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.cloudant.sync.internal.common.RetriableTask;
+
 public class RetriableTaskTest {
 
     @Test

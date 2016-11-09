@@ -13,17 +13,19 @@
 package com.cloudant.sync.query;
 
 
-import com.cloudant.sync.util.Misc;
+import com.cloudant.sync.internal.query.FieldSort;
+import com.cloudant.sync.internal.util.Misc;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * This class provides functionality to manage an index
+ *
+ * @api_public
  */
-class Index {
+public class Index {
 
     private static final Logger logger = Logger.getLogger(Index.class.getCanonicalName());
 
@@ -98,19 +100,6 @@ class Index {
             this.tokenize = tokenize;
         }
 
-    }
-
-    /**
-     * Converts the index settings to a JSON string
-     *
-     * @return the JSON representation of the index settings
-     */
-    protected String settingsAsJSON() {
-        // this is a trivial enough operation that we don't need a JSON serializer
-        if (tokenize == null) {
-            return "{}";
-        }
-        return "{\"tokenize\":\""+tokenize+"\"}";
     }
 
     @Override

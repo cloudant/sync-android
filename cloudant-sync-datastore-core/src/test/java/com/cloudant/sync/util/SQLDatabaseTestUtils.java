@@ -14,11 +14,10 @@
 
 package com.cloudant.sync.util;
 
-import com.cloudant.sync.sqlite.Cursor;
-import com.cloudant.sync.sqlite.SQLCallable;
-import com.cloudant.sync.sqlite.SQLDatabase;
-import com.cloudant.sync.sqlite.SQLDatabaseQueue;
-import com.cloudant.sync.sqlite.SQLCallable;
+import com.cloudant.sync.internal.sqlite.Cursor;
+import com.cloudant.sync.internal.sqlite.SQLCallable;
+import com.cloudant.sync.internal.sqlite.SQLDatabase;
+import com.cloudant.sync.internal.sqlite.SQLDatabaseQueue;
 
 import org.junit.Assert;
 

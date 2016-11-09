@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.sync.datastore.Database;
+import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.event.EventBus;
 
 /**
@@ -148,9 +148,9 @@ public interface Replicator {
      * <p>The replicator raises the following events:</p>
      *
      * <ul>
-     *     <li>{@link com.cloudant.sync.notifications.ReplicationErrored} if
+     *     <li>{@link com.cloudant.sync.event.notifications.ReplicationErrored} if
      *     there is an error during replication.</li>
-     *     <li>{@link com.cloudant.sync.notifications.ReplicationCompleted}
+     *     <li>{@link com.cloudant.sync.event.notifications.ReplicationCompleted}
      *     when the replication is completed, unless there is an error.</li>
      * </ul>
      *

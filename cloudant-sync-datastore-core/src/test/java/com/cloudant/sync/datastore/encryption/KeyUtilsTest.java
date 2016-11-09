@@ -20,6 +20,10 @@ import org.junit.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.cloudant.sync.documentstore.encryption.EncryptionKey;
+import com.cloudant.sync.documentstore.encryption.KeyProvider;
+import com.cloudant.sync.internal.datastore.encryption.KeyUtils;
+
 public class KeyUtilsTest {
 
     @Test
