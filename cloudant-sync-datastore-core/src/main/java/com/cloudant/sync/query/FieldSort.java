@@ -16,6 +16,8 @@ package com.cloudant.sync.query;
 
 /**
  * Created by tomblench on 28/09/2016.
+ *
+ * @api_private
  */
 
 public class FieldSort {
