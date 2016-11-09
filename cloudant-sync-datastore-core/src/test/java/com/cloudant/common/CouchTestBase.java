@@ -14,9 +14,9 @@
 
 package com.cloudant.common;
 
-import com.cloudant.mazha.CouchConfig;
-import com.cloudant.mazha.SpecifiedCouch;
-import com.cloudant.sync.util.Misc;
+import com.cloudant.sync.internal.mazha.CouchConfig;
+import com.cloudant.sync.internal.mazha.SpecifiedCouch;
+import com.cloudant.sync.internal.util.Misc;
 
 import java.lang.reflect.Field;
 import java.net.URI;

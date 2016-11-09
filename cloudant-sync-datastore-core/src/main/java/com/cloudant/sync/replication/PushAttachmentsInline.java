@@ -14,6 +14,8 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.sync.documentstore.RevisionHistoryHelper;
+
 import java.util.List;
 
 /**
@@ -32,10 +34,10 @@ import java.util.List;
  * Note that all attachments belonging to a pushed revision are either sent via multipart/related,
  * or all inline in JSON body, as a base64-encoded string.
  * Further details of this can be found at
- * {@link com.cloudant.sync.datastore.RevisionHistoryHelper#shouldInline(List, PushAttachmentsInline, int)}
+ * {@link RevisionHistoryHelper#shouldInline(List, PushAttachmentsInline, int)}
  * </p>
  *
- * @see com.cloudant.sync.datastore.RevisionHistoryHelper
+ * @see RevisionHistoryHelper
  *
  * @api_public
  */

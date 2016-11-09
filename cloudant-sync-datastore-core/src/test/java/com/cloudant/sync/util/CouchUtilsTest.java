@@ -14,6 +14,8 @@
 
 package com.cloudant.sync.util;
 
+import com.cloudant.sync.internal.common.CouchUtils;
+
 import org.junit.Assert;
 import org.junit.Test;
 

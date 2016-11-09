@@ -14,13 +14,14 @@
 
 package com.cloudant.sync.util;
 
-import com.cloudant.sync.datastore.DocumentBody;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.encryption.NullKeyProvider;
-import com.cloudant.sync.query.QueryImpl;
-import com.cloudant.sync.sqlite.SQLDatabase;
-import com.cloudant.sync.sqlite.SQLDatabaseFactory;
-import com.cloudant.sync.sqlite.SQLDatabaseQueue;
+import com.cloudant.sync.documentstore.DocumentBody;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
+import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
+import com.cloudant.sync.internal.util.Misc;
+import com.cloudant.sync.internal.query.QueryImpl;
+import com.cloudant.sync.internal.sqlite.SQLDatabase;
+import com.cloudant.sync.internal.sqlite.SQLDatabaseFactory;
+import com.cloudant.sync.internal.sqlite.SQLDatabaseQueue;
 
 import org.apache.commons.io.FileUtils;
 

@@ -19,7 +19,7 @@ package com.cloudant.sync.replication;
  * any exception thrown in the {@link ErrorInfo#t} field.</p>
  *
  * @see Replicator
- * @see com.cloudant.sync.notifications.ReplicationErrored
+ * @see com.cloudant.sync.event.notifications.ReplicationErrored
  *
  * @api_public
  */

@@ -13,6 +13,8 @@
  */
 package com.cloudant.sync.query;
 
+import com.cloudant.sync.internal.query.FieldSort;
+
 import java.util.List;
 import java.util.Map;
 

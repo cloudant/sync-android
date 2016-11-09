@@ -14,7 +14,8 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.sync.util.Misc;
+import com.cloudant.sync.internal.replication.PullStrategy;
+import com.cloudant.sync.internal.util.Misc;
 
 import java.util.ArrayList;
 import java.util.Collections;

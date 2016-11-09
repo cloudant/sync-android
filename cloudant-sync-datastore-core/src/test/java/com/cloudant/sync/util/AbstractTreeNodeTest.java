@@ -14,6 +14,8 @@
 
 package com.cloudant.sync.util;
 
+import com.cloudant.sync.internal.util.AbstractTreeNode;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

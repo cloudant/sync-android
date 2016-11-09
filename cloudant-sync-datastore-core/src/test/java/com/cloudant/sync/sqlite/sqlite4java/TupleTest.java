@@ -14,7 +14,9 @@
 
 package com.cloudant.sync.sqlite.sqlite4java;
 
-import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.internal.sqlite.Cursor;
+import com.cloudant.sync.internal.sqlite.sqlite4java.Tuple;
+
 import org.junit.Assert;
 import org.junit.Test;
 

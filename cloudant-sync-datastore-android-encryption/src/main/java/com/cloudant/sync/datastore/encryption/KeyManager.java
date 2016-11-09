@@ -32,6 +32,8 @@ import javax.crypto.spec.PBEKeySpec;
 
 import android.content.SharedPreferences;
 
+import com.cloudant.sync.documentstore.encryption.EncryptionKey;
+
 /**
  * Use this class to generate a Data Protection Key (DPK), i.e. a strong password that can be used
  * later on for other purposes like encrypting a database.

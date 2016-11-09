@@ -14,6 +14,8 @@
 
 package com.cloudant.sync.datastore.encryption;
 
+import com.cloudant.sync.documentstore.encryption.EncryptionKey;
+
 import org.junit.Assert;
 import org.junit.Test;
 
