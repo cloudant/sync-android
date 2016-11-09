@@ -274,9 +274,21 @@ public class IndexManagerImpl implements IndexManager {
             Collections.sort(fieldNames);
             for (Index index : indexes) {
                 Collections.sort(index.fieldNames);
-                if (fieldNames.equals(filterMeta(index.fieldNames))) {
-                    return index.indexName;
+                if (!fieldNames.equals(filterMeta(index.fieldNames))) {
+                    continue;
                 }
+
+                boolean equalTokenize = tokenize == null ? index.tokenize == null : tokenize.equals(index.tokenize);
+                if(!equalTokenize){
+                    continue;
+                }
+
+
+                if (index.indexType != indexType){
+                    continue;
+                }
+
+                return index.indexName;
             }
         }
 

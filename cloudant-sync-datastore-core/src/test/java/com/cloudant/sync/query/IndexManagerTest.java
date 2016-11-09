@@ -73,6 +73,27 @@ public class IndexManagerTest extends AbstractIndexTestBase {
 
         assertThat("There should be 2 indexes", im.listIndexes().size(), is(2));
     }
+    @Test
+    public void ensureIndexedGeneratesTwoIndexesForDifferingType() throws QueryException {
+        String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name")), null, IndexType.JSON);
+        assertThat("index name should not be null", indexName, is(notNullValue()));
+        assertThat("the previously generated index name should not be returned",
+                im.ensureIndexed(Arrays.asList( new FieldSort("name")), null, IndexType.TEXT),
+                is(not(indexName)));
+
+        assertThat("There should be 2 indexes", im.listIndexes().size(), is(2));
+    }
+
+    @Test
+    public void ensureIndexedGeneratesTwoIndexesForDifferingTokenize() throws QueryException {
+        String indexName =  im.ensureIndexed(Arrays.asList(new FieldSort("name")), null, IndexType.JSON);
+        assertThat("index name should not be null", indexName, is(notNullValue()));
+        assertThat("the previously generated index name should not be returned",
+                im.ensureIndexed(Arrays.asList( new FieldSort("name")), null, IndexType.TEXT, "simple"),
+                is(not(indexName)));
+
+        assertThat("There should be 2 indexes", im.listIndexes().size(), is(2));
+    }
 
     @Test
     public void ensureIndexGeneratesTwoIndexSecondIndexSuperSet() throws QueryException {
