@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.datastore.encryption;
 
+import com.cloudant.sync.internal.datastore.encryption.EncryptedAttachmentInputStream;
 import com.cloudant.sync.matcher.CauseMatcher;
 import com.cloudant.sync.util.TestUtils;
 
@@ -30,7 +31,6 @@ import java.io.InputStream;
 import java.security.InvalidKeyException;
 
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 
 /**
  * Test encrypting an attachment to check correct on disk format is read.

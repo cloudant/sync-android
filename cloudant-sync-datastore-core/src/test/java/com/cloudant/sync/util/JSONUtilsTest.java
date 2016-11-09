@@ -14,12 +14,12 @@
 
 package com.cloudant.sync.util;
 
-import com.cloudant.sync.replication.Foo;
+import com.cloudant.sync.internal.util.JSONUtils;
+import com.cloudant.sync.internal.replication.Foo;
 import org.junit.Assert;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;

@@ -14,6 +14,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNotNull;
 
+import com.cloudant.sync.documentstore.encryption.CachingKeyProvider;
+import com.cloudant.sync.documentstore.encryption.EncryptionKey;
+import com.cloudant.sync.documentstore.encryption.KeyProvider;
+import com.cloudant.sync.documentstore.encryption.SimpleKeyProvider;
+
 public class CachingKeyProviderTests {
     @Before
     public void beforeMethod() {
