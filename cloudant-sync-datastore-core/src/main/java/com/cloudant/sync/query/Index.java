@@ -44,7 +44,6 @@ public class Index {
      *
      * @param fieldNames the field names in the index
      * @param indexName the index name or null
-     * @return the Index object or null if arguments passed in were invalid.
      */
     public Index (List<FieldSort> fieldNames, String indexName) {
         this(fieldNames, indexName, IndexType.JSON);
@@ -57,7 +56,6 @@ public class Index {
      * @param fieldNames the field names in the index
      * @param indexName the index name or null
      * @param indexType the index type (json or text)
-     * @return the Index object or null if arguments passed in were invalid.
      */
     public Index (List<FieldSort> fieldNames, String indexName, IndexType indexType) {
         this(fieldNames, indexName, indexType, null);
@@ -71,7 +69,6 @@ public class Index {
      * @param indexName the index name or null
      * @param indexType the index type (json or text)
      * @param tokenize  for text indexes only.
-     * @return the Index object or null if arguments passed in were invalid.
      */
     public Index(List<FieldSort> fieldNames,
                  String indexName,
