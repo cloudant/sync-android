@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.event.notifications;
 
-import com.cloudant.sync.replication.ErrorInfo;
 import com.cloudant.sync.replication.Replicator;
 
 /**
@@ -31,7 +30,7 @@ import com.cloudant.sync.replication.Replicator;
  */
 public class ReplicationErrored {
 
-    public ReplicationErrored(Replicator replicator, ErrorInfo errorInfo) {
+    public ReplicationErrored(Replicator replicator, Throwable errorInfo) {
         this.replicator = replicator;
         this.errorInfo = errorInfo;
     }
@@ -44,7 +43,7 @@ public class ReplicationErrored {
     /** 
      * Error information about the error that occurred
      */
-    public final ErrorInfo errorInfo;
+    public final Throwable errorInfo;
     
     @Override
     public boolean equals(Object other) {

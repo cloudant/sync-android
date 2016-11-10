@@ -30,7 +30,6 @@ import com.cloudant.sync.event.Subscribe;
 
 import com.cloudant.sync.event.notifications.ReplicationCompleted;
 import com.cloudant.sync.event.notifications.ReplicationErrored;
-import com.cloudant.sync.replication.ErrorInfo;
 import com.cloudant.sync.replication.Replicator;
 
 import org.junit.Assert;
@@ -90,7 +89,7 @@ public class ReplicatorImplMockTest {
     public void error_woListener_nothing() {
         // don't subscribe to the eventbus
         replicator.start();
-        replicator.error(new ReplicationStrategyErrored(mockStrategy, new ErrorInfo(new RuntimeException("Mocked error"))));
+        replicator.error(new ReplicationStrategyErrored(mockStrategy, new RuntimeException("Mocked error")));
 
         verify(mockListener, never()).complete(any(ReplicationCompleted.class));
         verify(mockListener, never()).error(any(ReplicationErrored.class));
@@ -176,7 +175,7 @@ public class ReplicatorImplMockTest {
     public void startAndThenError_errorState() throws Exception {
         startAndVerify();
 
-        ErrorInfo err = new ErrorInfo(new RuntimeException("Mocked error"));
+        Throwable err = new RuntimeException("Mocked error");
         ReplicationStrategyErrored rse = new ReplicationStrategyErrored(mockStrategy, err);
         ReplicationErrored re = new ReplicationErrored(replicator, err);
         
@@ -193,7 +192,7 @@ public class ReplicatorImplMockTest {
     public void error_exceptionInErrorCallback_nothingShouldBeCorrupted() throws Exception {
         startAndVerify();
 
-        ErrorInfo err = new ErrorInfo(new RuntimeException("Mocked error"));
+        Throwable err = new RuntimeException("Mocked error");
         ReplicationStrategyErrored rse = new ReplicationStrategyErrored(mockStrategy, err);
         ReplicationErrored re = new ReplicationErrored(replicator, err);
 
@@ -235,7 +234,7 @@ public class ReplicatorImplMockTest {
         Assert.assertEquals(Replicator.State.STOPPING, replicator.getState());
         Assert.assertFalse(replicator.strategyThread().isAlive());
 
-        ErrorInfo err = new ErrorInfo(new RuntimeException("Mocked error"));
+        Throwable err = new RuntimeException("Mocked error");
         ReplicationStrategyErrored rse = new ReplicationStrategyErrored(mockStrategy, err);
         ReplicationErrored re = new ReplicationErrored(replicator, err);
         replicator.error(rse);
@@ -293,7 +292,7 @@ public class ReplicatorImplMockTest {
         replicator.stop();
         Assert.assertEquals(Replicator.State.STOPPING, replicator.getState());
 
-        ErrorInfo err = new ErrorInfo(new RuntimeException("Mocked error"));
+        Throwable err = new RuntimeException("Mocked error");
         ReplicationStrategyErrored rse = new ReplicationStrategyErrored(mockStrategy, err);
         ReplicationErrored re = new ReplicationErrored(replicator, err);
         replicator.error(rse);
@@ -399,7 +398,7 @@ public class ReplicatorImplMockTest {
         replicator.start();
 
         // Waits for callbacks to be run
-        replicator.error(new ReplicationStrategyErrored(mockStrategy, new ErrorInfo(new RuntimeException("Mocked error"))));
+        replicator.error(new ReplicationStrategyErrored(mockStrategy, new RuntimeException("Mocked error")));
 
         Assert.assertTrue(listener.run);
         Assert.assertFalse(listener.errorThrown);
