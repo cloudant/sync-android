@@ -14,16 +14,15 @@
 
 package com.cloudant.sync.internal.replication;
 
-import com.cloudant.sync.replication.ErrorInfo;
 
 class ReplicationStrategyErrored {
 
-    protected ReplicationStrategyErrored(ReplicationStrategy replicationStrategy, ErrorInfo errorInfo) {
+    protected ReplicationStrategyErrored(ReplicationStrategy replicationStrategy, Throwable errorInfo) {
         this.replicationStrategy = replicationStrategy;
         this.errorInfo = errorInfo;
     }
 
     protected final ReplicationStrategy replicationStrategy;
-    protected final ErrorInfo errorInfo;
+    protected final Throwable errorInfo;
     
 }

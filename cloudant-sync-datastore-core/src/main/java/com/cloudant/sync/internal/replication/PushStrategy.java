@@ -30,7 +30,6 @@ import com.cloudant.sync.internal.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.documentstore.RevisionHistoryHelper;
 import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.replication.DatabaseNotFoundException;
-import com.cloudant.sync.replication.ErrorInfo;
 import com.cloudant.sync.replication.PushAttachmentsInline;
 import com.cloudant.sync.replication.PushFilter;
 import com.cloudant.sync.internal.util.CollectionUtils;
@@ -163,7 +162,7 @@ public class PushStrategy implements ReplicationStrategy {
         // reset internal state
         this.state = new State();
 
-        ErrorInfo errorInfo = null;
+        Throwable errorInfo = null;
 
         try {
 
@@ -171,13 +170,13 @@ public class PushStrategy implements ReplicationStrategy {
 
         } catch (Throwable e) {
             logger.log(Level.SEVERE,String.format("Batch %s ended with error:", this.state.batchCounter),e);
-            errorInfo = new ErrorInfo(e);
+            errorInfo = e;
         }
 
         runComplete(errorInfo);
     }
 
-    private void runComplete(ErrorInfo errorInfo) {
+    private void runComplete(Throwable errorInfo) {
         state.replicationTerminated = true;
 
         String msg = "Push replication terminated via ";

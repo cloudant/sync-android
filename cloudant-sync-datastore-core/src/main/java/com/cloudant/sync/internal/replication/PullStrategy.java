@@ -29,7 +29,6 @@ import com.cloudant.sync.internal.datastore.PreparedAttachment;
 import com.cloudant.sync.internal.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.replication.DatabaseNotFoundException;
-import com.cloudant.sync.replication.ErrorInfo;
 import com.cloudant.sync.replication.PullFilter;
 import com.cloudant.sync.internal.util.CollectionUtils;
 import com.cloudant.sync.internal.util.JSONUtils;
@@ -172,7 +171,7 @@ public class PullStrategy implements ReplicationStrategy {
         // reset internal state
         this.state = new State();
 
-        ErrorInfo errorInfo = null;
+        Throwable errorInfo = null;
 
         try {
             this.useBulkGet = sourceDb.isBulkSupported();
@@ -181,17 +180,17 @@ public class PullStrategy implements ReplicationStrategy {
         } catch (ExecutionException ex) {
             logger.log(Level.SEVERE, String.format("Batch %s ended with error:", this.state
                     .batchCounter), ex);
-            errorInfo = new ErrorInfo(ex.getCause());
+            errorInfo = ex.getCause();
         } catch (Throwable e) {
             logger.log(Level.SEVERE, String.format("Batch %s ended with error:", this.state
                     .batchCounter), e);
-            errorInfo = new ErrorInfo(e);
+            errorInfo = e;
         }
 
         runComplete(errorInfo);
     }
 
-    private void runComplete(ErrorInfo errorInfo) {
+    private void runComplete(Throwable errorInfo) {
         state.replicationTerminated = true;
 
         String msg = "Pull replication terminated via ";
