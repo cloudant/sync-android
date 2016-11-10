@@ -228,7 +228,7 @@ public class PullReplicationTerminationTest extends ReplicationTestBase {
                 listener.errorCalled);
 
         Assert.assertNotNull("There should be errorInfo set on the listener", listener.errorInfo);
-        Throwable cause = listener.errorInfo.getException();
+        Throwable cause = listener.errorInfo;
         Assert.assertNotNull("There should be an exception set on the listener", cause);
 
         // Get all the causes and assert that the test exception was one of them.
