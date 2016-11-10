@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.internal.replication;
 
+import java.util.Observable;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorCompletionService;
@@ -47,6 +48,9 @@ public abstract class QueuingExecutorCompletionService<Q, R> extends ExecutorCom
     // class should be synchronized.
     private final AtomicInteger requestsOutstanding = new AtomicInteger();
 
+    // The object to synchronise on for accessing requestsOutstanding
+    private final Object lock = new Object();
+
     /**
      * @param executorService    the executor service to execute the requests
      * @param requests           the Queue of requests to execute
@@ -69,7 +73,7 @@ public abstract class QueuingExecutorCompletionService<Q, R> extends ExecutorCom
      * CompletionService
      */
     public boolean hasRequestsOutstanding() {
-        synchronized (requestsOutstanding) {
+        synchronized (lock) {
             return requestsOutstanding.get() != 0;
         }
     }
@@ -99,7 +103,7 @@ public abstract class QueuingExecutorCompletionService<Q, R> extends ExecutorCom
             // increment happen before any subsequent check of the value of requestsOutstanding.
             // This avoids any issues where a call in-between the decrement and increment could
             // have returned false for a short duration while the next request was submitted.
-            synchronized (requestsOutstanding) {
+            synchronized (lock) {
                 requestsOutstanding.decrementAndGet();
                 submitRequestInternal();
             }
@@ -121,7 +125,7 @@ public abstract class QueuingExecutorCompletionService<Q, R> extends ExecutorCom
                     return executeRequest(request);
                 }
             });
-            synchronized (requestsOutstanding) {
+            synchronized (lock) {
                 requestsOutstanding.incrementAndGet();
             }
         }

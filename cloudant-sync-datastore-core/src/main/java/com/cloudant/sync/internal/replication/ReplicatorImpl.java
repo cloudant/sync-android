@@ -97,7 +97,7 @@ public class ReplicatorImpl implements Replicator {
     }
 
     @Override
-    public State getState() {
+    public synchronized State getState() {
         return this.state;
     }
 
