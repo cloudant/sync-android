@@ -1,7 +1,7 @@
 /**
- * Copyright (C) 2013 Cloudant
+ * Copyright © 2013 Cloudant
  *
- * Copyright (C) 2011 Ahmed Yehia (ahmed.yehia.m@gmail.com)
+ * Copyright © 2011 Ahmed Yehia (ahmed.yehia.m@gmail.com)
  *
  * Copyright © 2016 IBM Corp. All rights reserved.
  *

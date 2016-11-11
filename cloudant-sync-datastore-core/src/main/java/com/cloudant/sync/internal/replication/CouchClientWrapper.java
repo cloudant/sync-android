@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+ * Copyright © 2013 Cloudant, Inc. All rights reserved.
  *
  * Copyright © 2016 IBM Corp. All rights reserved.
  *

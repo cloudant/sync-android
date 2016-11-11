@@ -2,9 +2,9 @@
  * Copyright © 2016 IBM Corp. All rights reserved.
  *
  * Original iOS version by  Jens Alfke, ported to Android by Marty Schoch
- * Copyright (c) 2012 Couchbase, Inc. All rights reserved.
+ * Copyright © 2012 Couchbase, Inc. All rights reserved.
  *
- * Modifications for this distribution by Cloudant, Inc., Copyright (c) 2013 Cloudant, Inc.
+ * Modifications for this distribution by Cloudant, Inc., Copyright © 2013 Cloudant, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
