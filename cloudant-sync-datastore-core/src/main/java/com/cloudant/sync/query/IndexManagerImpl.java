@@ -207,15 +207,6 @@ public class IndexManagerImpl implements IndexManager {
      */
     @Override
     public String ensureIndexed(List<FieldSort> fieldNames) throws QueryException {
-        List<Index> indexes = this.listIndexes();
-        Collections.sort(fieldNames);
-        for(Index index: indexes){
-            Collections.sort(index.fieldNames);
-            if (fieldNames.equals(filterMeta(index.fieldNames))){
-                return index.indexName;
-            }
-        }
-
         return this.ensureIndexed(fieldNames, null);
     }
 
