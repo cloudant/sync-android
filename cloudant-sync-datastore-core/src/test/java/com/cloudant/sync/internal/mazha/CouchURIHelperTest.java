@@ -12,7 +12,6 @@
  * and limitations under the License.
  */
 
-
 package com.cloudant.sync.internal.mazha;
 
 import com.cloudant.sync.internal.mazha.CouchURIHelper;
