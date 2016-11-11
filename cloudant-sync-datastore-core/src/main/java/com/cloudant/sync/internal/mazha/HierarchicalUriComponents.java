@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-/**
+/*
  * Code based on commit a0b231d36d7baf295a91e052cd2eb02a37a16a80 of HierarchicalUriComponents.java
  * from The Spring Framework http://projects.spring.io/spring-framework version 4.1.7
  * see https://raw.githubusercontent.com/spring-projects/spring-framework/v4.1.7.RELEASE/spring-web/src/main/java/org/springframework/web/util/HierarchicalUriComponents.java

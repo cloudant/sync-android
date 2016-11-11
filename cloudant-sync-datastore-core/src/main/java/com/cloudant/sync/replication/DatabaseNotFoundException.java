@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright © 2013 Cloudant, Inc. All rights reserved.
  *
  * Part of the library is derived from TouchDB: http://touchdb.org/.
