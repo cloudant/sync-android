@@ -68,10 +68,11 @@ public class FieldSort implements Comparable<FieldSort> {
     @Override
     public int compareTo(FieldSort other) {
 
-        if(field.compareTo(other.field) == 0){
+        int fieldCompare = field.compareTo(other.field);
+        if( fieldCompare == 0){
             return sort.compareTo(other.sort);
         }
-        return field.compareTo(other.field);
+        return fieldCompare;
     }
 
 
