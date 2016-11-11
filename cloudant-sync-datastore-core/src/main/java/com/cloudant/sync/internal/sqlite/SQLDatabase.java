@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright © 2013 Cloudant, Inc.
  *
  * Copyright © 2006 The Android Open Source Project

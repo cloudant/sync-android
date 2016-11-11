@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright © 2013 Cloudant
  *
  * Copyright © 2011 Ahmed Yehia (ahmed.yehia.m@gmail.com)
