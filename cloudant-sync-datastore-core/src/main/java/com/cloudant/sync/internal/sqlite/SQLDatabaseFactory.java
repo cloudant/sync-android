@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright © 2013, 2016 IBM Corp. All rights reserved.
  *
  * Original iOS version by  Jens Alfke, ported to Android by Marty Schoch

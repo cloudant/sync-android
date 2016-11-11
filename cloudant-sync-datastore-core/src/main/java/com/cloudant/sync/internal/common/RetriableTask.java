@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright © 2015 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -12,7 +12,7 @@
  * and limitations under the License.
  */
 
-/**
+/*
  * Code adapted from:
  *
  * http://stackoverflow.com/questions/4738510/retry-task-framework
