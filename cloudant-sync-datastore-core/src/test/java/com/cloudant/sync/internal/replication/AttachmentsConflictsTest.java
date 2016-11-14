@@ -17,11 +17,11 @@ package com.cloudant.sync.internal.replication;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.internal.mazha.Response;
 import com.cloudant.sync.documentstore.ConflictResolver;
-import com.cloudant.sync.internal.datastore.DatabaseImpl;
+import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStore;
-import com.cloudant.sync.internal.datastore.UnsavedStreamAttachment;
+import com.cloudant.sync.internal.documentstore.UnsavedStreamAttachment;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Assert;

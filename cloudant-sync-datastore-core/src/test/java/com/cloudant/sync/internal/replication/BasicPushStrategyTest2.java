@@ -18,7 +18,7 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.internal.mazha.Response;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
-import com.cloudant.sync.internal.datastore.DocumentRevisionTree;
+import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
 
 import org.junit.Assert;
 import org.junit.Test;

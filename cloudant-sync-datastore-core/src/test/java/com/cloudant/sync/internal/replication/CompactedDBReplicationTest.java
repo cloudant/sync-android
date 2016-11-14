@@ -20,7 +20,7 @@ import com.cloudant.sync.internal.mazha.ClientTestUtils;
 import com.cloudant.sync.internal.mazha.CouchDbInfo;
 import com.cloudant.sync.internal.mazha.Response;
 import com.cloudant.sync.documentstore.DocumentRevision;
-import com.cloudant.sync.internal.datastore.DocumentRevisionTree;
+import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
 import com.cloudant.sync.internal.util.AbstractTreeNode;
 
 import org.junit.Assert;

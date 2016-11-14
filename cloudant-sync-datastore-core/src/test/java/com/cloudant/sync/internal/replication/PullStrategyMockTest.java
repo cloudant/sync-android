@@ -29,7 +29,7 @@ import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.mazha.OkOpenRevision;
 import com.cloudant.sync.internal.mazha.OpenRevision;
 import com.cloudant.sync.internal.mazha.json.JSONHelper;
-import com.cloudant.sync.internal.datastore.DocumentRevsList;
+import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.util.TestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;

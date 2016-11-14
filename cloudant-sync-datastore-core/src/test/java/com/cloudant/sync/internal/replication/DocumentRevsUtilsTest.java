@@ -18,7 +18,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 
 import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.documentstore.DocumentRevision;
-import com.cloudant.sync.internal.datastore.DocumentRevsUtils;
+import com.cloudant.sync.internal.documentstore.DocumentRevsUtils;
 import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 

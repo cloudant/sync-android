@@ -18,7 +18,7 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
-import com.cloudant.sync.internal.datastore.UnsavedFileAttachment;
+import com.cloudant.sync.internal.documentstore.UnsavedFileAttachment;
 import com.cloudant.sync.replication.PushAttachmentsInline;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 import com.cloudant.sync.util.TestUtils;
