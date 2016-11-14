@@ -267,7 +267,7 @@ public class IndexManagerImpl implements IndexManager {
             Collections.sort(mFieldNames);
             for (Index index : indexes) {
                 Collections.sort(index.fieldNames);
-                if (!fieldNames.equals(filterMeta(index.fieldNames))) {
+                if (!mFieldNames.equals(filterMeta(index.fieldNames))) {
                     continue;
                 }
 
