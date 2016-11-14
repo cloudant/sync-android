@@ -26,7 +26,7 @@ package com.cloudant.sync.internal.sqlite.android;
 
 import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.documentstore.encryption.KeyProvider;
-import com.cloudant.sync.internal.datastore.encryption.KeyUtils;
+import com.cloudant.sync.internal.documentstore.encryption.KeyUtils;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.Misc;

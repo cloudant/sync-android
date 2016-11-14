@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.datastore.encryption;
 
-import com.cloudant.sync.internal.datastore.encryption.EncryptedAttachmentInputStream;
+import com.cloudant.sync.internal.documentstore.encryption.EncryptedAttachmentInputStream;
 import com.cloudant.sync.matcher.CauseMatcher;
 import com.cloudant.sync.util.TestUtils;
 

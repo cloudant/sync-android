@@ -25,9 +25,7 @@ import static org.hamcrest.Matchers.is;
 import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
-import com.cloudant.sync.internal.datastore.DocumentRevisionBuilder;
-import com.cloudant.sync.internal.query.QueryValidator;
-import com.cloudant.sync.internal.query.UnindexedMatcher;
+import com.cloudant.sync.internal.documentstore.DocumentRevisionBuilder;
 
 import org.junit.Before;
 import org.junit.Test;

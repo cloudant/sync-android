@@ -16,7 +16,7 @@ package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.encryption.KeyProvider;
-import com.cloudant.sync.internal.datastore.migrations.SchemaOnlyMigration;
+import com.cloudant.sync.internal.documentstore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.Query;

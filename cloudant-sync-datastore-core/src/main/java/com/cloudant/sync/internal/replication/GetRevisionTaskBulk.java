@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.internal.replication;
 
-import com.cloudant.sync.internal.datastore.DocumentRevsList;
+import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.util.Misc;
 
 import java.util.Iterator;

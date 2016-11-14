@@ -17,7 +17,7 @@ package com.cloudant.sync.internal.replication;
 import static org.mockito.Mockito.mock;
 
 import com.cloudant.common.CollectionFactory;
-import com.cloudant.sync.internal.datastore.DatabaseImpl;
+import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.replication.PullFilter;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 

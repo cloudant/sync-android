@@ -25,8 +25,8 @@ import com.cloudant.http.HttpConnection;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.sync.internal.mazha.json.JSONHelper;
-import com.cloudant.sync.internal.datastore.DocumentRevsList;
-import com.cloudant.sync.internal.datastore.MultipartAttachmentWriter;
+import com.cloudant.sync.internal.documentstore.DocumentRevsList;
+import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
 import com.cloudant.sync.internal.util.Misc;
 import com.fasterxml.jackson.core.type.TypeReference;
 

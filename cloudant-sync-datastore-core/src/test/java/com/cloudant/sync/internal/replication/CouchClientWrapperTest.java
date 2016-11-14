@@ -28,7 +28,7 @@ import com.cloudant.sync.internal.mazha.Response;
 import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
-import com.cloudant.sync.internal.datastore.DocumentRevisionBuilder;
+import com.cloudant.sync.internal.documentstore.DocumentRevisionBuilder;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.util.TestUtils;
 
