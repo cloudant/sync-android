@@ -262,7 +262,9 @@ public class IndexManagerImpl implements IndexManager {
         // if an index already exists that matches the request index definition.
         if (indexName == null) {
             List<Index> indexes = this.listIndexes();
-            Collections.sort(fieldNames);
+            // Create a copy of the field names list so we know its mutable.
+            List<FieldSort> mFieldNames = new ArrayList<FieldSort>(fieldNames);
+            Collections.sort(mFieldNames);
             for (Index index : indexes) {
                 Collections.sort(index.fieldNames);
                 if (!fieldNames.equals(filterMeta(index.fieldNames))) {
