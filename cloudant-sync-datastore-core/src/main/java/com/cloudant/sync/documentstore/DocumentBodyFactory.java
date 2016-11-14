@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.documentstore;
 
-import com.cloudant.sync.internal.datastore.DocumentBodyImpl;
+import com.cloudant.sync.internal.documentstore.DocumentBodyImpl;
 import com.cloudant.sync.internal.util.JSONUtils;
 
 import java.util.Map;

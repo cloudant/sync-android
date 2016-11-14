@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 import com.cloudant.sync.documentstore.encryption.EncryptionKey;
 import com.cloudant.sync.documentstore.encryption.KeyProvider;
-import com.cloudant.sync.internal.datastore.encryption.KeyUtils;
+import com.cloudant.sync.internal.documentstore.encryption.KeyUtils;
 
 public class KeyUtilsTest {
 

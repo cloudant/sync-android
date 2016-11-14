@@ -19,9 +19,9 @@ import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.mazha.Response;
 import com.cloudant.sync.documentstore.DocumentRevision;
-import com.cloudant.sync.internal.datastore.DocumentRevsList;
-import com.cloudant.sync.internal.datastore.MultipartAttachmentWriter;
-import com.cloudant.sync.internal.datastore.UnsavedStreamAttachment;
+import com.cloudant.sync.internal.documentstore.DocumentRevsList;
+import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
+import com.cloudant.sync.internal.documentstore.UnsavedStreamAttachment;
 import com.cloudant.sync.replication.PullFilter;
 
 import java.util.Collection;

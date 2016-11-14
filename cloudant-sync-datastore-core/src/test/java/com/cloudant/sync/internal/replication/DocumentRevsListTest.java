@@ -15,7 +15,7 @@
 package com.cloudant.sync.internal.replication;
 
 import com.cloudant.sync.internal.mazha.DocumentRevs;
-import com.cloudant.sync.internal.datastore.DocumentRevsList;
+import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 
