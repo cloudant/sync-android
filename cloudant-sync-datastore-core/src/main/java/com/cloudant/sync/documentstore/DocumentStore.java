@@ -16,7 +16,7 @@ package com.cloudant.sync.documentstore;
 
 import com.cloudant.sync.documentstore.encryption.KeyProvider;
 import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
-import com.cloudant.sync.internal.datastore.DatabaseImpl;
+import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.event.notifications.DocumentStoreClosed;
 import com.cloudant.sync.event.notifications.DocumentStoreCreated;

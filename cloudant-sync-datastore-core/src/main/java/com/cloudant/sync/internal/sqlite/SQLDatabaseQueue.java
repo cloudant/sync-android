@@ -16,7 +16,7 @@ package com.cloudant.sync.internal.sqlite;
 
 import com.cloudant.sync.documentstore.encryption.KeyProvider;
 import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
-import com.cloudant.sync.internal.datastore.migrations.Migration;
+import com.cloudant.sync.internal.documentstore.migrations.Migration;
 
 import java.io.File;
 import java.io.IOException;

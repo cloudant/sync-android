@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import com.cloudant.sync.internal.datastore.DatabaseImpl;
+import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.event.Subscribe;
 

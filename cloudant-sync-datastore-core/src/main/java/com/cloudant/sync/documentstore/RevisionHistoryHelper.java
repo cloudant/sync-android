@@ -18,8 +18,8 @@ import com.cloudant.sync.internal.android.Base64OutputStreamFactory;
 import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
-import com.cloudant.sync.internal.datastore.MultipartAttachmentWriter;
-import com.cloudant.sync.internal.datastore.SavedAttachment;
+import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
+import com.cloudant.sync.internal.documentstore.SavedAttachment;
 import com.cloudant.sync.replication.PushAttachmentsInline;
 import com.cloudant.sync.internal.util.Misc;
 

@@ -22,7 +22,7 @@ package com.cloudant.sync.documentstore;
 import com.cloudant.sync.internal.common.ChangeNotifyingMap;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.common.SimpleChangeNotifyingMap;
-import com.cloudant.sync.internal.datastore.DocumentRevisionBuilder;
+import com.cloudant.sync.internal.documentstore.DocumentRevisionBuilder;
 import com.cloudant.sync.internal.query.QueryImpl;
 
 import java.util.HashMap;
