@@ -437,6 +437,39 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
     }
 
     @Test
+    public void resolveConflictsForDocument_twoConflictAndNewlyConstructedDocumentRevision()
+            throws Exception {
+        // check that we can return a new DocumentRevision instance from resolve
+        String docId = this.createConflictedDocument();
+        DocumentRevisionTree oldTree = this.datastore.getAllRevisionsOfDocument(docId);
+        Assert.assertTrue(oldTree.hasConflicts());
+        // new sequence will be increased by 2 due to deleting one document and grafting on a new document
+        long expectedSequence = this.datastore.getLastSequence() + 2;
+
+        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+            @Override
+            public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
+                Assert.assertEquals(2, conflicts.size());
+                for(DocumentRevision rev : conflicts) {
+                    if (rev.getBody().asMap().get("name").equals("Tom")) {
+                        DocumentRevision newRev = new DocumentRevision(rev.getId(), rev.getRevision());
+                        newRev.setBody(DocumentBodyFactory.create("{\"name\":\"Dave\"}".getBytes()));
+                        return newRev;
+                    }
+                }
+                return null;
+            }
+        });
+        long actualSequence = this.datastore.getLastSequence();
+        Assert.assertEquals(expectedSequence, actualSequence);
+
+        DocumentRevisionTree newTree = this.datastore.getAllRevisionsOfDocument(docId);
+        Assert.assertFalse(newTree.hasConflicts());
+        DocumentRevision newWinner = newTree.getCurrentRevision();
+        Assert.assertEquals("Dave", newWinner.getBody().asMap().get("name"));
+    }
+
+    @Test
     public void resurrectWinningDocument() throws Exception {
         // create n conflicted docs, delete winner, then create another
         DocumentRevision rev = this.createDocumentRevision("Tom");
