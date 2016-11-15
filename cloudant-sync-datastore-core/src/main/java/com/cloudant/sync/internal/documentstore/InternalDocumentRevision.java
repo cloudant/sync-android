@@ -59,7 +59,7 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
     private long internalNumericId;
     private long parent = -1L;
 
-
+    protected boolean bodyModified = false;
 
     public InternalDocumentRevision(String docId, String revId, DocumentBody body, DocumentRevisionBuilder.DocumentRevisionOptions options) {
         super(docId, revId, body);
@@ -76,8 +76,6 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
             this.deleted = false;
         }
     }
-
-
 
     /*
      * Helper used by sub-classes to convert between list and map representation of attachments
@@ -195,6 +193,24 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
         }
     }
 
+    @Override
+    public void setAttachments(Map<String, Attachment> attachments) {
+        if (attachments != null) {
+            this.attachments = SimpleChangeNotifyingMap.wrap(attachments);
+        } else {
+            // user cleared the dict, we don't want our notifying map to try to forward to null
+            this.attachments = null;
+        }
+        // user reset the whole attachments dict, this is a change
+        this.bodyModified = true;
+    }
+
+    @Override
+    public void setBody(DocumentBody body) {
+        super.setBody(body);
+        this.bodyModified = true;
+    }
+    
     /**
      * @return Whether the body has been modified since this DocumentRevision was constructed or
      * retrieved from the Datastore. For internal use only.

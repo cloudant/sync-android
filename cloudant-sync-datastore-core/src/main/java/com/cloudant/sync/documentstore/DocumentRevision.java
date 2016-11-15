@@ -35,15 +35,12 @@ public class DocumentRevision {
     /**
      * top level key: _attachments
      */
-    protected ChangeNotifyingMap<String, Attachment> attachments = SimpleChangeNotifyingMap.wrap(new
-            HashMap<String, Attachment>());
+    protected Map<String, Attachment> attachments = new HashMap<String, Attachment>();
 
     /**
      * the rest of the document
      */
     protected DocumentBody body;
-
-    protected boolean bodyModified = false;
 
     protected boolean fullRevision = true;
 
@@ -100,14 +97,7 @@ public class DocumentRevision {
     }
 
     public void setAttachments(Map<String, Attachment> attachments) {
-        if (attachments != null) {
-            this.attachments = SimpleChangeNotifyingMap.wrap(attachments);
-        } else {
-            // user cleared the dict, we don't want our notifying map to try to forward to null
-            this.attachments = null;
-        }
-        // user reset the whole attachments dict, this is a change
-        this.bodyModified = true;
+        this.attachments = attachments;
     }
 
     public DocumentBody getBody() {
@@ -116,7 +106,6 @@ public class DocumentRevision {
 
     public void setBody(DocumentBody body) {
         this.body = body;
-        this.bodyModified = true;
     }
 
 
