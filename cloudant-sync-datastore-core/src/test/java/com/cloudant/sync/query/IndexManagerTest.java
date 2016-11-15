@@ -19,6 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 
 import com.cloudant.sync.datastore.DocumentBodyFactory;
@@ -29,6 +30,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +39,82 @@ public class IndexManagerTest extends AbstractIndexTestBase {
     @Test
     public void enusureIndexedGeneratesIndexName() throws QueryException {
         assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"))), is(notNullValue()));
+    }
+
+    @Test
+    public void ensureIndexedGeneratesSingleIndexForSameFields() throws QueryException {
+        String indexName = im.ensureIndexed(Collections.singletonList(new FieldSort("name")));
+        assertThat("index name should not be null", indexName, is(notNullValue()));
+        assertThat("the previously generated index name should be returned",
+                im.ensureIndexed(Collections.singletonList(new FieldSort("name"))),
+                is(indexName));
+
+        assertThat("There should only be 1 index", im.listIndexes().size(), is(1));
+    }
+
+    @Test
+    public void ensureIndexedGeneratesSingleIndexWithMeta() throws QueryException {
+        String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name"), new FieldSort("_id"), new FieldSort("_rev")));
+        assertThat("index name should not be null", indexName, is(notNullValue()));
+        assertThat("the previously generated index name should be returned",
+                im.ensureIndexed(Arrays.asList(new FieldSort("name"), new FieldSort("_id"), new FieldSort("_rev"))),
+                is(indexName));
+
+        assertThat("There should only be 1 index", im.listIndexes().size(), is(1));
+    }
+
+    @Test
+    public void ensureIndexedGeneratesSingleIndexRegardlessOfFieldOrder() throws QueryException {
+        String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name"), new FieldSort("otherName")));
+        assertThat("index name should not be null", indexName, is(notNullValue()));
+        assertThat("the previously generated index name should be returned",
+                im.ensureIndexed(Arrays.asList(new FieldSort("otherName"), new FieldSort("name"))),
+                is(indexName));
+
+        assertThat("There should only be 1 index", im.listIndexes().size(), is(1));
+    }
+
+    @Test
+    public void ensureIndexedGeneratesTwoIndexesForDifferingFields() throws QueryException {
+        String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name"), new FieldSort("otherName")));
+        assertThat("index name should not be null", indexName, is(notNullValue()));
+        assertThat("the previously generated index name should not be returned",
+                im.ensureIndexed(Arrays.asList( new FieldSort("name"))),
+                is(not(indexName)));
+
+        assertThat("There should be 2 indexes", im.listIndexes().size(), is(2));
+    }
+    @Test
+    public void ensureIndexedGeneratesTwoIndexesForDifferingType() throws QueryException {
+        String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name")), null, IndexType.JSON);
+        assertThat("index name should not be null", indexName, is(notNullValue()));
+        assertThat("the previously generated index name should not be returned",
+                im.ensureIndexed(Arrays.asList( new FieldSort("name")), null, IndexType.TEXT),
+                is(not(indexName)));
+
+        assertThat("There should be 2 indexes", im.listIndexes().size(), is(2));
+    }
+
+    @Test
+    public void ensureIndexedGeneratesTwoIndexesForDifferingTokenize() throws QueryException {
+        String indexName =  im.ensureIndexed(Arrays.asList(new FieldSort("name")), null, IndexType.JSON);
+        assertThat("index name should not be null", indexName, is(notNullValue()));
+        assertThat("the previously generated index name should not be returned",
+                im.ensureIndexed(Arrays.asList( new FieldSort("name")), null, IndexType.TEXT, "simple"),
+                is(not(indexName)));
+
+        assertThat("There should be 2 indexes", im.listIndexes().size(), is(2));
+    }
+
+    @Test
+    public void ensureIndexGeneratesTwoIndexSecondIndexSuperSet() throws QueryException {
+        String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name")));
+        assertThat("index name should not be null", indexName, is(notNullValue()));
+        assertThat("the previously generated index name should not be returned",
+                im.ensureIndexed(Arrays.asList( new FieldSort("name"), new FieldSort("otherName"))),
+                is(not(indexName)));
+
+        assertThat("There should be 2 indexes", im.listIndexes().size(), is(2));
     }
 
     @Test
