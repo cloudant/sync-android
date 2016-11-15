@@ -71,7 +71,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             Assert.assertArrayEquals(expectedSha1, savedAtt.key);
 
             SavedAttachment savedAtt2 = (SavedAttachment) datastore.attachmentsForRevision
-                    ((DocumentRevision)newRevision).get(0);
+                    ((InternalDocumentRevision)newRevision).get(0);
             Assert.assertArrayEquals(expectedSha1, savedAtt2.key);
         } catch (FileNotFoundException fnfe) {
             Assert.fail("FileNotFoundException thrown " + fnfe);
@@ -213,7 +213,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         Assert.assertNotNull("Revision null", rev3);
 
         // check that there are no attachments now associated with this doc
-        Assert.assertTrue("Revision should have 0 attachments", datastore.attachmentsForRevision((DocumentRevision)rev3).isEmpty());
+        Assert.assertTrue("Revision should have 0 attachments", datastore.attachmentsForRevision((InternalDocumentRevision)rev3).isEmpty());
     }
 
 
@@ -231,7 +231,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             rev_1_mut.getAttachments().put(att1.name, att1);
             rev_1_mut.getAttachments().put(att2.name, att2);
             newRevision = datastore.updateDocumentFromRevision(rev_1_mut);
-            List<? extends Attachment> attsForRev = datastore.attachmentsForRevision((DocumentRevision)newRevision);
+            List<? extends Attachment> attsForRev = datastore.attachmentsForRevision((InternalDocumentRevision)newRevision);
             Assert.assertEquals("Didn't get expected number of attachments", 2, attsForRev.size());
         } catch (ConflictException ce){
             Assert.fail("ConflictException thrown: "+ce);
@@ -261,7 +261,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             newRevisionDoc1 = datastore.updateDocumentFromRevision(doc1Rev1_mut);
             Assert.assertNotNull("Doc1 revision is null", newRevisionDoc1);
             List<? extends Attachment> attsForRev = datastore
-                .attachmentsForRevision((DocumentRevision)newRevisionDoc1);
+                .attachmentsForRevision((InternalDocumentRevision)newRevisionDoc1);
             Assert.assertEquals("Didn't get expected number of attachments", 1,
                 attsForRev.size());
 
@@ -269,7 +269,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             doc2Rev1_mut.getAttachments().put(att2.name, att2);
             newRevisionDoc2 = datastore.updateDocumentFromRevision(doc2Rev1_mut);
             Assert.assertNotNull("Doc2 revision is null", newRevisionDoc2);
-            attsForRev = datastore.attachmentsForRevision((DocumentRevision)newRevisionDoc2);
+            attsForRev = datastore.attachmentsForRevision((InternalDocumentRevision)newRevisionDoc2);
             Assert.assertEquals("Didn't get expected number of attachments", 1,
                 attsForRev.size());
 

@@ -19,6 +19,7 @@ import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionBuilder;
 import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.internal.query.UnindexedMatcher;
@@ -152,7 +153,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
                     range.length = Math.min(DEFAULT_BATCH_SIZE, originalDocIds.size() - range.location);
                     List<String> batch = originalDocIds.subList(range.location,
                         range.location + range.length);
-                    List<DocumentRevision> docs = database.getDocumentsWithIds(batch);
+                    List<? extends DocumentRevision> docs = database.getDocumentsWithIds(batch);
                     for (DocumentRevision rev : docs) {
                         DocumentRevision innerRev;
                         innerRev = rev;  // Allows us to replace later if projecting
@@ -202,7 +203,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
 
     private DocumentRevision projectFields(List<String> fields,
                                            DocumentRevision rev,
-                                           Database database) {
+                                                   Database database) {
         // grab the map filter fields and rebuild object
         Map<String, Object> originalBody = rev.getBody().asMap();
         Map<String, Object> body = new HashMap<String, Object>();

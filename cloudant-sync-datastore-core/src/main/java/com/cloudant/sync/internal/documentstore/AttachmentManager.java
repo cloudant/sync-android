@@ -19,7 +19,6 @@ import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.AttachmentException;
 import com.cloudant.sync.documentstore.AttachmentNotSavedException;
 import com.cloudant.sync.documentstore.DocumentStoreException;
-import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -104,7 +103,7 @@ public class AttachmentManager {
     private static final Random filenameRandom = new Random();
 
     public static void addAttachmentsToRevision(SQLDatabase db, String attachmentsDir,
-                                                DocumentRevision rev,
+                                                InternalDocumentRevision rev,
                                                 List<PreparedAttachment> attachments)
             throws AttachmentNotSavedException {
         for (PreparedAttachment a : attachments) {
@@ -114,7 +113,7 @@ public class AttachmentManager {
     }
 
     public static void addAttachment(SQLDatabase db, String attachmentsDir,
-                                     DocumentRevision rev, PreparedAttachment a)
+                                     InternalDocumentRevision rev, PreparedAttachment a)
             throws  AttachmentNotSavedException {
 
         // do it this way to only go thru inputstream once
@@ -376,7 +375,7 @@ public class AttachmentManager {
     }
 
     public static void copyAttachmentsToRevision(SQLDatabase db, List<SavedAttachment> attachments,
-                                                 DocumentRevision rev)
+                                                 InternalDocumentRevision rev)
             throws DocumentStoreException {
         try {
             for (SavedAttachment a : attachments) {

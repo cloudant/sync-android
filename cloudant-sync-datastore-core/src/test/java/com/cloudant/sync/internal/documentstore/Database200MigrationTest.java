@@ -17,10 +17,10 @@ package com.cloudant.sync.internal.documentstore;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 
+import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
-import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.internal.documentstore.migrations.MigrateDatabase100To200;
 import com.cloudant.sync.internal.documentstore.migrations.MigrateDatabase6To100;
@@ -145,8 +145,7 @@ public class Database200MigrationTest {
             }
         }).get();
 
-        DocumentRevision rev = new DocumentRevision(rootRevision.getId(), "1-abc");
-        rev.setBody(rootRevision.getBody());
+        InternalDocumentRevision rev = new InternalDocumentRevision(rootRevision.getId(), "1-abc", rootRevision.getBody(), null);
         ((DatabaseImpl) ds).forceInsert(rev, "1-abc");
         runMigration();
 
@@ -486,8 +485,8 @@ public class Database200MigrationTest {
         Map<String, Object> body = rootRevision.getBody().asMap();
         body.put("My", "otherBody");
 
-        DocumentRevision rev = new DocumentRevision("awesomeness", rootRevision.getRevision(),
-                rootRevision.getBody());
+        InternalDocumentRevision rev = new InternalDocumentRevision("awesomeness", rootRevision.getRevision(),
+                rootRevision.getBody(), null);
         ds.forceInsert(rev, rootRevision.getRevision());
 
         runMigration();
@@ -532,8 +531,8 @@ public class Database200MigrationTest {
         }).get();
 
 
-        DocumentRevision rev = new DocumentRevision("awesomeness", rootRevision.getRevision(),
-                rootRevision.getBody());
+        InternalDocumentRevision rev = new InternalDocumentRevision("awesomeness", rootRevision.getRevision(),
+                rootRevision.getBody(), null);
         ds.forceInsert(rev, rootRevision.getRevision());
 
         rev = ds.getDocument("awesomeness");
@@ -579,8 +578,8 @@ public class Database200MigrationTest {
 
         final String OBJECT_ID = "object_id";
 
-        DocumentRevision rev1a = new DocumentRevisionBuilder().setDocId(OBJECT_ID).setRevId("1-x").setBody(bodyOne).build();
-        DocumentRevision rev2 = new DocumentRevisionBuilder().setDocId(OBJECT_ID).setRevId("2-x").setDeleted(true).build();
+        InternalDocumentRevision rev1a = new DocumentRevisionBuilder().setDocId(OBJECT_ID).setRevId("1-x").setBody(bodyOne).build();
+        InternalDocumentRevision rev2 = new DocumentRevisionBuilder().setDocId(OBJECT_ID).setRevId("2-x").setDeleted(true).build();
 
         // Insert the same document twice, so we have two identical roots
         // We give them different bodies so we can tell them apart

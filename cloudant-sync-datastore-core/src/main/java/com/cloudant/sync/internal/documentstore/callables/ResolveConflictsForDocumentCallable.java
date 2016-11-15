@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.internal.documentstore.callables;
 
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -39,7 +39,7 @@ public class ResolveConflictsForDocumentCallable implements SQLCallable<Void> {
     @Override
     public Void call(SQLDatabase db) throws Exception {
 
-        for (DocumentRevision revision : docTree.leafRevisions()) {
+        for (InternalDocumentRevision revision : docTree.leafRevisions()) {
             if (revision.getRevision().equals(revIdKeep)) {
                 // this is the one we want to keep, set it to current
                 new SetCurrentCallable(revision.getSequence(), true).call(db);
@@ -49,7 +49,7 @@ public class ResolveConflictsForDocumentCallable implements SQLCallable<Void> {
                     new SetCurrentCallable(revision.getSequence(), false).call(db);
                 } else {
                     // if it's not deleted, deleted and make it non-current
-                    DocumentRevision deleted = new DeleteDocumentCallable(
+                    InternalDocumentRevision deleted = new DeleteDocumentCallable(
                             revision.getId(), revision.getRevision()).call(db);
                     new SetCurrentCallable(deleted.getSequence(), false).call(db);
                 }

@@ -19,7 +19,7 @@ import com.cloudant.sync.documentstore.AttachmentException;
 import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentStoreException;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
@@ -73,7 +73,7 @@ public class GetAllRevisionsOfDocumentCallable implements SQLCallable<DocumentRe
                 long sequence = cursor.getLong(3);
                 List<? extends Attachment> atts = new AttachmentsForRevisionCallable(
                         this.attachmentsDir, this.attachmentStreamFactory, sequence).call(db);
-                DocumentRevision rev = DatabaseImpl.getFullRevisionFromCurrentCursor(cursor, atts);
+                InternalDocumentRevision rev = DatabaseImpl.getFullRevisionFromCurrentCursor(cursor, atts);
                 logger.finer("Rev: " + rev);
                 tree.add(rev);
             }

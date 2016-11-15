@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 
 import com.cloudant.common.CouchTestBase;
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.mazha.ChangesResult;
 import com.cloudant.sync.internal.mazha.CouchConfig;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
@@ -280,7 +281,7 @@ public class CouchClientWrapperTest extends CouchTestBase {
         String objectId1 = "haha";
         String objectId2 = "hehe";
 
-        List<DocumentRevision> objects = createTwoDBObjects(remoteDb, objectId1, objectId2);
+        List<InternalDocumentRevision> objects = createTwoDBObjects(remoteDb, objectId1, objectId2);
 
         remoteDb.bulkCreateDocs(objects);
 
@@ -295,16 +296,16 @@ public class CouchClientWrapperTest extends CouchTestBase {
         Assert.assertEquals(objects.get(1).getRevision(), obj2.get("_rev"));
     }
 
-    public List<DocumentRevision> createTwoDBObjects(CouchClientWrapper remoteDb, String
+    public List<InternalDocumentRevision> createTwoDBObjects(CouchClientWrapper remoteDb, String
             id1, String id2) {
-        List<DocumentRevision> objects = new ArrayList<DocumentRevision>();
+        List<InternalDocumentRevision> objects = new ArrayList<InternalDocumentRevision>();
 
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
         builder.setDocId(id1);
         builder.setRevId(CouchUtils.getFirstRevisionId());
         builder.setBody(bodyOne);
 
-        DocumentRevision todo1 = builder.build();
+        InternalDocumentRevision todo1 = builder.build();
         objects.add(todo1);
 
         DocumentRevisionBuilder builder2 = new DocumentRevisionBuilder();
@@ -312,7 +313,7 @@ public class CouchClientWrapperTest extends CouchTestBase {
         builder2.setRevId(CouchUtils.getFirstRevisionId());
         builder2.setBody(bodyTwo);
 
-        DocumentRevision tdo2 = builder2.build();
+        InternalDocumentRevision tdo2 = builder2.build();
         objects.add(tdo2);
 
         return objects;

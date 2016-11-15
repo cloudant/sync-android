@@ -60,24 +60,26 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
         validateNewlyCreatedDocument(rev_2);
     }
 
-    DocumentRevision[] createThreeDocuments() throws Exception {
-        DocumentRevision rev_1Mut = new DocumentRevision();
-        rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
-        validateNewlyCreatedDocument(rev_1);
-        DocumentRevision rev_2Mut = new DocumentRevision();
-        rev_2Mut.setBody(bodyTwo);
-        DocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
-        validateNewlyCreatedDocument(rev_2);
-        DocumentRevision rev_3Mut = new DocumentRevision();
-        rev_3Mut.setBody(bodyTwo);
-        DocumentRevision rev_3 = datastore.createDocumentFromRevision(rev_3Mut);
-        validateNewlyCreatedDocument(rev_3);
-        DocumentRevision rev_3_a = rev_3;
+    InternalDocumentRevision[] createThreeDocuments() throws Exception {
+        DocumentRevision rev_1 = new DocumentRevision();
+        rev_1.setBody(bodyOne);
+        InternalDocumentRevision rev_1_i = (InternalDocumentRevision)datastore.createDocumentFromRevision(rev_1);
+        validateNewlyCreatedDocument(rev_1_i);
+
+        DocumentRevision rev_2 = new DocumentRevision();
+        rev_2.setBody(bodyTwo);
+        InternalDocumentRevision rev_2_i = (InternalDocumentRevision)datastore.createDocumentFromRevision(rev_2);
+        validateNewlyCreatedDocument(rev_1_i);
+
+        DocumentRevision rev_3 = new DocumentRevision();
+        rev_3.setBody(bodyTwo);
+        DocumentRevision rev_3_a = datastore.createDocumentFromRevision(rev_3);
+        validateNewlyCreatedDocument(rev_3_a);
         rev_3_a.setBody(bodyOne);
-        DocumentRevision rev_4 = datastore.updateDocumentFromRevision(rev_3_a);
-        Assert.assertNotNull(rev_4);
-        return new DocumentRevision[] { rev_1, rev_2, rev_4 };
+        InternalDocumentRevision rev_3_i = (InternalDocumentRevision)datastore.updateDocumentFromRevision(rev_3_a);
+        Assert.assertNotNull(rev_3_i);
+
+        return new InternalDocumentRevision[] { rev_1_i, rev_2_i, rev_3_i };
     }
 
     void validateNewlyCreatedDocument(DocumentRevision rev) {
@@ -85,8 +87,8 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
         CouchUtils.validateDocumentId(rev.getId());
         CouchUtils.validateRevisionId(rev.getRevision());
         Assert.assertEquals(1, CouchUtils.generationFromRevId(rev.getRevision()));
-        Assert.assertTrue(((DocumentRevision)rev).isCurrent());
-        Assert.assertTrue(((DocumentRevision)rev).getParent() == -1L);
+        Assert.assertTrue(rev.isCurrent());
+        Assert.assertTrue(((InternalDocumentRevision)rev).getParent() == -1L);
     }
 
     void validateNewlyCreateLocalDocument(DocumentRevision rev) {

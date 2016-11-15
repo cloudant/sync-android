@@ -24,7 +24,7 @@ import com.cloudant.sync.documentstore.Changes;
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
 import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
 import com.cloudant.sync.documentstore.RevisionHistoryHelper;
@@ -233,10 +233,10 @@ public class PushStrategy implements ReplicationStrategy {
 
             // If there is a filter replace the changes with the filtered list of changes
             if (this.filter != null) {
-                List<DocumentRevision> allowedChanges = new ArrayList<DocumentRevision>(changes
+                List<InternalDocumentRevision> allowedChanges = new ArrayList<InternalDocumentRevision>(changes
                         .getResults().size());
 
-                for (DocumentRevision revision : changes.getResults()) {
+                for (InternalDocumentRevision revision : changes.getResults()) {
                     if (this.filter.shouldReplicateDocument(revision)) {
                         allowedChanges.add(revision);
                     }
@@ -304,7 +304,7 @@ public class PushStrategy implements ReplicationStrategy {
     }
 
     private static class FilteredChanges extends Changes {
-        public FilteredChanges(long lastSequence, List<DocumentRevision> results) {
+        public FilteredChanges(long lastSequence, List<InternalDocumentRevision> results) {
             super(lastSequence, results);
         }
     }
@@ -330,11 +330,11 @@ public class PushStrategy implements ReplicationStrategy {
 
         // Process the changes themselves in batches, where we post a batch
         // at a time to the remote database's _bulk_docs endpoint.
-        List<? extends List<DocumentRevision>> batches = CollectionUtils.partition(
+        List<? extends List<InternalDocumentRevision>> batches = CollectionUtils.partition(
                 changes.getResults(),
                 this.bulkInsertSize
         );
-        for (List<DocumentRevision> batch : batches) {
+        for (List<InternalDocumentRevision> batch : batches) {
 
             if (this.state.cancel) { break; }
 
@@ -384,16 +384,16 @@ public class PushStrategy implements ReplicationStrategy {
             DocumentRevisionTree tree = allTrees.get(docId);
             for(String rev : missingRevisions) {
                 long sequence = tree.lookup(docId, rev).getSequence();
-                List<DocumentRevision> path = tree.getPathForNode(sequence);
+                List<InternalDocumentRevision> path = tree.getPathForNode(sequence);
 
                 // get the attachments for the leaf of this path
-                DocumentRevision dr = path.get(0);
+                InternalDocumentRevision dr = path.get(0);
                 List<? extends Attachment> atts = this.sourceDb.getDbCore().attachmentsForRevision(dr);
 
                 // get common ancestor generation - needed to correctly stub out attachments
                 // closest back (first) instance of one of the possible ancestors rev id in the history tree
                 int minRevPos = 0;
-                for (DocumentRevision ancestor : path) {
+                for (InternalDocumentRevision ancestor : path) {
                     if (e.getValue().possible_ancestors != null &&
                             e.getValue().possible_ancestors.contains(ancestor.getRevision())) {
                         minRevPos = ancestor.getGeneration();

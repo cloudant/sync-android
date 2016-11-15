@@ -27,7 +27,7 @@ import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentException;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.documentstore.encryption.SimpleKeyProvider;
 import com.cloudant.sync.internal.documentstore.encryption.EncryptedAttachmentInputStream;
 import com.cloudant.sync.internal.documentstore.UnsavedFileAttachment;
@@ -189,7 +189,7 @@ public class EndToEndEncryptionTest {
     @Test
     public void attachmentsDataEncrypted() throws IOException, DocumentException, InvalidKeyException {
 
-        DocumentRevision rev = new DocumentRevision();
+        InternalDocumentRevision rev = new InternalDocumentRevision();
         rev.setBody(DocumentBodyFactory.create(new HashMap<String, String>()));
 
         File expectedPlainText = TestUtils.loadFixture("fixture/EncryptedAttachmentTest_plainText");
@@ -259,13 +259,13 @@ public class EndToEndEncryptionTest {
         documentBody.put("non-ascii", nonAsciiText);
 
         // Create
-        DocumentRevision rev = new DocumentRevision(documentId);
+        InternalDocumentRevision rev = new InternalDocumentRevision(documentId);
         rev.setBody(DocumentBodyFactory.create(documentBody));
-        DocumentRevision saved = database.database.createDocumentFromRevision(rev);
+        InternalDocumentRevision saved = database.database.createDocumentFromRevision(rev);
         assertNotNull(saved);
 
         // Read
-        DocumentRevision retrieved = database.database.getDocument(documentId);
+        InternalDocumentRevision retrieved = database.database.getDocument(documentId);
         assertNotNull(retrieved);
         Map<String, Object> retrievedBody = retrieved.getBody().asMap();
         assertEquals("mike", retrievedBody.get("name"));
@@ -274,11 +274,11 @@ public class EndToEndEncryptionTest {
         assertEquals(3, retrievedBody.size());
 
         // Update
-        DocumentRevision update = retrieved;
+        InternalDocumentRevision update = retrieved;
         Map<String, Object> updateBody = retrieved.getBody().asMap();
         updateBody.put("name", "fred");
         update.setBody(DocumentBodyFactory.create(updateBody));
-        DocumentRevision updated = database.database.updateDocumentFromRevision(update);
+        InternalDocumentRevision updated = database.database.updateDocumentFromRevision(update);
         assertNotNull(updated);
         Map<String, Object> updatedBody = updated.getBody().asMap();
         assertEquals("fred", updatedBody.get("name"));
@@ -290,13 +290,13 @@ public class EndToEndEncryptionTest {
         final String attachmentName = "EncryptedAttachmentTest_plainText";
         File expectedPlainText = TestUtils.loadFixture("fixture/EncryptedAttachmentTest_plainText");
         assertNotNull(expectedPlainText);
-        DocumentRevision attachmentRevision = updated;
+        InternalDocumentRevision attachmentRevision = updated;
         final Map<String, Attachment> atts = attachmentRevision.getAttachments();
         atts.put(attachmentName, new UnsavedFileAttachment(expectedPlainText, "text/plain"));
         atts.put("non-ascii", new UnsavedStreamAttachment(
                 new ByteArrayInputStream(nonAsciiText.getBytes()),
                 "non-ascii", "text/plain"));
-        DocumentRevision updatedWithAttachment = database.database.updateDocumentFromRevision(attachmentRevision);
+        InternalDocumentRevision updatedWithAttachment = database.database.updateDocumentFromRevision(attachmentRevision);
         InputStream in = updatedWithAttachment.getAttachments().get(attachmentName).getInputStream();
         assertTrue("Saved attachment did not read correctly",
                 IOUtils.contentEquals(new FileInputStream(expectedPlainText), in));
@@ -324,7 +324,7 @@ public class EndToEndEncryptionTest {
         } catch (ConflictException ex) {
             // Expected exception
         }
-        DocumentRevision deleted = database.database.deleteDocumentFromRevision(updatedWithAttachment);
+        InternalDocumentRevision deleted = database.database.deleteDocumentFromRevision(updatedWithAttachment);
         assertNotNull(deleted);
         assertEquals(true, deleted.isDeleted());
     }

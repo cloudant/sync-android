@@ -17,14 +17,13 @@ package com.cloudant.sync.internal.documentstore;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentBody;
-import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.ProjectedDocumentRevision;
 
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * <p>Build {@link DocumentRevision}s in a chained manner.</p>
+ * <p>Build {@link InternalDocumentRevision}s in a chained manner.</p>
  *
  * @api_private
  */
@@ -63,10 +62,10 @@ public class DocumentRevisionBuilder {
     private Database database = null;
 
     /**
-     * <p>Builds and returns the {@link DocumentRevision} for this builder.</p>
-     * @return the {@link DocumentRevision} for this builder
+     * <p>Builds and returns the {@link InternalDocumentRevision} for this builder.</p>
+     * @return the {@link InternalDocumentRevision} for this builder
      */
-    public DocumentRevision build() {
+    public InternalDocumentRevision build() {
         DocumentRevisionOptions options = new DocumentRevisionOptions();
         options.sequence = sequence;
         options.docInternalId = docInternalId;
@@ -74,7 +73,7 @@ public class DocumentRevisionBuilder {
         options.current = current;
         options.parent = parent;
         options.attachments = attachments;
-        return new DocumentRevision(docId, revId, body, options);
+        return new InternalDocumentRevision(docId, revId, body, options);
     }
 
     /**

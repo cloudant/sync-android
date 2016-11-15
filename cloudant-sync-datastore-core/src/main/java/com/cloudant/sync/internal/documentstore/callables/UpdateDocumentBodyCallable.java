@@ -19,7 +19,7 @@ import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
 import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentBody;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.Misc;
@@ -30,7 +30,7 @@ import com.cloudant.sync.internal.util.Misc;
  *
  * @api_private
  */
-public class UpdateDocumentBodyCallable implements SQLCallable<DocumentRevision> {
+public class UpdateDocumentBodyCallable implements SQLCallable<InternalDocumentRevision> {
 
     private String docId;
     private String prevRevId;
@@ -49,7 +49,7 @@ public class UpdateDocumentBodyCallable implements SQLCallable<DocumentRevision>
     }
 
     @Override
-    public DocumentRevision call(SQLDatabase db) throws Exception {
+    public InternalDocumentRevision call(SQLDatabase db) throws Exception {
         Misc.checkNotNullOrEmpty(docId, "Input document id");
         Misc.checkNotNullOrEmpty(prevRevId, "Input previous revision id cannot be empty");
         Misc.checkNotNull(body, "Input document body");
@@ -58,7 +58,7 @@ public class UpdateDocumentBodyCallable implements SQLCallable<DocumentRevision>
         CouchUtils.validateRevisionId(prevRevId);
 
         // TODO quicker way of finding if current than fetching whole revision
-        DocumentRevision preRevision = new GetDocumentCallable(docId, prevRevId, this.attachmentsDir, this.attachmentStreamFactory).call(db);
+        InternalDocumentRevision preRevision = new GetDocumentCallable(docId, prevRevId, this.attachmentsDir, this.attachmentStreamFactory).call(db);
 
         if (!preRevision.isCurrent()) {
             throw new ConflictException("Revision to be updated is not current revision.");

@@ -17,7 +17,7 @@ package com.cloudant.sync.internal.documentstore.callables;
 import com.cloudant.sync.internal.documentstore.AttachmentManager;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentStoreException;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.Misc;
@@ -39,12 +39,12 @@ public class InsertDocumentHistoryIntoExistingTreeCallable implements SQLCallabl
 
     private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
-    private DocumentRevision newRevision;
+    private InternalDocumentRevision newRevision;
     private List<String> revisions;
     private Long docNumericID;
     private Map<String, Object> attachments;
 
-    public InsertDocumentHistoryIntoExistingTreeCallable(DocumentRevision newRevision,
+    public InsertDocumentHistoryIntoExistingTreeCallable(InternalDocumentRevision newRevision,
                                                          List<String> revisions, Long
                                                                  docNumericID, Map<String,
             Object> attachments) {
