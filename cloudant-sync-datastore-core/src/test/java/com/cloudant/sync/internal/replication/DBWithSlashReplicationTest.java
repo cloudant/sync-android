@@ -16,6 +16,7 @@ package com.cloudant.sync.internal.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.common.TestOptions;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.mazha.ClientTestUtils;
 import com.cloudant.sync.internal.mazha.Response;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
@@ -137,13 +138,13 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
 
     }
 
-    private void extractRevisionIDsFromChildren(AbstractTreeNode<DocumentRevision> node,
+    private void extractRevisionIDsFromChildren(AbstractTreeNode<InternalDocumentRevision> node,
                                                 List<String> documentRevisions) {
 
         if (node.hasChildren()) {
-            Iterator<AbstractTreeNode<DocumentRevision>> iterator = node.iterateChildren();
+            Iterator<AbstractTreeNode<InternalDocumentRevision>> iterator = node.iterateChildren();
             while (iterator.hasNext()) {
-                AbstractTreeNode<DocumentRevision> absNode = iterator.next();
+                AbstractTreeNode<InternalDocumentRevision> absNode = iterator.next();
                 documentRevisions.add(absNode.getData().getRevision());
                 extractRevisionIDsFromChildren(absNode, documentRevisions);
             }

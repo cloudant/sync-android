@@ -17,6 +17,7 @@ package com.cloudant.sync.documentstore;
 import com.cloudant.sync.internal.android.Base64OutputStreamFactory;
 import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.sync.internal.common.CouchUtils;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
 import com.cloudant.sync.internal.documentstore.SavedAttachment;
@@ -119,13 +120,13 @@ public class RevisionHistoryHelper {
      * @return JSON-serialised {@code String} suitable for sending to CouchDB's
      *      _bulk_docs endpoint.
      */
-    public static Map<String, Object> revisionHistoryToJson(List<DocumentRevision> history) {
+    public static Map<String, Object> revisionHistoryToJson(List<InternalDocumentRevision> history) {
         return revisionHistoryToJson(history, null, false, 0);
     }
 
     /**
      * <p>Serialise a branch's revision history, in the form of a list of
-     * {@link DocumentRevision}s, into the JSON format expected by CouchDB's _bulk_docs
+     * {@link InternalDocumentRevision}s, into the JSON format expected by CouchDB's _bulk_docs
      * endpoint.</p>
      *
      * @param history list of {@code DocumentRevision}s. This should be a complete list
@@ -143,7 +144,7 @@ public class RevisionHistoryHelper {
      *
      * @see DocumentRevs
      */
-    public static Map<String, Object> revisionHistoryToJson(List<DocumentRevision> history,
+    public static Map<String, Object> revisionHistoryToJson(List<InternalDocumentRevision> history,
                                                             List<? extends Attachment> attachments,
                                                             boolean shouldInline,
                                                             int minRevPos) {
@@ -152,7 +153,7 @@ public class RevisionHistoryHelper {
         Misc.checkArgument(checkHistoryIsInDescendingOrder(history),
                 "History must be in descending order.");
 
-        DocumentRevision currentNode = history.get(0);
+        InternalDocumentRevision currentNode = history.get(0);
 
         Map<String, Object> m = currentNode.asMap();
         if (attachments != null && !attachments.isEmpty()) {
@@ -327,11 +328,11 @@ public class RevisionHistoryHelper {
         }
     }
 
-    private static Map<String, Object> createRevisions(List<DocumentRevision> history) {
-        DocumentRevision currentNode = history.get(0);
+    private static Map<String, Object> createRevisions(List<InternalDocumentRevision> history) {
+        InternalDocumentRevision currentNode = history.get(0);
         int start = CouchUtils.generationFromRevId(currentNode.getRevision());
         List<String> ids = new ArrayList<String>();
-        for(DocumentRevision obj : history) {
+        for(InternalDocumentRevision obj : history) {
             ids.add(CouchUtils.getRevisionIdSuffix(obj.getRevision()));
         }
         Map revisions = new HashMap<String, Object>();
@@ -340,7 +341,7 @@ public class RevisionHistoryHelper {
         return revisions;
     }
 
-    private static boolean checkHistoryIsInDescendingOrder(List<DocumentRevision> history) {
+    private static boolean checkHistoryIsInDescendingOrder(List<InternalDocumentRevision> history) {
         for(int i = 0 ; i < history.size() - 1 ; i ++) {
             int l = CouchUtils.generationFromRevId(history.get(i).getRevision());
             int m = CouchUtils.generationFromRevId(history.get(i+1).getRevision());

@@ -14,6 +14,9 @@
 
 package com.cloudant.sync.documentstore;
 
+
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -26,7 +29,7 @@ import java.util.logging.Logger;
  *
  * @api_public
  */
-public class ProjectedDocumentRevision extends DocumentRevision {
+public class ProjectedDocumentRevision extends InternalDocumentRevision {
 
     private static final Logger logger = Logger.getLogger(ProjectedDocumentRevision.class.getCanonicalName());
 
@@ -38,7 +41,7 @@ public class ProjectedDocumentRevision extends DocumentRevision {
                               List<? extends Attachment> attachments,
                               DocumentBody body,
                               Database database) {
-        super(docId, revId,body);
+        super(docId, revId, body, null);
 
         super.setDeleted(deleted);
         super.setAttachmentsInternal(attachments);

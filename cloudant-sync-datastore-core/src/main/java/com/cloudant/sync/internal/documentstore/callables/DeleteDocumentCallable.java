@@ -20,7 +20,7 @@ import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionBuilder;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
@@ -39,7 +39,7 @@ import java.sql.SQLException;
  *
  * @api_private
  */
-public class DeleteDocumentCallable implements SQLCallable<DocumentRevision> {
+public class DeleteDocumentCallable implements SQLCallable<InternalDocumentRevision> {
 
     String docId;
     String prevRevId;
@@ -53,7 +53,7 @@ public class DeleteDocumentCallable implements SQLCallable<DocumentRevision> {
         this.prevRevId = prevRevId;
     }
 
-    public DocumentRevision call(SQLDatabase db) throws ConflictException,
+    public InternalDocumentRevision call(SQLDatabase db) throws ConflictException,
             DocumentNotFoundException, DocumentStoreException {
 
         Misc.checkNotNullOrEmpty(docId, "Input document id");

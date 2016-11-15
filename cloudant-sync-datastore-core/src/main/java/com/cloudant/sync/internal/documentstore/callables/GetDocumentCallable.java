@@ -20,7 +20,7 @@ import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -36,7 +36,7 @@ import java.util.logging.Logger;
  *
  * @api_private
  */
-public class GetDocumentCallable implements SQLCallable<DocumentRevision> {
+public class GetDocumentCallable implements SQLCallable<InternalDocumentRevision> {
 
     String id;
     String rev;
@@ -61,7 +61,7 @@ public class GetDocumentCallable implements SQLCallable<DocumentRevision> {
     private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
 
-    public DocumentRevision call(SQLDatabase db) throws DocumentNotFoundException, AttachmentException, DocumentStoreException {
+    public InternalDocumentRevision call(SQLDatabase db) throws DocumentNotFoundException, AttachmentException, DocumentStoreException {
 
         Cursor cursor = null;
         try {

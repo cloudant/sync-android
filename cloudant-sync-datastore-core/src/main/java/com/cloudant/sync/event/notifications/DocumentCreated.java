@@ -15,7 +15,7 @@
 package com.cloudant.sync.event.notifications;
 
 import com.cloudant.sync.documentstore.Database;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 
 /**
  * @api_public
@@ -26,13 +26,13 @@ public class DocumentCreated extends DocumentModified {
      * Event for document create
      * 
      * <p>This event is posted by
-     * {@link Database#createDocumentFromRevision(DocumentRevision)}
+     * {@link Database#createDocumentFromRevision(InternalDocumentRevision)}
      * </p>
      *
      * @param newDocument
      *            New document revision
      */
-    public DocumentCreated(DocumentRevision newDocument) {
+    public DocumentCreated(InternalDocumentRevision newDocument) {
         super(null, newDocument);
     }
 

@@ -19,7 +19,6 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
 import com.cloudant.sync.documentstore.DocumentBody;
-import com.cloudant.sync.documentstore.DocumentRevision;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,13 +31,13 @@ import java.util.List;
 public class DocumentRevisionTreeTest {
 
     DocumentBody b;
-    DocumentRevision c1, c2, c3, c4, c5;
-    DocumentRevision d3, d4;
-    DocumentRevision e1, e2, e3;
-    DocumentRevision f3, f4;
+    InternalDocumentRevision c1, c2, c3, c4, c5;
+    InternalDocumentRevision d3, d4;
+    InternalDocumentRevision e1, e2, e3;
+    InternalDocumentRevision f3, f4;
 
-    DocumentRevision x2, x3;
-    DocumentRevision y3;
+    InternalDocumentRevision x2, x3;
+    InternalDocumentRevision y3;
 
     @Before
     public void startUp() {
@@ -60,62 +59,62 @@ public class DocumentRevisionTreeTest {
         opts.sequence = 1l;
         opts.parent = -1l;
         opts.current = false;
-        c1 = new DocumentRevision( "id1", "1-rev", b, opts);
+        c1 = new InternalDocumentRevision( "id1", "1-rev", b, opts);
 
         opts.sequence = 2l;
         opts.parent = 1l;
         opts.current = false;
-        c2 = new DocumentRevision( "id1", "2-rev", b, opts);
+        c2 = new InternalDocumentRevision( "id1", "2-rev", b, opts);
 
         opts.sequence = 3l;
         opts.parent = 2l;
         opts.current = false;
-        c3 = new DocumentRevision( "id1", "3-rev", b, opts);
+        c3 = new InternalDocumentRevision( "id1", "3-rev", b, opts);
 
         opts.sequence = 4l;
         opts.parent = 3l;
         opts.current = false;
-        c4 = new DocumentRevision( "id1", "4-rev", b, opts);
+        c4 = new InternalDocumentRevision( "id1", "4-rev", b, opts);
 
         opts.sequence = 5l;
         opts.parent = 4l;
         opts.current = true;
-        c5 = new DocumentRevision( "id1", "5-rev", b, opts);
+        c5 = new InternalDocumentRevision( "id1", "5-rev", b, opts);
 
         opts.sequence = 6l;
         opts.parent = 2l;
         opts.current = false;
-        d3 = new DocumentRevision( "id1", "3-rev2", b, opts);
+        d3 = new InternalDocumentRevision( "id1", "3-rev2", b, opts);
 
         opts.sequence = 7l;
         opts.parent = 6l;
         opts.current = true;
-        d4 = new DocumentRevision( "id1", "4-rev2", b, opts);
+        d4 = new InternalDocumentRevision( "id1", "4-rev2", b, opts);
 
         opts.sequence = 8l;
         opts.parent = -1l;
         opts.current = false;
-        e1 = new DocumentRevision( "id1", "1-rev-star", b, opts);
+        e1 = new InternalDocumentRevision( "id1", "1-rev-star", b, opts);
 
         opts.sequence = 9l;
         opts.parent = 8l;
         opts.current = false;
-        e2 = new DocumentRevision( "id1", "2-rev-star", b, opts);
+        e2 = new InternalDocumentRevision( "id1", "2-rev-star", b, opts);
 
         opts.sequence = 10l;
         opts.parent = 9l;
         opts.current = false;
-        e3 = new DocumentRevision( "id1", "3-rev-star", b, opts);
+        e3 = new InternalDocumentRevision( "id1", "3-rev-star", b, opts);
 
         opts.sequence = 11l;
         opts.parent = 9l;
         opts.current = false;
-        f3 = new DocumentRevision( "id1", "3-rev-star-star", b, opts);
+        f3 = new InternalDocumentRevision( "id1", "3-rev-star-star", b, opts);
 
         opts.sequence = 12l;
         opts.parent = 11l;
         opts.current = false;
-        f4 = new DocumentRevision( "id1", "4-rev-star-star", b, opts);
+        f4 = new InternalDocumentRevision( "id1", "4-rev-star-star", b, opts);
 
         /**
          * x2 -> x3
@@ -128,17 +127,17 @@ public class DocumentRevisionTreeTest {
         opts.sequence = 12l;
         opts.parent = -1l;
         opts.current = false;
-        x2 = new DocumentRevision( "id2", "2-x", b, opts);
+        x2 = new InternalDocumentRevision( "id2", "2-x", b, opts);
 
         opts.sequence = 13l;
         opts.parent = 12l;
         opts.current = true;
-        x3 = new DocumentRevision( "id2", "3-x", b, opts);
+        x3 = new InternalDocumentRevision( "id2", "3-x", b, opts);
 
         opts.sequence = 14l;
         opts.parent = 12l;
         opts.current = false;
-        y3 = new DocumentRevision( "id2", "3-y", b, opts);
+        y3 = new InternalDocumentRevision( "id2", "3-y", b, opts);
     }
 
     @Test
@@ -216,7 +215,7 @@ public class DocumentRevisionTreeTest {
         t.add(d3).add(d4);
 
         Assert.assertNull(t.bySequence(-2l));
-        DocumentRevision d = t.bySequence(c2.getSequence());
+        InternalDocumentRevision d = t.bySequence(c2.getSequence());
         Assert.assertTrue(d.getSequence() == c2.getSequence());
     }
 
@@ -226,10 +225,10 @@ public class DocumentRevisionTreeTest {
         t.add(c2).add(c3).add(c4).add(c5);
         t.add(d3).add(d4);
 
-        DocumentRevision d = t.lookup(c3.getId(), c3.getRevision());
+        InternalDocumentRevision d = t.lookup(c3.getId(), c3.getRevision());
         Assert.assertNotNull(d);
 
-        DocumentRevision m = t.lookup("haha", "hehe");
+        InternalDocumentRevision m = t.lookup("haha", "hehe");
         Assert.assertNull(m);
     }
 
@@ -252,7 +251,7 @@ public class DocumentRevisionTreeTest {
         t.add(d3).add(d4);
 
         Assert.assertEquals(2, t.leafs().size());
-        List<DocumentRevision> l = new ArrayList<DocumentRevision>();
+        List<InternalDocumentRevision> l = new ArrayList<InternalDocumentRevision>();
         for(DocumentRevisionTree.DocumentRevisionNode n : t.leafs()) {
             l.add(n.getData());
         }
@@ -283,7 +282,7 @@ public class DocumentRevisionTreeTest {
         t.add(d3).add(d4);
 
         {
-            List<DocumentRevision> p = t.getPathForNode(c5.getSequence());
+            List<InternalDocumentRevision> p = t.getPathForNode(c5.getSequence());
             Assert.assertEquals(5, p.size());
             Assert.assertEquals(p.get(4).getSequence(), c1.getSequence());
             Assert.assertEquals(p.get(3).getSequence(), c2.getSequence());
@@ -294,7 +293,7 @@ public class DocumentRevisionTreeTest {
 
 
         {
-            List<DocumentRevision> p2 = t.getPathForNode(d4.getSequence());
+            List<InternalDocumentRevision> p2 = t.getPathForNode(d4.getSequence());
             Assert.assertEquals(4, p2.size());
             Assert.assertEquals(p2.get(3).getSequence(), c1.getSequence());
             Assert.assertEquals(p2.get(2).getSequence(), c2.getSequence());

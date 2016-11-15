@@ -16,6 +16,7 @@ package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 
 import java.util.ArrayList;
 import java.util.Arrays;

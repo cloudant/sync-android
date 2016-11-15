@@ -14,8 +14,8 @@
 
 package com.cloudant.sync.internal.documentstore;
 
-import com.cloudant.sync.internal.common.ValueListMap;
 import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.common.ValueListMap;
 
 import org.junit.Assert;
 import org.junit.Test;

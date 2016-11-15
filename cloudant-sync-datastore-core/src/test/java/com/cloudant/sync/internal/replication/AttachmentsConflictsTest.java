@@ -118,7 +118,7 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         this.pull();
         this.datastore.resolveConflictsForDocument("doc-a", new ConflictResolver() {
             @Override
-            public DocumentRevision resolve(String docId, List<DocumentRevision> conflicts) {
+            public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 return conflicts.get(0);
             }
         });

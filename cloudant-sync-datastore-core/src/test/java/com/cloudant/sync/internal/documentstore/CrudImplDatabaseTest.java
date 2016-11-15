@@ -186,7 +186,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         Assert.assertEquals(2, CouchUtils.generationFromRevId(rev_2.getRevision()));
 
         rev_1 = datastore.getDocument(rev_1.getId(), rev_1.getRevision());
-        Assert.assertFalse(((DocumentRevision)rev_1).isCurrent());
+        Assert.assertFalse(((InternalDocumentRevision)rev_1).isCurrent());
         rev_1Mut = rev_1;
         rev_1Mut.setBody(bodyOne);
 
@@ -210,12 +210,12 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
             throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev1 = datastore.createDocumentFromRevision(rev_1Mut);
+        InternalDocumentRevision rev1 = (InternalDocumentRevision)datastore.createDocumentFromRevision(rev_1Mut);
 
-        DocumentRevision deletedRev = this.datastore.deleteDocumentFromRevision(rev1);
+        InternalDocumentRevision deletedRev = (InternalDocumentRevision)this.datastore.deleteDocumentFromRevision(rev1);
         Assert.assertEquals(2, CouchUtils.generationFromRevId(deletedRev.getRevision()));
         Assert.assertTrue(deletedRev.isDeleted());
-        Assert.assertTrue(((DocumentRevision)deletedRev).isCurrent());
+        Assert.assertTrue(deletedRev.isCurrent());
         Assert.assertArrayEquals(JSONUtils.emptyJSONObjectAsBytes(), deletedRev.getBody().asBytes());
         Assert.assertEquals(rev1.getSequence(), deletedRev.getParent());
         Assert.assertTrue(deletedRev.getSequence() > rev1.getSequence());
@@ -253,14 +253,14 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
 
         DocumentRevision rev1aMut = new DocumentRevision();
         rev1aMut.setBody(bodyOne);
-        DocumentRevision rev1a = this.datastore.createDocumentFromRevision(rev1aMut);
+        InternalDocumentRevision rev1a = (InternalDocumentRevision)this.datastore.createDocumentFromRevision(rev1aMut);
         DocumentRevision rev2aMut = rev1a;
         rev2aMut.setBody(bodyTwo);
-        DocumentRevision rev2a = this.datastore.updateDocumentFromRevision(rev2aMut);
-        DocumentRevision rev3b = this.createDetachedDocumentRevision(rev1a.getId(), "3-b", bodyOne);
+        InternalDocumentRevision rev2a = (InternalDocumentRevision)this.datastore.updateDocumentFromRevision(rev2aMut);
+        InternalDocumentRevision rev3b = this.createDetachedDocumentRevision(rev1a.getId(), "3-b", bodyOne);
         this.datastore.forceInsert(rev3b, rev1a.getRevision(), "2-b", "3-b");
 
-        DocumentRevision deletedRev = this.datastore.deleteDocumentFromRevision(rev2a);
+        InternalDocumentRevision deletedRev = (InternalDocumentRevision)this.datastore.deleteDocumentFromRevision(rev2a);
         Assert.assertArrayEquals(JSONUtils.emptyJSONObjectAsBytes(), deletedRev.getBody().asBytes());
         Assert.assertEquals(rev2a.getSequence(), deletedRev.getParent());
         Assert.assertTrue(deletedRev.getSequence() > rev2a.getSequence());
@@ -285,7 +285,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         Assert.assertFalse(newInsertedRevision.isCurrent());
     }
 
-    private DocumentRevision createDetachedDocumentRevision(String docId, String rev, DocumentBody body) {
+    private InternalDocumentRevision createDetachedDocumentRevision(String docId, String rev, DocumentBody body) {
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
         builder.setDocId(docId);
         builder.setRevId(rev);
@@ -406,9 +406,9 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         ids.add(rev_2.getId());
 
         {
-            List<DocumentRevision> docs = datastore.getDocumentsWithIds(ids);
+            List<? extends DocumentRevision> docs = datastore.getDocumentsWithIds(ids);
             Assert.assertEquals(2, docs.size());
-            assertIdAndRevisionAndShallowContent(rev_1_2, docs.get(0));
+            assertIdAndRevisionAndShallowContent(rev_1_2, (InternalDocumentRevision)docs.get(0));
         }
 
         List<String> ids2 = new ArrayList<String>();
@@ -416,9 +416,9 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         ids2.add(rev_1.getId());
 
         {
-            List<DocumentRevision> docs = datastore.getDocumentsWithIds(ids2);
+            List<? extends DocumentRevision> docs = datastore.getDocumentsWithIds(ids2);
             Assert.assertEquals(2, docs.size());
-            assertIdAndRevisionAndShallowContent(rev_2, docs.get(0));
+            assertIdAndRevisionAndShallowContent(rev_2, (InternalDocumentRevision)docs.get(0));
         }
     }
 
@@ -443,7 +443,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         List<Long> ids = new ArrayList<Long>();
 
         {
-            List<DocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
+            List<? extends DocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
             Assert.assertEquals(0, docs.size());
         }
     }
@@ -454,12 +454,12 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         DocumentRevision[] dbObjects = createTwoDocumentsForGetDocumentsWithInternalIdsTest();
 
         List<Long> ids = new ArrayList<Long>();
-        ids.add(((DocumentRevision)dbObjects[1]).getInternalNumericId());
-        ids.add(((DocumentRevision)dbObjects[0]).getInternalNumericId());
+        ids.add(((InternalDocumentRevision)dbObjects[1]).getInternalNumericId());
+        ids.add(((InternalDocumentRevision)dbObjects[0]).getInternalNumericId());
         ids.add(101L);
 
         {
-            List<DocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
+            List<? extends DocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
             Assert.assertEquals(2, docs.size());
             Assert.assertEquals(dbObjects[0].getId(), docs.get(0).getId());
             Assert.assertEquals(dbObjects[1].getId(), docs.get(1).getId());
@@ -480,7 +480,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
             DocumentRevision rev = new DocumentRevision();
             rev.setBody(body);
             DocumentRevision saved = datastore.createDocumentFromRevision(rev);
-            internal_ids.add(((DocumentRevision)saved).getInternalNumericId());
+            internal_ids.add(((InternalDocumentRevision)saved).getInternalNumericId());
         }
 
         // Default SQLite parameter limit is 999, and we batch into batches
@@ -497,7 +497,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         };
         for (int[] test : tests) {
             int fromIndex = test[0], toIndex = test[0]+test[1];
-            List<DocumentRevision> docs = datastore.getDocumentsWithInternalIds(
+            List<InternalDocumentRevision> docs = datastore.getDocumentsWithInternalIds(
                 internal_ids.subList(fromIndex, toIndex)
             );
             Assert.assertEquals(test[1], docs.size());
@@ -514,12 +514,12 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         ids.add(102L);
 
         {
-            List<DocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
+            List<InternalDocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
             Assert.assertEquals(0, docs.size());
         }
     }
 
-    private void assertIdAndRevisionAndShallowContent(DocumentRevision expected, DocumentRevision actual) {
+    private void assertIdAndRevisionAndShallowContent(DocumentRevision expected, InternalDocumentRevision actual) {
         Assert.assertEquals(expected.getId(), actual.getId());
         Assert.assertEquals(expected.getRevision(), actual.getRevision());
 
@@ -575,9 +575,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
 
         // create some leaf nodes
         for (int i=0; i<10; i++) {
-            DocumentRevision leaf = new DocumentRevision(docId);
-            leaf.setBody(bodyOne);
-            leaf.setRevision("2-xyz"+i);
+            InternalDocumentRevision leaf = new InternalDocumentRevision(docId, "2-xyz"+i, bodyOne, null);
             datastore.forceInsert(leaf, root.getRevision(), leaf.getRevision());
         }
 
@@ -602,7 +600,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
 
         int count;
         int offset = 0;
-        List<DocumentRevision> result;
+        List<InternalDocumentRevision> result;
 
         // Count
         count = 10;
@@ -663,13 +661,13 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         }
     }
 
-    private void getAllDocuments_compareResult(List<DocumentRevision> expectedDocumentRevisions, List<DocumentRevision> result, int count, int offset) {
-        ListIterator<DocumentRevision> iterator;
+    private void getAllDocuments_compareResult(List<DocumentRevision> expectedDocumentRevisions, List<InternalDocumentRevision> result, int count, int offset) {
+        ListIterator<InternalDocumentRevision> iterator;
         iterator = result.listIterator();
         Assert.assertEquals(count, result.size());
         while (iterator.hasNext()) {
             int index = iterator.nextIndex();
-            DocumentRevision actual = iterator.next();
+            InternalDocumentRevision actual = iterator.next();
             DocumentRevision expected = expectedDocumentRevisions.get(index + offset);
 
             assertIdAndRevisionAndShallowContent(expected, actual);

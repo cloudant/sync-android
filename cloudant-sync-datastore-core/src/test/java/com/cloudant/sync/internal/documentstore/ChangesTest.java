@@ -29,8 +29,8 @@ public class ChangesTest extends BasicDatastoreTestBase {
 
     @Test
     public void changes() throws Exception {
-        DocumentRevision[] docs = createThreeDocuments();
-        List<DocumentRevision> docsList = new ArrayList<DocumentRevision>();
+        InternalDocumentRevision[] docs = createThreeDocuments();
+        List<InternalDocumentRevision> docsList = new ArrayList<InternalDocumentRevision>();
         docsList.add(docs[0]);
         docsList.add(docs[1]);
 

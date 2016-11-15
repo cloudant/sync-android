@@ -15,9 +15,9 @@
 package com.cloudant.sync.internal.documentstore;
 
 import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStoreNotDeletedException;
 import com.cloudant.sync.documentstore.DocumentStoreNotOpenedException;
-import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.util.MultiThreadedTestHelper;
 
