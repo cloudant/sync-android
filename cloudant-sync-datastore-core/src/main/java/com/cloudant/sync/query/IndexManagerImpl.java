@@ -52,11 +52,16 @@ import com.cloudant.sync.util.Misc;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -208,6 +213,7 @@ public class IndexManagerImpl implements IndexManager {
         return this.ensureIndexed(fieldNames, null);
     }
 
+
     /**
      *  Add a single, possibly compound, index for the given field names.
      *
@@ -219,9 +225,7 @@ public class IndexManagerImpl implements IndexManager {
      */
     @Override
     public String ensureIndexed(List<FieldSort> fieldNames, String indexName) throws QueryException {
-        return IndexCreator.ensureIndexed(new Index(fieldNames, indexName),
-                database,
-                dbQueue);
+        return this.ensureIndexed(fieldNames, indexName, IndexType.JSON);
     }
 
     /**
@@ -256,12 +260,53 @@ public class IndexManagerImpl implements IndexManager {
                                 String indexName,
                                 IndexType indexType,
                                 String tokenize) throws QueryException {
+
+        // If the index name is null, a name should be generated, but first we should check
+        // if an index already exists that matches the request index definition.
+        if (indexName == null) {
+            List<Index> indexes = this.listIndexes();
+            Set<FieldSort> fieldNamesSet = new HashSet<FieldSort>(filterMeta(fieldNames));
+            for (Index index : indexes) {
+                Set<FieldSort> indexFieldNamesSet = new HashSet<FieldSort>(filterMeta(index.fieldNames));
+                if (!indexFieldNamesSet.equals(fieldNamesSet)) {
+                    continue;
+                }
+
+                boolean equalTokenize = tokenize == null ? index.tokenize == null : tokenize.equals(index.tokenize);
+                if(!equalTokenize){
+                    continue;
+                }
+
+
+                if (index.indexType != indexType){
+                    continue;
+                }
+
+                return index.indexName;
+            }
+        }
+
         return IndexCreator.ensureIndexed(new Index(fieldNames,
                         indexName,
                         indexType,
                         tokenize),
                 database,
                 dbQueue);
+    }
+
+    /**
+     * Removes meta fields from a field sort list, the meta fields removed are "_id" and "_rev".
+     * Meta fields will always be added if missing by the underlying indexing functions.
+     */
+    private List<FieldSort> filterMeta(List<FieldSort> fields){
+        List<FieldSort> filtered = new ArrayList<FieldSort>();
+        for (FieldSort field: fields){
+            if (field.field.equals("_id") || field.field.equals("_rev")){
+                continue;
+            }
+            filtered.add(field);
+        }
+        return filtered;
     }
 
     /**
