@@ -923,9 +923,25 @@ public class DatabaseImpl implements Database {
 
                             new ResolveConflictsForDocumentCallable(docTree, revIdKeep).call(db);
 
+                            // is newWinnerTx a new or updated (as opposed to existing) revision?
+                            boolean isNewOrUpdatedRevision = false;
+                            if (newWinnerTx.getClass().equals(DocumentRevision.class)) {
+                                // user gave us a new DocumentRevision instance
+                                isNewOrUpdatedRevision = true;
+                            } else if (newWinnerTx.getClass().equals(InternalDocumentRevision.class)) {
+                                // user gave us an existing InternalDocumentRevision instance - did the body or attachments change?
+                                InternalDocumentRevision newWinnerTxInternal = (InternalDocumentRevision)newWinnerTx;
+                                if (newWinnerTxInternal.isBodyModified()) {
+                                    isNewOrUpdatedRevision = true;
+                                } else if (newWinnerTxInternal.getAttachments() != null) {
+                                    if (newWinnerTxInternal.getAttachments().hasChanged()) {
+                                        isNewOrUpdatedRevision = true;
+                                    }
+                                }
+                            }
+
                             // if this is a new or modified revision: graft the new revision on
-                            if ((newWinnerTx instanceof InternalDocumentRevision && ((InternalDocumentRevision)newWinnerTx).isBodyModified()) ||
-                                    (newWinnerTx.getAttachments() != null && ((ChangeNotifyingMap<String, Attachment>) newWinnerTx.getAttachments()).hasChanged())) {
+                            if (isNewOrUpdatedRevision) {
 
                                 // We need to work out which of the attachments for the revision are ones
                                 // we can copy over because they exist in the attachment store already and
