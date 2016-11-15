@@ -84,7 +84,7 @@ public class MultipartAttachmentWriterTests {
         DocumentRevision doc = database.createDocumentFromRevision(docMut);
 
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
-        mpw.setBody(doc.asMap());
+        mpw.setBody(doc.getBody().asMap());
 
         for (int i=0; i<1000; i++) {
             String name = "attachment" + UUID.randomUUID();
@@ -120,7 +120,7 @@ public class MultipartAttachmentWriterTests {
     public void AddImageAttachmentTest() throws Exception {
         DocumentRevision docMut = new DocumentRevision();
         docMut.setBody(bodyOne);
-        DocumentRevision doc = database.createDocumentFromRevision(docMut);
+        InternalDocumentRevision doc = (InternalDocumentRevision)database.createDocumentFromRevision(docMut);
 
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
         mpw.setBody(doc.asMap());
@@ -146,6 +146,7 @@ public class MultipartAttachmentWriterTests {
 
         bos.flush();
         bos.close();
+
         Assert.assertEquals(totalRead, mpw.getContentLength());
         FileInputStream fis = new FileInputStream(TestUtils.loadFixture("fixture/AddImageAttachmentTest_expected.mime"));
         Assert.assertTrue(TestUtils.streamsEqual(fis, new ByteArrayInputStream(bos.toByteArray())));

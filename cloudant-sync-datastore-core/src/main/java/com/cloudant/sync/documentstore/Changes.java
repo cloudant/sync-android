@@ -15,6 +15,7 @@
 package com.cloudant.sync.documentstore;
 
 
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.util.Misc;
 
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class Changes {
 
     private final long lastSequence;
 
-    private final List<DocumentRevision> results;
+    private final List<InternalDocumentRevision> results;
 
     /**
      * <p>
@@ -50,7 +51,7 @@ public class Changes {
      *
      * @api_private
      */
-    public Changes(long lastSequence, List<DocumentRevision> results) {
+    public Changes(long lastSequence, List<InternalDocumentRevision> results) {
         Misc.checkNotNull(results, "Changes results");
         this.lastSequence = lastSequence;
         this.results = results;
@@ -73,7 +74,7 @@ public class Changes {
      *
      * @return the list of {@code DocumentRevision}s in this change set.
      */
-    public List<DocumentRevision> getResults() {
+    public List<InternalDocumentRevision> getResults() {
         return this.results;
     }
 
@@ -93,7 +94,7 @@ public class Changes {
      */
     public List<String> getIds() {
         List<String> ids = new ArrayList<String>();
-        for(DocumentRevision obj : results) {
+        for(InternalDocumentRevision obj : results) {
             ids.add(obj.getId());
         }
         return ids;

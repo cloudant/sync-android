@@ -19,7 +19,7 @@ import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.Misc;
@@ -38,7 +38,7 @@ public class DoForceInsertExistingDocumentWithHistoryCallable implements SQLCall
 
     private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
-    private DocumentRevision newRevision;
+    private InternalDocumentRevision newRevision;
     private long docNumericId;
     private List<String> revisions;
     private Map<String, Object> attachments;
@@ -53,7 +53,7 @@ public class DoForceInsertExistingDocumentWithHistoryCallable implements SQLCall
      *                    revision of the DocumentRevision
      *                    as well) sorted in ascending order.
      */
-    public DoForceInsertExistingDocumentWithHistoryCallable(DocumentRevision newRevision, long
+    public DoForceInsertExistingDocumentWithHistoryCallable(InternalDocumentRevision newRevision, long
             docNumericId, List<String> revisions, Map<String, Object> attachments, String
             attachmentsDir, AttachmentStreamFactory attachmentStreamFactory) {
         this.newRevision = newRevision;

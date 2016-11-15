@@ -146,7 +146,7 @@ public interface Database {
      *                   descending order.
      * @return list of {@code DBObjects}, maximum length {@code limit}.
      */
-    List<DocumentRevision> getAllDocuments(int offset, int limit, boolean descending);
+    List<? extends DocumentRevision> getAllDocuments(int offset, int limit, boolean descending);
 
     /**
      * <p>Enumerates the current winning revision for all documents in the
@@ -168,7 +168,7 @@ public interface Database {
      * @throws DocumentException if there was an error retrieving the
      * documents.
      */
-    List<DocumentRevision> getDocumentsWithIds(List<String> documentIds) throws DocumentException;
+    List<? extends DocumentRevision> getDocumentsWithIds(List<String> documentIds) throws DocumentException;
 
     /**
      * <p>Retrieves the datastore's current sequence number.</p>
@@ -331,7 +331,7 @@ public interface Database {
      * @see Database#getEventBus()
      * @see Database#deleteDocumentFromRevision(DocumentRevision)
      */
-    List<DocumentRevision> deleteDocument(String id) throws DocumentException;
+    List<? extends DocumentRevision> deleteDocument(String id) throws DocumentException;
 
     /**
      * Compacts the sqlDatabase storage by removing the bodies and attachments of obsolete revisions.

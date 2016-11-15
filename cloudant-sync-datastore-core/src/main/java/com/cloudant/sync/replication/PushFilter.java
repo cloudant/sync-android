@@ -15,6 +15,7 @@
 package com.cloudant.sync.replication;
 
 import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 /*
  * Created by Rhys Short on 31/03/2016.
  */

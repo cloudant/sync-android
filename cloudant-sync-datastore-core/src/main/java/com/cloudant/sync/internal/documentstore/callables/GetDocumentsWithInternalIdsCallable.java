@@ -18,7 +18,7 @@ import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentException;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.CollectionUtils;
@@ -34,7 +34,7 @@ import java.util.List;
  *
  * @api_private
  */
-public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<DocumentRevision>> {
+public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<InternalDocumentRevision>> {
 
     private List<Long> docIds;
     private String attachmentsDir;
@@ -52,7 +52,7 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Doc
         this.attachmentStreamFactory = attachmentStreamFactory;
     }
 
-    public List<DocumentRevision> call(SQLDatabase db) throws DocumentStoreException,
+    public List<InternalDocumentRevision> call(SQLDatabase db) throws DocumentStoreException,
             DocumentException {
 
         if (docIds.size() == 0) {
@@ -67,7 +67,7 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Doc
         // of placeholders we can use in a single query. 999 is the default
         // value, but it can be lower. It's hard to find this out from Java,
         // so we use a value much lower.
-        List<DocumentRevision> result = new ArrayList<DocumentRevision>(docIds.size());
+        List<InternalDocumentRevision> result = new ArrayList<InternalDocumentRevision>(docIds.size());
 
         List<List<Long>> batches = CollectionUtils.partition(docIds,
                 DatabaseImpl.SQLITE_QUERY_PLACEHOLDERS_LIMIT);
@@ -86,9 +86,9 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Doc
 
         // Contract is to sort by sequence number, which we need to do
         // outside the sqlDb as we're batching requests.
-        Collections.sort(result, new Comparator<DocumentRevision>() {
+        Collections.sort(result, new Comparator<InternalDocumentRevision>() {
             @Override
-            public int compare(DocumentRevision documentRevision, DocumentRevision
+            public int compare(InternalDocumentRevision documentRevision, InternalDocumentRevision
                     documentRevision2) {
                 long a = documentRevision.getSequence();
                 long b = documentRevision2.getSequence();

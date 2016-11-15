@@ -17,7 +17,7 @@ package com.cloudant.sync.internal.documentstore.callables;
 import com.cloudant.sync.documentstore.AttachmentException;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentStoreException;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 
@@ -35,7 +35,7 @@ public class DoForceInsertNewDocumentWithHistoryCallable implements SQLCallable<
 
     private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
-    private DocumentRevision rev;
+    private InternalDocumentRevision rev;
     private List<String> revHistory;
 
     /**
@@ -44,7 +44,7 @@ public class DoForceInsertNewDocumentWithHistoryCallable implements SQLCallable<
      *                   revision of the DocumentRevision
      *                   as well) sorted in ascending order.
      */
-    public DoForceInsertNewDocumentWithHistoryCallable(DocumentRevision rev, List<String>
+    public DoForceInsertNewDocumentWithHistoryCallable(InternalDocumentRevision rev, List<String>
             revHistory) {
         this.rev = rev;
         this.revHistory = revHistory;

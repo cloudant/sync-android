@@ -15,6 +15,7 @@
 package com.cloudant.sync.internal.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.mazha.NoResourceException;
 import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
@@ -64,7 +65,7 @@ public class PushStrategyTest extends ReplicationTestBase {
         return DocumentBodyFactory.create(m);
     }
 
-    private DocumentRevision createDbObject(String rev, DocumentBody body) {
+    private InternalDocumentRevision createDbObject(String rev, DocumentBody body) {
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
         builder.setDocId("1");
         builder.setRevId(rev);
@@ -265,11 +266,11 @@ public class PushStrategyTest extends ReplicationTestBase {
         PushStrategy replicator = (PushStrategy) ((ReplicatorImpl) super
                 .getPushBuilder().changeLimitPerBatch(1).build()).strategy;
 
-        DocumentRevision rev = createDbObject("5-e", createDBBody("Tom"));
+        InternalDocumentRevision rev = createDbObject("5-e", createDBBody("Tom"));
         datastore.forceInsert(rev, "1-a", "2-b", "3-c", "4-d", "5-e");
 
         // 5-x will be the winner
-        DocumentRevision rev2 = createDbObject("5-x", createDBBody("Jerry"));
+        InternalDocumentRevision rev2 = createDbObject("5-x", createDBBody("Jerry"));
         datastore.forceInsert(rev2, "1-a", "2-b", "3-c", "4-d", "5-x");
 
         this.push(replicator, 1);
@@ -288,11 +289,11 @@ public class PushStrategyTest extends ReplicationTestBase {
         PushStrategy replicator = (PushStrategy) ((ReplicatorImpl) super
                 .getPushBuilder().changeLimitPerBatch(1).build()).strategy;
 
-        DocumentRevision rev = createDbObject("4-d", createDBBody("Tom"));
+        InternalDocumentRevision rev = createDbObject("4-d", createDBBody("Tom"));
         datastore.forceInsert(rev, "1-a", "2-b", "3-c", "4-d");
 
         // 4-d will be the winner
-        DocumentRevision rev2 = createDbObject("3-z", createDBBody("Jerry"));
+        InternalDocumentRevision rev2 = createDbObject("3-z", createDBBody("Jerry"));
         datastore.forceInsert(rev2, "1-x", "2-y", "3-z");
 
         this.push(replicator, 1);

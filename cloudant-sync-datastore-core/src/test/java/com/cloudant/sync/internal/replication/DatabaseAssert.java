@@ -241,7 +241,7 @@ public class DatabaseAssert {
      */
     static void checkWinningRevisionSame(String documentId, DatabaseImpl datastore,
                                          CouchClient client) throws Exception{
-        Map<String, Object> doc1 = ((DocumentRevision)datastore.getDocument(documentId)).asMap();
+        Map<String, Object> doc1 = ((DocumentRevision)datastore.getDocument(documentId)).getBody().asMap();
         Map<String, Object> doc2 = client.getDocument(documentId);
         doc2.remove(CouchConstants._attachments);
         DatabaseAssert.assertSameStringMap(doc1, doc2);

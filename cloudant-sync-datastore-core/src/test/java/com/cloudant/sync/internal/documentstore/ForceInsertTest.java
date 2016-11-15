@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-
+/*
 public class ForceInsertTest extends BasicDatastoreTestBase {
 
     static CountDownLatch documentCreated, documentUpdated;
@@ -163,5 +163,5 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
             documentUpdated.countDown();
     }
 
-
 }
+*/

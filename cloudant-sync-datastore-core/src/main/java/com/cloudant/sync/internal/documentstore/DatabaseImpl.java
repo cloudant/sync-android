@@ -19,6 +19,7 @@
 
 package com.cloudant.sync.internal.documentstore;
 
+import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.common.ChangeNotifyingMap;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.common.ValueListMap;
@@ -32,7 +33,6 @@ import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
-import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.InvalidDocumentException;
 import com.cloudant.sync.documentstore.LocalDocument;
 import com.cloudant.sync.internal.documentstore.callables.ChangesCallable;
@@ -282,13 +282,13 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public DocumentRevision getDocument(String id) throws DocumentNotFoundException {
+    public InternalDocumentRevision getDocument(String id) throws DocumentNotFoundException {
         Misc.checkState(this.isOpen(), "Database is closed");
         return getDocument(id, null);
     }
 
     @Override
-    public DocumentRevision getDocument(final String id, final String rev) throws
+    public InternalDocumentRevision getDocument(final String id, final String rev) throws
             DocumentNotFoundException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNullOrEmpty(id, "Document id");
@@ -347,7 +347,7 @@ public class DatabaseImpl implements Database {
      * @param docIds given list of internal ids
      * @return list of documents ordered by sequence number
      */
-    List<DocumentRevision> getDocumentsWithInternalIds(final List<Long> docIds) {
+    List<InternalDocumentRevision> getDocumentsWithInternalIds(final List<Long> docIds) {
         Misc.checkNotNull(docIds, "Input document internal id list");
 
         try {
@@ -359,7 +359,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public List<DocumentRevision> getAllDocuments(final int offset, final int limit, final
+    public List<InternalDocumentRevision> getAllDocuments(final int offset, final int limit, final
     boolean descending) {
         Misc.checkState(this.isOpen(), "Database is closed");
         if (offset < 0) {
@@ -389,7 +389,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public List<DocumentRevision> getDocumentsWithIds(final List<String> docIds) throws
+    public List<? extends DocumentRevision> getDocumentsWithIds(final List<String> docIds) throws
             DocumentException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNull(docIds, "Input document id list");
@@ -412,8 +412,8 @@ public class DatabaseImpl implements Database {
     }
 
     public static List<DocumentRevision> sortDocumentsAccordingToIdList(List<String> docIds,
-                                                                  List<DocumentRevision> docs) {
-        Map<String, DocumentRevision> idToDocs = putDocsIntoMap(docs);
+                                                                                List<InternalDocumentRevision> docs) {
+        Map<String, InternalDocumentRevision> idToDocs = putDocsIntoMap(docs);
         List<DocumentRevision> results = new ArrayList<DocumentRevision>();
         for (String id : docIds) {
             if (idToDocs.containsKey(id)) {
@@ -426,9 +426,9 @@ public class DatabaseImpl implements Database {
         return results;
     }
 
-    private static Map<String, DocumentRevision> putDocsIntoMap(List<DocumentRevision> docs) {
-        Map<String, DocumentRevision> map = new HashMap<String, DocumentRevision>();
-        for (DocumentRevision doc : docs) {
+    private static Map<String, InternalDocumentRevision> putDocsIntoMap(List<InternalDocumentRevision> docs) {
+        Map<String, InternalDocumentRevision> map = new HashMap<String, InternalDocumentRevision>();
+        for (InternalDocumentRevision doc : docs) {
             // id should be unique cross all docs
             assert !map.containsKey(doc.getId());
             map.put(doc.getId(), doc);
@@ -453,7 +453,7 @@ public class DatabaseImpl implements Database {
     }
 
     // TODO move to callable
-    private DocumentRevision createDocumentBody(SQLDatabase db, String docId, final DocumentBody
+    private InternalDocumentRevision createDocumentBody(SQLDatabase db, String docId, final DocumentBody
             body)
             throws AttachmentException, ConflictException, DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
@@ -470,7 +470,7 @@ public class DatabaseImpl implements Database {
         // * normal insert logic for a new document
 
         InsertRevisionCallable callable = new InsertRevisionCallable();
-        DocumentRevision potentialParent = null;
+        InternalDocumentRevision potentialParent = null;
 
         try {
             potentialParent = new GetDocumentCallable(docId, null, this.attachmentsDir, this.attachmentStreamFactory).call(db);
@@ -505,7 +505,7 @@ public class DatabaseImpl implements Database {
         callable.call(db);
 
         try {
-            DocumentRevision doc = new GetDocumentCallable(docId, callable.revId, this.attachmentsDir, this.attachmentStreamFactory).call(db);
+            InternalDocumentRevision doc = new GetDocumentCallable(docId, callable.revId, this.attachmentsDir, this.attachmentStreamFactory).call(db);
             logger.finer("New document created: " + doc.toString());
             return doc;
         } catch (DocumentNotFoundException e) {
@@ -581,11 +581,11 @@ public class DatabaseImpl implements Database {
         return callable;
     }
 
-    public static List<DocumentRevision> getRevisionsFromRawQuery(SQLDatabase db, String sql, String[]
+    public static List<InternalDocumentRevision> getRevisionsFromRawQuery(SQLDatabase db, String sql, String[]
             args, String attachmentsDir, AttachmentStreamFactory attachmentStreamFactory)
             throws DocumentException,
             DocumentStoreException {
-        List<DocumentRevision> result = new ArrayList<DocumentRevision>();
+        List<InternalDocumentRevision> result = new ArrayList<InternalDocumentRevision>();
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, args);
@@ -593,7 +593,7 @@ public class DatabaseImpl implements Database {
                 long sequence = cursor.getLong(3);
                 List<? extends Attachment> atts = AttachmentManager.attachmentsForRevision(db, attachmentsDir, attachmentStreamFactory
                         , sequence);
-                DocumentRevision row = getFullRevisionFromCurrentCursor(cursor, atts);
+                InternalDocumentRevision row = getFullRevisionFromCurrentCursor(cursor, atts);
                 result.add(row);
             }
         } catch (SQLException e) {
@@ -646,7 +646,7 @@ public class DatabaseImpl implements Database {
      * @see #forceInsert(List)
      */
     @Deprecated
-    public void forceInsert(final DocumentRevision rev,
+    public void forceInsert(final InternalDocumentRevision rev,
                             final List<String> revisionHistory,
                             final Map<String, Object> attachments,
                             final Map<String[], List<PreparedAttachment>> preparedAttachments,
@@ -768,10 +768,10 @@ public class DatabaseImpl implements Database {
      *                        including the rev ID of {@code rev}. This list
      *                        needs to be sorted in ascending order
      *
-     * @see DatabaseImpl#forceInsert(DocumentRevision, List, Map, Map, boolean)
+     * @see DatabaseImpl#forceInsert(InternalDocumentRevision, List, Map, Map, boolean)
      * @throws DocumentException if there was an error inserting the revision into the database
      */
-    public void forceInsert(DocumentRevision rev, String... revisionHistory) throws
+    public void forceInsert(InternalDocumentRevision rev, String... revisionHistory) throws
             DocumentException {
         Misc.checkState(this.isOpen(), "Database is closed");
         this.forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
@@ -789,7 +789,7 @@ public class DatabaseImpl implements Database {
         return true;
     }
 
-    public static boolean checkCurrentRevisionIsInRevisionHistory(DocumentRevision rev, List<String>
+    public static boolean checkCurrentRevisionIsInRevisionHistory(InternalDocumentRevision rev, List<String>
             revisionHistory) {
         return revisionHistory.get(revisionHistory.size() - 1).equals(rev.getRevision());
     }
@@ -924,8 +924,8 @@ public class DatabaseImpl implements Database {
                             new ResolveConflictsForDocumentCallable(docTree, revIdKeep).call(db);
 
                             // if this is a new or modified revision: graft the new revision on
-                            if (newWinnerTx.isBodyModified() || (newWinnerTx.getAttachments() != null && ((ChangeNotifyingMap<String, Attachment>) newWinnerTx
-                                    .getAttachments()).hasChanged())) {
+                            if ((newWinnerTx instanceof InternalDocumentRevision && ((InternalDocumentRevision)newWinnerTx).isBodyModified()) ||
+                                    (newWinnerTx.getAttachments() != null && ((ChangeNotifyingMap<String, Attachment>) newWinnerTx.getAttachments()).hasChanged())) {
 
                                 // We need to work out which of the attachments for the revision are ones
                                 // we can copy over because they exist in the attachment store already and
@@ -958,7 +958,7 @@ public class DatabaseImpl implements Database {
     }
 
     public static InsertRevisionCallable insertNewWinnerRevisionAdaptor(DocumentBody newWinner,
-                                           DocumentRevision oldWinner)
+                                           InternalDocumentRevision oldWinner)
             throws AttachmentException, DocumentStoreException {
         String newRevisionId = CouchUtils.generateNextRevisionId(oldWinner.getRevision());
 
@@ -973,8 +973,8 @@ public class DatabaseImpl implements Database {
         return callable;
     }
 
-    public static DocumentRevision getFullRevisionFromCurrentCursor(Cursor cursor,
-                                                                     List<? extends Attachment>
+    public static InternalDocumentRevision getFullRevisionFromCurrentCursor(Cursor cursor,
+                                                                            List<? extends Attachment>
                                                                              attachments) {
         String docId = cursor.getString(cursor.getColumnIndex("docid"));
         long internalId = cursor.getLong(cursor.getColumnIndex("doc_id"));
@@ -1069,7 +1069,7 @@ public class DatabaseImpl implements Database {
      * @throws AttachmentException if there was an error reading the attachment metadata from the
      * database
      */
-    public List<? extends Attachment> attachmentsForRevision(final DocumentRevision rev) throws
+    public List<? extends Attachment> attachmentsForRevision(final InternalDocumentRevision rev) throws
             AttachmentException {
         try {
             return get(queue.submit(new SQLCallable<List<? extends Attachment>>() {
@@ -1123,21 +1123,21 @@ public class DatabaseImpl implements Database {
         final List<SavedAttachment> existingAttachments =
                 AttachmentManager.findExistingAttachments(attachments);
 
-        DocumentRevision created = null;
+        InternalDocumentRevision created = null;
         try {
-            created = get(queue.submitTransaction(new SQLCallable<DocumentRevision>() {
+            created = get(queue.submitTransaction(new SQLCallable<InternalDocumentRevision>() {
                 @Override
-                public DocumentRevision call(SQLDatabase db) throws Exception {
+                public InternalDocumentRevision call(SQLDatabase db) throws Exception {
 
                     // Save document with new JSON body, add new attachments and copy over
                     // existing attachments
-                    DocumentRevision saved = createDocumentBody(db, docId, rev.getBody());
+                    InternalDocumentRevision saved = createDocumentBody(db, docId, rev.getBody());
                     AttachmentManager.addAttachmentsToRevision(db, attachmentsDir, saved,
                             preparedNewAttachments);
                     AttachmentManager.copyAttachmentsToRevision(db, existingAttachments, saved);
 
                     // now re-fetch the revision with updated attachments
-                    DocumentRevision updatedWithAttachments = new GetDocumentCallable(
+                    InternalDocumentRevision updatedWithAttachments = new GetDocumentCallable(
                             saved.getId(), saved.getRevision(), attachmentsDir, attachmentStreamFactory).call(db);
                     return updatedWithAttachments;
                 }
@@ -1175,7 +1175,7 @@ public class DatabaseImpl implements Database {
                 AttachmentManager.findExistingAttachments(attachments);
 
         try {
-            DocumentRevision revision = get(queue.submitTransaction(new UpdateDocumentFromRevisionCallable(
+            InternalDocumentRevision revision = get(queue.submitTransaction(new UpdateDocumentFromRevisionCallable(
                             rev, preparedNewAttachments, existingAttachments, this.attachmentsDir, this.attachmentStreamFactory)));
 
             if (revision != null) {
@@ -1198,7 +1198,7 @@ public class DatabaseImpl implements Database {
         Misc.checkState(isOpen(), "Datastore is closed");
 
         try {
-            DocumentRevision deletedRevision = get(queue.submit(new DeleteDocumentCallable(rev.getId(), rev.getRevision())));
+            InternalDocumentRevision deletedRevision = get(queue.submit(new DeleteDocumentCallable(rev.getId(), rev.getRevision())));
 
             if (deletedRevision != null) {
                 eventBus.post(new DocumentDeleted(rev, deletedRevision));
@@ -1219,7 +1219,7 @@ public class DatabaseImpl implements Database {
 
     // delete all leaf nodes
     @Override
-    public List<DocumentRevision> deleteDocument(final String id)
+    public List<InternalDocumentRevision> deleteDocument(final String id)
             throws DocumentException {
         Misc.checkNotNull(id, "ID");
         try {

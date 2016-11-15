@@ -14,8 +14,6 @@
 
 package com.cloudant.sync.internal.documentstore;
 
-import com.cloudant.sync.documentstore.DocumentRevision;
-
 import java.util.List;
 import java.util.Map;
 
@@ -25,13 +23,13 @@ import java.util.Map;
  * @api_private
  */
 public class ForceInsertItem {
-    public DocumentRevision rev;
+    public InternalDocumentRevision rev;
     public List<String> revisionHistory;
     public Map<String, Object> attachments;
     public Map<String[],List<PreparedAttachment>>preparedAttachments;
     public boolean pullAttachmentsInline;
 
-    public ForceInsertItem(DocumentRevision rev, List<String> revisionHistory,
+    public ForceInsertItem(InternalDocumentRevision rev, List<String> revisionHistory,
                            Map<String, Object> attachments, Map<String[],
             List<PreparedAttachment>> preparedAttachments, boolean pullAttachmentsInline) {
         this.rev = rev;

@@ -14,6 +14,8 @@
 
 package com.cloudant.sync.documentstore;
 
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+
 import java.util.List;
 
 /**
@@ -45,5 +47,5 @@ public interface ConflictResolver {
      *
      * @see Database#resolveConflictsForDocument(String, ConflictResolver)
      */
-    DocumentRevision resolve(String docId, List<DocumentRevision> conflicts);
+    DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts);
 }
