@@ -22,7 +22,7 @@ import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
 import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.documentstore.DocumentRevsUtils;
@@ -96,7 +96,7 @@ class DatastoreWrapper {
             for (DocumentRevs documentRevs : batch.revsList) {
                 logger.log(Level.FINEST, "Bulk inserting document revs: %s", documentRevs);
 
-                DocumentRevision doc = DocumentRevsUtils.createDocument(documentRevs);
+                InternalDocumentRevision doc = DocumentRevsUtils.createDocument(documentRevs);
 
                 List<String> revisions = DocumentRevsUtils.createRevisionIdHistory(documentRevs);
                 Map<String, Object> attachments = documentRevs.getAttachments();
@@ -113,7 +113,7 @@ class DatastoreWrapper {
         for(DocumentRevs documentRevs: documentRevsList) {
             logger.log(Level.FINEST,"Bulk inserting document revs: %s",documentRevs);
 
-            DocumentRevision doc = DocumentRevsUtils.createDocument(documentRevs);
+            InternalDocumentRevision doc = DocumentRevsUtils.createDocument(documentRevs);
 
             List<String> revisions = DocumentRevsUtils.createRevisionIdHistory(documentRevs);
             Map<String, Object> attachments = documentRevs.getAttachments();
@@ -121,10 +121,10 @@ class DatastoreWrapper {
         }
     }
 
-    Map<String, DocumentRevisionTree> getDocumentTrees(List<DocumentRevision> documents) {
+    Map<String, DocumentRevisionTree> getDocumentTrees(List<InternalDocumentRevision> documents) {
         Map<String, DocumentRevisionTree> allDocumentTrees =
                 new HashMap<String, DocumentRevisionTree>();
-        for(DocumentRevision doc: documents) {
+        for(InternalDocumentRevision doc: documents) {
             DocumentRevisionTree tree =
                     this.dbCore.getAllRevisionsOfDocument(doc.getId());
             allDocumentTrees.put(doc.getId(), tree);

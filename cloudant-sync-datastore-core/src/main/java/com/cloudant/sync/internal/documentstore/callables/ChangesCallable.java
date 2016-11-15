@@ -17,7 +17,7 @@ package com.cloudant.sync.internal.documentstore.callables;
 import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
 import com.cloudant.sync.documentstore.Changes;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -70,7 +70,7 @@ public class ChangesCallable implements SQLCallable<Changes> {
                 ids.add(cursor.getLong(0));
                 lastSequence = Math.max(lastSequence, cursor.getLong(1));
             }
-            List<DocumentRevision> results = new GetDocumentsWithInternalIdsCallable(ids, attachmentsDir, attachmentStreamFactory).call(db);
+            List<InternalDocumentRevision> results = new GetDocumentsWithInternalIdsCallable(ids, attachmentsDir, attachmentStreamFactory).call(db);
             if (results.size() != ids.size()) {
                 throw new IllegalStateException(String.format(Locale.ENGLISH,
                         "The number of documents does not match number of ids, " +

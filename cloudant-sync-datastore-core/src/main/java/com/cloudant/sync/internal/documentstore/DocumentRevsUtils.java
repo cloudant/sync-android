@@ -17,7 +17,6 @@ package com.cloudant.sync.internal.documentstore;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
-import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.util.Misc;
 
 import java.util.ArrayList;
@@ -59,7 +58,7 @@ public class DocumentRevsUtils {
         return revisionHistory;
     }
 
-    public static DocumentRevision createDocument(DocumentRevs documentRevs) {
+    public static InternalDocumentRevision createDocument(DocumentRevs documentRevs) {
         validateDocumentRevs(documentRevs);
 
         DocumentRevisionBuilder builder = new DocumentRevisionBuilder();

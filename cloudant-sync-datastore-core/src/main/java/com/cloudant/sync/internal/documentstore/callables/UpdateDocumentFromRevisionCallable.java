@@ -14,9 +14,10 @@
 
 package com.cloudant.sync.internal.documentstore.callables;
 
+import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.documentstore.AttachmentManager;
 import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.PreparedAttachment;
 import com.cloudant.sync.internal.documentstore.SavedAttachment;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
@@ -31,9 +32,7 @@ import java.util.List;
  *
  * @api_private
  */
-public class UpdateDocumentFromRevisionCallable implements SQLCallable<DocumentRevision> {
-
-
+public class UpdateDocumentFromRevisionCallable implements SQLCallable<InternalDocumentRevision> {
 
     private DocumentRevision rev;
     private List<PreparedAttachment> preparedNewAttachments;
@@ -53,10 +52,10 @@ public class UpdateDocumentFromRevisionCallable implements SQLCallable<DocumentR
     }
 
     @Override
-    public DocumentRevision call(SQLDatabase db) throws Exception {
+    public InternalDocumentRevision call(SQLDatabase db) throws Exception {
         Misc.checkNotNull(rev, "DocumentRevision");
 
-        DocumentRevision updated = new UpdateDocumentBodyCallable(rev.getId(), rev.getRevision(), rev
+        InternalDocumentRevision updated = new UpdateDocumentBodyCallable(rev.getId(), rev.getRevision(), rev
                 .getBody(), attachmentsDir, attachmentStreamFactory).call(db);
         AttachmentManager.addAttachmentsToRevision(db, attachmentsDir, updated,
                 preparedNewAttachments);
@@ -64,7 +63,7 @@ public class UpdateDocumentFromRevisionCallable implements SQLCallable<DocumentR
         AttachmentManager.copyAttachmentsToRevision(db, existingAttachments, updated);
 
         // now re-fetch the revision with updated attachments
-        DocumentRevision updatedWithAttachments = new GetDocumentCallable(updated.getId(),
+        InternalDocumentRevision updatedWithAttachments = new GetDocumentCallable(updated.getId(),
                 updated.getRevision(), this.attachmentsDir, this.attachmentStreamFactory).call(db);
         return updatedWithAttachments;
     }

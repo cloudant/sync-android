@@ -14,9 +14,10 @@
 
 package com.cloudant.sync.internal.documentstore.callables;
 
+import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.DatabaseUtils;
@@ -49,7 +50,7 @@ public class GetDocumentsWithIdsCallable implements SQLCallable<List<DocumentRev
                 " ORDER BY docs.doc_id ", DatabaseUtils.makePlaceholders(docIds.size
                 ()));
         String[] args = docIds.toArray(new String[docIds.size()]);
-        List<DocumentRevision> docs = DatabaseImpl.getRevisionsFromRawQuery(db, sql, args, attachmentsDir, attachmentStreamFactory);
+        List<InternalDocumentRevision> docs = DatabaseImpl.getRevisionsFromRawQuery(db, sql, args, attachmentsDir, attachmentStreamFactory);
         // Sort in memory since seems not able to sort them using SQL
         return DatabaseImpl.sortDocumentsAccordingToIdList(docIds, docs);
     }

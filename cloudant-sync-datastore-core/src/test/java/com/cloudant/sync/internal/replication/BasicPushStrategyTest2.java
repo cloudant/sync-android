@@ -15,9 +15,10 @@
 package com.cloudant.sync.internal.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.mazha.Response;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
-import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
 
 import org.junit.Assert;
@@ -120,21 +121,21 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
             DocumentRevisionTree t1 = datastore.getAllRevisionsOfDocument(id1);
             Assert.assertEquals(2, t1.leafs().size());
             DocumentRevision c = t1.getCurrentRevision();
-            Assert.assertEquals(4, t1.depth(c.getSequence()));
+            Assert.assertEquals(4, t1.depth(((InternalDocumentRevision)c).getSequence()));
         }
 
         {
             DocumentRevisionTree t2 = datastore.getAllRevisionsOfDocument(id2);
             Assert.assertEquals(2, t2.leafs().size());
             DocumentRevision c = t2.getCurrentRevision();
-            Assert.assertEquals(2, t2.depth(c.getSequence()));
+            Assert.assertEquals(2, t2.depth(((InternalDocumentRevision)c).getSequence()));
         }
 
         {
             DocumentRevisionTree t3 = datastore.getAllRevisionsOfDocument(id3);
             Assert.assertEquals(2, t3.leafs().size());
             DocumentRevision c = t3.getCurrentRevision();
-            Assert.assertEquals(4, t3.depth(c.getSequence()));
+            Assert.assertEquals(4, t3.depth(((InternalDocumentRevision)c).getSequence()));
         }
     }
 

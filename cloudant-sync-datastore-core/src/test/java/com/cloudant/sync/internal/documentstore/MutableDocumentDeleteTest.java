@@ -104,7 +104,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
             Assert.assertTrue("Expected rev to not be deleted", !rev.isDeleted());
         }
         // do the delete
-        List<DocumentRevision> deleted = datastore.deleteDocument(saved.getId());
+        List<? extends DocumentRevision> deleted = datastore.deleteDocument(saved.getId());
         // assert on deleted documents returned
         Assert.assertEquals("Expected 10 leaves", 10, deleted.size());
         for(DocumentRevision rev : deleted) {
@@ -119,7 +119,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
     @Test
     public void deleteAllNullRevision() throws Exception {
         try {
-            List<DocumentRevision> deleted = datastore.deleteDocument(null);
+            List<? extends DocumentRevision> deleted = datastore.deleteDocument(null);
             Assert.fail("NullPointerException expected");
         } catch (NullPointerException npe) {
             ;
@@ -128,7 +128,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
 
     @Test
     public void deleteAllNonExistentRevision() throws Exception {
-        List<DocumentRevision> deleted = datastore.deleteDocument("abc123");
+        List<? extends DocumentRevision> deleted = datastore.deleteDocument("abc123");
         Assert.assertEquals("Deleted list should be empty", true, deleted.isEmpty());
 
     }

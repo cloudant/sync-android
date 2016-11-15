@@ -19,7 +19,7 @@ import com.cloudant.sync.internal.documentstore.AttachmentManager;
 import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.ForceInsertItem;
 import com.cloudant.sync.internal.documentstore.PreparedAttachment;
 import com.cloudant.sync.internal.documentstore.UnsavedStreamAttachment;
@@ -133,7 +133,7 @@ public class ForceInsertCallable implements SQLCallable<List<DocumentModified>> 
                             String id = key[0];
                             String rev = key[1];
                             try {
-                                DocumentRevision doc = new GetDocumentCallable(id, rev, attachmentsDir, attachmentStreamFactory).call(db);
+                                InternalDocumentRevision doc = new GetDocumentCallable(id, rev, attachmentsDir, attachmentStreamFactory).call(db);
                                 if (doc != null) {
                                     AttachmentManager.addAttachmentsToRevision(db,
                                             attachmentsDir, doc, item

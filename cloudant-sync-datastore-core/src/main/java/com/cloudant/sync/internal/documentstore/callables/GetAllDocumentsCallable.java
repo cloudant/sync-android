@@ -16,7 +16,7 @@ package com.cloudant.sync.internal.documentstore.callables;
 
 import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 
@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @api_private
  */
-public class GetAllDocumentsCallable implements SQLCallable<List<DocumentRevision>> {
+public class GetAllDocumentsCallable implements SQLCallable<List<InternalDocumentRevision>> {
 
     private int offset;
     private int limit;
@@ -47,7 +47,7 @@ public class GetAllDocumentsCallable implements SQLCallable<List<DocumentRevisio
     }
 
     @Override
-    public List<DocumentRevision> call(SQLDatabase db) throws Exception {
+    public List<InternalDocumentRevision> call(SQLDatabase db) throws Exception {
         // Generate the SELECT statement, based on the options:
         String sql = String.format("SELECT " + DatabaseImpl.FULL_DOCUMENT_COLS +
                 " FROM revs, docs WHERE deleted = 0 AND current = 1 AND docs.doc_id = revs.doc_id " +

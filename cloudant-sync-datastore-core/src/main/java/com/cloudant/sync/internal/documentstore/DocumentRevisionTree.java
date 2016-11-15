@@ -16,7 +16,6 @@ package com.cloudant.sync.internal.documentstore;
 
 import com.cloudant.sync.documentstore.ConflictResolver;
 import com.cloudant.sync.documentstore.Database;
-import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.util.AbstractTreeNode;
 import com.cloudant.sync.internal.util.Misc;
 
@@ -84,9 +83,9 @@ import java.util.TreeMap;
  *     revisions {@code 4} and {@code 3^}.</li>
  *     <li>Merge these documents together in some way.</li>
  *     <li>Save a new revision in the {@code 4} branch using
- *     {@link Database#updateDocumentFromRevision(DocumentRevision)}</li>
+ *     {@link Database#updateDocumentFromRevision(InternalDocumentRevision)}</li>
  *     <li>Delete the {@code 3^} revision using
- *     {@link Database#deleteDocumentFromRevision(DocumentRevision)}</li>
+ *     {@link Database#deleteDocumentFromRevision(InternalDocumentRevision)}</li>
  * </ol>
  *
  * <p>This process leaves us still with two branches. Because only one
@@ -123,10 +122,10 @@ import java.util.TreeMap;
  * </p>
  *
  * <p>To construct a {@code DocumentRevisionTree}, first create an empty tree. Then
- * call {@link DocumentRevisionTree#add(DocumentRevision)} with each {@code DocumentRevision} in
+ * call {@link DocumentRevisionTree#add(InternalDocumentRevision)} with each {@code DocumentRevision} in
  * ascending generation order. For {@code DocumentRevision}s with the same generation,
  * the order they are added in should not matter; a branch will be created
- * automatically from the {@link DocumentRevision#getParent()}
+ * automatically from the {@link InternalDocumentRevision#getParent()}
  * property of each {@code DocumentRevision}. This implies that if a {@code DocumentRevision}
  * that is not the root of a tree (that is, it has a parent), the parent must
  * be added first so the tree is constructed correctly.</p>
@@ -176,14 +175,14 @@ public class DocumentRevisionTree {
      *
      * @param documentRevision a root of the revision tree
      */
-    public DocumentRevisionTree(DocumentRevision documentRevision) {
+    public DocumentRevisionTree(InternalDocumentRevision documentRevision) {
         addRootDBObject(documentRevision);
         documentNumericId = documentRevision.getInternalNumericId();
         docId = documentRevision.getId();
     }
 
     /**
-     * <p>Adds a new {@link DocumentRevision} to the document.</p>
+     * <p>Adds a new {@link InternalDocumentRevision} to the document.</p>
      *
      * <p>The {@code DocumentRevision}'s parent, if there is one, must already be in
      * the document tree.</p>
@@ -191,7 +190,7 @@ public class DocumentRevisionTree {
      * @param documentRevision the {@code DocumentRevision} to add
      * @return {@code DocumentRevisionTree} for method chaining
      */
-    public DocumentRevisionTree add(DocumentRevision documentRevision) {
+    public DocumentRevisionTree add(InternalDocumentRevision documentRevision) {
         Misc.checkArgument(!sequenceMap.containsKey(documentRevision.getSequence()),
                 "The revision must not be added to the tree before.");
 
@@ -213,7 +212,7 @@ public class DocumentRevisionTree {
         return this;
     }
 
-    private void addRootDBObject(DocumentRevision documentRevision) {
+    private void addRootDBObject(InternalDocumentRevision documentRevision) {
         Misc.checkArgument(documentRevision.getParent() <= 0,
                 "The added root DocumentRevision must be a valid root revision.");
 
@@ -223,7 +222,7 @@ public class DocumentRevisionTree {
         this.sequenceMap.put(documentRevision.getSequence(), rootNode);
     }
 
-    private void addNode(DocumentRevision documentRevision) {
+    private void addNode(InternalDocumentRevision documentRevision) {
         long parentSequence = documentRevision.getParent();
         Misc.checkArgument(sequenceMap.containsKey(parentSequence),
             "The given revision's parent must be in the tree already.");
@@ -240,12 +239,12 @@ public class DocumentRevisionTree {
     }
 
     /**
-     * <p>Returns the {@link DocumentRevision} for a document ID and revision ID.</p>
+     * <p>Returns the {@link InternalDocumentRevision} for a document ID and revision ID.</p>
      * @param id document ID
      * @param rev revision ID
      * @return the {@code DocumentRevision} for the document and revision ID
      */
-    public DocumentRevision lookup(String id, String rev) {
+    public InternalDocumentRevision lookup(String id, String rev) {
         for(DocumentRevisionNode n : sequenceMap.values()) {
             if(n.getData().getId().equals(id) && n.getData().getRevision().equals(rev)) {
                 return n.getData();
@@ -271,13 +270,13 @@ public class DocumentRevisionTree {
 
     /**
      * <p>Returns the child with a given revision ID of a parent
-     * {@link DocumentRevision}.</p>
+     * {@link InternalDocumentRevision}.</p>
      *
      * @param parentNode parent {@code DocumentRevision}
      * @param childRevision revision to look for in child nodes
      * @return the child with a given revision ID of a {@code DocumentRevision}.
      */
-    public DocumentRevision lookupChildByRevId(DocumentRevision parentNode, String childRevision) {
+    public InternalDocumentRevision lookupChildByRevId(InternalDocumentRevision parentNode, String childRevision) {
         Misc.checkNotNull(parentNode, "Parent node");
         Misc.checkArgument(sequenceMap.containsKey(parentNode.getSequence()),
                 "The given parent DocumentRevision must be in the tree.");
@@ -294,14 +293,14 @@ public class DocumentRevisionTree {
     }
 
     /**
-     * <p>Returns a {@link DocumentRevision} from this {@code DocumentRevisionTree} with
+     * <p>Returns a {@link InternalDocumentRevision} from this {@code DocumentRevisionTree} with
      * a particular sequence number.</p>
      *
      * @param sequence sequence number of the {@code DocumentRevision}
      * @return the {@code DocumentRevision} with the given sequence number,
      *     null if no {@code DocumentRevision} has the given sequence number.
      */
-    public DocumentRevision bySequence(long sequence) {
+    public InternalDocumentRevision bySequence(long sequence) {
         return sequenceMap.containsKey(sequence) ? sequenceMap.get(sequence).getData() : null;
     }
 
@@ -374,21 +373,21 @@ public class DocumentRevisionTree {
      * {@link DocumentRevisionTree#leafRevisions(boolean)} with
      * <code>false</code> as the parameter</p>
      *
-     * @return a list of {@link DocumentRevision} objects.
+     * @return a list of {@link InternalDocumentRevision} objects.
      */
-    public List<DocumentRevision> leafRevisions(){
+    public List<InternalDocumentRevision> leafRevisions(){
         return this.leafRevisions(false);
     }
     /**
      * <p>Returns the leaf revisions</p>
      *
      * @param excludeDeleted if true, exclude deleted leaf revisions from list
-     * @return a list of {@link DocumentRevision} objects.
+     * @return a list of {@link InternalDocumentRevision} objects.
      */
-    public List<DocumentRevision> leafRevisions(boolean excludeDeleted) {
-        List<DocumentRevision> res = new ArrayList<DocumentRevision>();
+    public List<InternalDocumentRevision> leafRevisions(boolean excludeDeleted) {
+        List<InternalDocumentRevision> res = new ArrayList<InternalDocumentRevision>();
         for(DocumentRevisionNode obj : leafs()) {
-            DocumentRevision revision = obj.getData();
+            InternalDocumentRevision revision = obj.getData();
             if (!excludeDeleted || (excludeDeleted && !revision.isDeleted())){
                 res.add(revision);
             }
@@ -397,12 +396,12 @@ public class DocumentRevisionTree {
     }
 
     /**
-     * <p>Returns the {@link DocumentRevision} that is the current winning revision
+     * <p>Returns the {@link InternalDocumentRevision} that is the current winning revision
      * for this {@code DocumentRevisionTree}.</p>
-     * @return the {@link DocumentRevision} that is the current winning revision
+     * @return the {@link InternalDocumentRevision} that is the current winning revision
      * for this {@code DocumentRevisionTree}.
      */
-    public DocumentRevision getCurrentRevision() {
+    public InternalDocumentRevision getCurrentRevision() {
         for(DocumentRevisionNode n : leafs) {
             if(n.getData().isCurrent()) {
                 return n.getData();
@@ -424,11 +423,11 @@ public class DocumentRevisionTree {
      * @return list of {@code DocumentRevision}s from the revision with {@code sequence}
      * to the root of the revision's tree.
      */
-    public List<DocumentRevision> getPathForNode(long sequence) {
+    public List<InternalDocumentRevision> getPathForNode(long sequence) {
         Misc.checkArgument(sequenceMap.containsKey(sequence),
                 "DocumentRevision for that sequence must be in the tree already.");
         DocumentRevisionNode l = sequenceMap.get(sequence);
-        List<DocumentRevision> r = new LinkedList<DocumentRevision>();
+        List<InternalDocumentRevision> r = new LinkedList<InternalDocumentRevision>();
         while(l != null) {
             r.add(l.getData());
             if(l.getData().getParent() > 0) {
@@ -451,9 +450,9 @@ public class DocumentRevisionTree {
      *   that revision's tree.
      */
     public List<String> getPath(long sequence) {
-        List<DocumentRevision> objects = getPathForNode(sequence);
+        List<InternalDocumentRevision> objects = getPathForNode(sequence);
         List<String> res = new ArrayList<String>();
-        for(DocumentRevision object : objects) {
+        for(InternalDocumentRevision object : objects) {
             res.add(object.getRevision());
         }
         return res;
@@ -480,15 +479,15 @@ public class DocumentRevisionTree {
     /**
      * <p>A node in a document's revision tree history.</p>
      */
-    public static class DocumentRevisionNode extends AbstractTreeNode<DocumentRevision>
-            implements Comparable<AbstractTreeNode<DocumentRevision>> {
+    public static class DocumentRevisionNode extends AbstractTreeNode<InternalDocumentRevision>
+            implements Comparable<AbstractTreeNode<InternalDocumentRevision>> {
 
-        public DocumentRevisionNode(DocumentRevision documentRevision) {
+        public DocumentRevisionNode(InternalDocumentRevision documentRevision) {
             super(documentRevision);
         }
 
         @Override
-        public int compareTo(AbstractTreeNode<DocumentRevision> o) {
+        public int compareTo(AbstractTreeNode<InternalDocumentRevision> o) {
             return getData().compareTo(o.getData());
         }
 
@@ -500,7 +499,7 @@ public class DocumentRevisionTree {
                 return false;
             if (getClass() != that.getClass())
                 return false;
-            AbstractTreeNode<DocumentRevision> other = (AbstractTreeNode<DocumentRevision>) that;
+            AbstractTreeNode<InternalDocumentRevision> other = (AbstractTreeNode<InternalDocumentRevision>) that;
             return this.getData().getSequence() == other.getData().getSequence();
         }
 

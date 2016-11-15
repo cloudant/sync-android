@@ -17,7 +17,7 @@ package com.cloudant.sync.internal.query;
 import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.documentstore.Changes;
 import com.cloudant.sync.documentstore.Database;
-import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.internal.sqlite.Cursor;
@@ -123,7 +123,7 @@ class IndexUpdater {
         Future<Void> result = queue.submitTransaction(new SQLCallable<Void>() {
             @Override
             public Void call(SQLDatabase database) throws QueryException {
-                for (DocumentRevision rev: changes.getResults()) {
+                for (InternalDocumentRevision rev: changes.getResults()) {
                     // Delete existing values
                     String tableName = QueryImpl.tableNameForIndex(indexName);
                     database.delete(tableName, " _id = ? ", new String[]{rev.getId()});
@@ -181,7 +181,7 @@ class IndexUpdater {
      *  is an array, however, multiple entries are required.
      */
     @SuppressWarnings("unchecked")
-    private List<DBParameter> parametersToIndexRevision (DocumentRevision rev,
+    private List<DBParameter> parametersToIndexRevision (InternalDocumentRevision rev,
                                                          String indexName,
                                                          List<FieldSort> fieldNames) {
         Misc.checkNotNull(rev, "rev");
@@ -259,7 +259,7 @@ class IndexUpdater {
                                             List<FieldSort> initialIncludedFields,
                                             List<Object> initialArgs,
                                             String indexName,
-                                            DocumentRevision rev) {
+                                            InternalDocumentRevision rev) {
         List<FieldSort> includeFieldNames = new ArrayList<FieldSort>();
         includeFieldNames.addAll(initialIncludedFields);
         List<Object> args = new ArrayList<Object>();
