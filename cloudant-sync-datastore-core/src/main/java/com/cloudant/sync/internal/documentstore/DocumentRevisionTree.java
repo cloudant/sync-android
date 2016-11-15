@@ -16,6 +16,7 @@ package com.cloudant.sync.internal.documentstore;
 
 import com.cloudant.sync.documentstore.ConflictResolver;
 import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.util.AbstractTreeNode;
 import com.cloudant.sync.internal.util.Misc;
 
@@ -83,9 +84,9 @@ import java.util.TreeMap;
  *     revisions {@code 4} and {@code 3^}.</li>
  *     <li>Merge these documents together in some way.</li>
  *     <li>Save a new revision in the {@code 4} branch using
- *     {@link Database#updateDocumentFromRevision(InternalDocumentRevision)}</li>
+ *     {@link Database#updateDocumentFromRevision(DocumentRevision)}</li>
  *     <li>Delete the {@code 3^} revision using
- *     {@link Database#deleteDocumentFromRevision(InternalDocumentRevision)}</li>
+ *     {@link Database#deleteDocumentFromRevision(DocumentRevision)} </li>
  * </ol>
  *
  * <p>This process leaves us still with two branches. Because only one
