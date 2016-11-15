@@ -53,6 +53,17 @@ public class IndexManagerTest extends AbstractIndexTestBase {
     }
 
     @Test
+    public void ensureIndexedGeneratesSingleIndexWithMeta() throws QueryException {
+        String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name"), new FieldSort("_id"), new FieldSort("_rev")));
+        assertThat("index name should not be null", indexName, is(notNullValue()));
+        assertThat("the previously generated index name should be returned",
+                im.ensureIndexed(Arrays.asList(new FieldSort("name"), new FieldSort("_id"), new FieldSort("_rev"))),
+                is(indexName));
+
+        assertThat("There should only be 1 index", im.listIndexes().size(), is(1));
+    }
+
+    @Test
     public void ensureIndexedGeneratesSingleIndexRegardlessOfFieldOrder() throws QueryException {
         String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name"), new FieldSort("otherName")));
         assertThat("index name should not be null", indexName, is(notNullValue()));

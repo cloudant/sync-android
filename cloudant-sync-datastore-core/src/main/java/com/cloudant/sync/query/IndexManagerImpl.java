@@ -52,13 +52,16 @@ import com.cloudant.sync.util.Misc;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -262,12 +265,10 @@ public class IndexManagerImpl implements IndexManager {
         // if an index already exists that matches the request index definition.
         if (indexName == null) {
             List<Index> indexes = this.listIndexes();
-            // Create a copy of the field names list so we know its mutable.
-            List<FieldSort> mFieldNames = new ArrayList<FieldSort>(fieldNames);
-            Collections.sort(mFieldNames);
+            Set<FieldSort> fieldNamesSet = new HashSet<FieldSort>(filterMeta(fieldNames));
             for (Index index : indexes) {
-                Collections.sort(index.fieldNames);
-                if (!mFieldNames.equals(filterMeta(index.fieldNames))) {
+                Set<FieldSort> indexFieldNamesSet = new HashSet<FieldSort>(filterMeta(index.fieldNames));
+                if (!(indexFieldNamesSet.containsAll(fieldNamesSet) && indexFieldNamesSet.size() == fieldNamesSet.size())) {
                     continue;
                 }
 

@@ -18,7 +18,7 @@ package com.cloudant.sync.query;
  * Created by tomblench on 28/09/2016.
  */
 
-public class FieldSort implements Comparable<FieldSort> {
+public class FieldSort {
 
     public final String field;
     public final Direction sort;
@@ -64,17 +64,6 @@ public class FieldSort implements Comparable<FieldSort> {
                 ", sort=" + sort +
                 '}';
     }
-
-    @Override
-    public int compareTo(FieldSort other) {
-
-        int fieldCompare = field.compareTo(other.field);
-        if( fieldCompare == 0){
-            return sort.compareTo(other.sort);
-        }
-        return fieldCompare;
-    }
-
 
     public enum Direction {
         ASCENDING,
