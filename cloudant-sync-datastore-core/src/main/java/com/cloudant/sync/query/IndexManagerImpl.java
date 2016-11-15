@@ -268,7 +268,7 @@ public class IndexManagerImpl implements IndexManager {
             Set<FieldSort> fieldNamesSet = new HashSet<FieldSort>(filterMeta(fieldNames));
             for (Index index : indexes) {
                 Set<FieldSort> indexFieldNamesSet = new HashSet<FieldSort>(filterMeta(index.fieldNames));
-                if (!(indexFieldNamesSet.size() == fieldNamesSet.size() && indexFieldNamesSet.containsAll(fieldNamesSet))) {
+                if (!indexFieldNamesSet.equals(fieldNamesSet)) {
                     continue;
                 }
 
