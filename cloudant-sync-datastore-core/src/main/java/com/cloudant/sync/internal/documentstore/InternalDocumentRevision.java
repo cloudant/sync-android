@@ -52,8 +52,7 @@ import java.util.Map;
  */
 public class InternalDocumentRevision extends DocumentRevision implements Comparable<InternalDocumentRevision> {
 
-
-
+    protected ChangeNotifyingMap<String, Attachment> attachments;
 
     private long sequence = - 1;
     private long internalNumericId;
@@ -74,6 +73,7 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
         } else {
             this.current = true;
             this.deleted = false;
+            this.attachments = SimpleChangeNotifyingMap.wrap(new HashMap<String, Attachment>());
         }
     }
 
@@ -92,12 +92,9 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
         }
     }
 
-
-
     public void setRevision(String revision) {
         this.revision = revision;
     }
-
 
     /**
      * <p>Returns the sequence number of this revision's parent revision.</p>
@@ -210,7 +207,7 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
         super.setBody(body);
         this.bodyModified = true;
     }
-    
+
     /**
      * @return Whether the body has been modified since this DocumentRevision was constructed or
      * retrieved from the Datastore. For internal use only.
@@ -219,6 +216,11 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
      */
     public boolean isBodyModified() {
         return bodyModified;
+    }
+
+    @Override
+    public ChangeNotifyingMap<String, Attachment> getAttachments() {
+        return attachments;
     }
 
     @Override
