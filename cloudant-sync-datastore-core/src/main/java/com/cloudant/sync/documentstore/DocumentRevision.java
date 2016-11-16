@@ -21,10 +21,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by tomblench on 14/11/2016.
- */
 
+/**
+ * <p>A single revision of a document within a datastore.</p>
+ *
+ * <p>Documents within the datastore are in fact trees of document revisions,
+ * with one document marked as the current winner at any point. Branches in
+ * the tree are caused when a document is edited in more than one place before
+ * being replicated between datastores. The consuming application is responsible
+ * for finding active branches (also called conflicts), and marking the leaf
+ * nodes of all branches but one deleted (thereby resolving the conflict).</p>
+ *
+ * <p>A {@code DocumentRevision} contains all the information for a single document
+ * revision, including its ID and revision ID, along with the document's
+ * content for this revision as a {@link DocumentBody} object. Clients will
+ * typically set only the revision content rather than the metadata
+ * explicitly.</p>
+ *
+ * @api_public
+ */
 public class DocumentRevision {
 
     /**
