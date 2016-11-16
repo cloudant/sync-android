@@ -14,8 +14,6 @@
 
 package com.cloudant.sync.documentstore;
 
-import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
-
 import java.util.List;
 
 /**
