@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
+import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.QueryResult;

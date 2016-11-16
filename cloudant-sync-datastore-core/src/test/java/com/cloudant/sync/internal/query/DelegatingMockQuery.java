@@ -19,8 +19,7 @@ import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.Query;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
-import com.cloudant.sync.internal.query.FieldSort;
-import com.cloudant.sync.internal.query.QueryImpl;
+import com.cloudant.sync.query.FieldSort;
 
 import java.util.List;
 import java.util.Map;

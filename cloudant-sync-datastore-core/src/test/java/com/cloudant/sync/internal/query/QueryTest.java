@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.internal.sqlite.SQLDatabaseFactory;

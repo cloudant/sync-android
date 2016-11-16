@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.internal.query;
 
+import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;

@@ -16,6 +16,7 @@ package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.QueryException;
