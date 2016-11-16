@@ -21,49 +21,33 @@ package com.cloudant.sync.internal.documentstore;
 
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.DocumentBody;
-import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.common.ChangeNotifyingMap;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.common.SimpleChangeNotifyingMap;
-import com.cloudant.sync.internal.query.QueryImpl;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * <p>A single revision of a document within a datastore.</p>
- *
- * <p>Documents within the datastore are in fact trees of document revisions,
- * with one document marked as the current winner at any point. Branches in
- * the tree are caused when a document is edited in more than one place before
- * being replicated between datastores. The consuming application is responsible
- * for finding active branches (also called conflicts), and marking the leaf
- * nodes of all branches but one deleted (thereby resolving the conflict).</p>
- *
- * <p>A {@code DocumentRevision} contains all the information for a single document
- * revision, including its ID and revision ID, along with the document's
- * content for this revision as a {@link DocumentBody} object. Clients will
- * typically set only the revision content rather than the metadata
- * explicitly.</p>
- *
- * @api_public
- */
-public class InternalDocumentRevision extends DocumentRevision implements Comparable<InternalDocumentRevision> {
+public class InternalDocumentRevision extends DocumentRevision implements
+        Comparable<InternalDocumentRevision> {
+
+    private long sequence = -1L;
+
+    private long internalNumericId;
+
+    private long parent = -1L;
 
     protected ChangeNotifyingMap<String, Attachment> attachments;
 
-    private long sequence = - 1;
-    private long internalNumericId;
-    private long parent = -1L;
+    private boolean bodyModified = false;
 
-    protected boolean bodyModified = false;
-
-    public InternalDocumentRevision(String docId, String revId, DocumentBody body, DocumentRevisionBuilder.DocumentRevisionOptions options) {
+    public InternalDocumentRevision(String docId, String revId, DocumentBody body,
+                                    DocumentRevisionBuilder.DocumentRevisionOptions options) {
         super(docId, revId, body);
 
-        if(options != null) {
+        if (options != null) {
             this.deleted = options.deleted;
             this.sequence = options.sequence;
             this.current = options.current;
@@ -77,23 +61,34 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
         }
     }
 
-    /*
-     * Helper used by sub-classes to convert between list and map representation of attachments
+    /**
+     * <p>Returns the sequence number of this revision.</p>
+     *
+     * <p>The sequence number is unique across the database, it is updated
+     * for every modification to the datastore.</p>
+     *
+     * @return the sequence number of this revision.
      */
-    protected void setAttachmentsInternal(List<? extends Attachment> attachments)
-    {
-        if (attachments != null) {
-            // this awkward looking way of doing things is to avoid marking the map as being modified
-            HashMap<String, Attachment> m = new HashMap<String, Attachment>();
-            for (Attachment att : attachments) {
-                m.put(att.name, att);
-            }
-            this.attachments = SimpleChangeNotifyingMap.wrap(m);
+    public long getSequence() {
+        return sequence;
+    }
+
+    public void initialiseSequence(long sequence) {
+        if (this.sequence == -1) {
+            this.sequence = sequence;
         }
     }
 
-    public void setRevision(String revision) {
-        this.revision = revision;
+    /**
+     * <p>Returns the internal numeric ID of this document revision.</p>
+     *
+     * <p>This can be useful for efficient storage by plugins extending the
+     * datastore.</p>
+     *
+     * @return the internal numeric ID of this document revision.
+     */
+    public long getInternalNumericId() {
+        return internalNumericId;
     }
 
     /**
@@ -111,16 +106,39 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
         return this.parent;
     }
 
-    /**
-     * <p>Returns the internal numeric ID of this document revision.</p>
-     *
-     * <p>This can be useful for efficient storage by plugins extending the
-     * datastore.</p>
-     *
-     * @return  the internal numeric ID of this document revision.
+    public void setRevision(String revision) {
+        this.revision = revision;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    /*
+     * Helper used by sub-classes to convert between list and map representation of attachments
      */
-    public long getInternalNumericId(){
-        return internalNumericId;
+    protected void setAttachmentsInternal(List<? extends Attachment> attachments) {
+        if (attachments != null) {
+            // this awkward looking way of doing things is to avoid marking the map as being
+            // modified
+            HashMap<String, Attachment> m = new HashMap<String, Attachment>();
+            for (Attachment att : attachments) {
+                m.put(att.name, att);
+            }
+            this.attachments = SimpleChangeNotifyingMap.wrap(m);
+        }
+    }
+
+    @Override
+    public void setAttachments(Map<String, Attachment> attachments) {
+        if (attachments != null) {
+            this.attachments = SimpleChangeNotifyingMap.wrap(attachments);
+        } else {
+            // user cleared the dict, we don't want our notifying map to try to forward to null
+            this.attachments = null;
+        }
+        // user reset the whole attachments dict, this is a change
+        this.bodyModified = true;
     }
 
     /**
@@ -134,13 +152,11 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
      * @return the JSON body of the document revision as a {@code Map}
      * object.
      */
-    public Map<String,Object> asMap() {
-           return addMetaProperties(getBody().asMap());
-    }
-
-    Map<String, Object> addMetaProperties(Map<String, Object> map) {
+    public Map<String, Object> asMap() {
+        Map<String, Object> map = getBody().asMap();
+        // add meta properties: id, rev, deleted
         map.put("_id", id);
-        if(revision != null) {
+        if (revision != null) {
             map.put("_rev", revision);
         }
         if (this.isDeleted()) {
@@ -162,44 +178,10 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
      */
     public byte[] asBytes() {
         byte[] result = null;
-        if(getBody() != null) {
+        if (getBody() != null) {
             result = getBody().asBytes();
         }
         return result;
-    }
-
-    public void setDeleted(boolean deleted) {
-        this.deleted = deleted;
-    }
-
-    /**
-     * <p>Returns the sequence number of this revision.</p>
-     *
-     * <p>The sequence number is unique across the database, it is updated
-     * for every modification to the datastore.</p>
-     *
-     * @return the sequence number of this revision.
-     */
-    public long getSequence() {
-        return sequence;
-    }
-
-    public void initialiseSequence(long sequence) {
-        if (this.sequence == -1) {
-            this.sequence = sequence;
-        }
-    }
-
-    @Override
-    public void setAttachments(Map<String, Attachment> attachments) {
-        if (attachments != null) {
-            this.attachments = SimpleChangeNotifyingMap.wrap(attachments);
-        } else {
-            // user cleared the dict, we don't want our notifying map to try to forward to null
-            this.attachments = null;
-        }
-        // user reset the whole attachments dict, this is a change
-        this.bodyModified = true;
     }
 
     @Override
@@ -210,12 +192,14 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
 
     /**
      * @return Whether the body has been modified since this DocumentRevision was constructed or
-     * retrieved from the Datastore. For internal use only.
-     *
-     * @api_private
+     * retrieved from the Datastore.
      */
     public boolean isBodyModified() {
         return bodyModified;
+    }
+
+    public int getGeneration() {
+        return CouchUtils.generationFromRevId(revision);
     }
 
     @Override
@@ -225,11 +209,8 @@ public class InternalDocumentRevision extends DocumentRevision implements Compar
 
     @Override
     public String toString() {
-        return "{ id: " + this.id + ", rev: " + this.revision + ", seq: " + sequence + ", parent: " + parent + ", current: " + current + ", deleted " + deleted +" }";
-    }
-
-    public int getGeneration() {
-        return CouchUtils.generationFromRevId(revision);
+        return "{ id: " + this.id + ", rev: " + this.revision + ", seq: " + sequence + ", parent:" +
+                " " + parent + ", current: " + current + ", deleted " + deleted + " }";
     }
 
     @Override
