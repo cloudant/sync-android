@@ -51,9 +51,9 @@ public class SavedAttachment extends Attachment {
     // these properties come directly from the database
     protected final long seq;
     protected final byte[] key;  // sha of file, used for file path on disk.
-    public final long length;
-    public final long encodedLength;
-    public final long revpos;
+    protected final long length;
+    protected final long encodedLength;
+    protected final long revpos;
 
     private final File file;
     private final AttachmentStreamFactory attachmentStreamFactory;
