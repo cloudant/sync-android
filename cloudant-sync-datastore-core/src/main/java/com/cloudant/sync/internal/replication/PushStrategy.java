@@ -27,7 +27,7 @@ import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
 import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
-import com.cloudant.sync.documentstore.RevisionHistoryHelper;
+import com.cloudant.sync.internal.documentstore.RevisionHistoryHelper;
 import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.replication.DatabaseNotFoundException;
 import com.cloudant.sync.replication.PushAttachmentsInline;

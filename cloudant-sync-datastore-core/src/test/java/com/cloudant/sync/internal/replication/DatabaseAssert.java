@@ -29,7 +29,7 @@ import com.cloudant.sync.documentstore.Changes;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
-import com.cloudant.sync.documentstore.RevisionHistoryHelper;
+import com.cloudant.sync.internal.documentstore.RevisionHistoryHelper;
 
 import org.junit.Assert;
 
