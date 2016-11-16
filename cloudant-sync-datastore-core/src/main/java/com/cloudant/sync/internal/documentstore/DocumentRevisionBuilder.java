@@ -176,7 +176,6 @@ public class DocumentRevisionBuilder {
         return this;
     }
 
-
     /**
      * Builds and returns the {@link ProjectedDocumentRevision} for this builder.
      * @return {@link ProjectedDocumentRevision} for this builder.
@@ -185,7 +184,7 @@ public class DocumentRevisionBuilder {
         return new ProjectedDocumentRevision(docId, revId, deleted, attachments, body, database);
     }
 
-    public static class DocumentRevisionOptions {
+    static class DocumentRevisionOptions {
         public long sequence;
         // doc_id in revs table
         public long docInternalId;
@@ -198,7 +197,5 @@ public class DocumentRevisionBuilder {
         // attachments associated with this revision
         public List<? extends Attachment> attachments;
     }
-
-
 
 }
