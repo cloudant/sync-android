@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.sync.documentstore.RevisionHistoryHelper;
+import com.cloudant.sync.internal.documentstore.RevisionHistoryHelper;
 
 import java.util.List;
 
