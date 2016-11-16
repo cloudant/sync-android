@@ -46,7 +46,11 @@ public class ProjectedDocumentRevision extends InternalDocumentRevision {
         super.setDeleted(deleted);
         super.setAttachmentsInternal(attachments);
         this.database = database;
-        this.fullRevision = false;
+    }
+
+    @Override
+    public boolean isFullRevision(){
+        return false;
     }
 
     @Override
