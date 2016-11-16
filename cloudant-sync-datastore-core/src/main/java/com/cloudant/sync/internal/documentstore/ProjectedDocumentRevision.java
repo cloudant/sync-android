@@ -12,10 +12,14 @@
  * and limitations under the License.
  */
 
-package com.cloudant.sync.documentstore;
+package com.cloudant.sync.internal.documentstore;
 
 
-import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.documentstore.Attachment;
+import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.documentstore.DocumentBody;
+import com.cloudant.sync.documentstore.DocumentNotFoundException;
+import com.cloudant.sync.documentstore.DocumentRevision;
 
 import java.util.List;
 import java.util.logging.Logger;
