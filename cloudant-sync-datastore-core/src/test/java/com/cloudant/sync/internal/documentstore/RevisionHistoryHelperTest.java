@@ -19,7 +19,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.mazha.json.JSONHelper;
 import com.cloudant.sync.documentstore.DocumentBody;
-import com.cloudant.sync.documentstore.RevisionHistoryHelper;
 
 import org.junit.Assert;
 import org.junit.Test;
