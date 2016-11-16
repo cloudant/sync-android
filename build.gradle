@@ -145,6 +145,7 @@ subprojects {
             options.encoding = "UTF-8"
             options.docEncoding = "UTF-8"
             options.charSet = "UTF-8"
+            exclude "**/internal/**"
             options.tags = ['api_public:tp:API Status: Public',
                             'api_private:tp:API Status: Private - API users are discouraged from using this class as fields, method signatures, and implementation details may be subject to change']
             options.showFromPublic()
