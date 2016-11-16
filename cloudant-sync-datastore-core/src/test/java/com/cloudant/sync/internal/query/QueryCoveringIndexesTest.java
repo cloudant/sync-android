@@ -25,6 +25,7 @@ import static org.junit.runners.Parameterized.Parameters;
 
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Query;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;

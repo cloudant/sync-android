@@ -32,7 +32,7 @@ import com.cloudant.sync.documentstore.encryption.SimpleKeyProvider;
 import com.cloudant.sync.internal.documentstore.encryption.EncryptedAttachmentInputStream;
 import com.cloudant.sync.internal.documentstore.UnsavedFileAttachment;
 import com.cloudant.sync.internal.documentstore.UnsavedStreamAttachment;
-import com.cloudant.sync.internal.query.FieldSort;
+import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.query.Query;
 import com.cloudant.sync.query.QueryException;

@@ -15,7 +15,6 @@
 package com.cloudant.sync.query;
 
 
-import com.cloudant.sync.internal.query.FieldSort;
 import com.cloudant.sync.internal.util.Misc;
 
 import java.util.ArrayList;
