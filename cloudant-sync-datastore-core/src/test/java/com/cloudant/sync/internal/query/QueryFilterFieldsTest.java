@@ -26,7 +26,7 @@ import static org.hamcrest.Matchers.nullValue;
 import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
-import com.cloudant.sync.documentstore.ProjectedDocumentRevision;
+import com.cloudant.sync.internal.documentstore.ProjectedDocumentRevision;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
