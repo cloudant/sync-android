@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2015 Cloudant, Inc. All rights reserved.
+/*
+ * Copyright © 2015 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -29,8 +29,8 @@ import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.event.Subscribe;
-import com.cloudant.sync.notifications.ReplicationCompleted;
-import com.cloudant.sync.notifications.ReplicationErrored;
+import com.cloudant.sync.event.notifications.ReplicationCompleted;
+import com.cloudant.sync.event.notifications.ReplicationErrored;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 

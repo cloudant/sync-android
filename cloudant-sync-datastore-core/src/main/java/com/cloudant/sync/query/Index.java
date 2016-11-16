@@ -1,29 +1,32 @@
-//  Copyright (c) 2015 Cloudant. All rights reserved.
-//
-//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
-//  except in compliance with the License. You may obtain a copy of the License at
-//
-//    http://www.apache.org/licenses/LICENSE-2.0
-//
-//  Unless required by applicable law or agreed to in writing, software distributed under the
-//  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-//  either express or implied. See the License for the specific language governing permissions
-//  and limitations under the License.
+/*
+ * Copyright © 2015 Cloudant, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
 
 package com.cloudant.sync.query;
 
 
-import com.cloudant.sync.util.Misc;
+import com.cloudant.sync.internal.util.Misc;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * This class provides functionality to manage an index
+ *
+ * @api_public
  */
-class Index {
+public class Index {
 
     private static final Logger logger = Logger.getLogger(Index.class.getCanonicalName());
 
@@ -42,7 +45,6 @@ class Index {
      *
      * @param fieldNames the field names in the index
      * @param indexName the index name or null
-     * @return the Index object or null if arguments passed in were invalid.
      */
     public Index (List<FieldSort> fieldNames, String indexName) {
         this(fieldNames, indexName, IndexType.JSON);
@@ -55,7 +57,6 @@ class Index {
      * @param fieldNames the field names in the index
      * @param indexName the index name or null
      * @param indexType the index type (json or text)
-     * @return the Index object or null if arguments passed in were invalid.
      */
     public Index (List<FieldSort> fieldNames, String indexName, IndexType indexType) {
         this(fieldNames, indexName, indexType, null);
@@ -69,7 +70,6 @@ class Index {
      * @param indexName the index name or null
      * @param indexType the index type (json or text)
      * @param tokenize  for text indexes only.
-     * @return the Index object or null if arguments passed in were invalid.
      */
     public Index(List<FieldSort> fieldNames,
                  String indexName,
@@ -98,19 +98,6 @@ class Index {
             this.tokenize = tokenize;
         }
 
-    }
-
-    /**
-     * Converts the index settings to a JSON string
-     *
-     * @return the JSON representation of the index settings
-     */
-    protected String settingsAsJSON() {
-        // this is a trivial enough operation that we don't need a JSON serializer
-        if (tokenize == null) {
-            return "{}";
-        }
-        return "{\"tokenize\":\""+tokenize+"\"}";
     }
 
     @Override

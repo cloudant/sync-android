@@ -14,13 +14,11 @@
 
 package com.cloudant.sync.util;
 
-import com.cloudant.sync.replication.ErrorInfo;
-
 import org.junit.Assert;
 
 public class TestEventListener {
 
-    public ErrorInfo errorInfo = null;
+    public Throwable errorInfo = null;
     public boolean errorCalled = false;
     public boolean finishCalled = false;
     public int documentsReplicated = 0;
@@ -28,7 +26,7 @@ public class TestEventListener {
 
     public void assertReplicationCompletedOrThrow() throws Exception {
         if (errorCalled) {
-            throw new Exception("Replication errored", errorInfo.getException());
+            throw new Exception("Replication errored", errorInfo);
         } else {
             Assert.assertTrue("The replication should finish.", finishCalled);
         }

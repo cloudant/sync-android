@@ -150,7 +150,7 @@ The exception has the form:
             at com.cloudant.sync.datastore.BasicDatastore.access$1500(BasicDatastore.java:65)
             at com.cloudant.sync.datastore.BasicDatastore$23.call(BasicDatastore.java:1816)
             at com.cloudant.sync.datastore.BasicDatastore$23.call(BasicDatastore.java:1812)
-            at com.cloudant.sync.sqlite.SQLQueueCallable.call(SQLQueueCallable.java:34)
+            at SQLQueueCallable.call(SQLQueueCallable.java:34)
             at java.util.concurrent.FutureTask.run(FutureTask.java:237)
             at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1112)
             at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:587)

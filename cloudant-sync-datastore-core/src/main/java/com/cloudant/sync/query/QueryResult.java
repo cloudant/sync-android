@@ -1,24 +1,29 @@
-//  Copyright (c) 2014 Cloudant. All rights reserved.
-//
-//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
-//  except in compliance with the License. You may obtain a copy of the License at
-//
-//    http://www.apache.org/licenses/LICENSE-2.0
-//
-//  Unless required by applicable law or agreed to in writing, software distributed under the
-//  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-//  either express or implied. See the License for the specific language governing permissions
-//  and limitations under the License.
+/*
+ * Copyright © 2014 Cloudant, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
 
 package com.cloudant.sync.query;
 
-import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.Database;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.datastore.DocumentRevisionBuilder;
-import com.cloudant.sync.util.CollectionUtils;
+import com.cloudant.sync.documentstore.Attachment;
+import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
+import com.cloudant.sync.documentstore.DocumentException;
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.internal.documentstore.DocumentRevisionBuilder;
+import com.cloudant.sync.internal.query.QueryImpl;
+import com.cloudant.sync.internal.query.UnindexedMatcher;
+import com.cloudant.sync.internal.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,9 +33,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- *  Iterable result of a query executed with {@link IndexManagerImpl}.
+ *  Iterable result of a query executed with {@link QueryImpl}.
  *
- *  @see IndexManagerImpl
+ *  @see QueryImpl
  *  @api_public
  */
 public class QueryResult implements Iterable<DocumentRevision> {
@@ -148,7 +153,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
                     range.length = Math.min(DEFAULT_BATCH_SIZE, originalDocIds.size() - range.location);
                     List<String> batch = originalDocIds.subList(range.location,
                         range.location + range.length);
-                    List<DocumentRevision> docs = database.getDocumentsWithIds(batch);
+                    List<? extends DocumentRevision> docs = database.getDocumentsWithIds(batch);
                     for (DocumentRevision rev : docs) {
                         DocumentRevision innerRev;
                         innerRev = rev;  // Allows us to replace later if projecting
@@ -198,7 +203,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
 
     private DocumentRevision projectFields(List<String> fields,
                                            DocumentRevision rev,
-                                           Database database) {
+                                                   Database database) {
         // grab the map filter fields and rebuild object
         Map<String, Object> originalBody = rev.getBody().asMap();
         Map<String, Object> body = new HashMap<String, Object>();

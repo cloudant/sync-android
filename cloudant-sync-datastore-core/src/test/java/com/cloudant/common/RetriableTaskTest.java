@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+/*
+ * Copyright © 2013 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -21,6 +21,8 @@ import java.util.concurrent.Callable;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import com.cloudant.sync.internal.common.RetriableTask;
 
 public class RetriableTaskTest {
 

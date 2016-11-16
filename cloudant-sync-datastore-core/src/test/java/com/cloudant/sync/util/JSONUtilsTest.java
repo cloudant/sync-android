@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+/*
+ * Copyright © 2013 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -14,12 +14,12 @@
 
 package com.cloudant.sync.util;
 
-import com.cloudant.sync.replication.Foo;
+import com.cloudant.sync.internal.util.JSONUtils;
+import com.cloudant.sync.internal.replication.Foo;
 import org.junit.Assert;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;

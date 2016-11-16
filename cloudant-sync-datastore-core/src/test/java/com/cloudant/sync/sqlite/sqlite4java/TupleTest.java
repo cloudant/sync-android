@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+/*
+ * Copyright © 2013 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -14,7 +14,9 @@
 
 package com.cloudant.sync.sqlite.sqlite4java;
 
-import com.cloudant.sync.sqlite.Cursor;
+import com.cloudant.sync.internal.sqlite.Cursor;
+import com.cloudant.sync.internal.sqlite.sqlite4java.Tuple;
+
 import org.junit.Assert;
 import org.junit.Test;
 

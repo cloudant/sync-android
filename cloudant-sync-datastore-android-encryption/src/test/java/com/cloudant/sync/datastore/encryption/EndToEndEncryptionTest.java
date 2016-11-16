@@ -1,11 +1,11 @@
-/**
- * Copyright (c) 2015 IBM Cloudant. All rights reserved.
- * <p/>
+/*
+ * Copyright © 2015 IBM Corp. All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
- * <p/>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language governing permissions
@@ -21,17 +21,20 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.DatastoreNotOpenedException;
-import com.cloudant.sync.datastore.DocumentStore;
-import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.datastore.UnsavedFileAttachment;
-import com.cloudant.sync.datastore.UnsavedStreamAttachment;
+import com.cloudant.sync.documentstore.Attachment;
+import com.cloudant.sync.documentstore.DocumentStoreNotOpenedException;
+import com.cloudant.sync.documentstore.DocumentStore;
+import com.cloudant.sync.documentstore.ConflictException;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
+import com.cloudant.sync.documentstore.DocumentException;
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.encryption.SimpleKeyProvider;
+import com.cloudant.sync.internal.documentstore.encryption.EncryptedAttachmentInputStream;
+import com.cloudant.sync.documentstore.UnsavedFileAttachment;
+import com.cloudant.sync.documentstore.UnsavedStreamAttachment;
 import com.cloudant.sync.query.FieldSort;
-import com.cloudant.sync.query.IndexManager;
+import com.cloudant.sync.internal.query.QueryImpl;
+import com.cloudant.sync.query.Query;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.TestUtils;
@@ -99,7 +102,7 @@ public class EndToEndEncryptionTest {
     byte[] expectedFirstAttachmentByte = new byte[]{ 1 };
 
     @Before
-    public void setUp() throws DatastoreNotOpenedException {
+    public void setUp() throws DocumentStoreNotOpenedException {
         datastoreManagerDir = TestUtils.createTempTestingDir(this.getClass().getName());
 
         if (dataShouldBeEncrypted) {
@@ -130,11 +133,11 @@ public class EndToEndEncryptionTest {
         // database operation to ensure the database exists on disk before we look at
         // it.
 
-        IndexManager im = this.database.query;
+        Query im = this.database.query;
         try {
             im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
         } finally {
-            im.close();
+            ((QueryImpl)im).close();
         }
 
         InputStream in = new FileInputStream(jsonDatabase);
@@ -155,11 +158,11 @@ public class EndToEndEncryptionTest {
     @Test
     public void indexDataEncrypted() throws IOException, QueryException {
 
-        IndexManager im = this.database.query;
+        Query im = this.database.query;
         try {
             im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
         } finally {
-            im.close();
+            ((QueryImpl)im).close();
         }
 
         File jsonDatabase = new File(datastoreManagerDir
@@ -230,8 +233,8 @@ public class EndToEndEncryptionTest {
      * supplying the wrong key will result in attempting to decrypt using that key,
      * which should fail in both cases.
      */
-    @Test(expected = DatastoreNotOpenedException.class)
-    public void testCannotOpenDatabaseWithWrongKey() throws DatastoreNotOpenedException {
+    @Test(expected = DocumentStoreNotOpenedException.class)
+    public void testCannotOpenDatabaseWithWrongKey() throws DocumentStoreNotOpenedException {
 
         // First close the datastore, as otherwise DatastoreManager's uniquing just
         // gives us back the existing instance which has the correct key.
@@ -302,17 +305,17 @@ public class EndToEndEncryptionTest {
                 IOUtils.contentEquals(new ByteArrayInputStream(nonAsciiText.getBytes()), in));
 
         // perform a query to ensure we can use special chars
-        IndexManager indexManager = database.query;
+        Query query = database.query;
         try {
-            assertNotNull(indexManager.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "my index"));
+            assertNotNull(query.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "my index"));
 
             // query for the name fred and check that docs are returned.
             Map<String, Object> selector = new HashMap<String, Object>();
             selector.put("name", "fred");
-            QueryResult queryResult = indexManager.find(selector);
+            QueryResult queryResult = query.find(selector);
             assertNotNull(queryResult);
         } finally {
-            indexManager.close();
+            ((QueryImpl)query).close();
         }
         // Delete
         try {

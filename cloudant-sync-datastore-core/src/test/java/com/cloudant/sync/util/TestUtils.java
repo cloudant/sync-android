@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+/*
+ * Copyright © 2013 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -14,13 +14,14 @@
 
 package com.cloudant.sync.util;
 
-import com.cloudant.sync.datastore.DocumentBody;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.encryption.NullKeyProvider;
-import com.cloudant.sync.query.IndexManagerImpl;
-import com.cloudant.sync.sqlite.SQLDatabase;
-import com.cloudant.sync.sqlite.SQLDatabaseFactory;
-import com.cloudant.sync.sqlite.SQLDatabaseQueue;
+import com.cloudant.sync.documentstore.DocumentBody;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
+import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
+import com.cloudant.sync.internal.util.Misc;
+import com.cloudant.sync.internal.query.QueryImpl;
+import com.cloudant.sync.internal.sqlite.SQLDatabase;
+import com.cloudant.sync.internal.sqlite.SQLDatabaseFactory;
+import com.cloudant.sync.internal.sqlite.SQLDatabaseQueue;
 
 import org.apache.commons.io.FileUtils;
 
@@ -64,8 +65,8 @@ public class TestUtils {
         }
     }
 
-    public static SQLDatabaseQueue getDBQueue(IndexManagerImpl indexManager) throws Exception {
-        Class clazz =  IndexManagerImpl.class;
+    public static SQLDatabaseQueue getDBQueue(QueryImpl indexManager) throws Exception {
+        Class clazz =  QueryImpl.class;
         Field dbQueue = clazz.getDeclaredField("dbQueue");
         dbQueue.setAccessible(true);
         return (SQLDatabaseQueue) dbQueue.get(indexManager);
