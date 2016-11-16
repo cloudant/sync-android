@@ -1,7 +1,19 @@
+/*
+ * Copyright © 2016 IBM Corp. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
 package com.cloudant.sync.documentstore;
 
-import com.cloudant.sync.internal.common.ChangeNotifyingMap;
-import com.cloudant.sync.internal.common.SimpleChangeNotifyingMap;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.query.QueryImpl;
 
@@ -42,8 +54,6 @@ public class DocumentRevision {
      */
     protected DocumentBody body;
 
-    protected boolean fullRevision = true;
-
     public DocumentRevision() {
         // BasicDatastore#createDocumentFromRevision will assign an id
         this(null);
@@ -57,9 +67,9 @@ public class DocumentRevision {
         this(id,revision, null);
     }
 
-    public DocumentRevision(String docId, String revId, DocumentBody body) {
-        this.id = docId;
-        this.revision = revId;
+    public DocumentRevision(String id, String revision, DocumentBody body) {
+        this.id = id;
+        this.revision = revision;
         this.body = body;
     }
 
@@ -108,8 +118,6 @@ public class DocumentRevision {
         this.body = body;
     }
 
-
-
     /**
      * Returns true if this revision is a full revision. A full revision is a revision which
      * contains all the data related to the revision. For example
@@ -119,12 +127,8 @@ public class DocumentRevision {
      * @return {@code true} if this revision is a full revision.
      */
     public boolean isFullRevision(){
-        return fullRevision;
+        return true;
     }
-
-
-
-
 
     /**
      * Returns a "Full" document revision.
