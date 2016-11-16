@@ -22,7 +22,7 @@ import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.ForceInsertItem;
 import com.cloudant.sync.internal.documentstore.PreparedAttachment;
-import com.cloudant.sync.internal.documentstore.UnsavedStreamAttachment;
+import com.cloudant.sync.documentstore.UnsavedStreamAttachment;
 import com.cloudant.sync.event.notifications.DocumentCreated;
 import com.cloudant.sync.event.notifications.DocumentModified;
 import com.cloudant.sync.event.notifications.DocumentUpdated;
