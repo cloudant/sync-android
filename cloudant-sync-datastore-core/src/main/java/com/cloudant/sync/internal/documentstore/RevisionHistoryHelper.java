@@ -12,15 +12,13 @@
  * and limitations under the License.
  */
 
-package com.cloudant.sync.documentstore;
+package com.cloudant.sync.internal.documentstore;
 
+import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.internal.android.Base64OutputStreamFactory;
 import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.sync.internal.common.CouchUtils;
-import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
-import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
-import com.cloudant.sync.internal.documentstore.SavedAttachment;
 import com.cloudant.sync.replication.PushAttachmentsInline;
 import com.cloudant.sync.internal.util.Misc;
 
@@ -116,7 +114,7 @@ public class RevisionHistoryHelper {
     /**
      * Serialise a branch's revision history, without attachments.
      * See {@link #revisionHistoryToJson(java.util.List, java.util.List, boolean, int)} for details.
-     * @param history list of {@code DocumentRevision}s.
+     * @param history list of {@code InternalDocumentRevision}s.
      * @return JSON-serialised {@code String} suitable for sending to CouchDB's
      *      _bulk_docs endpoint.
      */
