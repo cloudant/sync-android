@@ -16,6 +16,7 @@ package com.cloudant.sync.internal.documentstore;
 
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.AttachmentException;
+import com.cloudant.sync.documentstore.UnsavedFileAttachment;
 import com.cloudant.sync.internal.documentstore.encryption.EncryptedAttachmentInputStream;
 import com.cloudant.sync.datastore.encryption.EncryptionTestConstants;
 import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
