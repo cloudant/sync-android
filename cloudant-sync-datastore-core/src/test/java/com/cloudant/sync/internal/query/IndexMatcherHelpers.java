@@ -17,7 +17,7 @@ package com.cloudant.sync.internal.query;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 import com.cloudant.sync.query.Index;
-import com.cloudant.sync.internal.query.FieldSort;
+import com.cloudant.sync.query.FieldSort;
 
 import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;

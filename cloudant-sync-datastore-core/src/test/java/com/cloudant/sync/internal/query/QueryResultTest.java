@@ -19,6 +19,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
+import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;

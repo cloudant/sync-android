@@ -27,7 +27,7 @@ import com.cloudant.sync.internal.mazha.Response;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
-import com.cloudant.sync.internal.query.FieldSort;
+import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.replication.PullFilter;

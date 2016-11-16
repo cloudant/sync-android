@@ -12,12 +12,12 @@
  * and limitations under the License.
  */
 
-package com.cloudant.sync.internal.query;
+package com.cloudant.sync.query;
 
 /**
  * Created by tomblench on 28/09/2016.
  *
- * @api_private
+ * @api_public
  */
 
 public class FieldSort {
