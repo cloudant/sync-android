@@ -17,7 +17,6 @@ package com.cloudant.sync.internal.documentstore;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentBody;
-import com.cloudant.sync.documentstore.ProjectedDocumentRevision;
 
 import java.util.Arrays;
 import java.util.List;
