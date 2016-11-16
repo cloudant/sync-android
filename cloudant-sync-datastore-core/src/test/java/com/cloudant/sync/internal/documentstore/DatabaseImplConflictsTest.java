@@ -23,6 +23,7 @@ import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.UnsavedStreamAttachment;
 import com.cloudant.sync.internal.util.CollectionUtils;
 import com.cloudant.sync.internal.common.CouchUtils;
 

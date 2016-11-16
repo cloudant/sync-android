@@ -19,6 +19,8 @@ import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStore;
+import com.cloudant.sync.documentstore.UnsavedFileAttachment;
+import com.cloudant.sync.documentstore.UnsavedStreamAttachment;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Assert;

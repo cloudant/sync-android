@@ -12,7 +12,7 @@
  * and limitations under the License.
  */
 
-package com.cloudant.sync.internal.documentstore;
+package com.cloudant.sync.documentstore;
 
 /**
  * Created by tomblench on 28/04/2014.

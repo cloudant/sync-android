@@ -26,7 +26,7 @@ import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.documentstore.PreparedAttachment;
-import com.cloudant.sync.internal.documentstore.UnsavedStreamAttachment;
+import com.cloudant.sync.documentstore.UnsavedStreamAttachment;
 import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.replication.DatabaseNotFoundException;
 import com.cloudant.sync.replication.PullFilter;

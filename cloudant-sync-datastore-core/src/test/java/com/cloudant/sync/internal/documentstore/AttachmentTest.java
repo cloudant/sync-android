@@ -23,6 +23,7 @@ import com.cloudant.sync.documentstore.AttachmentNotSavedException;
 import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.UnsavedFileAttachment;
 import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;

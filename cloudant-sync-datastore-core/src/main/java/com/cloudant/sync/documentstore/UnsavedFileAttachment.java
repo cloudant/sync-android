@@ -12,7 +12,7 @@
  * and limitations under the License.
  */
 
-package com.cloudant.sync.internal.documentstore;
+package com.cloudant.sync.documentstore;
 
 import com.cloudant.sync.documentstore.Attachment;
 

@@ -18,6 +18,7 @@ import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.AttachmentException;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.UnsavedFileAttachment;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Assert;

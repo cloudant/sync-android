@@ -21,7 +21,7 @@ import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStore;
-import com.cloudant.sync.internal.documentstore.UnsavedStreamAttachment;
+import com.cloudant.sync.documentstore.UnsavedStreamAttachment;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Assert;
