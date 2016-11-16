@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.internal.documentstore;
 
-import com.cloudant.sync.documentstore.RevisionHistoryHelper;
 import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.http.HttpConnection;
 import com.cloudant.sync.internal.mazha.CouchClient;
