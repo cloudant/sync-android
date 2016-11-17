@@ -26,4 +26,5 @@ A list of known findbugs issues that we cannot fix at this time.
         <Bug code="RV" pattern="RV_NEGATING_RESULT_OF_COMPARETO" />
         <Class name="com.cloudant.sync.datastore.BasicDatastore$15" />
     </Match>
+
 </FindBugsFilter>
