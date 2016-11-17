@@ -22,6 +22,7 @@ import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.DatabaseUtils;
 
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Comparator;
@@ -133,7 +134,10 @@ public class PickWinningRevisionCallable implements SQLCallable<Void> {
         return null;
     }
 
-    private static class GenerationComparator implements Comparator<String> {
+    private static class GenerationComparator implements Comparator<String>, Serializable {
+
+        private static final long serialVersionUID = 7927387981850196089L;
+
         @Override
         public int compare(String r1, String r2) {
             int generationCompare = CouchUtils.generationFromRevId(r1) -
