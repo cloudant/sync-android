@@ -84,7 +84,7 @@ public class SQLiteWrapperUtils {
             bindArgs = new Object[]{};
         }
 
-        final int count =  bindArgs.length;
+        final int count = bindArgs.length;
         if (count != stmt.getBindParameterCount()) {
             throw new IllegalArgumentException(
                     "Expected " + stmt.getBindParameterCount() + " bind arguments but "
