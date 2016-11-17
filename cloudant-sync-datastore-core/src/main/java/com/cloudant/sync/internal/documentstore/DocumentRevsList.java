@@ -70,20 +70,7 @@ public class DocumentRevsList implements Iterable<DocumentRevs> {
         this.documentRevsList = new ArrayList<DocumentRevs>(list);
 
         // Order of the list decides which DocumentRevs is inserted first in bulkCreateDocs update.
-        Collections.sort(this.documentRevsList, new Comparator<DocumentRevs>() {
-            @Override
-            public int compare(DocumentRevs o1, DocumentRevs o2) {
-                return getMinGeneration(o1) - getMinGeneration(o2);
-            }
-
-            /**
-             * Get the minimum generation id from the <code>DocumentRevs</code>
-             * @see DocumentRevs
-             */
-            private int getMinGeneration(DocumentRevs o1) {
-                return o1.getRevisions().getStart() - o1.getRevisions().getIds().size() + 1;
-            }
-        });
+        Collections.sort(this.documentRevsList, new DocumentRevsComparator());
     }
 
     @Override
@@ -98,5 +85,20 @@ public class DocumentRevsList implements Iterable<DocumentRevs> {
     @Override
     public String toString() {
         return documentRevsList.toString();
+    }
+
+    private static class DocumentRevsComparator implements Comparator<DocumentRevs> {
+        @Override
+        public int compare(DocumentRevs o1, DocumentRevs o2) {
+            return getMinGeneration(o1) - getMinGeneration(o2);
+        }
+
+        /**
+         * Get the minimum generation id from the <code>DocumentRevs</code>
+         * @see DocumentRevs
+         */
+        private int getMinGeneration(DocumentRevs o1) {
+            return o1.getRevisions().getStart() - o1.getRevisions().getIds().size() + 1;
+        }
     }
 }
