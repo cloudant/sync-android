@@ -156,7 +156,7 @@ class TasksModel {
      */
     public List<Task> allTasks() {
         int nDocs = this.mDocumentStore.database.getDocumentCount();
-        List<? extends DocumentRevision> all = this.mDocumentStore.database.getAllDocuments(0, nDocs, true);
+        List<DocumentRevision> all = this.mDocumentStore.database.getAllDocuments(0, nDocs, true);
         List<Task> tasks = new ArrayList<Task>();
 
         // Filter all documents down to those of type Task.
