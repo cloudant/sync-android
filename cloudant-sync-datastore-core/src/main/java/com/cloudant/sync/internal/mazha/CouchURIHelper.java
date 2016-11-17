@@ -167,7 +167,7 @@ public class CouchURIHelper {
         ArrayList<String> queryParts = new ArrayList<String>(query.size());
         for(Map.Entry<String, Object> entry : query.entrySet()) {
             String value = this.encodeQueryParameter(entry.getValue().toString());
-            String key = this.encodeQueryParameter(entry.getKey().toString());
+            String key = this.encodeQueryParameter(entry.getKey());
             String term = String.format("%s=%s", key, value);
             queryParts.add(term);
         }

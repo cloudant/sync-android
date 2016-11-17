@@ -390,8 +390,7 @@ public class CouchClient  {
     public <T> T getDocConflictRevs(String id)  {
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("conflicts", true);
-        return this.getDocument(id, options, new TypeReference<T>() {
-        });
+        return this.getDocument(id, options, new CouchClientTypeReference<T>());
     }
 
     /**
@@ -420,8 +419,7 @@ public class CouchClient  {
             options.put("att_encoding_info", true);
         }
         options.put("open_revs", jsonHelper.toJson(revisions));
-        return this.getDocument(id, options, new TypeReference<List<OpenRevision>>() {
-        });
+        return this.getDocument(id, options,new CouchClientTypeReference<List<OpenRevision>>());
     }
 
     /**
@@ -485,12 +483,7 @@ public class CouchClient  {
     }
 
     public <T> T getDocument(String id, final Class<T> type)  {
-        return this.getDocument(id, new HashMap<String, Object>(), new TypeReference<T>() {
-            @Override
-            public Type getType() {
-                return type;
-            }
-        });
+        return this.getDocument(id, new HashMap<String, Object>(), new CouchClientTypeReference<T>(type));
     }
 
     public <T> T getDocument(final String id, final Map<String, Object> options, final
@@ -534,12 +527,7 @@ public class CouchClient  {
     }
 
     public <T> T getDocument(String id, String rev, final Class<T> type) {
-        return getDocument(id, rev, new TypeReference<T>() {
-            @Override
-            public Type getType() {
-                return type;
-            }
-        });
+        return getDocument(id, rev, new CouchClientTypeReference<T>(type));
     }
 
     /**
@@ -549,8 +537,7 @@ public class CouchClient  {
      *
      */
     public DocumentRevs getDocRevisions(String id, String rev) {
-        return getDocRevisions(id, rev, new TypeReference<DocumentRevs>() {
-        });
+        return getDocRevisions(id, rev, new CouchClientTypeReference<DocumentRevs>());
     }
 
     public <T> T getDocRevisions(String id, String rev, TypeReference<T> type) {
@@ -627,8 +614,7 @@ public class CouchClient  {
         try {
             is = bulkCreateDocsInputStream(objects);
             return jsonHelper.fromJsonToList(new InputStreamReader(is, Charset.forName("UTF-8")),
-                    new TypeReference<List<Response>>() {
-                    });
+                    new CouchClientTypeReference<List<Response>>());
         } finally {
             closeQuietly(is);
         }
@@ -663,8 +649,7 @@ public class CouchClient  {
         try {
             is = this.executeToInputStreamWithRetry(connection);
             return jsonHelper.fromJsonToList(new InputStreamReader(is, Charset.forName("UTF-8")),
-                    new TypeReference<List<Response>>() {
-            });
+                    new CouchClientTypeReference<List<Response>>());
         } finally {
             closeQuietly(is);
         }
@@ -718,8 +703,7 @@ public class CouchClient  {
             is = executeToInputStreamWithRetry(connection);
             Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is,
                             Charset.forName("UTF-8")),
-                    new TypeReference<Map<String, MissingRevisions>>() {
-                    });
+                   new CouchClientTypeReference<Map<String, MissingRevisions>>());
             return diff;
         } finally {
             closeQuietly(is);
@@ -760,4 +744,25 @@ public class CouchClient  {
     }
 
 
+    private static class CouchClientTypeReference<T> extends TypeReference<T> {
+
+        private Class<T> type;
+
+        CouchClientTypeReference() {
+            this(null);
+        }
+        CouchClientTypeReference(Class<T> type){
+            this.type = type;
+        }
+
+        @Override
+        public Type getType() {
+            if (this.type == null) {
+                return super.getType();
+            } else {
+                return this.type;
+            }
+
+        }
+    }
 }

@@ -139,12 +139,7 @@ public class QueryImpl implements Query {
     @Override
     public List<Index> listIndexes() {
         try {
-            return dbQueue.submit(new SQLCallable<List<Index>>() {
-                @Override
-                public List<Index> call(SQLDatabase database) throws Exception {
-                     return QueryImpl.listIndexesInDatabase(database);
-                }
-            }).get();
+            return dbQueue.submit(new ListIndexesCallable()).get();
         } catch (InterruptedException e) {
             logger.log(Level.SEVERE,"Failed to list indexes",e);
             throw new RuntimeException(e);
@@ -320,25 +315,7 @@ public class QueryImpl implements Query {
     public void deleteIndex(final String indexName) throws QueryException {
         Misc.checkNotNullOrEmpty(indexName, "indexName");
 
-        Future<Void> result = dbQueue.submitTransaction(new SQLCallable<Void>() {
-            @Override
-            public Void call(SQLDatabase database) throws QueryException {
-                try {
-                    // Drop the index table
-                    String tableName = tableNameForIndex(indexName);
-                    String sql = String.format("DROP TABLE \"%s\"", tableName);
-                    database.execSQL(sql);
-
-                    // Delete the metadata entries
-                    String where = " index_name = ? ";
-                    database.delete(INDEX_METADATA_TABLE_NAME, where, new String[]{ indexName });
-                } catch (SQLException e) {
-                    String msg = String.format("Failed to delete index: %s",indexName);
-                    throw new QueryException(msg, e);
-                }
-                return null;
-            }
-        });
+        Future<Void> result = dbQueue.submitTransaction(new DeleteIndexCallable(indexName));
 
         try {
             result.get();
@@ -395,4 +372,36 @@ public class QueryImpl implements Query {
     }
 
 
+    private static class ListIndexesCallable implements SQLCallable<List<Index>> {
+        @Override
+        public List<Index> call(SQLDatabase database) throws Exception {
+             return QueryImpl.listIndexesInDatabase(database);
+        }
+    }
+
+    private static class DeleteIndexCallable implements SQLCallable<Void> {
+        private final String indexName;
+
+        public DeleteIndexCallable(String indexName) {
+            this.indexName = indexName;
+        }
+
+        @Override
+        public Void call(SQLDatabase database) throws QueryException {
+            try {
+                // Drop the index table
+                String tableName = tableNameForIndex(indexName);
+                String sql = String.format("DROP TABLE \"%s\"", tableName);
+                database.execSQL(sql);
+
+                // Delete the metadata entries
+                String where = " index_name = ? ";
+                database.delete(INDEX_METADATA_TABLE_NAME, where, new String[]{indexName});
+            } catch (SQLException e) {
+                String msg = String.format("Failed to delete index: %s", indexName);
+                throw new QueryException(msg, e);
+            }
+            return null;
+        }
+    }
 }
