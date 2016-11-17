@@ -86,17 +86,18 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Int
 
         // Contract is to sort by sequence number, which we need to do
         // outside the sqlDb as we're batching requests.
-        Collections.sort(result, new Comparator<InternalDocumentRevision>() {
-            @Override
-            public int compare(InternalDocumentRevision documentRevision, InternalDocumentRevision
-                    documentRevision2) {
-                long a = documentRevision.getSequence();
-                long b = documentRevision2.getSequence();
-                return (int) (a - b);
-            }
-        });
+        Collections.sort(result, new InternalDocumentRevisionComparator());
 
         return result;
     }
 
+    private static class InternalDocumentRevisionComparator implements Comparator<InternalDocumentRevision> {
+        @Override
+        public int compare(InternalDocumentRevision documentRevision, InternalDocumentRevision
+                documentRevision2) {
+            long a = documentRevision.getSequence();
+            long b = documentRevision2.getSequence();
+            return (int) (a - b);
+        }
+    }
 }

@@ -618,24 +618,7 @@ public class DatabaseImpl implements Database {
     public String getPublicIdentifier() throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         try {
-            return get(queue.submit(new SQLCallable<String>() {
-                @Override
-                public String call(SQLDatabase db) throws Exception {
-                    Cursor cursor = null;
-                    try {
-                        cursor = db.rawQuery("SELECT value FROM info WHERE key='publicUUID'", null);
-                        if (cursor.moveToFirst()) {
-                            return "touchdb_" + cursor.getString(0);
-                        } else {
-                            throw new IllegalStateException("Error querying PublicUUID, " +
-                                    "it is probably because the sqlDatabase is not probably " +
-                                    "initialized.");
-                        }
-                    } finally {
-                        DatabaseUtils.closeCursorQuietly(cursor);
-                    }
-                }
-            }));
+            return get(queue.submit(new GetPublicIdentifierCallable()));
         } catch (ExecutionException e) {
             logger.log(Level.SEVERE, "Failed to get public ID", e);
             throw new DocumentStoreException("Failed to get public ID", e);
@@ -844,29 +827,7 @@ public class DatabaseImpl implements Database {
 
         // TODO hoist down queue.submit to just surround the call to RevsDiffBatchCallable
         try {
-            return get(queue.submit(new SQLCallable<Map<String, List<String>>>() {
-                @Override
-                public Map<String, List<String>> call(SQLDatabase db) throws Exception {
-
-                    ValueListMap<String, String> missingRevs = new ValueListMap<String, String>();
-
-                    // Break down by docId first to avoid potential rev ID clashes between doc IDs
-                    for (Map.Entry<String, List<String>> entry : revisions.entrySet()) {
-                        String docId = entry.getKey();
-                        List<String> revs = entry.getValue();
-                        // Partition into batches to avoid exceeding placeholder limit
-                        // The doc ID will use one placeholder, so use limit - 1 for the number of
-                        // revs for the remaining placeholders.
-                        List<List<String>> batches = CollectionUtils.partition(revs,
-                                SQLITE_QUERY_PLACEHOLDERS_LIMIT - 1);
-
-                        for (List<String> revsBatch : batches) {
-                            missingRevs.addValuesToKey(docId, new RevsDiffBatchCallable(docId, revsBatch).call(db));
-                        }
-                    }
-                    return missingRevs;
-                }
-            }));
+            return get(queue.submit(new RevsDiffCallable(revisions)));
         } catch (ExecutionException e) {
             logger.log(Level.SEVERE, "Failed to do revsdiff", e);
         }
@@ -1263,4 +1224,52 @@ public class DatabaseImpl implements Database {
     }
 
 
+    private static class GetPublicIdentifierCallable implements SQLCallable<String> {
+        @Override
+        public String call(SQLDatabase db) throws Exception {
+            Cursor cursor = null;
+            try {
+                cursor = db.rawQuery("SELECT value FROM info WHERE key='publicUUID'", null);
+                if (cursor.moveToFirst()) {
+                    return "touchdb_" + cursor.getString(0);
+                } else {
+                    throw new IllegalStateException("Error querying PublicUUID, " +
+                            "it is probably because the sqlDatabase is not probably " +
+                            "initialized.");
+                }
+            } finally {
+                DatabaseUtils.closeCursorQuietly(cursor);
+            }
+        }
+    }
+
+    private static class RevsDiffCallable implements SQLCallable<Map<String, List<String>>> {
+        private final Map<String, List<String>> revisions;
+
+        public RevsDiffCallable(Map<String, List<String>> revisions) {
+            this.revisions = revisions;
+        }
+
+        @Override
+        public Map<String, List<String>> call(SQLDatabase db) throws Exception {
+
+            ValueListMap<String, String> missingRevs = new ValueListMap<String, String>();
+
+            // Break down by docId first to avoid potential rev ID clashes between doc IDs
+            for (Map.Entry<String, List<String>> entry : revisions.entrySet()) {
+                String docId = entry.getKey();
+                List<String> revs = entry.getValue();
+                // Partition into batches to avoid exceeding placeholder limit
+                // The doc ID will use one placeholder, so use limit - 1 for the number of
+                // revs for the remaining placeholders.
+                List<List<String>> batches = CollectionUtils.partition(revs,
+                        SQLITE_QUERY_PLACEHOLDERS_LIMIT - 1);
+
+                for (List<String> revsBatch : batches) {
+                    missingRevs.addValuesToKey(docId, new RevsDiffBatchCallable(docId, revsBatch).call(db));
+                }
+            }
+            return missingRevs;
+        }
+    }
 }
