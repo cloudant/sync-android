@@ -84,19 +84,8 @@ public class PickWinningRevisionCallable implements SQLCallable<Void> {
          */
 
         // first get all non-deleted leafs
-        SortedMap<String, Long> leafs = new TreeMap<String, Long>(Collections.reverseOrder(new Comparator<String>() {
-            @Override
-            public int compare(String r1, String r2) {
-                int generationCompare = CouchUtils.generationFromRevId(r1) -
-                        CouchUtils.generationFromRevId(r2);
-                if (generationCompare != 0) {
-                    return generationCompare;
-                } else {
-                    return CouchUtils.getRevisionIdSuffix(r1).compareTo(CouchUtils
-                            .getRevisionIdSuffix(r2));
-                }
-            }
-        }));
+        SortedMap<String, Long> leafs = new TreeMap<String, Long>(Collections.reverseOrder(new
+                GenerationComparator()));
 
         Cursor cursor = null;
         try {
@@ -142,5 +131,19 @@ public class PickWinningRevisionCallable implements SQLCallable<Void> {
                         "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL)",
                 new String[]{Long.toString(newWinnerSeq), Long.toString(docNumericId)});
         return null;
+    }
+
+    private static class GenerationComparator implements Comparator<String> {
+        @Override
+        public int compare(String r1, String r2) {
+            int generationCompare = CouchUtils.generationFromRevId(r1) -
+                    CouchUtils.generationFromRevId(r2);
+            if (generationCompare != 0) {
+                return generationCompare;
+            } else {
+                return CouchUtils.getRevisionIdSuffix(r1).compareTo(CouchUtils
+                        .getRevisionIdSuffix(r2));
+            }
+        }
     }
 }
