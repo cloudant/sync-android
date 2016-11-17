@@ -24,6 +24,7 @@ import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.CollectionUtils;
 import com.cloudant.sync.internal.util.DatabaseUtils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -91,7 +92,10 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Int
         return result;
     }
 
-    private static class InternalDocumentRevisionComparator implements Comparator<InternalDocumentRevision> {
+    private static class InternalDocumentRevisionComparator implements Comparator<InternalDocumentRevision>, Serializable {
+
+        private static final long serialVersionUID = -2052529058740335141L;
+
         @Override
         public int compare(InternalDocumentRevision documentRevision, InternalDocumentRevision
                 documentRevision2) {
