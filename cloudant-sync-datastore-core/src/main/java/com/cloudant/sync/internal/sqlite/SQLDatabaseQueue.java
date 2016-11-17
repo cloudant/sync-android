@@ -72,7 +72,7 @@ public class SQLDatabaseQueue {
             }
         });
         this.db = SQLDatabaseFactory.openSQLDatabase(file, provider);
-        queue.submit(new Runnable() {
+        queue.execute(new Runnable() {
             @Override
             public void run() {
                 db.open();
@@ -153,7 +153,7 @@ public class SQLDatabaseQueue {
         // If shutdown has already been called then we don't need to shutdown again
         if (acceptTasks.getAndSet(false)) {
             //pass straight to queue, tasks passed via submitTaskToQueue will now be blocked.
-            queue.submit(new Runnable() {
+            Future<?> close = queue.submit(new Runnable() {
                 @Override
                 public void run() {
                     db.close();
@@ -161,9 +161,12 @@ public class SQLDatabaseQueue {
             });
             queue.shutdown();
             try {
+                close.get();
                 queue.awaitTermination(5, TimeUnit.MINUTES);
             } catch (InterruptedException e) {
                 logger.log(Level.SEVERE, "Interrupted while waiting for queue to terminate", e);
+            } catch (ExecutionException e) {
+                logger.log(Level.SEVERE, "Failed to close database", e);
             }
         } else {
             logger.log(Level.WARNING, "Database is already closed.");

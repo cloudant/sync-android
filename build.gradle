@@ -101,7 +101,7 @@ subprojects {
     apply plugin: 'findbugs'
     findbugs {
         toolVersion = "3.0.1"
-        reportLevel = System.getProperty("findbugs.report.level","high")
+        reportLevel = System.getProperty("findbugs.report.level","low")
         //the code base is pretty small so use max effort
         effort = "max"
         // We don't want to run findbugs on the test code yet

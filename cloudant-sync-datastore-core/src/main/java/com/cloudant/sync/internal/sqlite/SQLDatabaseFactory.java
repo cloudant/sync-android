@@ -89,7 +89,9 @@ public class SQLDatabaseFactory {
     public static SQLDatabase openSQLDatabase(File dbFile, KeyProvider provider) throws IOException, SQLException {
         Misc.checkNotNull(dbFile, "dbFile");
         File dbDirectory = dbFile.getParentFile();
-        dbDirectory.mkdirs();
+        if (!dbDirectory.mkdirs()){
+            throw new IOException("Could not create directories for path: "+dbFile);
+        }
         Misc.checkArgument(dbDirectory.isDirectory(), "Input path is not a valid directory");
         Misc.checkArgument(dbDirectory.canWrite(), "Datastore directory is not writable");
         return internalOpenSQLDatabase(dbFile, provider);
