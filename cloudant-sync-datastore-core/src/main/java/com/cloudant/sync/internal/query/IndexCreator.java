@@ -302,12 +302,7 @@ class IndexCreator {
 
     private List<Index> listIndexesInDatabaseQueue() throws ExecutionException,
                                                                     InterruptedException {
-        Future<List<Index>> indexes = queue.submit(new SQLCallable<List<Index>>() {
-            @Override
-            public List<Index> call(SQLDatabase database) throws SQLException {
-                return QueryImpl.listIndexesInDatabase(database);
-            }
-        });
+        Future<List<Index>> indexes = queue.submit(new ListIndexesCallable());
 
         return indexes.get();
     }
@@ -394,4 +389,10 @@ class IndexCreator {
         }
     }
 
+    private static class ListIndexesCallable implements SQLCallable<List<Index>> {
+        @Override
+        public List<Index> call(SQLDatabase database) throws SQLException {
+            return QueryImpl.listIndexesInDatabase(database);
+        }
+    }
 }

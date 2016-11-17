@@ -121,39 +121,8 @@ class IndexUpdater {
                                 final Changes changes,
                                 long lastSequence) throws QueryException {
 
-        Future<Void> result = queue.submitTransaction(new SQLCallable<Void>() {
-            @Override
-            public Void call(SQLDatabase database) throws QueryException {
-                for (InternalDocumentRevision rev: changes.getResults()) {
-                    // Delete existing values
-                    String tableName = QueryImpl.tableNameForIndex(indexName);
-                    database.delete(tableName, " _id = ? ", new String[]{rev.getId()});
-
-                    // Insert new values if the rev isn't deleted
-                    if (!rev.isDeleted()) {
-                        // If we are indexing a document where one field is an array, we
-                        // have multiple rows to insert into the index.
-                        List<DBParameter> parameters = parametersToIndexRevision(rev,
-                                                                                 indexName,
-                                                                                 fieldNames);
-                        if (parameters == null) {
-                            // non-fatal error found with this rev, but we can carry on indexing
-                            continue;
-                        }
-                        for (DBParameter parameter: parameters) {
-                            long rowId = database.insert(parameter.tableName,
-                                    parameter.contentValues);
-                            if (rowId < 0) {
-                                String msg = String.format("Updating index %s failed.", indexName);
-                                throw new QueryException(msg);
-                            }
-                        }
-                    }
-                }
-
-                return null;
-            }
-        });
+        Future<Void> result = queue.submitTransaction(new UpdateIndexCallable(changes, indexName,
+                fieldNames));
 
         try {
             result.get();
@@ -315,28 +284,7 @@ class IndexUpdater {
     }
 
     private long sequenceNumberForIndex(final String indexName) throws QueryException {
-        Future<Long> sequenceNumber = queue.submit( new SQLCallable<Long>() {
-            @Override
-            public Long call(SQLDatabase database) {
-                long result = 0;
-                String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = ?",
-                                           QueryImpl.INDEX_METADATA_TABLE_NAME);
-                Cursor cursor = null;
-                try {
-                    cursor = database.rawQuery(sql, new String[]{ indexName });
-                    if (cursor.getCount() > 0) {
-                        // All rows for a given index will have the same last_sequence
-                        cursor.moveToNext();
-                        result = cursor.getLong(0);
-                    }
-                } catch (SQLException e) {
-                    logger.log(Level.SEVERE, "Error getting last sequence number. ", e);
-                } finally {
-                    DatabaseUtils.closeCursorQuietly(cursor);
-                }
-                return result;
-            }
-        });
+        Future<Long> sequenceNumber = queue.submit(new SequenceNumberForIndexCallable(indexName));
 
         long lastSequenceNumber = 0;
         try {
@@ -351,21 +299,8 @@ class IndexUpdater {
     }
 
     private void updateMetadataForIndex(final String indexName, final long lastSequence) throws QueryException {
-        Future<Void> result = queue.submit(new SQLCallable<Void>() {
-            @Override
-            public Void call(SQLDatabase database) throws QueryException {
-                ContentValues v = new ContentValues();
-                v.put("last_sequence", lastSequence);
-                int row = database.update(QueryImpl.INDEX_METADATA_TABLE_NAME,
-                                          v,
-                                          " index_name = ? ",
-                                          new String[]{ indexName });
-                if (row <= 0) {
-                    throw new QueryException("Failed to update index metadata for index "+indexName);
-                }
-                return null;
-            }
-        });
+        Future<Void> result = queue.submit(new UpdateMetadataForIndexCallable(lastSequence,
+                indexName));
 
         try {
             result.get();
@@ -390,4 +325,100 @@ class IndexUpdater {
         }
     }
 
+    private static class SequenceNumberForIndexCallable implements SQLCallable<Long> {
+        private final String indexName;
+
+        public SequenceNumberForIndexCallable(String indexName) {
+            this.indexName = indexName;
+        }
+
+        @Override
+        public Long call(SQLDatabase database) {
+            long result = 0;
+            String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = ?",
+                                       QueryImpl.INDEX_METADATA_TABLE_NAME);
+            Cursor cursor = null;
+            try {
+                cursor = database.rawQuery(sql, new String[]{indexName});
+                if (cursor.getCount() > 0) {
+                    // All rows for a given index will have the same last_sequence
+                    cursor.moveToNext();
+                    result = cursor.getLong(0);
+                }
+            } catch (SQLException e) {
+                logger.log(Level.SEVERE, "Error getting last sequence number. ", e);
+            } finally {
+                DatabaseUtils.closeCursorQuietly(cursor);
+            }
+            return result;
+        }
+    }
+
+    private static class UpdateMetadataForIndexCallable implements SQLCallable<Void> {
+        private final long lastSequence;
+        private final String indexName;
+
+        public UpdateMetadataForIndexCallable(long lastSequence, String indexName) {
+            this.lastSequence = lastSequence;
+            this.indexName = indexName;
+        }
+
+        @Override
+        public Void call(SQLDatabase database) throws QueryException {
+            ContentValues v = new ContentValues();
+            v.put("last_sequence", lastSequence);
+            int row = database.update(QueryImpl.INDEX_METADATA_TABLE_NAME,
+                                      v,
+                                      " index_name = ? ",
+                                      new String[]{indexName});
+            if (row <= 0) {
+                throw new QueryException("Failed to update index metadata for index "+ indexName);
+            }
+            return null;
+        }
+    }
+
+    private class UpdateIndexCallable implements SQLCallable<Void> {
+        private final Changes changes;
+        private final String indexName;
+        private final List<FieldSort> fieldNames;
+
+        public UpdateIndexCallable(Changes changes, String indexName, List<FieldSort> fieldNames) {
+            this.changes = changes;
+            this.indexName = indexName;
+            this.fieldNames = fieldNames;
+        }
+
+        @Override
+        public Void call(SQLDatabase database) throws QueryException {
+            for (DocumentRevision rev: changes.getResults()) {
+                // Delete existing values
+                String tableName = QueryImpl.tableNameForIndex(indexName);
+                database.delete(tableName, " _id = ? ", new String[]{rev.getId()});
+
+                // Insert new values if the rev isn't deleted
+                if (!rev.isDeleted()) {
+                    // If we are indexing a document where one field is an array, we
+                    // have multiple rows to insert into the index.
+                    List<DBParameter> parameters = parametersToIndexRevision(rev,
+                            indexName,
+                            fieldNames);
+                    if (parameters == null) {
+                        // non-fatal error found with this rev, but we can carry on indexing
+                        continue;
+                    }
+                    for (DBParameter parameter: parameters) {
+                        long rowId = database.insert(parameter.tableName,
+                                parameter.contentValues);
+                        if (rowId < 0) {
+                            String msg = String.format("Updating index %s failed.", indexName);
+                            throw new QueryException(msg);
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+    }
 }
