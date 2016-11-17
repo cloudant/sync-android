@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,7 +38,7 @@ public class Misc {
 
     public static boolean isRunningOnAndroid() {
         String javaRuntime = System.getProperty("java.runtime.name", "");
-        return javaRuntime.toLowerCase().contains(ANDROID_RUNTIME);
+        return javaRuntime.toLowerCase(Locale.ENGLISH).contains(ANDROID_RUNTIME);
     }
 
     public static byte[] getSha1(InputStream shaFis) {
