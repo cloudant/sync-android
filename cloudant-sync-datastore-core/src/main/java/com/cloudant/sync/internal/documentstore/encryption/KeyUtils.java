@@ -46,9 +46,6 @@ public class KeyUtils {
             return null;
         }
         byte[] keyBytes = key.getKey();
-        if (keyBytes == null) {
-            return null;
-        }
 
         String hexKey = new String(Hex.encodeHex(keyBytes));
         return String.format("x'%1$s'", hexKey);

@@ -141,8 +141,7 @@ public class UnindexedMatcher {
 
         // Execution step will evaluate each child node and AND or OR the results.
         for (Object expression: basicClauses) {
-            OperatorExpressionNode node = new OperatorExpressionNode();
-            node.expression = (Map<String, Object>) expression;
+            OperatorExpressionNode node = new OperatorExpressionNode((Map<String, Object>) expression);
             if (root != null) {
                 root.children.add(node);
             }

@@ -441,14 +441,14 @@ public class ContentValues {
      * any other types to byte arrays.
      *
      * @param key the value to get
-     * @return the byte[] value, or null is the value is missing or not a byte[]
+     * @return the byte[] value, or an empty byte array the value is missing or not a byte[]
      */
     public byte[] getAsByteArray(String key) {
         Object value = mValues.get(key);
         if (value instanceof byte[]) {
             return (byte[]) value;
         } else {
-            return null;
+            return new byte[]{};
         }
     }
 
