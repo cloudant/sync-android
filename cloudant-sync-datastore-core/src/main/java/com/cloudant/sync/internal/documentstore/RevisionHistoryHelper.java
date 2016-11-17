@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -308,7 +309,7 @@ public class RevisionHistoryHelper {
                     theAtt.put("content_type", savedAtt.type);
                     theAtt.put("revpos", savedAtt.revpos);
                     if (savedAtt.encoding != Attachment.Encoding.Plain) {
-                        theAtt.put("encoding", savedAtt.encoding.toString().toLowerCase());
+                        theAtt.put("encoding", savedAtt.encoding.toString().toLowerCase(Locale.ENGLISH));
                     }
                 } else {
                     // if the revpos of the attachment is higher than the minimum, it's a stub
