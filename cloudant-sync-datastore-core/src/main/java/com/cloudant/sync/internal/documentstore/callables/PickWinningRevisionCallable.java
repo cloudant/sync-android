@@ -23,6 +23,7 @@ import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.DatabaseUtils;
 
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -83,20 +84,19 @@ public class PickWinningRevisionCallable implements SQLCallable<Void> {
          */
 
         // first get all non-deleted leafs
-        SortedMap<String, Long> leafs = new TreeMap<String, Long>(new Comparator<String>() {
+        SortedMap<String, Long> leafs = new TreeMap<String, Long>(Collections.reverseOrder(new Comparator<String>() {
             @Override
             public int compare(String r1, String r2) {
                 int generationCompare = CouchUtils.generationFromRevId(r1) -
                         CouchUtils.generationFromRevId(r2);
-                // note that the return statements have a unary minus since we are reverse sorting
                 if (generationCompare != 0) {
-                    return -generationCompare;
+                    return generationCompare;
                 } else {
-                    return -CouchUtils.getRevisionIdSuffix(r1).compareTo(CouchUtils
+                    return CouchUtils.getRevisionIdSuffix(r1).compareTo(CouchUtils
                             .getRevisionIdSuffix(r2));
                 }
             }
-        });
+        }));
 
         Cursor cursor = null;
         try {
