@@ -142,31 +142,6 @@ public class SQLDatabaseFactory {
     }
 
     /**
-     * This method runs a simple SQL query to validate the opened database
-     * is readable. In particular, this is useful for testing the key we
-     * passed SQLCipher is the correct key.
-     *
-     * @param db database to check is readable
-     * @return true if database passes validation, false otherwise
-     */
-    private static boolean validateOpenedDatabase(SQLDatabase db) {
-        Cursor c = null;
-        try {
-            c = db.rawQuery("SELECT count(*) FROM sqlite_master", null);
-            if (c.moveToFirst()) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Error performing database start up validation", ex);
-            return false;
-        } finally {
-            DatabaseUtils.closeCursorQuietly(c);
-        }
-    }
-
-    /**
      * <p>Update schema for {@code SQLDatabase}</p>
      *
      * <p>Each input schema has a version, if the database's version is
