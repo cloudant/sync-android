@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -358,7 +359,7 @@ class QueryExecutor {
             String fieldName = clause.field;
             String direction = clause.sort == FieldSort.Direction.ASCENDING ? "asc" : "desc";
 
-            String orderClause = String.format("\"%s\" %s", fieldName, direction.toUpperCase());
+            String orderClause = String.format("\"%s\" %s", fieldName, direction.toUpperCase(Locale.ENGLISH));
             orderClauses.add(orderClause);
         }
 
