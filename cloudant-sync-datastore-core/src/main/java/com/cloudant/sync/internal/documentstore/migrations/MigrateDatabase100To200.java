@@ -21,6 +21,7 @@ import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.DatabaseUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +53,7 @@ public class MigrateDatabase100To200 implements Migration {
     private String[] schemaUpdates;
 
     public MigrateDatabase100To200(String[] schemaUpdates) {
-        this.schemaUpdates = schemaUpdates;
+        this.schemaUpdates = Arrays.copyOf(schemaUpdates, schemaUpdates.length);
     }
 
     @Override
