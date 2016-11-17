@@ -28,6 +28,10 @@ import java.util.Map;
  */
 class OperatorExpressionNode implements QueryNode {
 
-    public Map<String, Object> expression;
+    final Map<String, Object> expression;
+
+    OperatorExpressionNode(Map<String, Object> expression){
+        this.expression = expression;
+    }
 
 }

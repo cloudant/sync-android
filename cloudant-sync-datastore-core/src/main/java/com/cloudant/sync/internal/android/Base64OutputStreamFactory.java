@@ -18,12 +18,17 @@ import com.cloudant.sync.internal.util.Misc;
 
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Created by tomblench on 07/07/2014.
  * @api_private
  */
 public class Base64OutputStreamFactory {
+
+    private static Logger logger = Logger.getLogger(Base64OutputStreamFactory.class.getCanonicalName());
+
     public static OutputStream get(OutputStream os) {
         try {
             if (Misc.isRunningOnAndroid()) {
@@ -34,10 +39,12 @@ public class Base64OutputStreamFactory {
             } else {
                 Class c = Class.forName("org.apache.commons.codec.binary.Base64OutputStream");
                 Constructor ctor = c.getDeclaredConstructor(OutputStream.class, boolean.class, int.class, byte[].class);
-                return (OutputStream)ctor.newInstance(os, true, 0, null);
+                return (OutputStream) ctor.newInstance(os, true, 0, null);
             }
+        } catch (RuntimeException e){
+            throw e;
         } catch (Exception e) {
-            // TODO log
+            logger.log(Level.SEVERE, "Failed to load Base64OutputStream implementation", e);
             return null;
         }
     }
