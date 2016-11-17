@@ -519,7 +519,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         }
     }
 
-    private void assertIdAndRevisionAndShallowContent(DocumentRevision expected, InternalDocumentRevision actual) {
+    private void assertIdAndRevisionAndShallowContent(DocumentRevision expected, DocumentRevision actual) {
         Assert.assertEquals(expected.getId(), actual.getId());
         Assert.assertEquals(expected.getRevision(), actual.getRevision());
 
@@ -600,7 +600,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
 
         int count;
         int offset = 0;
-        List<InternalDocumentRevision> result;
+        List<DocumentRevision> result;
 
         // Count
         count = 10;
@@ -661,13 +661,13 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         }
     }
 
-    private void getAllDocuments_compareResult(List<DocumentRevision> expectedDocumentRevisions, List<InternalDocumentRevision> result, int count, int offset) {
-        ListIterator<InternalDocumentRevision> iterator;
+    private void getAllDocuments_compareResult(List<DocumentRevision> expectedDocumentRevisions, List<DocumentRevision> result, int count, int offset) {
+        ListIterator<DocumentRevision> iterator;
         iterator = result.listIterator();
         Assert.assertEquals(count, result.size());
         while (iterator.hasNext()) {
             int index = iterator.nextIndex();
-            InternalDocumentRevision actual = iterator.next();
+            DocumentRevision actual = iterator.next();
             DocumentRevision expected = expectedDocumentRevisions.get(index + offset);
 
             assertIdAndRevisionAndShallowContent(expected, actual);

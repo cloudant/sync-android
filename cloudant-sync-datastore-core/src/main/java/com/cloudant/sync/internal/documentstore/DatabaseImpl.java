@@ -359,7 +359,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public List<InternalDocumentRevision> getAllDocuments(final int offset, final int limit, final
+    public List<DocumentRevision> getAllDocuments(final int offset, final int limit, final
     boolean descending) {
         Misc.checkState(this.isOpen(), "Database is closed");
         if (offset < 0) {
@@ -389,7 +389,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public List<? extends DocumentRevision> getDocumentsWithIds(final List<String> docIds) throws
+    public List<DocumentRevision> getDocumentsWithIds(final List<String> docIds) throws
             DocumentException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNull(docIds, "Input document id list");
@@ -1235,7 +1235,7 @@ public class DatabaseImpl implements Database {
 
     // delete all leaf nodes
     @Override
-    public List<InternalDocumentRevision> deleteDocument(final String id)
+    public List<DocumentRevision> deleteDocument(final String id)
             throws DocumentException {
         Misc.checkNotNull(id, "ID");
         try {
