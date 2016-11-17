@@ -17,6 +17,7 @@ package com.cloudant.sync.internal.documentstore;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.util.Misc;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -87,7 +88,10 @@ public class DocumentRevsList implements Iterable<DocumentRevs> {
         return documentRevsList.toString();
     }
 
-    private static class DocumentRevsComparator implements Comparator<DocumentRevs> {
+    private static class DocumentRevsComparator implements Comparator<DocumentRevs>, Serializable {
+
+        private static final long serialVersionUID = 5278582092379780124L;
+
         @Override
         public int compare(DocumentRevs o1, DocumentRevs o2) {
             return getMinGeneration(o1) - getMinGeneration(o2);
