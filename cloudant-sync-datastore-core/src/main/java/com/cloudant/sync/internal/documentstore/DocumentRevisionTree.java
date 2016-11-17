@@ -389,7 +389,7 @@ public class DocumentRevisionTree {
         List<InternalDocumentRevision> res = new ArrayList<InternalDocumentRevision>();
         for(DocumentRevisionNode obj : leafs()) {
             InternalDocumentRevision revision = obj.getData();
-            if (!excludeDeleted || (excludeDeleted && !revision.isDeleted())){
+            if (!excludeDeleted || !revision.isDeleted()){
                 res.add(revision);
             }
         }

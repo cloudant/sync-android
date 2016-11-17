@@ -39,8 +39,6 @@ public class InternalDocumentRevision extends DocumentRevision implements
 
     private long parent = -1L;
 
-    protected ChangeNotifyingMap<String, Attachment> attachments;
-
     private boolean bodyModified = false;
 
     public InternalDocumentRevision(String docId, String revId, DocumentBody body,
@@ -204,7 +202,7 @@ public class InternalDocumentRevision extends DocumentRevision implements
 
     @Override
     public ChangeNotifyingMap<String, Attachment> getAttachments() {
-        return attachments;
+        return (ChangeNotifyingMap<String, Attachment>) attachments;
     }
 
     @Override
