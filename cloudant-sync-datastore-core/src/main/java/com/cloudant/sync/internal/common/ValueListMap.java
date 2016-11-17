@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.internal.common;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,6 +41,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @api_private
  */
 public class ValueListMap<K, V> extends ConcurrentHashMap<K, List<V>> {
+
+
+    private static final long serialVersionUID = 5775249920237785452L;
 
     /**
      * Add a value to the map under the existing key or creating a new key if it does not

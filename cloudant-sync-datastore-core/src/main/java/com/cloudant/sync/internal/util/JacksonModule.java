@@ -25,6 +25,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
  */
 public class JacksonModule extends SimpleModule {
 
+    private static final long serialVersionUID = 5112015974963951685L;
+
     @SuppressWarnings("deprecation")
     public JacksonModule() {
          super("JacksonModule", new Version(0,0,1,null));

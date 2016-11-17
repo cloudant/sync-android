@@ -418,7 +418,7 @@ public class ContentValues {
      * Gets a value and converts it to a Boolean.
      *
      * @param key the value to get
-     * @return the Boolean value, or null if the value is missing or cannot be converted
+     * @return the Boolean value, or false if the value is missing or cannot be converted
      */
     public Boolean getAsBoolean(String key) {
         Object value = mValues.get(key);
@@ -431,7 +431,7 @@ public class ContentValues {
                 return ((Number) value).intValue() != 0;
             } else {
                 logger.log(Level.SEVERE, "Cannot cast value for " + key + " to a Boolean: " + value, e);
-                return null;
+                return false;
             }
         }
     }
