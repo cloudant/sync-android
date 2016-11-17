@@ -14,7 +14,7 @@
 
 package com.cloudant.todo;
 
-import com.cloudant.sync.datastore.ConflictException;
+import com.cloudant.sync.documentstore.ConflictException;
 
 import java.net.URISyntaxException;
 import java.util.List;
