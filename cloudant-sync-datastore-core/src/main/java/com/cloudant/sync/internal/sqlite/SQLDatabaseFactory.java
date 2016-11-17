@@ -117,24 +117,29 @@ public class SQLDatabaseFactory {
 
             if (runningOnAndroid) {
                 if (useSqlCipher) {
-                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite.android.AndroidSQLCipherSQLite")
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite.android" +
+                            ".AndroidSQLCipherSQLite")
                             .getMethod("open", File.class, KeyProvider.class)
                             .invoke(null, new Object[]{dbFile, provider});
                 } else {
-                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite.android.AndroidSQLite")
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite.android" +
+                            ".AndroidSQLite")
                             .getMethod("open", File.class)
                             .invoke(null, dbFile);
                 }
             } else {
                 if (useSqlCipher) {
-                    throw new UnsupportedOperationException("No SQLCipher-based database implementation for Java SE");
+                    throw new UnsupportedOperationException("No SQLCipher-based database " +
+                            "implementation for Java SE");
                 } else {
-                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite.sqlite4java.SQLiteWrapper")
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite" +
+                            ".sqlite4java.SQLiteWrapper")
                             .getMethod("open", File.class)
                             .invoke(null, dbFile);
                 }
             }
-
+        } catch (RuntimeException e){
+            throw e;
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to load database module", e);
             throw new SQLException("Failed to load database module", e);

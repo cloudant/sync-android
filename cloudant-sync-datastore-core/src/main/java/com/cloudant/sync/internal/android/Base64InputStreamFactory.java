@@ -18,25 +18,32 @@ import com.cloudant.sync.internal.util.Misc;
 
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Created by tomblench on 07/07/2014.
  * @api_private
  */
 public class Base64InputStreamFactory {
+
+    private static final Logger logger = Logger.getLogger(Base64InputStreamFactory.class.getCanonicalName());
+
     public static InputStream get(InputStream is) {
         try {
             if (Misc.isRunningOnAndroid()) {
                 Class c = Class.forName("android.util.Base64InputStream");
                 Constructor ctor = c.getDeclaredConstructor(InputStream.class, int.class);
-                return (InputStream)ctor.newInstance(is, 0);
+                return (InputStream) ctor.newInstance(is, 0);
             } else {
                 Class c = Class.forName("org.apache.commons.codec.binary.Base64InputStream");
                 Constructor ctor = c.getDeclaredConstructor(InputStream.class);
-                return (InputStream)ctor.newInstance(is);
+                return (InputStream) ctor.newInstance(is);
             }
+        } catch (RuntimeException e){
+            throw e;
         } catch (Exception e) {
-            // TODO log
+            logger.log(Level.SEVERE, "Failed to load Base64InputStream implementation", e);
             return null;
         }
     }

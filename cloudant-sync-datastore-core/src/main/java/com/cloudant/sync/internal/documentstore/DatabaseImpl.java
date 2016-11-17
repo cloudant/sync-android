@@ -237,9 +237,10 @@ public class DatabaseImpl implements Database {
             throw new RuntimeException(e);
         } catch (ExecutionException e) {
             logger.log(Level.SEVERE, "Failed to get last Sequence", e);
-            if (e.getCause() != null) {
-                if (e.getCause() instanceof IllegalStateException) {
-                    throw (IllegalStateException) e.getCause();
+            Throwable cause = e.getCause();
+            if (cause != null) {
+                if (cause instanceof IllegalStateException) {
+                    throw (IllegalStateException)cause;
                 }
             }
         }
@@ -928,7 +929,7 @@ public class DatabaseImpl implements Database {
                             if (newWinnerTx.getClass().equals(DocumentRevision.class)) {
                                 // user gave us a new DocumentRevision instance
                                 isNewOrUpdatedRevision = true;
-                            } else if (newWinnerTx.getClass().equals(InternalDocumentRevision.class)) {
+                            } else if (newWinnerTx instanceof InternalDocumentRevision) {
                                 // user gave us an existing InternalDocumentRevision instance - did the body or attachments change?
                                 InternalDocumentRevision newWinnerTxInternal = (InternalDocumentRevision)newWinnerTx;
                                 if (newWinnerTxInternal.isBodyModified()) {
@@ -964,9 +965,10 @@ public class DatabaseImpl implements Database {
                     }));
         } catch (ExecutionException e) {
             logger.log(Level.SEVERE, "Failed to resolve Conflicts", e);
-            if (e.getCause() != null) {
-                if (e.getCause() instanceof IllegalArgumentException) {
-                    throw (IllegalArgumentException) e.getCause();
+            Throwable cause = e.getCause();
+            if (cause != null) {
+                if (cause instanceof IllegalArgumentException) {
+                    throw (IllegalArgumentException) cause;
                 }
             }
         }
@@ -1223,9 +1225,10 @@ public class DatabaseImpl implements Database {
             return deletedRevision;
         } catch (ExecutionException e) {
             logger.log(Level.SEVERE, "Failed to delete document", e);
-            if (e.getCause() != null) {
-                if (e.getCause() instanceof ConflictException) {
-                    throw (ConflictException) e.getCause();
+            Throwable cause = e.getCause();
+            if (cause != null) {
+                if (cause instanceof ConflictException) {
+                    throw (ConflictException) cause;
                 }
             }
         }

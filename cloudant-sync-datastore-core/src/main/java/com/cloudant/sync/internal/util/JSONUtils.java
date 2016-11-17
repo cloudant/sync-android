@@ -137,6 +137,8 @@ public class JSONUtils {
     public static Map<String, Object> deserialize(byte[] json) {
         try {
             return getsMapper().readValue(json, Map.class);
+        } catch (RuntimeException e){
+            throw e;
         } catch (Exception e) {
             throw new IllegalStateException("Error converting byte[] to map object: " +
                     bytesToString(json));
@@ -155,6 +157,8 @@ public class JSONUtils {
     public static String toPrettyJson(Object rev) {
         try {
             return getsMapper().writerWithDefaultPrettyPrinter().writeValueAsString(rev);
+        } catch (RuntimeException e){
+            throw e;
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
