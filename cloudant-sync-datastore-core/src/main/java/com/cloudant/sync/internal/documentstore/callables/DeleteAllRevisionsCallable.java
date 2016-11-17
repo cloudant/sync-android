@@ -15,6 +15,7 @@
 package com.cloudant.sync.internal.documentstore.callables;
 
 import com.cloudant.sync.documentstore.ConflictException;
+import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
@@ -32,7 +33,7 @@ import java.util.List;
  *
  * @api_private
  */
-public class DeleteAllRevisionsCallable implements SQLCallable<List<InternalDocumentRevision>> {
+public class DeleteAllRevisionsCallable implements SQLCallable<List<DocumentRevision>> {
 
     private String id;
 
@@ -41,10 +42,10 @@ public class DeleteAllRevisionsCallable implements SQLCallable<List<InternalDocu
     }
 
     @Override
-    public List<InternalDocumentRevision> call(SQLDatabase db) throws DocumentStoreException, ConflictException,
+    public List<DocumentRevision> call(SQLDatabase db) throws DocumentStoreException, ConflictException,
             DocumentNotFoundException {
 
-        ArrayList<InternalDocumentRevision> deleted = new ArrayList<InternalDocumentRevision>();
+        ArrayList<DocumentRevision> deleted = new ArrayList<DocumentRevision>();
         Cursor cursor = null;
         // delete all in one tx
         try {
