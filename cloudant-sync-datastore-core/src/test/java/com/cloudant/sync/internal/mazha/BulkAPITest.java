@@ -80,7 +80,7 @@ public class BulkAPITest extends CouchClientTestBase {
         List<Response> responses = client.bulkCreateDocs(doc1);
         Assert.assertEquals(0, responses.size());
 
-        Map<String, Object> allRevs = client.getDocRevisions(res1.getId(), revision3, JSONHelper.STRING_MAP_TYPE_DEF);
+        Map<String, Object> allRevs = client.getDocRevisions(res1.getId(), revision3, jsonHelper.mapStringToObject());
 
         int revisionStart = (Integer) ((Map<String, Object>) allRevs.get(CouchConstants._revisions)).get
                 (CouchConstants.start);

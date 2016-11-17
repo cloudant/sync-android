@@ -42,19 +42,6 @@ public class KeyUtilsTest {
     }
 
     @Test
-    public void sqlCipherKeyForKeyProvider_nullKeyBytes() {
-        final EncryptionKey key = mock(EncryptionKey.class);
-        when(key.getKey()).thenReturn(null);
-
-        Assert.assertNull(KeyUtils.sqlCipherKeyForKeyProvider(new KeyProvider() {
-            @Override
-            public EncryptionKey getEncryptionKey() {
-                return key;
-            }
-        }));
-    }
-
-    @Test
     public void sqlCipherKeyForKeyProvider_encodesBytesCorrectly() {
         byte[] keyBytes = new byte[] { -123, 53, -22, -15 };
         String expected = "x'8535eaf1'";

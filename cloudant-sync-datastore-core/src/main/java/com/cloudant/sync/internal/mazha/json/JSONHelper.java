@@ -18,7 +18,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -49,6 +51,14 @@ public class JSONHelper {
     public <T> T fromJson(Reader reader, TypeReference<T> typeRef) {
         try {
             return objectMapper.readValue(reader, typeRef);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public <T> T fromJson(Reader reader, JavaType type) {
+        try {
+            return objectMapper.readValue(reader, type);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -85,4 +95,13 @@ public class JSONHelper {
             throw new RuntimeException(e);
         }
     }
+
+    public TypeFactory getTypeFactory(){
+        return objectMapper.getTypeFactory();
+    }
+
+    public JavaType mapStringToObject(){
+        return this.getTypeFactory().constructParametricType(Map.class,String.class,Object.class);
+    }
+
 }

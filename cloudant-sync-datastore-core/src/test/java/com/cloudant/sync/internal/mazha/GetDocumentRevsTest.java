@@ -50,7 +50,7 @@ public class GetDocumentRevsTest extends CouchClientTestBase {
     public void getDocRevisions_idAndRevAndMapClass_revsMustBeReturned() {
         Response[] responses = createAndUpdateDocumentAndReturnRevisions();
         Map<String, Object> revs = client.getDocRevisions(responses[1].getId(), responses[1].getRev(),
-                JSONHelper.STRING_MAP_TYPE_DEF);
+                jsonHelper.mapStringToObject());
 
         Assert.assertThat(revs.keySet(), hasItem(CouchConstants._revisions));
 

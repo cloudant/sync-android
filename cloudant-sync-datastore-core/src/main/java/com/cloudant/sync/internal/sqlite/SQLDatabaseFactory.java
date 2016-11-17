@@ -28,6 +28,7 @@ import com.cloudant.sync.internal.util.Misc;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -90,7 +91,7 @@ public class SQLDatabaseFactory {
         Misc.checkNotNull(dbFile, "dbFile");
         File dbDirectory = dbFile.getParentFile();
         if (!dbDirectory.mkdirs()){
-            throw new IOException("Could not create directories for path: "+dbFile);
+            logger.info(String.format(Locale.ENGLISH, "Did not create directories for path: %s directories may already exist", dbFile));
         }
         Misc.checkArgument(dbDirectory.isDirectory(), "Input path is not a valid directory");
         Misc.checkArgument(dbDirectory.canWrite(), "Datastore directory is not writable");

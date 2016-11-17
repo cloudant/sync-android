@@ -31,6 +31,7 @@ import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
 import com.cloudant.sync.internal.util.Misc;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 
 import org.apache.commons.io.IOUtils;
 
@@ -387,10 +388,10 @@ public class CouchClient  {
      *   "2-65ddd7d56da84f25af544e84a3267ccf" ]
      * }
      */
-    public <T> T getDocConflictRevs(String id)  {
+    public Map<String,Object> getDocConflictRevs(String id)  {
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("conflicts", true);
-        return this.getDocument(id, options, new CouchClientTypeReference<T>());
+        return this.getDocument(id, options, jsonHelper.mapStringToObject());
     }
 
     /**
@@ -422,7 +423,8 @@ public class CouchClient  {
             options.put("att_encoding_info", true);
         }
         options.put("open_revs", jsonHelper.toJson(revisions));
-        return this.getDocument(id, options,new CouchClientTypeReference<List<OpenRevision>>());
+        JavaType type = jsonHelper.getTypeFactory().constructParametricType(List.class, OpenRevision.class);
+        return this.getDocument(id, options, type);
     }
 
     /**
@@ -483,15 +485,15 @@ public class CouchClient  {
     }
 
     public Map<String, Object> getDocument(String id) {
-        return this.getDocument(id, new HashMap<String, Object>(), JSONHelper.STRING_MAP_TYPE_DEF);
+        return this.getDocument(id, new HashMap<String, Object>(), jsonHelper.mapStringToObject());
     }
 
     public <T> T getDocument(String id, final Class<T> type)  {
-        return this.getDocument(id, new HashMap<String, Object>(), new CouchClientTypeReference<T>(type));
+        JavaType javaType = jsonHelper.getTypeFactory().constructType(type);
+        return this.getDocument(id, new HashMap<String, Object>(), javaType);
     }
 
-    public <T> T getDocument(final String id, final Map<String, Object> options, final
-    TypeReference<T> type) {
+    public <T> T getDocument(final String id, final Map<String, Object> options, final JavaType type) {
         Misc.checkNotNullOrEmpty(id, "id");
         Misc.checkNotNull(type, "Type");
 
@@ -541,10 +543,11 @@ public class CouchClient  {
      *
      */
     public DocumentRevs getDocRevisions(String id, String rev) {
-        return getDocRevisions(id, rev, new CouchClientTypeReference<DocumentRevs>());
+        JavaType type = jsonHelper.getTypeFactory().constructType(DocumentRevs.class);
+        return getDocRevisions(id, rev, type);
     }
 
-    public <T> T getDocRevisions(String id, String rev, TypeReference<T> type) {
+    public <T> T getDocRevisions(String id, String rev, JavaType type) {
         Misc.checkNotNullOrEmpty(id, "id");
         Misc.checkNotNull(rev, "Revision ID");
         Map<String, Object> queries = new HashMap<String, Object>();
@@ -705,10 +708,11 @@ public class CouchClient  {
             HttpConnection connection = Http.POST(uri, "application/json");
             connection.setRequestBody(payload);
             is = executeToInputStreamWithRetry(connection);
-            Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is,
-                            Charset.forName("UTF-8")),
-                   new CouchClientTypeReference<Map<String, MissingRevisions>>());
-            return diff;
+
+            JavaType type = jsonHelper.getTypeFactory()
+                    .constructParametricType(Map.class, String.class, MissingRevisions.class);
+
+            return jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8")), type);
         } finally {
             closeQuietly(is);
         }
