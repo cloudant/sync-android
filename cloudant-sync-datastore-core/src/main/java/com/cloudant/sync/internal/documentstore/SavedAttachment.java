@@ -66,7 +66,7 @@ public class SavedAttachment extends Attachment {
 
         this.revpos = revpos;
         this.seq = seq;
-        this.key = Arrays.copyOf(key, key.length);
+        this.key = key == null? null : Arrays.copyOf(key, key.length);
         this.length = length;
         this.encodedLength = encodedLength;
 
