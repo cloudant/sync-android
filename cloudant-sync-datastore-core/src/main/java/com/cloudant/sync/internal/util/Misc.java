@@ -51,9 +51,11 @@ public class Misc {
             while ((bytesRead = shaFis.read(buf)) != -1) {
                 sha1.update(buf, 0, bytesRead);
             }
+        } catch (RuntimeException e){
+            throw e;
         } catch (Exception e) {
             logger.log(Level.WARNING,"Problem calculating SHA1 for stream",e);
-            return null;
+            return new byte[]{};
         }
         return sha1.digest();
     }
@@ -67,7 +69,6 @@ public class Misc {
      * @return the joined string
      */
     public static String join(String separator, Collection<String> stringsToJoin) {
-        Iterator<String> iterator = stringsToJoin.iterator();
         StringBuilder builder = new StringBuilder();
         // Check if there is at least 1 element then use do/while to avoid trailing separator
         int index = stringsToJoin.size();

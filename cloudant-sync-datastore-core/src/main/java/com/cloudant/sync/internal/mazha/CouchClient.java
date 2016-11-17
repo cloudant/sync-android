@@ -255,14 +255,12 @@ public class CouchClient  {
 
     public void createDb() {
         HttpConnection connection = Http.PUT(uriHelper.getRootUri(), "application/json");
-        DBOperationResponse res = executeToJsonObjectWithRetry(connection, DBOperationResponse
-                .class);
+        executeToJsonObjectWithRetry(connection, DBOperationResponse.class);
     }
 
     public void deleteDb() {
         HttpConnection connection = Http.DELETE(this.uriHelper.getRootUri());
-        DBOperationResponse res = executeToJsonObjectWithRetry(connection, DBOperationResponse
-                .class);
+        executeToJsonObjectWithRetry(connection, DBOperationResponse.class);
     }
 
     public CouchDbInfo getDbInfo() {

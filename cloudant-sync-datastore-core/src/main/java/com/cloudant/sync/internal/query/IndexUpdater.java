@@ -199,9 +199,6 @@ class IndexUpdater {
                                                             initialArgs,
                                                             indexName,
                                                             rev);
-                if (parameter == null) {
-                    return null;
-                }
                 parameters.add(parameter);
             }
         } else {
@@ -216,9 +213,6 @@ class IndexUpdater {
                                                         initialArgs,
                                                         indexName,
                                                         rev);
-            if (parameter == null) {
-                return null;
-            }
             parameters.add(parameter);
         }
 
@@ -391,7 +385,7 @@ class IndexUpdater {
 
         @Override
         public Void call(SQLDatabase database) throws QueryException {
-            for (DocumentRevision rev: changes.getResults()) {
+            for (InternalDocumentRevision rev: changes.getResults()) {
                 // Delete existing values
                 String tableName = QueryImpl.tableNameForIndex(indexName);
                 database.delete(tableName, " _id = ? ", new String[]{rev.getId()});
