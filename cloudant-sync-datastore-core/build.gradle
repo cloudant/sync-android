@@ -3,7 +3,7 @@
 // ************ //
 dependencies {
 
-    compile group: 'com.cloudant', name: 'cloudant-http', version:'2.6.2'
+    compile group: 'com.cloudant', name: 'cloudant-http', version:'2.7.0'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.1.1'
     compile group: 'commons-codec', name: 'commons-codec', version:'1.10'
     compile group: 'commons-io', name: 'commons-io', version:'2.4'

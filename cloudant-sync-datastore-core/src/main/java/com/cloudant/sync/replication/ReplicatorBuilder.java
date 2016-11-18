@@ -61,7 +61,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
         if (uri.getUserInfo() != null) {
             String[] parts = uri.getUserInfo().split(":");
             if (parts.length == 2) {
-                CookieInterceptor ci = new CookieInterceptor(parts[0], parts[1]);
+                CookieInterceptor ci = new CookieInterceptor(parts[0], parts[1], uri.toString());
                 requestInterceptors.add(ci);
                 responseInterceptors.add(ci);
             }
