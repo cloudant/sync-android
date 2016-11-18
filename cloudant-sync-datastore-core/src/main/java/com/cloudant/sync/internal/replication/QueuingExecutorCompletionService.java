@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.internal.replication;
 
-import java.util.Observable;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorCompletionService;
