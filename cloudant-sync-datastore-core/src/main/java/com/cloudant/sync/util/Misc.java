@@ -82,7 +82,7 @@ public class Misc {
         return builder.toString();
     }
     /**
-     * Check that a parameter is not null and throw IllegalArgumentException with a message of
+     * Check that a parameter is not null and throw NullPointerException with a message of
      * errorMessagePrefix + " must not be null." if it is null, defaulting to "Parameter must not be
      * null.".
      *
@@ -112,7 +112,7 @@ public class Misc {
     public static void checkNotNullOrEmpty(String param, String errorMessagePrefix) throws
             IllegalArgumentException {
         checkArgument(!isStringNullOrEmpty(param), (errorMessagePrefix != null ? errorMessagePrefix :
-                "Parameter") + " must not be " + param == null ? "null." : "empty.");
+              "Parameter") + " must not be " + (param == null ? "null." : "empty."));
     }
 
     /**

@@ -1,3 +1,6 @@
+# Unreleased
+- [FIXED] Incorrect message output from parameter `null` or empty checks.
+
 # 1.1.2 (2016-10-20)
 - [FIXED] Issue preventing index updates from being persisted that
   impacted query performance
