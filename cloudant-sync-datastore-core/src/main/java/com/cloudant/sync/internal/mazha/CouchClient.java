@@ -418,8 +418,7 @@ public class CouchClient  {
             options.put("att_encoding_info", true);
         }
         options.put("open_revs", jsonHelper.toJson(revisions));
-        JavaType type = jsonHelper.getTypeFactory().constructParametricType(List.class, OpenRevision.class);
-        return this.getDocument(id, options, type);
+        return this.getDocument(id, options, jsonHelper.openRevisionList());
     }
 
     /**
@@ -537,8 +536,7 @@ public class CouchClient  {
      *
      */
     public DocumentRevs getDocRevisions(String id, String rev) {
-        JavaType type = jsonHelper.getTypeFactory().constructType(DocumentRevs.class);
-        return getDocRevisions(id, rev, type);
+        return getDocRevisions(id, rev, jsonHelper.documentRevs());
     }
 
     public <T> T getDocRevisions(String id, String rev, JavaType type) {
@@ -703,10 +701,9 @@ public class CouchClient  {
             connection.setRequestBody(payload);
             is = executeToInputStreamWithRetry(connection);
 
-            JavaType type = jsonHelper.getTypeFactory()
-                    .constructParametricType(Map.class, String.class, MissingRevisions.class);
 
-            return jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8")), type);
+            return jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8")),
+                    jsonHelper.mapStringMissingRevisions());
         } finally {
             closeQuietly(is);
         }

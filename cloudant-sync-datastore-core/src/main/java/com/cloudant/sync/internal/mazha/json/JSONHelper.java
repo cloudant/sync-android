@@ -14,6 +14,9 @@
 
 package com.cloudant.sync.internal.mazha.json;
 
+import com.cloudant.sync.internal.mazha.CouchClient;
+import com.cloudant.sync.internal.mazha.DocumentRevs;
+import com.cloudant.sync.internal.mazha.OpenRevision;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -102,6 +105,19 @@ public class JSONHelper {
 
     public JavaType mapStringToObject(){
         return this.getTypeFactory().constructParametricType(Map.class,String.class,Object.class);
+    }
+
+    public JavaType mapStringMissingRevisions(){
+        return this.getTypeFactory().constructParametricType(Map.class, String.class, CouchClient
+                .MissingRevisions.class);
+    }
+
+    public JavaType openRevisionList() {
+        return this.getTypeFactory().constructParametricType(List.class, OpenRevision.class);
+    }
+
+    public JavaType documentRevs() {
+        return this.getTypeFactory().constructType(DocumentRevs.class);
     }
 
 }
