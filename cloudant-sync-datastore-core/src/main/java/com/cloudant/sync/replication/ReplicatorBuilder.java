@@ -17,6 +17,7 @@ package com.cloudant.sync.replication;
 import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
+import com.cloudant.http.internal.interceptors.UserAgentInterceptor;
 import com.cloudant.sync.datastore.Datastore;
 
 import java.net.URI;
@@ -33,6 +34,10 @@ import java.util.List;
 // S = Source Type, T = target Type, E = Extending class Type
 public abstract class ReplicatorBuilder<S, T, E> {
 
+    private static final UserAgentInterceptor USER_AGENT_INTERCEPTOR =
+            new UserAgentInterceptor(ReplicatorBuilder.class.getClassLoader(),
+                    "META-INF/com.cloudant.sync.client.properties");
+
     private T target;
     private S source;
     private int id = ReplicatorImpl.NULL_ID;
@@ -40,6 +45,10 @@ public abstract class ReplicatorBuilder<S, T, E> {
             <HttpConnectionRequestInterceptor>();
     private List<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList
             <HttpConnectionResponseInterceptor>();
+
+    private ReplicatorBuilder(){
+        requestInterceptors.add(USER_AGENT_INTERCEPTOR);
+    }
 
     private URI addCookieInterceptorIfRequired(URI uri) {
         String uriProtocol = uri.getScheme();
@@ -102,6 +111,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             if (super.source == null || super.target == null) {
                 throw new IllegalStateException("Source and target cannot be null");
             }
+
 
             // add cookie interceptor and remove creds from URI if required
             super.target = super.addCookieInterceptorIfRequired(super.target);

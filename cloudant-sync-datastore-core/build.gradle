@@ -126,3 +126,54 @@ compileToolsJava {
     // tools.jar needed for custom doclet
     classpath += files(org.gradle.internal.jvm.Jvm.current().toolsJar)
 }
+
+//
+// Generate client.properties
+//
+
+//task for generating a client properties file
+class ClientProperties extends DefaultTask {
+
+    //allow this to be configured, default to com.cloudant.sync.client.properties
+    File clientPropsPath = new File("com.cloudant.sync.client.properties")
+
+    //internal
+    private Properties p = new Properties()
+
+    def load() {
+        //if there is a generated file already load the values
+        if (clientPropsPath.exists()) {
+            p.load(new FileInputStream(clientPropsPath));
+        }
+    }
+
+
+    @TaskAction
+    def save() {
+        p.put("user.agent.name", project.clientName)
+        p.put("user.agent.version", project.version)
+        p.store(new FileOutputStream(clientPropsPath), "User agent information for this client")
+    }
+
+    String getPropertyValue(String key) {
+        return p.getProperty(key)
+    }
+}
+
+//generate a client props file, make the jar task depend on this
+task generateClientPropertiesFile(type: ClientProperties) {
+    clientPropsPath = new File(buildDir, "tmp/com.cloudant.sync.client.properties")
+    outputs.upToDateWhen {
+        if (clientPropsPath.exists()) {
+            it.load()
+            return project.clientName.equals(it.getPropertyValue("user.agent.name")) && project.version.equals(it.getPropertyValue("user.agent.version"))
+        } else {
+            return false
+        }
+    }
+}
+jar.dependsOn generateClientPropertiesFile
+//include the client props in the built jar
+jar {
+    into "META-INF", { from generateClientPropertiesFile.clientPropsPath }
+}
