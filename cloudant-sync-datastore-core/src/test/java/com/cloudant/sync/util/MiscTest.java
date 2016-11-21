@@ -74,4 +74,101 @@ public class MiscTest {
         Assert.assertEquals("Should get the correct joined string",
                 "alpha, beta, gamma", joined);
     }
+
+    @Test
+    public void defaultNullStringCheck() throws Exception {
+        try {
+            Misc.checkNotNullOrEmpty(null, null);
+        } catch(IllegalArgumentException e) {
+            Assert.assertEquals("Parameter must not be null.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void defaultEmptyStringCheck() throws Exception {
+        try {
+            Misc.checkNotNullOrEmpty("", null);
+        } catch(IllegalArgumentException e) {
+            Assert.assertEquals("Parameter must not be empty.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void defaultNullObjectCheck() throws Exception {
+        try {
+            Misc.checkNotNull(null, null);
+        } catch(NullPointerException e) {
+            Assert.assertEquals("Parameter must not be null.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void nullStringCheck() throws Exception {
+        try {
+            Misc.checkNotNullOrEmpty(null, "Test argument");
+        } catch(IllegalArgumentException e) {
+            Assert.assertEquals("Test argument must not be null.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void emptyStringCheck() throws Exception {
+        try {
+            Misc.checkNotNullOrEmpty("", "Test argument");
+        } catch(IllegalArgumentException e) {
+            Assert.assertEquals("Test argument must not be empty.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void nullObjectCheck() throws Exception {
+        try {
+            Misc.checkNotNull(null, "Test argument");
+        } catch(NullPointerException e) {
+            Assert.assertEquals("Test argument must not be null.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void stringNull() throws Exception {
+        Assert.assertTrue(Misc.isStringNullOrEmpty(null));
+    }
+
+    @Test
+    public void stringEmpty() throws Exception {
+        Assert.assertTrue(Misc.isStringNullOrEmpty(""));
+    }
+
+    @Test
+    public void stringNeitherNullNorEmpty() throws Exception {
+        Assert.assertFalse(Misc.isStringNullOrEmpty("hello"));
+    }
+
+    @Test
+    public void checkTrueArgument() throws Exception {
+        Misc.checkArgument(true, "Whatever");
+    }
+
+    @Test
+    public void checkFalseArgument() throws Exception {
+        try {
+            Misc.checkArgument(false, "Whatever");
+        } catch(IllegalArgumentException e) {
+            Assert.assertEquals("Whatever", e.getMessage());
+        }
+    }
+
+    @Test
+    public void checkTrueState() throws Exception {
+        Misc.checkState(true, "Whatever");
+    }
+
+    @Test
+    public void checkFalseState() throws Exception {
+        try {
+            Misc.checkState(false, "Whatever");
+        } catch(IllegalStateException e) {
+            Assert.assertEquals("Whatever", e.getMessage());
+        }
+    }
 }
