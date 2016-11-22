@@ -39,6 +39,7 @@ import com.cloudant.sync.internal.util.Misc;
 import org.apache.commons.codec.binary.Hex;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -440,10 +441,14 @@ public class PushStrategy implements ReplicationStrategy {
         dict.put("source", this.sourceDb.getIdentifier());
         dict.put("target", this.targetDb.getIdentifier());
         // get raw SHA-1 of dictionary
-        byte[] sha1Bytes = Misc.getSha1(new ByteArrayInputStream(JSONUtils.serializeAsBytes(dict)));
-        // return SHA-1 as a hex string
-        byte[] sha1Hex = new Hex().encode(sha1Bytes);
-        return new String(sha1Hex, Charset.forName("UTF-8"));
+        try {
+            byte[] sha1Bytes = Misc.getSha1(new ByteArrayInputStream(JSONUtils.serializeAsBytes(dict)));
+            // return SHA-1 as a hex string
+            byte[] sha1Hex = new Hex().encode(sha1Bytes);
+            return new String(sha1Hex, Charset.forName("UTF-8"));
+        } catch (IOException ioe) {
+            throw new DocumentStoreException(ioe);
+        }
     }
 
     private long getLastCheckpointSequence() throws DocumentStoreException {

@@ -14,8 +14,10 @@
 
 package com.cloudant.sync.internal.util;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Locale;
@@ -41,7 +43,7 @@ public class Misc {
         return javaRuntime.toLowerCase(Locale.ENGLISH).contains(ANDROID_RUNTIME);
     }
 
-    public static byte[] getSha1(InputStream shaFis) {
+    public static byte[] getSha1(InputStream shaFis) throws IOException {
         MessageDigest sha1;
         try {
             sha1 = MessageDigest.getInstance("SHA-1");
@@ -51,11 +53,8 @@ public class Misc {
             while ((bytesRead = shaFis.read(buf)) != -1) {
                 sha1.update(buf, 0, bytesRead);
             }
-        } catch (RuntimeException e){
-            throw e;
-        } catch (Exception e) {
-            logger.log(Level.WARNING,"Problem calculating SHA1 for stream",e);
-            return new byte[]{};
+        } catch (NoSuchAlgorithmException e){
+            throw new IllegalStateException(e);
         }
         return sha1.digest();
     }
