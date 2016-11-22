@@ -127,7 +127,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     protected ReplicatorBuilder.Push getPushBuilder() {
         return ReplicatorBuilder.push().
-                from(this.datastore).
+                from(this.documentStore).
                 to(this.couchConfig.getRootUri()).
                 addRequestInterceptors(couchConfig.getRequestInterceptors()).
                 addResponseInterceptors(couchConfig.getResponseInterceptors());
@@ -135,7 +135,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     protected ReplicatorBuilder.Pull getPullBuilder() {
         return ReplicatorBuilder.pull().
-                to(this.datastore).
+                to(this.documentStore).
                 from(this.couchConfig.getRootUri()).
                 addRequestInterceptors(couchConfig.getRequestInterceptors()).
                 addResponseInterceptors(couchConfig.getResponseInterceptors());
@@ -143,7 +143,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     protected ReplicatorBuilder.Pull getPullBuilder(PullFilter filter) {
         return ReplicatorBuilder.pull().
-                to(this.datastore).
+                to(this.documentStore).
                 from(this.couchConfig.getRootUri()).
                 addRequestInterceptors(couchConfig.getRequestInterceptors()).
                 addResponseInterceptors(couchConfig.getResponseInterceptors()).

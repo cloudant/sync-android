@@ -160,7 +160,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
     @Test
     public void replicatorBuilderAddsCookieInterceptorCustomPort() throws Exception {
         ReplicatorBuilder.Push p = ReplicatorBuilder.push().
-                from(datastore).
+                from(documentStore).
                 to(new URI("http://🍶:🍶@some-host:123/path%2Fsome-path-日本"));
         ReplicatorImpl r = (ReplicatorImpl) p.build();
         // check that user/pass has been removed
@@ -176,7 +176,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
     @Test
     public void replicatorBuilderAddsCookieInterceptorDefaultPort() throws Exception {
         ReplicatorBuilder.Push p = ReplicatorBuilder.push().
-                from(datastore).
+                from(documentStore).
                 to(new URI("http://🍶:🍶@some-host/path%2Fsome-path-日本"));
         ReplicatorImpl r = (ReplicatorImpl) p.build();
         // check that user/pass has been removed
