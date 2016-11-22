@@ -1,6 +1,8 @@
 /**
  * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
  *
+ * Copyright © 2016 IBM Corp. All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
  *
@@ -48,7 +50,7 @@ public class CouchClientWrapper implements CouchDB {
     private final static String LOG_TAG = "CouchClientWrapper";
     private static final Logger logger = Logger.getLogger(CouchClientWrapper.class.getCanonicalName());
 
-    final CouchClient couchClient;
+    CouchClient couchClient;
 
     public CouchClientWrapper(CouchClient client) {
         Misc.checkNotNull(client, "Couch client");

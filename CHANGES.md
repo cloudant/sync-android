@@ -1,5 +1,6 @@
 # Unreleased
 - [FIXED] Incorrect message output from parameter `null` or empty checks.
+- [FIXED] Issue where replications would error if the server returned missing revisions.
 - [UPGRADED] Upgraded to version 2.7.0 of the `cloudant-http` library.
 
 # 1.1.2 (2016-10-20)

@@ -3,6 +3,8 @@
  *
  * Copyright (C) 2011 Ahmed Yehia (ahmed.yehia.m@gmail.com)
  *
+ * Copyright © 2016 IBM Corp. All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -409,6 +411,9 @@ public class CouchClient  {
 
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("revs", true);
+        // by adding latest we should never receive a "missing" response from the server. A descendant
+        // of the revision requested will be returned even if it has been deleted.
+        options.put("latest", true);
         // only pull attachments inline if we're configured to
         if (pullAttachmentsInline) {
             options.put("attachments", true);
