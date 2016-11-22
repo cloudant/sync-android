@@ -34,4 +34,30 @@ class RemoteCheckpointDoc extends Document {
     public void setLastSequence(String lastSequence) {
         this.lastSequence = lastSequence;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+
+        RemoteCheckpointDoc that = (RemoteCheckpointDoc) o;
+
+        return lastSequence != null ? lastSequence.equals(that.lastSequence) : that.lastSequence
+                == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (lastSequence != null ? lastSequence.hashCode() : 0);
+        return result;
+    }
 }

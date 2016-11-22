@@ -26,4 +26,125 @@ A list of known findbugs issues that we cannot fix at this time.
         <Bug code="RV" pattern="RV_NEGATING_RESULT_OF_COMPARETO" />
         <Class name="com.cloudant.sync.datastore.BasicDatastore$15" />
     </Match>
+    <Match>
+        <Bug code="FE" pattern="FE_FLOATING_POINT_EQUALITY" />
+        <Class name="com.cloudant.sync.internal.query.UnindexedMatcher"/>
+    </Match>
+    <Match>
+        <Bug code="NP" pattern="NP_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD"/>
+        <Class name="com.cloudant.sync.internal.replication.PushStrategy"/>
+        <Method name="missingRevisionsToJsonDocs"/>
+    </Match>
+    <Match>
+        <Bug code="REC" pattern="REC_CATCH_EXCEPTION" />
+        <Class name="com.cloudant.sync.internal.mazha.CouchClient$ExecuteResult" />
+        <Method name="ExecuteResult" />
+    </Match>
+    <Match>
+        <Bug code="REC" pattern="REC_CATCH_EXCEPTION" />
+        <Class name="com.cloudant.sync.internal.replication.PullStrategy" />
+        <Method name="processOneChangesBatch" />
+    </Match>
+    <Match>
+        <Bug code="REC" pattern="REC_CATCH_EXCEPTION" />
+        <Class name="com.cloudant.sync.internal.util.JSONUtils" />
+        <Method name="isValidJSON" />
+    </Match>
+
+    <Match>
+        <Bug code="REC" pattern="REC_CATCH_EXCEPTION" />
+        <Class name="com.cloudant.sync.internal.datastore.callables.ForceInsertCallable" />
+        <Method name="call" />
+    </Match>
+
+    <Match>
+        <Bug code="REC" pattern="REC_CATCH_EXCEPTION" />
+        <Class name="com.cloudant.sync.internal.mazha.CouchClient$ExecuteResult" />
+    </Match>
+
+
+    <Match>
+        <Bug code="UrF" pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" />
+        <Class name="com.cloudant.sync.documentstore.LocalDocument" />
+        <Field name="docId" />
+    </Match>
+
+    <Match>
+        <Bug code="REC" pattern="REC_CATCH_EXCEPTION" />
+        <Class name="com.cloudant.sync.internal.util.JSONUtils" />
+        <Mehtod name="deserialize" />
+    </Match>
+
+    <Match>
+        <Bug code="UrF" pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" />
+        <Class name="com.cloudant.sync.event.notifications.DocumentModified" />
+        <Field name="newDocument" />
+    </Match>
+
+    <Match>
+        <Bug code="UrF" pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" />
+        <Class name="com.cloudant.sync.event.notifications.DocumentModified" />
+        <Field name="prevDocument" />
+    </Match>
+
+    <Match>
+        <Bug code="UrF" pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" />
+        <Class name="com.cloudant.sync.event.notifications.DocumentStoreModified" />
+        <Field name="dbName" />
+    </Match>
+
+    <Match>
+        <Bug code="UrF" pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" />
+        <Class name="com.cloudant.sync.internal.mazha.BulkGetRequest" />
+        <Field name="atts_since" />
+    </Match>
+
+    <Match>
+        <Bug code="UrF" pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" />
+        <Class name="com.cloudant.sync.internal.mazha.BulkGetRequest" />
+        <Field name="id" />
+    </Match>
+
+    <Match>
+        <Bug code="UrF" pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" />
+        <Class name="com.cloudant.sync.internal.mazha.BulkGetRequest" />
+        <Field name="rev" />
+    </Match>
+
+    <Match>
+        <Bug code="UrF" pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" />
+        <Class name="com.cloudant.sync.internal.replication.ReplicationStrategyErrored" />
+        <Field name="replicationStrategy" />
+    </Match>
+
+    <Match>
+        <Bug code="UwF" pattern="URF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD" />
+        <Class name="com.cloudant.sync.internal.mazha.CouchClient$MissingRevisions" />
+        <Field name="missing" />
+    </Match>
+
+    <Match>
+        <Bug code="UwF" pattern="URF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD" />
+        <Class name="com.cloudant.sync.internal.mazha.CouchClient$MissingRevisions" />
+        <Field name="possible_ancestors" />
+    </Match>
+
+    <Match>
+        <Bug code="RECR" pattern="REC_CATCH_EXCEPTION" />
+        <Class name="com.cloudant.sync.internal.documentstore.callables.ForceInsertCallable"/>
+        <Method name="call"/>
+    </Match>
+
+    <Match>
+        <Bug code="RCN" pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+        <Class name="com.cloudant.sync.internal.util.Misc"/>
+        <Method name="checkNotNullOrEmpty" />
+    </Match>
+
+    <Match>
+        <Bug code="DB" pattern="DB_DUPLICATE_SWITCH_CLAUSES"/>
+        <Class name="com.cloudant.sync.internal.mazha.CouchClient$ExecuteResult" />
+        <Method name="&lt;init&gt;"/>
+    </Match>
+
 </FindBugsFilter>

@@ -418,7 +418,7 @@ public class ContentValues {
      * Gets a value and converts it to a Boolean.
      *
      * @param key the value to get
-     * @return the Boolean value, or null if the value is missing or cannot be converted
+     * @return the Boolean value, or false if the value is missing or cannot be converted
      */
     public Boolean getAsBoolean(String key) {
         Object value = mValues.get(key);
@@ -431,7 +431,7 @@ public class ContentValues {
                 return ((Number) value).intValue() != 0;
             } else {
                 logger.log(Level.SEVERE, "Cannot cast value for " + key + " to a Boolean: " + value, e);
-                return null;
+                return false;
             }
         }
     }
@@ -441,14 +441,14 @@ public class ContentValues {
      * any other types to byte arrays.
      *
      * @param key the value to get
-     * @return the byte[] value, or null is the value is missing or not a byte[]
+     * @return the byte[] value, or an empty byte array the value is missing or not a byte[]
      */
     public byte[] getAsByteArray(String key) {
         Object value = mValues.get(key);
         if (value instanceof byte[]) {
             return (byte[]) value;
         } else {
-            return null;
+            return new byte[]{};
         }
     }
 

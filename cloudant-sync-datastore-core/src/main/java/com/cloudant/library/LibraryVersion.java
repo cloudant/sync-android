@@ -59,6 +59,8 @@ public class LibraryVersion implements com.cloudant.http.Version {
                 String codename = (String) c.getField("CODENAME").get(null);
                 int sdkInt = c.getField("SDK_INT").getInt(null);
                 userAgent = String.format("%s Android %s %d", ua, codename, sdkInt);
+            } catch (RuntimeException e){
+                throw e;
             } catch (Exception e) {
                 userAgent = String.format("%s Android unknown version", ua);
             }

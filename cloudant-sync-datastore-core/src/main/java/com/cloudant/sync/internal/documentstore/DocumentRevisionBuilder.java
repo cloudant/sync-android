@@ -28,26 +28,6 @@ import java.util.List;
  */
 public class DocumentRevisionBuilder {
 
-
-    static {
-        // these values are defined http://docs.couchdb.org/en/latest/api/document/common.html
-
-        allowedPrefixes = Arrays.asList(new String[]{
-                "_id",
-                "_rev",
-                "_deleted",
-                "_attachments",
-                "_conflicts",
-                "_deleted_conflicts",
-                "_local_seq",
-                "_revs_info",
-                "_revisions"
-        });
-
-    }
-
-    private static List<String> allowedPrefixes;
-
     private String docId = null;
     private String revId = null;
     private DocumentBody body = null;

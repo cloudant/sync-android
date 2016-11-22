@@ -29,6 +29,7 @@ import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
 import com.cloudant.sync.internal.util.Misc;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 
 import org.apache.commons.io.IOUtils;
 
@@ -253,14 +254,12 @@ public class CouchClient  {
 
     public void createDb() {
         HttpConnection connection = Http.PUT(uriHelper.getRootUri(), "application/json");
-        DBOperationResponse res = executeToJsonObjectWithRetry(connection, DBOperationResponse
-                .class);
+        executeToJsonObjectWithRetry(connection, DBOperationResponse.class);
     }
 
     public void deleteDb() {
         HttpConnection connection = Http.DELETE(this.uriHelper.getRootUri());
-        DBOperationResponse res = executeToJsonObjectWithRetry(connection, DBOperationResponse
-                .class);
+        executeToJsonObjectWithRetry(connection, DBOperationResponse.class);
     }
 
     public CouchDbInfo getDbInfo() {
@@ -387,11 +386,10 @@ public class CouchClient  {
      *   "2-65ddd7d56da84f25af544e84a3267ccf" ]
      * }
      */
-    public <T> T getDocConflictRevs(String id)  {
+    public Map<String,Object> getDocConflictRevs(String id)  {
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("conflicts", true);
-        return this.getDocument(id, options, new TypeReference<T>() {
-        });
+        return this.getDocument(id, options, jsonHelper.mapStringToObject());
     }
 
     /**
@@ -420,8 +418,7 @@ public class CouchClient  {
             options.put("att_encoding_info", true);
         }
         options.put("open_revs", jsonHelper.toJson(revisions));
-        return this.getDocument(id, options, new TypeReference<List<OpenRevision>>() {
-        });
+        return this.getDocument(id, options, jsonHelper.openRevisionList());
     }
 
     /**
@@ -481,20 +478,15 @@ public class CouchClient  {
     }
 
     public Map<String, Object> getDocument(String id) {
-        return this.getDocument(id, new HashMap<String, Object>(), JSONHelper.STRING_MAP_TYPE_DEF);
+        return this.getDocument(id, new HashMap<String, Object>(), jsonHelper.mapStringToObject());
     }
 
     public <T> T getDocument(String id, final Class<T> type)  {
-        return this.getDocument(id, new HashMap<String, Object>(), new TypeReference<T>() {
-            @Override
-            public Type getType() {
-                return type;
-            }
-        });
+        JavaType javaType = jsonHelper.getTypeFactory().constructType(type);
+        return this.getDocument(id, new HashMap<String, Object>(), javaType);
     }
 
-    public <T> T getDocument(final String id, final Map<String, Object> options, final
-    TypeReference<T> type) {
+    public <T> T getDocument(final String id, final Map<String, Object> options, final JavaType type) {
         Misc.checkNotNullOrEmpty(id, "id");
         Misc.checkNotNull(type, "Type");
 
@@ -534,12 +526,7 @@ public class CouchClient  {
     }
 
     public <T> T getDocument(String id, String rev, final Class<T> type) {
-        return getDocument(id, rev, new TypeReference<T>() {
-            @Override
-            public Type getType() {
-                return type;
-            }
-        });
+        return getDocument(id, rev, new CouchClientTypeReference<T>(type));
     }
 
     /**
@@ -549,11 +536,10 @@ public class CouchClient  {
      *
      */
     public DocumentRevs getDocRevisions(String id, String rev) {
-        return getDocRevisions(id, rev, new TypeReference<DocumentRevs>() {
-        });
+        return getDocRevisions(id, rev, jsonHelper.documentRevs());
     }
 
-    public <T> T getDocRevisions(String id, String rev, TypeReference<T> type) {
+    public <T> T getDocRevisions(String id, String rev, JavaType type) {
         Misc.checkNotNullOrEmpty(id, "id");
         Misc.checkNotNull(rev, "Revision ID");
         Map<String, Object> queries = new HashMap<String, Object>();
@@ -627,8 +613,7 @@ public class CouchClient  {
         try {
             is = bulkCreateDocsInputStream(objects);
             return jsonHelper.fromJsonToList(new InputStreamReader(is, Charset.forName("UTF-8")),
-                    new TypeReference<List<Response>>() {
-                    });
+                    new CouchClientTypeReference<List<Response>>());
         } finally {
             closeQuietly(is);
         }
@@ -663,8 +648,7 @@ public class CouchClient  {
         try {
             is = this.executeToInputStreamWithRetry(connection);
             return jsonHelper.fromJsonToList(new InputStreamReader(is, Charset.forName("UTF-8")),
-                    new TypeReference<List<Response>>() {
-            });
+                    new CouchClientTypeReference<List<Response>>());
         } finally {
             closeQuietly(is);
         }
@@ -716,11 +700,10 @@ public class CouchClient  {
             HttpConnection connection = Http.POST(uri, "application/json");
             connection.setRequestBody(payload);
             is = executeToInputStreamWithRetry(connection);
-            Map<String, MissingRevisions> diff = jsonHelper.fromJson(new InputStreamReader(is,
-                            Charset.forName("UTF-8")),
-                    new TypeReference<Map<String, MissingRevisions>>() {
-                    });
-            return diff;
+
+
+            return jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8")),
+                    jsonHelper.mapStringMissingRevisions());
         } finally {
             closeQuietly(is);
         }
@@ -760,4 +743,25 @@ public class CouchClient  {
     }
 
 
+    private static class CouchClientTypeReference<T> extends TypeReference<T> {
+
+        private Class<T> type;
+
+        CouchClientTypeReference() {
+            this(null);
+        }
+        CouchClientTypeReference(Class<T> type){
+            this.type = type;
+        }
+
+        @Override
+        public Type getType() {
+            if (this.type == null) {
+                return super.getType();
+            } else {
+                return this.type;
+            }
+
+        }
+    }
 }

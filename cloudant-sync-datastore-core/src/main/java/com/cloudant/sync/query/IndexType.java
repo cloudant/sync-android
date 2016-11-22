@@ -14,6 +14,8 @@
 
 package com.cloudant.sync.query;
 
+import java.util.Locale;
+
 /**
  * Denotes the type for an query Index.
  *
@@ -35,7 +37,7 @@ public enum IndexType {
      */
     @Override
     public String toString() {
-        return super.toString().toLowerCase();
+        return super.toString().toLowerCase(Locale.ENGLISH);
     }
 
     /**

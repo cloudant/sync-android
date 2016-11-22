@@ -63,7 +63,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     private static final String PREFERENCE_PERIODIC_REPLICATION_ENABLED
         = "com.cloudant.sync.replication.PeriodicReplicationService.periodicReplicationsActive";
 
-    private static final int MILLISECONDS_IN_SECOND = 1000;
+    private static final long MILLISECONDS_IN_SECOND = 1000L;
 
     public static final int COMMAND_START_PERIODIC_REPLICATION = 2;
     public static final int COMMAND_STOP_PERIODIC_REPLICATION = 3;

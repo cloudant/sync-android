@@ -20,6 +20,7 @@ import com.cloudant.sync.replication.PushAttachmentsInline;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 /**
@@ -65,7 +66,7 @@ public class SavedAttachment extends Attachment {
 
         this.revpos = revpos;
         this.seq = seq;
-        this.key = key;
+        this.key = key == null ? null : Arrays.copyOf(key, key.length);
         this.length = length;
         this.encodedLength = encodedLength;
 

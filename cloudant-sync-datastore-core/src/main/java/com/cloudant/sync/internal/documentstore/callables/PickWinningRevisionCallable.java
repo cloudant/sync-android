@@ -22,7 +22,9 @@ import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.DatabaseUtils;
 
+import java.io.Serializable;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -83,20 +85,8 @@ public class PickWinningRevisionCallable implements SQLCallable<Void> {
          */
 
         // first get all non-deleted leafs
-        SortedMap<String, Long> leafs = new TreeMap<String, Long>(new Comparator<String>() {
-            @Override
-            public int compare(String r1, String r2) {
-                int generationCompare = CouchUtils.generationFromRevId(r1) -
-                        CouchUtils.generationFromRevId(r2);
-                // note that the return statements have a unary minus since we are reverse sorting
-                if (generationCompare != 0) {
-                    return -generationCompare;
-                } else {
-                    return -CouchUtils.getRevisionIdSuffix(r1).compareTo(CouchUtils
-                            .getRevisionIdSuffix(r2));
-                }
-            }
-        });
+        SortedMap<String, Long> leafs = new TreeMap<String, Long>(Collections.reverseOrder(new
+                GenerationComparator()));
 
         Cursor cursor = null;
         try {
@@ -142,5 +132,22 @@ public class PickWinningRevisionCallable implements SQLCallable<Void> {
                         "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL)",
                 new String[]{Long.toString(newWinnerSeq), Long.toString(docNumericId)});
         return null;
+    }
+
+    private static class GenerationComparator implements Comparator<String>, Serializable {
+
+        private static final long serialVersionUID = 7927387981850196089L;
+
+        @Override
+        public int compare(String r1, String r2) {
+            int generationCompare = CouchUtils.generationFromRevId(r1) -
+                    CouchUtils.generationFromRevId(r2);
+            if (generationCompare != 0) {
+                return generationCompare;
+            } else {
+                return CouchUtils.getRevisionIdSuffix(r1).compareTo(CouchUtils
+                        .getRevisionIdSuffix(r2));
+            }
+        }
     }
 }

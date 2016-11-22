@@ -17,6 +17,7 @@ package com.cloudant.sync.internal.documentstore;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.util.Misc;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -70,20 +71,7 @@ public class DocumentRevsList implements Iterable<DocumentRevs> {
         this.documentRevsList = new ArrayList<DocumentRevs>(list);
 
         // Order of the list decides which DocumentRevs is inserted first in bulkCreateDocs update.
-        Collections.sort(this.documentRevsList, new Comparator<DocumentRevs>() {
-            @Override
-            public int compare(DocumentRevs o1, DocumentRevs o2) {
-                return getMinGeneration(o1) - getMinGeneration(o2);
-            }
-
-            /**
-             * Get the minimum generation id from the <code>DocumentRevs</code>
-             * @see DocumentRevs
-             */
-            private int getMinGeneration(DocumentRevs o1) {
-                return o1.getRevisions().getStart() - o1.getRevisions().getIds().size() + 1;
-            }
-        });
+        Collections.sort(this.documentRevsList, new DocumentRevsComparator());
     }
 
     @Override
@@ -98,5 +86,23 @@ public class DocumentRevsList implements Iterable<DocumentRevs> {
     @Override
     public String toString() {
         return documentRevsList.toString();
+    }
+
+    private static class DocumentRevsComparator implements Comparator<DocumentRevs>, Serializable {
+
+        private static final long serialVersionUID = 5278582092379780124L;
+
+        @Override
+        public int compare(DocumentRevs o1, DocumentRevs o2) {
+            return getMinGeneration(o1) - getMinGeneration(o2);
+        }
+
+        /**
+         * Get the minimum generation id from the <code>DocumentRevs</code>
+         * @see DocumentRevs
+         */
+        private int getMinGeneration(DocumentRevs o1) {
+            return o1.getRevisions().getStart() - o1.getRevisions().getIds().size() + 1;
+        }
     }
 }

@@ -62,5 +62,28 @@ public class ProjectedDocumentRevision extends InternalDocumentRevision {
         return this.database.getDocument(this.id,this.revision);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
 
+        ProjectedDocumentRevision that = (ProjectedDocumentRevision) o;
+
+        return database != null ? database.equals(that.database) : that.database == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (database != null ? database.hashCode() : 0);
+        return result;
+    }
 }

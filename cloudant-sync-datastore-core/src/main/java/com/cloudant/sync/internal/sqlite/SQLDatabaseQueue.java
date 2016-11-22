@@ -65,14 +65,9 @@ public class SQLDatabaseQueue {
      * @throws SQLException If the database cannot be opened.
      */
     public SQLDatabaseQueue(final File file, KeyProvider provider) throws IOException, SQLException {
-        queue = Executors.newSingleThreadExecutor(new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                return new Thread(r, "SQLDatabaseQueue - "+ file);
-            }
-        });
+        queue = Executors.newSingleThreadExecutor(new ThreadFactory(file));
         this.db = SQLDatabaseFactory.openSQLDatabase(file, provider);
-        queue.submit(new Runnable() {
+        queue.execute(new Runnable() {
             @Override
             public void run() {
                 db.open();
@@ -86,16 +81,7 @@ public class SQLDatabaseQueue {
      * @param version The version of the schema
      */
     public void updateSchema(final Migration migration, final int version){
-        queue.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    SQLDatabaseFactory.updateSchema(db, migration, version);
-                } catch (SQLException e){
-                    logger.log(Level.SEVERE, "Failed to update database schema",e);
-                }
-            }
-        }); // Fire and forget
+        queue.execute(new UpdateSchemaCallable(migration, version)); // Fire and forget
     }
 
     /**
@@ -105,12 +91,7 @@ public class SQLDatabaseQueue {
      */
     public int getVersion() throws SQLException {
         try {
-            return this.submit(new SQLCallable<Integer>() {
-                @Override
-                public Integer call(SQLDatabase db) throws Exception {
-                    return db.getVersion();
-                }
-            }).get();
+            return this.submit(new VersionCallable()).get();
         } catch (InterruptedException e) {
             logger.log(Level.SEVERE, "Failed to get database version", e);
             throw new SQLException(e);
@@ -153,7 +134,7 @@ public class SQLDatabaseQueue {
         // If shutdown has already been called then we don't need to shutdown again
         if (acceptTasks.getAndSet(false)) {
             //pass straight to queue, tasks passed via submitTaskToQueue will now be blocked.
-            queue.submit(new Runnable() {
+            Future<?> close = queue.submit(new Runnable() {
                 @Override
                 public void run() {
                     db.close();
@@ -161,9 +142,12 @@ public class SQLDatabaseQueue {
             });
             queue.shutdown();
             try {
+                close.get();
                 queue.awaitTermination(5, TimeUnit.MINUTES);
             } catch (InterruptedException e) {
                 logger.log(Level.SEVERE, "Interrupted while waiting for queue to terminate", e);
+            } catch (ExecutionException e) {
+                logger.log(Level.SEVERE, "Failed to close database", e);
             }
         } else {
             logger.log(Level.WARNING, "Database is already closed.");
@@ -202,18 +186,7 @@ public class SQLDatabaseQueue {
 
         if (this.sqliteVersion == null) {
             try {
-                this.sqliteVersion = this.submit(new SQLCallable<String>() {
-                    @Override
-                    public String call(SQLDatabase db) throws Exception {
-                        Cursor cursor = db.rawQuery("SELECT sqlite_version()", null);
-
-                        String sqliteVersion = "";
-                        while (cursor.moveToNext()) {
-                            sqliteVersion += cursor.getString(0);
-                        }
-                        return sqliteVersion;
-                    }
-                }).get();
+                this.sqliteVersion = this.submit(new SQLiteVersionCallable()).get();
                 return sqliteVersion;
             } catch (InterruptedException e) {
                 logger.log(Level.WARNING, "Could not determine SQLite version", e);
@@ -226,5 +199,57 @@ public class SQLDatabaseQueue {
         return this.sqliteVersion;
 
 
+    }
+
+    private static class SQLiteVersionCallable implements SQLCallable<String> {
+        @Override
+        public String call(SQLDatabase db) throws Exception {
+            Cursor cursor = db.rawQuery("SELECT sqlite_version()", null);
+
+            StringBuilder stringBuilder = new StringBuilder();
+            while (cursor.moveToNext()) {
+                stringBuilder.append(cursor.getString(0));
+            }
+            return stringBuilder.toString();
+        }
+    }
+
+    private static class VersionCallable implements SQLCallable<Integer> {
+        @Override
+        public Integer call(SQLDatabase db) throws Exception {
+            return db.getVersion();
+        }
+    }
+
+    private static class ThreadFactory implements java.util.concurrent.ThreadFactory {
+        private final File file;
+
+        public ThreadFactory(File file) {
+            this.file = file;
+        }
+
+        @Override
+        public Thread newThread(Runnable r) {
+            return new Thread(r, "SQLDatabaseQueue - "+ file);
+        }
+    }
+
+    private class UpdateSchemaCallable implements Runnable {
+        private final Migration migration;
+        private final int version;
+
+        public UpdateSchemaCallable(Migration migration, int version) {
+            this.migration = migration;
+            this.version = version;
+        }
+
+        @Override
+        public void run() {
+            try {
+                SQLDatabaseFactory.updateSchema(db, migration, version);
+            } catch (SQLException e){
+                logger.log(Level.SEVERE, "Failed to update database schema",e);
+            }
+        }
     }
 }

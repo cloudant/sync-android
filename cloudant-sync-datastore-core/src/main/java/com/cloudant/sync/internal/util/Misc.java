@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,7 +38,7 @@ public class Misc {
 
     public static boolean isRunningOnAndroid() {
         String javaRuntime = System.getProperty("java.runtime.name", "");
-        return javaRuntime.toLowerCase().contains(ANDROID_RUNTIME);
+        return javaRuntime.toLowerCase(Locale.ENGLISH).contains(ANDROID_RUNTIME);
     }
 
     public static byte[] getSha1(InputStream shaFis) {
@@ -50,9 +51,11 @@ public class Misc {
             while ((bytesRead = shaFis.read(buf)) != -1) {
                 sha1.update(buf, 0, bytesRead);
             }
+        } catch (RuntimeException e){
+            throw e;
         } catch (Exception e) {
             logger.log(Level.WARNING,"Problem calculating SHA1 for stream",e);
-            return null;
+            return new byte[]{};
         }
         return sha1.digest();
     }
@@ -66,7 +69,6 @@ public class Misc {
      * @return the joined string
      */
     public static String join(String separator, Collection<String> stringsToJoin) {
-        Iterator<String> iterator = stringsToJoin.iterator();
         StringBuilder builder = new StringBuilder();
         // Check if there is at least 1 element then use do/while to avoid trailing separator
         int index = stringsToJoin.size();
@@ -112,7 +114,7 @@ public class Misc {
     public static void checkNotNullOrEmpty(String param, String errorMessagePrefix) throws
             IllegalArgumentException {
         checkArgument(!isStringNullOrEmpty(param), (errorMessagePrefix != null ? errorMessagePrefix :
-                "Parameter") + " must not be " + param == null ? "null." : "empty.");
+              "Parameter") + " must not be " + param == null ? "null." : "empty.");
     }
 
     /**

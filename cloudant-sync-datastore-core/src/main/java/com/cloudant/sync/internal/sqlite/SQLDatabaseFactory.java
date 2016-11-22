@@ -28,6 +28,7 @@ import com.cloudant.sync.internal.util.Misc;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -89,7 +90,9 @@ public class SQLDatabaseFactory {
     public static SQLDatabase openSQLDatabase(File dbFile, KeyProvider provider) throws IOException, SQLException {
         Misc.checkNotNull(dbFile, "dbFile");
         File dbDirectory = dbFile.getParentFile();
-        dbDirectory.mkdirs();
+        if (!dbDirectory.mkdirs()){
+            logger.info(String.format(Locale.ENGLISH, "Did not create directories for path: %s directories may already exist", dbFile));
+        }
         Misc.checkArgument(dbDirectory.isDirectory(), "Input path is not a valid directory");
         Misc.checkArgument(dbDirectory.canWrite(), "Datastore directory is not writable");
         return internalOpenSQLDatabase(dbFile, provider);
@@ -115,52 +118,32 @@ public class SQLDatabaseFactory {
 
             if (runningOnAndroid) {
                 if (useSqlCipher) {
-                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite.android.AndroidSQLCipherSQLite")
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite.android" +
+                            ".AndroidSQLCipherSQLite")
                             .getMethod("open", File.class, KeyProvider.class)
                             .invoke(null, new Object[]{dbFile, provider});
                 } else {
-                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite.android.AndroidSQLite")
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite.android" +
+                            ".AndroidSQLite")
                             .getMethod("open", File.class)
                             .invoke(null, dbFile);
                 }
             } else {
                 if (useSqlCipher) {
-                    throw new UnsupportedOperationException("No SQLCipher-based database implementation for Java SE");
+                    throw new UnsupportedOperationException("No SQLCipher-based database " +
+                            "implementation for Java SE");
                 } else {
-                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite.sqlite4java.SQLiteWrapper")
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite" +
+                            ".sqlite4java.SQLiteWrapper")
                             .getMethod("open", File.class)
                             .invoke(null, dbFile);
                 }
             }
-
+        } catch (RuntimeException e){
+            throw e;
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to load database module", e);
             throw new SQLException("Failed to load database module", e);
-        }
-    }
-
-    /**
-     * This method runs a simple SQL query to validate the opened database
-     * is readable. In particular, this is useful for testing the key we
-     * passed SQLCipher is the correct key.
-     *
-     * @param db database to check is readable
-     * @return true if database passes validation, false otherwise
-     */
-    private static boolean validateOpenedDatabase(SQLDatabase db) {
-        Cursor c = null;
-        try {
-            c = db.rawQuery("SELECT count(*) FROM sqlite_master", null);
-            if (c.moveToFirst()) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Error performing database start up validation", ex);
-            return false;
-        } finally {
-            DatabaseUtils.closeCursorQuietly(c);
         }
     }
 
