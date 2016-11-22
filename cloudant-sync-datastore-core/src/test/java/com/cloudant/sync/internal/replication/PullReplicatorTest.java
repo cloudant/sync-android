@@ -104,7 +104,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
 
         Replicator replicator = ReplicatorBuilder.pull()
                 .from(this.source)
-                .to(this.datastore)
+                .to(this.documentStore)
                 .build();
 
         Assert.assertNotNull(replicator);
@@ -115,7 +115,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
 
         Replicator replicator = ReplicatorBuilder.pull()
                 .from(this.source)
-                .to(this.datastore)
+                .to(this.documentStore)
                 .filter(new PullFilter("a_filter"))
                 .build();
 
@@ -129,7 +129,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
         params.put("a","parameter");
         Replicator replicator = ReplicatorBuilder.pull()
                 .from(this.source)
-                .to(this.datastore)
+                .to(this.documentStore)
                 .filter(new PullFilter("a_filter",params))
                 .build();
 
@@ -142,7 +142,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
         Map<String,String> params = new HashMap<String,String>();
         Replicator replicator = ReplicatorBuilder.pull()
                 .from(this.source)
-                .to(this.datastore)
+                .to(this.documentStore)
                 .filter(new PullFilter("a_filter",params))
                 .build();
 
@@ -156,7 +156,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
 
         TestReplicationListener listener = new TestReplicationListener();
         ReplicatorBuilder replicatorBuilder = ReplicatorBuilder.pull()
-                .to(this.datastore)
+                .to(this.documentStore)
                 .from(this.remoteDb.couchClient.getRootUri())
                 .addRequestInterceptors(interceptorCallCounter)
                 .addResponseInterceptors(interceptorCallCounter);
@@ -214,7 +214,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
     public void replicatorBuilderAddsCookieInterceptorCustomPort() throws Exception {
         ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
                 from(new URI("http://🍶:🍶@some-host:123/path%2Fsome-path-日本")).
-                to(datastore);
+                to(documentStore);
         ReplicatorImpl r = (ReplicatorImpl)p.build();
         // check that user/pass has been removed
         Assert.assertEquals("http://some-host:123/path%2Fsome-path-日本",
@@ -230,7 +230,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
     public void replicatorBuilderAddsCookieInterceptorDefaultPort() throws Exception {
         ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
                 from(new URI("http://🍶:🍶@some-host/path%2Fsome-path-日本")).
-                to(datastore);
+                to(documentStore);
         ReplicatorImpl r = (ReplicatorImpl)p.build();
         // check that user/pass has been removed
         Assert.assertEquals("http://some-host:80/path%2Fsome-path-日本",
