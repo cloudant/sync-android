@@ -158,7 +158,9 @@ public class PullReplicatorTest extends ReplicationTestBase {
                 .addRequestInterceptors(interceptorCallCounter)
                 .addResponseInterceptors(interceptorCallCounter);
         if (TestOptions.COOKIE_AUTH) {
-            CookieInterceptor ci = new CookieInterceptor(TestOptions.COUCH_USERNAME, TestOptions.COUCH_PASSWORD);
+            CookieInterceptor ci = new CookieInterceptor(TestOptions.COUCH_USERNAME,
+                    TestOptions.COUCH_PASSWORD,
+                    this.remoteDb.couchClient.getRootUri().toString());
             replicatorBuilder.addRequestInterceptors(ci);
             replicatorBuilder.addResponseInterceptors(ci);
         }

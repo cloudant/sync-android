@@ -178,11 +178,12 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         respI.setAccessible(true);
         List<HttpConnectionRequestInterceptor> reqIList = (List)reqI.get(p);
         List<HttpConnectionRequestInterceptor> respIList = (List)respI.get(p);
-        Assert.assertEquals(1, reqIList.size());
-        Assert.assertEquals(CookieInterceptor.class, reqIList.get(0).getClass());
+        // This relies on the UserAgentInterceptor being added before the CookieInterceptor.
+        Assert.assertEquals(2, reqIList.size());
+        Assert.assertEquals(CookieInterceptor.class, reqIList.get(1).getClass());
         Assert.assertEquals(1, respIList.size());
         Assert.assertEquals(CookieInterceptor.class, respIList.get(0).getClass());
-        CookieInterceptor ci = (CookieInterceptor)reqIList.get(0);
+        CookieInterceptor ci = (CookieInterceptor)reqIList.get(1);
         Field srbField = CookieInterceptor.class.getDeclaredField("sessionRequestBody");
         srbField.setAccessible(true);
         byte[] srb = (byte[])srbField.get(ci);

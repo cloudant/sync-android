@@ -60,7 +60,7 @@ public class SpecifiedCouch {
             if (COOKIE_AUTH) {
                 ArrayList<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
                 ArrayList<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList<HttpConnectionResponseInterceptor>();
-                CookieInterceptor cookieInterceptor = new CookieInterceptor(COUCH_USERNAME, COUCH_PASSWORD);
+                CookieInterceptor cookieInterceptor = new CookieInterceptor(COUCH_USERNAME, COUCH_PASSWORD, uriString);
                 requestInterceptors.add(cookieInterceptor);
                 responseInterceptors.add(cookieInterceptor);
                 config.setRequestInterceptors(requestInterceptors);

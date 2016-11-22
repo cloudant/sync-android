@@ -159,7 +159,9 @@ public class HttpTest extends CouchTestBase {
         }
 
         CookieInterceptor interceptor = new CookieInterceptor(TestOptions.COUCH_USERNAME,
-                TestOptions.COUCH_PASSWORD);
+                TestOptions.COUCH_PASSWORD,
+                getCouchConfig("httptest" + System
+                        .currentTimeMillis()).getRootUri().toString());
 
         CouchConfig config = getCouchConfig("cookie_test");
         HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
