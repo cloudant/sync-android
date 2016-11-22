@@ -55,7 +55,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
     @Override
     protected ReplicatorBuilder.Push getPushBuilder() {
         return ReplicatorBuilder.push().
-                from(this.datastore).
+                from(this.documentStore).
                 to(this.couchConfig.getRootUri()).
                 pushAttachmentsInline(pushAttachmentsInline).
                 addRequestInterceptors(couchConfig.getRequestInterceptors()).
