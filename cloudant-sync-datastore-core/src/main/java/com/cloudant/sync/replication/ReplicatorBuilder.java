@@ -18,6 +18,7 @@ import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.internal.replication.PullStrategy;
 import com.cloudant.sync.internal.replication.PushStrategy;
 import com.cloudant.sync.internal.replication.ReplicatorImpl;
@@ -87,7 +88,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
     /**
      * A Push Replication Builder
      */
-    public static class Push extends ReplicatorBuilder<Database, URI, Push> {
+    public static class Push extends ReplicatorBuilder<DocumentStore, URI, Push> {
 
         private int changeLimitPerBatch = 500;
 
@@ -109,7 +110,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             // add cookie interceptor and remove creds from URI if required
             super.target = super.addCookieInterceptorIfRequired(super.target);
 
-            PushStrategy pushStrategy = new PushStrategy(super.source,
+            PushStrategy pushStrategy = new PushStrategy(super.source.database,
                     super.target,
                     super.requestInterceptors,
                     super.responseInterceptors);
@@ -181,7 +182,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
     /**
      * A Pull Replication Builder
      */
-    public static class Pull extends ReplicatorBuilder<URI, Database, Pull> {
+    public static class Pull extends ReplicatorBuilder<URI, DocumentStore, Pull> {
 
         private PullFilter pullPullFilter = null;
 
@@ -204,7 +205,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             super.source = super.addCookieInterceptorIfRequired(super.source);
 
             PullStrategy pullStrategy = new PullStrategy(super.source,
-                    super.target,
+                    super.target.database,
                     pullPullFilter,
                     super.requestInterceptors,
                     super.responseInterceptors);
