@@ -70,7 +70,27 @@ public abstract class ReplicatorBuilder<S, T, E> {
         if (uri.getUserInfo() != null) {
             String[] parts = uri.getUserInfo().split(":");
             if (parts.length == 2) {
-                CookieInterceptor ci = new CookieInterceptor(parts[0], parts[1], uri.toString());
+
+                String path = uri.getRawPath();
+                int index = path.lastIndexOf("/");
+                if (index == path.length() - 1) {
+                    // we need to go back one
+                    path = path.substring(0, index);
+                    index = path.lastIndexOf("/");
+                }
+
+                path = path.substring(0, index);
+
+                URI baseURI;
+
+                try {
+                    baseURI = new URI(uriProtocol, null, uriHost, uriPort, path, null, null);
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
+
+
+                CookieInterceptor ci = new CookieInterceptor(parts[0], parts[1], baseURI.toString());
                 requestInterceptors.add(ci);
                 responseInterceptors.add(ci);
             }
