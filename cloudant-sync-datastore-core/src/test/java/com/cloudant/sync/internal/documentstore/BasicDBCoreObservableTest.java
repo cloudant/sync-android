@@ -108,7 +108,7 @@ public class BasicDBCoreObservableTest {
         }
         
         @Subscribe
-        public void onDocumentModified(DocumentModified dm) {
+        public void onDocumentModified(DocumentModified dm) throws Exception {
             this.sequence = core.getLastSequence();            
         }
 

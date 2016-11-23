@@ -15,6 +15,8 @@
 package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.documentstore.DocumentException;
+import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.QueryResult;
@@ -204,7 +206,7 @@ class QueryExecutor {
         return fields;
     }
 
-    protected Set<String> executeQueryTree(QueryNode node, SQLDatabase db) {
+    protected Set<String> executeQueryTree(QueryNode node, SQLDatabase db) throws DocumentStoreException {
         if (node instanceof AndQueryNode) {
             Set<String> accumulator = null;
 
@@ -242,7 +244,7 @@ class QueryExecutor {
             return accumulator;
         } else if (node instanceof SqlQueryNode) {
             SqlQueryNode sqlNode = (SqlQueryNode) node;
-            List<String> docIds;
+            List<String> docIds = null;
             if (sqlNode.sql != null) {
                 docIds = new ArrayList<String>();
                 SqlParts sqlParts = sqlNode.sql;
