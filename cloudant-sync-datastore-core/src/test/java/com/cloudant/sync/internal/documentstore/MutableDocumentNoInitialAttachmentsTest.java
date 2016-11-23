@@ -18,6 +18,7 @@ import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.AttachmentException;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.UnsavedFileAttachment;
 import com.cloudant.sync.util.TestUtils;
 
@@ -53,12 +54,12 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
     }
 
     // Update revision with updated body set to null
-    @Test(expected = DocumentException.class)
+    // TODO this probably should become become InvalidDocumentException
+    @Test(expected = DocumentStoreException.class)
     public void updateBodyNull() throws Exception {
         DocumentRevision update = saved;
         update.setBody(null);
         DocumentRevision updated = datastore.updateDocumentFromRevision(update);
-        Assert.fail("Expected NullPointerException");
     }
 
     // Update revision with updated body and new attachment

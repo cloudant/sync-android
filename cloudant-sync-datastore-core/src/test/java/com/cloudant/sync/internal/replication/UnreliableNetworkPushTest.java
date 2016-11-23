@@ -61,7 +61,7 @@ public class UnreliableNetworkPushTest extends UnreliableProxyTestBase {
 
 
 
-    private void createLocalDocument(String docid) throws DocumentException {
+    private void createLocalDocument(String docid) throws Exception {
         DocumentRevision mdr = new DocumentRevision(docid);
         Map<String, Object> doc = new HashMap<String, Object>();
         // TODO make a much more complex document
