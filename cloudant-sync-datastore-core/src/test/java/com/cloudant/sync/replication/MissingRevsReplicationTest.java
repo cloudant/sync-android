@@ -28,6 +28,7 @@ import com.cloudant.sync.datastore.DocumentRevisionTree;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
@@ -53,6 +54,7 @@ public class MissingRevsReplicationTest extends ReplicationTestBase {
         return s;
     }
 
+    @Ignore //pending resolution of case 79041
     @Test
     public void testReplicationWithMissingRevision() throws Exception {
         // Create doc
