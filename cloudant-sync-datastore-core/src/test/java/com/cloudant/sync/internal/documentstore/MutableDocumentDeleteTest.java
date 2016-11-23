@@ -44,7 +44,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
 
     // Delete a MutableCopy
     @Test
-    public void deleteFromRevision() throws ConflictException {
+    public void deleteFromRevision() throws Exception {
         DocumentRevision deleted = datastore.deleteDocumentFromRevision(saved);
         Assert.assertNotNull("Deleted DocumentRevision is null", deleted);
         Assert.assertTrue("Deleted DocumentRevision is not flagged as deleted", deleted.isDeleted());
@@ -52,7 +52,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
 
     // Delete null
     @Test
-    public void deleteNullRevision() throws ConflictException {
+    public void deleteNullRevision() throws Exception {
         try {
             DocumentRevision deleted = datastore.deleteDocumentFromRevision(null);
             Assert.fail("NullPointerException expected");

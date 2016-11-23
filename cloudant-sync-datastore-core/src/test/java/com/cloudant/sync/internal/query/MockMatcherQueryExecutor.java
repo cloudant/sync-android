@@ -15,6 +15,7 @@
 package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.sqlite.SQLDatabaseQueue;
@@ -35,11 +36,16 @@ import java.util.Set;
  */
 public class MockMatcherQueryExecutor extends QueryExecutor{
 
-    private final Set<String> docIds;
+    private Set<String> docIds;
 
     MockMatcherQueryExecutor(Database database, SQLDatabaseQueue queue) {
         super(database, queue);
-        docIds = new HashSet<String>(database.getAllDocumentIds());
+        try {
+            docIds = new HashSet<String>(database.getAllDocumentIds());
+        } catch (DocumentStoreException dse) {
+            ;// TODO
+        }
+
     }
 
     // return just a blank node (we don't execute it anyway).

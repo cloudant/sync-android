@@ -20,7 +20,7 @@
 package com.cloudant.sync.documentstore;
 
 import com.cloudant.sync.event.EventBus;
-import com.cloudant.sync.internal.query.QueryImpl;
+import com.cloudant.sync.query.Query;
 
 import java.io.File;
 import java.util.Iterator;
@@ -36,7 +36,7 @@ import java.util.List;
  * is the document ID combined with a (sometimes optional) revision ID.</p>
  *
  * <p>For a more advanced way of querying the Datastore, see the
- * {@link QueryImpl} class</p>
+ * {@link Query} class</p>
  *
  * <p>Each document consists of a set of revisions, hence most methods within
  * this class operating on {@link DocumentRevision} objects, which carry both a
@@ -55,7 +55,7 @@ import java.util.List;
  * peers.</p>
  *
  * @see DocumentRevision
- * @see QueryImpl
+ * @see Query
  * @api_public
  *
  */
@@ -82,10 +82,11 @@ public interface Database {
      * </p>
      *
      * @param documentId ID of document to retrieve.
-     * @return {@code DocumentRevision} of the document or null if it doesn't exist.
-     * @throws DocumentNotFoundException When the document specified was not found
+     * @return {@code DocumentRevision} of the document
+     * @throws DocumentNotFoundException if the document specified was not found
+     * @throws DocumentStoreException if there was an error accessing database
      */
-    DocumentRevision getDocument(String documentId) throws DocumentNotFoundException;
+    DocumentRevision getDocument(String documentId) throws DocumentNotFoundException, DocumentStoreException;
 
     /**
      * <p>Retrieves a given revision of a document.</p>
@@ -100,11 +101,12 @@ public interface Database {
      *
      * @param documentId ID of the document
      * @param revisionId Revision of the document
-     * @return {@code DocumentRevision} of the document or null if it doesn't exist.
-     * @throws DocumentNotFoundException if the document at the specified revision was not found
+     * @return {@code DocumentRevision} of the document
+     * @throws DocumentNotFoundException if the document specified was not found
+     * @throws DocumentStoreException if there was an error reading the document
      */
     DocumentRevision getDocument(String documentId, String revisionId) throws
-            DocumentNotFoundException;
+            DocumentNotFoundException, DocumentStoreException;
 
     /**
      * <p>Returns whether this datastore contains a particular revision of
@@ -116,8 +118,9 @@ public interface Database {
      * @param revisionId revision of the document
      * @return {@code true} if specified document's particular revision exists
      *         in the datastore, {@code false} otherwise.
+     * @throws DocumentStoreException if there was an error reading from the database
      */
-    boolean containsDocument(String documentId, String revisionId);
+    boolean containsDocument(String documentId, String revisionId) throws DocumentStoreException;
 
     /**
      * <p>Returns whether this datastore contains any revisions of a document.
@@ -128,8 +131,9 @@ public interface Database {
      * @param documentId id of the document
      * @return {@code true} if specified document exists
      *         in the datastore, {@code false} otherwise.
+     * @throws DocumentStoreException if there was an error reading from the database
      */
-    boolean containsDocument(String documentId);
+    boolean containsDocument(String documentId) throws DocumentStoreException;
 
     /**
      * <p>Enumerates the current winning revision for all documents in the
@@ -145,16 +149,18 @@ public interface Database {
      * @param descending whether the documents are read in ascending or
      *                   descending order.
      * @return list of {@code DBObjects}, maximum length {@code limit}.
+     * @throws DocumentStoreException if there was an error reading the documents
      */
-    List<DocumentRevision> getAllDocuments(int offset, int limit, boolean descending);
+    List<DocumentRevision> getAllDocuments(int offset, int limit, boolean descending) throws DocumentStoreException;
 
     /**
      * <p>Enumerates the current winning revision for all documents in the
      * datastore and return a list of their document identifiers.</p>
      *
      * @return list of {@code String}.
+     * @throws DocumentStoreException if there was an error reading the document IDs
      */
-    List<String> getAllDocumentIds();
+    List<String> getAllDocumentIds() throws DocumentStoreException;
 
     /**
      * <p>Returns the current winning revisions for a set of documents.</p>
@@ -165,10 +171,10 @@ public interface Database {
      *
      * @param documentIds list of document id
      * @return list of {@code DocumentRevision} objects.
-     * @throws DocumentException if there was an error retrieving the
+     * @throws DocumentStoreException if there was an error retrieving the
      * documents.
      */
-    List<DocumentRevision> getDocumentsWithIds(List<String> documentIds) throws DocumentException;
+    List<DocumentRevision> getDocumentsWithIds(List<String> documentIds) throws DocumentStoreException;
 
     /**
      * <p>Retrieves the datastore's current sequence number.</p>
@@ -185,14 +191,14 @@ public interface Database {
      *
      * @return the last sequence number
      */
-    long getLastSequence();
+    long getLastSequence() throws DocumentStoreException;
 
     /**
      * <p>Return the number of documents in the datastore</p>
      *
      * @return number of non-deleted documents in datastore
      */
-    int getDocumentCount();
+    int getDocumentCount() throws DocumentStoreException;
 
     /**
      * <p>Returns a list of changed documents, from {@code since} to
@@ -205,17 +211,7 @@ public interface Database {
      * @return list of the documents and last sequence number of the change set
      *      (checkpoint)
      */
-    Changes changes(long since, int limit);
-
-    /**
-     * <p>Returns the EventBus which this Datastore posts
-     * {@link com.cloudant.sync.event.notifications.DocumentModified Document Notification Events} to.</p>
-     * @return the Datastore's EventBus
-     *
-     * @see <a href="https://github.com/cloudant/sync-android/blob/master/doc/events.md">
-     *     Events documentation</a>
-     */
-    EventBus getEventBus();
+    Changes changes(long since, int limit) throws DocumentStoreException;
 
     /**
      * <p>Return {@code @Iterable<String>} over ids to all the Documents with
@@ -231,7 +227,7 @@ public interface Database {
      *
      * @see <a href="http://wiki.apache.org/couchdb/Replication_and_conflicts">Replication and conflicts</a>
      */
-    Iterator<String> getConflictedDocumentIds();
+    Iterator<String> getConflictedDocumentIds() throws DocumentStoreException;
 
     /**
      * <p>
@@ -266,10 +262,13 @@ public interface Database {
      * @param rev the <code>DocumentRevision</code> to be created
      * @return a <code>DocumentRevision</code> - the newly created document
      * @throws AttachmentException if there was an error saving any new attachments
-     * @throws DocumentException if there was an error creating the document
+     * @throws InvalidDocumentException if the document body was invalid
+     * @throws ConflictException if a document with this document id already exists
+     * @throws DocumentStoreException if there was an error creating the document
      * @see Database#getEventBus()
      */
-    DocumentRevision createDocumentFromRevision(DocumentRevision rev) throws DocumentException;
+    DocumentRevision createDocumentFromRevision(DocumentRevision rev) throws AttachmentException,
+            InvalidDocumentException, ConflictException, DocumentStoreException;
 
     /**
      * <p>Updates a document that exists in the datastore with with body and attachments
@@ -286,10 +285,11 @@ public interface Database {
      * @return a <code>DocumentRevision</code> - the updated document
      * @throws ConflictException <code>rev</code> is not a current revision for this document
      * @throws AttachmentException if there was an error saving the attachments
-     * @throws DocumentException if there was an error updating the document
+     * @throws DocumentStoreException if there was an error updating the document
      * @see Database#getEventBus()
      */
-    DocumentRevision updateDocumentFromRevision(DocumentRevision rev) throws DocumentException;
+    DocumentRevision updateDocumentFromRevision(DocumentRevision rev) throws ConflictException,
+            AttachmentException, DocumentStoreException;
 
     /**
      * <p>Deletes a document from the datastore.</p>
@@ -313,10 +313,13 @@ public interface Database {
      * @param rev the <code>DocumentRevision</code> to be deleted
      * @return a <code>DocumentRevision</code> - the deleted or "tombstone" document
      * @throws ConflictException if the <code>sourceRevisionId</code> is not the current revision
+     * @throws DocumentNotFoundException if the <code>DocumentRevision</code> was already deleted
+     * @throws DocumentStoreException if there was an error deleting the document
      * @see Database#getEventBus()
      * @see Database#resolveConflictsForDocument
      */
-    DocumentRevision deleteDocumentFromRevision(DocumentRevision rev) throws ConflictException;
+    DocumentRevision deleteDocumentFromRevision(DocumentRevision rev) throws ConflictException, DocumentNotFoundException,
+            DocumentStoreException;
 
     /**
      * <p>Delete all leaf revisions for the document</p>
@@ -327,16 +330,27 @@ public interface Database {
      *
      * @param id the ID of the document to delete leaf nodes for
      * @return a List of a <code>DocumentRevision</code>s - the deleted or "tombstone" documents
-     * @throws DocumentException if there was an error deleting the document
+     * @throws DocumentStoreException if there was an error deleting the document
      * @see Database#getEventBus()
      * @see Database#deleteDocumentFromRevision(DocumentRevision)
      */
-    List<DocumentRevision> deleteDocument(String id) throws DocumentException;
+    List<DocumentRevision> deleteDocument(String id) throws DocumentStoreException;
 
     /**
-     * Compacts the sqlDatabase storage by removing the bodies and attachments of obsolete revisions.
+     * Compacts the SQL database and disk storage by removing the bodies and attachments of obsolete revisions.
      */
-    void compact();
+    void compact() throws DocumentStoreException;
+
+    /**
+     * <p>Returns the EventBus which this Datastore posts
+     * {@link com.cloudant.sync.event.notifications.DocumentModified Document Notification Events} to.</p>
+     * @return the Datastore's EventBus
+     *
+     * @see <a href="https://github.com/cloudant/sync-android/blob/master/doc/events.md">
+     *     Events documentation</a>
+     */
+    EventBus getEventBus();
+
 
 }
 

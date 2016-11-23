@@ -18,6 +18,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.Database;
@@ -604,7 +605,7 @@ public class DatastoreSchemaTests {
     }
 
     private void assertAttachmentCount(Database database, String docId,
-                                       int expectedAttachmentCount) {
+                                       int expectedAttachmentCount) throws DocumentNotFoundException, DocumentStoreException {
         int actualAttachmentCount = 0;
         Set<String> revIds = ((DatabaseImpl) database).getAllRevisionsOfDocument(docId).
                 leafRevisionIds();
@@ -621,7 +622,7 @@ public class DatastoreSchemaTests {
                 actualAttachmentCount);
     }
 
-    private void assertWinner(Database database, String docId, String expectedRevId) {
+    private void assertWinner(Database database, String docId, String expectedRevId) throws DocumentNotFoundException, DocumentStoreException {
         try {
             String actualRevId = database.getDocument(docId).getRevision();
             Assert.assertEquals("Should get the expected winning revision ID", expectedRevId,

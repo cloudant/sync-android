@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.internal.query;
 
+import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.documentstore.Changes;
 import com.cloudant.sync.documentstore.Database;
@@ -32,6 +33,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -108,12 +110,17 @@ class IndexUpdater {
 
         Changes changes;
         long lastSequence = sequenceNumberForIndex(indexName);
-
-        do {
-            changes = database.changes(lastSequence, 10000);
-            updateIndex(indexName, fieldNames, changes, lastSequence);
-            lastSequence = changes.getLastSequence();
-        } while (changes.size() > 0);
+        try {
+            do {
+                changes = database.changes(lastSequence, 10000);
+                updateIndex(indexName, fieldNames, changes, lastSequence);
+                lastSequence = changes.getLastSequence();
+            } while (changes.size() > 0);
+        } catch (DocumentStoreException e) {
+            String message = String.format(Locale.ENGLISH, "Failed to get changes feed from %d", lastSequence);
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(e.getCause());
+        }
     }
 
     private void updateIndex(final String indexName,
