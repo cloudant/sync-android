@@ -1,3 +1,6 @@
+# Unreleased
+- [FIXED] Issue performing cookie authentication in version 1.1.3.
+
 # 1.1.3 (2016-11-22)
 - [FIXED] Incorrect message output from parameter `null` or empty checks.
 - [FIXED] Issue where replications would error if the server returned missing revisions.
