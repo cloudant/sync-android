@@ -44,6 +44,9 @@ public class CompactCallable implements SQLCallable<Void> {
         ContentValues args = new ContentValues();
         args.put("json", (String) null);
         int revsCompacted = db.update("revs", args, "sequence IN (SELECT parent FROM revs)", null);
+        if (revsCompacted < 0) {
+            throw new IllegalStateException("Error running compact SQL update");
+        }
         logger.finer(String.format("Compacted %d revisions", revsCompacted));
 
         logger.finer("Deleting old attachments...");

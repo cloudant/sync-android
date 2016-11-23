@@ -22,7 +22,10 @@ import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentException;
+import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.DocumentStoreException;
+import com.cloudant.sync.documentstore.InvalidDocumentException;
 import com.cloudant.sync.documentstore.LocalDocument;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -99,7 +102,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         Assert.assertEquals(id, rev.getId());
     }
 
-    @Test(expected = DocumentException.class)
+    @Test(expected = ConflictException.class)
     public void createDocument_existDocId_fail() throws Exception {
         String docId = CouchUtils.generateDocumentId();
         DocumentRevision newDoc = new DocumentRevision(docId);
@@ -109,7 +112,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         datastore.createDocumentFromRevision(newDoc);
     }
 
-    @Test(expected = DocumentException.class)
+    @Test(expected = InvalidDocumentException.class)
     public void createDocument_specialField_fail() throws Exception {
         Map m = createMapWithSpecialField();
         DocumentRevision rev = new DocumentRevision();
@@ -159,7 +162,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         Assert.assertEquals(4, CouchUtils.generationFromRevId(rev_4.getRevision()));
     }
 
-    @Test(expected = DocumentException.class)
+    @Test(expected = InvalidDocumentException.class)
     public void updateDocument_specialField_exception() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
@@ -172,7 +175,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         datastore.updateDocumentFromRevision(rev_2Mut);
     }
 
-    @Test(expected = DocumentException.class)
+    @Test(expected = ConflictException.class)
     public void updateDocument_targetDocumentNotCurrentRevision_exception() throws Exception{
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
@@ -241,7 +244,12 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         DocumentRevision rev2 = (DocumentRevision) tree1.getCurrentRevision();
         Assert.assertEquals(2, CouchUtils.generationFromRevId(rev2.getRevision()));
 
-        this.datastore.deleteDocumentFromRevision(rev2);
+        try {
+            this.datastore.deleteDocumentFromRevision(rev2);
+            Assert.fail("Expected DocumentNotFoundException");
+        } catch(DocumentNotFoundException dnfe) {
+            ;
+        }
         DocumentRevisionTree tree2 = this.datastore.getAllRevisionsOfDocument(rev1.getId());
         DocumentRevision rev3 = (DocumentRevision) tree2.getCurrentRevision();
         Assert.assertEquals(rev2.getRevision(), rev3.getRevision());
@@ -295,7 +303,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void getLastSequence_noDocuments_ShouldBeMinusOne() {
+    public void getLastSequence_noDocuments_ShouldBeMinusOne() throws Exception {
         Assert.assertEquals(DatabaseImpl.SEQUENCE_NUMBER_START, datastore.getLastSequence());
     }
 
@@ -596,7 +604,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
 
     }
 
-    private void getAllDocuments_testCountAndOffset(int objectCount, List<DocumentRevision> expectedDocumentRevisions, boolean descending) {
+    private void getAllDocuments_testCountAndOffset(int objectCount, List<DocumentRevision> expectedDocumentRevisions, boolean descending) throws DocumentStoreException {
 
         int count;
         int offset = 0;
