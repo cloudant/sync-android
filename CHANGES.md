@@ -1,4 +1,4 @@
-# Unreleased
+# 1.1.4 (2016-11-23)
 - [FIXED] Issue performing cookie authentication in version 1.1.3.
 
 # 1.1.3 (2016-11-22)
