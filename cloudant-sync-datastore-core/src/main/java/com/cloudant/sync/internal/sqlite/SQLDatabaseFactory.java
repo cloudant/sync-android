@@ -133,10 +133,16 @@ public class SQLDatabaseFactory {
                     throw new UnsupportedOperationException("No SQLCipher-based database " +
                             "implementation for Java SE");
                 } else {
+
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.h2.H2Wrapper")
+                            .getMethod("open", File.class)
+                            .invoke(null, dbFile);
+/*
+
                     return (SQLDatabase) Class.forName("com.cloudant.sync.internal.sqlite" +
                             ".sqlite4java.SQLiteWrapper")
                             .getMethod("open", File.class)
-                            .invoke(null, dbFile);
+                            .invoke(null, dbFile);*/
                 }
             }
         } catch (RuntimeException e){
@@ -172,17 +178,17 @@ public class SQLDatabaseFactory {
             throws SQLException {
         Misc.checkArgument(version > 0, "Schema version number must be positive");
         // ensure foreign keys are enforced in the case that we are up to date and no migration happen
-        database.execSQL("PRAGMA foreign_keys = ON;");
+//        database.execSQL("PRAGMA foreign_keys = ON;");
         int dbVersion = database.getVersion();
         if(dbVersion < version) {
             // switch off foreign keys during the migration - so that we don't get caught out by
             // "ON DELETE CASCADE" constraints etc
-            database.execSQL("PRAGMA foreign_keys = OFF;");
+//            database.execSQL("PRAGMA foreign_keys = OFF;");
             database.beginTransaction();
             try {
                 try {
                     migration.runMigration(database);
-                    database.execSQL("PRAGMA user_version = " + version + ";");
+             //       database.execSQL("PRAGMA user_version = " + version + ";");
 
                     database.setTransactionSuccessful();
                 } catch (Exception ex) {
@@ -194,7 +200,7 @@ public class SQLDatabaseFactory {
             } finally {
                 database.endTransaction();
                 // re-enable foreign keys
-                database.execSQL("PRAGMA foreign_keys = ON;");
+    //            database.execSQL("PRAGMA foreign_keys = ON;");
             }
 
         }
