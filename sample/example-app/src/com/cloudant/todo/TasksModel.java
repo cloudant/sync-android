@@ -21,13 +21,13 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.sync.datastore.DatastoreNotCreatedException;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.documentstore.ConflictException;
+import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
+import com.cloudant.sync.documentstore.DocumentException;
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.DocumentStore;
+import com.cloudant.sync.documentstore.DocumentStoreNotOpenedException;
 import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.event.notifications.ReplicationCompleted;
 import com.cloudant.sync.event.notifications.ReplicationErrored;
@@ -51,7 +51,7 @@ class TasksModel {
     private static final String DATASTORE_MANGER_DIR = "data";
     private static final String TASKS_DATASTORE_NAME = "tasks";
 
-    private Datastore mDatastore;
+    private Database mDatabase;
 
     private Replicator mPushReplicator;
     private Replicator mPullReplicator;
@@ -70,11 +70,11 @@ class TasksModel {
                 DATASTORE_MANGER_DIR,
                 Context.MODE_PRIVATE
         );
-        DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
         try {
-            this.mDatastore = manager.openDatastore(TASKS_DATASTORE_NAME);
-        } catch (DatastoreNotCreatedException dnce) {
-            Log.e(LOG_TAG, "Unable to open Datastore", dnce);
+            this.mDatabase = DocumentStore.getInstance(new File(path, TASKS_DATASTORE_NAME))
+                .database;
+        } catch (DocumentStoreNotOpenedException dsnoe) {
+            Log.e(LOG_TAG, "Unable to open Datastore", dsnoe);
         }
 
         Log.d(LOG_TAG, "Set up database at " + path.getAbsolutePath());
@@ -118,7 +118,7 @@ class TasksModel {
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(DocumentBodyFactory.create(task.asMap()));
         try {
-            DocumentRevision created = this.mDatastore.createDocumentFromRevision(rev);
+            DocumentRevision created = this.mDatabase.createDocumentFromRevision(rev);
             return Task.fromRevision(created);
         } catch (DocumentException de) {
             return null;
@@ -136,7 +136,7 @@ class TasksModel {
         DocumentRevision rev = task.getDocumentRevision();
         rev.setBody(DocumentBodyFactory.create(task.asMap()));
         try {
-            DocumentRevision updated = this.mDatastore.updateDocumentFromRevision(rev);
+            DocumentRevision updated = this.mDatabase.updateDocumentFromRevision(rev);
             return Task.fromRevision(updated);
         } catch (DocumentException de) {
             return null;
@@ -150,15 +150,15 @@ class TasksModel {
      *      match the current rev in the datastore.
      */
     public void deleteDocument(Task task) throws ConflictException {
-        this.mDatastore.deleteDocumentFromRevision(task.getDocumentRevision());
+        this.mDatabase.deleteDocumentFromRevision(task.getDocumentRevision());
     }
 
     /**
      * <p>Returns all {@code Task} documents in the datastore.</p>
      */
     public List<Task> allTasks() {
-        int nDocs = this.mDatastore.getDocumentCount();
-        List<DocumentRevision> all = this.mDatastore.getAllDocuments(0, nDocs, true);
+        int nDocs = this.mDatabase.getDocumentCount();
+        List<DocumentRevision> all = this.mDatabase.getAllDocuments(0, nDocs, true);
         List<Task> tasks = new ArrayList<Task>();
 
         // Filter all documents down to those of type Task.
@@ -233,8 +233,8 @@ class TasksModel {
         // Set up the new replicator objects
         URI uri = this.createServerURI();
 
-        mPullReplicator = ReplicatorBuilder.pull().to(mDatastore).from(uri).build();
-        mPushReplicator = ReplicatorBuilder.push().from(mDatastore).to(uri).build();
+        mPullReplicator = ReplicatorBuilder.pull().to(mDatabase).from(uri).build();
+        mPushReplicator = ReplicatorBuilder.push().from(mDatabase).to(uri).build();
 
         mPushReplicator.getEventBus().register(this);
         mPullReplicator.getEventBus().register(this);
@@ -291,7 +291,7 @@ class TasksModel {
      */
     @Subscribe
     public void error(ReplicationErrored re) {
-        Log.e(LOG_TAG, "Replication error:", re.errorInfo.getException());
+        Log.e(LOG_TAG, "Replication error:", re.errorInfo.getCause());
         mHandler.post(new Runnable() {
             @Override
             public void run() {

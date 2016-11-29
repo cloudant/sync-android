@@ -18,7 +18,10 @@ repositories {
 
 dependencies {
     // change version to 'latest.integration' to build from latest snapshot release
-    compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'latest.release')
+//    compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'latest.release')
+    compile project(':cloudant-sync-datastore-android')
+    compile project(':cloudant-sync-datastore-core')
+
     // needed for PeriodicReplicationReceiver etc
     compile 'com.android.support:support-v13:23.3.0'
 }
@@ -65,6 +68,19 @@ android {
             // use default proguard config plus our extra settings
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard.cfg'
         }
+    }
+
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven'
+
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
+
+    repositories {
+        mavenCentral()
     }
 
 }

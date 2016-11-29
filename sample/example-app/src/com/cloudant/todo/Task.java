@@ -14,7 +14,8 @@
 
 package com.cloudant.todo;
 
-import com.cloudant.sync.datastore.DocumentRevision;
+
+import com.cloudant.sync.documentstore.DocumentRevision;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -80,7 +81,7 @@ public class Task {
         Task t = new Task();
         t.rev = rev;
         // this could also be done by a fancy object mapper
-        Map<String, Object> map = rev.asMap();
+        Map<String, Object> map = rev.getBody().asMap();
         if(map.containsKey("type") && map.get("type").equals(Task.DOC_TYPE)) {
             t.setType((String) map.get("type"));
             t.setCompleted((Boolean) map.get("completed"));
