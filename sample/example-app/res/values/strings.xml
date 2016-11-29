@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">TodoSync</string>
+    <string name="activity_settings_title">Settings</string>
+    <string name="create">Create</string>
+    <string name="cancel">Cancel</string>
+    <string name="action_new">New</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_download">Download (Pull)</string>
+    <string name="action_upload">Upload (Push)</string>
+    <string name="action_delete">Delete</string>
+    <string name="new_task">New Task</string>
+    <string name="enter_description">Enter task description</string>
+    <string name="task_not_created">Task not created because description is empty</string>
+    <string name="completed">COMPLETED</string>
+    <string name="replication_running">Replication is running</string>
+    <string name="replication_completed">Replication completed</string>
+    <string name="replication_error">Replication error</string>
+    <string name="pref_summary_api_key">The api key used to replicate to/from your cloudant account.</string>
+    <string name="pref_title_api_key">API Key</string>
+    <string name="pref_summary_api_password">The api password used to replicate to/from your cloudant account.</string>
+    <string name="pref_title_api_password">API Password</string>
+    <string name="pref_summary_username">You cloudant user name, and it is also used to determine your cloudant server url.</string>
+    <string name="pref_title_username">Cloudant user name</string>
+    <string name="pref_summary_dbname">You cloudant db name, and this is the db used in replication.</string>
+    <string name="pref_title_dbname">Cloudant db name</string>
+
+</resources>

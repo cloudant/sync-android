@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="default_user"></string>
+    <string name="default_dbname"></string>
+    <string name="default_api_key"></string>
+    <string name="default_api_password"></string>
+
+</resources>
