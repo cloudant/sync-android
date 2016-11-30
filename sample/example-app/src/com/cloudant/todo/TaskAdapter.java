@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cloudant, Inc. All rights reserved.
+ * Copyright © 2016 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -14,8 +14,6 @@
 
 package com.cloudant.todo;
 
-import java.util.List;
-
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.view.LayoutInflater;
@@ -26,6 +24,8 @@ import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.ListAdapter;
 import android.widget.TextView;
+
+import java.util.List;
 
 public class TaskAdapter extends BaseAdapter implements ListAdapter {
 
@@ -65,9 +65,9 @@ public class TaskAdapter extends BaseAdapter implements ListAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        if(convertView == null) {
+        if (convertView == null) {
             LayoutInflater inflater = (LayoutInflater) context
-                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.task_item, parent, false);
         }
 

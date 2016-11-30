@@ -1,25 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <EditTextPreference
-        android:key="pref_key_username"
+        android:defaultValue="@string/default_user"
+        android:key="pref_cloudant_username"
         android:summary="@string/pref_summary_username"
-        android:title="@string/pref_title_username"
-        android:defaultValue="@string/default_user" />
+        android:title="@string/pref_title_username"/>
     <EditTextPreference
-        android:key="pref_key_dbname"
+        android:defaultValue="@string/default_dbname"
+        android:key="pref_cloudant_dbname"
         android:summary="@string/pref_summary_dbname"
-        android:title="@string/pref_title_dbname"
-        android:defaultValue="@string/default_dbname"  />
+        android:title="@string/pref_title_dbname"/>
     <EditTextPreference
-        android:key="pref_key_api_key"
+        android:defaultValue="@string/default_api_key"
+        android:key="pref_cloudant_api_key"
         android:summary="@string/pref_summary_api_key"
-        android:title="@string/pref_title_api_key" 
-        android:defaultValue="@string/default_api_key" />
+        android:title="@string/pref_title_api_key"/>
     <EditTextPreference
-        android:key="pref_key_api_password"
+        android:defaultValue="@string/default_api_password"
+        android:key="pref_cloudant_api_password"
         android:summary="@string/pref_summary_api_password"
-        android:title="@string/pref_title_api_password"
-        android:defaultValue="@string/default_api_password" />
+        android:title="@string/pref_title_api_password"/>
+    <EditTextPreference
+        android:defaultValue="@string/default_unbound_replication_minutes"
+        android:key="pref_unbound_replication_minutes"
+        android:numeric="integer"
+        android:summary="@string/pref_summary_unbound_period"
+        android:title="@string/pref_title_unbound_period"/>
+    <EditTextPreference
+        android:defaultValue="@string/default_bound_replication_minutes"
+        android:key="pref_bound_replication_minutes"
+        android:numeric="integer"
+        android:summary="@string/pref_summary_bound_period"
+        android:title="@string/pref_title_bound_period"/>
 
 </PreferenceScreen>

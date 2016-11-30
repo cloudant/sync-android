@@ -24,12 +24,13 @@ dependencies {
 
     // needed for PeriodicReplicationReceiver etc
     compile 'com.android.support:support-v13:23.3.0'
+    compile 'com.android.support:support-v4:21.0.3'
 }
 
 android {
     compileSdkVersion 21
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion 15
     }
     buildToolsVersion "21.0"
 

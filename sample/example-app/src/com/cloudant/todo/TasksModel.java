@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cloudant, Inc. All rights reserved.
+ * Copyright © 2016 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -15,10 +15,8 @@
 package com.cloudant.todo;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.cloudant.sync.documentstore.ConflictException;
@@ -33,6 +31,8 @@ import com.cloudant.sync.event.notifications.ReplicationCompleted;
 import com.cloudant.sync.event.notifications.ReplicationErrored;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
+import com.cloudant.todo.ui.activities.ReplicationSettingsActivity;
+import com.cloudant.todo.ui.activities.TodoActivity;
 
 import java.io.File;
 import java.net.URI;
@@ -44,31 +44,25 @@ import java.util.List;
 /**
  * <p>Handles dealing with the datastore and replication.</p>
  */
-class TasksModel {
+public class TasksModel {
 
     private static final String LOG_TAG = "TasksModel";
 
     private static final String DATASTORE_MANGER_DIR = "data";
     private static final String TASKS_DATASTORE_NAME = "tasks";
-
+    private final Handler mHandler;
     private Database mDatabase;
-
     private Replicator mPushReplicator;
     private Replicator mPullReplicator;
-
-    private final Context mContext;
-    private final Handler mHandler;
     private TodoActivity mListener;
 
     public TasksModel(Context context) {
 
-        this.mContext = context;
-
         // Set up our tasks datastore within its own folder in the applications
         // data directory.
-        File path = this.mContext.getApplicationContext().getDir(
-                DATASTORE_MANGER_DIR,
-                Context.MODE_PRIVATE
+        File path = context.getDir(
+            DATASTORE_MANGER_DIR,
+            Context.MODE_PRIVATE
         );
         try {
             this.mDatabase = DocumentStore.getInstance(new File(path, TASKS_DATASTORE_NAME))
@@ -81,7 +75,7 @@ class TasksModel {
 
         // Set up the replicator objects from the app's settings.
         try {
-            this.reloadReplicationSettings();
+            this.reloadReplicationSettings(context);
         } catch (URISyntaxException e) {
             Log.e(LOG_TAG, "Unable to construct remote URI from configuration", e);
         }
@@ -99,6 +93,7 @@ class TasksModel {
 
     /**
      * Sets the listener for replication callbacks as a weak reference.
+     *
      * @param listener {@link TodoActivity} to receive callbacks.
      */
     public void setReplicationListener(TodoActivity listener) {
@@ -111,6 +106,7 @@ class TasksModel {
 
     /**
      * Creates a task, assigning an ID.
+     *
      * @param task task to create
      * @return new revision of the document
      */
@@ -127,10 +123,11 @@ class TasksModel {
 
     /**
      * Updates a Task document within the datastore.
+     *
      * @param task task to update
      * @return the updated revision of the Task
      * @throws ConflictException if the task passed in has a rev which doesn't
-     *      match the current rev in the datastore.
+     *                           match the current rev in the datastore.
      */
     public Task updateDocument(Task task) throws ConflictException {
         DocumentRevision rev = task.getDocumentRevision();
@@ -145,9 +142,10 @@ class TasksModel {
 
     /**
      * Deletes a Task document within the datastore.
+     *
      * @param task task to delete
      * @throws ConflictException if the task passed in has a rev which doesn't
-     *      match the current rev in the datastore.
+     *                           match the current rev in the datastore.
      */
     public void deleteDocument(Task task) throws ConflictException {
         this.mDatabase.deleteDocumentFromRevision(task.getDocumentRevision());
@@ -159,10 +157,10 @@ class TasksModel {
     public List<Task> allTasks() {
         int nDocs = this.mDatabase.getDocumentCount();
         List<DocumentRevision> all = this.mDatabase.getAllDocuments(0, nDocs, true);
-        List<Task> tasks = new ArrayList<Task>();
+        List<Task> tasks = new ArrayList<>();
 
         // Filter all documents down to those of type Task.
-        for(DocumentRevision rev : all) {
+        for (DocumentRevision rev : all) {
             Task t = Task.fromRevision(rev);
             if (t != null) {
                 tasks.add(t);
@@ -178,7 +176,7 @@ class TasksModel {
 
     /**
      * <p>Stops running replications.</p>
-     *
+     * <p>
      * <p>The stop() methods stops the replications asynchronously, see the
      * replicator docs for more information.</p>
      */
@@ -217,8 +215,8 @@ class TasksModel {
      * <p>Stops running replications and reloads the replication settings from
      * the app's preferences.</p>
      */
-    public void reloadReplicationSettings()
-            throws URISyntaxException {
+    public void reloadReplicationSettings(Context context)
+        throws URISyntaxException {
 
         // Stop running replications before reloading the replication
         // settings.
@@ -231,7 +229,7 @@ class TasksModel {
         this.stopAllReplications();
 
         // Set up the new replicator objects
-        URI uri = this.createServerURI();
+        URI uri = ReplicationSettingsActivity.constructServerURI(context);
 
         mPullReplicator = ReplicatorBuilder.pull().to(mDatabase).from(uri).build();
         mPushReplicator = ReplicatorBuilder.push().from(mDatabase).to(uri).build();
@@ -240,27 +238,6 @@ class TasksModel {
         mPullReplicator.getEventBus().register(this);
 
         Log.d(LOG_TAG, "Set up replicators for URI:" + uri.toString());
-    }
-
-    /**
-     * <p>Returns the URI for the remote database, based on the app's
-     * configuration.</p>
-     * @return the remote database's URI
-     * @throws URISyntaxException if the settings give an invalid URI
-     */
-    private URI createServerURI()
-            throws URISyntaxException {
-        // We store this in plain text for the purposes of simple demonstration,
-        // you might want to use something more secure.
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-        String username = sharedPref.getString(TodoActivity.SETTINGS_CLOUDANT_USER, "");
-        String dbName = sharedPref.getString(TodoActivity.SETTINGS_CLOUDANT_DB, "");
-        String apiKey = sharedPref.getString(TodoActivity.SETTINGS_CLOUDANT_API_KEY, "");
-        String apiSecret = sharedPref.getString(TodoActivity.SETTINGS_CLOUDANT_API_SECRET, "");
-        String host = username + ".cloudant.com";
-
-        // We recommend always using HTTPS to talk to Cloudant.
-        return new URI("https", apiKey + ":" + apiSecret, host, 443, "/" + dbName, null, null);
     }
 
     //

@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:paddingLeft="?android:attr/listPreferredItemPaddingLeft"
-    android:paddingRight="?android:attr/listPreferredItemPaddingRight"
-    android:minHeight="?android:attr/listPreferredItemHeightSmall"
-    android:background="?android:attr/activatedBackgroundIndicator">
-    
-    <CheckBox android:id="@+id/checkbox_completed"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="?android:attr/activatedBackgroundIndicator"
+              android:minHeight="?android:attr/listPreferredItemHeightSmall"
+              android:orientation="horizontal"
+              android:paddingLeft="?android:attr/listPreferredItemPaddingLeft"
+              android:paddingRight="?android:attr/listPreferredItemPaddingRight">
+
+    <CheckBox
+        android:id="@+id/checkbox_completed"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:focusable="false"

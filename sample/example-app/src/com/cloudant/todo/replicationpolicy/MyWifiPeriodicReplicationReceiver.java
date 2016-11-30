@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cloudant, Inc. All rights reserved.
+ * Copyright © 2016 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -12,16 +12,12 @@
  * and limitations under the License.
  */
 
-package com.cloudant.todo;
+package com.cloudant.todo.replicationpolicy;
 
-import android.os.Bundle;
-import android.preference.PreferenceActivity;
+import com.cloudant.sync.replication.WifiPeriodicReplicationReceiver;
 
-public class SettingsActivity extends PreferenceActivity {
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        addPreferencesFromResource(R.xml.preferences);
+public class MyWifiPeriodicReplicationReceiver extends WifiPeriodicReplicationReceiver<MyReplicationService> {
+    public MyWifiPeriodicReplicationReceiver() {
+        super(MyReplicationService.class);
     }
 }

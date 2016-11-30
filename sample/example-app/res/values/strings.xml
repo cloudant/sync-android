@@ -21,9 +21,24 @@
     <string name="pref_title_api_key">API Key</string>
     <string name="pref_summary_api_password">The api password used to replicate to/from your cloudant account.</string>
     <string name="pref_title_api_password">API Password</string>
-    <string name="pref_summary_username">You cloudant user name, and it is also used to determine your cloudant server url.</string>
+    <string name="pref_summary_username">Your cloudant user name. It is also used to
+        determine your cloudant server url.</string>
     <string name="pref_title_username">Cloudant user name</string>
-    <string name="pref_summary_dbname">You cloudant db name, and this is the db used in replication.</string>
+    <string name="pref_summary_dbname">Your cloudant db name. This is the db used in
+        replication.</string>
     <string name="pref_title_dbname">Cloudant db name</string>
+    <string name="pref_summary_bound_period">The approximate frequency (in minutes) with which
+        replications to/from your cloudant account will be performed when the data is visible to
+        the user.</string>
+    <string name="pref_title_bound_period">Active frequency</string>
+    <string name="pref_summary_unbound_period">The approximate frequency (in minutes) with which
+        replications to/from your cloudant account will be performed when the app is in the
+        background.</string>
+    <string name="pref_title_unbound_period">Background frequency</string>
+    <string name="synchronising">Synchronising</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 
 </resources>
