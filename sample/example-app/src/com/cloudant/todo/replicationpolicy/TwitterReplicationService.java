@@ -25,29 +25,31 @@ import com.cloudant.sync.replication.PeriodicReplicationService;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 import com.cloudant.sync.replication.WifiPeriodicReplicationReceiver;
-import com.cloudant.todo.ui.activities.ReplicationSettingsActivity;
+import com.cloudant.todo.ui.activities.SettingsActivity;
 
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class MyReplicationService extends PeriodicReplicationService<MyWifiPeriodicReplicationReceiver> {
-    private static final String TAG = "MyReplicationService";
-    private static final String TASKS_DATASTORE_NAME = "tasks";
+public class TwitterReplicationService extends PeriodicReplicationService<TwitterWifiPeriodicReplicationReceiver> {
+    private static final String TAG = "TwitterRS";
+    private static final String TASKS_DATASTORE_NAME = "tweets";
     private static final String DATASTORE_MANGER_DIR = "data";
-    public static int PUSH_REPLICATION_ID = 0;
-    public static int PULL_REPLICATION_ID = 1;
+    public static int PUSH_REPLICATION_ID = 2;
+    public static int PULL_REPLICATION_ID = 3;
 
-    public MyReplicationService() {
-        super(MyWifiPeriodicReplicationReceiver.class);
+    public TwitterReplicationService() {
+        super(TwitterWifiPeriodicReplicationReceiver.class);
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
 
+        Log.d(TAG, "Called onCreate");
+
         try {
-            URI uri = ReplicationSettingsActivity.constructServerURI(this);
+            URI uri = SettingsActivity.constructTwitterURI(this);
 
             File path = getApplicationContext().getDir(
                 DATASTORE_MANGER_DIR,
@@ -76,13 +78,13 @@ public class MyReplicationService extends PeriodicReplicationService<MyWifiPerio
     @Override
     protected int getBoundIntervalInSeconds() {
         return Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(this).getString
-            (ReplicationSettingsActivity.SETTINGS_BOUND_REPLICATION_MINUTES, "0")) * 60;
+            (SettingsActivity.TWITTER_BOUND_REPLICATION_MINUTES, "0")) * 60;
     }
 
     @Override
     protected int getUnboundIntervalInSeconds() {
         return Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(this).getString
-            (ReplicationSettingsActivity.SETTINGS_UNBOUND_REPLICATION_MINUTES, "0")) * 60;
+            (SettingsActivity.TWITTER_UNBOUND_REPLICATION_MINUTES, "0")) * 60;
     }
 
     @Override

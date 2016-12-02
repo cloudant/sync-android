@@ -21,10 +21,19 @@ import com.cloudant.todo.R;
 
 public class SettingsFragment extends PreferenceFragment {
 
+    private static final String KEY_SETTINGS = "settings";
+    private static final String VALUE_TODO_SETTINGS = "todo_settings";
+    private static final String VALUE_TWITTER_SETTINGS = "twitter_settings";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        addPreferencesFromResource(R.xml.preferences);
+        String settings = getArguments().getString(KEY_SETTINGS);
+        if (VALUE_TODO_SETTINGS.equals(settings)) {
+            addPreferencesFromResource(R.xml.todo_preferences);
+        } else if (VALUE_TWITTER_SETTINGS.equals(settings)) {
+            addPreferencesFromResource(R.xml.twitter_preferences);
+        }
     }
 }

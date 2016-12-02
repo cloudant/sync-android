@@ -18,6 +18,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.Database;
@@ -31,7 +32,7 @@ import com.cloudant.sync.event.notifications.ReplicationCompleted;
 import com.cloudant.sync.event.notifications.ReplicationErrored;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
-import com.cloudant.todo.ui.activities.ReplicationSettingsActivity;
+import com.cloudant.todo.ui.activities.SettingsActivity;
 import com.cloudant.todo.ui.activities.TodoActivity;
 
 import java.io.File;
@@ -229,7 +230,7 @@ public class TasksModel {
         this.stopAllReplications();
 
         // Set up the new replicator objects
-        URI uri = ReplicationSettingsActivity.constructServerURI(context);
+        URI uri = SettingsActivity.constructTodoURI(context);
 
         mPullReplicator = ReplicatorBuilder.pull().to(mDatabase).from(uri).build();
         mPushReplicator = ReplicatorBuilder.push().from(mDatabase).to(uri).build();
@@ -250,12 +251,13 @@ public class TasksModel {
      * thread.
      */
     @Subscribe
-    public void complete(ReplicationCompleted rc) {
+    public void complete(final ReplicationCompleted rc) {
+        Log.d(LOG_TAG, "Replication completed for id " + rc.replicator.getId());
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 if (mListener != null) {
-                    mListener.replicationComplete();
+                    mListener.replicationComplete(rc.replicator.getId());
                 }
             }
         });

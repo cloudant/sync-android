@@ -16,8 +16,8 @@ package com.cloudant.todo.replicationpolicy;
 
 import com.cloudant.sync.replication.WifiPeriodicReplicationReceiver;
 
-public class MyWifiPeriodicReplicationReceiver extends WifiPeriodicReplicationReceiver<MyReplicationService> {
-    public MyWifiPeriodicReplicationReceiver() {
-        super(MyReplicationService.class);
+public class TwitterWifiPeriodicReplicationReceiver extends WifiPeriodicReplicationReceiver<TwitterReplicationService> {
+    public TwitterWifiPeriodicReplicationReceiver() {
+        super(TwitterReplicationService.class);
     }
 }

@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="default_user"></string>
-    <string name="default_dbname"></string>
-    <string name="default_api_key"></string>
-    <string name="default_api_password"></string>
-    <string name="default_unbound_replication_minutes">1440</string>
-    <string name="default_bound_replication_minutes">5</string>
+    <string name="default_todo_user"></string>
+    <string name="default_todo_dbname"></string>
+    <string name="default_todo_api_key"></string>
+    <string name="default_todo_api_password"></string>
+    <string name="default_todo_unbound_replication_minutes">1440</string>
+    <string name="default_todo_bound_replication_minutes">1</string>
+
+    <string name="default_twitter_user"></string>
+    <string name="default_twitter_dbname"></string>
+    <string name="default_twitter_api_key"></string>
+    <string name="default_twitter_api_password"></string>
+    <string name="default_twitter_unbound_replication_minutes">5</string>
+    <string name="default_twitter_bound_replication_minutes">2</string>
+
 </resources>

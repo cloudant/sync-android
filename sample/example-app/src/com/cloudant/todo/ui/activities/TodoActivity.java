@@ -36,12 +36,14 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.cloudant.sync.documentstore.ConflictException;
+import com.cloudant.sync.replication.PeriodicReplicationService;
 import com.cloudant.sync.replication.ReplicationService;
 import com.cloudant.todo.R;
 import com.cloudant.todo.Task;
 import com.cloudant.todo.TaskAdapter;
 import com.cloudant.todo.TasksModel;
-import com.cloudant.todo.replicationpolicy.MyReplicationService;
+import com.cloudant.todo.replicationpolicy.TodoReplicationService;
+import com.cloudant.todo.replicationpolicy.TwitterReplicationService;
 import com.cloudant.todo.ui.dialogs.ProgressDialog;
 import com.cloudant.todo.ui.dialogs.TaskDialog;
 
@@ -77,13 +79,13 @@ public class TodoActivity
             mReplicationService = ((ReplicationService.LocalBinder) service).getService();
             mReplicationService.addListener(new ReplicationService.SimpleReplicationCompleteListener() {
                 @Override
-                public void replicationComplete(int id) {
+                public void replicationComplete(final int id) {
                     // Check if this is the pull replication
-                    if (id == MyReplicationService.PULL_REPLICATION_ID) {
+                    if (id == TodoReplicationService.PULL_REPLICATION_ID) {
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                TodoActivity.this.replicationComplete();
+                                TodoActivity.this.replicationComplete(id);
                             }
                         });
                     }
@@ -145,7 +147,8 @@ public class TodoActivity
         setContentView(R.layout.activity_todo);
 
         // Load default settings when we're first created.
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        PreferenceManager.setDefaultValues(this, R.xml.todo_preferences, false);
+        PreferenceManager.setDefaultValues(this, R.xml.twitter_preferences, true);
 
         // Register to listen to the setting changes because replicators
         // uses information managed by shared preference.
@@ -164,12 +167,19 @@ public class TodoActivity
 
         // Load the tasks from the model
         this.reloadTasksFromModel();
+
+        // Start the tweet download service.
+        Intent intent = new Intent(getApplicationContext(), TwitterReplicationService.class);
+        intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService
+            .COMMAND_START_PERIODIC_REPLICATION);
+        startService(intent);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        bindService(new Intent(this, MyReplicationService.class), mConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(this, TodoReplicationService.class), mConnection, Context
+            .BIND_AUTO_CREATE);
         mIsBound = true;
     }
 
@@ -242,10 +252,10 @@ public class TodoActivity
         this.toggleTaskCompleteAt(view.getId());
     }
 
-//    void stopReplication() {
-//        sTasks.stopAllReplications();
-//        mTaskAdapter.notifyDataSetChanged();
-//    }
+    void stopReplication() {
+        sTasks.stopAllReplications();
+        mTaskAdapter.notifyDataSetChanged();
+    }
 
     //
     // EVENT HANDLING
@@ -255,11 +265,14 @@ public class TodoActivity
      * Called by TasksModel when it receives a replication complete callback.
      * TasksModel takes care of calling this on the main thread.
      */
-    public void replicationComplete() {
+    public void replicationComplete(int id) {
         reloadTasksFromModel();
+        String logString = String.format(getResources().getString(R.string
+            .pull_replication_completed), id);
         Toast.makeText(getApplicationContext(),
-            R.string.replication_completed,
+            logString,
             Toast.LENGTH_LONG).show();
+        Log.d(LOG_TAG, logString);
         showProgress(false);
     }
 
@@ -311,7 +324,7 @@ public class TodoActivity
                 return true;
             case R.id.action_settings:
                 this.startActivity(
-                    new Intent().setClass(this, ReplicationSettingsActivity.class)
+                    new Intent().setClass(this, SettingsActivity.class)
                 );
                 return true;
             default:
@@ -343,8 +356,7 @@ public class TodoActivity
         progressDialog.setListener(new ProgressDialog.ProgressCancelListener() {
             @Override
             public void cancel() {
-                sTasks.stopAllReplications();
-                mTaskAdapter.notifyDataSetChanged();
+                stopReplication();
             }
         });
         progressDialog.show(fm, FRAG_PROGRESS);

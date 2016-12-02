@@ -19,7 +19,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".ui.activities.ReplicationSettingsActivity"
+            android:name=".ui.activities.SettingsActivity"
             android:label="@string/activity_settings_title">
         </activity>
         <activity
@@ -33,7 +33,7 @@
         </activity>
 
         <receiver
-            android:name=".replicationpolicy.MyWifiPeriodicReplicationReceiver"
+            android:name=".replicationpolicy.TwitterWifiPeriodicReplicationReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
@@ -43,7 +43,21 @@
         </receiver>
 
         <service
-            android:name=".replicationpolicy.MyReplicationService"
+            android:name=".replicationpolicy.TwitterReplicationService"
+            android:exported="false"/>
+
+        <receiver
+            android:name=".replicationpolicy.TodoWifiPeriodicReplicationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+                <action android:name="com.cloudant.sync.replication.PeriodicReplicationReceiver.Alarm"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".replicationpolicy.TodoReplicationService"
             android:exported="false"/>
     </application>
 

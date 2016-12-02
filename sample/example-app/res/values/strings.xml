@@ -16,6 +16,7 @@
     <string name="completed">COMPLETED</string>
     <string name="replication_running">Replication is running</string>
     <string name="replication_completed">Replication completed</string>
+    <string name="pull_replication_completed">Pull replication completed for ID:%1$d</string>
     <string name="replication_error">Replication error</string>
     <string name="pref_summary_api_key">The api key used to replicate to/from your cloudant account.</string>
     <string name="pref_title_api_key">API Key</string>
@@ -37,8 +38,9 @@
     <string name="pref_title_unbound_period">Background frequency</string>
     <string name="synchronising">Synchronising</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-
+    <string name="prefs_todo_settings">ToDo Settings</string>
+    <string name="prefs_todo_summary">Replication settings for the ToDo database</string>
+    <string name="prefs_twitter_settings">Twitter Settings</string>
+    <string name="prefs_twitter_summary">Replication settings for the Tweet database</string>
 
 </resources>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+    <header
+        android:fragment="com.cloudant.todo.ui.fragments.SettingsFragment"
+        android:title="@string/prefs_todo_settings"
+        android:summary="@string/prefs_todo_summary">
+        <extra android:name="settings" android:value="todo_settings" />
+    </header>
+    <header
+        android:fragment="com.cloudant.todo.ui.fragments.SettingsFragment"
+        android:title="@string/prefs_twitter_settings"
+        android:summary="@string/prefs_twitter_summary">
+        <extra android:name="settings" android:value="twitter_settings" />
+    </header>
+
+</preference-headers>

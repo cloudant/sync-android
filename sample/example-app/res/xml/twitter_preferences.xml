@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <EditTextPreference
+        android:defaultValue="@string/default_twitter_user"
+        android:key="twitter_cloudant_username"
+        android:summary="@string/pref_summary_username"
+        android:title="@string/pref_title_username"/>
+    <EditTextPreference
+        android:defaultValue="@string/default_twitter_dbname"
+        android:key="twitter_cloudant_dbname"
+        android:summary="@string/pref_summary_dbname"
+        android:title="@string/pref_title_dbname"/>
+    <EditTextPreference
+        android:defaultValue="@string/default_twitter_api_key"
+        android:key="twitter_cloudant_api_key"
+        android:summary="@string/pref_summary_api_key"
+        android:title="@string/pref_title_api_key"/>
+    <EditTextPreference
+        android:defaultValue="@string/default_twitter_api_password"
+        android:key="twitter_cloudant_api_password"
+        android:summary="@string/pref_summary_api_password"
+        android:title="@string/pref_title_api_password"/>
+    <EditTextPreference
+        android:defaultValue="@string/default_twitter_unbound_replication_minutes"
+        android:key="twitter_unbound_replication_minutes"
+        android:numeric="integer"
+        android:summary="@string/pref_summary_unbound_period"
+        android:title="@string/pref_title_unbound_period"/>
+    <EditTextPreference
+        android:defaultValue="@string/default_twitter_bound_replication_minutes"
+        android:key="twitter_bound_replication_minutes"
+        android:numeric="integer"
+        android:summary="@string/pref_summary_bound_period"
+        android:title="@string/pref_title_bound_period"/>
+
+</PreferenceScreen>
