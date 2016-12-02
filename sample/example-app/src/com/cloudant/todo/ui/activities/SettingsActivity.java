@@ -17,7 +17,6 @@ package com.cloudant.todo.ui.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
@@ -27,7 +26,6 @@ import com.cloudant.sync.replication.ReplicationService;
 import com.cloudant.todo.R;
 import com.cloudant.todo.replicationpolicy.TodoReplicationService;
 import com.cloudant.todo.replicationpolicy.TwitterReplicationService;
-import com.cloudant.todo.ui.fragments.SettingsFragment;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -97,11 +95,17 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
+    protected void onResume() {
+        super.onResume();
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .unregisterOnSharedPreferenceChangeListener(this);
     }
 
     @Override
