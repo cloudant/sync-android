@@ -15,13 +15,18 @@
 package com.cloudant.todo.ui.activities;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 
+import com.cloudant.sync.replication.PeriodicReplicationService;
+import com.cloudant.sync.replication.ReplicationService;
 import com.cloudant.todo.R;
+import com.cloudant.todo.replicationpolicy.TodoReplicationService;
+import com.cloudant.todo.replicationpolicy.TwitterReplicationService;
 import com.cloudant.todo.ui.fragments.SettingsFragment;
 
 import java.net.URI;
@@ -104,17 +109,35 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
         if (TODO_BOUND_REPLICATION_MINUTES.equals(key)) {
             Toast.makeText(this, "Updating the TODO bound replication time", Toast.LENGTH_SHORT)
                 .show();
+            resetTodoReplicationTimers();
         } else if (TODO_UNBOUND_REPLICATION_MINUTES.equals(key)) {
             Toast.makeText(this, "Updating the TODO unbound replication time", Toast.LENGTH_SHORT)
                 .show();
+            resetTodoReplicationTimers();
         } else if (TWITTER_BOUND_REPLICATION_MINUTES.equals(key)) {
             Toast.makeText(this, "Updating the TWITTER bound replication time", Toast.LENGTH_SHORT)
                 .show();
+            resetTwitterReplicationTimers();
         } else if (TWITTER_UNBOUND_REPLICATION_MINUTES.equals(key)) {
             Toast.makeText(this, "Updating the TWITTER unbound replication time", Toast
                 .LENGTH_SHORT)
                 .show();
+            resetTwitterReplicationTimers();
         }
+    }
+
+    private void resetTodoReplicationTimers() {
+        Intent intent = new Intent(getApplicationContext(), TodoReplicationService.class);
+        intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService
+            .COMMAND_RESET_REPLICATION_TIMERS);
+        startService(intent);
+    }
+
+    private void resetTwitterReplicationTimers() {
+        Intent intent = new Intent(getApplicationContext(), TwitterReplicationService.class);
+        intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService
+            .COMMAND_RESET_REPLICATION_TIMERS);
+        startService(intent);
     }
 
     @Override
