@@ -88,6 +88,7 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
         CouchUtils.validateRevisionId(rev.getRevision());
         Assert.assertEquals(1, CouchUtils.generationFromRevId(rev.getRevision()));
         Assert.assertTrue(rev.isCurrent());
+        System.out.println("parent "+((InternalDocumentRevision)rev).getParent());
         Assert.assertTrue(((InternalDocumentRevision)rev).getParent() == -1L);
     }
 

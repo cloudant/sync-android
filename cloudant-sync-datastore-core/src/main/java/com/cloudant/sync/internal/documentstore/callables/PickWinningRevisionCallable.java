@@ -41,13 +41,13 @@ public class PickWinningRevisionCallable implements SQLCallable<Void> {
     // gets all revs whose sequence is not a parent of another rev and the rev isn't deleted
     public static final String GET_NON_DELETED_LEAFS = "SELECT revs.revid, revs.sequence FROM " +
             "revs WHERE revs.doc_id = ? AND revs.deleted = 0 AND revs.sequence NOT IN " +
-            "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
+            "(SELECT DISTINCT parent FROM revs WHERE parent IS NOT NULL) ";
 
     // get all leaf rev ids for a given doc id
     // gets all revs whose sequence is not a parent of another rev
     public static final String GET_ALL_LEAFS = "SELECT revs.revid, revs.sequence FROM revs " +
             "WHERE revs.doc_id = ? AND revs.sequence NOT IN " +
-            "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
+            "(SELECT DISTINCT parent FROM revs WHERE parent IS NOT NULL) ";
 
     private final long docNumericId;
 
@@ -129,7 +129,7 @@ public class PickWinningRevisionCallable implements SQLCallable<Void> {
         currentFalse.put("current", 0);
         db.update("revs", currentFalse,
                 "sequence!=? AND doc_id=? AND sequence NOT IN " +
-                        "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL)",
+                        "(SELECT DISTINCT parent FROM revs WHERE parent IS NOT NULL)",
                 new String[]{Long.toString(newWinnerSeq), Long.toString(docNumericId)});
         return null;
     }

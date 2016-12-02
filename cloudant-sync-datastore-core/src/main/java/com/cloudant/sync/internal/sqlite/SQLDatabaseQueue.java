@@ -17,6 +17,7 @@ package com.cloudant.sync.internal.sqlite;
 import com.cloudant.sync.documentstore.encryption.KeyProvider;
 import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
 import com.cloudant.sync.internal.documentstore.migrations.Migration;
+import com.sun.xml.internal.ws.util.CompletedFuture;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,7 +110,13 @@ public class SQLDatabaseQueue {
      * @return Future representing the task to be executed.
      */
     public <T> Future<T> submit(SQLCallable<T> callable){
-        return this.submitTaskToQueue(new SQLQueueCallable<T>(db, callable));
+        try {
+            T result = new SQLQueueCallable<T>(db, callable).call();
+            return new CompletedFuture<T>(result, null);
+        } catch (Exception e) {
+            return new CompletedFuture<T>(null, e);
+        }
+//        return this.submitTaskToQueue(new SQLQueueCallable<T>(db, callable));
     }
 
     /**
@@ -120,7 +127,12 @@ public class SQLDatabaseQueue {
      * @return Future representing the task to be executed.
      */
     public <T> Future<T> submitTransaction(SQLCallable<T> callable){
-        return this.submitTaskToQueue(new SQLQueueCallable<T>(db, callable, true));
+        try {
+            T result = new SQLQueueCallable<T>(db, callable, true).call();
+            return new CompletedFuture<T>(result, null);
+        } catch (Exception e) {
+            return new CompletedFuture<T>(null, e);
+        }
     }
 
     /**

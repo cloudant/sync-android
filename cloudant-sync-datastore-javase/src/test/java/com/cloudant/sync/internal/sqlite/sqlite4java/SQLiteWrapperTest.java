@@ -41,8 +41,8 @@ public class SQLiteWrapperTest {
     private SQLiteWrapper database = null;
 
     private final static String doc_table_name = "docs";
-    private final static String create_doc_table = " CREATE TABLE docs (  doc_id INTEGER PRIMARY KEY, doc_name TEXT NOT NULL" +
-            ", desc TEXT, balance REAL NOT NULL, data BLOB); ";
+    private final static String create_doc_table = " CREATE TABLE docs (  doc_id INTEGER PRIMARY KEY, doc_name LONGVARCHAR NOT NULL" +
+            ", desc LONGVARCHAR, balance REAL NOT NULL, data BLOB); ";
     private final static String create_rev_table = " CREATE TABLE revs (  rev_id INTEGER PRIMARY KEY )";
 
     private final static String DELETE_REVS_TABLE = "DROP TABLE revs;";

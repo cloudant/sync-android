@@ -40,7 +40,7 @@ import java.util.logging.Logger;
 public class SQLDatabaseFactory {
 
     public static final boolean FTS_AVAILABLE;
-    private static final String FTS_CHECK_TABLE_NAME = "_t_cloudant_sync_query_fts_check";
+    private static final String FTS_CHECK_TABLE_NAME = "t_cloudant_sync_query_fts_check";
     private final static Logger logger = Logger.getLogger(SQLDatabaseFactory.class.getCanonicalName());
 
     static {
@@ -49,25 +49,7 @@ public class SQLDatabaseFactory {
 
     private static boolean isFtsAvailable() {
         SQLDatabase tempInMemoryDB = null;
-        try {
-            tempInMemoryDB = internalOpenSQLDatabase(null, new NullKeyProvider());
-            tempInMemoryDB.beginTransaction();
-            try {
-                tempInMemoryDB.execSQL(String.format("CREATE VIRTUAL TABLE %s USING FTS4 ( col )",
-                        FTS_CHECK_TABLE_NAME));
-                return true;
-            } finally {
-                // End the transaction and rollback the virtual table we created because we never
-                // set transaction success.
-                tempInMemoryDB.endTransaction();
-            }
-        } catch (SQLException sqle) {
-            return false;
-        } finally {
-            if (tempInMemoryDB != null) {
-                tempInMemoryDB.close();
-            }
-        }
+        return false;
     }
 
     /**
@@ -134,7 +116,7 @@ public class SQLDatabaseFactory {
                             "implementation for Java SE");
                 } else {
 
-                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.h2.H2Wrapper")
+                    return (SQLDatabase) Class.forName("com.cloudant.sync.internal.hypersql.HyperSqlWrapper")
                             .getMethod("open", File.class)
                             .invoke(null, dbFile);
 /*
@@ -178,12 +160,12 @@ public class SQLDatabaseFactory {
             throws SQLException {
         Misc.checkArgument(version > 0, "Schema version number must be positive");
         // ensure foreign keys are enforced in the case that we are up to date and no migration happen
-//        database.execSQL("PRAGMA foreign_keys = ON;");
+        database.execSQL("SET DATABASE REFERENTIAL INTEGRITY TRUE;");
         int dbVersion = database.getVersion();
         if(dbVersion < version) {
             // switch off foreign keys during the migration - so that we don't get caught out by
             // "ON DELETE CASCADE" constraints etc
-//            database.execSQL("PRAGMA foreign_keys = OFF;");
+            database.execSQL("SET DATABASE REFERENTIAL INTEGRITY FALSE;");
             database.beginTransaction();
             try {
                 try {
@@ -200,7 +182,7 @@ public class SQLDatabaseFactory {
             } finally {
                 database.endTransaction();
                 // re-enable foreign keys
-    //            database.execSQL("PRAGMA foreign_keys = ON;");
+                database.execSQL("SET DATABASE REFERENTIAL INTEGRITY TRUE;");
             }
 
         }

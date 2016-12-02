@@ -114,7 +114,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     public void smallDocSetForSingleFieldUsingAsc() {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
-        String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_a";
+        String select = "SELECT DISTINCT _id FROM t_cloudant_sync_query_index_a";
         String where = "WHERE _id IN (?, ?) ORDER BY \"name\" ASC";
         String sql = String.format("%s %s", select, where);
         assertThat(parts.sqlWithPlaceHolders, is(sql));
@@ -126,7 +126,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     public void smallDocSetForSingleFieldUsingDesc() {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
-        String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
+        String select = "SELECT DISTINCT _id FROM t_cloudant_sync_query_index_b";
         String where = "WHERE _id IN (?, ?) ORDER BY \"y\" DESC";
         String sql = String.format("%s %s", select, where);
         assertThat(parts.sqlWithPlaceHolders, is(sql));
@@ -138,7 +138,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     public void smallDocSetForMultipleFieldUsingAsc() {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.ASCENDING), new FieldSort("x", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
-        String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
+        String select = "SELECT DISTINCT _id FROM t_cloudant_sync_query_index_b";
         String where = "WHERE _id IN (?, ?) ORDER BY \"y\" ASC, \"x\" ASC";
         String sql = String.format("%s %s", select, where);
         assertThat(parts.sqlWithPlaceHolders, is(sql));
@@ -150,7 +150,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     public void smallDocSetForMultipleFieldUsingDesc() {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING), new FieldSort("x", FieldSort.Direction.DESCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
-        String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
+        String select = "SELECT DISTINCT _id FROM t_cloudant_sync_query_index_b";
         String where = "WHERE _id IN (?, ?) ORDER BY \"y\" DESC, \"x\" DESC";
         String sql = String.format("%s %s", select, where);
         assertThat(parts.sqlWithPlaceHolders, is(sql));
@@ -162,7 +162,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     public void smallDocSetForMultipleFieldUsingMixed() {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING), new FieldSort("x", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
-        String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
+        String select = "SELECT DISTINCT _id FROM t_cloudant_sync_query_index_b";
         String where = "WHERE _id IN (?, ?) ORDER BY \"y\" DESC, \"x\" ASC";
         String sql = String.format("%s %s", select, where);
         assertThat(parts.sqlWithPlaceHolders, is(sql));
@@ -174,7 +174,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     public void largeDocSetForSingleFieldUsingAsc() {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
-        String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_a";
+        String select = "SELECT DISTINCT _id FROM t_cloudant_sync_query_index_a";
         String orderBy = "ORDER BY \"name\" ASC";
         String sql = String.format("%s  %s", select, orderBy);
         assertThat(parts.sqlWithPlaceHolders, is(sql));
@@ -185,7 +185,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     public void largeDocSetForSingleFieldUsingDesc() {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
-        String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
+        String select = "SELECT DISTINCT _id FROM t_cloudant_sync_query_index_b";
         String orderBy = "ORDER BY \"y\" DESC";
         String sql = String.format("%s  %s", select, orderBy);
         assertThat(parts.sqlWithPlaceHolders, is(sql));
@@ -196,7 +196,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     public void largeDocSetForMultipleFieldUsingAsc() {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.ASCENDING), new FieldSort("x", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
-        String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
+        String select = "SELECT DISTINCT _id FROM t_cloudant_sync_query_index_b";
         String orderBy = "ORDER BY \"y\" ASC, \"x\" ASC";
         String sql = String.format("%s  %s", select, orderBy);
         assertThat(parts.sqlWithPlaceHolders, is(sql));
@@ -207,7 +207,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     public void largeDocSetForMultipleFieldUsingDesc() {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING), new FieldSort("x", FieldSort.Direction.DESCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
-        String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
+        String select = "SELECT DISTINCT _id FROM t_cloudant_sync_query_index_b";
         String orderBy = "ORDER BY \"y\" DESC, \"x\" DESC";
         String sql = String.format("%s  %s", select, orderBy);
         assertThat(parts.sqlWithPlaceHolders, is(sql));
@@ -218,7 +218,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     public void largeDocSetForMultipleFieldUsingMixed() {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING), new FieldSort("x", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
-        String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
+        String select = "SELECT DISTINCT _id FROM t_cloudant_sync_query_index_b";
         String orderBy = "ORDER BY \"y\" DESC, \"x\" ASC";
         String sql = String.format("%s  %s", select, orderBy);
         assertThat(parts.sqlWithPlaceHolders, is(sql));

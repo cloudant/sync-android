@@ -66,7 +66,9 @@ public class InsertRevisionCallable implements SQLCallable<Long> {
         args.put("available", this.available);
         args.put("json", this.data);
         logger.fine("New revision inserted: " + this.docNumericId + ", " + this.revId);
+        System.out.println(toString());
         newSequence = db.insert("revs", args);
+
         if (newSequence < 0) {
             throw new IllegalStateException("Unknown error inserting new revision, please check log");
         }

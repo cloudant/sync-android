@@ -61,7 +61,7 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Int
         }
 
         final String GET_DOCUMENTS_BY_INTERNAL_IDS = "SELECT " + DatabaseImpl.FULL_DOCUMENT_COLS
-                + " FROM revs, docs WHERE revs.doc_id IN ( %s ) AND current = 1 AND docs.doc_id =" +
+                + " FROM revs, docs WHERE revs.doc_id IN ( %s ) AND revs.current = 1 AND docs.doc_id =" +
                 " revs.doc_id";
 
         // Split into batches because SQLite has a limit on the number

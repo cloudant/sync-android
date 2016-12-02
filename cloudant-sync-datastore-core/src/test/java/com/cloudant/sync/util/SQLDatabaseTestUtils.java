@@ -59,7 +59,7 @@ public class SQLDatabaseTestUtils {
     public static Set<String> getAllTableNames(SQLDatabase db) throws SQLException {
         Cursor cursor = null;
         try {
-            cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", new String[]{});
+            cursor = db.rawQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES", new String[]{});
             Set<String> tables = new HashSet<String>();
             while(cursor.moveToNext()) {
                 tables.add(cursor.getString(0));

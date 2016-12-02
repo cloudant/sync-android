@@ -58,29 +58,29 @@ public class AttachmentManager {
 
     private static final Logger logger = Logger.getLogger(AttachmentManager.class.getCanonicalName());
 
-    public static final String SQL_ATTACHMENTS_SELECT = "SELECT sequence, " +
-            "filename, " +
-            "key, " +
-            "type, " +
-            "encoding, " +
-            "length, " +
-            "encoded_length, " +
-            "revpos " +
+    public static final String SQL_ATTACHMENTS_SELECT = "SELECT attachments.sequence, " +
+            "attachments.filename, " +
+            "attachments.key, " +
+            "attachments.type, " +
+            "attachments.encoding, " +
+            "attachments.length, " +
+            "attachments.encoded_length, " +
+            "attachments.revpos " +
             "FROM attachments " +
-            "WHERE filename = ? and sequence = ?";
+            "WHERE attachments.filename = ? and attachments.sequence = ?";
 
-    public static final String SQL_ATTACHMENTS_SELECT_ALL = "SELECT sequence, " +
-            "filename, " +
-            "key, " +
-            "type, " +
-            "encoding, " +
-            "length, " +
-            "encoded_length, " +
-            "revpos " +
+    public static final String SQL_ATTACHMENTS_SELECT_ALL = "SELECT attachments.sequence, " +
+            "attachments.filename, " +
+            "attachments.key, " +
+            "attachments.type, " +
+            "attachments.encoding, " +
+            "attachments.length, " +
+            "attachments.encoded_length, " +
+            "attachments.revpos " +
             "FROM attachments " +
-            "WHERE sequence = ?";
+            "WHERE attachments.sequence = ?";
 
-    private static final String SQL_ATTACHMENTS_SELECT_ALL_KEYS = "SELECT key " +
+    private static final String SQL_ATTACHMENTS_SELECT_ALL_KEYS = "SELECT attachments.key " +
             "FROM attachments";
 
     /**

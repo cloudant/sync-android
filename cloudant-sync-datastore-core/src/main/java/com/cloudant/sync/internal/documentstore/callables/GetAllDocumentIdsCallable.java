@@ -34,7 +34,7 @@ public class GetAllDocumentIdsCallable implements SQLCallable<List<String>> {
     public List<String> call(SQLDatabase db) throws Exception {
         List<String> docIds = new ArrayList<String>();
         String sql = "SELECT docs.docid FROM revs, docs " +
-                "WHERE deleted = 0 AND current = 1 AND docs.doc_id = revs.doc_id";
+                "WHERE revs.deleted = 0 AND revs.current = 1 AND docs.doc_id = revs.doc_id";
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(sql, new String[]{});

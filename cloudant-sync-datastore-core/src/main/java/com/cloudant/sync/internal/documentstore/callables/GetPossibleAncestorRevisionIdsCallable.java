@@ -64,7 +64,7 @@ public class GetPossibleAncestorRevisionIdsCallable implements SQLCallable<List<
         }
 
         String sql = "SELECT revid FROM revs, docs WHERE docs.docid=?" +
-                " and revs.deleted=0 and revs.json not null and revs.doc_id = docs.doc_id" +
+                " and revs.deleted=0 and revs.json is not null and revs.doc_id = docs.doc_id" +
                 " ORDER BY revs.sequence DESC";
         ArrayList<String> ids = new ArrayList<String>();
         Cursor c = null;

@@ -47,7 +47,7 @@ public class GetConflictedDocumentIdsCallable implements SQLCallable<List<String
         final String sql = "SELECT docs.docid, COUNT(*) FROM docs,revs " +
                 "WHERE revs.doc_id = docs.doc_id " +
                 "AND deleted = 0 AND revs.sequence NOT IN " +
-                "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) " +
+                "(SELECT DISTINCT parent FROM revs WHERE parent IS NOT NULL) " +
                 "GROUP BY docs.docid HAVING COUNT(*) > 1";
 
         List<String> conflicts = new ArrayList<String>();

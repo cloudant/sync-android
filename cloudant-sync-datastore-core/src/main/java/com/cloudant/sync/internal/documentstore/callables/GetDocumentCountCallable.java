@@ -38,7 +38,7 @@ public class GetDocumentCountCallable implements SQLCallable<Integer> {
 
     @Override
     public Integer call(SQLDatabase db) throws Exception {
-        String sql = "SELECT COUNT(DISTINCT doc_id) FROM revs WHERE current=1 AND deleted=0";
+        String sql = "SELECT COUNT(DISTINCT doc_id) FROM revs WHERE revs.current=1 AND revs.deleted=0";
         Cursor cursor = null;
         int result = 0;
         try {

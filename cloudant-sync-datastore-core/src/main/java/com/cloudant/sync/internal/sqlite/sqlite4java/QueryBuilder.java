@@ -28,13 +28,14 @@ public class QueryBuilder {
     private static final Pattern sLimitPattern =
             Pattern.compile("\\s*\\d+\\s*(,\\s*\\d+\\s*)?");
 
+    // TODO removing quoting has probably broken sqlite
     public static String buildUpdateQuery(String table, ContentValues values, String whereClause, String[] whereArgs) {
 
         StringBuilder query = new StringBuilder(120);
         query.append("UPDATE ")
-                .append("\"")
+                .append("")
                 .append(table)
-                .append("\"")
+                .append("")
                 .append(" SET ");
 
         int i = 0;

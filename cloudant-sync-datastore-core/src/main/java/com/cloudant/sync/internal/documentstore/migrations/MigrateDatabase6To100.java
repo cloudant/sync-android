@@ -38,8 +38,8 @@ public class MigrateDatabase6To100 implements Migration {
         Cursor cursor = null;
         try {
             db.execSQL("CREATE TABLE attachments_key_filename ( " +
-                    "key TEXT UNIQUE NOT NULL, " +
-                    "filename TEXT UNIQUE NOT NULL);");
+                    "key LONGVARCHAR UNIQUE NOT NULL, " +
+                    "filename LONGVARCHAR UNIQUE NOT NULL);");
             db.execSQL("CREATE INDEX attachments_key_filename_index " +
                     "ON attachments_key_filename(key, filename);");
 

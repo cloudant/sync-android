@@ -87,8 +87,8 @@ public class QueryImpl implements Query {
 
     private static final String DB_FILE_NAME = "indexes.sqlite";
 
-    private static final String INDEX_TABLE_PREFIX = "_t_cloudant_sync_query_index_";
-    public static final String INDEX_METADATA_TABLE_NAME = "_t_cloudant_sync_query_metadata";
+    private static final String INDEX_TABLE_PREFIX = "t_cloudant_sync_query_index_";
+    public static final String INDEX_METADATA_TABLE_NAME = "t_cloudant_sync_query_metadata";
 
     private static final String EXTENSION_NAME = "com.cloudant.sync.query";
     private static final String INDEX_FIELD_NAME_PATTERN = "^[a-zA-Z][a-zA-Z0-9_]*$";

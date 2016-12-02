@@ -55,8 +55,8 @@ public class Database200MigrationTest {
     private DocumentRevision rootRevision;
     private String dir;
     private final String duplicateRevs = "INSERT INTO revs (doc_id, parent, current, deleted, " +
-            "available, revid, json) SELECT doc_id, parent, current, deleted, available, revid, " +
-            "json FROM revs where revs.revid = ?";
+            "available, revid, json) SELECT revs.doc_id, revs.parent, revs.current, revs.deleted, revs.available, revs.revid, " +
+            "revs.json FROM revs where revs.revid = ?";
 
     @Before
     public void setUp() throws Exception {
@@ -76,18 +76,18 @@ public class Database200MigrationTest {
             @Override
             public Void call(SQLDatabase db) throws Exception {
                 try {
-                    db.execSQL("PRAGMA foreign_keys = OFF");
-                    db.execSQL("DROP TABLE views;");
-                    db.execSQL("DROP TABLE revs;");
-                    db.execSQL("DROP TABLE docs;");
-                    db.execSQL("DROP TABLE attachments;");
-                    db.execSQL("DROP TABLE maps;");
-                    db.execSQL("DROP TABLE replicators;");
-                    db.execSQL("DROP TABLE localdocs;");
-                    db.execSQL("DROP TABLE info;");
-                    db.execSQL("DROP TABLE attachments_key_filename;");
-                    db.execSQL("PRAGMA foreign_keys = ON");
-                    db.execSQL("PRAGMA user_version=0;");
+                    db.execSQL("SET DATABASE REFERENTIAL INTEGRITY FALSE");
+                    db.execSQL("DROP TABLE views CASCADE;");
+                    db.execSQL("DROP TABLE revs CASCADE;");
+                    db.execSQL("DROP TABLE docs CASCADE;");
+                    db.execSQL("DROP TABLE attachments CASCADE;");
+                    db.execSQL("DROP TABLE maps CASCADE;");
+                    db.execSQL("DROP TABLE replicators CASCADE;");
+                    db.execSQL("DROP TABLE localdocs CASCADE;");
+                    db.execSQL("DROP TABLE info CASCADE;");
+                    db.execSQL("DROP TABLE attachments_key_filename CASCADE;");
+                    db.execSQL("SET DATABASE REFERENTIAL INTEGRITY TRUE");
+                    //db.execSQL("PRAGMA user_version=0;");
                 } catch (Exception e) {
                     Assert.fail("Failed to drop tables in setup method: "+e);
                 }
@@ -134,7 +134,7 @@ public class Database200MigrationTest {
 
         // sets up the datastore with 1-x and 1-x revisions (Duplicates)
 
-        final String updateCurrent = "UPDATE revs SET current=0 where sequence=2";
+        final String updateCurrent = "UPDATE revs SET revs.current=0 where revs.sequence=2";
 
         ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
@@ -325,8 +325,8 @@ public class Database200MigrationTest {
         DocumentRevision updated = ds.updateDocumentFromRevision(rev);
 
         final String sql = "INSERT INTO revs (doc_id, parent, current, deleted, available, revid," +
-                " json) SELECT doc_id, parent, current, deleted, available, revid, json FROM revs";
-        final String updateCurrent = "UPDATE revs SET current=0";
+                " json) SELECT revs.doc_id, revs.parent, revs.current, revs.deleted, revs.available, revs.revid, revs.json FROM revs";
+        final String updateCurrent = "UPDATE revs SET revs.current=0";
 
         ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
@@ -338,8 +338,8 @@ public class Database200MigrationTest {
         }).get();
 
 
-        final String changeParent = "UPDATE revs SET parent=4 where parent = 1 AND sequence = 5";
-        final String changeOtherParent = "UPDATE revs SET parent =5 where parent = 2 AND sequence" +
+        final String changeParent = "UPDATE revs SET revs.parent=4 where revs.parent = 1 AND revs.sequence = 5";
+        final String changeOtherParent = "UPDATE revs SET revs.parent =5 where revs.parent = 2 AND revs.sequence" +
                 " = 6";
         ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
@@ -519,7 +519,12 @@ public class Database200MigrationTest {
         Map<String, Object> body = rootRevision.getBody().asMap();
         body.put("My", "otherBody");
 
-        final String updateCurrent = "UPDATE revs SET current=0 where sequence=2";
+        System.out.println("*");
+
+
+        final String updateCurrent = "UPDATE revs SET revs.current=0 where revs.sequence=2";
+
+        System.out.println("A");
 
         ds.runOnDbQueue(new SQLCallable<Void>() {
             @Override
@@ -530,17 +535,26 @@ public class Database200MigrationTest {
             }
         }).get();
 
+        System.out.println("B");
 
         InternalDocumentRevision rev = new InternalDocumentRevision("awesomeness", rootRevision.getRevision(),
                 rootRevision.getBody(), null);
         ds.forceInsert(rev, rootRevision.getRevision());
 
+        System.out.println("C");
+
+
         rev = ds.getDocument("awesomeness");
         rev.setBody(DocumentBodyFactory.create(body));
         DocumentRevision update = ds.updateDocumentFromRevision(rev);
 
+        System.out.println("D");
+
+
+
         runMigration();
 
+        System.out.println("E");
 
         int count = revisionCount();
         Assert.assertThat("Only 3 revisions should be in the database", count, is(3));
@@ -630,8 +644,9 @@ public class Database200MigrationTest {
                 Cursor cursor = null;
                 int count1 = 0;
                 try {
-                    cursor = db.rawQuery("SELECT * FROM revs", new String[]{});
+                    cursor = db.rawQuery("SELECT revs.revid, revs.doc_id FROM revs", new String[]{});
                     while (cursor.moveToNext()) {
+                        System.out.println(cursor.getString(0)+", "+cursor.getInt(1));
                         count1++;
                     }
                 } finally {

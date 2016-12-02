@@ -43,7 +43,8 @@ public final class DocumentBodyImpl implements DocumentBody {
         if(JSONUtils.isValidJSON(bytes)) {
             this.bytes = bytes;
         } else {
-            throw new IllegalArgumentException("Input bytes is not valid json data.");
+            String s = new String(bytes);
+            throw new IllegalArgumentException("Input bytes is not valid json data."+s);
         }
     }
 

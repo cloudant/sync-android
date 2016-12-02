@@ -33,6 +33,7 @@ public class SchemaOnlyMigration implements Migration {
 
     public void runMigration(SQLDatabase db) throws Exception {
         for (String statement : statements) {
+            System.out.println(statement);
             db.execSQL(statement);
         }
     }

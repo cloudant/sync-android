@@ -102,17 +102,17 @@ public class DatabaseImpl implements Database {
     private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
     // for building up the strings below
-    public static final String METADATA_COLS = "docs.docid, docs.doc_id, revid, sequence, " +
-            "current, deleted, parent";
+    public static final String METADATA_COLS = "docs.docid, docs.doc_id, revs.revid, revs.sequence, " +
+            "revs.current, revs.deleted, revs.parent";
 
-    public static final String FULL_DOCUMENT_COLS = METADATA_COLS + ", json";
+    public static final String FULL_DOCUMENT_COLS = METADATA_COLS + ", revs.json";
 
     public static final String CURRENT_REVISION_CLAUSES =
-            "FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id AND current=1 ORDER " +
-                    "BY revid DESC LIMIT 1";
+            "FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id AND revs.current=1 ORDER " +
+                    "BY revs.revid DESC LIMIT 1";
 
     private static final String GIVEN_REVISION_CLAUSES =
-            "FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id AND revid=? ORDER BY " +
+            "FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id AND revs.revid=? ORDER BY " +
                     "revs.sequence LIMIT 1";
 
     // get all document columns for current ("winning") revision of a given doc id
@@ -134,7 +134,7 @@ public class DatabaseImpl implements Database {
     public static final String GET_DOC_NUMERIC_ID = "SELECT doc_id from docs WHERE docid=?";
 
     public static final String SQL_CHANGE_IDS_SINCE_LIMIT = "SELECT doc_id, max(sequence) FROM " +
-            "revs WHERE sequence > ? AND sequence <= ? GROUP BY doc_id ";
+            "revs WHERE revs.sequence > ? AND revs.sequence <= ? GROUP BY revs.doc_id ";
 
     // † N.B. whilst there should only ever be a single result bugs have resulted in duplicate
     // revision IDs in the tree. Whilst it appears that the lowest sequence number is always

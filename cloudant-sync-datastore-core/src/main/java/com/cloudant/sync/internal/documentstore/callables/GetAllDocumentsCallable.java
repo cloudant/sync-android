@@ -52,8 +52,8 @@ public class GetAllDocumentsCallable implements SQLCallable<List<DocumentRevisio
     public List<DocumentRevision> call(SQLDatabase db) throws Exception {
         // Generate the SELECT statement, based on the options:
         String sql = String.format("SELECT " + DatabaseImpl.FULL_DOCUMENT_COLS +
-                " FROM revs, docs WHERE deleted = 0 AND current = 1 AND docs.doc_id = revs.doc_id " +
-                " ORDER BY docs.doc_id %1$s, revid DESC LIMIT %2$s OFFSET %3$s ",
+                " FROM revs, docs WHERE revs.deleted = 0 AND revs.current = 1 AND docs.doc_id = revs.doc_id " +
+                " ORDER BY docs.doc_id %1$s, revs.revid DESC LIMIT %2$s OFFSET %3$s ",
                 (descending ? "DESC" : "ASC"), limit, offset);
 
         return new ArrayList<DocumentRevision>(DatabaseImpl.getRevisionsFromRawQuery(db, sql,

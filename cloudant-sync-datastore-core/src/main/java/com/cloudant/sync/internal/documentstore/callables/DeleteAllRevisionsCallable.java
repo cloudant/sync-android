@@ -54,7 +54,7 @@ public class DeleteAllRevisionsCallable implements SQLCallable<List<DocumentRevi
                     "WHERE revs.doc_id = docs.doc_id " +
                     "AND docs.docid = ? " +
                     "AND deleted = 0 AND revs.sequence NOT IN " +
-                    "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
+                    "(SELECT DISTINCT parent FROM revs WHERE parent IS NOT NULL) ";
 
             cursor = db.rawQuery(sql, new String[]{id});
             while (cursor.moveToNext()) {

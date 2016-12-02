@@ -56,7 +56,7 @@ public class Tuple {
     }
 
     public void put(int index, String value) {
-        if(desc.get(index) != Cursor.FIELD_TYPE_STRING) {
+        if(desc.get(index) != Cursor.FIELD_TYPE_STRING && desc.get(index) != 12) {
             throw new IllegalArgumentException("Inserting a string, but expecting " + getTypeName(desc.get(index)));
         }
         this.values.add(index, value);
@@ -123,6 +123,8 @@ public class Tuple {
             case Cursor.FIELD_TYPE_FLOAT:
                 return "Float";
             case Cursor.FIELD_TYPE_STRING:
+                return "String";
+            case 12:
                 return "String";
         }
         throw new IllegalArgumentException("Unsupported type: " + i);

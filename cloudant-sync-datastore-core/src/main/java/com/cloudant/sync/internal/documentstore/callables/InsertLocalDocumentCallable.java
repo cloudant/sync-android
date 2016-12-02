@@ -14,6 +14,7 @@
 
 package com.cloudant.sync.internal.documentstore.callables;
 
+import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentStoreException;
@@ -45,11 +46,24 @@ public class InsertLocalDocumentCallable implements SQLCallable<LocalDocument> {
     @Override
     public LocalDocument call(SQLDatabase db) throws DocumentException, DocumentStoreException {
         ContentValues values = new ContentValues();
-        values.put("docid", docId);
+
+        // TODO conflict replace diffucult to emulate
+        boolean exists = true;
+        try {
+            new GetLocalDocumentCallable(docId).call(db);
+        } catch (DocumentNotFoundException dnfe) {
+            exists = false;
+        }
+
         values.put("json", body.asBytes());
 
-        long rowId = db.insertWithOnConflict("localdocs", values, SQLDatabase
-                .CONFLICT_REPLACE);
+        long rowId;
+        if (exists) {
+            rowId = db.update("localdocs", values, "docid = ?", new String[]{docId});
+        } else {
+            values.put("docid", docId);
+            rowId = db.insert("localdocs", values);
+        }
         if (rowId < 0) {
             throw new DocumentException("Failed to insert local document");
         } else {

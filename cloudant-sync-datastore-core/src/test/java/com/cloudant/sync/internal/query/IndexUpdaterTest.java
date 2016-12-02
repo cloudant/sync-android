@@ -59,7 +59,7 @@ import java.util.concurrent.CountDownLatch;
 @RunWith(Parameterized.class)
 public class IndexUpdaterTest extends AbstractIndexTestBase {
 
-    private static final String TEXT_INDEX_EXECUTION = "Execute TEXT index update tests";
+    private static final String TEXT_INDEX_EXECUTION = "Execute LONGVARCHAR index update tests";
     private static final String JSON_INDEX_EXECUTION = "Execute JSON index update tests";
 
     private String testType = null;

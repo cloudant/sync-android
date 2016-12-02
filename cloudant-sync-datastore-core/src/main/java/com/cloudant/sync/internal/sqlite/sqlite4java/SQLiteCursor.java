@@ -17,6 +17,7 @@ package com.cloudant.sync.internal.sqlite.sqlite4java;
 import com.cloudant.sync.internal.sqlite.Cursor;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @api_private
@@ -121,11 +122,21 @@ public class SQLiteCursor implements Cursor {
 
     @Override
     public int getColumnIndex(String columnName) {
-        if(names.contains(columnName)) {
-            return names.indexOf(columnName);
-        } else {
-            return -1;
+        int index = -1;
+        index = names.indexOf(columnName);
+        if (index != -1) {
+            return index;
         }
+        index = names.indexOf(columnName.toUpperCase(Locale.ENGLISH));
+        if (index != -1) {
+            return index;
+        }
+        index = names.indexOf(columnName.toLowerCase(Locale.ENGLISH));
+        if (index != -1) {
+            return index;
+        }
+        return index;
+
     }
 
     @Override
