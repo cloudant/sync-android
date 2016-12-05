@@ -15,6 +15,8 @@ package com.cloudant.sync.query;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.util.TestUtils;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +31,7 @@ import java.util.Map;
  */
 public class MockMatcherIndexManager extends IndexManager {
 
-    public MockMatcherIndexManager(Datastore datastore) {
+    public MockMatcherIndexManager(Datastore datastore) throws IOException, SQLException {
         super(datastore);
     }
 
