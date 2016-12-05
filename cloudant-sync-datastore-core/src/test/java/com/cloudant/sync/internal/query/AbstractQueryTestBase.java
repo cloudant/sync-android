@@ -66,7 +66,9 @@ public abstract class AbstractQueryTestBase {
     @After
     public void tearDown() throws Exception {
         im.close();
-        assertThat(indexManagerDatabaseQueue.isShutdown(), is(true));
+        if (indexManagerDatabaseQueue != null) {
+            assertThat(indexManagerDatabaseQueue.isShutdown(), is(true));
+        }
         ds.close();
         TestUtils.deleteTempTestingDir(factoryPath);
 
