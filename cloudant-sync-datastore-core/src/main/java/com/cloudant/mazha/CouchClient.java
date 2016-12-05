@@ -445,6 +445,7 @@ public class CouchClient  {
                                                                     boolean pullAttachmentsInline) {
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("revs", true);
+        options.put("latest", true);
 
         if (pullAttachmentsInline) {
             options.put("attachments", true);

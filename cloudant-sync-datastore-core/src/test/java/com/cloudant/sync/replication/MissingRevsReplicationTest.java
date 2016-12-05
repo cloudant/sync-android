@@ -54,7 +54,6 @@ public class MissingRevsReplicationTest extends ReplicationTestBase {
         return s;
     }
 
-    @Ignore //pending resolution of case 79041
     @Test
     public void testReplicationWithMissingRevision() throws Exception {
         // Create doc

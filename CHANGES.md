@@ -1,3 +1,7 @@
+# Unreleased
+- [FIXED] Issue where replicator would not get the latest revision if `_bulk_get`
+   was available.
+
 # 1.1.4 (2016-11-23)
 - [FIXED] Issue performing cookie authentication in version 1.1.3.
 
