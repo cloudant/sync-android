@@ -119,7 +119,7 @@ class IndexUpdater {
         } catch (DocumentStoreException e) {
             String message = String.format(Locale.ENGLISH, "Failed to get changes feed from %d", lastSequence);
             logger.log(Level.SEVERE, message, e);
-            throw new QueryException(e.getCause());
+            throw new QueryException(message, e.getCause());
         }
     }
 

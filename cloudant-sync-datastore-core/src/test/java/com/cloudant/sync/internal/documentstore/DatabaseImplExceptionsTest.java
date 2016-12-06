@@ -56,7 +56,7 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
         DocumentRevision dr = new DocumentRevision("doc1");
         dr.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
         this.datastore.createDocumentFromRevision(dr);
-        this.datastore.getDocument("nosuchdocument", "nosuchrevid");
+        this.datastore.getDocument(dr.getId(), "nosuchrevid");
     }
 
     // getDocument after we remove the underlying SQL database should throw DocumentStoreException
@@ -154,7 +154,7 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
         this.datastore.updateDocumentFromRevision(dr);
     }
 
-    // updateDocumentFromRevision after we remove the underlying SQL database should throw
+    // deleteDocumentFromRevision after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void deleteDocumentFromRevisionShouldThrowDocumentStoreException() throws Exception {
@@ -166,7 +166,7 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
         this.datastore.deleteDocumentFromRevision(dr);
     }
 
-    // updateDocumentFromRevision after we remove the underlying SQL database should throw
+    // deleteDocumentFromRevision after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void deleteDocumentShouldThrowDocumentStoreException() throws Exception {
