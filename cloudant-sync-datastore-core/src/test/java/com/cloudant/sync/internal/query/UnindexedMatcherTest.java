@@ -26,6 +26,7 @@ import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionBuilder;
+import com.cloudant.sync.query.QueryException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -323,7 +324,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleEqMatch() {
+    public void singleEqMatch() throws QueryException {
         // Selector - { "name" : { "$eq" : "mike" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> eq = new HashMap<String, Object>();
@@ -335,7 +336,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleEqNoMatch() {
+    public void singleEqNoMatch() throws QueryException {
         // Selector - { "name" : { "$eq" : "fred" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> eq = new HashMap<String, Object>();
@@ -347,7 +348,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleEqNoMatchBadField() {
+    public void singleEqNoMatchBadField() throws QueryException {
         // Selector - { "species" : { "$eq" : "fred" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> eq = new HashMap<String, Object>();
@@ -359,7 +360,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleImpliedEqMatch() {
+    public void singleImpliedEqMatch() throws QueryException {
         // Selector - { "name" : "mike" }
         Map<String, Object> selector = new HashMap<String, Object>();
         selector.put("name", "mike");
@@ -369,7 +370,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleImpliedEqNoMatch() {
+    public void singleImpliedEqNoMatch() throws QueryException {
         // Selector - { "name" : "fred" }
         Map<String, Object> selector = new HashMap<String, Object>();
         selector.put("name", "fred");
@@ -379,7 +380,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleImpliedEqNoMatchBadField() {
+    public void singleImpliedEqNoMatchBadField() throws QueryException {
         // Selector - { "species" : "fred" }
         Map<String, Object> selector = new HashMap<String, Object>();
         selector.put("species", "fred");
@@ -389,7 +390,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleNeMatch() {
+    public void singleNeMatch() throws QueryException {
         // Selector - { "name" : { "$ne" : "fred" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> ne = new HashMap<String, Object>();
@@ -401,7 +402,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleNeNoMatch() {
+    public void singleNeNoMatch() throws QueryException {
         // Selector - { "name" : { "$ne" : "mike" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> ne = new HashMap<String, Object>();
@@ -413,7 +414,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleNeMatchesOnBadField() {
+    public void singleNeMatchesOnBadField() throws QueryException {
         // Selector - { "species" : { "$ne" : "fred" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> ne = new HashMap<String, Object>();
@@ -425,7 +426,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleGtStringMatch() {
+    public void singleGtStringMatch() throws QueryException {
         // Selector - { "name" : { "$gt" : "andy" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -437,7 +438,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleGtIntMatch() {
+    public void singleGtIntMatch() throws QueryException {
         // Selector - { "age" : { "$gt" : 12 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -449,7 +450,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleGtStringNoMatch() {
+    public void singleGtStringNoMatch() throws QueryException {
         // Selector - { "name" : { "$gt" : "robert" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -461,7 +462,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleGtIntNoMatch() {
+    public void singleGtIntNoMatch() throws QueryException {
         // Selector - { "age" : { "$gt" : 45 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -473,7 +474,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleGtNoMatchBadField() {
+    public void singleGtNoMatchBadField() throws QueryException {
         // Selector - { "species" : { "$gt" : "fred" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -485,7 +486,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleGteStringMatch() {
+    public void singleGteStringMatch() throws QueryException {
         // Selector - { "name" : { "$gte" : "andy" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -497,7 +498,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleGteStringMatchEq() {
+    public void singleGteStringMatchEq() throws QueryException {
         // Selector - { "name" : { "$gte" : "mike" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -509,7 +510,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleGteIntMatch() {
+    public void singleGteIntMatch() throws QueryException {
         // Selector - { "age" : { "$gte" : 12 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -521,7 +522,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleGteIntMatchEq() {
+    public void singleGteIntMatchEq() throws QueryException {
         // Selector - { "age" : { "$gte" : 31 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -533,7 +534,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleGteStringNoMatch() {
+    public void singleGteStringNoMatch() throws QueryException {
         // Selector - { "name" : { "$gte" : "robert" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -545,7 +546,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleGteIntNoMatch() {
+    public void singleGteIntNoMatch() throws QueryException {
         // Selector - { "age" : { "$gte" : 45 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -557,7 +558,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleGteNoMatchBadField() {
+    public void singleGteNoMatchBadField() throws QueryException {
         // Selector - { "species" : { "$gte" : "fred" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -569,7 +570,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleLtStringMatch() {
+    public void singleLtStringMatch() throws QueryException {
         // Selector - { "name" : { "$lt" : "robert" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -581,7 +582,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleLtIntMatch() {
+    public void singleLtIntMatch() throws QueryException {
         // Selector - { "age" : { "$lt" : 45 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -593,7 +594,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleLtStringNoMatch() {
+    public void singleLtStringNoMatch() throws QueryException {
         // Selector - { "name" : { "$lt" : "andy" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -605,7 +606,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleLtIntNoMatch() {
+    public void singleLtIntNoMatch() throws QueryException {
         // Selector - { "age" : { "$lt" : 12 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -617,7 +618,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleLtNoMatchBadField() {
+    public void singleLtNoMatchBadField() throws QueryException {
         // Selector - { "species" : { "$lt" : "fred" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -629,7 +630,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleLteStringMatch() {
+    public void singleLteStringMatch() throws QueryException {
         // Selector - { "name" : { "$lte" : "robert" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -641,7 +642,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleLteStringMatchEq() {
+    public void singleLteStringMatchEq() throws QueryException {
         // Selector - { "name" : { "$lte" : "mike" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -653,7 +654,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleLteIntMatch() {
+    public void singleLteIntMatch() throws QueryException {
         // Selector - { "age" : { "$lte" : 45 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -665,7 +666,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleLteIntMatchEq() {
+    public void singleLteIntMatchEq() throws QueryException {
         // Selector - { "age" : { "$lte" : 31 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -677,7 +678,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleLteStringNoMatch() {
+    public void singleLteStringNoMatch() throws QueryException {
         // Selector - { "name" : { "$lte" : "andy" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -689,7 +690,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleLteIntNoMatch() {
+    public void singleLteIntNoMatch() throws QueryException {
         // Selector - { "age" : { "$lte" : 12 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -701,7 +702,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleLteNoMatchBadField() {
+    public void singleLteNoMatchBadField() throws QueryException {
         // Selector - { "species" : { "$lte" : "fred" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> op = new HashMap<String, Object>();
@@ -713,7 +714,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleExistsMatch() {
+    public void singleExistsMatch() throws QueryException {
         // Selector - { "name" : { "$exists" : true } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> exists = new HashMap<String, Object>();
@@ -725,7 +726,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleExistsNoMatch() {
+    public void singleExistsNoMatch() throws QueryException {
         // Selector - { "name" : { "$exists" : false } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> exists = new HashMap<String, Object>();
@@ -737,7 +738,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleExistsMatchOnMissing() {
+    public void singleExistsMatchOnMissing() throws QueryException {
         // Selector - { "species" : { "$exists" : false } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> exists = new HashMap<String, Object>();
@@ -749,7 +750,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void singleExistsNoMatchOnMissing() {
+    public void singleExistsNoMatchOnMissing() throws QueryException {
         // Selector - { "species" : { "$exists" : true } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> exists = new HashMap<String, Object>();
@@ -761,7 +762,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchWhenUsingIntegerDivisorWithMOD() {
+    public void matchWhenUsingIntegerDivisorWithMOD() throws QueryException {
         // Selector - { "age": { "$mod":  [ 3, 1 ] } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -773,7 +774,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchWhenUsingNegativeDivisorWithMOD() {
+    public void matchWhenUsingNegativeDivisorWithMOD() throws QueryException {
         // Selector - { "age": { "$mod":  [ -3, 1 ] } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -785,7 +786,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchByTruncatingADoubleDivisorWithMOD() {
+    public void matchByTruncatingADoubleDivisorWithMOD() throws QueryException {
         // Selector - { "age": { "$mod":  [ 3.6, 1.0 ] } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -802,7 +803,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchWhenUsingIntegerDivisorWithMOD() {
+    public void noMatchWhenUsingIntegerDivisorWithMOD() throws QueryException {
         // Selector - { "age": { "$mod":  [ 3, 2 ] } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -814,7 +815,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchWhenUsingNegativeDivisorWithMOD() {
+    public void noMatchWhenUsingNegativeDivisorWithMOD() throws QueryException {
         // Selector - { "age": { "$mod":  [ -3, 2 ] } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -826,7 +827,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchWhenUsingDoubleDivisorWithMOD() {
+    public void noMatchWhenUsingDoubleDivisorWithMOD() throws QueryException {
         // Selector - { "age": { "$mod":  [ 3.6, 2.0 ] } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -843,7 +844,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchOnNegativeFieldWhenUsingIntegerDivisorWithMOD() {
+    public void matchOnNegativeFieldWhenUsingIntegerDivisorWithMOD() throws QueryException {
         // Selector - { "score": { "$mod":  [ 2, -1 ] } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -855,7 +856,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchOnNegativeFieldWhenUsingNegativeDivisorWithMOD() {
+    public void matchOnNegativeFieldWhenUsingNegativeDivisorWithMOD() throws QueryException {
         // Selector - { "score": { "$mod":  [ -2, -1 ] } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -867,7 +868,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchOnNegativeFieldWhenUsingIntegerDivisorWithMOD() {
+    public void noMatchOnNegativeFieldWhenUsingIntegerDivisorWithMOD() throws QueryException {
         // Selector - { "score": { "$mod":  [ 3, -1 ] } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -879,7 +880,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchOnNegativeFieldWhenUsingPositiveRemainderWithMOD() {
+    public void noMatchOnNegativeFieldWhenUsingPositiveRemainderWithMOD() throws QueryException {
         // Selector - { "score": { "$mod":  [ -2, 1 ] } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -891,7 +892,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchOnNegativeFieldWhenUsingNegativeDivisorWithMOD() {
+    public void noMatchOnNegativeFieldWhenUsingNegativeDivisorWithMOD() throws QueryException {
         // Selector - { "score": { "$mod":  [ -3, -1 ] } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -903,7 +904,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchWhenUsingAPositiveIntegerWithSIZE() {
+    public void matchWhenUsingAPositiveIntegerWithSIZE() throws QueryException {
         // Selector - { "pets": { "$size":  2 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> sizeOp = new HashMap<String, Object>();
@@ -915,7 +916,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchWhenUsingAPositiveIntegerWithSIZE() {
+    public void noMatchWhenUsingAPositiveIntegerWithSIZE() throws QueryException {
         // Selector - { "pets": { "$size":  3 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> sizeOp = new HashMap<String, Object>();
@@ -927,7 +928,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchWhenFieldIsNotAnArrayWithSIZE() {
+    public void noMatchWhenFieldIsNotAnArrayWithSIZE() throws QueryException {
         // Selector - { "name": { "$size":  1 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> sizeOp = new HashMap<String, Object>();
@@ -939,7 +940,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchWhenUsingANegativeIntegerWithSIZE() {
+    public void noMatchWhenUsingANegativeIntegerWithSIZE() throws QueryException {
         // Selector - { "pets": { "$size":  -2 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> sizeOp = new HashMap<String, Object>();
@@ -951,7 +952,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchWhenUsingZeroWithSIZE() {
+    public void matchWhenUsingZeroWithSIZE() throws QueryException {
         // Selector - { "hobbies": { "$size":  0 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> sizeOp = new HashMap<String, Object>();
@@ -963,7 +964,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchWhenUsingZeroAndFieldMissingWithSIZE() {
+    public void noMatchWhenUsingZeroAndFieldMissingWithSIZE() throws QueryException {
         // Selector - { "books": { "$size":  0 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> sizeOp = new HashMap<String, Object>();
@@ -975,7 +976,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchWhenUsingAStringWithSIZE() {
+    public void noMatchWhenUsingAStringWithSIZE() throws QueryException {
         // Selector - { "pets": { "$size":  "2" } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> sizeOp = new HashMap<String, Object>();
@@ -987,7 +988,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchWhenNotUsingAnIntegerWithSIZE() {
+    public void noMatchWhenNotUsingAnIntegerWithSIZE() throws QueryException {
         // Selector - { "pets": { "$size":  2.2 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> sizeOp = new HashMap<String, Object>();
@@ -999,7 +1000,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void compoundAndMatchAll() {
+    public void compoundAndMatchAll() throws QueryException {
         // Selector - { "$and" : [ { "name" : { "$eq" : "mike" } }, { "age" : { "$eq" : 31 } } ] }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> eqName = new HashMap<String, Object>();
@@ -1017,7 +1018,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void compoundAndNoMatchSome() {
+    public void compoundAndNoMatchSome() throws QueryException {
         // Selector - { "$and" : [ { "name" : { "$eq" : "mike" } }, { "age" : { "$eq" : 12 } } ] }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> eqName = new HashMap<String, Object>();
@@ -1035,7 +1036,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void compoundAndNoMatchAny() {
+    public void compoundAndNoMatchAny() throws QueryException {
         // Selector - { "$and" : [ { "name" : { "$eq" : "fred" } }, { "age" : { "$eq" : 12 } } ] }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> eqName = new HashMap<String, Object>();
@@ -1053,7 +1054,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void compoundImplicitAndMatch() {
+    public void compoundImplicitAndMatch() throws QueryException {
         // Selector - { "name" : { "$eq" : "mike" }, "age" : { "$eq" : 31 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> eqName = new HashMap<String, Object>();
@@ -1068,7 +1069,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void compoundImplicitAndNoMatch() {
+    public void compoundImplicitAndNoMatch() throws QueryException {
         // Selector - { "name" : { "$eq" : "mike" }, "age" : { "$eq" : 12 } }
         Map<String, Object> selector = new HashMap<String, Object>();
         Map<String, Object> eqName = new HashMap<String, Object>();
@@ -1083,7 +1084,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void orMatchAllFields() {
+    public void orMatchAllFields() throws QueryException {
         // Selector - { "$or" : [ { "name" : { "$eq" : "mike" } }, { "age" : { "$eq" : 31 } } ] }
         Map<String, Object> c1op = new HashMap<String, Object>();
         c1op.put("$eq", "mike");
@@ -1101,7 +1102,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void orMatchOnOneField() {
+    public void orMatchOnOneField() throws QueryException {
         // Selector - { "$or" : [ { "name" : { "$eq" : "mike" } }, { "age" : { "$eq" : 12 } } ] }
         Map<String, Object> c1op = new HashMap<String, Object>();
         c1op.put("$eq", "mike");
@@ -1119,7 +1120,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void orNoMatch() {
+    public void orNoMatch() throws QueryException {
         // Selector - { "$or" : [ { "name" : { "$eq" : "fred" } }, { "age" : { "$eq" : 12 } } ] }
         Map<String, Object> c1op = new HashMap<String, Object>();
         c1op.put("$eq", "fred");
@@ -1140,7 +1141,7 @@ public class UnindexedMatcherTest {
     // ($ne)  - $ne translates to $not..$eq
 
     @Test
-     public void noMatchNotEq() {
+     public void noMatchNotEq() throws QueryException {
         // Selector - { "name" : { "$not" : { "$eq" : "mike" } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$eq", "mike");
@@ -1154,7 +1155,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchNe() {
+    public void noMatchNe() throws QueryException {
         // Selector - { "name" : { "$ne" : "mike" } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$ne", "mike");
@@ -1166,7 +1167,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchNotNe() {
+    public void noMatchNotNe() throws QueryException {
         // Selector - { "name" : { "$not" : { "$ne" : "fred" } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$ne", "fred");
@@ -1180,7 +1181,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchNotEq() {
+    public void matchNotEq() throws QueryException {
         // Selector - { "name" : { "$not" : { "$eq" : "fred" } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$eq", "fred");
@@ -1194,7 +1195,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchNe() {
+    public void matchNe() throws QueryException {
         // Selector - { "name" : { "$ne" : "fred" } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$ne", "fred");
@@ -1206,7 +1207,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchNotNe() {
+    public void matchNotNe() throws QueryException {
         // Selector - { "name" : { "$not" : { "$ne" : "mike" } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$ne", "mike");
@@ -1220,7 +1221,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchNotEqBadField() {
+    public void matchNotEqBadField() throws QueryException {
         // Selector - { "species" : { "$not" : { "$eq" : "fred" } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$eq", "fred");
@@ -1234,7 +1235,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchNeBadField() {
+    public void matchNeBadField() throws QueryException {
         // Selector - { "species" : { "$ne" : "fred" } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$ne", "fred");
@@ -1246,7 +1247,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchOnArrayFields() {
+    public void matchOnArrayFields() throws QueryException {
         // Selector - { "pets" : "white_cat" }
         Map<String, Object> selector = new HashMap<String, Object>();
         selector.put("pets", "white_cat");
@@ -1256,7 +1257,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchGoodItemWithNot() {
+    public void noMatchGoodItemWithNot() throws QueryException {
         // Selector - { "pets" : { "$not" : { "$eq" : "white_cat" } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$eq", "white_cat");
@@ -1270,7 +1271,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchGoodItemWithNe() {
+    public void noMatchGoodItemWithNe() throws QueryException {
         // Selector - { "pets" : { "$ne" : "white_cat" } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$ne", "white_cat");
@@ -1282,7 +1283,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchOnBadItem() {
+    public void noMatchOnBadItem() throws QueryException {
         // Selector - { "pets" : "tabby_cat" }
         Map<String, Object> selector = new HashMap<String, Object>();
         selector.put("pets", "tabby_cat");
@@ -1292,7 +1293,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchBadItemWithNot() {
+    public void matchBadItemWithNot() throws QueryException {
         // Selector - { "pets" : { "$not" : { "$eq" : "tabby_cat" } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$eq", "tabby_cat");
@@ -1306,7 +1307,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchBadItemWithNe() {
+    public void matchBadItemWithNe() throws QueryException {
         // Selector - { "pets" : { "$ne" : "tabby_cat" } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$ne", "tabby_cat");
@@ -1318,7 +1319,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchOnArrayUsingIn() {
+    public void matchOnArrayUsingIn() throws QueryException {
         // Selector - { "pets" : { "$in" : [ "white_cat", "tabby_cat" ] } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$in", Arrays.<Object>asList("white_cat", "tabby_cat"));
@@ -1330,7 +1331,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchOnArrayUsingIn() {
+    public void noMatchOnArrayUsingIn() throws QueryException {
         // Selector - { "pets" : { "$in" : [ "grey_cat", "tabby_cat" ] } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$in", Arrays.<Object>asList("grey_cat", "tabby_cat"));
@@ -1342,7 +1343,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchOnNonArrayUsingIn() {
+    public void matchOnNonArrayUsingIn() throws QueryException {
         // Selector - { "name" : { "$in" : [ "mike", "fred" ] } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$in", Arrays.<Object>asList("mike", "fred"));
@@ -1354,7 +1355,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchOnNonArrayUsingIn() {
+    public void noMatchOnNonArrayUsingIn() throws QueryException {
         // Selector - { "name" : { "$in" : [ "john", "fred" ] } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$in", Arrays.<Object>asList("john", "fred"));
@@ -1366,7 +1367,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchOnArrayUsingNotIn() {
+    public void matchOnArrayUsingNotIn() throws QueryException {
         // Selector - { "pets" : { "$not" : { "$in" : [ "grey_cat", "tabby_cat" ] } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$in", Arrays.<Object>asList("grey_cat", "tabby_cat"));
@@ -1380,7 +1381,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchOnArrayUsingNotIn() {
+    public void noMatchOnArrayUsingNotIn() throws QueryException {
         // Selector - { "pets" : { "$not" : { "$in" : [ "white_cat", "tabby_cat" ] } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$in", Arrays.<Object>asList("white_cat", "tabby_cat"));
@@ -1394,7 +1395,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchOnNonArrayUsingNotIn() {
+    public void matchOnNonArrayUsingNotIn() throws QueryException {
         // Selector - { "name" : { "$not" : { "$in" : [ "john", "fred" ] } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$in", Arrays.<Object>asList("john", "fred"));
@@ -1408,7 +1409,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchOnNonArrayUsingNotIn() {
+    public void noMatchOnNonArrayUsingNotIn() throws QueryException {
         // Selector - { "name" : { "$not" : { "$in" : [ "mike", "fred" ] } } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$in", Arrays.<Object>asList("mike", "fred"));
@@ -1422,7 +1423,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void matchOnDottedFields() {
+    public void matchOnDottedFields() throws QueryException {
         // Selector - { "address.number" : "1" }
         Map<String, Object> selector = new HashMap<String, Object>();
         selector.put("address.number", "1");
@@ -1432,7 +1433,7 @@ public class UnindexedMatcherTest {
     }
 
     @Test
-    public void noMatchOnDottedFields() {
+    public void noMatchOnDottedFields() throws QueryException {
         // Selector - { "address.number" : "2" }
         Map<String, Object> selector = new HashMap<String, Object>();
         selector.put("address.number", "2");
