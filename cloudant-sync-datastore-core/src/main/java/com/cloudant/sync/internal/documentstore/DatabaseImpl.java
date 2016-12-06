@@ -20,7 +20,6 @@
 package com.cloudant.sync.internal.documentstore;
 
 import com.cloudant.sync.documentstore.DocumentRevision;
-import com.cloudant.sync.internal.common.ChangeNotifyingMap;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.common.ValueListMap;
 import com.cloudant.sync.documentstore.Attachment;
@@ -88,6 +87,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -227,77 +227,74 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public long getLastSequence() {
+    public long getLastSequence() throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
 
         try {
-            return queue.submit(new GetLastSequenceCallable()).get();
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Failed to get last Sequence", e);
-            throw new RuntimeException(e);
+            return get(queue.submit(new GetLastSequenceCallable()));
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to get last Sequence", e);
-            Throwable cause = e.getCause();
-            if (cause != null) {
-                if (cause instanceof IllegalStateException) {
-                    throw (IllegalStateException)cause;
-                }
-            }
+            throwCauseAs(e, IllegalStateException.class);
+            String message = "Failed to get last Sequence";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e.getCause());
         }
-        return 0;
-
     }
 
     @Override
-    public int getDocumentCount() {
+    public int getDocumentCount() throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         try {
             return get(queue.submit(new GetDocumentCountCallable()));
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to get document count", e);
+            String message = "Failed to get document count";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e.getCause());
         }
-        return 0;
-
     }
 
     @Override
-    public boolean containsDocument(String docId, String revId) {
+    public boolean containsDocument(String docId, String revId) throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         try {
             // TODO this can be made quicker than getting the whole document
-            return getDocument(docId, revId) != null;
+            getDocument(docId, revId);
+            return true;
         } catch (DocumentNotFoundException e) {
             return false;
         }
     }
 
     @Override
-    public boolean containsDocument(String docId) {
+    public boolean containsDocument(String docId) throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         try {
             // TODO this can be made quicker than getting the whole document
-            return getDocument(docId) != null;
+            getDocument(docId);
+            return true;
         } catch (DocumentNotFoundException e) {
             return false;
         }
     }
 
     @Override
-    public InternalDocumentRevision getDocument(String id) throws DocumentNotFoundException {
+    public InternalDocumentRevision getDocument(String id) throws DocumentNotFoundException, DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         return getDocument(id, null);
     }
 
     @Override
     public InternalDocumentRevision getDocument(final String id, final String rev) throws
-            DocumentNotFoundException {
+            DocumentNotFoundException, DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNullOrEmpty(id, "Document id");
 
         try {
             return get(queue.submit(new GetDocumentCallable(id, rev, this.attachmentsDir, this.attachmentStreamFactory)));
         } catch (ExecutionException e) {
-            throw new DocumentNotFoundException(id, rev, e.getCause());
+            throwCauseAs(e, DocumentNotFoundException.class);
+            String message = String.format(Locale.ENGLISH, "Failed to get document id %s at revision %s", id, rev);
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e.getCause());
         }
     }
 
@@ -321,7 +318,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public Changes changes(long since, final int limit) {
+    public Changes changes(long since, final int limit) throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkArgument(limit > 0, "Limit must be positive number");
         final long verifiedSince = since >= 0 ? since : 0;
@@ -329,15 +326,10 @@ public class DatabaseImpl implements Database {
         try {
             return get(queue.submit(new ChangesCallable(verifiedSince, limit, attachmentsDir, attachmentStreamFactory)));
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to get changes", e);
-            if (e.getCause() instanceof IllegalStateException) {
-                throw new IllegalStateException("Failed to get changes, SQLite version: " + queue
-                        .getSQLiteVersion(), e);
-            }
+            String message = "Failed to get changes";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e.getCause());
         }
-
-        return null;
-
     }
 
     /**
@@ -361,7 +353,7 @@ public class DatabaseImpl implements Database {
 
     @Override
     public List<DocumentRevision> getAllDocuments(final int offset, final int limit, final
-    boolean descending) {
+    boolean descending) throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         if (offset < 0) {
             throw new IllegalArgumentException("offset must be >= 0");
@@ -372,33 +364,35 @@ public class DatabaseImpl implements Database {
         try {
             return get(queue.submit(new GetAllDocumentsCallable(offset, limit, descending, this.attachmentsDir, this.attachmentStreamFactory)));
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to get all documents", e);
+            String message = "Failed to get all documents";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e.getCause());
         }
-        return null;
-
     }
 
     @Override
-    public List<String> getAllDocumentIds() {
+    public List<String> getAllDocumentIds() throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         try {
             return get(queue.submit(new GetAllDocumentIdsCallable()));
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to get all document ids", e);
+            String message = "Failed to get all document ids";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e.getCause());
         }
-        return null;
     }
 
     @Override
     public List<DocumentRevision> getDocumentsWithIds(final List<String> docIds) throws
-            DocumentException {
+            DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNull(docIds, "Input document id list");
         try {
             return get (queue.submit(new GetDocumentsWithIdsCallable(docIds, attachmentsDir, attachmentStreamFactory)));
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to get documents with ids", e);
-            throw new DocumentException("Failed to get documents with ids", e);
+            String message = "Failed to get documents with ids";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e);
         }
     }
 
@@ -780,13 +774,14 @@ public class DatabaseImpl implements Database {
 
     // TODO can this run async? if so no need to call get()
     @Override
-    public void compact() {
+    public void compact() throws DocumentStoreException {
         try {
             get(queue.submit(new CompactCallable(this.attachmentsDir)));
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to compact database", e);
+            String message = "Failed to compact database";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e.getCause());
         }
-
     }
 
     public void close() {
@@ -836,15 +831,14 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public Iterator<String> getConflictedDocumentIds() {
-
+    public Iterator<String> getConflictedDocumentIds() throws DocumentStoreException {
         try {
             return get(queue.submit(new GetConflictedDocumentIdsCallable())).iterator();
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to get conflicted document Ids", e);
+            String message = "Failed to get conflicted document ids";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e.getCause());
         }
-        return null;
-
     }
 
     @Override
@@ -1075,7 +1069,7 @@ public class DatabaseImpl implements Database {
 
     @Override
     public DocumentRevision createDocumentFromRevision(final DocumentRevision rev)
-            throws DocumentException {
+            throws AttachmentException, InvalidDocumentException, ConflictException, DocumentStoreException {
         Misc.checkNotNull(rev, "DocumentRevision");
         Misc.checkState(isOpen(), "Datastore is closed");
         Misc.checkArgument(rev.getRevision() == null, "Revision ID must be null for new " +
@@ -1123,8 +1117,13 @@ public class DatabaseImpl implements Database {
             }));
             return created;
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to create document", e);
-            throw new DocumentException(e);
+            // invalid if eg there are keys starting with _
+            throwCauseAs(e, InvalidDocumentException.class);
+            // conflictexception if doc id already exists
+            throwCauseAs(e, ConflictException.class);
+            String message = "Failed to create document";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e.getCause());
         } finally {
             if (created != null) {
                 eventBus.post(new DocumentCreated(created));
@@ -1134,7 +1133,7 @@ public class DatabaseImpl implements Database {
 
     @Override
     public DocumentRevision updateDocumentFromRevision(final DocumentRevision rev)
-            throws DocumentException {
+            throws AttachmentException, DocumentStoreException, ConflictException {
 
         Misc.checkNotNull(rev, "DocumentRevision");
         Misc.checkState(isOpen(), "Datastore is closed");
@@ -1158,54 +1157,63 @@ public class DatabaseImpl implements Database {
                             rev, preparedNewAttachments, existingAttachments, this.attachmentsDir, this.attachmentStreamFactory)));
 
             if (revision != null) {
-                eventBus.post(new DocumentUpdated(getDocument(rev.getId(), rev.getRevision()),
-                        revision));
+                try {
+                    eventBus.post(new DocumentUpdated(getDocument(rev.getId(), rev.getRevision()),
+                            revision));
+                } catch (DocumentStoreException de) {
+                    ; // TODO couldn't re-fetch document to post event
+                } catch (DocumentException de) {
+                    ; // TODO couldn't re-fetch document to post event
+                }
             }
 
             return revision;
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to updated document", e);
-            throw new DocumentException(e);
+            // invalid if eg there are keys starting with _
+            throwCauseAs(e, InvalidDocumentException.class);
+            // conflictexception if rev id is not winning rev
+            throwCauseAs(e, ConflictException.class);
+            String message = "Failed to update document";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e.getCause());
         }
 
     }
 
     @Override
     public DocumentRevision deleteDocumentFromRevision(final DocumentRevision rev) throws
-            ConflictException {
+            ConflictException, DocumentNotFoundException, DocumentStoreException {
         Misc.checkNotNull(rev, "DocumentRevision");
         Misc.checkState(isOpen(), "Datastore is closed");
 
         try {
             InternalDocumentRevision deletedRevision = get(queue.submit(new DeleteDocumentCallable(rev.getId(), rev.getRevision())));
-
             if (deletedRevision != null) {
                 eventBus.post(new DocumentDeleted(rev, deletedRevision));
             }
-
             return deletedRevision;
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to delete document", e);
-            Throwable cause = e.getCause();
-            if (cause != null) {
-                if (cause instanceof ConflictException) {
-                    throw (ConflictException) cause;
-                }
-            }
+            // conflictexception if source revision isn't current rev
+            throwCauseAs(e, ConflictException.class);
+            // documentnotfoundexception if it's already deleted
+            throwCauseAs(e, DocumentNotFoundException.class);
+            String message = "Failed to delete document";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e.getCause());
         }
-
-        return null;
     }
 
     // delete all leaf nodes
     @Override
     public List<DocumentRevision> deleteDocument(final String id)
-            throws DocumentException {
+            throws DocumentStoreException {
         Misc.checkNotNull(id, "ID");
         try {
             return get(queue.submitTransaction(new DeleteAllRevisionsCallable(id)));
         } catch (ExecutionException e) {
-            throw new DocumentException("Failed to delete document", e);
+            String message = "Failed to delete document";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e.getCause());
         }
     }
 
@@ -1272,4 +1280,11 @@ public class DatabaseImpl implements Database {
             return missingRevs;
         }
     }
+
+    private <T extends Throwable> void throwCauseAs(Throwable t, Class<T> type) throws T {
+        if (t.getCause().getClass().equals(type)) {
+            throw (T)t.getCause();
+        }
+    }
+
 }

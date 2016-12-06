@@ -25,7 +25,7 @@ import com.cloudant.sync.documentstore.DocumentRevision;
 public class DatabaseImplChangesTest extends BasicDatastoreTestBase {
 
     @Test
-    public void changes_noChanges_nothing() {
+    public void changes_noChanges_nothing() throws Exception {
         Changes changes = datastore.changes(0, 100);
         Assert.assertEquals(0, changes.size());
         Assert.assertEquals(0, changes.getResults().size());

@@ -160,7 +160,7 @@ public class DocumentRevision {
      * @throws DocumentNotFoundException Thrown if the full document cannot be loaded from the
      * datastore.
      */
-    public DocumentRevision toFullRevision() throws DocumentNotFoundException {
+    public DocumentRevision toFullRevision() throws DocumentNotFoundException, DocumentStoreException {
         return this;
     }
 

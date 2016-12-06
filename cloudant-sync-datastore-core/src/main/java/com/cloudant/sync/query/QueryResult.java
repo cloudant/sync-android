@@ -19,7 +19,7 @@ import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
-import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionBuilder;
 import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.internal.query.UnindexedMatcher;
@@ -194,9 +194,9 @@ public class QueryResult implements Iterable<DocumentRevision> {
                     }
                 }
                 return docList.iterator();
-            } catch (DocumentException e) {
+            } catch (DocumentStoreException dse) {
                 // TODO - not sure what the right thing is here
-                throw new NoSuchElementException(e.toString());
+                throw new NoSuchElementException(dse.toString());
             }
         }
     }

@@ -43,6 +43,7 @@ public class GetLastSequenceCallable implements SQLCallable<Long> {
         try {
             cursor = db.rawQuery(sql, null);
             if (cursor.moveToFirst()) {
+                // TODO this will always be an integer or null and we can't be expected to handle other cases
                 if (cursor.columnType(0) == Cursor.FIELD_TYPE_INTEGER) {
                     result = cursor.getLong(0);
                 } else if (cursor.columnType(0) == Cursor.FIELD_TYPE_NULL) {
