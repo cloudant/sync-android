@@ -19,6 +19,7 @@ import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
+import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
@@ -79,28 +80,20 @@ class QueryExecutor {
                             long skip,
                             long limit,
                             List<String> fields,
-                            final List<FieldSort> sortDocument) {
+                            final List<FieldSort> sortDocument) throws QueryException {
         //
         // Validate inputs
         //
 
-        if (!validateSortDocument(sortDocument)) {
-            return null;  // validate logs the error if doc is invalid
-        }
-
         fields = normaliseFields(fields);
 
-        if (!validateFields(fields)) {
-            return null;  // validate logs error message
-        }
+        Misc.checkArgument(validateFields(fields), "TODO");
 
         // normalise and validate query by passing into the executors
 
         query = QueryValidator.normaliseAndValidateQuery(query);
 
-        if (query == null) {
-            return null;
-        }
+        Misc.checkNotNull(query, "query");
 
         //
         // Execute the query
@@ -109,9 +102,7 @@ class QueryExecutor {
         Boolean[] indexesCoverQuery = new Boolean[]{ false };
         final ChildrenQueryNode root = translateQuery(query, indexes, indexesCoverQuery);
 
-        if (root == null) {
-            return null;
-        }
+
 
         Future<List<String>> result = queue.submit(new SQLCallable<List<String>>() {
             @Override
@@ -134,13 +125,16 @@ class QueryExecutor {
         try {
             docIds = result.get();
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Execution error encountered:", e);
-            return null;
+            String message = "Execution error encountered";
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e.getCause());
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Execution interrupted error encountered:", e);
-            return null;
+            String message = "Execution interrupted error encountered";
+            logger.log(Level.SEVERE, message, e);
+            throw new QueryException(message, e.getCause());
         }
 
+        // TODO null or empty?
         if (docIds == null) {
             return null;
         }
@@ -168,13 +162,6 @@ class QueryExecutor {
     protected UnindexedMatcher matcherForIndexCoverage(Boolean[] indexesCoverQuery,
                                                        Map<String, Object> selector) {
         return indexesCoverQuery[0] ? null : UnindexedMatcher.matcherWithSelector(selector);
-    }
-
-    // TODO - remove - not needed now sorts aren't expressed as maps
-    private boolean validateSortDocument(List<FieldSort> sortDocument) {
-
-
-        return true;
     }
 
     /**
@@ -206,7 +193,7 @@ class QueryExecutor {
         return fields;
     }
 
-    protected Set<String> executeQueryTree(QueryNode node, SQLDatabase db) throws DocumentStoreException {
+    protected Set<String> executeQueryTree(QueryNode node, SQLDatabase db) throws QueryException {
         if (node instanceof AndQueryNode) {
             Set<String> accumulator = null;
 
@@ -268,7 +255,7 @@ class QueryExecutor {
 
             return new HashSet<String>(docIds);
         } else {
-            return null;
+            throw new QueryException("Unexpected node type "+node);
         }
     }
 
@@ -287,42 +274,39 @@ class QueryExecutor {
     private List<String> sortIds(Set<String> docIdSet,
                                  List<FieldSort> sortDocument,
                                  List<Index> indexes,
-                                 SQLDatabase db) {
+                                 SQLDatabase db) throws QueryException {
         boolean smallResultSet = (docIdSet.size() < SMALL_RESULT_SET_SIZE_THRESHOLD);
         SqlParts orderBy = sqlToSortIds(docIdSet, sortDocument, indexes);
+
         List<String> sortedIds = null;
-        if (orderBy != null) {
-            // The query will iterate through a sorted list of docIds.
-            // This means that if we create a new array and add entries
-            // to that array as we iterate through the result set which
-            // are part of the query's results, we'll end up with an
-            // ordered set of results.
-            Cursor cursor = null;
-            try {
-                cursor = db.rawQuery(orderBy.sqlWithPlaceHolders, orderBy.placeHolderValues);
-                while (cursor.moveToNext()) {
-                    if (sortedIds == null) {
-                        sortedIds = new ArrayList<String>();
-                    }
+        // The query will iterate through a sorted list of docIds.
+        // This means that if we create a new array and add entries
+        // to that array as we iterate through the result set which
+        // are part of the query's results, we'll end up with an
+        // ordered set of results.
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(orderBy.sqlWithPlaceHolders, orderBy.placeHolderValues);
+            while (cursor.moveToNext()) {
+                if (sortedIds == null) {
+                    sortedIds = new ArrayList<String>();
+                }
 
-                    String candidateId = cursor.getString(0);
+                String candidateId = cursor.getString(0);
 
-                    if (smallResultSet) {
+                if (smallResultSet) {
+                    sortedIds.add(candidateId);
+                } else {
+                    if (docIdSet.contains(candidateId)) {
                         sortedIds.add(candidateId);
-                    } else {
-                        if (docIdSet.contains(candidateId)) {
-                            sortedIds.add(candidateId);
-                        }
                     }
                 }
-            } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Failed to sort doc ids.", e);
-                return null;
-            } finally {
-                DatabaseUtils.closeCursorQuietly(cursor);
             }
-        } else {
-            sortedIds = null;  // error doing the ordering
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Failed to sort doc ids.", e);
+            return null;
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
         }
 
         return sortedIds;
@@ -341,12 +325,12 @@ class QueryExecutor {
      */
     protected static SqlParts sqlToSortIds(Set<String> docIdSet,
                                   List<FieldSort> sortDocument,
-                                  List<Index> indexes) {
+                                  List<Index> indexes) throws QueryException {
         String chosenIndex = chooseIndexForSort(sortDocument, indexes);
         if (chosenIndex == null) {
-            String msg = String.format("No single index can satisfy order %s", sortDocument);
+            String msg = String.format(Locale.ENGLISH, "No single index can satisfy order %s", sortDocument);
             logger.log(Level.SEVERE, msg);
-            return null;
+            throw new QueryException(msg);
         }
 
         String indexTable = QueryImpl.tableNameForIndex(chosenIndex);

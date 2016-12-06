@@ -33,6 +33,7 @@ import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.internal.util.Misc;
+import com.cloudant.sync.query.QueryException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -124,19 +125,13 @@ class QuerySqlTranslator {
         TranslatorState state = new TranslatorState();
         QueryNode node = translateQuery(query, indexes, state);
 
-        if (state.textIndexMissing) {
-            String msg = "No text index defined, cannot execute query containing a text search.";
-            logger.log(Level.SEVERE, msg);
-            return null;
-        } else if (state.textIndexRequired && state.atLeastOneIndexMissing) {
-            String msg = String.format("query %s contains a text search but is missing \"json\"" +
+        Misc.checkState(!state.textIndexMissing, "No text index defined, cannot execute query containing a text search.");
+        Misc.checkState(!(state.textIndexRequired && state.atLeastOneIndexMissing), String.format("query %s contains a text search but is missing \"json\"" +
                                        " index(es).  All indexes must exist in order to execute a" +
                                        " query containing a text search.  Create all necessary" +
                                        " indexes for the query and re-execute.",
-                                       query.toString());
-            logger.log(Level.SEVERE, msg);
-            return null;
-        } else if (!state.textIndexRequired &&
+                                       query.toString()));
+        if (!state.textIndexRequired &&
                       (!state.atLeastOneIndexUsed || state.atLeastOneORIndexMissing)) {
             // If we haven't used a single index or an OR clause is missing an index,
             // we need to return every document id, so that the post-hoc matcher can
@@ -221,12 +216,6 @@ class QuerySqlTranslator {
 
                     // Execute SQL on that index with appropriate values
                     SqlParts select = selectStatementForAndClause(basicClauses, chosenIndex);
-                    if (select == null) {
-                        String msg = String.format("Error generating SELECT clause for %s",
-                                basicClauses);
-                        logger.log(Level.SEVERE, msg);
-                        return null;
-                    }
 
                     SqlQueryNode sqlNode = new SqlQueryNode();
                     sqlNode.sql = select;
@@ -261,12 +250,6 @@ class QuerySqlTranslator {
 
                         // Execute SQL on that index with appropriate values
                         SqlParts select = selectStatementForAndClause(wrappedClause, chosenIndex);
-                        if (select == null) {
-                            String msg = String.format("Error generating SELECT clause for %s",
-                                    basicClauses);
-                            logger.log(Level.SEVERE, msg);
-                            return null;
-                        }
 
                         SqlQueryNode sqlNode = new SqlQueryNode();
                         sqlNode.sql = select;
@@ -289,12 +272,6 @@ class QuerySqlTranslator {
                 state.textIndexMissing = true;
             } else {
                 SqlParts select = selectStatementForTextClause(textClause, textIndex);
-                if (select == null) {
-                    String msg = String.format("Error generating SELECT clause for %s",
-                            textClause.toString());
-                    logger.log(Level.SEVERE, msg);
-                    return null;
-                }
 
                 SqlQueryNode sqlNode = new SqlQueryNode();
                 sqlNode.sql = select;
@@ -339,9 +316,8 @@ class QuerySqlTranslator {
     }
 
     private static List<String> fieldsForAndClause(List<Object> clause) {
-        if (clause == null) {
-            return null;
-        }
+        Misc.checkNotNull(clause, "clause");
+
         List<String> fieldNames = new ArrayList<String>();
         for (Object rawTerm: clause) {
             @SuppressWarnings("unchecked")
@@ -377,6 +353,7 @@ class QuerySqlTranslator {
 
     protected static String chooseIndexForAndClause(List<Object> clause,
                                                     List<Index>indexes) {
+
         if (clause == null || clause.isEmpty()) {
             return null;
         }
@@ -385,9 +362,10 @@ class QuerySqlTranslator {
             return null;
         }
 
+        // NB this is not an error condition, but no index will be used
         if (isOperatorFoundInClause(SIZE, clause)) {
             String msg = String.format("$size operator found in clause %s.  " +
-                                       "Indexes are not used with $size operations.", clause);
+                    "Indexes are not used with $size operations.", clause);
             logger.log(Level.INFO, msg);
             return null;
         }
@@ -395,11 +373,7 @@ class QuerySqlTranslator {
         List<String> fieldList = fieldsForAndClause(clause);
         Set<String> neededFields = new HashSet<String>(fieldList);
 
-        if (neededFields.isEmpty()) {
-            String msg = String.format("Invalid clauses in $and clause %s.", clause.toString());
-            logger.log(Level.SEVERE, msg);
-            return null;
-        }
+        Misc.checkState(!neededFields.isEmpty(), String.format("Invalid clauses in $and clause %s.", clause.toString()));
 
         return chooseIndexForFields(neededFields, indexes);
     }
@@ -443,19 +417,14 @@ class QuerySqlTranslator {
 
     protected static SqlParts selectStatementForAndClause(List<Object> clause,
                                                           String indexName) {
-        if (clause == null || clause.isEmpty()) {
-            return null;  // no query here
-        }
 
-        if (indexName == null || indexName.isEmpty()) {
-            return null;
-        }
+        Misc.checkArgument(!(clause == null || clause.isEmpty()), "clause cannot be null or empty");
+
+        Misc.checkNotNullOrEmpty(indexName, "indexName");
 
         SqlParts where = whereSqlForAndClause(clause, indexName);
 
-        if (where == null) {
-            return null;
-        }
+        Misc.checkNotNull(where, "where");
 
         String tableName = QueryImpl.tableNameForIndex(indexName);
 
@@ -469,17 +438,12 @@ class QuerySqlTranslator {
     @SuppressWarnings("unchecked")
     protected static SqlParts selectStatementForTextClause(Object clause,
                                                            String indexName) {
-        if (clause == null) {
-            return null;  // no query here
-        }
 
-        if (indexName == null || indexName.isEmpty()) {
-            return null;
-        }
+        Misc.checkNotNull(clause, "clause");
 
-        if (!(clause instanceof Map)) {
-            return null;  // should never get here as this would not pass normalization
-        }
+        Misc.checkNotNullOrEmpty(indexName, "indexName");
+
+        Misc.checkArgument(clause instanceof Map, "clause must be a Map");
 
         Map<String, Object> textClause = (Map<String, Object>) clause;
         Map<String, String> searchClause = (Map<String, String>) textClause.get(TEXT);
@@ -494,9 +458,7 @@ class QuerySqlTranslator {
 
     @SuppressWarnings("unchecked")
     protected static SqlParts whereSqlForAndClause(List<Object> clause, String indexName) {
-        if (clause == null || clause.isEmpty()) {
-            return null;  //  no point in querying empty set of fields
-        }
+        Misc.checkArgument (!(clause == null || clause.isEmpty()), "clause cannot be null or empty"); //  no point in querying empty set of fields
 
         // [ { "fieldName":  "mike"}, ...]
 
@@ -524,22 +486,14 @@ class QuerySqlTranslator {
 
         for (Object rawComponent: clause) {
             Map<String, Object> component = (Map<String, Object>) rawComponent;
-            if (component.size() != 1) {
-                String msg = String.format("Expected single predicate per clause map, got %s",
-                                           component.toString());
-                logger.log(Level.SEVERE, msg);
-                return null;
-            }
+            Misc.checkState(component.size() == 1, String.format("Expected single predicate per clause map, got %s",
+                                           component.toString()));
 
             String fieldName = (String) component.keySet().toArray()[0];
             Map<String, Object> predicate = (Map<String, Object>) component.get(fieldName);
 
-            if (predicate.size() != 1) {
-                String msg = String.format("Expected single operator per predicate map, got %s",
-                                           predicate.toString());
-                logger.log(Level.SEVERE, msg);
-                return null;
-            }
+            Misc.checkState(predicate.size() == 1, String.format("Expected single operator per predicate map, got %s",
+                                           predicate.toString()));
 
             String operator = (String) predicate.keySet().toArray()[0];
 
@@ -547,12 +501,8 @@ class QuerySqlTranslator {
             if (operator.equals(NOT)) {
                 Map<String, Object> negatedPredicate = (Map<String, Object>) predicate.get(NOT);
 
-                if (negatedPredicate.size() != 1) {
-                    String msg = String.format("Expected single operator per predicate map, got %s",
-                                               predicate.toString());
-                    logger.log(Level.SEVERE, msg);
-                    return null;
-                }
+                Misc.checkState (negatedPredicate.size() == 1, String.format("Expected single operator per predicate map, got %s",
+                                               predicate.toString()));
 
                 operator = (String) negatedPredicate.keySet().toArray()[0];
                 Object predicateValue;
