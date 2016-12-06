@@ -180,7 +180,7 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
         this.datastore.deleteDocumentFromRevision(dr);
     }
 
-    // deleteDocumentFromRevision after we remove the underlying SQL database should throw
+    // deleteDocument after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void deleteDocumentShouldThrowDocumentStoreException() throws Exception {
