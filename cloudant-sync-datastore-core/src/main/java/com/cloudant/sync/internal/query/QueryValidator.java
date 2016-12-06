@@ -16,10 +16,13 @@ package com.cloudant.sync.internal.query;
 
 import static com.cloudant.sync.internal.query.QueryConstants.*;
 
+import com.cloudant.sync.query.QueryException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,7 +50,7 @@ class QueryValidator {
      *  Expand implicit operators in a query, and validate
      */
     @SuppressWarnings("unchecked")
-    public static Map<String, Object> normaliseAndValidateQuery(Map<String, Object> query) {
+    public static Map<String, Object> normaliseAndValidateQuery(Map<String, Object> query) throws QueryException{
         boolean isWildCard = false;
         if (query.isEmpty()) {
             isWildCard = true;
@@ -98,11 +101,11 @@ class QueryValidator {
 
         Map<String, Object> selector = new HashMap<String, Object>();
         selector.put(compoundOperator, predicates);
-        if (isWildCard || validateSelector(selector)) {
-            return selector;
+        if (!isWildCard) {
+            validateSelector(selector);
         }
 
-        return null;
+        return selector;
     }
 
     private static Map<String, Object> addImplicitAnd(Map<String, Object> query) {
@@ -395,21 +398,19 @@ class QueryValidator {
         return accumulator;
     }
 
-    private static boolean validateCompoundOperatorOperand(Object operand) {
+    private static void validateCompoundOperatorOperand(Object operand) throws QueryException {
         if (!(operand instanceof List)) {
             String msg = String.format("Argument to compound operator is not a List: %s",
                                        operand.toString());
-            logger.log(Level.SEVERE, msg);
-            return false;
+            throw new QueryException(msg);
         }
-        return true;
     }
 
     /**
      *  we are going to need to walk the query tree to validate it before executing it
      */
     @SuppressWarnings("unchecked")
-    private static boolean validateSelector(Map<String, Object> selector) {
+    private static void validateSelector(Map<String, Object> selector) throws QueryException {
         String topLevelOp = (String) selector.keySet().toArray()[0];
 
         // top level op can only be $and or $or after normalisation
@@ -417,12 +418,10 @@ class QueryValidator {
             Object topLevelArg = selector.get(topLevelOp);
             if (topLevelArg instanceof List) {
                 // safe we know its a List
-                return validateCompoundOperatorClauses((List<Object>) topLevelArg,
+                validateCompoundOperatorClauses((List<Object>) topLevelArg,
                                                        new Boolean[]{ false });
             }
         }
-
-        return false;
     }
 
     /**
@@ -436,60 +435,49 @@ class QueryValidator {
      * @return true/false whether the list of clauses passed validation.
      */
     @SuppressWarnings("unchecked")
-    private static boolean validateCompoundOperatorClauses(List<Object> clauses,
-                                                           Boolean[] textClauseLimitReached) {
-        boolean valid = false;
+    private static void validateCompoundOperatorClauses(List<Object> clauses,
+                                                           Boolean[] textClauseLimitReached) throws QueryException {
 
         for (Object obj : clauses) {
-            valid = false;
             if (!(obj instanceof Map)) {
                 String msg = String.format("Operator argument must be a Map %s",
                                            clauses.toString());
-                logger.log(Level.SEVERE, msg);
-                break;
+                throw new QueryException(msg);
             }
             Map<String, Object> clause = (Map<String, Object>) obj;
             if (clause.size() != 1) {
                 String msg;
                 msg = String.format("Operator argument clause should have one key value pair: %s",
                                     clauses.toString());
-                logger.log(Level.SEVERE, msg);
-                break;
+                throw new QueryException(msg);
             }
 
             String key = (String) clause.keySet().toArray()[0];
             if (Arrays.asList(OR, NOT, AND).contains(key)) {
                 // this should have a list as top level type
                 Object compoundClauses = clause.get(key);
-                if (validateCompoundOperatorOperand(compoundClauses)) {
-                    // validate list
-                    valid = validateCompoundOperatorClauses((List<Object>) compoundClauses,
+                validateCompoundOperatorOperand(compoundClauses);
+                // validate list
+                validateCompoundOperatorClauses((List<Object>) compoundClauses,
                                                             textClauseLimitReached);
-                }
             } else if (!(key.startsWith("$"))) {
                 // this should have a map
                 // send this for validation
-                valid = validateClause((Map<String, Object>) clause.get(key));
+                validateClause((Map<String, Object>) clause.get(key));
             } else if (key.equalsIgnoreCase(TEXT)) {
                 // this should have a map
                 // send this for validation
-                valid = validateTextClause(clause.get(key), textClauseLimitReached);
+                validateTextClause(clause.get(key), textClauseLimitReached);
             } else {
                 String msg = String.format("%s operator cannot be a top level operator", key);
-                logger.log(Level.SEVERE, msg);
-                break;
+                throw new QueryException(msg);
             }
 
-            if (!valid) {
-                break;  // if we have gotten here with valid being false, we should abort
-            }
         }
-
-        return valid;
     }
 
     @SuppressWarnings("unchecked")
-    private static boolean validateClause(Map<String, Object> clause) {
+    private static void validateClause(Map<String, Object> clause) throws QueryException {
         List<String> validOperators = Arrays.asList(EQ,
                                                     LT,
                                                     GT,
@@ -509,17 +497,33 @@ class QueryValidator {
                 //  - $not is the only operator that expects a Map
                 //  - $in is the only operator that expects a List
                 if (operator.equals(NOT)) {
-                    return clauseOperand instanceof Map && validateClause((Map) clauseOperand);
+                    if (!(clauseOperand instanceof Map)) {
+                        throw new QueryException(String.format(Locale.ENGLISH,
+                                "clauseOperand %s is not an instance of Map",
+                                clauseOperand));
+                    }
+                    validateClause((Map) clauseOperand);
                 } else if (operator.equals(IN)) {
-                    return clauseOperand instanceof List &&
-                           validateInListValues((List<Object>) clauseOperand);
+                    if (!(clauseOperand instanceof List)) {
+                        throw new QueryException(String.format(Locale.ENGLISH,
+                                "clauseOperand %s is not an instance of List",
+                                clauseOperand));
+                    }
+                    validateInListValues((List<Object>) clauseOperand);
                 } else {
-                    return validatePredicateValue(clauseOperand, operator);
+                    validatePredicateValue(clauseOperand, operator);
                 }
+            } else {
+                throw new QueryException(String.format(Locale.ENGLISH,
+                        "operator %s is not a valid operator",
+                        operator));
             }
+        } else {
+            throw new QueryException(String.format(Locale.ENGLISH,
+                    "Clause %s must only have one key",
+                    clause));
         }
 
-        return false;
     }
 
     /**
@@ -534,70 +538,62 @@ class QueryValidator {
      * @return true/false whether the clause is valid
      */
     @SuppressWarnings("unchecked")
-    private static boolean validateTextClause(Object clause,
-                                              Boolean[] textClauseLimitReached) {
+    private static void validateTextClause(Object clause,
+                                              Boolean[] textClauseLimitReached) throws QueryException {
         Map<String, Object> textClause;
         if (!(clause instanceof Map)) {
             String msg = String.format("Text search expects a Map, found %s instead.", clause);
-            logger.log(Level.SEVERE, msg);
-            return false;
+            throw new QueryException(msg);
         }
 
         textClause = (Map<String, Object>) clause;
         if (textClause.size() != 1) {
             String msg = String.format("Unexpected content %s in text search.", textClause);
-            logger.log(Level.SEVERE, msg);
-            return false;
+            throw new QueryException(msg);
         }
 
         String operator = (String) textClause.keySet().toArray()[0];
         if (!operator.equals(SEARCH)) {
             String msg = String.format("Invalid operator %s in text search", operator);
-            logger.log(Level.SEVERE, msg);
-            return false;
+            throw new QueryException(msg);
         }
 
 
         if (textClauseLimitReached[0]) {
-            logger.log(Level.SEVERE, "Multiple text search clauses not allowed in a query.  " +
-                                     "Rewrite query to contain at most one text search clause.");
-            return false;
+            String msg = "Multiple text search clauses not allowed in a query.  " +
+                                     "Rewrite query to contain at most one text search clause.";
+            throw new QueryException(msg);
         }
 
         textClauseLimitReached[0] = true;
-        return validatePredicateValue(textClause.get(operator), operator);
+        validatePredicateValue(textClause.get(operator), operator);
     }
 
-    private static boolean validateInListValues(List<Object> inListValues) {
-        boolean valid = true;
-
+    private static void validateInListValues(List<Object> inListValues) throws QueryException {
         for (Object value : inListValues) {
-            if (!validatePredicateValue(value, IN)) {
-                valid = false;
-                break;
+            validatePredicateValue(value, IN);
+        }
+    }
+
+    private static void validatePredicateValue(Object predicateValue, String operator) throws QueryException {
+        if (operator.equals(EXISTS)) {
+             validateExistsArgument(predicateValue);
+        } else if (operator.equals(SEARCH)) {
+             validateTextSearchArgument(predicateValue);
+        } else if (operator.equals(MOD)) {
+             validateModArgument(predicateValue);
+        } else {
+            validateNotAFloat(predicateValue);
+            // if we got here, the value needs to be one of these:
+            if (!(predicateValue instanceof String || predicateValue instanceof Number || predicateValue instanceof Boolean)) {
+
+                throw new QueryException(String.format(Locale.ENGLISH, "Predicate value %s was not a String, Number, or Boolean", predicateValue));
             }
         }
 
-        return valid;
     }
 
-    private static boolean validatePredicateValue(Object predicateValue, String operator) {
-        if (operator.equals(EXISTS)) {
-            return validateExistsArgument(predicateValue);
-        } else if (operator.equals(SEARCH)) {
-            return validateTextSearchArgument(predicateValue);
-        } else if (operator.equals(MOD)) {
-            return validateModArgument(predicateValue);
-        } else if (validateNotAFloat(predicateValue)) {
-            return (predicateValue instanceof String || predicateValue instanceof Number || predicateValue instanceof Boolean);
-        }
-
-        return false;
-    }
-
-    private static boolean validateModArgument(Object modulus) {
-        boolean valid = true;
-
+    private static void validateModArgument(Object modulus) throws QueryException {
         // The argument must be a list containing two number elements.  The two elements
         // a.k.a the divisor and remainder, are treated as integers by the query engine.
         // The divisor, however, cannot be 0, since division by 0 is not a valid
@@ -607,46 +603,29 @@ class QueryValidator {
             !(((List)modulus).get(0) instanceof Number) ||
             !(((List)modulus).get(1) instanceof Number) ||
             ((Number)(((List)modulus).get(0))).intValue() == 0) {
-            valid = false;
-            logger.log(Level.SEVERE, "$mod operator requires a two element List containing " +
+            throw new QueryException("$mod operator requires a two element List containing " +
                                      "numbers where the first number, the divisor, is not zero.  " +
                                      "As in: { \"$mod\" : [ 2, 1 ] }.  Where 2 is the divisor " +
                                      "and 1 is the remainder.");
         }
-        return valid;
     }
 
-    private static boolean validateExistsArgument(Object exists) {
-        boolean valid = true;
-
+    private static void validateExistsArgument(Object exists) throws QueryException {
         if (!(exists instanceof Boolean)) {
-            valid = false;
-            logger.log(Level.SEVERE, "$exists operator expects true or false");
+            throw new QueryException("$exists operator requires operand to be true or false");
         }
-
-        return valid;
     }
 
-    private static boolean validateTextSearchArgument(Object textSearch) {
-        boolean valid = true;
-
+    private static void validateTextSearchArgument(Object textSearch) throws QueryException {
         if (!(textSearch instanceof String)) {
-            valid = false;
-            logger.log(Level.SEVERE, "$search operator expects a String");
+            throw new QueryException("$search operator requires a String operand");
         }
-
-        return valid;
     }
 
-    private static boolean validateNotAFloat(Object value) {
-        boolean valid = true;
-
+    private static void validateNotAFloat(Object value) throws QueryException {
         if (value instanceof Float) {
-            valid = false;
-            logger.log(Level.SEVERE, "Float value found in query: %f - Use Double instead.", value);
+            throw new QueryException(String.format(Locale.ENGLISH, "Float value found in query: %f - Use Double instead.", value));
         }
-
-        return valid;
     }
 
 }
