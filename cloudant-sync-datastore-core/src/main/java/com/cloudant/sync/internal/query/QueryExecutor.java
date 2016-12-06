@@ -87,13 +87,12 @@ class QueryExecutor {
 
         fields = normaliseFields(fields);
 
-        Misc.checkArgument(validateFields(fields), "TODO");
+        Misc.checkArgument(validateFields(fields),
+                "One or more fields are not valid: projection field cannot use dotted notation.");
 
         // normalise and validate query by passing into the executors
 
         query = QueryValidator.normaliseAndValidateQuery(query);
-
-        Misc.checkNotNull(query, "query");
 
         //
         // Execute the query
@@ -134,7 +133,6 @@ class QueryExecutor {
             throw new QueryException(message, e.getCause());
         }
 
-        // TODO null or empty?
         if (docIds == null) {
             return null;
         }

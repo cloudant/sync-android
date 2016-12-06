@@ -498,22 +498,30 @@ class QueryValidator {
                 //  - $in is the only operator that expects a List
                 if (operator.equals(NOT)) {
                     if (!(clauseOperand instanceof Map)) {
-                        throw new QueryException("clauseOperand not instance of Map");
+                        throw new QueryException(String.format(Locale.ENGLISH,
+                                "clauseOperand %s is not an instance of Map",
+                                clauseOperand));
                     }
                     validateClause((Map) clauseOperand);
                 } else if (operator.equals(IN)) {
                     if (!(clauseOperand instanceof List)) {
-                        throw new QueryException("clauseOperand not instance of List");
+                        throw new QueryException(String.format(Locale.ENGLISH,
+                                "clauseOperand %s is not an instance of List",
+                                clauseOperand));
                     }
                     validateInListValues((List<Object>) clauseOperand);
                 } else {
                     validatePredicateValue(clauseOperand, operator);
                 }
             } else {
-                throw new QueryException(String.format(Locale.ENGLISH, "%s not a valid operator", operator));
+                throw new QueryException(String.format(Locale.ENGLISH,
+                        "operator %s is not a valid operator",
+                        operator));
             }
         } else {
-            throw new QueryException("Clause must only have one key");
+            throw new QueryException(String.format(Locale.ENGLISH,
+                    "Clause %s must only have one key",
+                    clause));
         }
 
     }
@@ -604,13 +612,13 @@ class QueryValidator {
 
     private static void validateExistsArgument(Object exists) throws QueryException {
         if (!(exists instanceof Boolean)) {
-            throw new QueryException("$exists operator expects true or false");
+            throw new QueryException("$exists operator requires operand to be true or false");
         }
     }
 
     private static void validateTextSearchArgument(Object textSearch) throws QueryException {
         if (!(textSearch instanceof String)) {
-            throw new QueryException("$search operator expects a String");
+            throw new QueryException("$search operator requires a String operand");
         }
     }
 
