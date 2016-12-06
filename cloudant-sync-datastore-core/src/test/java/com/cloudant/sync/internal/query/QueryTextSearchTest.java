@@ -206,7 +206,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
                                                                  "fred12"));
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void nullForTextSearchQueryWithoutATextIndex() throws QueryException {
         assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name")), "basic"), is("basic"));
 
@@ -216,10 +216,10 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
         query.put("$text", search);
-        assertThat(im.find(query), is(nullValue()));
+        im.find(query);
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void nullForTextSearchQueryWhenAJsonIndexIsMissing() throws QueryException {
         // All fields in a TEXT index only apply to the text search portion of any query.
         // So even though "name" exists in the text index, the clause that { "name" : "mike" }
@@ -238,7 +238,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("$or", Arrays.<Object>asList(name, text));
 
-        assertThat(im.find(query), is(nullValue()));
+        im.find(query);
     }
 
     @Test
@@ -388,7 +388,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         assertThat(queryResult.documentIds(), containsInAnyOrder("mike12", "fred12"));
     }
 
-    @Test
+    @Test(expected = QueryException.class)
     public void returnsNullWhenSearchCriteriaNotAString() throws QueryException {
         // Text index on age field
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("age"));
@@ -399,8 +399,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         search.put("$search", 12);
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("$text", search);
-        QueryResult queryResult = im.find(query);
-        assertThat(queryResult, is(nullValue()));
+        im.find(query);
     }
 
     @Test
