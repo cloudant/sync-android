@@ -248,7 +248,7 @@ public class DatabaseImpl implements Database {
         } catch (ExecutionException e) {
             String message = "Failed to get document count";
             logger.log(Level.SEVERE, message, e);
-            throw new DocumentStoreException(e.getCause());
+            throw new DocumentStoreException(message, e.getCause());
         }
     }
 
@@ -390,8 +390,9 @@ public class DatabaseImpl implements Database {
         try {
             return get (queue.submit(new GetDocumentsWithIdsCallable(docIds, attachmentsDir, attachmentStreamFactory)));
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to get documents with ids", e);
-            throw new DocumentStoreException("Failed to get documents with ids", e);
+            String message = "Failed to get documents with ids";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e);
         }
     }
 
