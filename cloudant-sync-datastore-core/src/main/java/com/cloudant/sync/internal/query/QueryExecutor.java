@@ -15,7 +15,6 @@
 package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.documentstore.Database;
-import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
@@ -232,29 +231,40 @@ class QueryExecutor {
             return accumulator;
         } else if (node instanceof SqlQueryNode) {
             SqlQueryNode sqlNode = (SqlQueryNode) node;
-            List<String> docIds = null;
-            if (sqlNode.sql != null) {
-                docIds = new ArrayList<String>();
-                SqlParts sqlParts = sqlNode.sql;
-                Cursor cursor = null;
-                try {
-                    cursor = db.rawQuery(sqlParts.sqlWithPlaceHolders, sqlParts.placeHolderValues);
-                    while (cursor.moveToNext()) {
-                        String docId = cursor.getString(0);
-                        docIds.add(docId);
-                    }
-                } catch (SQLException e) {
-                    logger.log(Level.SEVERE, "Failed to get a list of doc ids.", e);
-                } finally {
-                    DatabaseUtils.closeCursorQuietly(cursor);
-                }
-            } else {
-                // No SQL exists so we are now forced to go directly to the
-                // document datastore to retrieve the list of document ids.
-                docIds = database.getAllDocumentIds();
-            }
 
-            return new HashSet<String>(docIds);
+            try {
+                List<String> docIds = null;
+
+                if (sqlNode.sql != null) {
+                    docIds = new ArrayList<String>();
+                    SqlParts sqlParts = sqlNode.sql;
+                    Cursor cursor = null;
+                    try {
+                        cursor = db.rawQuery(sqlParts.sqlWithPlaceHolders, sqlParts.placeHolderValues);
+
+                        while (cursor.moveToNext()) {
+                            String docId = cursor.getString(0);
+                            docIds.add(docId);
+                        }
+                    } catch (SQLException e) {
+                        String message = "Failed to get a list of doc ids.";
+                        logger.log(Level.SEVERE, message, e);
+                        throw new QueryException(message, e);
+                    } finally {
+                        DatabaseUtils.closeCursorQuietly(cursor);
+                    }
+                } else {
+                    // No SQL exists so we are now forced to go directly to the
+                    // document datastore to retrieve the list of document ids.
+                    docIds = database.getAllDocumentIds();
+                }
+
+                return new HashSet<String>(docIds);
+            } catch (DocumentStoreException dse) {
+                String message = "Failed to get a list of doc ids.";
+                logger.log(Level.SEVERE, message, dse);
+                throw new QueryException(message, dse.getCause());
+            }
         } else {
             throw new QueryException("Unexpected node type "+node);
         }
