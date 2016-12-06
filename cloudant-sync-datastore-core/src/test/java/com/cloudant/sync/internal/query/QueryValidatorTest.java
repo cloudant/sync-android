@@ -20,7 +20,9 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 import com.cloudant.sync.internal.query.QueryValidator;
+import com.cloudant.sync.query.QueryException;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -32,7 +34,7 @@ import java.util.Map;
 public class QueryValidatorTest {
 
     @Test
-    public void normalizeSingleFieldQuery() {
+    public void normalizeSingleFieldQuery() throws QueryException {
         Map<String, Object> query = new LinkedHashMap<String, Object>();
         // query - { "name" : "mike" }
         query.put("name", "mike");
@@ -49,7 +51,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizeMultiFieldQuery() {
+    public void normalizeMultiFieldQuery() throws QueryException {
         Map<String, Object> query = new LinkedHashMap<String, Object>();
         // query - { "name" : "mike", "pet" : "cat", "age", 12 }
         query.put("name", "mike");
@@ -78,7 +80,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void doesNotChangeAlreadyNormalizedQuery() {
+    public void doesNotChangeAlreadyNormalizedQuery() throws QueryException {
         // query - { "$and" : [ { "name" : { "$eq" : "mike" } },
         //                      { "pet" : { "$eq" : "cat" } },
         //                      { "age" : { "$eq" : "12" } } ] }
@@ -105,7 +107,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizesMultipleEvenNOTs() {
+    public void normalizesMultipleEvenNOTs() throws QueryException {
         // query - { "pet" : { "$not" : { "$not" : { "$eq" : "cat" } } } }
         Map<String, Object> query = new HashMap<String, Object>();
         Map<String, Object> predicate = new HashMap<String, Object>(){{ put("$eq", "cat"); }};
@@ -127,7 +129,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizesSingleNe() {
+    public void normalizesSingleNe() throws QueryException {
         // query - { "pet" : { "$ne" : "cat" } }
         Map<String, Object> neCat = new HashMap<String, Object>();
         neCat.put("$ne", "cat");
@@ -148,7 +150,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizesMultipleNOTsWithNe() {
+    public void normalizesMultipleNOTsWithNe() throws QueryException {
         // query - { "pet" : { "$not" : { "$not" : { "$ne" : "cat" } } } }
         Map<String, Object> predicate = new HashMap<String, Object>(){{ put("$ne", "cat"); }};
         for (int i = 0; i < 2; i++) {
@@ -172,7 +174,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizesMultipleOddNOTs() {
+    public void normalizesMultipleOddNOTs() throws QueryException {
         // query - { "pet" : { "$not" : { "$not" : { "$not" : { "$eq" : "cat" } } } } }
         Map<String, Object> predicate = new HashMap<String, Object>(){{ put("$eq", "cat"); }};
         for (int i = 0; i < 3; i++) {
@@ -196,7 +198,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizesMultiLevelQueryWithMultipleNOTs() {
+    public void normalizesMultiLevelQueryWithMultipleNOTs() throws QueryException {
         // query - { "$or" : [ { "name" : { "$eq" : "mike" } },
         //                     { "$and" : [ { "pet" : { "$not" : { "$not" :
         //                                  { "$not" : { "$eq" : "cat" } } } } },
@@ -252,7 +254,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizesQueryWithIN() {
+    public void normalizesQueryWithIN() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "name" : { "$in" : ["mike", "fred"] } }
         Map<String, Object> inOp = new HashMap<String, Object>();
@@ -271,7 +273,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizesQueryWithNIN() {
+    public void normalizesQueryWithNIN() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "name" : { "$nin" : ["mike", "fred"] } }
         Map<String, Object> inOp = new HashMap<String, Object>();
@@ -292,7 +294,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizesQueryWithNOTNIN() {
+    public void normalizesQueryWithNOTNIN() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "name" : { "$not" : { "$nin" : ["mike", "fred"] } } }
         Map<String, Object> ninOp = new HashMap<String, Object>();
@@ -313,7 +315,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizesQueryWithNOTNOTNIN() {
+    public void normalizesQueryWithNOTNOTNIN() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "name" : { "$not" : { "$not" : { "$nin" : ["mike", "fred"] } } } }
 
@@ -342,7 +344,7 @@ public class QueryValidatorTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void checkForInvalidValues() {
+    public void checkForInvalidValues() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "$and" : [ { "name" : { "$eq" : "mike" } },
         //                      { "age" : { "$eq" : 12 } } ] - (VALID)
@@ -360,7 +362,12 @@ public class QueryValidatorTest {
         //                      { "age" : { "$eq" : 12.0f } } ] - (INVALID)
         eq12.remove("$eq");
         eq12.put("$eq", 12.0f);
-        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+        try {
+            QueryValidator.normaliseAndValidateQuery(query);
+            Assert.fail("Didn't catch expected QueryException");
+        } catch (QueryException qe) {
+
+        }
         // query - { "$and" : [ { "name" : { "$eq" : "mike" } },
         //                      { "age" : { "$eq" : 12.345 } } ] - (VALID)
         eq12.remove("$eq");
@@ -373,18 +380,18 @@ public class QueryValidatorTest {
         assertThat(QueryValidator.normaliseAndValidateQuery(query), is(notNullValue()));
     }
 
-    @Test
-    public void returnsNullForInvalidOperator() {
+    @Test(expected = QueryException.class)
+    public void returnsNullForInvalidOperator() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "name" : { "$blah" : "mike" } }
         Map<String, Object> blah = new HashMap<String, Object>();
         blah.put("$blah", "mike");
         query.put("name", blah);
-        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullForInvalidOperatorWithNOT() {
+    @Test(expected = QueryException.class)
+    public void returnsNullForInvalidOperatorWithNOT() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "name" : { "$not" : { "$blah" : "mike" } } }
         Map<String, Object> blah = new HashMap<String, Object>();
@@ -392,31 +399,31 @@ public class QueryValidatorTest {
         Map<String, Object> notBlah = new HashMap<String, Object>();
         notBlah.put("$not", blah);
         query.put("name", notBlah);
-        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullForNOTWithoutOperator() {
+    @Test(expected = QueryException.class)
+    public void returnsNullForNOTWithoutOperator() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "name" : { "$not" : "mike" } }
         Map<String, Object> notMike = new HashMap<String, Object>();
         notMike.put("$not", "mike");
         query.put("name", notMike);
-        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullForInvalidIN() {
+    @Test(expected = QueryException.class)
+    public void returnsNullForInvalidIN() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "name" : { "$in" : "mike" } }
         Map<String, Object> inMike = new HashMap<String, Object>();
         inMike.put("$in", "mike");
         query.put("name", inMike);
-        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
     @Test
-    public void normalizesSingleTextSearch() {
+    public void normalizesSingleTextSearch() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "$text" : { "$search" : "foo bar baz" } }
         Map<String, Object> search = new HashMap<String, Object>();
@@ -435,7 +442,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizesMultiFieldQueryWithTextSearch() {
+    public void normalizesMultiFieldQueryWithTextSearch() throws QueryException {
         Map<String, Object> query = new LinkedHashMap<String, Object>();
         // query - { "name" : "mike", "$text" : { "$search" : "foo bar baz" } }
         query.put("name", "mike");
@@ -459,18 +466,18 @@ public class QueryValidatorTest {
         assertThat(normalizedQuery, is(expected));
     }
 
-    @Test
-    public void returnsNullForInvalidTextSearchContent() {
+    @Test(expected = QueryException.class)
+    public void returnsNullForInvalidTextSearchContent() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "$text" : { "$search" : 12 } }
         Map<String, Object> search = new HashMap<String, Object>();
         search.put("$search", 12);
         query.put("$text", search);
-        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullForMultipleTextSearchClauses() {
+    @Test(expected = QueryException.class)
+    public void returnsNullForMultipleTextSearchClauses() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "$or" : [ { "$text" : { "$search" : "foo bar" } },
         //                     { "$text" : { "$search" : "baz" } } ] }
@@ -483,37 +490,37 @@ public class QueryValidatorTest {
         search2.put("$search", "baz");
         text2.put("$text", search2);
         query.put("$or", Arrays.<Object>asList(text1, text2));
-        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullForInvalidTextSearchOperator() {
+    @Test(expected = QueryException.class)
+    public void returnsNullForInvalidTextSearchOperator() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "$text" : { "$eq" : "foo bar baz" } }
         Map<String, Object> search = new HashMap<String, Object>();
         search.put("$eq", "foo bar baz");
         query.put("$text", search);
-        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullForTextOperatorWithoutSearchOperator() {
+    @Test(expected = QueryException.class)
+    public void returnsNullForTextOperatorWithoutSearchOperator() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "$text" : "foo bar baz" }
         query.put("$text", "foo bar baz");
-        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullForSearchOperatorWithoutTextOperator() {
+    @Test(expected = QueryException.class)
+    public void returnsNullForSearchOperatorWithoutTextOperator() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "$search" : "foo bar baz" }
         query.put("$search", "foo bar baz");
-        assertThat(QueryValidator.normaliseAndValidateQuery(query), is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
     @Test
-    public void normalizesQueryWithMODOperator() {
+    public void normalizesQueryWithMODOperator() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "age" : { "$mod" : [ 2, 1 ] } }
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -532,7 +539,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizesQueryWithMODOperatorAndNonWholeNumberValues() {
+    public void normalizesQueryWithMODOperatorAndNonWholeNumberValues() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "age" : { "$mod" : [ 2.6, 1.7 ] } }
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -551,7 +558,7 @@ public class QueryValidatorTest {
     }
 
     @Test
-    public void normalizesQueryWithMODOperatorAndNegativeValues() {
+    public void normalizesQueryWithMODOperatorAndNegativeValues() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "age" : { "$mod" : [ -2.6, -1.7 ] } }
         Map<String, Object> mod = new HashMap<String, Object>();
@@ -569,85 +576,78 @@ public class QueryValidatorTest {
         assertThat(normalizedQuery, is(expected));
     }
 
-    @Test
-    public void returnsNullWhenMODArgumentNotArray() {
+    @Test(expected = QueryException.class)
+    public void returnsNullWhenMODArgumentNotArray() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "age" : { "$mod" : "blah" } }
         Map<String, Object> mod = new HashMap<String, Object>();
         mod.put("$mod", "blah");
         query.put("age", mod);
-        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
-        assertThat(normalizedQuery, is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullWhenTooManyMODArguments() {
+    @Test(expected = QueryException.class)
+    public void returnsNullWhenTooManyMODArguments() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "age" : { "$mod" : [ 2, 1, 0 ] } }
         Map<String, Object> mod = new HashMap<String, Object>();
         mod.put("$mod", Arrays.<Object>asList(2, 1, 0));
         query.put("age", mod);
-        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
-        assertThat(normalizedQuery, is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullWhenMODArgumentIsInvalid() {
+    @Test(expected = QueryException.class)
+    public void returnsNullWhenMODArgumentIsInvalid() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "age" : { "$mod" : [ 2, "blah" ] } }
         Map<String, Object> mod = new HashMap<String, Object>();
         mod.put("$mod", Arrays.<Object>asList(2, "blah"));
         query.put("age", mod);
-        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
-        assertThat(normalizedQuery, is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullWhenMODDivisorArgumentIs0() {
+    @Test(expected = QueryException.class)
+    public void returnsNullWhenMODDivisorArgumentIs0() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "age" : { "$mod" : [ 0, 1 ] } }
         Map<String, Object> mod = new HashMap<String, Object>();
         mod.put("$mod", Arrays.<Object>asList(0, 1));
         query.put("age", mod);
-        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
-        assertThat(normalizedQuery, is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullWhenMODDivisorArgumentIs0point0() {
+    @Test(expected = QueryException.class)
+    public void returnsNullWhenMODDivisorArgumentIs0point0() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "age" : { "$mod" : [ 0.0, 1 ] } }
         Map<String, Object> mod = new HashMap<String, Object>();
         mod.put("$mod", Arrays.<Object>asList(0.0, 1));
         query.put("age", mod);
-        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
-        assertThat(normalizedQuery, is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullWhenMODDivisorArgumentIsBetween0And1() {
+    @Test(expected = QueryException.class)
+    public void returnsNullWhenMODDivisorArgumentIsBetween0And1() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "age" : { "$mod" : [ 0.2, 1 ] } }
         Map<String, Object> mod = new HashMap<String, Object>();
         mod.put("$mod", Arrays.<Object>asList(0.2, 1));
         query.put("age", mod);
-        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
-        assertThat(normalizedQuery, is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
-    @Test
-    public void returnsNullWhenMODDivisorArgumentIsBetween0AndNegative1() {
+    @Test(expected = QueryException.class)
+    public void returnsNullWhenMODDivisorArgumentIsBetween0AndNegative1() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "age" : { "$mod" : [ -0.2, 1 ] } }
         Map<String, Object> mod = new HashMap<String, Object>();
         mod.put("$mod", Arrays.<Object>asList(-0.2, 1));
         query.put("age", mod);
-        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
-        assertThat(normalizedQuery, is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
     @Test
-    public void normalizesQueryWithSIZEOperator() {
+    public void normalizesQueryWithSIZEOperator() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "pet" : { "$size" : 2 } }
         Map<String, Object> size = new HashMap<String, Object>();
@@ -665,19 +665,18 @@ public class QueryValidatorTest {
         assertThat(normalizedQuery, is(expected));
     }
 
-    @Test
-    public void returnsNullForQueryWhenSIZEArgumentInvalid() {
+    @Test(expected = QueryException.class)
+    public void returnsNullForQueryWhenSIZEArgumentInvalid() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
         // query - { "pet" : { "$size" : [2] } }
         Map<String, Object> size = new HashMap<String, Object>();
         size.put("$size", Collections.singletonList(2));
         query.put("pet", size);
-        Map<String, Object> normalizedQuery = QueryValidator.normaliseAndValidateQuery(query);
-        assertThat(normalizedQuery, is(nullValue()));
+        QueryValidator.normaliseAndValidateQuery(query);
     }
 
     @Test
-    public void normalizesQueryWithEQOperator() {
+    public void normalizesQueryWithEQOperator() throws QueryException {
         Map<String, Object> query = new HashMap<String, Object>();
 
         // query - { "animal" : true }

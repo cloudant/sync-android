@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.nullValue;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.IndexType;
+import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
@@ -98,7 +99,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     // TODO check test can be deleted - i think it relates to the way the sort document is built up which is no longer relevant
-//    @Test
+    //@Test
     public void returnsNullWhenTooManyClauses() throws Exception{
         setUpSortingQueryData();
         Map<String, Object> query = new HashMap<String, Object>();
@@ -111,7 +112,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     // When generating ordering SQL
 
     @Test
-    public void smallDocSetForSingleFieldUsingAsc() {
+    public void smallDocSetForSingleFieldUsingAsc() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_a";
@@ -123,7 +124,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void smallDocSetForSingleFieldUsingDesc() {
+    public void smallDocSetForSingleFieldUsingDesc() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
@@ -135,7 +136,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void smallDocSetForMultipleFieldUsingAsc() {
+    public void smallDocSetForMultipleFieldUsingAsc() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.ASCENDING), new FieldSort("x", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
@@ -147,7 +148,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void smallDocSetForMultipleFieldUsingDesc() {
+    public void smallDocSetForMultipleFieldUsingDesc() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING), new FieldSort("x", FieldSort.Direction.DESCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
@@ -159,7 +160,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void smallDocSetForMultipleFieldUsingMixed() {
+    public void smallDocSetForMultipleFieldUsingMixed() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING), new FieldSort("x", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(smallDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
@@ -171,7 +172,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void largeDocSetForSingleFieldUsingAsc() {
+    public void largeDocSetForSingleFieldUsingAsc() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_a";
@@ -182,7 +183,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void largeDocSetForSingleFieldUsingDesc() {
+    public void largeDocSetForSingleFieldUsingDesc() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
@@ -193,7 +194,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void largeDocSetForMultipleFieldUsingAsc() {
+    public void largeDocSetForMultipleFieldUsingAsc() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.ASCENDING), new FieldSort("x", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
@@ -204,7 +205,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void largeDocSetForMultipleFieldUsingDesc() {
+    public void largeDocSetForMultipleFieldUsingDesc() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING), new FieldSort("x", FieldSort.Direction.DESCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
@@ -215,7 +216,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
     }
 
     @Test
-    public void largeDocSetForMultipleFieldUsingMixed() {
+    public void largeDocSetForMultipleFieldUsingMixed() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING), new FieldSort("x", FieldSort.Direction.ASCENDING));
         SqlParts parts = sqlToSortIds(largeDocIdSet, order, indexes);
         String select = "SELECT DISTINCT _id FROM _t_cloudant_sync_query_index_b";
@@ -225,24 +226,29 @@ public class QuerySortTest extends AbstractQueryTestBase {
         assertThat(parts.placeHolderValues, is(new String[]{}));
     }
 
-    @Test
-    public void failsWhenUsingUnindexedField() {
+    @Test(expected = QueryException.class)
+    public void failsWhenUsingUnindexedField() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("apples", FieldSort.Direction.ASCENDING));
-        assertThat(sqlToSortIds(smallDocIdSet, order, indexes), is(nullValue()));
+        sqlToSortIds(smallDocIdSet, order, indexes);
     }
 
-    @Test
-    public void failsWhenFieldsNotInSingleIndex() {
+    @Test(expected = QueryException.class)
+    public void failsWhenFieldsNotInSingleIndex() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("x", FieldSort.Direction.ASCENDING), new FieldSort("age", FieldSort.Direction.ASCENDING));
-        assertThat(sqlToSortIds(smallDocIdSet, order, indexes), is(nullValue()));
+        sqlToSortIds(smallDocIdSet, order, indexes);
     }
 
-    @Test
-    public void returnsNullWhenNoIndexes() {
+    @Test(expected = QueryException.class)
+    public void returnsNullWhenNoIndexes() throws QueryException {
         List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING));
-        assertThat(sqlToSortIds(smallDocIdSet, order, new ArrayList<Index>()),
-                is(nullValue()));
-        assertThat(sqlToSortIds(smallDocIdSet, order, null), is(nullValue()));
+        sqlToSortIds(smallDocIdSet, order, new ArrayList<Index>());
     }
+
+    @Test(expected = QueryException.class)
+    public void returnsNullWhenNullIndexes() throws QueryException {
+        List<FieldSort> order = Arrays.<FieldSort>asList(new FieldSort("y", FieldSort.Direction.DESCENDING));
+        sqlToSortIds(smallDocIdSet, order, null);
+    }
+
 
 }

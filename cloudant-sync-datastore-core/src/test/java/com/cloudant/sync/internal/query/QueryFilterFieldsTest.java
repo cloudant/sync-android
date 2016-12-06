@@ -92,17 +92,16 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
         }
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void returnsNullWhenUsingDottedNotation() throws QueryException {
         // query - { "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("name", "mike");
-        QueryResult queryResult = im.find(query,
+        im.find(query,
                                           0,
                                           Long.MAX_VALUE,
                                           Arrays.asList("name.blah"),
                                           null);
-        assertThat(queryResult, is(nullValue()));
     }
 
     @Test

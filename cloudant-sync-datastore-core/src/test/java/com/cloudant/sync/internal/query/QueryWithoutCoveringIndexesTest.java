@@ -27,6 +27,7 @@ import static org.junit.runners.Parameterized.Parameters;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.query.Query;
+import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
@@ -366,7 +367,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
         assertThat(queryResult.documentIds(), is(empty()));
     }
 
-    @Test
+    @Test(expected = QueryException.class)
     public void returnsNullWhenArgumentIsInvalidUsingSIZE() throws Exception {
         setUpSizeOperatorQueryData();
         // query - { "pet" : { "$size" : [1] } }
@@ -374,7 +375,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
         sizeOp.put("$size", Collections.singletonList(1));
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("pet", sizeOp);
-        assertThat(idxMgr.find(query), is(nullValue()));
+        idxMgr.find(query);
     }
 
     @Test

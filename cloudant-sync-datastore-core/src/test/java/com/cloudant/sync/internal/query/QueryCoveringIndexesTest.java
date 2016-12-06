@@ -27,6 +27,7 @@ import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Query;
+import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
@@ -106,7 +107,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         idxMgr.find(null);
     }
 
-    @Test
+    @Test(expected = QueryException.class)
     // Since Floats are not allowed, the query is rejected when a Float is encountered as a value.
     public void returnsNullWhenQueryContainsInvalidValue() throws Exception {
         setUpBasicQueryData();
@@ -118,7 +119,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         Map<String, Object> ageOperator = new HashMap<String, Object>();
         ageOperator.put("$eq", 12.0f);
         query.put("age", ageOperator);
-        assertThat(idxMgr.find(query), is(nullValue()));
+        idxMgr.find(query);
     }
 
     @Test
@@ -326,7 +327,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         assertThat(queryResult.size(), is(0));
     }
 
-    @Test
+    @Test(expected = QueryException.class)
     public void failsWhenUsingUnsupportedOperator() throws Exception {
         setUpBasicQueryData();
         // query - { "age" : { "$blah" : 12 } }
@@ -334,8 +335,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         operator.put("$blah", 12);
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("age", operator);
-        QueryResult queryResult = idxMgr.find(query);
-        assertThat(queryResult, is(nullValue()));
+        idxMgr.find(query);
     }
 
     @Test
@@ -1395,7 +1395,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         assertThat(queryResult.documentIds(), containsInAnyOrder("fred34", "fred12", "john44"));
     }
 
-    @Test
+    @Test(expected = QueryException.class)
     public void returnsNullWhenUsingArrayInQuery() throws Exception {
         setUpArrayIndexingData();
         // query - { "pet" : { "$not" : { "$eq" : [ "dog" ] } } }
@@ -1405,8 +1405,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         notDog.put("$not", eqDog);
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("pet", notDog);
-        QueryResult queryResult = idxMgr.find(query);
-        assertThat(queryResult, is(nullValue()));
+        idxMgr.find(query);
     }
 
     // When querying using $exists operator
@@ -1602,7 +1601,6 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         assertThat(queryResult.documentIds(), containsInAnyOrder("mike31"));
     }
 
-    @Test
     public void returnsEmptyResultSetWhenMODAppliedToNonNumericField() throws Exception {
         setUpNumericOperationsQueryData();
         // query - { "name": { "$mod": [ 10, 1 ] } }
