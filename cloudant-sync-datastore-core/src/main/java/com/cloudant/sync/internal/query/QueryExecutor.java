@@ -87,8 +87,8 @@ class QueryExecutor {
 
         fields = normaliseFields(fields);
 
-        Misc.checkArgument(validateFields(fields),
-                "One or more fields are not valid: projection field cannot use dotted notation.");
+        // will throw IllegalArgumentException if there are invalid fields
+        validateFields(fields);
 
         // normalise and validate query by passing into the executors
 
@@ -165,20 +165,23 @@ class QueryExecutor {
     /**
      *  Checks if the fields are valid.
      */
-    private boolean validateFields(List<String> fields) {
+    private void validateFields(List<String> fields) {
         if (fields == null) {
-            return true;
+            return;
         }
+        List<String> badFields = new ArrayList<String>();
         for (String field: fields) {
             if (field.contains(".")) {
-                String msg = String.format("Projection field cannot use dotted notation: %s",
-                        field);
-                logger.log(Level.SEVERE, msg);
-                return false;
+                badFields.add(field);
             }
         }
 
-        return true;
+        if (!badFields.isEmpty()) {
+            String msg = String.format("Projection field(s) cannot use dotted notation: %s",
+                    Misc.join(", ", badFields));
+            logger.log(Level.SEVERE, msg);
+            throw new IllegalArgumentException(msg);
+        }
     }
 
     private List<String> normaliseFields(List<String> fields) {
