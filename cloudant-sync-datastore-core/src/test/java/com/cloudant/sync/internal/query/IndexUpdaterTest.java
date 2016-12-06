@@ -205,8 +205,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                     rev.setBody(DocumentBodyFactory.create(bodyMap));
                     try {
                         ds.createDocumentFromRevision(rev);
-                    } catch (Exception de) {
-                        fail("Exception thrown when creating revision " + de);
+                    } catch (Exception e) {
+                        fail("Exception thrown when creating revision " + e);
                     }
                     // batch up index updates
                     if (i % nUpdates == nUpdates-1) {
