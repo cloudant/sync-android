@@ -256,7 +256,7 @@ class QueryExecutor {
                 } else {
                     // No SQL exists so we are now forced to go directly to the
                     // document datastore to retrieve the list of document ids.
-                    docIds = database.getAllIds();
+                    docIds = database.getIds();
                 }
 
                 return new HashSet<String>(docIds);

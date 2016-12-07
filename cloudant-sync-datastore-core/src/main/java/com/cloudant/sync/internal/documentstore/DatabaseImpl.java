@@ -352,7 +352,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public List<DocumentRevision> getAll(final int offset, final int limit, final
+    public List<DocumentRevision> get(final int offset, final int limit, final
     boolean descending) throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         if (offset < 0) {
@@ -371,7 +371,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public List<String> getAllIds() throws DocumentStoreException {
+    public List<String> getIds() throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         try {
             return get(queue.submit(new GetAllDocumentIdsCallable()));
@@ -383,7 +383,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public List<DocumentRevision> getAllWithIds(final List<String> docIds) throws
+    public List<DocumentRevision> get(final List<String> docIds) throws
             DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNull(docIds, "Input document id list");
