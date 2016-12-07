@@ -18,7 +18,6 @@ import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.http.internal.interceptors.UserAgentInterceptor;
-import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.internal.replication.PullStrategy;
 import com.cloudant.sync.internal.replication.PushStrategy;
@@ -151,7 +150,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             // add cookie interceptor and remove creds from URI if required
             super.target = super.addCookieInterceptorIfRequired(super.target);
 
-            PushStrategy pushStrategy = new PushStrategy(super.source.database,
+            PushStrategy pushStrategy = new PushStrategy(super.source.database(),
                     super.target,
                     super.requestInterceptors,
                     super.responseInterceptors);
@@ -246,7 +245,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             super.source = super.addCookieInterceptorIfRequired(super.source);
 
             PullStrategy pullStrategy = new PullStrategy(super.source,
-                    super.target.database,
+                    super.target.database(),
                     pullPullFilter,
                     super.requestInterceptors,
                     super.responseInterceptors);
