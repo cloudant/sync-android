@@ -174,10 +174,14 @@ public class DocumentStore {
     }
 
     /**
+     * <p>
      * Get a reference to the {@link Database} object.
+     * </p>
      *
+     * <p>
      * Users can perform CRUD (create, read, update, delete) operations on JSON documents and
      * attachments by invoking methods on this object.
+     * </p>
      *
      * @return a reference to the {@link Database} object
      */
@@ -186,10 +190,14 @@ public class DocumentStore {
     }
 
     /**
+     * <p>
      * Get a reference to the {@link Query} object.
+     * </p>
      *
+     * <p>
      * Users can perform index and query operations on JSON documents by invoking methods on this
-     * object
+     * object.
+     * </p>
      *
      * @return a reference to the {@link Query} object
      */
