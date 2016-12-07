@@ -151,7 +151,7 @@ public interface Database {
      * @return list of {@code DBObjects}, maximum length {@code limit}.
      * @throws DocumentStoreException if there was an error reading the documents
      */
-    List<DocumentRevision> getAll(int offset, int limit, boolean descending) throws DocumentStoreException;
+    List<DocumentRevision> get(int offset, int limit, boolean descending) throws DocumentStoreException;
 
     /**
      * <p>Enumerates the current winning revision for all documents in the
@@ -160,7 +160,7 @@ public interface Database {
      * @return list of {@code String}.
      * @throws DocumentStoreException if there was an error reading the document IDs
      */
-    List<String> getAllIds() throws DocumentStoreException;
+    List<String> getIds() throws DocumentStoreException;
 
     /**
      * <p>Returns the current winning revisions for a set of documents.</p>
@@ -174,7 +174,7 @@ public interface Database {
      * @throws DocumentStoreException if there was an error retrieving the
      * documents.
      */
-    List<DocumentRevision> getAllWithIds(List<String> documentIds) throws DocumentStoreException;
+    List<DocumentRevision> get(List<String> documentIds) throws DocumentStoreException;
 
     /**
      * <p>Retrieves the datastore's current sequence number.</p>

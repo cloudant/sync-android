@@ -445,6 +445,6 @@ public class PullStrategyTest extends ReplicationTestBase {
 
         // Assert that the number of documents is correct
         Assert.assertEquals("There should be one document after replication.", 1,
-                datastore.getAllIds().size());
+                datastore.getIds().size());
     }
 }
