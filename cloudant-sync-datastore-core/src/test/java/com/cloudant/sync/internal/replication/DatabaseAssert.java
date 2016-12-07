@@ -186,7 +186,7 @@ public class DatabaseAssert {
      * Assert the specified document is deleted in both remote CouchDb and local datastore.
      */
     static void checkBothDeleted(String id, DatabaseImpl datastore, CouchClient client) throws Exception {
-        DocumentRevision documentRevision = datastore.getDocument(id);
+        DocumentRevision documentRevision = datastore.get(id);
         Assert.assertTrue(documentRevision.isDeleted());
 
         Map<String, Object> m = client.getDocument(id, documentRevision.getRevision());
@@ -241,7 +241,7 @@ public class DatabaseAssert {
      */
     static void checkWinningRevisionSame(String documentId, DatabaseImpl datastore,
                                          CouchClient client) throws Exception{
-        Map<String, Object> doc1 = ((DocumentRevision)datastore.getDocument(documentId)).getBody().asMap();
+        Map<String, Object> doc1 = ((DocumentRevision)datastore.get(documentId)).getBody().asMap();
         Map<String, Object> doc2 = client.getDocument(documentId);
         doc2.remove(CouchConstants._attachments);
         DatabaseAssert.assertSameStringMap(doc1, doc2);

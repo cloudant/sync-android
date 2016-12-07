@@ -129,7 +129,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
             bodyMap.put("pet", "cat");
             bodyMap.put("town", "cardiff");
             rev.setBody(DocumentBodyFactory.create(bodyMap));
-            ds.createDocumentFromRevision(rev);
+            ds.create(rev);
         }
 
         Map<String, Object> query = new HashMap<String, Object>();
@@ -162,7 +162,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
                 bodyMap.put("town", "bristol"); //+2
             }
             rev.setBody(DocumentBodyFactory.create(bodyMap));
-            ds.createDocumentFromRevision(rev);
+            ds.create(rev);
         }
 
         Map<String, Object> query = new HashMap<String, Object>();

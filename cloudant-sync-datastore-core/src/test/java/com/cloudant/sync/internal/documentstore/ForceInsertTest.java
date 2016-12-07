@@ -49,7 +49,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         // create a document and insert the first revision
         DocumentRevision doc1_rev1 = new DocumentRevision();
         doc1_rev1.setBody(bodyOne);
-        doc1_rev1 = datastore.createDocumentFromRevision(doc1_rev1);
+        doc1_rev1 = datastore.create(doc1_rev1);
 
         ArrayList<String> revisionHistory = new ArrayList<String>();
         revisionHistory.add(doc1_rev1.getRevision());
@@ -79,7 +79,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         // create a document and insert the 1-revision
         DocumentRevision doc1_rev1Mut = new DocumentRevision();
         doc1_rev1Mut.setBody(bodyOne);
-        DocumentRevision doc1_rev1 = datastore.createDocumentFromRevision(doc1_rev1Mut);
+        DocumentRevision doc1_rev1 = datastore.create(doc1_rev1Mut);
         Map<String, Object> atts = new HashMap<String, Object>();
         Map<String, Object> att1 = new HashMap<String, Object>();
 
@@ -123,7 +123,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
 
         DocumentRevision doc1_rev1Mut = new DocumentRevision();
         doc1_rev1Mut.setBody(bodyOne);
-        DocumentRevision doc1_rev1 = datastore.createDocumentFromRevision(doc1_rev1Mut);
+        DocumentRevision doc1_rev1 = datastore.create(doc1_rev1Mut);
         Map<String, Object> atts = new HashMap<String, Object>();
         Map<String, Object> att1 = new HashMap<String, Object>();
 
@@ -144,7 +144,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         }
 
         // adding the attachment should have failed transactionally, so the rev should not exist as well
-        Assert.assertFalse(datastore.containsDocument(doc1_rev1.getId(), doc1_rev1.getRevision()));
+        Assert.assertFalse(datastore.contains(doc1_rev1.getId(), doc1_rev1.getRevision()));
 
         Attachment storedAtt = datastore.getAttachment(doc1_rev1.getId(), doc1_rev1.getRevision(), "att1");
         Assert.assertNull(storedAtt);

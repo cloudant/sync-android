@@ -15,13 +15,11 @@
 package com.cloudant.sync.internal.documentstore;
 
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
-import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
-import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Test;
 
@@ -50,71 +48,71 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
         });
     }
 
-    // getDocument on non-existent document should throw DocumentNotFoundException
+    // get on non-existent document should throw DocumentNotFoundException
     @Test(expected = DocumentNotFoundException.class)
     public void getDocumentShouldThrowDocumentNotFoundException() throws Exception {
-        this.datastore.getDocument("nosuchdocument");
+        this.datastore.get("nosuchdocument");
     }
 
-    // getDocument after we remove the underlying SQL database should throw DocumentStoreException
+    // get after we remove the underlying SQL database should throw DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void getDocumentShouldThrowDocumentStoreException() throws Exception {
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.getDocument("nosuchdocument");
+        this.datastore.get("nosuchdocument");
     }
 
-    // getDocument on non-existent revid should throw DocumentNotFoundException
+    // get on non-existent revid should throw DocumentNotFoundException
     @Test(expected = DocumentNotFoundException.class)
     public void getDocumentWithRevisionShouldThrowDocumentNotFoundException() throws Exception {
         DocumentRevision dr = new DocumentRevision("doc1");
         dr.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
-        this.datastore.createDocumentFromRevision(dr);
-        this.datastore.getDocument(dr.getId(), "nosuchrevid");
+        this.datastore.create(dr);
+        this.datastore.get(dr.getId(), "nosuchrevid");
     }
 
-    // getDocument after we remove the underlying SQL database should throw DocumentStoreException
+    // get after we remove the underlying SQL database should throw DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void getDocumentWithRevisionShouldThrowDocumentStoreException() throws Exception {
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.getDocument("nosuchdocument", "nosuchrevid");
+        this.datastore.get("nosuchdocument", "nosuchrevid");
     }
 
-    // containsDocument after we remove the underlying SQL database should throw
+    // contains after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void containsDocumentShouldThrowDocumentStoreException() throws Exception {
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.containsDocument("nosuchdocument");
+        this.datastore.contains("nosuchdocument");
     }
 
-    // containsDocument after we remove the underlying SQL database should throw
+    // contains after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void containsDocumentWithRevisionShouldThrowDocumentStoreException() throws Exception {
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.containsDocument("nosuchdocument", "nosuchrevid");
+        this.datastore.contains("nosuchdocument", "nosuchrevid");
     }
 
-    // getAllDocuments after we remove the underlying SQL database should throw
+    // getAll after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void getAllDocumentsShouldThrowDocumentStoreException() throws Exception {
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.getAllDocuments(0, 100, true);
+        this.datastore.getAll(0, 100, true);
     }
 
-    // getAllDocumentIds after we remove the underlying SQL database should throw
+    // getAllIds after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void getAllDocumentIdsShouldThrowDocumentStoreException() throws Exception {
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.getAllDocumentIds();
+        this.datastore.getAllIds();
     }
 
     // getLastSequence after we remove the underlying SQL database should throw
@@ -135,16 +133,16 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
         this.datastore.getDocumentCount();
     }
 
-    // getConflictedDocumentIds after we remove the underlying SQL database should throw
+    // getConflictedIds after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void getConflictedDocumentIdsShouldThrowDocumentStoreException() throws Exception {
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.getConflictedDocumentIds();
+        this.datastore.getConflictedIds();
     }
 
-    // createDocumentFromRevision after we remove the underlying SQL database should throw
+    // create after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void createDocumentFromRevisionShouldThrowDocumentStoreException() throws Exception {
@@ -152,44 +150,44 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
         dropRevs();
         DocumentRevision dr = new DocumentRevision("doc1");
         dr.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
-        this.datastore.createDocumentFromRevision(dr);
+        this.datastore.create(dr);
     }
 
-    // updateDocumentFromRevision after we remove the underlying SQL database should throw
+    // update after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void updateDocumentFromRevisionShouldThrowDocumentStoreException() throws Exception {
         DocumentRevision dr = new DocumentRevision("doc1");
         dr.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
-        dr = this.datastore.createDocumentFromRevision(dr);
+        dr = this.datastore.create(dr);
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
         dr.setBody(DocumentBodyFactory.create("{\"hello\":\"updated\"}".getBytes()));
-        this.datastore.updateDocumentFromRevision(dr);
+        this.datastore.update(dr);
     }
 
-    // deleteDocumentFromRevision after we remove the underlying SQL database should throw
+    // delete after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void deleteDocumentFromRevisionShouldThrowDocumentStoreException() throws Exception {
         DocumentRevision dr = new DocumentRevision("doc1");
         dr.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
-        dr = this.datastore.createDocumentFromRevision(dr);
+        dr = this.datastore.create(dr);
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.deleteDocumentFromRevision(dr);
+        this.datastore.delete(dr);
     }
 
-    // deleteDocument after we remove the underlying SQL database should throw
+    // delete after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void deleteDocumentShouldThrowDocumentStoreException() throws Exception {
         DocumentRevision dr = new DocumentRevision("doc1");
         dr.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
-        dr = this.datastore.createDocumentFromRevision(dr);
+        dr = this.datastore.create(dr);
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.deleteDocument(dr.getId());
+        this.datastore.delete(dr.getId());
     }
 
     @Test(expected = DocumentStoreException.class)

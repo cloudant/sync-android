@@ -26,7 +26,7 @@ public class DocumentDeleted extends DocumentModified {
      * Event for document delete
      *
      * <p>This event is posted by
-     * {@link Database#deleteDocument deleteDocument}.</p>
+     * {@link Database#delete delete}.</p>
      * 
      * @param prevDocument
      *            Previous document revision

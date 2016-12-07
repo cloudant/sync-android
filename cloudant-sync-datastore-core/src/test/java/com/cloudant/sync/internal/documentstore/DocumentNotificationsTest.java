@@ -44,7 +44,7 @@ public class DocumentNotificationsTest extends BasicDatastoreTestBase {
     public void notification_document_created() throws Exception {
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(bodyOne);
-        datastore.createDocumentFromRevision(rev);
+        datastore.create(rev);
         boolean ok = NotificationTestUtils.waitForSignal(documentCreated);
         Assert.assertTrue("Didn't receive document created event", ok);
     }
@@ -53,12 +53,12 @@ public class DocumentNotificationsTest extends BasicDatastoreTestBase {
     public void notification_document_updated() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
         try {
             DocumentRevision rev_2Mut = rev_1;
             rev_2Mut.setBody(bodyTwo);
-            datastore.updateDocumentFromRevision(rev_2Mut);
+            datastore.update(rev_2Mut);
         } catch (ConflictException ce) {
             Assert.fail("Got ConflictException when updating");
         }
@@ -70,9 +70,9 @@ public class DocumentNotificationsTest extends BasicDatastoreTestBase {
     public void notification_document_deleted() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         try {
-            datastore.deleteDocumentFromRevision(rev_1);
+            datastore.delete(rev_1);
         } catch (ConflictException ce) {
             Assert.fail("Got ConflictException when deleting");
         }

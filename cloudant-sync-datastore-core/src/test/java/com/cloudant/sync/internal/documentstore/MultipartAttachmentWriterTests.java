@@ -83,7 +83,7 @@ public class MultipartAttachmentWriterTests {
     public void Add1000TextAttachmentsTest() throws Exception {
         DocumentRevision docMut = new DocumentRevision();
         docMut.setBody(bodyOne);
-        DocumentRevision doc = database.createDocumentFromRevision(docMut);
+        DocumentRevision doc = database.create(docMut);
 
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
         mpw.setBody(doc.getBody().asMap());
@@ -122,7 +122,7 @@ public class MultipartAttachmentWriterTests {
     public void AddImageAttachmentTest() throws Exception {
         DocumentRevision docMut = new DocumentRevision();
         docMut.setBody(bodyOne);
-        InternalDocumentRevision doc = (InternalDocumentRevision)database.createDocumentFromRevision(docMut);
+        InternalDocumentRevision doc = (InternalDocumentRevision)database.create(docMut);
 
         MultipartAttachmentWriter mpw = new MultipartAttachmentWriter();
         mpw.setBody(doc.asMap());

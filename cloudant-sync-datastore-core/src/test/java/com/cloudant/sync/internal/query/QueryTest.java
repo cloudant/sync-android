@@ -223,7 +223,7 @@ public class QueryTest extends AbstractIndexTestBase {
             petMap.put("name", "mike");
             bodyMap.put("pet", petMap);
             rev.setBody(DocumentBodyFactory.create(bodyMap));
-            ds.createDocumentFromRevision(rev);
+            ds.create(rev);
         }
 
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
@@ -244,7 +244,7 @@ public class QueryTest extends AbstractIndexTestBase {
             petMap.put("name", "mike");
             bodyMap.put("pet", petMap);
             rev.setBody(DocumentBodyFactory.create(bodyMap));
-            ds.createDocumentFromRevision(rev);
+            ds.create(rev);
         }
 
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
@@ -270,7 +270,7 @@ public class QueryTest extends AbstractIndexTestBase {
             petMap.put("name", "mike");
             bodyMap.put("pet", petMap);
             rev.setBody(DocumentBodyFactory.create(bodyMap));
-            ds.createDocumentFromRevision(rev);
+            ds.create(rev);
         }
 
         im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic", IndexType.TEXT);

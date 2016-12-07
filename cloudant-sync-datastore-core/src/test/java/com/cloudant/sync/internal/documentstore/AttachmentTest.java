@@ -50,14 +50,14 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         String attachmentName = "attachment_1.txt";
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         DocumentRevision newRevision = null;
         try {
             DocumentRevision rev1_mut = rev_1;
             rev1_mut.getAttachments().put(attachmentName, att);
-            newRevision = datastore.updateDocumentFromRevision(rev1_mut);
+            newRevision = datastore.update(rev1_mut);
         } catch (ConflictException ce){
             Assert.fail("ConflictException thrown: "+ce);
         }
@@ -86,7 +86,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     public void setBadAttachmentsTest() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_1.txt"), "text/plain");
         Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/nonexistentfile"), "text/plain");
         Attachment att3 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_2.txt"), "text/plain");
@@ -96,7 +96,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             rev1_mut.getAttachments().put(att1.name, att1);
             rev1_mut.getAttachments().put(att2.name, att2);
             rev1_mut.getAttachments().put(att3.name, att3);
-            newRevision = datastore.updateDocumentFromRevision(rev1_mut);
+            newRevision = datastore.update(rev1_mut);
             Assert.fail("FileNotFoundException not thrown");
         } catch (AttachmentException ae) {
             // now check that things got rolled back
@@ -120,13 +120,13 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         String attachmentName = "attachment_1.txt";
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
 
         DocumentRevision rev_2;
         try {
             DocumentRevision rev_1_mut = rev_1;
             rev_1_mut.setBody(bodyTwo);
-            rev_2 = datastore.updateDocumentFromRevision(rev_1_mut);
+            rev_2 = datastore.update(rev_1_mut);
         } catch (ConflictException ce) {
             Assert.fail("ConflictException thrown: "+ce);
         }
@@ -134,7 +134,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         DocumentRevision newRevision = rev_1;
         newRevision.getAttachments().put(attachmentName, att);
-        datastore.updateDocumentFromRevision(newRevision);
+        datastore.update(newRevision);
     }
 
     @Test
@@ -142,7 +142,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
 
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_1.txt"), "text/plain");
         Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_2.txt"), "text/plain");
         Attachment att3 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/bonsai-boston.jpg"), "image/jpeg");
@@ -152,14 +152,14 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         rev_1_mut.getAttachments().put(att1.name, att1);
         rev_1_mut.getAttachments().put(att2.name, att2);
         rev_1_mut.getAttachments().put(att3.name, att3);
-        rev2 = datastore.updateDocumentFromRevision(rev_1_mut);
+        rev2 = datastore.update(rev_1_mut);
         Assert.assertNotNull("Revision null", rev2);
 
         DocumentRevision rev3 = null;
 
         DocumentRevision rev2_mut = rev2;
         rev2_mut.getAttachments().remove(att1.name);
-        rev3 = datastore.updateDocumentFromRevision(rev2_mut);
+        rev3 = datastore.update(rev2_mut);
         datastore.compact();
         Assert.assertNotNull("Revision null", rev3);
 
@@ -193,13 +193,13 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         String attachmentName = "attachment_1.txt";
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         DocumentRevision rev2 = null;
         DocumentRevision rev_1_mut = rev_1;
         rev_1_mut.getAttachments().put(att.name, att);
-        rev2 = datastore.updateDocumentFromRevision(rev_1_mut);
+        rev2 = datastore.update(rev_1_mut);
         Assert.assertNotNull("Revision null", rev2);
 
         DocumentRevision rev3 = null;
@@ -210,7 +210,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         }
         DocumentRevision rev2_mut = rev2;
         rev2_mut.getAttachments().remove(attachmentName);
-        rev3 = datastore.updateDocumentFromRevision(rev2_mut);
+        rev3 = datastore.update(rev2_mut);
         Assert.assertNotNull("Revision null", rev3);
 
         // check that there are no attachments now associated with this doc
@@ -222,7 +222,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
     public void attachmentsForRevisionTest() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
 
         Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_1.txt"), "text/plain");
         Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_2.txt"), "text/plain");
@@ -231,7 +231,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             DocumentRevision rev_1_mut = rev_1;
             rev_1_mut.getAttachments().put(att1.name, att1);
             rev_1_mut.getAttachments().put(att2.name, att2);
-            newRevision = datastore.updateDocumentFromRevision(rev_1_mut);
+            newRevision = datastore.update(rev_1_mut);
             List<? extends Attachment> attsForRev = datastore.attachmentsForRevision((InternalDocumentRevision)newRevision);
             Assert.assertEquals("Didn't get expected number of attachments", 2, attsForRev.size());
         } catch (ConflictException ce){
@@ -244,10 +244,10 @@ public class AttachmentTest extends BasicDatastoreTestBase {
 
         DocumentRevision doc1Rev1Mut = new DocumentRevision();
         doc1Rev1Mut.setBody(bodyOne);
-        DocumentRevision doc1Rev1 = datastore.createDocumentFromRevision(doc1Rev1Mut);
+        DocumentRevision doc1Rev1 = datastore.create(doc1Rev1Mut);
         DocumentRevision doc2Rev1Mut = new DocumentRevision();
         doc2Rev1Mut.setBody(bodyTwo);
-        DocumentRevision doc2Rev1 = datastore.createDocumentFromRevision(doc2Rev1Mut);
+        DocumentRevision doc2Rev1 = datastore.create(doc2Rev1Mut);
 
         File attachmentFile = TestUtils.loadFixture("fixture/attachment_1.txt");
         Attachment att1 = new UnsavedFileAttachment(attachmentFile, "text/plain");
@@ -259,7 +259,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         try {
             DocumentRevision doc1Rev1_mut = doc1Rev1;
             doc1Rev1_mut.getAttachments().put(att1.name, att1);
-            newRevisionDoc1 = datastore.updateDocumentFromRevision(doc1Rev1_mut);
+            newRevisionDoc1 = datastore.update(doc1Rev1_mut);
             Assert.assertNotNull("Doc1 revision is null", newRevisionDoc1);
             List<? extends Attachment> attsForRev = datastore
                 .attachmentsForRevision((InternalDocumentRevision)newRevisionDoc1);
@@ -268,7 +268,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
 
             DocumentRevision doc2Rev1_mut = doc2Rev1;
             doc2Rev1_mut.getAttachments().put(att2.name, att2);
-            newRevisionDoc2 = datastore.updateDocumentFromRevision(doc2Rev1_mut);
+            newRevisionDoc2 = datastore.update(doc2Rev1_mut);
             Assert.assertNotNull("Doc2 revision is null", newRevisionDoc2);
             attsForRev = datastore.attachmentsForRevision((InternalDocumentRevision)newRevisionDoc2);
             Assert.assertEquals("Didn't get expected number of attachments", 1,

@@ -43,7 +43,7 @@ public interface ConflictResolver {
      *                  current winner
      * @return resolved DocumentRevision
      *
-     * @see Database#resolveConflictsForDocument(String, ConflictResolver)
+     * @see Database#resolveConflicts(String, ConflictResolver)
      */
     DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts);
 }
