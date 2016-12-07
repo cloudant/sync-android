@@ -413,7 +413,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         ids.add(rev_2.getId());
 
         {
-            List<? extends DocumentRevision> docs = datastore.getAllWithIds(ids);
+            List<? extends DocumentRevision> docs = datastore.get(ids);
             Assert.assertEquals(2, docs.size());
             assertIdAndRevisionAndShallowContent(rev_1_2, (InternalDocumentRevision)docs.get(0));
         }
@@ -423,7 +423,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         ids2.add(rev_1.getId());
 
         {
-            List<? extends DocumentRevision> docs = datastore.getAllWithIds(ids2);
+            List<? extends DocumentRevision> docs = datastore.get(ids2);
             Assert.assertEquals(2, docs.size());
             assertIdAndRevisionAndShallowContent(rev_2, (InternalDocumentRevision)docs.get(0));
         }
@@ -560,14 +560,14 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
 
     @Test
     public void getAllDocumentIds() throws Exception {
-        Assert.assertTrue(datastore.getAllIds().isEmpty());
+        Assert.assertTrue(datastore.getIds().isEmpty());
         DocumentRevision rev = new DocumentRevision("document-one");
         rev.setBody(bodyOne);
         datastore.create(rev);
         rev = new DocumentRevision("document-two");
         rev.setBody(bodyTwo);
         datastore.create(rev);
-        Assert.assertThat(datastore.getAllIds(), containsInAnyOrder("document-one",
+        Assert.assertThat(datastore.getIds(), containsInAnyOrder("document-one",
                                                                             "document-two"));
     }
 
@@ -611,57 +611,57 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
 
         // Count
         count = 10;
-        result = datastore.getAll(offset, count, descending);
+        result = datastore.get(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, count, offset);
 
         count = 47;
-        result = datastore.getAll(offset, count, descending);
+        result = datastore.get(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, count, offset);
 
         count = objectCount;
-        result = datastore.getAll(offset, count, descending);
+        result = datastore.get(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, count, offset);
 
         count = objectCount * 12;
-        result = datastore.getAll(offset, count, descending);
+        result = datastore.get(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, objectCount, offset);
 
 
         // Offsets
         offset = 10; count = 10;
-        result = datastore.getAll(offset, count, descending);
+        result = datastore.get(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, count, offset);
 
         offset = 20; count = 30;
-        result = datastore.getAll(offset, count, descending);
+        result = datastore.get(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, count, offset);
 
         offset = objectCount - 3; count = 10;
-        result = datastore.getAll(offset, count, descending);
+        result = datastore.get(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, 3, offset);
 
         offset = objectCount + 5; count = 10;
-        result = datastore.getAll(offset, count, descending);
+        result = datastore.get(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, 0, 0);
 
         // Error cases
         try {
             offset = 0; count = -10;
-            datastore.getAll(offset, count, descending);
+            datastore.get(offset, count, descending);
             Assert.fail("IllegalArgumentException not thrown");
         } catch (IllegalArgumentException ex) {
             // All fine
         }
         try {
             offset = -10; count = 10;
-            datastore.getAll(offset, count, descending);
+            datastore.get(offset, count, descending);
             Assert.fail("IllegalArgumentException not thrown");
         } catch (IllegalArgumentException ex) {
             // All fine
         }
         try {
             offset = 50; count = -10;
-            datastore.getAll(offset, count, descending);
+            datastore.get(offset, count, descending);
             Assert.fail("IllegalArgumentException not thrown");
         } catch (IllegalArgumentException ex) {
             // All fine
