@@ -157,12 +157,12 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
             assertThat(revBody.keySet(), contains("name"));
             assertThat((String) revBody.get("name"), is("mike"));
 
-            DocumentRevision original = ds.getDocument(rev.getId());
+            DocumentRevision original = ds.get(rev.getId());
             DocumentRevision update = original;
             Map<String, Object> updateBody = original.getBody().asMap();
             updateBody.put("name", "charles");
             update.setBody(DocumentBodyFactory.create(updateBody));
-            assertThat(ds.updateDocumentFromRevision(update), is(notNullValue()));
+            assertThat(ds.update(update), is(notNullValue()));
             assertThat(rev.isFullRevision(),is(false));
             DocumentRevision fullRevision = rev.toFullRevision();
             assertThat(fullRevision.isFullRevision(),is(true));
@@ -187,7 +187,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
 
             try {
                 DocumentRevision deleted;
-                deleted = ds.deleteDocumentFromRevision((ProjectedDocumentRevision) rev);
+                deleted = ds.delete((ProjectedDocumentRevision) rev);
                 assertThat(deleted, is(notNullValue()));
             } catch (ConflictException e) {
                 Assert.fail("Failed to delete document revision");
@@ -212,7 +212,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
         for (DocumentRevision rev : queryResult) {
             assertThat(rev, is(instanceOf(ProjectedDocumentRevision.class)));
             try {
-                ds.updateDocumentFromRevision(rev);
+                ds.update(rev);
                 Assert.fail("IllegalArgumentException not thrown");
             } catch(IllegalArgumentException iae) {
                 ; // exception thrown - can't update from a projected revision

@@ -36,7 +36,7 @@ public class DatabaseImplRevsDiffTest extends BasicDatastoreTestBase{
     public void revsDiff_oneDocOneRev_returnNothing() throws Exception {
         DocumentRevision revMut = new DocumentRevision();
         revMut.setBody(bodyOne);
-        DocumentRevision rev = datastore.createDocumentFromRevision(revMut);
+        DocumentRevision rev = datastore.create(revMut);
         ValueListMap<String, String> revs = new ValueListMap<String, String>();
         revs.addValueToKey(rev.getId(), rev.getRevision());
         Map<String, List<String>> missingRevs = datastore.revsDiff(revs);
@@ -47,7 +47,7 @@ public class DatabaseImplRevsDiffTest extends BasicDatastoreTestBase{
     public void revsDiff_oneDocOneRev_returnOne() throws Exception {
         DocumentRevision revMut = new DocumentRevision();
         revMut.setBody(bodyOne);
-        DocumentRevision rev = datastore.createDocumentFromRevision(revMut);
+        DocumentRevision rev = datastore.create(revMut);
         ValueListMap<String, String> revs = new ValueListMap<String, String>();
         revs.addValueToKey(rev.getId(), "2-a");
         Map<String, List<String>> missingRevs = datastore.revsDiff(revs);
@@ -59,10 +59,10 @@ public class DatabaseImplRevsDiffTest extends BasicDatastoreTestBase{
     public void revsDiff_oneDocTwoRevs_returnNothing() throws Exception {
         DocumentRevision revMut1 = new DocumentRevision();
         revMut1.setBody(bodyOne);
-        DocumentRevision rev1 = datastore.createDocumentFromRevision(revMut1);
+        DocumentRevision rev1 = datastore.create(revMut1);
         DocumentRevision rev2Mut = rev1;
         rev2Mut.setBody(bodyTwo);
-        DocumentRevision rev2 = datastore.updateDocumentFromRevision(rev2Mut);
+        DocumentRevision rev2 = datastore.update(rev2Mut);
         ValueListMap<String, String> revs = new ValueListMap<String, String>();
         revs.addValueToKey(rev1.getId(), rev1.getRevision());
         revs.addValueToKey(rev2.getId(), rev2.getRevision());
@@ -74,10 +74,10 @@ public class DatabaseImplRevsDiffTest extends BasicDatastoreTestBase{
     public void revsDiff_twoDoc_returnOneDoc() throws Exception {
         DocumentRevision revMut1 = new DocumentRevision();
         revMut1.setBody(bodyOne);
-        DocumentRevision rev1 = datastore.createDocumentFromRevision(revMut1);
+        DocumentRevision rev1 = datastore.create(revMut1);
         DocumentRevision revMut2 = new DocumentRevision();
         revMut2.setBody(bodyTwo);
-        DocumentRevision rev2 = datastore.createDocumentFromRevision(revMut2);
+        DocumentRevision rev2 = datastore.create(revMut2);
         ValueListMap<String, String> revs = new ValueListMap<String, String>();
         revs.addValueToKey(rev1.getId(), rev1.getRevision());
         revs.addValueToKey(rev1.getId(), "2-a");
@@ -92,10 +92,10 @@ public class DatabaseImplRevsDiffTest extends BasicDatastoreTestBase{
     public void revsDiff_twoDoc_returnTwoDocs() throws Exception {
         DocumentRevision revMut1 = new DocumentRevision();
         revMut1.setBody(bodyOne);
-        DocumentRevision rev1 = datastore.createDocumentFromRevision(revMut1);
+        DocumentRevision rev1 = datastore.create(revMut1);
         DocumentRevision revMut2 = new DocumentRevision();
         revMut2.setBody(bodyTwo);
-        DocumentRevision rev2 = datastore.createDocumentFromRevision(revMut2);
+        DocumentRevision rev2 = datastore.create(revMut2);
 
         ValueListMap<String, String> revs = new ValueListMap<String, String>();
         revs.addValueToKey(rev1.getId(), rev1.getRevision());
@@ -113,10 +113,10 @@ public class DatabaseImplRevsDiffTest extends BasicDatastoreTestBase{
     public void revsDiff_oneDocWithManyRevisions_onlyNonExistingRevisionsReturned() throws Exception {
         DocumentRevision revMut1 = new DocumentRevision();
         revMut1.setBody(bodyOne);
-        DocumentRevision rev1 = datastore.createDocumentFromRevision(revMut1);
+        DocumentRevision rev1 = datastore.create(revMut1);
         DocumentRevision revMut2 = new DocumentRevision();
         revMut2.setBody(bodyTwo);
-        DocumentRevision rev2 = datastore.createDocumentFromRevision(revMut2);
+        DocumentRevision rev2 = datastore.create(revMut2);
 
         ValueListMap<String, String> revs = new ValueListMap<String, String>();
         // Add two existing revisions first, and then add many

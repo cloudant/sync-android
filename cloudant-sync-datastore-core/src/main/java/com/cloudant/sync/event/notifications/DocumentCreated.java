@@ -26,7 +26,7 @@ public class DocumentCreated extends DocumentModified {
      * Event for document create
      * 
      * <p>This event is posted by
-     * {@link Database#createDocumentFromRevision(DocumentRevision)}
+     * {@link Database#create(DocumentRevision)}
      * </p>
      *
      * @param newDocument

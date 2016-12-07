@@ -89,7 +89,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
 
         rev = new DocumentRevision("mike34");
@@ -98,7 +98,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
 
         rev = new DocumentRevision("mike72");
@@ -107,7 +107,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 72);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
 
         rev = new DocumentRevision("fred34");
@@ -116,7 +116,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
 
         rev = new DocumentRevision("fred12");
@@ -124,7 +124,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
 
         assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic"), is("basic"));
@@ -152,7 +152,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
 
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
 
         rev = new DocumentRevision("mike34");
@@ -161,7 +161,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
 
         rev = new DocumentRevision("mike72");
@@ -170,7 +170,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 72);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
 
         rev = new DocumentRevision("اسم34");
@@ -179,21 +179,21 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred12");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fredarabic");
         bodyMap.clear();
         bodyMap.put("اسم", "fred");
         bodyMap.put("age", 12);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
 
         rev = new DocumentRevision("freddatatype");
@@ -201,7 +201,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("datatype", "fred");
         bodyMap.put("age", 12);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
     }
 
@@ -227,7 +227,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike23");
         bodyMap.clear();
@@ -235,7 +235,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 23);
         bodyMap.put("pet", "parrot");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike34");
         bodyMap.clear();
@@ -243,7 +243,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john34");
         bodyMap.clear();
@@ -251,7 +251,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "fish");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred43");
         bodyMap.clear();
@@ -259,14 +259,14 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 43);
         bodyMap.put("pet", "snake");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred12");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new FieldSort("name")), "basic"),
                 is("basic"));
@@ -282,7 +282,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", Arrays.<String>asList("cat", "dog"));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred34");
         bodyMap.clear();
@@ -290,7 +290,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "parrot");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike34");
         bodyMap.clear();
@@ -298,14 +298,14 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", Arrays.<String>asList("cat", "dog", "fish"));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred12");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john44");
         bodyMap.clear();
@@ -313,7 +313,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 44);
         bodyMap.put("pet", Arrays.<String>asList("hamster", "snake"));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john22");
         bodyMap.clear();
@@ -321,7 +321,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 22);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("age")), "pet"),
                 is("pet"));
@@ -335,70 +335,70 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("name", "mike");
         bodyMap.put("score", 31);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred11");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("score", 11);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john15");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", 15);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john-15");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", -15);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john15.2");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", 15.2);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john15.6");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", 15.6);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john0");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", 0);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john0.0");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", 0.0);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john0.6");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", 0.6);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john-0.6");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("score", -0.6);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("score")), "name_score"),
                                     is("name_score"));
@@ -413,7 +413,7 @@ public abstract class AbstractQueryTestBase {
             bodyMap.put("large_field", "cat");
             bodyMap.put("idx", i);
             rev.setBody(DocumentBodyFactory.create(bodyMap));
-            ds.createDocumentFromRevision(rev);
+            ds.create(rev);
         }
         assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("large_field"), new FieldSort("idx")), "large"),
                 is("large"));
@@ -429,7 +429,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike34");
         bodyMap.clear();
@@ -437,7 +437,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike72");
         bodyMap.clear();
@@ -446,7 +446,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("pet", "cat");
         bodyMap.put("town", "bristol");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred34");
         bodyMap.clear();
@@ -454,7 +454,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred12");
         bodyMap.clear();
@@ -462,7 +462,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("town", "bristol");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic"), is("basic"));
         assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "pet"), is("pet"));
@@ -477,7 +477,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 24);
         bodyMap.put("pet", Collections.singletonList("cat"));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike12");
         bodyMap.clear();
@@ -485,7 +485,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", Arrays.asList("cat", "dog"));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred34");
         bodyMap.clear();
@@ -493,7 +493,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", Arrays.asList("cat", "dog"));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john44");
         bodyMap.clear();
@@ -501,7 +501,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 44);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred72");
         bodyMap.clear();
@@ -509,14 +509,14 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 72);
         bodyMap.put("pet", Collections.singletonList("dog"));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john12");
         bodyMap.clear();
         bodyMap.put("name", "john");
         bodyMap.put("age", 12);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("bill34");
         bodyMap.clear();
@@ -524,7 +524,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", Arrays.asList("cat", "parrot"));
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred11");
         bodyMap.clear();
@@ -532,7 +532,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 11);
         bodyMap.put("pet", new ArrayList<Object>());
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("age")), "basic"), is("basic"));
     }
@@ -547,7 +547,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", Arrays.<FieldSort>asList(new FieldSort("cat"), new FieldSort("dog")));
         bodyMap.put("same", "all");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred34");
         bodyMap.clear();
@@ -556,7 +556,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("pet", "parrot");
         bodyMap.put("same", "all");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred11");
         bodyMap.clear();
@@ -565,7 +565,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("pet", "fish");
         bodyMap.put("same", "all");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("age"), new FieldSort("same")), "pet"),
                 is("pet"));
@@ -581,7 +581,7 @@ public abstract class AbstractQueryTestBase {
         petMap.put("name", "mike");
         bodyMap.put("pet", petMap);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike23");
         bodyMap.clear();
@@ -594,7 +594,7 @@ public abstract class AbstractQueryTestBase {
         petMap.put("name", petNameMap);
         bodyMap.put("pet", petMap);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike34");
         bodyMap.clear();
@@ -605,7 +605,7 @@ public abstract class AbstractQueryTestBase {
         petMap.put("name", "mike");
         bodyMap.put("pet", petMap);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike72");
         bodyMap.clear();
@@ -613,7 +613,7 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 72);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred34");
         bodyMap.clear();
@@ -621,14 +621,14 @@ public abstract class AbstractQueryTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred12");
         bodyMap.clear();
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
     }
 
 }

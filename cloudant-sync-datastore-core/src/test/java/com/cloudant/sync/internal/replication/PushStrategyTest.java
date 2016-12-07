@@ -314,7 +314,7 @@ public class PushStrategyTest extends ReplicationTestBase {
         String id = "\u738b\u4e1c\u5347";
         DocumentRevision rev = new DocumentRevision(id);
         rev.setBody(createDBBody("Tom"));
-        DocumentRevision saved = datastore.createDocumentFromRevision(rev);
+        DocumentRevision saved = datastore.create(rev);
 
         this.push(replicator, 1);
         assertPushReplicationStatus(replicator, 1, 2, "1");

@@ -63,7 +63,7 @@ public class DeleteAllRevisionsCallable implements SQLCallable<List<DocumentRevi
             }
             return deleted;
         } catch (SQLException sqe) {
-            throw new DocumentStoreException("SQLException in deleteDocument, not " +
+            throw new DocumentStoreException("SQLException in delete, not " +
                     "deleting revisions", sqe);
         } finally {
             DatabaseUtils.closeCursorQuietly(cursor);

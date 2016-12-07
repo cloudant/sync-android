@@ -48,7 +48,7 @@ import java.util.List;
  * the same document in-between replications. MVCC exposes these branches as
  * conflicted documents. These conflicts should be resolved by user-code, by
  * marking all but one of the leaf nodes of the branches as "deleted", using
- * the {@link Database#deleteDocumentFromRevision(DocumentRevision)}
+ * the {@link Database#delete(DocumentRevision)}
  * method. When the
  * datastore is next replicated with a remote datastore, this fix will be
  * propagated, thereby resolving the conflicted document across the set of
@@ -78,7 +78,7 @@ public interface Database {
      * <p>Returns the current winning revision of a document.</p>
      *
      * <p>Previously deleted documents can be retrieved
-     * (via tombstones, see {@link Database#deleteDocumentFromRevision(DocumentRevision)})
+     * (via tombstones, see {@link Database#delete(DocumentRevision)})
      * </p>
      *
      * @param documentId ID of document to retrieve.
@@ -86,7 +86,7 @@ public interface Database {
      * @throws DocumentNotFoundException if the document specified was not found
      * @throws DocumentStoreException if there was an error accessing database
      */
-    DocumentRevision getDocument(String documentId) throws DocumentNotFoundException, DocumentStoreException;
+    DocumentRevision get(String documentId) throws DocumentNotFoundException, DocumentStoreException;
 
     /**
      * <p>Retrieves a given revision of a document.</p>
@@ -96,7 +96,7 @@ public interface Database {
      * revision may contain the metadata but not content of the revision.</p>
      *
      * <p>Previously deleted documents can be retrieved
-     * (via tombstones, see {@link Database#deleteDocumentFromRevision(DocumentRevision)})
+     * (via tombstones, see {@link Database#delete(DocumentRevision)})
      * </p>
      *
      * @param documentId ID of the document
@@ -105,7 +105,7 @@ public interface Database {
      * @throws DocumentNotFoundException if the document specified was not found
      * @throws DocumentStoreException if there was an error reading the document
      */
-    DocumentRevision getDocument(String documentId, String revisionId) throws
+    DocumentRevision get(String documentId, String revisionId) throws
             DocumentNotFoundException, DocumentStoreException;
 
     /**
@@ -120,7 +120,7 @@ public interface Database {
      *         in the datastore, {@code false} otherwise.
      * @throws DocumentStoreException if there was an error reading from the database
      */
-    boolean containsDocument(String documentId, String revisionId) throws DocumentStoreException;
+    boolean contains(String documentId, String revisionId) throws DocumentStoreException;
 
     /**
      * <p>Returns whether this datastore contains any revisions of a document.
@@ -133,7 +133,7 @@ public interface Database {
      *         in the datastore, {@code false} otherwise.
      * @throws DocumentStoreException if there was an error reading from the database
      */
-    boolean containsDocument(String documentId) throws DocumentStoreException;
+    boolean contains(String documentId) throws DocumentStoreException;
 
     /**
      * <p>Enumerates the current winning revision for all documents in the
@@ -151,7 +151,7 @@ public interface Database {
      * @return list of {@code DBObjects}, maximum length {@code limit}.
      * @throws DocumentStoreException if there was an error reading the documents
      */
-    List<DocumentRevision> getAllDocuments(int offset, int limit, boolean descending) throws DocumentStoreException;
+    List<DocumentRevision> getAll(int offset, int limit, boolean descending) throws DocumentStoreException;
 
     /**
      * <p>Enumerates the current winning revision for all documents in the
@@ -160,7 +160,7 @@ public interface Database {
      * @return list of {@code String}.
      * @throws DocumentStoreException if there was an error reading the document IDs
      */
-    List<String> getAllDocumentIds() throws DocumentStoreException;
+    List<String> getAllIds() throws DocumentStoreException;
 
     /**
      * <p>Returns the current winning revisions for a set of documents.</p>
@@ -174,7 +174,7 @@ public interface Database {
      * @throws DocumentStoreException if there was an error retrieving the
      * documents.
      */
-    List<DocumentRevision> getDocumentsWithIds(List<String> documentIds) throws DocumentStoreException;
+    List<DocumentRevision> getAllWithIds(List<String> documentIds) throws DocumentStoreException;
 
     /**
      * <p>Retrieves the datastore's current sequence number.</p>
@@ -227,7 +227,7 @@ public interface Database {
      *
      * @see <a href="http://wiki.apache.org/couchdb/Replication_and_conflicts">Replication and conflicts</a>
      */
-    Iterator<String> getConflictedDocumentIds() throws DocumentStoreException;
+    Iterator<String> getConflictedIds() throws DocumentStoreException;
 
     /**
      * <p>
@@ -246,7 +246,7 @@ public interface Database {
      *
      * @see ConflictResolver
      */
-    void resolveConflictsForDocument(String docId, ConflictResolver resolver)
+    void resolveConflicts(String docId, ConflictResolver resolver)
         throws ConflictException;
 
     /**
@@ -267,7 +267,7 @@ public interface Database {
      * @throws DocumentStoreException if there was an error creating the document
      * @see Database#getEventBus()
      */
-    DocumentRevision createDocumentFromRevision(DocumentRevision rev) throws AttachmentException,
+    DocumentRevision create(DocumentRevision rev) throws AttachmentException,
             InvalidDocumentException, ConflictException, DocumentStoreException;
 
     /**
@@ -288,7 +288,7 @@ public interface Database {
      * @throws DocumentStoreException if there was an error updating the document
      * @see Database#getEventBus()
      */
-    DocumentRevision updateDocumentFromRevision(DocumentRevision rev) throws ConflictException,
+    DocumentRevision update(DocumentRevision rev) throws ConflictException,
             AttachmentException, DocumentStoreException;
 
     /**
@@ -305,7 +305,7 @@ public interface Database {
      * <p>If the input revision is already deleted, nothing will be changed. </p>
      *
      * <p>When resolving conflicts, this method can be used to delete any non-deleted
-     * leaf revision of a document. {@link Database#resolveConflictsForDocument} handles this
+     * leaf revision of a document. {@link Database#resolveConflicts} handles this
      * deletion step during conflict resolution, so it's not usually necessary to call this
      * method in this way from client code. See the doc/conflicts.md document for
      * more details.</p>
@@ -316,25 +316,25 @@ public interface Database {
      * @throws DocumentNotFoundException if the <code>DocumentRevision</code> was already deleted
      * @throws DocumentStoreException if there was an error deleting the document
      * @see Database#getEventBus()
-     * @see Database#resolveConflictsForDocument
+     * @see Database#resolveConflicts
      */
-    DocumentRevision deleteDocumentFromRevision(DocumentRevision rev) throws ConflictException, DocumentNotFoundException,
+    DocumentRevision delete(DocumentRevision rev) throws ConflictException, DocumentNotFoundException,
             DocumentStoreException;
 
     /**
      * <p>Delete all leaf revisions for the document</p>
      *
      * <p>This is equivalent to calling
-     * {@link Database#deleteDocumentFromRevision(DocumentRevision)
-     * deleteDocumentFromRevision} on all leaf revisions</p>
+     * {@link Database#delete(DocumentRevision)
+     * delete} on all leaf revisions</p>
      *
      * @param id the ID of the document to delete leaf nodes for
      * @return a List of a <code>DocumentRevision</code>s - the deleted or "tombstone" documents
      * @throws DocumentStoreException if there was an error deleting the document
      * @see Database#getEventBus()
-     * @see Database#deleteDocumentFromRevision(DocumentRevision)
+     * @see Database#delete(DocumentRevision)
      */
-    List<DocumentRevision> deleteDocument(String id) throws DocumentStoreException;
+    List<DocumentRevision> delete(String id) throws DocumentStoreException;
 
     /**
      * Compacts the SQL database and disk storage by removing the bodies and attachments of obsolete revisions.

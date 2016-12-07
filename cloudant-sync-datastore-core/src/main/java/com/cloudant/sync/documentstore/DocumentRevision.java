@@ -70,7 +70,7 @@ public class DocumentRevision {
     protected DocumentBody body;
 
     public DocumentRevision() {
-        // BasicDatastore#createDocumentFromRevision will assign an id
+        // BasicDatastore#create will assign an id
         this(null);
     }
 

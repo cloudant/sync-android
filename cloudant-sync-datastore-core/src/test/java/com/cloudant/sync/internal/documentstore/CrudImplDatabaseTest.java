@@ -21,7 +21,6 @@ import static org.hamcrest.Matchers.hasSize;
 import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
-import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStoreException;
@@ -76,7 +75,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
     public void createDocument_bodyOnly_success() throws Exception {
         DocumentRevision rev_mut = new DocumentRevision();
         rev_mut.setBody(bodyOne);
-        DocumentRevision rev = datastore.createDocumentFromRevision(rev_mut);
+        DocumentRevision rev = datastore.create(rev_mut);
         validateNewlyCreatedDocument(rev);
         Assert.assertNull(rev_mut.getId());
     }
@@ -86,7 +85,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         String docId = CouchUtils.generateDocumentId();
         DocumentRevision newDoc = new DocumentRevision(docId);
         newDoc.setBody(bodyOne);
-        DocumentRevision rev = datastore.createDocumentFromRevision(newDoc);
+        DocumentRevision rev = datastore.create(newDoc);
         validateNewlyCreatedDocument(rev);
         Assert.assertEquals(docId, rev.getId());
     }
@@ -96,7 +95,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         String id = "\u738b\u4e1c\u5347";
         DocumentRevision newDoc = new DocumentRevision(id);
         newDoc.setBody(bodyOne);
-        DocumentRevision rev = datastore.createDocumentFromRevision(newDoc);
+        DocumentRevision rev = datastore.create(newDoc);
         validateNewlyCreatedDocument(rev);
         System.out.println(rev.getId());
         Assert.assertEquals(id, rev.getId());
@@ -107,9 +106,9 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         String docId = CouchUtils.generateDocumentId();
         DocumentRevision newDoc = new DocumentRevision(docId);
         newDoc.setBody(bodyOne);
-        DocumentRevision rev = datastore.createDocumentFromRevision(newDoc);
+        DocumentRevision rev = datastore.create(newDoc);
         validateNewlyCreatedDocument(rev);
-        datastore.createDocumentFromRevision(newDoc);
+        datastore.create(newDoc);
     }
 
     @Test(expected = InvalidDocumentException.class)
@@ -117,7 +116,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         Map m = createMapWithSpecialField();
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(DocumentBodyImpl.bodyWith(m));
-        datastore.createDocumentFromRevision(rev);
+        datastore.create(rev);
     }
 
     private Map createMapWithSpecialField() {
@@ -138,27 +137,27 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
     public void updateDocument_existingDocument_success() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
 
         DocumentRevision rev_2Mut = rev_1;
         rev_2Mut.setBody(bodyTwo);
-        DocumentRevision rev_2 = datastore.updateDocumentFromRevision(rev_2Mut);
+        DocumentRevision rev_2 = datastore.update(rev_2Mut);
         Assert.assertEquals(2, CouchUtils.generationFromRevId(rev_2.getRevision()));
         Assert.assertTrue(((DocumentRevision)rev_2).isCurrent()); // new revision is current revision
 
-        DocumentRevision rev_1_again = datastore.getDocument(rev_1.getId(), rev_1.getRevision());
+        DocumentRevision rev_1_again = datastore.get(rev_1.getId(), rev_1.getRevision());
         Assert.assertTrue(((DocumentRevision)rev_1).isCurrent()); // rev_1 is still marked as "current", and developer need query db to get the latest data, yikes :(
         Assert.assertFalse(rev_1_again.isCurrent());
 
         DocumentRevision rev_3Mut = rev_2;
         rev_3Mut.setBody(bodyOne);
-        DocumentRevision rev_3 = datastore.updateDocumentFromRevision(rev_3Mut);
+        DocumentRevision rev_3 = datastore.update(rev_3Mut);
         Assert.assertEquals(3, CouchUtils.generationFromRevId(rev_3.getRevision()));
 
         DocumentRevision rev_4Mut = rev_3;
         rev_4Mut.setBody(bodyTwo);
-        DocumentRevision rev_4 = datastore.updateDocumentFromRevision(rev_4Mut);
+        DocumentRevision rev_4 = datastore.update(rev_4Mut);
         Assert.assertEquals(4, CouchUtils.generationFromRevId(rev_4.getRevision()));
     }
 
@@ -166,46 +165,46 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
     public void updateDocument_specialField_exception() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
 
         Map m = createMapWithSpecialField();
         DocumentRevision rev_2Mut = rev_1;
         rev_2Mut.setBody(DocumentBodyImpl.bodyWith(m));
-        datastore.updateDocumentFromRevision(rev_2Mut);
+        datastore.update(rev_2Mut);
     }
 
     @Test(expected = ConflictException.class)
     public void updateDocument_targetDocumentNotCurrentRevision_exception() throws Exception{
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
         validateNewlyCreatedDocument(rev_1);
 
         DocumentRevision rev_2Mut = rev_1;
         rev_2Mut.setBody(bodyTwo);
-        DocumentRevision rev_2 = datastore.updateDocumentFromRevision(rev_2Mut);
+        DocumentRevision rev_2 = datastore.update(rev_2Mut);
         Assert.assertEquals(2, CouchUtils.generationFromRevId(rev_2.getRevision()));
 
-        rev_1 = datastore.getDocument(rev_1.getId(), rev_1.getRevision());
+        rev_1 = datastore.get(rev_1.getId(), rev_1.getRevision());
         Assert.assertFalse(((InternalDocumentRevision)rev_1).isCurrent());
         rev_1Mut = rev_1;
         rev_1Mut.setBody(bodyOne);
 
-        datastore.updateDocumentFromRevision(rev_1Mut);
+        datastore.update(rev_1Mut);
     }
 
     @Test(expected = ConflictException.class)
     public void deleteDocument_previousRevisionNotLeafNode_exception() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev1 = datastore.create(rev_1Mut);
         DocumentRevision rev1_mut = rev1;
         rev1_mut.setBody(bodyTwo);
-        DocumentRevision rev2 = datastore.updateDocumentFromRevision(rev1_mut);
+        DocumentRevision rev2 = datastore.update(rev1_mut);
         Assert.assertNotNull(rev2);
-        this.datastore.deleteDocumentFromRevision(rev1);
+        this.datastore.delete(rev1);
     }
 
     @Test
@@ -213,9 +212,9 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
             throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        InternalDocumentRevision rev1 = (InternalDocumentRevision)datastore.createDocumentFromRevision(rev_1Mut);
+        InternalDocumentRevision rev1 = (InternalDocumentRevision)datastore.create(rev_1Mut);
 
-        InternalDocumentRevision deletedRev = (InternalDocumentRevision)this.datastore.deleteDocumentFromRevision(rev1);
+        InternalDocumentRevision deletedRev = (InternalDocumentRevision)this.datastore.delete(rev1);
         Assert.assertEquals(2, CouchUtils.generationFromRevId(deletedRev.getRevision()));
         Assert.assertTrue(deletedRev.isDeleted());
         Assert.assertTrue(deletedRev.isCurrent());
@@ -238,14 +237,14 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
             throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev1 = datastore.createDocumentFromRevision(rev_1Mut);
-        this.datastore.deleteDocumentFromRevision(rev1);
+        DocumentRevision rev1 = datastore.create(rev_1Mut);
+        this.datastore.delete(rev1);
         DocumentRevisionTree tree1 = this.datastore.getAllRevisionsOfDocument(rev1.getId());
         DocumentRevision rev2 = (DocumentRevision) tree1.getCurrentRevision();
         Assert.assertEquals(2, CouchUtils.generationFromRevId(rev2.getRevision()));
 
         try {
-            this.datastore.deleteDocumentFromRevision(rev2);
+            this.datastore.delete(rev2);
             Assert.fail("Expected DocumentNotFoundException");
         } catch(DocumentNotFoundException dnfe) {
             ;
@@ -261,14 +260,14 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
 
         DocumentRevision rev1aMut = new DocumentRevision();
         rev1aMut.setBody(bodyOne);
-        InternalDocumentRevision rev1a = (InternalDocumentRevision)this.datastore.createDocumentFromRevision(rev1aMut);
+        InternalDocumentRevision rev1a = (InternalDocumentRevision)this.datastore.create(rev1aMut);
         DocumentRevision rev2aMut = rev1a;
         rev2aMut.setBody(bodyTwo);
-        InternalDocumentRevision rev2a = (InternalDocumentRevision)this.datastore.updateDocumentFromRevision(rev2aMut);
+        InternalDocumentRevision rev2a = (InternalDocumentRevision)this.datastore.update(rev2aMut);
         InternalDocumentRevision rev3b = this.createDetachedDocumentRevision(rev1a.getId(), "3-b", bodyOne);
         this.datastore.forceInsert(rev3b, rev1a.getRevision(), "2-b", "3-b");
 
-        InternalDocumentRevision deletedRev = (InternalDocumentRevision)this.datastore.deleteDocumentFromRevision(rev2a);
+        InternalDocumentRevision deletedRev = (InternalDocumentRevision)this.datastore.delete(rev2a);
         Assert.assertArrayEquals(JSONUtils.emptyJSONObjectAsBytes(), deletedRev.getBody().asBytes());
         Assert.assertEquals(rev2a.getSequence(), deletedRev.getParent());
         Assert.assertTrue(deletedRev.getSequence() > rev2a.getSequence());
@@ -288,7 +287,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         }
 
         Assert.assertEquals(3, CouchUtils.generationFromRevId(newInsertedRevisionId));
-        DocumentRevision newInsertedRevision = this.datastore.getDocument(rev1a.getId(), newInsertedRevisionId);
+        DocumentRevision newInsertedRevision = this.datastore.get(rev1a.getId(), newInsertedRevisionId);
         Assert.assertTrue(newInsertedRevision.isDeleted());
         Assert.assertFalse(newInsertedRevision.isCurrent());
     }
@@ -323,24 +322,24 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
     public void getDocument_twoDoc() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
 
-        DocumentRevision revRead_1 = datastore.getDocument(rev_1.getId(), rev_1.getRevision());
+        DocumentRevision revRead_1 = datastore.get(rev_1.getId(), rev_1.getRevision());
         Assert.assertTrue(revRead_1.isCurrent());
 
         DocumentRevision rev_2Mut = rev_1;
         rev_2Mut.setBody(bodyTwo);
-        datastore.updateDocumentFromRevision(rev_2Mut);
+        datastore.update(rev_2Mut);
 
-        DocumentRevision revRead_2 = datastore.getDocument(rev_1.getId(), rev_1.getRevision());
+        DocumentRevision revRead_2 = datastore.get(rev_1.getId(), rev_1.getRevision());
         Assert.assertFalse(revRead_2.isCurrent());
 
-        DocumentRevision revRead_3 = datastore.getDocument(rev_1.getId());
+        DocumentRevision revRead_3 = datastore.get(rev_1.getId());
         Assert.assertTrue(revRead_3.isCurrent());
         Assert.assertEquals(2, CouchUtils.generationFromRevId(revRead_3.getRevision()));
 
-        DocumentRevision revRead_3_2 = datastore.getDocument(rev_1.getId());
+        DocumentRevision revRead_3_2 = datastore.get(rev_1.getId());
         Assert.assertTrue(revRead_3_2.isCurrent());
         Assert.assertEquals(2, CouchUtils.generationFromRevId(revRead_3_2.getRevision()));
     }
@@ -361,16 +360,16 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
     public void existsDocument_goodOneAndBadOne() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
 
         String badRevision = CouchUtils.generateNextRevisionId(rev_1.getRevision());
 
-        Assert.assertTrue(datastore.containsDocument(rev_1.getId(), rev_1.getRevision()));
-        Assert.assertFalse(datastore.containsDocument(rev_1.getId(), badRevision));
+        Assert.assertTrue(datastore.contains(rev_1.getId(), rev_1.getRevision()));
+        Assert.assertFalse(datastore.contains(rev_1.getId(), badRevision));
 
-        Assert.assertTrue(datastore.containsDocument(rev_1.getId()));
-        Assert.assertFalse(datastore.containsDocument("-1"));
+        Assert.assertTrue(datastore.contains(rev_1.getId()));
+        Assert.assertFalse(datastore.contains("-1"));
     }
 
     @Test
@@ -401,20 +400,20 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
     public void getDocumentsWithIds_NA_allSpecifiedDocumentsShouldBeReturnedInCorrectOrder() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         DocumentRevision rev_1_2Mut = rev_1;
         rev_1_2Mut.setBody(bodyTwo);
-        DocumentRevision rev_1_2 = datastore.updateDocumentFromRevision(rev_1_2Mut);
+        DocumentRevision rev_1_2 = datastore.update(rev_1_2Mut);
         DocumentRevision rev_2Mut = new DocumentRevision();
         rev_2Mut.setBody(bodyTwo);
-        DocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
+        DocumentRevision rev_2 = datastore.create(rev_2Mut);
 
         List<String> ids = new ArrayList<String>();
         ids.add(rev_1.getId());
         ids.add(rev_2.getId());
 
         {
-            List<? extends DocumentRevision> docs = datastore.getDocumentsWithIds(ids);
+            List<? extends DocumentRevision> docs = datastore.getAllWithIds(ids);
             Assert.assertEquals(2, docs.size());
             assertIdAndRevisionAndShallowContent(rev_1_2, (InternalDocumentRevision)docs.get(0));
         }
@@ -424,7 +423,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         ids2.add(rev_1.getId());
 
         {
-            List<? extends DocumentRevision> docs = datastore.getDocumentsWithIds(ids2);
+            List<? extends DocumentRevision> docs = datastore.getAllWithIds(ids2);
             Assert.assertEquals(2, docs.size());
             assertIdAndRevisionAndShallowContent(rev_2, (InternalDocumentRevision)docs.get(0));
         }
@@ -433,13 +432,13 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
     private DocumentRevision[] createTwoDocumentsForGetDocumentsWithInternalIdsTest() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         DocumentRevision rev_1_2Mut = rev_1;
         rev_1_2Mut.setBody(bodyTwo);
-        DocumentRevision rev_1_2 = datastore.updateDocumentFromRevision(rev_1_2Mut);
+        DocumentRevision rev_1_2 = datastore.update(rev_1_2Mut);
         DocumentRevision rev_2Mut = new DocumentRevision();
         rev_2Mut.setBody(bodyTwo);
-        DocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
+        DocumentRevision rev_2 = datastore.create(rev_2Mut);
         return new DocumentRevision[]{ rev_1, rev_2 };
     }
 
@@ -487,7 +486,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
             DocumentBody body = DocumentBodyFactory.create(content);
             DocumentRevision rev = new DocumentRevision();
             rev.setBody(body);
-            DocumentRevision saved = datastore.createDocumentFromRevision(rev);
+            DocumentRevision saved = datastore.create(rev);
             internal_ids.add(((InternalDocumentRevision)saved).getInternalNumericId());
         }
 
@@ -548,7 +547,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         for (int i = 0; i < objectCount; i++) {
             DocumentRevision rev = new DocumentRevision();
             rev.setBody(bodies.get(i));
-            DocumentRevision saved = datastore.createDocumentFromRevision(rev);
+            DocumentRevision saved = datastore.create(rev);
             documentRevisions.add(saved);
         }
         ArrayList<DocumentRevision> reversedObjects = new ArrayList<DocumentRevision>(documentRevisions);
@@ -561,14 +560,14 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
 
     @Test
     public void getAllDocumentIds() throws Exception {
-        Assert.assertTrue(datastore.getAllDocumentIds().isEmpty());
+        Assert.assertTrue(datastore.getAllIds().isEmpty());
         DocumentRevision rev = new DocumentRevision("document-one");
         rev.setBody(bodyOne);
-        datastore.createDocumentFromRevision(rev);
+        datastore.create(rev);
         rev = new DocumentRevision("document-two");
         rev.setBody(bodyTwo);
-        datastore.createDocumentFromRevision(rev);
-        Assert.assertThat(datastore.getAllDocumentIds(), containsInAnyOrder("document-one",
+        datastore.create(rev);
+        Assert.assertThat(datastore.getAllIds(), containsInAnyOrder("document-one",
                                                                             "document-two"));
     }
 
@@ -579,7 +578,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         // create a root node
         DocumentRevision root = new DocumentRevision(docId);
         root.setBody(bodyOne);
-        root = datastore.createDocumentFromRevision(root);
+        root = datastore.create(root);
 
         // create some leaf nodes
         for (int i=0; i<10; i++) {
@@ -596,7 +595,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         datastore.compact();
 
         // re-fetch and check root and leafs: root should not have a body but leafs should
-        root = datastore.getDocument(root.getId(), root.getRevision());
+        root = datastore.get(root.getId(), root.getRevision());
         Assert.assertEquals("root body must be empty after compaction", 0, root.getBody().asMap().size());
         for (DocumentRevision leaf : datastore.getAllRevisionsOfDocument(docId).leafRevisions()) {
             Assert.assertTrue("leaf body must not be empty after compaction", leaf.getBody().asMap().size() > 0);
@@ -612,57 +611,57 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
 
         // Count
         count = 10;
-        result = datastore.getAllDocuments(offset, count, descending);
+        result = datastore.getAll(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, count, offset);
 
         count = 47;
-        result = datastore.getAllDocuments(offset, count, descending);
+        result = datastore.getAll(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, count, offset);
 
         count = objectCount;
-        result = datastore.getAllDocuments(offset, count, descending);
+        result = datastore.getAll(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, count, offset);
 
         count = objectCount * 12;
-        result = datastore.getAllDocuments(offset, count, descending);
+        result = datastore.getAll(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, objectCount, offset);
 
 
         // Offsets
         offset = 10; count = 10;
-        result = datastore.getAllDocuments(offset, count, descending);
+        result = datastore.getAll(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, count, offset);
 
         offset = 20; count = 30;
-        result = datastore.getAllDocuments(offset, count, descending);
+        result = datastore.getAll(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, count, offset);
 
         offset = objectCount - 3; count = 10;
-        result = datastore.getAllDocuments(offset, count, descending);
+        result = datastore.getAll(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, 3, offset);
 
         offset = objectCount + 5; count = 10;
-        result = datastore.getAllDocuments(offset, count, descending);
+        result = datastore.getAll(offset, count, descending);
         getAllDocuments_compareResult(expectedDocumentRevisions, result, 0, 0);
 
         // Error cases
         try {
             offset = 0; count = -10;
-            datastore.getAllDocuments(offset, count, descending);
+            datastore.getAll(offset, count, descending);
             Assert.fail("IllegalArgumentException not thrown");
         } catch (IllegalArgumentException ex) {
             // All fine
         }
         try {
             offset = -10; count = 10;
-            datastore.getAllDocuments(offset, count, descending);
+            datastore.getAll(offset, count, descending);
             Assert.fail("IllegalArgumentException not thrown");
         } catch (IllegalArgumentException ex) {
             // All fine
         }
         try {
             offset = 50; count = -10;
-            datastore.getAllDocuments(offset, count, descending);
+            datastore.getAll(offset, count, descending);
             Assert.fail("IllegalArgumentException not thrown");
         } catch (IllegalArgumentException ex) {
             // All fine
