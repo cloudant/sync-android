@@ -74,7 +74,7 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         try {
             this.pull();
 
-            DocumentRevision gotRev = this.datastore.get("doc-a");
+            DocumentRevision gotRev = this.datastore.read("doc-a");
 
             Assert.assertEquals(gotRev.getAttachments().size(), 1);
             // local one is guaranteed to be winner because its revision tree is longer
@@ -130,7 +130,7 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         try {
             this.pull();
 
-            DocumentRevision gotRev = this.datastore.get("doc-a");
+            DocumentRevision gotRev = this.datastore.read("doc-a");
             Assert.assertEquals(gotRev.getAttachments().size(), 1);
         } finally {
             this.datastore.close();

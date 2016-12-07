@@ -68,7 +68,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
     }
 
     public String updateDocInDatastore(String id, String data) throws Exception {
-        DocumentRevision rev = datastore.get(id);
+        DocumentRevision rev = datastore.read(id);
         Map<String, String> m = new HashMap<String, String>();
         m.put("data", data);
         rev.setBody(DocumentBodyFactory.create(m));
@@ -146,7 +146,7 @@ public class BasicPushStrategyTest2 extends ReplicationTestBase {
     }
 
     public void checkDocumentIsSynced(String id) throws Exception{
-        DocumentRevision fooLocal = this.datastore.get(id);
+        DocumentRevision fooLocal = this.datastore.read(id);
         Map fooRemote = remoteDb.get(Map.class, id);
         Assert.assertEquals(fooLocal.getId(), fooRemote.get("_id"));
         Assert.assertEquals(fooLocal.getRevision(), fooRemote.get("_rev"));

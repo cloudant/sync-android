@@ -51,7 +51,7 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
     // get on non-existent document should throw DocumentNotFoundException
     @Test(expected = DocumentNotFoundException.class)
     public void getDocumentShouldThrowDocumentNotFoundException() throws Exception {
-        this.datastore.get("nosuchdocument");
+        this.datastore.read("nosuchdocument");
     }
 
     // get after we remove the underlying SQL database should throw DocumentStoreException
@@ -59,7 +59,7 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
     public void getDocumentShouldThrowDocumentStoreException() throws Exception {
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.get("nosuchdocument");
+        this.datastore.read("nosuchdocument");
     }
 
     // get on non-existent revid should throw DocumentNotFoundException
@@ -68,7 +68,7 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
         DocumentRevision dr = new DocumentRevision("doc1");
         dr.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
         this.datastore.create(dr);
-        this.datastore.get(dr.getId(), "nosuchrevid");
+        this.datastore.read(dr.getId(), "nosuchrevid");
     }
 
     // get after we remove the underlying SQL database should throw DocumentStoreException
@@ -76,7 +76,7 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
     public void getDocumentWithRevisionShouldThrowDocumentStoreException() throws Exception {
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.get("nosuchdocument", "nosuchrevid");
+        this.datastore.read("nosuchdocument", "nosuchrevid");
     }
 
     // contains after we remove the underlying SQL database should throw
@@ -103,7 +103,7 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
     public void getAllDocumentsShouldThrowDocumentStoreException() throws Exception {
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.get(0, 100, true);
+        this.datastore.read(0, 100, true);
     }
 
     // getIds after we remove the underlying SQL database should throw
