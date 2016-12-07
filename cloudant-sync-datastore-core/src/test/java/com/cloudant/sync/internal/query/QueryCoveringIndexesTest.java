@@ -1081,7 +1081,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     @Test
     public void queryUsing_revWorksAsASingleClause() throws Exception {
         setUpBasicQueryData();
-        String docRev = ds.get("mike12").getRevision();
+        String docRev = ds.read("mike12").getRevision();
         // query - { "_rev" : <docRev> }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("_rev", docRev);
@@ -1092,7 +1092,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     @Test
     public void queryUsing_revWorksWithOtherClauses() throws Exception {
         setUpBasicQueryData();
-        String docRev = ds.get("mike12").getRevision();
+        String docRev = ds.read("mike12").getRevision();
         // query - { "_rev" : <docRev>, "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("_rev", docRev);

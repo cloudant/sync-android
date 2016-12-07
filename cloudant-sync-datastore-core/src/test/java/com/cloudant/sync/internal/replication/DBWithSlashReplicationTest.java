@@ -102,7 +102,7 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
         }
 
         //now create some local revs
-        DocumentRevision revision = datastore.get(documentName);
+        DocumentRevision revision = datastore.read(documentName);
 
         for (int i = 0; i < 10; i++) {
             Map<String, Object> body = revision.getBody().asMap();

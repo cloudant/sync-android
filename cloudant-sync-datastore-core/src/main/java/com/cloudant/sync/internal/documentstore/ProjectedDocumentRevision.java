@@ -60,7 +60,7 @@ public class ProjectedDocumentRevision extends InternalDocumentRevision {
 
     @Override
     public DocumentRevision toFullRevision() throws DocumentNotFoundException, DocumentStoreException {
-        return this.database.get(this.id,this.revision);
+        return this.database.read(this.id,this.revision);
     }
 
     @Override

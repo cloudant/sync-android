@@ -157,7 +157,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
             assertThat(revBody.keySet(), contains("name"));
             assertThat((String) revBody.get("name"), is("mike"));
 
-            DocumentRevision original = ds.get(rev.getId());
+            DocumentRevision original = ds.read(rev.getId());
             DocumentRevision update = original;
             Map<String, Object> updateBody = original.getBody().asMap();
             updateBody.put("name", "charles");

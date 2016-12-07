@@ -535,7 +535,7 @@ public class Database200MigrationTest {
                 rootRevision.getBody(), null);
         ds.forceInsert(rev, rootRevision.getRevision());
 
-        rev = ds.get("awesomeness");
+        rev = ds.read("awesomeness");
         rev.setBody(DocumentBodyFactory.create(body));
         DocumentRevision update = ds.update(rev);
 
@@ -588,7 +588,7 @@ public class Database200MigrationTest {
         ds.forceInsert(rev1a, "1-x");
 
         // fetch back the document we just inserted because we need the numeric id
-        final long doc_id = ds.get(OBJECT_ID).getInternalNumericId();
+        final long doc_id = ds.read(OBJECT_ID).getInternalNumericId();
 
         // Now insert a duplicate (don't use forceInsert because that will protect against
         // duplicate entries).
@@ -607,7 +607,7 @@ public class Database200MigrationTest {
         ds.forceInsert(rev2, "1-x", "2-x");
 
         // Get the document
-        DocumentRevision doc = ds.get(OBJECT_ID);
+        DocumentRevision doc = ds.read(OBJECT_ID);
         // If there is no winner an exception would be thrown.
 
         // We favour non-deleted nodes so the winner should be a 1-x
