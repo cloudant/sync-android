@@ -34,7 +34,8 @@ public abstract class DatastoreTestBase {
     @Before
     public void setUp() throws Exception {
         datastore_manager_dir = TestUtils.createTempTestingDir(this.getClass().getName());
-        this.datastore = (DatabaseImpl)(DocumentStore.getInstance(new File(datastore_manager_dir, getClass().getSimpleName()))).database;
+        this.datastore = (DatabaseImpl) (DocumentStore.getInstance(new File
+                (datastore_manager_dir, getClass().getSimpleName()))).database();
 
     }
 

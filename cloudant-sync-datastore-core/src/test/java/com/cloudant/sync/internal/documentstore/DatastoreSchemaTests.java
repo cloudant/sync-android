@@ -18,7 +18,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.Database;
@@ -199,7 +198,7 @@ public class DatastoreSchemaTests {
 
         // Datastore manager the temp folder
         DatabaseImpl datastore = (DatabaseImpl) DocumentStore.getInstance(
-                new File(temp_folder+"/datastores", "testdb")).database;
+                new File(temp_folder + "/datastores", "testdb")).database();
 
         try {
             // Check migration worked
@@ -316,7 +315,7 @@ public class DatastoreSchemaTests {
 
         // Open the v100WithDuplicates datastore. Opening should perform the 100 to 200 migration.
         DatabaseImpl datastore = (DatabaseImpl) DocumentStore.getInstance(
-                new File(temp_folder + "/datastores", "v100DBWithDuplicates")).database;
+                new File(temp_folder + "/datastores", "v100DBWithDuplicates")).database();
 
         try {
 
@@ -430,7 +429,7 @@ public class DatastoreSchemaTests {
 
         // Open the v100WithDuplicates datastore. Opening should perform the 100 to 200 migration.
         DatabaseImpl datastore = (DatabaseImpl) DocumentStore.getInstance(
-                new File(temp_folder + "/datastores", "v100ComplexWithoutDuplicates")).database;
+                new File(temp_folder + "/datastores", "v100ComplexWithoutDuplicates")).database();
 
         try {
 

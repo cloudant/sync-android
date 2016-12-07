@@ -70,7 +70,7 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         this.push();
         this.documentStore.delete();
         this.documentStore = DocumentStore.getInstance(new File(this.datastoreManagerPath, "foo-bar-baz"));
-        this.datastore = (DatabaseImpl)documentStore.database;
+        this.datastore = (DatabaseImpl) documentStore.database();
         try {
             this.pull();
 
@@ -126,7 +126,7 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         this.pull();
         this.documentStore.delete();
         this.documentStore = DocumentStore.getInstance(new File(this.datastoreManagerPath, "foo-bar-baz"));
-        this.datastore = (DatabaseImpl)documentStore.database;
+        this.datastore = (DatabaseImpl) documentStore.database();
         try {
             this.pull();
 
