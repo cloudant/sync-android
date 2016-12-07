@@ -47,7 +47,7 @@ public class UnreliableNetworkPullTest extends ProxyTestBase {
         }
         this.addToxic();
         super.pull();
-        Assert.assertEquals(nDocs, this.datastore.getAllIds().size());
+        Assert.assertEquals(nDocs, this.datastore.getIds().size());
         // TODO a number of extra document updates and pulls to ensure checkpointing is correct
     }
 

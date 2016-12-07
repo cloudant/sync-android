@@ -97,22 +97,22 @@ public class DatabaseImplExceptionsTest extends BasicDatastoreTestBase {
         this.datastore.contains("nosuchdocument", "nosuchrevid");
     }
 
-    // getAll after we remove the underlying SQL database should throw
+    // get after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void getAllDocumentsShouldThrowDocumentStoreException() throws Exception {
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.getAll(0, 100, true);
+        this.datastore.get(0, 100, true);
     }
 
-    // getAllIds after we remove the underlying SQL database should throw
+    // getIds after we remove the underlying SQL database should throw
     // DocumentStoreException
     @Test(expected = DocumentStoreException.class)
     public void getAllDocumentIdsShouldThrowDocumentStoreException() throws Exception {
         // remove the underlying database, triggering a SQL Exception
         dropRevs();
-        this.datastore.getAllIds();
+        this.datastore.getIds();
     }
 
     // getLastSequence after we remove the underlying SQL database should throw
