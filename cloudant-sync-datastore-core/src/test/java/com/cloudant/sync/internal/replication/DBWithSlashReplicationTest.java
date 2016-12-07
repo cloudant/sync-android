@@ -102,7 +102,7 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
         }
 
         //now create some local revs
-        DocumentRevision revision = datastore.getDocument(documentName);
+        DocumentRevision revision = datastore.get(documentName);
 
         for (int i = 0; i < 10; i++) {
             Map<String, Object> body = revision.getBody().asMap();
@@ -110,7 +110,7 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
             age = age.intValue() + 1;
             body.put("age", age);
             revision.setBody(DocumentBodyFactory.create(body));
-            revision = datastore.updateDocumentFromRevision(revision);
+            revision = datastore.update(revision);
         }
 
         // push the changes to the remote

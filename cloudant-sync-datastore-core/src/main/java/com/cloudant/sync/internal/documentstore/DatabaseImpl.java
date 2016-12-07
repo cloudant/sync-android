@@ -253,11 +253,11 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public boolean containsDocument(String docId, String revId) throws DocumentStoreException {
+    public boolean contains(String docId, String revId) throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         try {
             // TODO this can be made quicker than getting the whole document
-            getDocument(docId, revId);
+            get(docId, revId);
             return true;
         } catch (DocumentNotFoundException e) {
             return false;
@@ -265,11 +265,11 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public boolean containsDocument(String docId) throws DocumentStoreException {
+    public boolean contains(String docId) throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         try {
             // TODO this can be made quicker than getting the whole document
-            getDocument(docId);
+            get(docId);
             return true;
         } catch (DocumentNotFoundException e) {
             return false;
@@ -277,13 +277,13 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public InternalDocumentRevision getDocument(String id) throws DocumentNotFoundException, DocumentStoreException {
+    public InternalDocumentRevision get(String id) throws DocumentNotFoundException, DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
-        return getDocument(id, null);
+        return get(id, null);
     }
 
     @Override
-    public InternalDocumentRevision getDocument(final String id, final String rev) throws
+    public InternalDocumentRevision get(final String id, final String rev) throws
             DocumentNotFoundException, DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNullOrEmpty(id, "Document id");
@@ -352,7 +352,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public List<DocumentRevision> getAllDocuments(final int offset, final int limit, final
+    public List<DocumentRevision> getAll(final int offset, final int limit, final
     boolean descending) throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         if (offset < 0) {
@@ -371,7 +371,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public List<String> getAllDocumentIds() throws DocumentStoreException {
+    public List<String> getAllIds() throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         try {
             return get(queue.submit(new GetAllDocumentIdsCallable()));
@@ -383,7 +383,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public List<DocumentRevision> getDocumentsWithIds(final List<String> docIds) throws
+    public List<DocumentRevision> getAllWithIds(final List<String> docIds) throws
             DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNull(docIds, "Input document id list");
@@ -831,7 +831,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public Iterator<String> getConflictedDocumentIds() throws DocumentStoreException {
+    public Iterator<String> getConflictedIds() throws DocumentStoreException {
         try {
             return get(queue.submit(new GetConflictedDocumentIdsCallable())).iterator();
         } catch (ExecutionException e) {
@@ -842,7 +842,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public void resolveConflictsForDocument(final String docId, final ConflictResolver resolver)
+    public void resolveConflicts(final String docId, final ConflictResolver resolver)
             throws ConflictException {
 
 
@@ -1068,7 +1068,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public DocumentRevision createDocumentFromRevision(final DocumentRevision rev)
+    public DocumentRevision create(final DocumentRevision rev)
             throws AttachmentException, InvalidDocumentException, ConflictException, DocumentStoreException {
         Misc.checkNotNull(rev, "DocumentRevision");
         Misc.checkState(isOpen(), "Datastore is closed");
@@ -1132,7 +1132,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public DocumentRevision updateDocumentFromRevision(final DocumentRevision rev)
+    public DocumentRevision update(final DocumentRevision rev)
             throws AttachmentException, DocumentStoreException, ConflictException {
 
         Misc.checkNotNull(rev, "DocumentRevision");
@@ -1158,7 +1158,7 @@ public class DatabaseImpl implements Database {
 
             if (revision != null) {
                 try {
-                    eventBus.post(new DocumentUpdated(getDocument(rev.getId(), rev.getRevision()),
+                    eventBus.post(new DocumentUpdated(get(rev.getId(), rev.getRevision()),
                             revision));
                 } catch (DocumentStoreException de) {
                     ; // TODO couldn't re-fetch document to post event
@@ -1181,7 +1181,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public DocumentRevision deleteDocumentFromRevision(final DocumentRevision rev) throws
+    public DocumentRevision delete(final DocumentRevision rev) throws
             ConflictException, DocumentNotFoundException, DocumentStoreException {
         Misc.checkNotNull(rev, "DocumentRevision");
         Misc.checkState(isOpen(), "Datastore is closed");
@@ -1205,7 +1205,7 @@ public class DatabaseImpl implements Database {
 
     // delete all leaf nodes
     @Override
-    public List<DocumentRevision> deleteDocument(final String id)
+    public List<DocumentRevision> delete(final String id)
             throws DocumentStoreException {
         Misc.checkNotNull(id, "ID");
         try {

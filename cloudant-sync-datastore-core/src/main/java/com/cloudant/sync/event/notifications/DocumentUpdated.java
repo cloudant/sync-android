@@ -26,7 +26,7 @@ public class DocumentUpdated extends DocumentModified {
      * Event for document update
      * 
      * <p>This event is posted by
-     * {@link Database#updateDocumentFromRevision(DocumentRevision)}
+     * {@link Database#update(DocumentRevision)}
      * </p>
      *
      * @param prevDocument

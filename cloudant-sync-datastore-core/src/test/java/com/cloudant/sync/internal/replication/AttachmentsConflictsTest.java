@@ -60,13 +60,13 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         // create local (1-rev and 2-rev)
         DocumentRevision rev = new DocumentRevision("doc-a");
         rev.setBody(DocumentBodyFactory.create("{\"foo\": \"local\"}".getBytes()));
-        DocumentRevision rev2 = this.datastore.createDocumentFromRevision(rev);
+        DocumentRevision rev2 = this.datastore.create(rev);
         rev2.getAttachments().put("att1", new UnsavedStreamAttachment(
                         new ByteArrayInputStream("hello universe".getBytes()),
                         "att1",
                         "text/plain")
         );
-        this.datastore.updateDocumentFromRevision(rev2);
+        this.datastore.update(rev2);
         this.push();
         this.documentStore.delete();
         this.documentStore = DocumentStore.getInstance(new File(this.datastoreManagerPath, "foo-bar-baz"));
@@ -74,7 +74,7 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         try {
             this.pull();
 
-            DocumentRevision gotRev = this.datastore.getDocument("doc-a");
+            DocumentRevision gotRev = this.datastore.get("doc-a");
 
             Assert.assertEquals(gotRev.getAttachments().size(), 1);
             // local one is guaranteed to be winner because its revision tree is longer
@@ -114,9 +114,9 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
                         "att1",
                         "text/plain")
         );
-        this.datastore.createDocumentFromRevision(rev);
+        this.datastore.create(rev);
         this.pull();
-        this.datastore.resolveConflictsForDocument("doc-a", new ConflictResolver() {
+        this.datastore.resolveConflicts("doc-a", new ConflictResolver() {
             @Override
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 return conflicts.get(0);
@@ -130,7 +130,7 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         try {
             this.pull();
 
-            DocumentRevision gotRev = this.datastore.getDocument("doc-a");
+            DocumentRevision gotRev = this.datastore.get("doc-a");
             Assert.assertEquals(gotRev.getAttachments().size(), 1);
         } finally {
             this.datastore.close();

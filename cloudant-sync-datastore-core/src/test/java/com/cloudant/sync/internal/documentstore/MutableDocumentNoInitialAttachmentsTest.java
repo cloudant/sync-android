@@ -16,7 +16,6 @@ package com.cloudant.sync.internal.documentstore;
 
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.AttachmentException;
-import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.UnsavedFileAttachment;
@@ -41,7 +40,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         super.setUp();
         DocumentRevision rev = new DocumentRevision("doc1");
         rev.setBody(bodyOne);
-        saved = datastore.createDocumentFromRevision(rev);
+        saved = datastore.create(rev);
     }
 
     // Update revision with updated body
@@ -49,7 +48,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
     public void updateBody() throws Exception {
         DocumentRevision update = saved;
         update.setBody(bodyTwo);
-        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        DocumentRevision updated = datastore.update(update);
         Assert.assertNotNull("Updated DocumentRevision is null", updated);
     }
 
@@ -59,7 +58,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
     public void updateBodyNull() throws Exception {
         DocumentRevision update = saved;
         update.setBody(null);
-        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        DocumentRevision updated = datastore.update(update);
     }
 
     // Update revision with updated body and new attachment
@@ -71,7 +70,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         File f = TestUtils.loadFixture("fixture/" + attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         update.getAttachments().put(attachmentName, att);
-        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        DocumentRevision updated = datastore.update(update);
         Assert.assertNotNull("Updated DocumentRevision is null", updated);
         Attachment retrievedAtt = datastore.getAttachment(updated.getId(), updated.getRevision(), attachmentName);
         Assert.assertNotNull("Retrieved attachment is null", retrievedAtt);
@@ -86,7 +85,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         DocumentRevision update = saved;
         update.setBody(bodyTwo);
         update.setAttachments(null);
-        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        DocumentRevision updated = datastore.update(update);
         Assert.assertNotNull("Updated DocumentRevision is null", updated);
         // also get the attachments through the documentrev
         Assert.assertEquals("Revision should have 0 attachments", 0, updated.getAttachments().size());
@@ -100,7 +99,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         File f = TestUtils.loadFixture("fixture/"+attachmentName);
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         update.getAttachments().put(attachmentName, att);
-        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        DocumentRevision updated = datastore.update(update);
         Assert.assertNotNull("Updated DocumentRevision is null", updated);
         Attachment retrievedAtt = datastore.getAttachment(updated.getId(), updated.getRevision(), attachmentName);
         Assert.assertNotNull("Retrieved attachment is null", retrievedAtt);
@@ -121,14 +120,14 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         update.getAttachments().put(attachmentName, att);
         DocumentRevision updated = null;
         try {
-            updated = datastore.updateDocumentFromRevision(update);
+            updated = datastore.update(update);
             Assert.fail("Expected AttachmentException; not thrown");
         } catch (AttachmentException e) {
             ;
         }
         // document should not be updated
         Assert.assertNull("Updated DocumentRevision is not null", updated);
-        DocumentRevision retrieved = this.datastore.getDocument(saved.getId());
+        DocumentRevision retrieved = this.datastore.get(saved.getId());
         Assert.assertEquals("Document should not be updated", retrieved.getRevision(), saved.getRevision());
         // also get the attachments through the documentrev
         Assert.assertEquals("Revision should have 0 attachments", 0, retrieved.getAttachments().size());

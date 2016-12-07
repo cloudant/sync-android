@@ -17,7 +17,6 @@ package com.cloudant.sync.query;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
-import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionBuilder;
@@ -153,7 +152,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
                     range.length = Math.min(DEFAULT_BATCH_SIZE, originalDocIds.size() - range.location);
                     List<String> batch = originalDocIds.subList(range.location,
                         range.location + range.length);
-                    List<? extends DocumentRevision> docs = database.getDocumentsWithIds(batch);
+                    List<? extends DocumentRevision> docs = database.getAllWithIds(batch);
                     for (DocumentRevision rev : docs) {
                         DocumentRevision innerRev;
                         innerRev = rev;  // Allows us to replace later if projecting

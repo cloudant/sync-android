@@ -41,7 +41,7 @@ public class MockMatcherQueryExecutor extends QueryExecutor{
     MockMatcherQueryExecutor(Database database, SQLDatabaseQueue queue) {
         super(database, queue);
         try {
-            docIds = new HashSet<String>(database.getAllDocumentIds());
+            docIds = new HashSet<String>(database.getAllIds());
         } catch (DocumentStoreException dse) {
             ;// TODO
         }

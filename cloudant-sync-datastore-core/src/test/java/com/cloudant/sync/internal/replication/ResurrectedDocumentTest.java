@@ -59,7 +59,7 @@ public class ResurrectedDocumentTest extends ReplicationTestBase {
         for (int i=0; i<100; i++) {
             DocumentRevision rev = new DocumentRevision("doc-a-"+i);
             rev.setBody(DocumentBodyFactory.create("{\"test\": \"content\"}".getBytes()));
-            DocumentRevision newRev = datastore.createDocumentFromRevision(rev);
+            DocumentRevision newRev = datastore.create(rev);
             Assert.assertEquals(3, CouchUtils.generationFromRevId(newRev.getRevision()));
         }
 

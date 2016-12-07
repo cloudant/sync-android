@@ -52,31 +52,31 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
     void createTwoDocuments() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.createDocumentFromRevision(rev_1Mut);
+        DocumentRevision rev_1 = datastore.create(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
         DocumentRevision rev_2Mut = new DocumentRevision();
         rev_2Mut.setBody(bodyTwo);
-        DocumentRevision rev_2 = datastore.createDocumentFromRevision(rev_2Mut);
+        DocumentRevision rev_2 = datastore.create(rev_2Mut);
         validateNewlyCreatedDocument(rev_2);
     }
 
     InternalDocumentRevision[] createThreeDocuments() throws Exception {
         DocumentRevision rev_1 = new DocumentRevision();
         rev_1.setBody(bodyOne);
-        InternalDocumentRevision rev_1_i = (InternalDocumentRevision)datastore.createDocumentFromRevision(rev_1);
+        InternalDocumentRevision rev_1_i = (InternalDocumentRevision)datastore.create(rev_1);
         validateNewlyCreatedDocument(rev_1_i);
 
         DocumentRevision rev_2 = new DocumentRevision();
         rev_2.setBody(bodyTwo);
-        InternalDocumentRevision rev_2_i = (InternalDocumentRevision)datastore.createDocumentFromRevision(rev_2);
+        InternalDocumentRevision rev_2_i = (InternalDocumentRevision)datastore.create(rev_2);
         validateNewlyCreatedDocument(rev_1_i);
 
         DocumentRevision rev_3 = new DocumentRevision();
         rev_3.setBody(bodyTwo);
-        DocumentRevision rev_3_a = datastore.createDocumentFromRevision(rev_3);
+        DocumentRevision rev_3_a = datastore.create(rev_3);
         validateNewlyCreatedDocument(rev_3_a);
         rev_3_a.setBody(bodyOne);
-        InternalDocumentRevision rev_3_i = (InternalDocumentRevision)datastore.updateDocumentFromRevision(rev_3_a);
+        InternalDocumentRevision rev_3_i = (InternalDocumentRevision)datastore.update(rev_3_a);
         Assert.assertNotNull(rev_3_i);
 
         return new InternalDocumentRevision[] { rev_1_i, rev_2_i, rev_3_i };

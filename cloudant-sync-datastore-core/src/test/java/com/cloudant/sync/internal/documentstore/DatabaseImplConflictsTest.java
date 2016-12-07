@@ -44,7 +44,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         DocumentRevision rev = this.createDocumentRevision("Tom");
         InternalDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "1-rev", "Jerry");
         this.datastore.forceInsert(newRev, "1-rev");
-        Iterator<String> iterator = this.datastore.getConflictedDocumentIds();
+        Iterator<String> iterator = this.datastore.getConflictedIds();
         List<String> conflictedDocId = CollectionUtils.newArrayList(iterator);
         Assert.assertThat(conflictedDocId, hasSize(1));
         Assert.assertThat(conflictedDocId, hasItems(rev.getId()));
@@ -59,7 +59,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         InternalDocumentRevision newRev2 = this.createDetachedDocumentRevision(rev.getId(), "3-b", "Harry");
         this.datastore.forceInsert(newRev2, "1-b", "2-b", "3-b");
 
-        Iterator<String> iterator = this.datastore.getConflictedDocumentIds();
+        Iterator<String> iterator = this.datastore.getConflictedIds();
         List<String> conflictedDocId = CollectionUtils.newArrayList(iterator);
         Assert.assertThat(conflictedDocId, hasSize(1));
         Assert.assertThat(conflictedDocId, hasItems(rev.getId()));
@@ -68,11 +68,11 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
     @Test
     public void getConflictedDocumentIds_oneDeletedLeafAndOneLiveLeaf_conflicts() throws  Exception {
         DocumentRevision rev = this.createDocumentRevision("Tom");
-        this.datastore.deleteDocumentFromRevision(rev);
+        this.datastore.delete(rev);
         InternalDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "4-a", "Jerry");
         this.datastore.forceInsert(newRev, "1-a", "2-a", "3-a", "4-a");
 
-        Iterator<String> iterator = this.datastore.getConflictedDocumentIds();
+        Iterator<String> iterator = this.datastore.getConflictedIds();
         List<String> conflictedDocId = CollectionUtils.newArrayList(iterator);
         Assert.assertThat(conflictedDocId, hasSize(0));
     }
@@ -102,7 +102,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
             throws Exception {
         String docId = this.createConflictedDocument();
         long expectedSequence = this.datastore.getLastSequence();
-        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+        this.datastore.resolveConflicts(docId, new ConflictResolver() {
             @Override
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 throw new IllegalStateException("Mocked error");
@@ -116,7 +116,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
     public void resolveConflictThenResolveSecondConflict() throws Exception {
         String docId = this.createConflictedDocument();
         long expectedSequence = this.datastore.getLastSequence();
-        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+        this.datastore.resolveConflicts(docId, new ConflictResolver() {
             @Override
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 DocumentRevision newRev = conflicts.get(0);
@@ -141,7 +141,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
             }
         };
 
-        this.datastore.resolveConflictsForDocument(docId, resolver);
+        this.datastore.resolveConflicts(docId, resolver);
         Assert.assertEquals(2,conflictsList.size());
 
     }
@@ -151,7 +151,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
             throws Exception {
         String docId = this.createConflictedDocument();
         long expectedSequence = this.datastore.getLastSequence();
-        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+        this.datastore.resolveConflicts(docId, new ConflictResolver() {
             @Override
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 return null;
@@ -170,7 +170,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         // new sequence will be increased by 1 due to deleting one document
         long expectedSequence = this.datastore.getLastSequence() + 1;
 
-        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+        this.datastore.resolveConflicts(docId, new ConflictResolver() {
             @Override
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 Assert.assertEquals(2, conflicts.size());
@@ -202,10 +202,10 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         long expectedSequence = this.datastore.getLastSequence() + 1;
 
         // check the winner is the one without attachments
-        Assert.assertEquals("Jerry", this.datastore.getDocument(docId).asMap().get("name"));
-        Assert.assertTrue(this.datastore.getDocument(docId).getAttachments().isEmpty());
+        Assert.assertEquals("Jerry", this.datastore.get(docId).asMap().get("name"));
+        Assert.assertTrue(this.datastore.get(docId).getAttachments().isEmpty());
 
-        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+        this.datastore.resolveConflicts(docId, new ConflictResolver() {
             @Override
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 Assert.assertEquals(2, conflicts.size());
@@ -238,10 +238,10 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         long expectedSequence = this.datastore.getLastSequence() + 1;
 
         // check the winner is the one with attachments
-        Assert.assertEquals("Jerry With Attachments", this.datastore.getDocument(docId).asMap().get("name"));
-        Assert.assertEquals(1, this.datastore.getDocument(docId).getAttachments().size());
+        Assert.assertEquals("Jerry With Attachments", this.datastore.get(docId).asMap().get("name"));
+        Assert.assertEquals(1, this.datastore.get(docId).getAttachments().size());
 
-        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+        this.datastore.resolveConflicts(docId, new ConflictResolver() {
             @Override
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 Assert.assertEquals(2, conflicts.size());
@@ -271,7 +271,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         Assert.assertTrue(oldTree.hasConflicts());
         long expectedSequence = this.datastore.getLastSequence() + 2;
 
-        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+        this.datastore.resolveConflicts(docId, new ConflictResolver() {
             @Override
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 Assert.assertEquals(2, conflicts.size());
@@ -299,7 +299,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         Assert.assertTrue(oldTree.hasConflicts());
         long expectedSequence = this.datastore.getLastSequence() + 2;
 
-        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+        this.datastore.resolveConflicts(docId, new ConflictResolver() {
             @Override
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 Assert.assertEquals(2, conflicts.size());
@@ -334,7 +334,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
 
         try {
             // should throw IllegalArgumentException because sourceRevId is null
-            this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+            this.datastore.resolveConflicts(docId, new ConflictResolver() {
                 @Override
                 public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                     Assert.assertEquals(2, conflicts.size());
@@ -368,7 +368,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         // new sequence will be increased by 2 due to deleting 2 documents
         long expectedSequence = this.datastore.getLastSequence() + 2;
 
-        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+        this.datastore.resolveConflicts(docId, new ConflictResolver() {
             @Override
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 Assert.assertEquals(3, conflicts.size());
@@ -399,7 +399,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         // new sequence will be increased by 2 due to deleting 2 documents
         long expectedSequence = this.datastore.getLastSequence() + 2;
 
-        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+        this.datastore.resolveConflicts(docId, new ConflictResolver() {
             @Override
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 Assert.assertEquals(2, conflicts.size());
@@ -418,19 +418,19 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         DocumentBody body1 = this.createDocumentBody("Tom", ts);
         DocumentRevision revMut = new DocumentRevision();
         revMut.setBody(body1);
-        DocumentRevision rev = this.datastore.createDocumentFromRevision(revMut);
+        DocumentRevision rev = this.datastore.create(revMut);
         InternalDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "4-a", "Jerry", ts + 1);
         this.datastore.forceInsert(newRev, "1-a", "2-a", "3-a", "4-a");
         InternalDocumentRevision newRev2 = this.createDetachedDocumentRevision(rev.getId(), "2-b", "Carl", ts + 2);
         this.datastore.forceInsert(newRev2, "1-b", "2-b");
 
-        DocumentRevision oldWinner = this.datastore.getDocument(rev.getId());
+        DocumentRevision oldWinner = this.datastore.get(rev.getId());
         Assert.assertEquals("4-a", oldWinner.getRevision());
         Assert.assertEquals("Jerry", oldWinner.getBody().asMap().get("name"));
 
-        this.datastore.resolveConflictsForDocument(rev.getId(), new TimestampBasedConflictsResolver());
+        this.datastore.resolveConflicts(rev.getId(), new TimestampBasedConflictsResolver());
 
-        DocumentRevision newWinner = this.datastore.getDocument(rev.getId());
+        DocumentRevision newWinner = this.datastore.get(rev.getId());
         Assert.assertEquals("Carl", newWinner.getBody().asMap().get("name"));
         int generation = CouchUtils.generationFromRevId(newWinner.getRevision());
         // last (by timestamp) to be inserted was Carl, 2-b
@@ -447,7 +447,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         // new sequence will be increased by 2 due to deleting one document and grafting on a new document
         long expectedSequence = this.datastore.getLastSequence() + 2;
 
-        this.datastore.resolveConflictsForDocument(docId, new ConflictResolver() {
+        this.datastore.resolveConflicts(docId, new ConflictResolver() {
             @Override
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 Assert.assertEquals(2, conflicts.size());
@@ -479,13 +479,13 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         for (int i=0; i<count; i++) {
             InternalDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), (String.format("2-%c",'a'+i)), "Jerry");
             this.datastore.forceInsert(newRev, rev.getRevision(), newRev.getRevision());
-            DocumentRevision retrieved = this.datastore.getDocument(newRev.getId(), newRev.getRevision());
+            DocumentRevision retrieved = this.datastore.get(newRev.getId(), newRev.getRevision());
         }
-        DocumentRevision winner = this.datastore.getDocument(rev.getId());
-        DocumentRevision deleted = this.datastore.deleteDocumentFromRevision(winner);
+        DocumentRevision winner = this.datastore.get(rev.getId());
+        DocumentRevision deleted = this.datastore.delete(winner);
         DocumentRevision newRev = new DocumentRevision(rev.getId());
         newRev.setBody(DocumentBodyFactory.create("{\"data\": \"I am the resurrection\"}".getBytes()));
-        DocumentRevision resurrected = this.datastore.createDocumentFromRevision(newRev);
+        DocumentRevision resurrected = this.datastore.create(newRev);
         // 1 -> 2{a,b,c,...} -> 3 (deleted) -> 4
         Assert.assertEquals(4, ((InternalDocumentRevision)resurrected).getGeneration());
         // check that 'resurrected' doc's parent is the deleted one
@@ -501,20 +501,20 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         for (int i=0; i<count; i++) {
             InternalDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), (String.format("2-%c",'a'+i)), "Jerry");
             this.datastore.forceInsert(newRev, rev.getRevision(), newRev.getRevision());
-            DocumentRevision retrieved = this.datastore.getDocument(newRev.getId(), newRev.getRevision());
+            DocumentRevision retrieved = this.datastore.get(newRev.getId(), newRev.getRevision());
         }
         // first guaranteed to be non-winner since winner is last to sort lexigraphically
         DocumentRevision nonWinner = this.datastore.getAllRevisionsOfDocument(rev.getId()).leafRevisions().get(0);
-        DocumentRevision deletedNonWinner = this.datastore.deleteDocumentFromRevision(nonWinner);
+        DocumentRevision deletedNonWinner = this.datastore.delete(nonWinner);
 
         DocumentRevision newRev = new DocumentRevision(rev.getId());
         newRev.setBody(DocumentBodyFactory.create("{\"data\": \"I am the resurrection\"}".getBytes()));
-        DocumentRevision resurrected = this.datastore.createDocumentFromRevision(newRev);
+        DocumentRevision resurrected = this.datastore.create(newRev);
     }
 
     private void testWithConflictCount(int conflictCount) throws Exception {
         List<String> expectedConflicts = createConflictDocuments(conflictCount);
-        Iterator<String> iterator = this.datastore.getConflictedDocumentIds();
+        Iterator<String> iterator = this.datastore.getConflictedIds();
         List<String> actualConflicts = CollectionUtils.newArrayList(iterator);
         Assert.assertThat(actualConflicts, hasSize(expectedConflicts.size()));
         for(String id : expectedConflicts) {
@@ -550,7 +550,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         DocumentRevision rev = this.createDocumentRevision("Tom");
         InternalDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "2-a", "Jerry");
         this.datastore.forceInsert(newRev, "1-a", "2-a");
-        DocumentRevision current = this.datastore.getDocument(rev.getId());
+        DocumentRevision current = this.datastore.get(rev.getId());
         DocumentRevision rev2 = this.updateDocumentRevisionWithAttachment(rev.getId(), current.getRevision(), "Jerry With Attachments");
         return rev.getId();
     }
@@ -567,7 +567,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
 
     private String createConflictedDocumentWithThreeLeafsOneDeleted() throws Exception {
         DocumentRevision rev = this.createDocumentRevision("Tom");
-        this.datastore.deleteDocumentFromRevision(rev);
+        this.datastore.delete(rev);
         InternalDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "2-a", "Jerry");
         this.datastore.forceInsert(newRev, "1-a", "2-a");
         InternalDocumentRevision newRev2 = this.createDetachedDocumentRevision(rev.getId(), "4-b", "Carl");
@@ -580,21 +580,21 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         DocumentBody body = createDocumentBody(name);
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(body);
-        return this.datastore.createDocumentFromRevision(rev);
+        return this.datastore.create(rev);
     }
 
     private DocumentRevision createDocumentRevisionWithAttachment(String name) throws Exception {
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(createDocumentBody(name));
         rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "att1", "text/plain"));
-        return this.datastore.createDocumentFromRevision(rev);
+        return this.datastore.create(rev);
     }
 
     private DocumentRevision updateDocumentRevisionWithAttachment(String docId, String revId, String name) throws Exception {
         DocumentRevision rev = new DocumentRevision(docId, revId);
         rev.setBody(createDocumentBody(name));
         rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "att1", "text/plain"));
-        return this.datastore.updateDocumentFromRevision(rev);
+        return this.datastore.update(rev);
     }
 
     private InternalDocumentRevision createDetachedDocumentRevision(String docId, String rev, String name) {
