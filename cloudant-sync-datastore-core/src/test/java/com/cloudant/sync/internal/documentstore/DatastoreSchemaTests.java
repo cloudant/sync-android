@@ -379,7 +379,7 @@ public class DatastoreSchemaTests {
             // lowest seq.
             // Validate that after migration only one remains and it is of the correct name
             List<? extends Attachment> attachments = datastore.attachmentsForRevision(datastore
-                    .get("d834ca038de24bf0ac9f708fcdb63e21"));
+                    .read("d834ca038de24bf0ac9f708fcdb63e21"));
             Assert.assertEquals("There should only be one copy of the attachment", 1, attachments
                     .size());
             Attachment a = attachments.get(0);
@@ -389,7 +389,7 @@ public class DatastoreSchemaTests {
             // highest seq.
             // Validate that after migration only one remains and it is of the correct name
             attachments = datastore.attachmentsForRevision(datastore
-                    .get("a2359c3503e34c008ec448834583e482"));
+                    .read("a2359c3503e34c008ec448834583e482"));
             Assert.assertEquals("There should only be one copy of the attachment", 1, attachments
                     .size());
             a = attachments.get(0);
@@ -399,7 +399,7 @@ public class DatastoreSchemaTests {
             // two seqs.
             // Validate that after migration two different attachments remain
             attachments = datastore.attachmentsForRevision(datastore
-                    .get("badad1b3842e4056b013587b49c93308"));
+                    .read("badad1b3842e4056b013587b49c93308"));
             Assert.assertEquals("There should only be two attachments", 2, attachments
                     .size());
             Assert.assertNotEquals("The attachment names should be different", attachments.get(0)
@@ -610,7 +610,7 @@ public class DatastoreSchemaTests {
                 leafRevisionIds();
         for (String revId : revIds) {
             try {
-                actualAttachmentCount += database.get(docId, revId).getAttachments().size();
+                actualAttachmentCount += database.read(docId, revId).getAttachments().size();
             } catch (DocumentNotFoundException dnfe) {
                 Assert.fail("Failed to find revision for document ID " + docId + " and revision ID "
                         + revId);
@@ -623,7 +623,7 @@ public class DatastoreSchemaTests {
 
     private void assertWinner(Database database, String docId, String expectedRevId) throws DocumentNotFoundException, DocumentStoreException {
         try {
-            String actualRevId = database.get(docId).getRevision();
+            String actualRevId = database.read(docId).getRevision();
             Assert.assertEquals("Should get the expected winning revision ID", expectedRevId,
                     actualRevId);
         } catch (DocumentNotFoundException dnfe) {

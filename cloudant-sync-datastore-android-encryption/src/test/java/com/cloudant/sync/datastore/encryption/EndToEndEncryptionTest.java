@@ -265,7 +265,7 @@ public class EndToEndEncryptionTest {
         assertNotNull(saved);
 
         // Read
-        DocumentRevision retrieved = database.database().get(documentId);
+        DocumentRevision retrieved = database.database().read(documentId);
         assertNotNull(retrieved);
         Map<String, Object> retrievedBody = retrieved.getBody().asMap();
         assertEquals("mike", retrievedBody.get("name"));

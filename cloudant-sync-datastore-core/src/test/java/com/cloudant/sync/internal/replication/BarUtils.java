@@ -118,7 +118,7 @@ public class BarUtils {
         bar.setName(name);
         bar.setAge(age);
 
-        DocumentRevision rev = db.get(id);
+        DocumentRevision rev = db.read(id);
         DocumentRevision revMut = rev;
         int oldGeneration = CouchUtils.generationFromRevId(rev.getRevision());
         Map<String, Object> m = new HashMap<String, Object>();

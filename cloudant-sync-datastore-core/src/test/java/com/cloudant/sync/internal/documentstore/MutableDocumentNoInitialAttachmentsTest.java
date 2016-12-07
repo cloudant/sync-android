@@ -127,7 +127,7 @@ public class MutableDocumentNoInitialAttachmentsTest extends BasicDatastoreTestB
         }
         // document should not be updated
         Assert.assertNull("Updated DocumentRevision is not null", updated);
-        DocumentRevision retrieved = this.datastore.get(saved.getId());
+        DocumentRevision retrieved = this.datastore.read(saved.getId());
         Assert.assertEquals("Document should not be updated", retrieved.getRevision(), saved.getRevision());
         // also get the attachments through the documentrev
         Assert.assertEquals("Revision should have 0 attachments", 0, retrieved.getAttachments().size());

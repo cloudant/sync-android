@@ -88,7 +88,7 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
     private void assertDataDeleted() throws Exception {
         for(String id : cache.getAllDeletedIds()) {
             logger.info("Deleted id: " + id);
-            DocumentRevision obj = datastore.get(id);
+            DocumentRevision obj = datastore.read(id);
             logger.info("Deleted: " + obj.isDeleted());
             Assert.assertTrue(obj.isDeleted());
         }
@@ -98,7 +98,7 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
         for(String id : cache.getAllDocumentIds()) {
             Bar bar = cache.getData(id);
             logger.info("Id: " + bar);
-            DocumentRevision obj = datastore.get(bar.getId(), bar.getRevision());
+            DocumentRevision obj = datastore.read(bar.getId(), bar.getRevision());
             Assert.assertNotNull(obj);
         }
     }

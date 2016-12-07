@@ -86,7 +86,7 @@ public interface Database {
      * @throws DocumentNotFoundException if the document specified was not found
      * @throws DocumentStoreException if there was an error accessing database
      */
-    DocumentRevision get(String documentId) throws DocumentNotFoundException, DocumentStoreException;
+    DocumentRevision read(String documentId) throws DocumentNotFoundException, DocumentStoreException;
 
     /**
      * <p>Retrieves a given revision of a document.</p>
@@ -105,7 +105,7 @@ public interface Database {
      * @throws DocumentNotFoundException if the document specified was not found
      * @throws DocumentStoreException if there was an error reading the document
      */
-    DocumentRevision get(String documentId, String revisionId) throws
+    DocumentRevision read(String documentId, String revisionId) throws
             DocumentNotFoundException, DocumentStoreException;
 
     /**
@@ -151,7 +151,7 @@ public interface Database {
      * @return list of {@code DBObjects}, maximum length {@code limit}.
      * @throws DocumentStoreException if there was an error reading the documents
      */
-    List<DocumentRevision> get(int offset, int limit, boolean descending) throws DocumentStoreException;
+    List<DocumentRevision> read(int offset, int limit, boolean descending) throws DocumentStoreException;
 
     /**
      * <p>Enumerates the current winning revision for all documents in the
@@ -174,7 +174,7 @@ public interface Database {
      * @throws DocumentStoreException if there was an error retrieving the
      * documents.
      */
-    List<DocumentRevision> get(List<String> documentIds) throws DocumentStoreException;
+    List<DocumentRevision> read(List<String> documentIds) throws DocumentStoreException;
 
     /**
      * <p>Retrieves the datastore's current sequence number.</p>
