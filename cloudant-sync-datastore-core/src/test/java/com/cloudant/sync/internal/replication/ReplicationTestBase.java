@@ -69,7 +69,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     protected void createDatastore() throws Exception {
         datastoreManagerPath = TestUtils.createTempTestingDir(this.getClass().getName());
         documentStore = DocumentStore.getInstance(new File(this.datastoreManagerPath, this.getClass().getSimpleName()));
-        datastore = (DatabaseImpl)documentStore.database;
+        datastore = (DatabaseImpl) documentStore.database();
         datastoreWrapper = new DatastoreWrapper(datastore);
     }
 

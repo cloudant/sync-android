@@ -89,7 +89,7 @@ public class DatabaseNotificationsMoreTest {
             Assert.assertThat(documentStoreCreated.get(0).dbName, endsWith("test123"));
             Assert.assertThat(databaseOpened.get(0).dbName, endsWith("test123"));
 
-            ds1 = DocumentStore.getInstance(new File(datastoreManagerDir, "test123")).database;
+            ds1 = DocumentStore.getInstance(new File(datastoreManagerDir, "test123")).database();
             Assert.assertThat(documentStoreCreated, hasSize(1));
             Assert.assertThat(databaseOpened, hasSize(1));
             Assert.assertNotNull(ds1);

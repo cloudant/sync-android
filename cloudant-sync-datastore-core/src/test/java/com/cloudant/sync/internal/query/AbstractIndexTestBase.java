@@ -41,9 +41,9 @@ public abstract class AbstractIndexTestBase {
         factoryPath = TestUtils.createTempTestingDir(AbstractIndexTestBase.class.getName());
         assertThat(factoryPath, is(notNullValue()));
         DocumentStore documentStore = DocumentStore.getInstance(new File(factoryPath));
-        ds = (DatabaseImpl) documentStore.database;
+        ds = (DatabaseImpl) documentStore.database();
         assertThat(ds, is(notNullValue()));
-        im = (QueryImpl) documentStore.query;
+        im = (QueryImpl) documentStore.query();
         assertThat(im, is(notNullValue()));
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(indexManagerDatabaseQueue, is(notNullValue()));

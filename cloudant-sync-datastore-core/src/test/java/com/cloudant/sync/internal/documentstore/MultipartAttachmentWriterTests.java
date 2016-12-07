@@ -68,7 +68,7 @@ public class MultipartAttachmentWriterTests {
     public void setUp() throws Exception {
         datastore_manager_dir = TestUtils.createTempTestingDir(this.getClass().getName());
         documentStore = DocumentStore.getInstance(new File(datastore_manager_dir, this.getClass().getName()));
-        database = documentStore.database;
+        database = documentStore.database();
         jsonData = "{\"body\":\"This is a body.\"}".getBytes();
         bodyOne = DocumentBodyImpl.bodyWith(jsonData);
     }

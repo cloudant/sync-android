@@ -48,12 +48,12 @@ import java.util.logging.Logger;
  *
  * <p>
  * Users can perform CRUD (create, read, update, delete) operations on JSON documents and attachments
- * by invoking methods on the {@link #database} member.
+ * by invoking methods through {@link #database()}.
  * </p>
  *
  * <p>
- * Users can perform index and query operations on JSON documents by invoking methods on the
- * {@link #query} member.
+ * Users can perform index and query operations on JSON documents by invoking methods through
+ * {@link #query()}.
  * </p>
  *
  * <p>
@@ -70,8 +70,8 @@ public class DocumentStore {
 
     private static final String EXTENSIONS_LOCATION_NAME = "extensions";
 
-    public final Database database;
-    public final Query query;
+    private final Database database;
+    private final Query query;
     protected final String databaseName; // only used for events
     private final File location; // needed for close/delete
     private final File extensionsLocation; // for extensions: currently attachments and indexes
@@ -99,15 +99,6 @@ public class DocumentStore {
         } catch (SQLException e) {
             closeQuietlyOnException();
             throw e;
-        }
-    }
-
-    private void closeQuietlyOnException() {
-        if (database != null) {
-            ((DatabaseImpl) database).close();
-        }
-        if (query != null) {
-            ((QueryImpl) query).close();
         }
     }
 
@@ -182,6 +173,30 @@ public class DocumentStore {
         }
     }
 
+    /**
+     * Get a reference to the {@link Database} object.
+     *
+     * Users can perform CRUD (create, read, update, delete) operations on JSON documents and
+     * attachments by invoking methods on this object.
+     *
+     * @return a reference to the {@link Database} object
+     */
+    public Database database() {
+        return database;
+    }
+
+    /**
+     * Get a reference to the {@link Query} object.
+     *
+     * Users can perform index and query operations on JSON documents by invoking methods on this
+     * object
+     *
+     * @return a reference to the {@link Query} object
+     */
+    public Query query() {
+        return query;
+    }
+
     @SuppressWarnings("unchecked")
     public void close() {
         synchronized (documentStores) {
@@ -230,6 +245,15 @@ public class DocumentStore {
      */
     public static EventBus getEventBus() {
         return eventBus;
+    }
+
+    private void closeQuietlyOnException() {
+        if (database != null) {
+            ((DatabaseImpl) database).close();
+        }
+        if (query != null) {
+            ((QueryImpl) query).close();
+        }
     }
 
 }

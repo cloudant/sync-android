@@ -97,7 +97,7 @@ public class DatabaseManagerTest {
 
     private DocumentStore createAndAssertDatastore() throws Exception {
         DocumentStore d = DocumentStore.getInstance(TEST_PATH);
-        Database ds = d.database;
+        Database ds = d.database();
         Assert.assertNotNull(ds);
         boolean assertsFailed = true;
         try {
@@ -136,14 +136,14 @@ public class DatabaseManagerTest {
     @Test(expected = IllegalStateException.class)
     public void deleteDatastore_createDocumentUsingDeletedDatastore_exception() throws Exception {
         DocumentStore ds = createAndAssertDatastore();
-        DocumentRevision object = ds.database.createDocumentFromRevision(createDBBody("Tom"));
+        DocumentRevision object = ds.database().createDocumentFromRevision(createDBBody("Tom"));
         Assert.assertNotNull(object);
 
         ds.delete();
         String dbDir = TEST_PATH.getAbsolutePath();
         Assert.assertFalse(new File(dbDir).exists());
 
-        ds.database.createDocumentFromRevision(createDBBody("Jerry"));
+        ds.database().createDocumentFromRevision(createDBBody("Jerry"));
     }
 
     public DocumentRevision createDBBody(String name) throws IOException {
@@ -197,7 +197,7 @@ public class DatabaseManagerTest {
         try {
             ds2 = DocumentStore.getInstance(TEST_PATH);
             Assert.assertNotSame("The documentstore instances should not be the same.", ds1, ds2);
-            Assert.assertNotSame("The database instances should not be the same.", ds1.database, ds2.database);
+            Assert.assertNotSame("The database instances should not be the same.", ds1.database(), ds2.database());
         } finally {
             if (ds2 != null) ds2.close();
         }
