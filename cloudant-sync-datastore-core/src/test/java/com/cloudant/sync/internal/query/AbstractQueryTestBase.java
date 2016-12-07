@@ -58,8 +58,8 @@ public abstract class AbstractQueryTestBase {
         assertThat(factoryPath, is(notNullValue()));
         String datastoreName = AbstractQueryTestBase.class.getSimpleName();
         DocumentStore documentStore = DocumentStore.getInstance(new File(factoryPath));
-        ds = (DatabaseImpl) documentStore.database;
-        im = (QueryImpl) documentStore.query;
+        ds = (DatabaseImpl) documentStore.database();
+        im = (QueryImpl) documentStore.query();
         assertThat(ds, is(notNullValue()));
     }
 

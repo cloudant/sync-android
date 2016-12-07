@@ -133,7 +133,7 @@ public class EndToEndEncryptionTest {
         // database operation to ensure the database exists on disk before we look at
         // it.
 
-        Query im = this.database.query;
+        Query im = this.database.query();
         try {
             im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
         } finally {
@@ -158,7 +158,7 @@ public class EndToEndEncryptionTest {
     @Test
     public void indexDataEncrypted() throws IOException, QueryException {
 
-        Query im = this.database.query;
+        Query im = this.database.query();
         try {
             im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
         } finally {
@@ -199,7 +199,7 @@ public class EndToEndEncryptionTest {
                 expectedPlainText, "text/plain");
         rev.getAttachments().put("EncryptedAttachmentTest_plainText", attachment);
 
-        database.database.createDocumentFromRevision(rev);
+        database.database().createDocumentFromRevision(rev);
 
         File attachmentsFolder = new File(datastoreManagerDir
                 + File.separator + "EndToEndEncryptionTest"
@@ -261,11 +261,11 @@ public class EndToEndEncryptionTest {
         // Create
         DocumentRevision rev = new DocumentRevision(documentId);
         rev.setBody(DocumentBodyFactory.create(documentBody));
-        DocumentRevision saved = database.database.createDocumentFromRevision(rev);
+        DocumentRevision saved = database.database().createDocumentFromRevision(rev);
         assertNotNull(saved);
 
         // Read
-        DocumentRevision retrieved = database.database.getDocument(documentId);
+        DocumentRevision retrieved = database.database().getDocument(documentId);
         assertNotNull(retrieved);
         Map<String, Object> retrievedBody = retrieved.getBody().asMap();
         assertEquals("mike", retrievedBody.get("name"));
@@ -278,7 +278,7 @@ public class EndToEndEncryptionTest {
         Map<String, Object> updateBody = retrieved.getBody().asMap();
         updateBody.put("name", "fred");
         update.setBody(DocumentBodyFactory.create(updateBody));
-        DocumentRevision updated = database.database.updateDocumentFromRevision(update);
+        DocumentRevision updated = database.database().updateDocumentFromRevision(update);
         assertNotNull(updated);
         Map<String, Object> updatedBody = updated.getBody().asMap();
         assertEquals("fred", updatedBody.get("name"));
@@ -296,7 +296,7 @@ public class EndToEndEncryptionTest {
         atts.put("non-ascii", new UnsavedStreamAttachment(
                 new ByteArrayInputStream(nonAsciiText.getBytes()),
                 "non-ascii", "text/plain"));
-        DocumentRevision updatedWithAttachment = database.database.updateDocumentFromRevision(attachmentRevision);
+        DocumentRevision updatedWithAttachment = database.database().updateDocumentFromRevision(attachmentRevision);
         InputStream in = updatedWithAttachment.getAttachments().get(attachmentName).getInputStream();
         assertTrue("Saved attachment did not read correctly",
                 IOUtils.contentEquals(new FileInputStream(expectedPlainText), in));
@@ -305,7 +305,7 @@ public class EndToEndEncryptionTest {
                 IOUtils.contentEquals(new ByteArrayInputStream(nonAsciiText.getBytes()), in));
 
         // perform a query to ensure we can use special chars
-        Query query = database.query;
+        Query query = database.query();
         try {
             assertNotNull(query.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "my index"));
 
@@ -319,12 +319,12 @@ public class EndToEndEncryptionTest {
         }
         // Delete
         try {
-            database.database.deleteDocumentFromRevision(saved);
+            database.database().deleteDocumentFromRevision(saved);
             fail("Deleting document from old revision succeeded");
         } catch (ConflictException ex) {
             // Expected exception
         }
-        DocumentRevision deleted = database.database.deleteDocumentFromRevision(updatedWithAttachment);
+        DocumentRevision deleted = database.database().deleteDocumentFromRevision(updatedWithAttachment);
         assertNotNull(deleted);
         assertEquals(true, deleted.isDeleted());
     }

@@ -388,7 +388,7 @@ public class PullStrategyTest extends ReplicationTestBase {
 
         Assert.assertEquals(0, datastore.getDocumentCount());
 
-        QueryImpl im = (QueryImpl) documentStore.query;
+        QueryImpl im = (QueryImpl) documentStore.query();
         try {
             im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("diet")), "diet");
 

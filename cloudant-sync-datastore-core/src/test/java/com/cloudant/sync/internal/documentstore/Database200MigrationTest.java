@@ -62,7 +62,7 @@ public class Database200MigrationTest {
     public void setUp() throws Exception {
         dir = TestUtils.createTempTestingDir(this.getClass().getName());
 
-        ds = (DatabaseImpl) (DocumentStore.getInstance(new File(dir, "complexTree"))).database;
+        ds = (DatabaseImpl) (DocumentStore.getInstance(new File(dir, "complexTree"))).database();
 
         // Return DB to schema version 100:
 
