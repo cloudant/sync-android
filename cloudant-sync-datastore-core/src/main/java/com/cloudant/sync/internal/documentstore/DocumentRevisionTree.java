@@ -80,13 +80,13 @@ import java.util.TreeMap;
  * <p>In this case, to resolve the conflict the application would need to:</p>
  *
  * <ol>
- *     <li>Call {@link Database#getDocument(String, String)} to get the
+ *     <li>Call {@link Database#get(String, String)} to get the
  *     revisions {@code 4} and {@code 3^}.</li>
  *     <li>Merge these documents together in some way.</li>
  *     <li>Save a new revision in the {@code 4} branch using
- *     {@link Database#updateDocumentFromRevision(DocumentRevision)}</li>
+ *     {@link Database#update(DocumentRevision)}</li>
  *     <li>Delete the {@code 3^} revision using
- *     {@link Database#deleteDocumentFromRevision(DocumentRevision)} </li>
+ *     {@link Database#delete(DocumentRevision)} </li>
  * </ol>
  *
  * <p>This process leaves us still with two branches. Because only one
@@ -138,7 +138,7 @@ import java.util.TreeMap;
  *
  *  <p><strong>Note: This class is not thread safe.</strong></p>
  *
- * @see Database#resolveConflictsForDocument(String, ConflictResolver)
+ * @see Database#resolveConflicts(String, ConflictResolver)
  * @see ConflictResolver
  *
  * @api_private

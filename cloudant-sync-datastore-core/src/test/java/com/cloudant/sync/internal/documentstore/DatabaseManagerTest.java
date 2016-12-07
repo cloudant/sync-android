@@ -136,14 +136,14 @@ public class DatabaseManagerTest {
     @Test(expected = IllegalStateException.class)
     public void deleteDatastore_createDocumentUsingDeletedDatastore_exception() throws Exception {
         DocumentStore ds = createAndAssertDatastore();
-        DocumentRevision object = ds.database().createDocumentFromRevision(createDBBody("Tom"));
+        DocumentRevision object = ds.database().create(createDBBody("Tom"));
         Assert.assertNotNull(object);
 
         ds.delete();
         String dbDir = TEST_PATH.getAbsolutePath();
         Assert.assertFalse(new File(dbDir).exists());
 
-        ds.database().createDocumentFromRevision(createDBBody("Jerry"));
+        ds.database().create(createDBBody("Jerry"));
     }
 
     public DocumentRevision createDBBody(String name) throws IOException {

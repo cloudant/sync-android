@@ -29,7 +29,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
 
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
-import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
 import com.cloudant.sync.query.FieldSort;
@@ -119,7 +118,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("name", "mike");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         final DocumentRevision saved;
-        saved = ds.createDocumentFromRevision(rev);
+        saved = ds.create(rev);
 
 
         IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
@@ -204,7 +203,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
                     }
                     rev.setBody(DocumentBodyFactory.create(bodyMap));
                     try {
-                        ds.createDocumentFromRevision(rev);
+                        ds.create(rev);
                     } catch (Exception e) {
                         fail("Exception thrown when creating revision " + e);
                     }
@@ -307,7 +306,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("age", 12);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         final DocumentRevision saved;
-        saved = ds.createDocumentFromRevision(rev);
+        saved = ds.create(rev);
 
         IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -377,7 +376,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("ignored", "something");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         final DocumentRevision saved;
-        saved = ds.createDocumentFromRevision(rev);
+        saved = ds.create(rev);
 
         IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -446,7 +445,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("ignored", "something");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         final DocumentRevision saved;
-        saved = ds.createDocumentFromRevision(rev);
+        saved = ds.create(rev);
 
         IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -515,7 +514,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("ignored", "something");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         final DocumentRevision saved;
-        saved = ds.createDocumentFromRevision(rev);
+        saved = ds.create(rev);
 
         IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -582,7 +581,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("pet", pets);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         final DocumentRevision saved;
-        saved = ds.createDocumentFromRevision(rev);
+        saved = ds.create(rev);
 
         IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -651,7 +650,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("pet", pets);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         final DocumentRevision saved;
-        saved = ds.createDocumentFromRevision(rev);
+        saved = ds.create(rev);
 
         IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -727,8 +726,8 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         badBodyMap.put("pet", pets);
         badBodyMap.put("pet2", pets);
         badRev.setBody(DocumentBodyFactory.create(badBodyMap));
-        saved = ds.createDocumentFromRevision(goodRev);
-        ds.createDocumentFromRevision(badRev);
+        saved = ds.create(goodRev);
+        ds.create(badRev);
 
         IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(2l));
@@ -799,7 +798,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("pet", new ArrayList<Object>());
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         final DocumentRevision saved;
-        saved = ds.createDocumentFromRevision(rev);
+        saved = ds.create(rev);
 
         IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -867,7 +866,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("pet", pets);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         final DocumentRevision saved;
-        saved = ds.createDocumentFromRevision(rev);
+        saved = ds.create(rev);
 
         IndexUpdater.updateIndex("basic", fields, ds, indexManagerDatabaseQueue);
         assertThat(getIndexSequenceNumber("basic"), is(1l));
@@ -909,7 +908,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike23");
         // body content: { "name" : "mike",  "age" : 23, "pet" : "parrot" }
@@ -918,7 +917,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("age", 23);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike34");
         // body content: { "name" : "mike",  "age" : 34, "pet" : "dog" }
@@ -927,7 +926,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "dog");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john72");
         // body content: { "name" : "john",  "age" : 72, "pet" : "fish" }
@@ -936,7 +935,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("age", 72);
         bodyMap.put("pet", "fish");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred34");
         // body content: { "name" : "fred",  "age" : 34, "pet" : "snake" }
@@ -945,7 +944,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("age", 34);
         bodyMap.put("pet", "snake");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred12");
         // body content: { "name" : "fred",  "age" : 12 }
@@ -953,7 +952,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         bodyMap.put("name", "fred");
         bodyMap.put("age", 12);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         // Test index updates for multiple json indexes as well as
         // index updates for co-existing json and text indexes.
@@ -1012,7 +1011,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
         rev = new DocumentRevision("newdoc");
         rev.setBody(DocumentBodyFactory.EMPTY);
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         im.updateAllIndexes();
 
@@ -1065,7 +1064,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             bodyMap.put("age", 12);
             bodyMap.put("pet", "cat");
             rev.setBody(DocumentBodyFactory.create(bodyMap));
-            ds.createDocumentFromRevision(rev);
+            ds.create(rev);
 
             createIndex("testIndex", Collections.singletonList((FieldSort) new FieldSort("name")));
             exepctedSequence = getIndexSequenceNumber("testIndex");
@@ -1106,7 +1105,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             bodyMap.put("age", 12);
             bodyMap.put("pet", "cat");
             rev.setBody(DocumentBodyFactory.create(bodyMap));
-            ds.createDocumentFromRevision(rev);
+            ds.create(rev);
 
             createIndex("testIndex", Collections.singletonList((FieldSort) new FieldSort("name")));
             exepctedSequence = getIndexSequenceNumber("testIndex");
@@ -1129,7 +1128,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             bodyMap.put("age", 23);
             bodyMap.put("pet", "cat");
             rev.setBody(DocumentBodyFactory.create(bodyMap));
-            ds.createDocumentFromRevision(rev);
+            ds.create(rev);
 
             im.updateAllIndexes();
             exepctedSequence = getIndexSequenceNumber("testIndex");

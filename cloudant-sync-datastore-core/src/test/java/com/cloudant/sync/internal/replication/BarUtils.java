@@ -91,7 +91,7 @@ public class BarUtils {
         m.put("name", name);
         m.put("age", age);
         rev.setBody(DocumentBodyFactory.create(m));
-        DocumentRevision saved = db.createDocumentFromRevision(rev);
+        DocumentRevision saved = db.create(rev);
         bar.setRevision(saved.getRevision());
         bar.setId(saved.getId());
 
@@ -118,14 +118,14 @@ public class BarUtils {
         bar.setName(name);
         bar.setAge(age);
 
-        DocumentRevision rev = db.getDocument(id);
+        DocumentRevision rev = db.get(id);
         DocumentRevision revMut = rev;
         int oldGeneration = CouchUtils.generationFromRevId(rev.getRevision());
         Map<String, Object> m = new HashMap<String, Object>();
         m.put("name", name);
         m.put("age", age);
         revMut.setBody(DocumentBodyFactory.create(m));
-        DocumentRevision saved = db.updateDocumentFromRevision(revMut);
+        DocumentRevision saved = db.update(revMut);
 
         bar.setRevision(saved.getRevision());
         bar.setId(saved.getId());
@@ -146,7 +146,7 @@ public class BarUtils {
     }
 
     public static void deleteBar(Database db, String id) throws Exception {
-        db.deleteDocument(id);
+        db.delete(id);
     }
 
     /**

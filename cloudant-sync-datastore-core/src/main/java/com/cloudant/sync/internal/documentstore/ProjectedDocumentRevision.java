@@ -18,7 +18,6 @@ package com.cloudant.sync.internal.documentstore;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentBody;
-import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStoreException;
@@ -61,7 +60,7 @@ public class ProjectedDocumentRevision extends InternalDocumentRevision {
 
     @Override
     public DocumentRevision toFullRevision() throws DocumentNotFoundException, DocumentStoreException {
-        return this.database.getDocument(this.id,this.revision);
+        return this.database.get(this.id,this.revision);
     }
 
     @Override
