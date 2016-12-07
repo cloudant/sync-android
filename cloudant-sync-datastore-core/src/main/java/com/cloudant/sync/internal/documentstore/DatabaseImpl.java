@@ -257,7 +257,7 @@ public class DatabaseImpl implements Database {
         Misc.checkState(this.isOpen(), "Database is closed");
         try {
             // TODO this can be made quicker than getting the whole document
-            get(docId, revId);
+            read(docId, revId);
             return true;
         } catch (DocumentNotFoundException e) {
             return false;
@@ -269,7 +269,7 @@ public class DatabaseImpl implements Database {
         Misc.checkState(this.isOpen(), "Database is closed");
         try {
             // TODO this can be made quicker than getting the whole document
-            get(docId);
+            read(docId);
             return true;
         } catch (DocumentNotFoundException e) {
             return false;
@@ -277,13 +277,13 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public InternalDocumentRevision get(String id) throws DocumentNotFoundException, DocumentStoreException {
+    public InternalDocumentRevision read(String id) throws DocumentNotFoundException, DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
-        return get(id, null);
+        return read(id, null);
     }
 
     @Override
-    public InternalDocumentRevision get(final String id, final String rev) throws
+    public InternalDocumentRevision read(final String id, final String rev) throws
             DocumentNotFoundException, DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNullOrEmpty(id, "Document id");
@@ -352,7 +352,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public List<DocumentRevision> get(final int offset, final int limit, final
+    public List<DocumentRevision> read(final int offset, final int limit, final
     boolean descending) throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         if (offset < 0) {
@@ -383,7 +383,7 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public List<DocumentRevision> get(final List<String> docIds) throws
+    public List<DocumentRevision> read(final List<String> docIds) throws
             DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNull(docIds, "Input document id list");
@@ -1158,7 +1158,7 @@ public class DatabaseImpl implements Database {
 
             if (revision != null) {
                 try {
-                    eventBus.post(new DocumentUpdated(get(rev.getId(), rev.getRevision()),
+                    eventBus.post(new DocumentUpdated(read(rev.getId(), rev.getRevision()),
                             revision));
                 } catch (DocumentStoreException de) {
                     ; // TODO couldn't re-fetch document to post event
