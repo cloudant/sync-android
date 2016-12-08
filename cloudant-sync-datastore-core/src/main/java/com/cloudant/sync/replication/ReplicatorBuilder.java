@@ -21,12 +21,14 @@ import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.internal.replication.PullStrategy;
 import com.cloudant.sync.internal.replication.PushStrategy;
 import com.cloudant.sync.internal.replication.ReplicatorImpl;
+import com.cloudant.sync.internal.util.Misc;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A Builder to create a {@link Replicator Object}
@@ -44,7 +46,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
     private List<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList
             <HttpConnectionResponseInterceptor>();
 
-    private URI addCookieInterceptorIfRequired(URI uri) {
+    private URI addCookieInterceptorIfRequired(URI uri) throws URISyntaxException {
         String uriProtocol = uri.getScheme();
         String uriHost = uri.getHost();
         String uriPath = uri.getRawPath();
@@ -56,10 +58,12 @@ public abstract class ReplicatorBuilder<S, T, E> {
                 uriPort = 80;
             } else if ("https".equals(uriProtocol)) {
                 uriPort = 443;
-            } else {
-                throw new RuntimeException("Unknown protocol: "+uriProtocol);
             }
         }
+
+        Misc.checkArgument(uriPort >= 0,
+                String.format(Locale.ENGLISH,
+                        "Could not determine default port for protocol \"%s\"", uriProtocol));
 
         if (uri.getUserInfo() != null) {
             String[] parts = uri.getUserInfo().split(":");
@@ -70,18 +74,14 @@ public abstract class ReplicatorBuilder<S, T, E> {
             }
         }
 
-        try {
-            //Remove user credentials from url
-            URI redacted = new URI(uriProtocol
-                    + "://"
-                    + uriHost
-                    + ":"
-                    + uriPort
-                    + (uriPath != null ? uriPath : ""));
-            return redacted;
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+        //Remove user credentials from url
+        URI redacted = new URI(uriProtocol
+                + "://"
+                + uriHost
+                + ":"
+                + uriPort
+                + (uriPath != null ? uriPath : ""));
+        return redacted;
     }
 
     /**
@@ -100,11 +100,10 @@ public abstract class ReplicatorBuilder<S, T, E> {
         private PushFilter pushFilter = null;
 
         @Override
-        public Replicator build() {
+        public Replicator build() throws URISyntaxException {
 
-            if (super.source == null || super.target == null) {
-                throw new IllegalStateException("Source and target cannot be null");
-            }
+            Misc.checkState(super.source != null && super.target != null,
+                    "Source and target cannot be null");
 
             // add cookie interceptor and remove creds from URI if required
             super.target = super.addCookieInterceptorIfRequired(super.target);
@@ -194,11 +193,10 @@ public abstract class ReplicatorBuilder<S, T, E> {
         private boolean pullAttachmentsInline = false;
 
         @Override
-        public Replicator build() {
+        public Replicator build() throws URISyntaxException {
 
-            if (super.source == null || super.target == null) {
-                throw new IllegalStateException("Source and target cannot be null");
-            }
+            Misc.checkState(super.source != null && super.target != null,
+                    "Source and target cannot be null");
 
             // add cookie interceptor and remove creds from URI if required
             super.source = super.addCookieInterceptorIfRequired(super.source);
@@ -350,7 +348,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
      *
      * @return The replicator running the replication for this builder.
      */
-    public Replicator start() {
+    public Replicator start() throws URISyntaxException {
         Replicator replicator = this.build();
         replicator.start();
         return replicator;
@@ -361,7 +359,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
      *
      * @return {@link Replicator} that will carry out the replication
      */
-    public abstract Replicator build();
+    public abstract Replicator build() throws URISyntaxException;
 
     /**
      * Creates a pull replication builder.

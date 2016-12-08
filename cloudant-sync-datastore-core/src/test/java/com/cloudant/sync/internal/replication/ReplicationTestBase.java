@@ -33,6 +33,7 @@ import org.junit.Before;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.net.URISyntaxException;
 import java.util.List;
 
 public abstract class ReplicationTestBase extends CouchTestBase {
@@ -133,15 +134,15 @@ public abstract class ReplicationTestBase extends CouchTestBase {
                 filter(filter);
     }
 
-    protected PushStrategy getPushStrategy() {
+    protected PushStrategy getPushStrategy() throws URISyntaxException {
         return (PushStrategy)((ReplicatorImpl)this.getPushBuilder().build()).strategy;
     }
 
-    protected PullStrategy getPullStrategy() {
+    protected PullStrategy getPullStrategy() throws URISyntaxException {
         return (PullStrategy)((ReplicatorImpl)this.getPullBuilder().build()).strategy;
     }
 
-    protected PullStrategy getPullStrategy(PullFilter filter) {
+    protected PullStrategy getPullStrategy(PullFilter filter) throws URISyntaxException {
         return (PullStrategy)((ReplicatorImpl)this.getPullBuilder(filter).build()).strategy;
     }
 
