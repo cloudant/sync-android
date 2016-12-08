@@ -242,7 +242,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void replicatorBuilderNoSource() throws URISyntaxException {
+    public void replicatorBuilderNoSource() {
         ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
                 from(null).
                 to(documentStore);

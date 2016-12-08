@@ -349,7 +349,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void replicatorBuilderNoTarget() throws URISyntaxException {
+    public void replicatorBuilderNoTarget() {
         ReplicatorBuilder.Push p = ReplicatorBuilder.push().
                 from(documentStore).
                 to(null);

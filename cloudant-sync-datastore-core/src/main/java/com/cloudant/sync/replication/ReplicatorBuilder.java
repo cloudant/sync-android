@@ -23,7 +23,6 @@ import com.cloudant.sync.internal.replication.PushStrategy;
 import com.cloudant.sync.internal.replication.ReplicatorImpl;
 import com.cloudant.sync.internal.util.Misc;
 
-import java.net.ProtocolException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
