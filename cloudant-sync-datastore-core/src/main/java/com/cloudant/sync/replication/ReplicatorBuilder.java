@@ -47,7 +47,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
     private List<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList
             <HttpConnectionResponseInterceptor>();
 
-    private URI addCookieInterceptorIfRequired(URI uri) throws URISyntaxException {
+    private URI addCookieInterceptorIfRequired(URI uri) {
         String uriProtocol = uri.getScheme();
         String uriHost = uri.getHost();
         String uriPath = uri.getRawPath();
@@ -73,13 +73,17 @@ public abstract class ReplicatorBuilder<S, T, E> {
             }
         }
 
-        //Remove user credentials from url
-        return new URI(uriProtocol
-                + "://"
-                + uriHost
-                + ":"
-                + uriPort
-                + (uriPath != null ? uriPath : ""));
+        try {
+            //Remove user credentials from url
+            return new URI(uriProtocol
+                    + "://"
+                    + uriHost
+                    + ":"
+                    + uriPort
+                    + (uriPath != null ? uriPath : ""));
+        } catch (URISyntaxException use) {
+            throw new RuntimeException("Failed to construct URI", use);
+        }
     }
 
     /**
@@ -98,7 +102,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
         private PushFilter pushFilter = null;
 
         @Override
-        public Replicator build() throws URISyntaxException {
+        public Replicator build() {
 
             Misc.checkState(super.source != null && super.target != null,
                     "Source and target cannot be null");
@@ -191,7 +195,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
         private boolean pullAttachmentsInline = false;
 
         @Override
-        public Replicator build() throws URISyntaxException {
+        public Replicator build() {
 
             Misc.checkState(super.source != null && super.target != null,
                     "Source and target cannot be null");
@@ -346,7 +350,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
      *
      * @return The replicator running the replication for this builder.
      */
-    public Replicator start() throws URISyntaxException {
+    public Replicator start() {
         Replicator replicator = this.build();
         replicator.start();
         return replicator;
@@ -357,7 +361,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
      *
      * @return {@link Replicator} that will carry out the replication
      */
-    public abstract Replicator build() throws URISyntaxException;
+    public abstract Replicator build();
 
     /**
      * Creates a pull replication builder.

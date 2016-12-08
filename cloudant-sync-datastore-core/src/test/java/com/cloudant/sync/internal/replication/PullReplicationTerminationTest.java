@@ -25,7 +25,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -53,7 +52,7 @@ public class PullReplicationTerminationTest extends ReplicationTestBase {
         populateRemoteDb(docBatches, docsPerBatch, 512);
     }
 
-    private void setupTerminationTestReplicator() throws URISyntaxException {
+    private void setupTerminationTestReplicator() {
         replicator = getPullBuilder().addRequestInterceptors((throwingInterceptor = new
                 ThrowingInterceptor())).build();
         replicator.getEventBus().register((listener = new TestReplicationListener()));
