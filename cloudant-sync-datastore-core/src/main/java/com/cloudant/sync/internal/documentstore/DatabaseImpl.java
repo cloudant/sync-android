@@ -332,25 +332,6 @@ public class DatabaseImpl implements Database {
         }
     }
 
-    /**
-     * Get list of documents for given list of numeric ids. The result list is ordered by
-     * sequence number,
-     * and only the current revisions are returned.
-     *
-     * @param docIds given list of internal ids
-     * @return list of documents ordered by sequence number
-     */
-    List<InternalDocumentRevision> getDocumentsWithInternalIds(final List<Long> docIds) {
-        Misc.checkNotNull(docIds, "Input document internal id list");
-
-        try {
-            return get(queue.submit(new GetDocumentsWithInternalIdsCallable(docIds, this.attachmentsDir, this.attachmentStreamFactory)));
-        } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to get documents using internal ids", e);
-        }
-        return null;
-    }
-
     @Override
     public List<DocumentRevision> read(final int offset, final int limit, final
     boolean descending) throws DocumentStoreException {
