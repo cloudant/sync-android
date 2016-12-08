@@ -23,6 +23,7 @@ import com.cloudant.sync.internal.replication.PushStrategy;
 import com.cloudant.sync.internal.replication.ReplicatorImpl;
 import com.cloudant.sync.internal.util.Misc;
 
+import java.net.ProtocolException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -51,19 +52,17 @@ public abstract class ReplicatorBuilder<S, T, E> {
         String uriHost = uri.getHost();
         String uriPath = uri.getRawPath();
 
-        //Check if port exists
+        // assign default port if it hasn't been set
+        // and check that we support the protocol
         int uriPort = uri.getPort();
-        if (uriPort < 0) {
-            if ("http".equals(uriProtocol)) {
-                uriPort = 80;
-            } else if ("https".equals(uriProtocol)) {
-                uriPort = 443;
-            }
+        if ("http".equals(uriProtocol)) {
+            uriPort = uriPort < 0 ? 80 : uriPort;
+        } else if ("https".equals(uriProtocol)) {
+            uriPort = uriPort < 0 ? 443 : uriPort;
+        } else {
+            throw new IllegalArgumentException(String.format(Locale.ENGLISH,
+                    "Protocol %s not supported", uriProtocol));
         }
-
-        Misc.checkArgument(uriPort >= 0,
-                String.format(Locale.ENGLISH,
-                        "Could not determine default port for protocol \"%s\"", uriProtocol));
 
         if (uri.getUserInfo() != null) {
             String[] parts = uri.getUserInfo().split(":");
@@ -75,13 +74,12 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         //Remove user credentials from url
-        URI redacted = new URI(uriProtocol
+        return new URI(uriProtocol
                 + "://"
                 + uriHost
                 + ":"
                 + uriPort
                 + (uriPath != null ? uriPath : ""));
-        return redacted;
     }
 
     /**
