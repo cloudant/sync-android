@@ -60,7 +60,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         bodyMap.put("pet", "cat");
         bodyMap.put("comment", "He lives in Bristol, UK and his best friend is Fred.");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike34");
         bodyMap.clear();
@@ -69,7 +69,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         bodyMap.put("pet", "dog");
         bodyMap.put("comment", "He lives in a van down by the river in Bristol.");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("mike72");
         bodyMap.clear();
@@ -79,7 +79,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         bodyMap.put("comment",
                     "He's retired and has memories of spending time with his cat Remus.");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred34");
         bodyMap.clear();
@@ -89,7 +89,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         bodyMap.put("comment",
                     "He lives next door to Mike and his cat Romulus is brother to Remus.");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("fred12");
         bodyMap.clear();
@@ -97,7 +97,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("comment", "He lives in Bristol, UK and his best friend is Mike.");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
 
         rev = new DocumentRevision("john34");
         bodyMap.clear();
@@ -106,7 +106,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         bodyMap.put("pet", "cat");
         bodyMap.put("comment", "وهو يعيش في بريستول، المملكة المتحدة، وأفضل صديق له هو مايك.");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
     }
 
     @Test

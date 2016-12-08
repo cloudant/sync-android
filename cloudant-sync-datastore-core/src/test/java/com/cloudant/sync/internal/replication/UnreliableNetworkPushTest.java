@@ -18,7 +18,6 @@ import com.cloudant.common.ProxyTestBase;
 import com.cloudant.common.RequireRunningProxy;
 import com.cloudant.http.Http;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
-import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
 
 import org.junit.After;
@@ -87,7 +86,7 @@ public class UnreliableNetworkPushTest extends ProxyTestBase {
             doc.put("key_"+i, "value_"+i);
         }
         mdr.setBody(DocumentBodyFactory.create(doc));
-        datastore.createDocumentFromRevision(mdr);
+        datastore.create(mdr);
     }
 
     private void addToxic() throws Exception {

@@ -150,9 +150,9 @@ public class DatabaseImplForceInsertTest {
             InternalDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision insertedObj = datastore.read(OBJECT_ID);
             insertedObj.setBody(bodyTwo);
-            DocumentRevision updatedObj = datastore.updateDocumentFromRevision(insertedObj);
+            DocumentRevision updatedObj = datastore.update(insertedObj);
 
             Assert.assertNotNull(updatedObj);
 
@@ -180,11 +180,11 @@ public class DatabaseImplForceInsertTest {
             InternalDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision insertedObj = datastore.read(OBJECT_ID);
             insertedObj.setBody(bodyTwo);
-            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            DocumentRevision updateObj = datastore.update(insertedObj);
             insertedObj.setBody(bodyTwo);
-            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision updateObj2 = datastore.update(updateObj);
 
             Assert.assertNotNull(updateObj2);
 
@@ -204,7 +204,7 @@ public class DatabaseImplForceInsertTest {
 
         assertDBObjectIsCorrect(OBJECT_ID, 6, bodyTwo);
 
-        DocumentRevision p = datastore.getDocument(OBJECT_ID, "5-rev");
+        DocumentRevision p = datastore.read(OBJECT_ID, "5-rev");
         Assert.assertNotNull(p);
         Assert.assertEquals("5-rev", p.getRevision());
         Assert.assertTrue(Arrays.equals(bodyOne.asBytes(), p.getBody().asBytes()));
@@ -216,11 +216,11 @@ public class DatabaseImplForceInsertTest {
             InternalDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "3-rev", "4-rev");
 
-            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision insertedObj = datastore.read(OBJECT_ID);
             insertedObj.setBody(bodyTwo);
-            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            DocumentRevision updateObj = datastore.update(insertedObj);
             insertedObj.setBody(bodyTwo);
-            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision updateObj2 = datastore.update(updateObj);
 
             Assert.assertNotNull(updateObj2);
 
@@ -257,7 +257,7 @@ public class DatabaseImplForceInsertTest {
             datastore.forceInsert(newRev, "1-rev", "2-rev", "3-rev", "4-rev", "5-rev", remoteRevisionId6);
         }
 
-        DocumentRevision obj = datastore.getDocument(OBJECT_ID);
+        DocumentRevision obj = datastore.read(OBJECT_ID);
         Assert.assertEquals(remoteRevisionId6, obj.getRevision());
         Assert.assertTrue(Arrays.equals(bodyOne.asBytes(), obj.getBody().asBytes()));
     }
@@ -279,11 +279,11 @@ public class DatabaseImplForceInsertTest {
             InternalDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "3-rev", "4-rev");
 
-            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision insertedObj = datastore.read(OBJECT_ID);
             insertedObj.setBody(bodyTwo);
-            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            DocumentRevision updateObj = datastore.update(insertedObj);
             insertedObj.setBody(bodyTwo);
-            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision updateObj2 = datastore.update(updateObj);
 
             Assert.assertNotNull(updateObj2);
 
@@ -321,7 +321,7 @@ public class DatabaseImplForceInsertTest {
                     remoteRevisionId6);
         }
 
-        DocumentRevision obj = datastore.getDocument(OBJECT_ID);
+        DocumentRevision obj = datastore.read(OBJECT_ID);
         Assert.assertEquals(localRevisionId6, obj.getRevision());
         Assert.assertTrue(Arrays.equals(bodyTwo.asBytes(), obj.getBody().asBytes()));
     }
@@ -337,16 +337,16 @@ public class DatabaseImplForceInsertTest {
             InternalDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision insertedObj = datastore.read(OBJECT_ID);
             insertedObj.setBody(bodyTwo);
-            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            DocumentRevision updateObj = datastore.update(insertedObj);
             updateObj.setBody(bodyTwo);
-            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision updateObj2 = datastore.update(updateObj);
             Assert.assertNotNull(updateObj2);
 
             // Delete the document from the local database
-            datastore.deleteDocumentFromRevision(updateObj2);
-            DocumentRevision deletedObj = datastore.getDocument(OBJECT_ID);
+            datastore.delete(updateObj2);
+            DocumentRevision deletedObj = datastore.read(OBJECT_ID);
             Assert.assertTrue(deletedObj.isDeleted());
         }
 
@@ -370,11 +370,11 @@ public class DatabaseImplForceInsertTest {
             InternalDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision insertedObj = datastore.read(OBJECT_ID);
             insertedObj.setBody(bodyTwo);
-            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            DocumentRevision updateObj = datastore.update(insertedObj);
             updateObj.setBody(bodyTwo);
-            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision updateObj2 = datastore.update(updateObj);
             Assert.assertNotNull(updateObj2);
         }
 
@@ -394,7 +394,7 @@ public class DatabaseImplForceInsertTest {
     }
 
     private void assertDBObjectIsCorrect(String docId, int revGeneration, DocumentBody body) throws Exception {
-        DocumentRevision obj = datastore.getDocument(docId);
+        DocumentRevision obj = datastore.read(docId);
         Assert.assertNotNull(obj);
         Assert.assertEquals(revGeneration, CouchUtils.generationFromRevId(obj.getRevision()));
         Assert.assertTrue(Arrays.equals(body.asBytes(), obj.getBody().asBytes()));
@@ -405,7 +405,7 @@ public class DatabaseImplForceInsertTest {
         {
             InternalDocumentRevision rev = createDbObject("1-a", bodyOne);
             datastore.forceInsert(rev, "1-a" );
-            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision insertedObj = datastore.read(OBJECT_ID);
             Assert.assertEquals("1-a", insertedObj.getRevision());
         }
 
@@ -425,7 +425,7 @@ public class DatabaseImplForceInsertTest {
         {
             InternalDocumentRevision rev = createDbObject("1-x", bodyOne);
             datastore.forceInsert(rev, "1-x" );
-            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision insertedObj = datastore.read(OBJECT_ID);
             Assert.assertEquals("1-x", insertedObj.getRevision());
         }
 
@@ -445,7 +445,7 @@ public class DatabaseImplForceInsertTest {
         {
             InternalDocumentRevision rev = createDbObject("1-x", bodyOne);
             datastore.forceInsert(rev, "1-x");
-            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            DocumentRevision insertedObj = datastore.read(OBJECT_ID);
             Assert.assertEquals("1-x", insertedObj.getRevision());
         }
 
@@ -458,7 +458,7 @@ public class DatabaseImplForceInsertTest {
         Assert.assertThat(tree.leafs(), hasSize(2));
         Assert.assertThat(tree.leafRevisionIds(), hasItems("1-x", "2-c"));
 
-        InternalDocumentRevision leaf = datastore.getDocument(OBJECT_ID, "2-c");
+        InternalDocumentRevision leaf = datastore.read(OBJECT_ID, "2-c");
         Assert.assertThat(tree.getPath(leaf.getSequence()), equalTo(Arrays.asList("2-c", "1-a")));
 
         assertDocumentHasRevAndBody(OBJECT_ID, "2-c", bodyTwo);
@@ -494,7 +494,7 @@ public class DatabaseImplForceInsertTest {
         datastore.forceInsert(rev2_alt, "1-x", "2-y");
         datastore.forceInsert(rev7, "6-x", "7-x");
 
-        Assert.assertEquals(datastore.getDocument(OBJECT_ID).getRevision(), "2-y");
+        Assert.assertEquals(datastore.read(OBJECT_ID).getRevision(), "2-y");
     }
 
     @Test
@@ -523,7 +523,7 @@ public class DatabaseImplForceInsertTest {
         datastore.forceInsert(rev7, "6-x", "7-x");
         datastore.forceInsert(rev2_alt, "1-x", "2-y");
 
-        Assert.assertEquals(datastore.getDocument(OBJECT_ID).getRevision(), "2-y");
+        Assert.assertEquals(datastore.read(OBJECT_ID).getRevision(), "2-y");
     }
 
     @Test
@@ -558,9 +558,9 @@ public class DatabaseImplForceInsertTest {
         // fetch non-deleted leafs until there are none left
         List<InternalDocumentRevision> leafs;
         while((leafs = (datastore.getAllRevisionsOfDocument(OBJECT_ID).leafRevisions(true))).size() != 0) {
-            // getDocument() should never return a deleted document:
+            // get() should never return a deleted document:
             // under previous behaviour of pickWinnerOfConflicts, this would fail
-            DocumentRevision currentLeaf = datastore.getDocument(OBJECT_ID);
+            DocumentRevision currentLeaf = datastore.read(OBJECT_ID);
             Assert.assertFalse("Current revision should not have been marked as deleted. Current leaf: " +
                     currentLeaf +
                     ". Current state of all leaf nodes: "+leafs,
@@ -588,7 +588,7 @@ public class DatabaseImplForceInsertTest {
                     }
                 }
             });
-            currentLeaf = datastore.getDocument(OBJECT_ID);
+            currentLeaf = datastore.read(OBJECT_ID);
 
             if (leafs.size() == 0) {
                 break;
@@ -611,11 +611,11 @@ public class DatabaseImplForceInsertTest {
         Assert.assertEquals(
                 "RevId should have been highest expected value. Current state of all sorted leaf nodes: "+leafs,
                 expectedRevId,
-                datastore.getDocument(OBJECT_ID).getRevision());
+                datastore.read(OBJECT_ID).getRevision());
     }
 
     private void assertDocumentHasRevAndBody(String id, String rev, DocumentBody body) throws Exception {
-        DocumentRevision obj = datastore.getDocument(id);
+        DocumentRevision obj = datastore.read(id);
         Assert.assertEquals(rev, obj.getRevision());
         Assert.assertTrue(Arrays.equals(obj.getBody().asBytes(), body.asBytes()));
     }

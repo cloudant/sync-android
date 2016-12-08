@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 public class PullStrategyTest extends ReplicationTestBase {
 
     private Bar getDocument(String id) throws Exception {
-        DocumentRevision rev = this.datastore.getDocument(id);
+        DocumentRevision rev = this.datastore.read(id);
         Bar bar = new Bar();
         Map<String, Object> m = rev.getBody().asMap();
         bar.setAge((Integer)m.get("age"));
@@ -172,7 +172,7 @@ public class PullStrategyTest extends ReplicationTestBase {
         Bar bar1 = oneDocCreatedAndThenPulled(replicator);
         Response res = BarUtils.deleteBar(remoteDb, bar1.getId());
         this.pull(replicator, 1);
-        DocumentRevision object = datastore.getDocument(res.getId(), res.getRev());
+        DocumentRevision object = datastore.read(res.getId(), res.getRev());
         Assert.assertNotNull(object);
         Assert.assertTrue(object.isDeleted());
     }
@@ -305,7 +305,7 @@ public class PullStrategyTest extends ReplicationTestBase {
         Assert.assertEquals(2, datastore.getDocumentCount());
         String[] birds = {"snipe", "kookaburra"};
         for(String mammal : birds) {
-            Assert.assertTrue(datastore.containsDocument(mammal));
+            Assert.assertTrue(datastore.contains(mammal));
         }
     }
 
@@ -324,7 +324,7 @@ public class PullStrategyTest extends ReplicationTestBase {
         Assert.assertEquals(8, datastore.getDocumentCount());
         String[] mammals = {"aardvark", "badger", "elephant", "giraffe", "lemur", "llama", "panda", "zebra"};
         for(String mammal : mammals) {
-            Assert.assertTrue(datastore.containsDocument(mammal));
+            Assert.assertTrue(datastore.contains(mammal));
         }
     }
 
@@ -343,7 +343,7 @@ public class PullStrategyTest extends ReplicationTestBase {
         Assert.assertEquals(6, datastore.getDocumentCount());
         String[] mammals = {"badger", "kookaburra", "lemur", "llama", "panda", "snipe"};
         for(String mammal : mammals) {
-            Assert.assertTrue(mammal + " should be in the datastore", datastore.containsDocument(mammal));
+            Assert.assertTrue(mammal + " should be in the datastore", datastore.contains(mammal));
         }
     }
 
@@ -362,7 +362,7 @@ public class PullStrategyTest extends ReplicationTestBase {
         Assert.assertEquals(1, datastore.getDocumentCount());
         String[] mammals = {"panda"};
         for(String mammal : mammals) {
-            Assert.assertTrue(mammal + " should be in the datastore", datastore.containsDocument(mammal));
+            Assert.assertTrue(mammal + " should be in the datastore", datastore.contains(mammal));
         }
     }
 
@@ -445,6 +445,6 @@ public class PullStrategyTest extends ReplicationTestBase {
 
         // Assert that the number of documents is correct
         Assert.assertEquals("There should be one document after replication.", 1,
-                datastore.getAllDocumentIds().size());
+                datastore.getIds().size());
     }
 }

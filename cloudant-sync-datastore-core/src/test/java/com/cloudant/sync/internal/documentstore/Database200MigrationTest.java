@@ -107,7 +107,7 @@ public class Database200MigrationTest {
 
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(DocumentBodyFactory.create(body));
-        rootRevision = ds.createDocumentFromRevision(rev);
+        rootRevision = ds.create(rev);
     }
 
     @After
@@ -188,7 +188,7 @@ public class Database200MigrationTest {
         Map<String, Object> body = rootRevision.getBody().asMap();
         body.put("My", "otherBody");
         rootRevision.setBody(DocumentBodyFactory.create(body));
-        DocumentRevision rev = ds.updateDocumentFromRevision(rootRevision);
+        DocumentRevision rev = ds.update(rootRevision);
 
 
         final String changeParent = "UPDATE revs SET parent=2 where parent = 1";
@@ -241,7 +241,7 @@ public class Database200MigrationTest {
         Map<String, Object> body = rootRevision.getBody().asMap();
         body.put("My", "otherBody");
         rootRevision.setBody(DocumentBodyFactory.create(body));
-        DocumentRevision rev = ds.updateDocumentFromRevision(rootRevision);
+        DocumentRevision rev = ds.update(rootRevision);
 
 
         final String changeParent = "UPDATE revs SET parent=2 where parent = 1";
@@ -278,7 +278,7 @@ public class Database200MigrationTest {
         Map<String, Object> body = rootRevision.getBody().asMap();
         body.put("My", "otherBody");
         rootRevision.setBody(DocumentBodyFactory.create(body));
-        final DocumentRevision rev = ds.updateDocumentFromRevision(rootRevision); // 2x
+        final DocumentRevision rev = ds.update(rootRevision); // 2x
 
         final String updateCurrent = "UPDATE revs SET current=0 where sequence=2 or sequence=3";
 
@@ -318,11 +318,11 @@ public class Database200MigrationTest {
         Map<String, Object> body = rootRevision.getBody().asMap();
         body.put("My", "otherBody");
         rootRevision.setBody(DocumentBodyFactory.create(body));
-        final DocumentRevision rev = ds.updateDocumentFromRevision(rootRevision); // 2x
+        final DocumentRevision rev = ds.update(rootRevision); // 2x
 
         body.put("My", "thirdBody");
         rev.setBody(DocumentBodyFactory.create(body));
-        DocumentRevision updated = ds.updateDocumentFromRevision(rev);
+        DocumentRevision updated = ds.update(rev);
 
         final String sql = "INSERT INTO revs (doc_id, parent, current, deleted, available, revid," +
                 " json) SELECT doc_id, parent, current, deleted, available, revid, json FROM revs";
@@ -379,7 +379,7 @@ public class Database200MigrationTest {
         Map<String, Object> body = rootRevision.getBody().asMap();
         body.put("My", "otherBody");
         rootRevision.setBody(DocumentBodyFactory.create(body));
-        final DocumentRevision rev = ds.updateDocumentFromRevision(rootRevision); // 2x
+        final DocumentRevision rev = ds.update(rootRevision); // 2x
 
         final String updateCurrent = "UPDATE revs SET current=0";
 
@@ -392,7 +392,7 @@ public class Database200MigrationTest {
             }
         }).get();
 
-        ds.deleteDocument(rev.getId());
+        ds.delete(rev.getId());
 
 
         final String changeParent = "UPDATE revs SET parent=3 where sequence = 5";
@@ -429,7 +429,7 @@ public class Database200MigrationTest {
         Map<String, Object> body = rootRevision.getBody().asMap();
         body.put("My", "otherBody");
         rootRevision.setBody(DocumentBodyFactory.create(body));
-        final DocumentRevision rev = ds.updateDocumentFromRevision(rootRevision); // 2x
+        final DocumentRevision rev = ds.update(rootRevision); // 2x
 
         final String updateCurrent = "UPDATE revs SET current=0;";
         final String setCurrent = "UPDATE revs SET current=1 where sequence=2";
@@ -447,7 +447,7 @@ public class Database200MigrationTest {
 
         body.put("myAwesomeness", "level 0");
         rev.setBody(DocumentBodyFactory.create(body));
-        final DocumentRevision secondUpdate = ds.updateDocumentFromRevision(rev);
+        final DocumentRevision secondUpdate = ds.update(rev);
         // parent needs to be changed for the above, then a new revision will need to be genreated.
         final String changeParent = "UPDATE revs SET parent=2 where parent = 3";
         ds.runOnDbQueue(new SQLCallable<Void>() {
@@ -535,9 +535,9 @@ public class Database200MigrationTest {
                 rootRevision.getBody(), null);
         ds.forceInsert(rev, rootRevision.getRevision());
 
-        rev = ds.getDocument("awesomeness");
+        rev = ds.read("awesomeness");
         rev.setBody(DocumentBodyFactory.create(body));
-        DocumentRevision update = ds.updateDocumentFromRevision(rev);
+        DocumentRevision update = ds.update(rev);
 
         runMigration();
 
@@ -588,7 +588,7 @@ public class Database200MigrationTest {
         ds.forceInsert(rev1a, "1-x");
 
         // fetch back the document we just inserted because we need the numeric id
-        final long doc_id = ds.getDocument(OBJECT_ID).getInternalNumericId();
+        final long doc_id = ds.read(OBJECT_ID).getInternalNumericId();
 
         // Now insert a duplicate (don't use forceInsert because that will protect against
         // duplicate entries).
@@ -607,7 +607,7 @@ public class Database200MigrationTest {
         ds.forceInsert(rev2, "1-x", "2-x");
 
         // Get the document
-        DocumentRevision doc = ds.getDocument(OBJECT_ID);
+        DocumentRevision doc = ds.read(OBJECT_ID);
         // If there is no winner an exception would be thrown.
 
         // We favour non-deleted nodes so the winner should be a 1-x

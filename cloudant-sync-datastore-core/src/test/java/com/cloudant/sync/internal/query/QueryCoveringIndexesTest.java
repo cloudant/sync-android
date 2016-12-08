@@ -132,7 +132,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         bodyMap.put("pet", "cat");
         bodyMap.put("married", true);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
         assertThat(idxMgr.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("married")), "married"), is("married"));
         // query - { "married" : { "eq" : true } }
         Map<String, Object> marriedOperator = new HashMap<String, Object>();
@@ -152,7 +152,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         bodyMap.put("age", 12);
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
-        ds.createDocumentFromRevision(rev);
+        ds.create(rev);
         assertThat(idxMgr.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic index"), is
                 ("basic index"));
 
@@ -1081,7 +1081,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     @Test
     public void queryUsing_revWorksAsASingleClause() throws Exception {
         setUpBasicQueryData();
-        String docRev = ds.getDocument("mike12").getRevision();
+        String docRev = ds.read("mike12").getRevision();
         // query - { "_rev" : <docRev> }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("_rev", docRev);
@@ -1092,7 +1092,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     @Test
     public void queryUsing_revWorksWithOtherClauses() throws Exception {
         setUpBasicQueryData();
-        String docRev = ds.getDocument("mike12").getRevision();
+        String docRev = ds.read("mike12").getRevision();
         // query - { "_rev" : <docRev>, "name" : "mike" }
         Map<String, Object> query = new HashMap<String, Object>();
         query.put("_rev", docRev);

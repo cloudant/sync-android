@@ -497,7 +497,7 @@ public class CouchClient  {
             is = executeToInputStreamWithRetry(connection);
             T returndoc = jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8"))
                     , type);
-            logger.fine("getDocument returning " + returndoc);
+            logger.fine("get returning " + returndoc);
             return returndoc;
         } finally {
             closeQuietly(is);
@@ -518,7 +518,7 @@ public class CouchClient  {
             is = this.getDocumentStream(id, rev);
             T returndoc = jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8"))
                     , type);
-            logger.fine("getDocument returning " + returndoc);
+            logger.fine("get returning " + returndoc);
             return returndoc;
         } finally {
             closeQuietly(is);
