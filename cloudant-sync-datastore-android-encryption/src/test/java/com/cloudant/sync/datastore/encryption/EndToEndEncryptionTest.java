@@ -22,11 +22,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.cloudant.sync.documentstore.Attachment;
+import com.cloudant.sync.documentstore.AttachmentException;
+import com.cloudant.sync.documentstore.DocumentNotFoundException;
+import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.DocumentStoreNotOpenedException;
 import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
-import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.encryption.SimpleKeyProvider;
 import com.cloudant.sync.internal.documentstore.encryption.EncryptedAttachmentInputStream;
@@ -187,7 +189,8 @@ public class EndToEndEncryptionTest {
     }
 
     @Test
-    public void attachmentsDataEncrypted() throws IOException, DocumentException, InvalidKeyException {
+    public void attachmentsDataEncrypted() throws IOException, DocumentStoreException,
+            AttachmentException, ConflictException, InvalidKeyException {
 
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(DocumentBodyFactory.create(new HashMap<String, String>()));
@@ -248,7 +251,8 @@ public class EndToEndEncryptionTest {
      * A basic check things round trip successfully.
      */
     @Test
-    public void readAndWriteDocument() throws DocumentException, IOException, QueryException {
+    public void readAndWriteDocument() throws DocumentStoreException, AttachmentException,
+            ConflictException, DocumentNotFoundException, IOException {
 
         String documentId = "a-test-document";
         final String nonAsciiText = "摇;摃:xx\uD83D\uDC79⌚️\uD83D\uDC7D";
