@@ -37,7 +37,7 @@ import java.util.List;
 public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
-    public void emptyIndexList() {
+    public void emptyIndexList() throws QueryException {
         List<Index> indexes = im.listIndexes();
         assertThat(indexes, is(notNullValue()));
         assertThat(indexes.isEmpty(), is(true));
