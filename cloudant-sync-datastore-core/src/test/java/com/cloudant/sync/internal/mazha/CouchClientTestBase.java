@@ -15,7 +15,6 @@
 package com.cloudant.sync.internal.mazha;
 
 import com.cloudant.common.CouchTestBase;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -25,14 +24,12 @@ public abstract class CouchClientTestBase extends CouchTestBase {
     String testDb;
     CouchConfig couchConfig;
     CouchClient client;
-    JSONHelper jsonHelper;
 
     public CouchClientTestBase() {
         testDb = "mazha-test"+System.currentTimeMillis();
         couchConfig = getCouchConfig(testDb);
         client = new CouchClient(couchConfig.getRootUri(), couchConfig.getRequestInterceptors(),
                 couchConfig.getResponseInterceptors());
-        jsonHelper = new JSONHelper();
     }
 
     @Before

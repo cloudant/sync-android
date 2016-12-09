@@ -16,16 +16,27 @@ package com.cloudant.sync.internal.util;
 
 import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.sync.internal.common.PropertyFilterMixIn;
+import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.mazha.Document;
+import com.cloudant.sync.internal.mazha.DocumentRevs;
+import com.cloudant.sync.internal.mazha.OpenRevision;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,6 +49,24 @@ public class JSONUtils {
 
 
     private static final byte[] EMPTY_JSON = "{}".getBytes(Charset.forName("UTF-8"));
+
+
+    public final static TypeReference<List<String>> STRING_LIST_TYPE_DEF =
+            new TypeReference<List<String>>() {};
+
+    public final static TypeReference<Map<String, Object>> STRING_MAP_TYPE_DEF =
+            new TypeReference<Map<String, Object>>() {};
+
+
+    private static final ObjectMapper sMapper = new ObjectMapper();
+
+    static {
+        sMapper.registerModule(new JacksonModule());
+        sMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        // Should only disable this in production, cause we do want to see them in development?
+        sMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
     public static byte[] emptyJSONObjectAsBytes(){
         return Arrays.copyOf(EMPTY_JSON, EMPTY_JSON.length);
@@ -55,13 +84,8 @@ public class JSONUtils {
 
     private static final FilterProvider sEmptyProvider =
             new SimpleFilterProvider().addFilter("simpleFilter",
-                    SimpleBeanPropertyFilter.serializeAllExcept());
+                    SimpleBeanPropertyFilter.serializeAllExcept()).setFailOnUnknownId(false);
 
-    private static final ObjectMapper sMapper = new ObjectMapper();
-
-    static {
-        sMapper.registerModule(new JacksonModule());
-    }
 
     private static FilterProvider getFilterProvider(boolean usingFilter) {
         return usingFilter ? sCouchWordsFilter : sEmptyProvider;
@@ -134,6 +158,7 @@ public class JSONUtils {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static Map<String, Object> deserialize(byte[] json) {
         try {
             return getsMapper().readValue(json, Map.class);
@@ -154,11 +179,9 @@ public class JSONUtils {
         }
     }
 
-    public static String toPrettyJson(Object rev) {
+    public static String toPrettyJson(Object object) {
         try {
-            return getsMapper().writerWithDefaultPrettyPrinter().writeValueAsString(rev);
-        } catch (RuntimeException e){
-            throw e;
+            return sMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -172,5 +195,66 @@ public class JSONUtils {
         } else {
             return "";
         }
+    }
+
+    public static <T> T fromJson(Reader reader, TypeReference<T> typeRef) {
+        try {
+            return sMapper.readValue(reader, typeRef);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> T fromJson(Reader reader, JavaType type) {
+        try {
+            return sMapper.readValue(reader, type);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> T fromJson(Reader reader, Class<T> clazz) {
+        try {
+            return sMapper.readValue(reader, clazz);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Map<String, Object> fromJson(Reader reader) {
+        return fromJson(reader, STRING_MAP_TYPE_DEF);
+    }
+
+    public static <T> T fromJsonToList(Reader reader, TypeReference<T> typeReference) {
+        return fromJson(reader, typeReference);
+    }
+
+    public static String toJson(Object object) {
+        try {
+            return getWriter(false).writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static TypeFactory getTypeFactory(){
+        return sMapper.getTypeFactory();
+    }
+
+    public static JavaType mapStringToObject(){
+        return JSONUtils.getTypeFactory().constructParametricType(Map.class,String.class,Object.class);
+    }
+
+    public static JavaType mapStringMissingRevisions(){
+        return JSONUtils.getTypeFactory().constructParametricType(Map.class, String.class, CouchClient
+                .MissingRevisions.class);
+    }
+
+    public static JavaType openRevisionList() {
+        return JSONUtils.getTypeFactory().constructParametricType(List.class, OpenRevision.class);
+    }
+
+    public static JavaType documentRevs() {
+        return JSONUtils.getTypeFactory().constructType(DocumentRevs.class);
     }
 }

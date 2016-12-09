@@ -17,7 +17,6 @@ package com.cloudant.sync.internal.replication;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.sync.internal.mazha.CouchClient;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.AttachmentException;
 import com.cloudant.sync.documentstore.Changes;
@@ -86,8 +85,6 @@ public class PushStrategy implements ReplicationStrategy {
     private final String name;
 
     public final EventBus eventBus = new EventBus();
-
-    private static JSONHelper sJsonHelper = new JSONHelper();
 
     public int changeLimitPerBatch = 500;
 
@@ -418,7 +415,7 @@ public class PushStrategy implements ReplicationStrategy {
 
                 // now we will have either a multipart or a plain doc
                 if (mpw == null) {
-                    itemsToPush.serializedDocs.add(sJsonHelper.toJson(json));
+                    itemsToPush.serializedDocs.add(JSONUtils.toJson(json));
                 } else {
                     itemsToPush.multiparts.add(mpw);
                 }

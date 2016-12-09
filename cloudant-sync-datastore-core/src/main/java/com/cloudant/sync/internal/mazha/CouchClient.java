@@ -26,9 +26,9 @@ import com.cloudant.http.Http;
 import com.cloudant.http.HttpConnection;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
 import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
+import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
@@ -56,7 +56,6 @@ import java.util.logging.Logger;
  */
 public class CouchClient  {
 
-    protected final JSONHelper jsonHelper;
     private CouchURIHelper uriHelper;
     private List<HttpConnectionRequestInterceptor> requestInterceptors;
     private List<HttpConnectionResponseInterceptor> responseInterceptors;
@@ -65,7 +64,6 @@ public class CouchClient  {
     public CouchClient(URI rootUri,
                        List<HttpConnectionRequestInterceptor> requestInterceptors,
                        List<HttpConnectionResponseInterceptor> responseInterceptors) {
-        this.jsonHelper = new JSONHelper();
         this.uriHelper = new CouchURIHelper(rootUri);
         this.requestInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
         this.responseInterceptors = new ArrayList<HttpConnectionResponseInterceptor>();
@@ -93,8 +91,7 @@ public class CouchClient  {
                               InputStream errorStream,
                               int responseCode,
                               String responseMessage,
-                              Throwable cause,
-                              JSONHelper jsonHelper)
+                              Throwable cause)
         {
             this.responseCode = responseCode;
             boolean needsCouchException = false;
@@ -135,7 +132,7 @@ public class CouchClient  {
             }
             if (needsCouchException) {
                 try {
-                    Map<String, String> json = jsonHelper.fromJson(new InputStreamReader
+                    Map<String, String> json = JSONUtils.fromJson(new InputStreamReader
                             (errorStream, Charset.forName("UTF-8")), Map.class);
                     CouchException ce = new CouchException(responseMessage, cause, responseCode);
                     ce.setError(json.get("error"));
@@ -195,8 +192,8 @@ public class CouchClient  {
                     errorStream,
                     responseCode,
                     responseMessage,
-                    cause,
-                    jsonHelper);
+                    cause
+            );
             return executeResult;
         } finally {
             // don't close inputStream as the callee still needs it
@@ -233,7 +230,7 @@ public class CouchClient  {
         InputStream is = this.executeToInputStreamWithRetry(connection);
         InputStreamReader isr = new InputStreamReader(is, Charset.forName("UTF-8"));
         try {
-            T json = new JSONHelper().fromJson(isr, c);
+            T json = JSONUtils.fromJson(isr, c);
             return json;
         } finally {
             IOUtils.closeQuietly(is);
@@ -321,7 +318,7 @@ public class CouchClient  {
     }
 
     public Response create(Object document) {
-        String json = jsonHelper.toJson(document);
+        String json = JSONUtils.toJson(document);
         InputStream is = null;
         try {
             HttpConnection connection = Http.POST(this.uriHelper.getRootUri(), "application/json");
@@ -391,7 +388,7 @@ public class CouchClient  {
     public Map<String,Object> getDocConflictRevs(String id)  {
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("conflicts", true);
-        return this.getDocument(id, options, jsonHelper.mapStringToObject());
+        return this.getDocument(id, options, JSONUtils.mapStringToObject());
     }
 
     /**
@@ -416,14 +413,14 @@ public class CouchClient  {
         if (pullAttachmentsInline) {
             options.put("attachments", true);
             if (attsSince != null) {
-                options.put("atts_since", jsonHelper.toJson(attsSince));
+                options.put("atts_since", JSONUtils.toJson(attsSince));
             }
         } else {
             options.put("attachments", false);
             options.put("att_encoding_info", true);
         }
-        options.put("open_revs", jsonHelper.toJson(revisions));
-        return this.getDocument(id, options, jsonHelper.openRevisionList());
+        options.put("open_revs", JSONUtils.toJson(revisions));
+        return this.getDocument(id, options, JSONUtils.openRevisionList());
     }
 
     /**
@@ -455,7 +452,7 @@ public class CouchClient  {
         Map<String, List<BulkGetRequest>> jsonRequest = new HashMap<String, List<BulkGetRequest>>();
         jsonRequest.put("docs", request);
         // build request
-        connection.setRequestBody(jsonHelper.toJson(jsonRequest));
+        connection.setRequestBody(JSONUtils.toJson(jsonRequest));
         // deserialise response
         BulkGetResponse response = executeToJsonObjectWithRetry(connection, BulkGetResponse.class);
 
@@ -484,11 +481,11 @@ public class CouchClient  {
     }
 
     public Map<String, Object> getDocument(String id) {
-        return this.getDocument(id, new HashMap<String, Object>(), jsonHelper.mapStringToObject());
+        return this.getDocument(id, new HashMap<String, Object>(), JSONUtils.mapStringToObject());
     }
 
     public <T> T getDocument(String id, final Class<T> type)  {
-        JavaType javaType = jsonHelper.getTypeFactory().constructType(type);
+        JavaType javaType = JSONUtils.getTypeFactory().constructType(type);
         return this.getDocument(id, new HashMap<String, Object>(), javaType);
     }
 
@@ -501,7 +498,7 @@ public class CouchClient  {
         try {
             HttpConnection connection = Http.GET(doc);
             is = executeToInputStreamWithRetry(connection);
-            T returndoc = jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8"))
+            T returndoc = JSONUtils.fromJson(new InputStreamReader(is, Charset.forName("UTF-8"))
                     , type);
             logger.fine("get returning " + returndoc);
             return returndoc;
@@ -511,7 +508,7 @@ public class CouchClient  {
     }
 
     public Map<String, Object> getDocument(String id, String rev) {
-        return getDocument(id, rev, JSONHelper.STRING_MAP_TYPE_DEF);
+        return getDocument(id, rev, JSONUtils.STRING_MAP_TYPE_DEF);
     }
 
     public <T> T getDocument(String id, String rev, TypeReference<T> type) {
@@ -522,7 +519,7 @@ public class CouchClient  {
         InputStream is = null;
         try {
             is = this.getDocumentStream(id, rev);
-            T returndoc = jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8"))
+            T returndoc = JSONUtils.fromJson(new InputStreamReader(is, Charset.forName("UTF-8"))
                     , type);
             logger.fine("get returning " + returndoc);
             return returndoc;
@@ -542,7 +539,7 @@ public class CouchClient  {
      *
      */
     public DocumentRevs getDocRevisions(String id, String rev) {
-        return getDocRevisions(id, rev, jsonHelper.documentRevs());
+        return getDocRevisions(id, rev, JSONUtils.documentRevs());
     }
 
     public <T> T getDocRevisions(String id, String rev, JavaType type) {
@@ -557,7 +554,7 @@ public class CouchClient  {
         try {
             HttpConnection connection = Http.GET(findRevs);
             is = this.executeToInputStreamWithRetry(connection);
-            return jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8")), type);
+            return JSONUtils.fromJson(new InputStreamReader(is, Charset.forName("UTF-8")), type);
         } finally {
             closeQuietly(is);
         }
@@ -571,7 +568,7 @@ public class CouchClient  {
             throw new NoResourceException("No document for given id: " + id);
         }
 
-        String json = jsonHelper.toJson(document);
+        String json = JSONUtils.toJson(document);
         URI doc = this.uriHelper.documentUri(id);
         HttpConnection connection = Http.PUT(doc, "application/json");
         connection.setRequestBody(json);
@@ -604,7 +601,7 @@ public class CouchClient  {
         String newEditsVal = "\"new_edits\": false, ";
         URI uri = this.uriHelper.bulkDocsUri();
         String payload = String.format("{%s%s%s}", newEditsVal, "\"docs\": ",
-                jsonHelper.toJson(objects));
+                JSONUtils.toJson(objects));
         HttpConnection connection = Http.POST(uri, "application/json");
         connection.setRequestBody(payload);
         return this.executeToInputStreamWithRetry(connection);
@@ -618,7 +615,7 @@ public class CouchClient  {
         InputStream is = null;
         try {
             is = bulkCreateDocsInputStream(objects);
-            return jsonHelper.fromJsonToList(new InputStreamReader(is, Charset.forName("UTF-8")),
+            return JSONUtils.fromJsonToList(new InputStreamReader(is, Charset.forName("UTF-8")),
                     new CouchClientTypeReference<List<Response>>());
         } finally {
             closeQuietly(is);
@@ -653,7 +650,7 @@ public class CouchClient  {
         connection.setRequestBody(payload);
         try {
             is = this.executeToInputStreamWithRetry(connection);
-            return jsonHelper.fromJsonToList(new InputStreamReader(is, Charset.forName("UTF-8")),
+            return JSONUtils.fromJsonToList(new InputStreamReader(is, Charset.forName("UTF-8")),
                     new CouchClientTypeReference<List<Response>>());
         } finally {
             closeQuietly(is);
@@ -700,7 +697,7 @@ public class CouchClient  {
     public Map<String, MissingRevisions> revsDiff(Map<String, Set<String>> revisions) {
         Misc.checkNotNull(revisions,"Input revisions");
         URI uri = this.uriHelper.revsDiffUri();
-        String payload = this.jsonHelper.toJson(revisions);
+        String payload = JSONUtils.toJson(revisions);
         InputStream is = null;
         try {
             HttpConnection connection = Http.POST(uri, "application/json");
@@ -708,8 +705,8 @@ public class CouchClient  {
             is = executeToInputStreamWithRetry(connection);
 
 
-            return jsonHelper.fromJson(new InputStreamReader(is, Charset.forName("UTF-8")),
-                    jsonHelper.mapStringMissingRevisions());
+            return JSONUtils.fromJson(new InputStreamReader(is, Charset.forName("UTF-8")),
+                    JSONUtils.mapStringMissingRevisions());
         } finally {
             closeQuietly(is);
         }

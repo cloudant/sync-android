@@ -17,7 +17,7 @@ package com.cloudant.sync.internal.mazha;
 import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.common.RequireRunningCouchDB;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
+import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 
 import org.apache.commons.io.FileUtils;
@@ -80,7 +80,7 @@ public class BulkAPITest extends CouchClientTestBase {
         List<Response> responses = client.bulkCreateDocs(doc1);
         Assert.assertEquals(0, responses.size());
 
-        Map<String, Object> allRevs = client.getDocRevisions(res1.getId(), revision3, jsonHelper.mapStringToObject());
+        Map<String, Object> allRevs = client.getDocRevisions(res1.getId(), revision3, JSONUtils.mapStringToObject());
 
         int revisionStart = (Integer) ((Map<String, Object>) allRevs.get(CouchConstants._revisions)).get
                 (CouchConstants.start);

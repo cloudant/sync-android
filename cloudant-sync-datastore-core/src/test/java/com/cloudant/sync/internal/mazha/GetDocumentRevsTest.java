@@ -17,7 +17,8 @@ package com.cloudant.sync.internal.mazha;
 import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.common.RequireRunningCouchDB;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
+import com.cloudant.sync.internal.util.JSONUtils;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -50,7 +51,7 @@ public class GetDocumentRevsTest extends CouchClientTestBase {
     public void getDocRevisions_idAndRevAndMapClass_revsMustBeReturned() {
         Response[] responses = createAndUpdateDocumentAndReturnRevisions();
         Map<String, Object> revs = client.getDocRevisions(responses[1].getId(), responses[1].getRev(),
-                jsonHelper.mapStringToObject());
+                JSONUtils.mapStringToObject());
 
         Assert.assertThat(revs.keySet(), hasItem(CouchConstants._revisions));
 

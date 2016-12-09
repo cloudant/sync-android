@@ -14,9 +14,7 @@
 
 package com.cloudant.sync.internal.mazha;
 
-import com.cloudant.sync.internal.mazha.CouchClient;
-import com.cloudant.sync.internal.mazha.Response;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
+import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 
 import org.apache.commons.io.FileUtils;
@@ -29,10 +27,9 @@ public class AnimalDb {
 
     public static void populateWithoutFilter(CouchClient client) {
         try {
-            JSONHelper jsonHelper =  new JSONHelper();
             for(int i = 0 ; i < 10 ; i ++) {
                 String animal = FileUtils.readFileToString(TestUtils.loadFixture("fixture/animaldb/animaldb_animal" + i + ".json"));
-                Response response = client.create(jsonHelper.fromJson(new StringReader(animal)));
+                Response response = client.create(JSONUtils.fromJson(new StringReader(animal)));
                 Assert.assertTrue(response.getOk());
             }
         } catch (IOException e) {
@@ -42,15 +39,14 @@ public class AnimalDb {
 
     public static void populate(CouchClient client) {
         try {
-            JSONHelper jsonHelper =  new JSONHelper();
             for(int i = 0 ; i < 10 ; i ++) {
                 String animal = FileUtils.readFileToString(TestUtils.loadFixture("fixture/animaldb" +
                         "/animaldb_animal" + i + ".json"));
-                Response response = client.create(jsonHelper.fromJson(new StringReader(animal)));
+                Response response = client.create(JSONUtils.fromJson(new StringReader(animal)));
                 Assert.assertTrue(response.getOk());
             }
             String filter = FileUtils.readFileToString(TestUtils.loadFixture("fixture/animaldb/animaldb_filter.json"));
-            Response response = client.create(jsonHelper.fromJson(new StringReader(filter)));
+            Response response = client.create(JSONUtils.fromJson(new StringReader(filter)));
             Assert.assertTrue(response.getOk());
         } catch (IOException e) {
             Assert.fail(e.getMessage());
