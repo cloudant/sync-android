@@ -17,8 +17,8 @@ package com.cloudant.sync.internal.documentstore;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 import com.cloudant.sync.internal.mazha.DocumentRevs;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
 import com.cloudant.sync.documentstore.DocumentBody;
+import com.cloudant.sync.internal.util.JSONUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,7 +32,6 @@ import java.util.Map;
 
 public class RevisionHistoryHelperTest {
 
-    private JSONHelper jsonHelper = new JSONHelper();
 
     @Test
     public void revisionHistoryToJson_oneRevisionInHistory_success() {
@@ -40,9 +39,9 @@ public class RevisionHistoryHelperTest {
         m.put("name", "Tom");
 
         List<InternalDocumentRevision> d = createDBObjects("Tom", "1-a");
-        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
+        String json = JSONUtils.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
 
-        DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
+        DocumentRevs documentRevs = JSONUtils.fromJson(new StringReader(json), DocumentRevs.class);
         Assert.assertEquals("1", documentRevs.getId());
         Assert.assertEquals("1-a", documentRevs.getRev());
         Assert.assertThat(documentRevs.getOthers().entrySet(), equalTo(m.entrySet()));
@@ -77,9 +76,9 @@ public class RevisionHistoryHelperTest {
         m.put("name", "Tom");
 
         List<InternalDocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
-        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
+        String json = JSONUtils.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
 
-        DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
+        DocumentRevs documentRevs = JSONUtils.fromJson(new StringReader(json), DocumentRevs.class);
         Assert.assertEquals("1", documentRevs.getId());
         Assert.assertEquals("2-b", documentRevs.getRev());
         Assert.assertThat(documentRevs.getOthers().entrySet(), equalTo(m.entrySet()));
@@ -106,8 +105,8 @@ public class RevisionHistoryHelperTest {
     @Test
     public void getRevisionPath_oneRevision_success() {
         List<InternalDocumentRevision> d = createDBObjects("Tom", "1-a");
-        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
-        DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
+        String json = JSONUtils.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
+        DocumentRevs documentRevs = JSONUtils.fromJson(new StringReader(json), DocumentRevs.class);
         List<String> revisions = RevisionHistoryHelper.getRevisionPath(documentRevs);
         Assert.assertThat(revisions, equalTo(Arrays.asList("1-a")));
     }
@@ -115,8 +114,8 @@ public class RevisionHistoryHelperTest {
     @Test
     public void getRevisionPath_twoRevision_success() {
         List<InternalDocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
-        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
-        DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
+        String json = JSONUtils.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
+        DocumentRevs documentRevs = JSONUtils.fromJson(new StringReader(json), DocumentRevs.class);
         List<String> revisions = RevisionHistoryHelper.getRevisionPath(documentRevs);
         Assert.assertThat(revisions, equalTo(Arrays.asList("2-b", "1-a")));
     }
@@ -124,8 +123,8 @@ public class RevisionHistoryHelperTest {
     @Test(expected = IllegalArgumentException.class)
     public void getRevisionPath_revisionStartIsTooSmall_exception() {
         List<InternalDocumentRevision> d = createDBObjects("Tom", "2-b", "1-a");
-        String json = jsonHelper.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
-        DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(json), DocumentRevs.class);
+        String json = JSONUtils.toJson(RevisionHistoryHelper.revisionHistoryToJson(d));
+        DocumentRevs documentRevs = JSONUtils.fromJson(new StringReader(json), DocumentRevs.class);
         addOneMoreIdToRevisions(documentRevs);
         RevisionHistoryHelper.getRevisionPath(documentRevs);
     }

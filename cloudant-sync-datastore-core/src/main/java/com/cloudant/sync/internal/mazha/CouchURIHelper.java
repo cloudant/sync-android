@@ -19,7 +19,7 @@
 package com.cloudant.sync.internal.mazha;
 
 import com.cloudant.sync.internal.common.CouchConstants;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
+import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
 
 import java.io.UnsupportedEncodingException;
@@ -69,8 +69,7 @@ public class CouchURIHelper {
             Object since = query.get("since");
             if(!(since instanceof String)){
                 //json encode the seq number since it isn't a string
-                JSONHelper helper = new JSONHelper();
-                query.put("since",helper.toJson(since));
+                query.put("since", JSONUtils.toJson(since));
             }
         }
 

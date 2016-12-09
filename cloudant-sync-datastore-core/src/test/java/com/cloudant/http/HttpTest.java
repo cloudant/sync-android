@@ -20,7 +20,7 @@ import com.cloudant.common.TestOptions;
 import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.mazha.CouchConfig;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
+import com.cloudant.sync.internal.util.JSONUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -190,8 +190,7 @@ public class HttpTest extends CouchTestBase {
         Assert.assertEquals(2, conn.getConnection().getResponseCode() / 100);
 
         //check the json
-        JSONHelper helper = new JSONHelper();
-        Map<String, Object> jsonRes = helper.fromJson(new InputStreamReader(conn.getConnection()
+        Map<String, Object> jsonRes = JSONUtils.fromJson(new InputStreamReader(conn.getConnection()
                 .getInputStream()));
 
         Assert.assertTrue(jsonRes.containsKey("ok"));
