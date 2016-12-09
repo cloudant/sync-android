@@ -22,12 +22,14 @@ import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.internal.replication.PullStrategy;
 import com.cloudant.sync.internal.replication.PushStrategy;
 import com.cloudant.sync.internal.replication.ReplicatorImpl;
+import com.cloudant.sync.internal.util.Misc;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A Builder to create a {@link Replicator Object}
@@ -58,16 +60,16 @@ public abstract class ReplicatorBuilder<S, T, E> {
         String uriHost = uri.getHost();
         String uriPath = uri.getRawPath();
 
-        //Check if port exists
+        // assign default port if it hasn't been set
+        // and check that we support the protocol
         int uriPort = uri.getPort();
-        if (uriPort < 0) {
-            if ("http".equals(uriProtocol)) {
-                uriPort = 80;
-            } else if ("https".equals(uriProtocol)) {
-                uriPort = 443;
-            } else {
-                throw new RuntimeException("Unknown protocol: "+uriProtocol);
-            }
+        if ("http".equals(uriProtocol)) {
+            uriPort = uriPort < 0 ? 80 : uriPort;
+        } else if ("https".equals(uriProtocol)) {
+            uriPort = uriPort < 0 ? 443 : uriPort;
+        } else {
+            throw new IllegalArgumentException(String.format(Locale.ENGLISH,
+                    "Protocol %s not supported", uriProtocol));
         }
 
         if (uri.getUserInfo() != null) {
@@ -101,15 +103,14 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
         try {
             //Remove user credentials from url
-            URI redacted = new URI(uriProtocol
+            return new URI(uriProtocol
                     + "://"
                     + uriHost
                     + ":"
                     + uriPort
                     + (uriPath != null ? uriPath : ""));
-            return redacted;
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+        } catch (URISyntaxException use) {
+            throw new RuntimeException("Failed to construct URI", use);
         }
     }
 
@@ -131,10 +132,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
         @Override
         public Replicator build() {
 
-            if (super.source == null || super.target == null) {
-                throw new IllegalStateException("Source and target cannot be null");
-            }
-
+            Misc.checkState(super.source != null && super.target != null,
+                    "Source and target cannot be null");
 
             // add cookie interceptor and remove creds from URI if required
             super.target = super.addCookieInterceptorIfRequired(super.target);
@@ -226,9 +225,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
         @Override
         public Replicator build() {
 
-            if (super.source == null || super.target == null) {
-                throw new IllegalStateException("Source and target cannot be null");
-            }
+            Misc.checkState(super.source != null && super.target != null,
+                    "Source and target cannot be null");
 
             // add cookie interceptor and remove creds from URI if required
             super.source = super.addCookieInterceptorIfRequired(super.source);
