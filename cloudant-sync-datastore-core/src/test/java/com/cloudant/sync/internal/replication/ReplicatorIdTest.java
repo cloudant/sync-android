@@ -14,13 +14,16 @@
 
 package com.cloudant.sync.internal.replication;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.cloudant.common.CollectionFactory;
+import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentStore;
+import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.replication.PullFilter;
 import com.cloudant.sync.replication.ReplicatorBuilder;
-import com.cloudant.sync.util.TestUtils;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,19 +36,18 @@ import java.net.URI;
  */
 public class ReplicatorIdTest {
 
-    String testDir;
-    DocumentStore documentStore;
+    DocumentStore mockDocumentStore;
 
     @Before
-    public void before() throws Exception {
-        testDir = TestUtils.createTempTestingDir(this.getClass().getName());
-        documentStore = DocumentStore.getInstance(new File(testDir));
-    }
-
-    @After
-    public void after() throws Exception {
-        documentStore.close();
-        TestUtils.deleteTempTestingDir(testDir);
+    public void before() {
+        mockDocumentStore = mock(DocumentStore.class);
+        // we have to mock DatabaseImpl because of a down-cast in the call to the DatastoreWrapper
+        // constructor
+        Database mockDatabase = mock(DatabaseImpl.class);
+        when(mockDocumentStore.database()).thenReturn(mockDatabase);
+        // the value of getPath() doesn't have to be valid, it just needs to be non-null to satisfy
+        // {Pull,Push}Strategy constructors when generating replicatorName
+        when(mockDatabase.getPath()).thenReturn(new File("/abc"));
     }
 
     // source/target switched, so ids should be different
@@ -53,11 +55,11 @@ public class ReplicatorIdTest {
     public void pullNotEqualToPush() throws Exception {
         PullStrategy pull = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
-                ("http://default-host/default-database")).to(documentStore).build
+                ("http://default-host/default-database")).to(mockDocumentStore).build
                         ()).strategy;
         PushStrategy push = (PushStrategy) ((ReplicatorImpl) ReplicatorBuilder.push()
                 .to(new URI
-                ("http://default-host/default-database")).from(documentStore)
+                ("http://default-host/default-database")).from(mockDocumentStore)
                 .build()).strategy;
 
         Assert.assertNotEquals(pull.getReplicationId(),
@@ -69,11 +71,11 @@ public class ReplicatorIdTest {
     public void pullsEqual() throws Exception {
         PullStrategy pull1 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
-                ("http://default-host/default-database")).to(documentStore).build
+                ("http://default-host/default-database")).to(mockDocumentStore).build
                         ()).strategy;
         PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
-                ("http://default-host/default-database")).to(documentStore).build
+                ("http://default-host/default-database")).to(mockDocumentStore).build
                         ()).strategy;
 
         Assert.assertEquals(pull1.getReplicationId(),
@@ -85,11 +87,11 @@ public class ReplicatorIdTest {
     public void pushesEqual() throws Exception {
         PushStrategy push1 = (PushStrategy) ((ReplicatorImpl) ReplicatorBuilder.push()
                 .to(new URI
-                ("http://default-host/default-database")).from(documentStore)
+                ("http://default-host/default-database")).from(mockDocumentStore)
                 .build()).strategy;
         PushStrategy push2 = (PushStrategy) ((ReplicatorImpl) ReplicatorBuilder.push()
                 .to(new URI
-                ("http://default-host/default-database")).from(documentStore)
+                ("http://default-host/default-database")).from(mockDocumentStore)
                 .build()).strategy;
         Assert.assertEquals(push1.getReplicationId(),
                 push2.getReplicationId());
@@ -100,11 +102,11 @@ public class ReplicatorIdTest {
     public void pushesDifferingTargetNotEqual() throws Exception {
         PushStrategy push1 = (PushStrategy) ((ReplicatorImpl) ReplicatorBuilder.push()
                 .to(new URI
-                ("http://a-host/a-database")).from(documentStore).build())
+                ("http://a-host/a-database")).from(mockDocumentStore).build())
                 .strategy;
         PushStrategy push2 = (PushStrategy) ((ReplicatorImpl) ReplicatorBuilder.push()
                 .to(new URI
-                ("http://another-host/another-database")).from(documentStore)
+                ("http://another-host/another-database")).from(mockDocumentStore)
                 .build()).strategy;
 
         Assert.assertNotEquals(push1.getReplicationId(),
@@ -116,11 +118,11 @@ public class ReplicatorIdTest {
     public void pullsDifferingSourceNotEqual() throws Exception {
         PullStrategy pull1 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
-                ("http://a-host/a-database")).to(documentStore).build())
+                ("http://a-host/a-database")).to(mockDocumentStore).build())
                 .strategy;
         PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
-                ("http://another-host/another-database")).to(documentStore).build
+                ("http://another-host/another-database")).to(mockDocumentStore).build
                         ()).strategy;
 
         Assert.assertNotEquals(pull1.getReplicationId(),
@@ -132,11 +134,11 @@ public class ReplicatorIdTest {
     public void pullWithFilterNotEqual() throws Exception {
         PullStrategy pull1 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
-                ("http://default-host/default-database")).to(documentStore).build
+                ("http://default-host/default-database")).to(mockDocumentStore).build
                         ()).strategy;
         PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
-                ("http://default-host/default-database")).to(documentStore)
+                ("http://default-host/default-database")).to(mockDocumentStore)
                 .filter(new PullFilter("animal/by_class",
                 CollectionFactory.MAP.of("class", "mammal"))).build()).strategy;
 
@@ -149,12 +151,12 @@ public class ReplicatorIdTest {
     public void pullWithDifferentFiltersNotEqual() throws Exception {
         PullStrategy pull1 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
-                ("http://default-host/default-database")).to(documentStore)
+                ("http://default-host/default-database")).to(mockDocumentStore)
                 .filter(new PullFilter("animal/by_class",
                 CollectionFactory.MAP.of("class", "mammal"))).build()).strategy;
         PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
-                ("http://default-host/default-database")).to(documentStore)
+                ("http://default-host/default-database")).to(mockDocumentStore)
                 .filter(new PullFilter("animal/by_class",
                 CollectionFactory.MAP.of("class", "bird"))).build()).strategy;
 
