@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.startsWith;
 import com.cloudant.common.CollectionFactory;
 import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
 
 import org.apache.commons.io.IOUtils;
@@ -42,11 +43,6 @@ public class CouchClientBasicTest extends CouchClientTestBase {
 
     // Some of these tests don't use 'client' from the base class and should probably be moved
     // to another class
-
-    @Test
-    public void getJsonHelper_mustNotBeNull() {
-        Assert.assertNotNull(client.jsonHelper);
-    }
 
     @Test
     public void createDb_validDbName_dbMustBeCreated() {
@@ -177,7 +173,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
         InputStream is = client.getDocumentStream(res.getId(), res.getRev());
         try {
-            Map<String, Object> doc = client.jsonHelper.fromJson(new InputStreamReader(is));
+            Map<String, Object> doc = JSONUtils.fromJson(new InputStreamReader(is));
             assertHelloWorldMapObject(res, doc);
         } finally {
             IOUtils.closeQuietly(is);
@@ -254,7 +250,7 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
         InputStream is = client.getDocumentStream(res.getId(), res.getRev());
         try {
-            Map<String, Object> doc = client.jsonHelper.fromJson(new InputStreamReader(is));
+            Map<String, Object> doc = JSONUtils.fromJson(new InputStreamReader(is));
             assertHelloWorldMapObject(res, doc);
         } finally {
             IOUtils.closeQuietly(is);

@@ -24,7 +24,6 @@ import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.http.Http;
 import com.cloudant.http.HttpConnection;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
@@ -42,8 +41,6 @@ import java.util.Map;
 
 
 public class ClientTestUtils {
-
-    private static JSONHelper jsonHelper = new JSONHelper();
 
     public static Response createHelloWorldDoc(CouchClient client) {
         Map<String, Object> doc = getHelloWorldObject();

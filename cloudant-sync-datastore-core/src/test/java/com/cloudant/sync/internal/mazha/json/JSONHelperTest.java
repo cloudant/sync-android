@@ -15,6 +15,7 @@
 package com.cloudant.sync.internal.mazha.json;
 
 import com.cloudant.sync.internal.mazha.Response;
+import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -35,8 +36,6 @@ public class JSONHelperTest {
 
     private static Map<String, Object> expectedJSONMap;
     private static String expectedJson;
-
-    private JSONHelper helper = null;
 
 
     @BeforeClass
@@ -99,16 +98,11 @@ public class JSONHelperTest {
 
     }
 
-    @Before
-    public void setUp(){
-        helper = new JSONHelper();
-    }
-
 
 
     @Test
     public void testHashMapToJSONString(){
-        String jsonString = helper.toJson(expectedJSONMap);
+        String jsonString = JSONUtils.toJson(expectedJSONMap);
         Assert.assertEquals("JSON Strings not the same",expectedJson,jsonString);
 
     }
@@ -119,7 +113,7 @@ public class JSONHelperTest {
     {
         File fixture = TestUtils.loadFixture("fixture/json_helper.json");
         FileReader fr = new FileReader(fixture);
-        Map<String, Object> objectHashMap = helper.fromJson(fr);
+        Map<String, Object> objectHashMap = JSONUtils.fromJson(fr);
 
         Assert.assertTrue("Map read is not equal to expected map",
                 expectedJSONMap.equals(objectHashMap));
@@ -132,7 +126,7 @@ public class JSONHelperTest {
 
         File fixture = TestUtils.loadFixture("fixture/json_helper_response.json");
         FileReader fr = new FileReader(fixture);
-        Response res = helper.fromJson(fr, Response.class);
+        Response res = JSONUtils.fromJson(fr, Response.class);
         Assert.assertTrue("Response should have been okay -> true", res.getOk());
         Assert.assertEquals("Response should have Id of myId","myId", res.getId());
         Assert.assertEquals("Response should have rev of 1-IPromiseIamARevision",
@@ -149,7 +143,7 @@ public class JSONHelperTest {
         //Note json in helper json is partial, it only contains an array of reponses
         File fixture = TestUtils.loadFixture("fixture/json_helper_response_list.json");
         FileReader fr = new FileReader(fixture);
-        List<Response> responses = helper.fromJson(fr, new TypeReference<List<Response>>() {});
+        List<Response> responses = JSONUtils.fromJson(fr, new TypeReference<List<Response>>() {});
 
         Assert.assertEquals("Number of responses is incorrect", 2, responses.size());
         Response res = responses.get(0);
