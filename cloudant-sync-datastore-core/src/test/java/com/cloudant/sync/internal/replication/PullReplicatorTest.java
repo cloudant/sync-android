@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -267,6 +268,30 @@ public class PullReplicatorTest extends ReplicationTestBase {
         );
         assertCookieInterceptorPresent(p, "name=" + encodedUsername + "&password=" +
                 encodedPassword);
+    }
+    
+    @Test(expected = IllegalStateException.class)
+    public void replicatorBuilderNoSource() {
+        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
+                from(null).
+                to(documentStore);
+        p.build();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void replicatorBuilderNoTarget() throws URISyntaxException {
+        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
+                from(new URI("http://localhost/abc")).
+                to(null);
+        p.build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void replicatorBuilderUnknownProtocol() throws URISyntaxException {
+        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
+                from(new URI("gopher://localhost/abc")).
+                to(documentStore);
+        p.build();
     }
 
 }
