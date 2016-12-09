@@ -12,7 +12,7 @@
  * and limitations under the License.
  */
 
-package com.cloudant.sync.replication;
+package com.cloudant.sync.internal.replication;
 
 
 import static org.mockito.Matchers.anyInt;
@@ -21,14 +21,14 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 
-import com.cloudant.mazha.ChangesResult;
-import com.cloudant.mazha.CouchClient;
-import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.datastore.DocumentRevisionTree;
+
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
+import com.cloudant.sync.internal.mazha.ChangesResult;
+import com.cloudant.sync.internal.mazha.CouchClient;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
@@ -81,7 +81,7 @@ public class MissingRevsReplicationTest extends ReplicationTestBase {
         // Do the pull replication
         pull();
         // Validate the document was created at the correct rev
-        DocumentRevision rev = datastore.getDocument("testdoc");
+        DocumentRevision rev = datastore.read("testdoc");
         Assert.assertNotNull("The document should be present", rev);
         Assert.assertEquals("The local revision should be the third generation",
                 c.getRevision(),
