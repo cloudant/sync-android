@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
 @Category(RequireRunningCouchDB.class)
@@ -364,4 +365,29 @@ public class PushReplicatorTest extends ReplicationTestBase {
         );
         assertCookieInterceptorPresent(p, "name="+encodedUsername+"&password=" + encodedPassword);
     }
+
+    @Test(expected = IllegalStateException.class)
+    public void replicatorBuilderNoSource() throws URISyntaxException {
+        ReplicatorBuilder.Push p = ReplicatorBuilder.push().
+                from(null).
+                to(new URI("http://localhost/abc"));
+        p.build();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void replicatorBuilderNoTarget() {
+        ReplicatorBuilder.Push p = ReplicatorBuilder.push().
+                from(documentStore).
+                to(null);
+        p.build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void replicatorBuilderUnknownProtocol() throws URISyntaxException {
+        ReplicatorBuilder.Push p = ReplicatorBuilder.push().
+                from(documentStore).
+                to(new URI("gopher://localhost/abc"));
+        p.build();
+    }
+
 }
