@@ -26,6 +26,7 @@ import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.InvalidDocumentException;
 import com.cloudant.sync.documentstore.LocalDocument;
+import com.cloudant.sync.internal.documentstore.callables.GetDocumentsWithInternalIdsCallable;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
@@ -450,7 +451,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         List<Long> ids = new ArrayList<Long>();
 
         {
-            List<? extends DocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
+            List<? extends DocumentRevision> docs = datastore.runOnDbQueue(new GetDocumentsWithInternalIdsCallable(ids, null, null)).get();
             Assert.assertEquals(0, docs.size());
         }
     }
@@ -466,7 +467,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         ids.add(101L);
 
         {
-            List<? extends DocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
+            List<? extends DocumentRevision> docs = datastore.runOnDbQueue(new GetDocumentsWithInternalIdsCallable(ids, null, null)).get();
             Assert.assertEquals(2, docs.size());
             Assert.assertEquals(dbObjects[0].getId(), docs.get(0).getId());
             Assert.assertEquals(dbObjects[1].getId(), docs.get(1).getId());
@@ -504,9 +505,9 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         };
         for (int[] test : tests) {
             int fromIndex = test[0], toIndex = test[0]+test[1];
-            List<InternalDocumentRevision> docs = datastore.getDocumentsWithInternalIds(
-                internal_ids.subList(fromIndex, toIndex)
-            );
+            List<? extends DocumentRevision> docs = datastore.runOnDbQueue(new
+                    GetDocumentsWithInternalIdsCallable(internal_ids.subList(fromIndex, toIndex),
+                    null, null)).get();
             Assert.assertEquals(test[1], docs.size());
         }
     }
@@ -521,7 +522,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         ids.add(102L);
 
         {
-            List<InternalDocumentRevision> docs = datastore.getDocumentsWithInternalIds(ids);
+            List<? extends DocumentRevision> docs = datastore.runOnDbQueue(new GetDocumentsWithInternalIdsCallable(ids, null, null)).get();
             Assert.assertEquals(0, docs.size());
         }
     }
