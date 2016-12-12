@@ -239,4 +239,31 @@ public class PullReplicatorTest extends ReplicationTestBase {
        assertCookieInterceptorPresent(p, "name=%F0%9F%8D%B6&password=%F0%9F%8D%B6");
     }
 
+    /**
+     * Test that a username and password combination where both parts contain a series of URI
+     * reserved and other percent encoded characters is correctly encoded and not double encoded
+     * after going through the ReplicatorBuilder and CookieInterceptor.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void replicatorBuilderAddsCookieInterceptorCredsPercentEncoded() throws Exception {
+        String encodedUsername = "user" + PERCENT_ENCODED_URI_CHARS;
+        String encodedPassword = "password" + PERCENT_ENCODED_URI_CHARS;
+        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
+                from(new URI("http://" + encodedUsername + ":" + encodedPassword +
+                        "@some-host/path%2Fsome-path-日本")).
+                to(datastore);
+        ReplicatorImpl r = (ReplicatorImpl) p.build();
+        // check that user/pass has been removed
+        Assert.assertEquals("http://some-host:80/path%2Fsome-path-日本",
+                (((CouchClientWrapper) (((PullStrategy) r.strategy).sourceDb)).
+                        getCouchClient().
+                        getRootUri()).
+                        toString()
+        );
+        assertCookieInterceptorPresent(p, "name=" + encodedUsername + "&password=" +
+                encodedPassword);
+    }
+
 }

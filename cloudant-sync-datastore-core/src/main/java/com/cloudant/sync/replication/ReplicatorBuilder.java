@@ -14,14 +14,16 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
+import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.http.internal.interceptors.UserAgentInterceptor;
 import com.cloudant.sync.datastore.Datastore;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -68,7 +70,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         if (uri.getUserInfo() != null) {
-            String[] parts = uri.getUserInfo().split(":");
+            String[] parts = uri.getRawUserInfo().split(":");
             if (parts.length == 2) {
 
                 String path = uri.getRawPath();
@@ -90,9 +92,18 @@ public abstract class ReplicatorBuilder<S, T, E> {
                 }
 
 
-                CookieInterceptor ci = new CookieInterceptor(parts[0], parts[1], baseURI.toString());
-                requestInterceptors.add(ci);
-                responseInterceptors.add(ci);
+                try {
+                    // Decode the creds that came from the URI since they will already have been
+                    // encoded
+                    CookieInterceptor ci = new CookieInterceptor(URLDecoder.decode(parts[0],
+                            "UTF-8"), URLDecoder.decode(parts[1], "UTF-8"), baseURI.toString());
+
+                    requestInterceptors.add(ci);
+                    responseInterceptors.add(ci);
+                } catch (UnsupportedEncodingException e) {
+                    // Should never happen, UTF-8 is required in JVM
+                    throw new RuntimeException(e);
+                }
             }
         }
 
