@@ -14,8 +14,6 @@
 
 package com.cloudant.todo;
 
-import com.cloudant.sync.datastore.ConflictException;
-
 import java.net.URISyntaxException;
 import java.util.List;
 
@@ -40,6 +38,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.cloudant.sync.documentstore.ConflictException;
+import com.cloudant.sync.documentstore.DocumentNotFoundException;
+import com.cloudant.sync.documentstore.DocumentStoreException;
 
 public class TodoActivity
         extends ListActivity
@@ -112,9 +114,13 @@ public class TodoActivity
     }
 
     private void reloadTasksFromModel() {
-        List<Task> tasks = this.sTasks.allTasks();
-        this.mTaskAdapter = new TaskAdapter(this, tasks);
-        this.setListAdapter(this.mTaskAdapter);
+        try {
+            List<Task> tasks = this.sTasks.allTasks();
+            this.mTaskAdapter = new TaskAdapter(this, tasks);
+            this.setListAdapter(this.mTaskAdapter);
+        } catch (DocumentStoreException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void createNewTask(String desc) {
@@ -131,6 +137,8 @@ public class TodoActivity
             mTaskAdapter.set(position, t);
         } catch (ConflictException e) {
             throw new RuntimeException(e);
+        } catch (DocumentStoreException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -143,6 +151,10 @@ public class TodoActivity
                     "Deleted item : " + t.getDescription(),
                     Toast.LENGTH_SHORT).show();
         } catch (ConflictException e) {
+            throw new RuntimeException(e);
+        } catch (DocumentNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (DocumentStoreException e) {
             throw new RuntimeException(e);
         }
     }

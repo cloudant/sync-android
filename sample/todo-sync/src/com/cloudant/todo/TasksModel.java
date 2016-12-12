@@ -21,13 +21,14 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.sync.datastore.DatastoreNotCreatedException;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.documentstore.ConflictException;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
+import com.cloudant.sync.documentstore.DocumentException;
+import com.cloudant.sync.documentstore.DocumentNotFoundException;
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.DocumentStore;
+import com.cloudant.sync.documentstore.DocumentStoreException;
+import com.cloudant.sync.documentstore.DocumentStoreNotOpenedException;
 import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.event.notifications.ReplicationCompleted;
 import com.cloudant.sync.event.notifications.ReplicationErrored;
@@ -51,7 +52,7 @@ class TasksModel {
     private static final String DATASTORE_MANGER_DIR = "data";
     private static final String TASKS_DATASTORE_NAME = "tasks";
 
-    private Datastore mDatastore;
+    private DocumentStore mDatastore;
 
     private Replicator mPushReplicator;
     private Replicator mPullReplicator;
@@ -70,11 +71,11 @@ class TasksModel {
                 DATASTORE_MANGER_DIR,
                 Context.MODE_PRIVATE
         );
-        DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
+
         try {
-            this.mDatastore = manager.openDatastore(TASKS_DATASTORE_NAME);
-        } catch (DatastoreNotCreatedException dnce) {
-            Log.e(LOG_TAG, "Unable to open Datastore", dnce);
+            this.mDatastore = DocumentStore.getInstance(new File(path, TASKS_DATASTORE_NAME));
+        } catch (DocumentStoreNotOpenedException e) {
+            Log.e(LOG_TAG, "Unable to open Datastore", e);
         }
 
         Log.d(LOG_TAG, "Set up database at " + path.getAbsolutePath());
@@ -118,9 +119,11 @@ class TasksModel {
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(DocumentBodyFactory.create(task.asMap()));
         try {
-            DocumentRevision created = this.mDatastore.createDocumentFromRevision(rev);
+            DocumentRevision created = this.mDatastore.database().create(rev);
             return Task.fromRevision(created);
         } catch (DocumentException de) {
+            return null;
+        } catch (DocumentStoreException de) {
             return null;
         }
     }
@@ -131,12 +134,13 @@ class TasksModel {
      * @return the updated revision of the Task
      * @throws ConflictException if the task passed in has a rev which doesn't
      *      match the current rev in the datastore.
+     * @throws DocumentStoreException if there was an error updating the rev for this task
      */
-    public Task updateDocument(Task task) throws ConflictException {
+    public Task updateDocument(Task task) throws ConflictException, DocumentStoreException {
         DocumentRevision rev = task.getDocumentRevision();
         rev.setBody(DocumentBodyFactory.create(task.asMap()));
         try {
-            DocumentRevision updated = this.mDatastore.updateDocumentFromRevision(rev);
+            DocumentRevision updated = this.mDatastore.database().update(rev);
             return Task.fromRevision(updated);
         } catch (DocumentException de) {
             return null;
@@ -148,17 +152,19 @@ class TasksModel {
      * @param task task to delete
      * @throws ConflictException if the task passed in has a rev which doesn't
      *      match the current rev in the datastore.
+     * @throws DocumentNotFoundException if the rev for this task does not exist
+     * @throws DocumentStoreException if there was an error deleting the rev for this task
      */
-    public void deleteDocument(Task task) throws ConflictException {
-        this.mDatastore.deleteDocumentFromRevision(task.getDocumentRevision());
+    public void deleteDocument(Task task) throws ConflictException, DocumentNotFoundException, DocumentStoreException {
+        this.mDatastore.database().delete(task.getDocumentRevision());
     }
 
     /**
      * <p>Returns all {@code Task} documents in the datastore.</p>
      */
-    public List<Task> allTasks() {
-        int nDocs = this.mDatastore.getDocumentCount();
-        List<DocumentRevision> all = this.mDatastore.getAllDocuments(0, nDocs, true);
+    public List<Task> allTasks() throws DocumentStoreException {
+        int nDocs = this.mDatastore.database().getDocumentCount();
+        List<DocumentRevision> all = this.mDatastore.database().read(0, nDocs, true);
         List<Task> tasks = new ArrayList<Task>();
 
         // Filter all documents down to those of type Task.
@@ -291,7 +297,7 @@ class TasksModel {
      */
     @Subscribe
     public void error(ReplicationErrored re) {
-        Log.e(LOG_TAG, "Replication error:", re.errorInfo.getException());
+        Log.e(LOG_TAG, "Replication error:", re.errorInfo);
         mHandler.post(new Runnable() {
             @Override
             public void run() {
