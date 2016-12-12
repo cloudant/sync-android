@@ -239,4 +239,25 @@ public class PullReplicatorTest extends ReplicationTestBase {
        assertCookieInterceptorPresent(p, "name=%F0%9F%8D%B6&password=%F0%9F%8D%B6");
     }
 
+    @Test
+    public void replicatorBuilderAddsCookieInterceptorSpecialCreds() throws Exception {
+        String encodedUsername = "user%3B%2F%3F%3A%40%3D%26%3C%3E%23%25%7B%7D%7C%5C%5E%7E%5B%5D" +
+                "+%C2%A9%F0%9F%94%92";
+        String encodedPassword = "password%3B%2F%3F%3A%40%3D%26%3C%3E%23%25%7B%7D%7C%5C%5E%7E%5B" +
+                "%5D+%C2%A9%F0%9F%94%92";
+        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
+                from(new URI("http://" + encodedUsername + ":" + encodedPassword +
+                        "@some-host/path%2Fsome-path-日本")).
+                to(datastore);
+        ReplicatorImpl r = (ReplicatorImpl) p.build();
+        // check that user/pass has been removed
+        Assert.assertEquals("http://some-host:80/path%2Fsome-path-日本",
+                (((CouchClientWrapper) (((PullStrategy) r.strategy).sourceDb)).
+                        getCouchClient().
+                        getRootUri()).
+                        toString()
+        );
+        assertCookieInterceptorPresent(p, "name="+encodedUsername+"&password=" + encodedPassword);
+    }
+
 }
