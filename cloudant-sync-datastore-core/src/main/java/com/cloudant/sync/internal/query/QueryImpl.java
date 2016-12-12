@@ -16,6 +16,7 @@ package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.encryption.KeyProvider;
+import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.documentstore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
@@ -137,15 +138,13 @@ public class QueryImpl implements Query {
      *  @return Map of indexes in the database.
      */
     @Override
-    public List<Index> listIndexes() {
+    public List<Index> listIndexes() throws QueryException {
         try {
-            return dbQueue.submit(new ListIndexesCallable()).get();
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE,"Failed to list indexes",e);
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            logger.log(Level.SEVERE,"Failed to list indexes",e);
-            throw new RuntimeException(e);
+            return DatabaseImpl.get(dbQueue.submit(new ListIndexesCallable()));
+        }  catch (ExecutionException e) {
+            String msg = "Failed to list indexes";
+            logger.log(Level.SEVERE, msg, e);
+            throw new QueryException(msg, e);
         }
 
     }
