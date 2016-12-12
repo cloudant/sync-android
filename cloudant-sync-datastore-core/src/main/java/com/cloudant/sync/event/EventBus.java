@@ -14,10 +14,14 @@
 
 package com.cloudant.sync.event;
 
+import com.cloudant.sync.event.notifications.Notification;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -46,7 +50,7 @@ public class EventBus {
      *
      * @param event to post to subscribers
      */
-    public void post(Object event) {
+    public void post(Notification event) {
         for (Map.Entry<Object, List<SubscriberMethod>> entry : listeners.entrySet()) {
             for (SubscriberMethod method : entry.getValue()) {
                 if (method.eventTypeToInvokeOn.isInstance(event)) {
@@ -74,11 +78,28 @@ public class EventBus {
      * {@link com.cloudant.sync.event.Subscribe}.
      * </p>
      *
+     * <p>
+     *     The following restrictions are placed on the subscriber instance.
+     * </p>
+     * <ul>
+     *    <li>The class of the subscriber <strong>must</strong> be public</li>
+     *    <li>Methods annotated with <code>@Subscribe</code> <strong>must</strong> be public</li>
+     *    <li>Methods annotated with <code>@Subscribe</code> <strong>must</strong> have exactly <strong>one</strong> parameter</li>
+     * </ul>
+     *
      * @param object the instance that will be notified when an event is posted
+     * @throws IllegalArgumentException if the subscribing class does not adhere to the restrictions listed.
+     *
      */
     public void register(Object object) {
 
         Class<?> listenerClass = object.getClass();
+
+        if(!Modifier.isPublic(listenerClass.getModifiers())){
+            throw new IllegalArgumentException(String.format(Locale.ENGLISH,
+                    "Event Subscriber class %s needs to be public",
+                    listenerClass.getName()));
+        }
 
         List<SubscriberMethod> methods = new ArrayList<SubscriberMethod>();
         // Do loop to traverse the class hierarchy looking for @Subscribe methods. Using
@@ -88,9 +109,28 @@ public class EventBus {
         do {
             for (Method m : listenerClass.getDeclaredMethods()) {
                 if (m.isAnnotationPresent(com.cloudant.sync.event.Subscribe.class)) {
+
+                    if (!Modifier.isPublic(m.getModifiers())){
+                        throw new IllegalArgumentException(String.format(Locale.ENGLISH,
+                                "Subscriber method %s#%s is required to be public",
+                                listenerClass.getName(), m.getName()));
+                    }
+
                     Class[] params = m.getParameterTypes();
                     if (params.length == 1) {
+                        if(!Notification.class.isAssignableFrom(params[0])){
+                            throw new IllegalArgumentException(String.format(Locale.ENGLISH,
+                                    "Subscriber method %s#%s parameter is required to be assignable %s",
+                                    listenerClass.getName(),
+                                    m.getName(),
+                                    Notification.class.getCanonicalName()));
+                        }
                         methods.add(new SubscriberMethod(m, params[0]));
+                    } else {
+                        throw new IllegalArgumentException(String.format(Locale.ENGLISH,
+                                "Subscriber method  %s#%s is required to have only 1 parameter",
+                                listenerClass.getName(),
+                                m.getName()));
                     }
                 }
             }
