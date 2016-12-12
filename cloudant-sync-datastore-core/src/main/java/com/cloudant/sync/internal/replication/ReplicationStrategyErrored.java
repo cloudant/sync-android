@@ -15,7 +15,9 @@
 package com.cloudant.sync.internal.replication;
 
 
-class ReplicationStrategyErrored {
+import com.cloudant.sync.event.notifications.Notification;
+
+class ReplicationStrategyErrored implements Notification {
 
     protected ReplicationStrategyErrored(ReplicationStrategy replicationStrategy, Throwable errorInfo) {
         this.replicationStrategy = replicationStrategy;

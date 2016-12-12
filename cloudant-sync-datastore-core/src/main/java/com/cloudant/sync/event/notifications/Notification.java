@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cloudant, Inc. All rights reserved.
+ * Copyright © 2016 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -10,18 +10,13 @@
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
+ *
  */
 
-package com.cloudant.sync.internal.replication;
+package com.cloudant.sync.event.notifications;
 
-import com.cloudant.sync.event.notifications.Notification;
-
-class ReplicationStrategyCompleted implements Notification {
-
-    protected ReplicationStrategyCompleted(ReplicationStrategy replicationStrategy) {
-        this.replicationStrategy = replicationStrategy;
-    }
-
-    protected final ReplicationStrategy replicationStrategy;
-    
+/**
+ * Marker interface for events.
+ */
+public interface Notification {
 }

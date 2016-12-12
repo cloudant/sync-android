@@ -27,7 +27,7 @@ import com.cloudant.sync.replication.Replicator;
  *
  * @api_public
  */
-public class ReplicationCompleted {
+public class ReplicationCompleted implements Notification {
 
     public ReplicationCompleted(Replicator replicator,
                                 int documentsReplicated,
