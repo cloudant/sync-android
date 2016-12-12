@@ -28,10 +28,27 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.net.URLEncoder;
 import java.util.List;
 
 public abstract class ReplicationTestBase extends CouchTestBase {
+
+    // A String of all the URI reserved and "unsafe" characters, plus © and an emoji. Encodes to:
+    // %21*%27%28%29%3B%3A%40%26%3D%2B%24%2C%2F%3F%23%5B%5D+%22%25
+    // -.%3C%3E%5C%5E_%60%7B%7C%7D%7E%C2%A9%F0%9F%94%92
+    protected static final String PERCENT_ENCODED_URI_CHARS;
+
+    static {
+        try {
+            PERCENT_ENCODED_URI_CHARS = URLEncoder.encode("!*'();:@&=+$,/?#[] \"%-" +
+                    ".<>\\^_`{|}~©\uD83D\uDD12", "UTF-8");
+
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public String datastoreManagerPath = null;
 
@@ -210,5 +227,4 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         PullStrategy pullStrategy;
         TestStrategyListener listener;
     }
-
 }
