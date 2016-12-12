@@ -250,7 +250,6 @@ public class PullReplicatorTest extends ReplicationTestBase {
     public void replicatorBuilderAddsCookieInterceptorCredsPercentEncoded() throws Exception {
         String encodedUsername = "user" + PERCENT_ENCODED_URI_CHARS;
         String encodedPassword = "password" + PERCENT_ENCODED_URI_CHARS;
-        System.out.println(encodedUsername);
         ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
                 from(new URI("http://" + encodedUsername + ":" + encodedPassword +
                         "@some-host/path%2Fsome-path-日本")).
