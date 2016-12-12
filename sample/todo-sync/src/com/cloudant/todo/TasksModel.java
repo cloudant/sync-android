@@ -52,7 +52,7 @@ class TasksModel {
     private static final String DATASTORE_MANGER_DIR = "data";
     private static final String TASKS_DATASTORE_NAME = "tasks";
 
-    private DocumentStore mDatastore;
+    private DocumentStore mDocumentStore;
 
     private Replicator mPushReplicator;
     private Replicator mPullReplicator;
@@ -73,7 +73,7 @@ class TasksModel {
         );
 
         try {
-            this.mDatastore = DocumentStore.getInstance(new File(path, TASKS_DATASTORE_NAME));
+            this.mDocumentStore = DocumentStore.getInstance(new File(path, TASKS_DATASTORE_NAME));
         } catch (DocumentStoreNotOpenedException e) {
             Log.e(LOG_TAG, "Unable to open Datastore", e);
         }
@@ -119,7 +119,7 @@ class TasksModel {
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(DocumentBodyFactory.create(task.asMap()));
         try {
-            DocumentRevision created = this.mDatastore.database().create(rev);
+            DocumentRevision created = this.mDocumentStore.database().create(rev);
             return Task.fromRevision(created);
         } catch (DocumentException de) {
             return null;
@@ -140,7 +140,7 @@ class TasksModel {
         DocumentRevision rev = task.getDocumentRevision();
         rev.setBody(DocumentBodyFactory.create(task.asMap()));
         try {
-            DocumentRevision updated = this.mDatastore.database().update(rev);
+            DocumentRevision updated = this.mDocumentStore.database().update(rev);
             return Task.fromRevision(updated);
         } catch (DocumentException de) {
             return null;
@@ -156,15 +156,15 @@ class TasksModel {
      * @throws DocumentStoreException if there was an error deleting the rev for this task
      */
     public void deleteDocument(Task task) throws ConflictException, DocumentNotFoundException, DocumentStoreException {
-        this.mDatastore.database().delete(task.getDocumentRevision());
+        this.mDocumentStore.database().delete(task.getDocumentRevision());
     }
 
     /**
      * <p>Returns all {@code Task} documents in the datastore.</p>
      */
     public List<Task> allTasks() throws DocumentStoreException {
-        int nDocs = this.mDatastore.database().getDocumentCount();
-        List<DocumentRevision> all = this.mDatastore.database().read(0, nDocs, true);
+        int nDocs = this.mDocumentStore.database().getDocumentCount();
+        List<DocumentRevision> all = this.mDocumentStore.database().read(0, nDocs, true);
         List<Task> tasks = new ArrayList<Task>();
 
         // Filter all documents down to those of type Task.
@@ -239,8 +239,8 @@ class TasksModel {
         // Set up the new replicator objects
         URI uri = this.createServerURI();
 
-        mPullReplicator = ReplicatorBuilder.pull().to(mDatastore).from(uri).build();
-        mPushReplicator = ReplicatorBuilder.push().from(mDatastore).to(uri).build();
+        mPullReplicator = ReplicatorBuilder.pull().to(mDocumentStore).from(uri).build();
+        mPushReplicator = ReplicatorBuilder.push().from(mDocumentStore).to(uri).build();
 
         mPushReplicator.getEventBus().register(this);
         mPullReplicator.getEventBus().register(this);
