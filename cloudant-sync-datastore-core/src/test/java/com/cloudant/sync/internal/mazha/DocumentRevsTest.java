@@ -14,8 +14,7 @@
 
 package com.cloudant.sync.internal.mazha;
 
-import com.cloudant.sync.internal.mazha.DocumentRevs;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
+import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 
 import org.apache.commons.io.FileUtils;
@@ -31,24 +30,18 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
 public class DocumentRevsTest {
-    JSONHelper jsonHelper;
-
-    @Before
-    public void setUp() {
-        jsonHelper = new JSONHelper();
-    }
 
     @Test(expected = RuntimeException.class)
     public void deserialization_unknownSpecialField() throws IOException {
         String s = FileUtils.readFileToString(TestUtils.loadFixture("fixture" +
                     "/document_revs_with_unknown_special_field.json"));
-        jsonHelper.fromJson(new StringReader(s), DocumentRevs.class);
+        JSONUtils.fromJson(new StringReader(s), DocumentRevs.class);
     }
 
     @Test
     public void deserialization_others() throws IOException {
         String s = FileUtils.readFileToString(TestUtils.loadFixture("fixture/document_revs_others.json"));
-        DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(s), DocumentRevs.class);
+        DocumentRevs documentRevs = JSONUtils.fromJson(new StringReader(s), DocumentRevs.class);
         Map<String, Object> others = documentRevs.getOthers();
         Assert.assertThat(others.keySet(), hasSize(2));
         Assert.assertThat(others.keySet(), hasItems("a", "b"));
@@ -59,7 +52,7 @@ public class DocumentRevsTest {
     @Test
     public void deserialization_withAttachments() throws IOException {
         String s = FileUtils.readFileToString(TestUtils.loadFixture("fixture/document_revs_with_attachments_1.json"));
-        DocumentRevs documentRevs = jsonHelper.fromJson(new StringReader(s), DocumentRevs.class);
+        DocumentRevs documentRevs = JSONUtils.fromJson(new StringReader(s), DocumentRevs.class);
 
         Assert.assertEquals("Reston", documentRevs.getId());
         Assert.assertEquals("5-9d234010f32f593edafc04620f3cf2bd", documentRevs.getRev());

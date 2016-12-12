@@ -28,9 +28,9 @@ import com.cloudant.sync.internal.mazha.ChangesResult;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.mazha.OkOpenRevision;
 import com.cloudant.sync.internal.mazha.OpenRevision;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
 import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.event.Subscribe;
+import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -157,10 +157,9 @@ public class PullStrategyMockTest extends ReplicationTestBase {
         when(mockRemoteDb.changes(null, null, 1000)).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                JSONHelper jsonHelper = new JSONHelper();
                 FileReader fr = new FileReader(TestUtils.loadFixture
                         ("fixture/testReplicationDocWithEmptyId_changes.json"));
-                return jsonHelper.fromJson(fr, ChangesResult.class);
+                return JSONUtils.fromJson(fr, ChangesResult.class);
             }
         });
         when(mockRemoteDb.exists()).thenReturn(true);
@@ -249,9 +248,8 @@ public class PullStrategyMockTest extends ReplicationTestBase {
     }
 
     private List<DocumentRevs> loadOpenRevsResponseFromFixture(String fixturePath) throws Exception{
-        JSONHelper helper = new JSONHelper();
         FileReader fileReader = new FileReader(TestUtils.loadFixture(fixturePath));
-        List<OpenRevision> openRevs = helper.fromJson(fileReader,
+        List<OpenRevision> openRevs = JSONUtils.fromJson(fileReader,
                 new TypeReference<List<OpenRevision>>() {
                 });
 

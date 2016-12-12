@@ -14,11 +14,7 @@
 
 package com.cloudant.sync.internal.mazha;
 
-import com.cloudant.sync.internal.mazha.DocumentRevs;
-import com.cloudant.sync.internal.mazha.MissingOpenRevision;
-import com.cloudant.sync.internal.mazha.OkOpenRevision;
-import com.cloudant.sync.internal.mazha.OpenRevision;
-import com.cloudant.sync.internal.mazha.json.JSONHelper;
+import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.io.FileUtils;
@@ -34,17 +30,10 @@ import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
 public class OpenRevisionTest {
 
-    JSONHelper jsonHelper;
-
-    @Before
-    public void setUp() {
-        jsonHelper = new JSONHelper();
-    }
-
     @Test
     public void deserialization_ok() throws IOException {
         String s = FileUtils.readFileToString(TestUtils.loadFixture("fixture/open_revisions_ok.json"));
-        List<OpenRevision> openRevisionList = jsonHelper.fromJson(
+        List<OpenRevision> openRevisionList = JSONUtils.fromJson(
                 new StringReader(s), new TypeReference<List<OpenRevision>>() {});
         Assert.assertThat(openRevisionList, hasSize(1));
         Assert.assertTrue(openRevisionList.get(0) instanceof OkOpenRevision);
@@ -56,7 +45,7 @@ public class OpenRevisionTest {
     @Test
     public void deserialization_missingRevision() throws IOException {
         String s = FileUtils.readFileToString(TestUtils.loadFixture("fixture/open_revisions_missing.json"));
-        List<OpenRevision> openRevisionList = jsonHelper.fromJson(
+        List<OpenRevision> openRevisionList = JSONUtils.fromJson(
                 new StringReader(s), new TypeReference<List<OpenRevision>>() {
         });
         Assert.assertThat(openRevisionList, hasSize(1));
@@ -68,7 +57,7 @@ public class OpenRevisionTest {
     @Test
     public void deserialization_okAndMissingRevision() throws IOException {
         String s = FileUtils.readFileToString(TestUtils.loadFixture("fixture/open_revisions_ok_and_missing.json"));
-        List<OpenRevision> openRevisionList = jsonHelper.fromJson(
+        List<OpenRevision> openRevisionList = JSONUtils.fromJson(
                 new StringReader(s), new TypeReference<List<OpenRevision>>() {
         });
         Assert.assertThat(openRevisionList, hasSize(2));
@@ -85,7 +74,7 @@ public class OpenRevisionTest {
     @Test
     public void deserialization_manyOpenRevisions() throws IOException {
         String s = FileUtils.readFileToString(TestUtils.loadFixture("fixture/open_revisions_many.json"));
-        List<OpenRevision> openRevisionList = jsonHelper.fromJson(
+        List<OpenRevision> openRevisionList = JSONUtils.fromJson(
                 new StringReader(s), new TypeReference<List<OpenRevision>>() {});
 
         Assert.assertEquals(11, openRevisionList.size());
@@ -96,7 +85,7 @@ public class OpenRevisionTest {
     @Test
     public void deserialization_empty() throws IOException {
         String s = FileUtils.readFileToString(TestUtils.loadFixture("fixture/open_revisions_empty.json"));
-        List<OpenRevision> openRevisionList = jsonHelper.fromJson(
+        List<OpenRevision> openRevisionList = JSONUtils.fromJson(
                 new StringReader(s), new TypeReference<List<OpenRevision>>() {});
         Assert.assertThat(openRevisionList, hasSize(0));
     }
