@@ -18,18 +18,23 @@ import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.common.ValueListMap;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.List;
 import java.util.Map;
 
 public class DatabaseImplRevsDiffTest extends BasicDatastoreTestBase{
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Test
     public void revsDiff_emptyInput_returnEmpty() {
-        Map<String, List<String>> revs =
-                datastore.revsDiff(new ValueListMap<String, String>());
-        Assert.assertTrue(revs.size() == 0);
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("revisions cannot be empty");
+        datastore.revsDiff(new ValueListMap<String, String>());
     }
 
     @Test
