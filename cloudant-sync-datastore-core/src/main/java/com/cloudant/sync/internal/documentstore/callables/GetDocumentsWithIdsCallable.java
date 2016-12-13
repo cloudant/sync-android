@@ -21,6 +21,7 @@ import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.DatabaseUtils;
+import com.cloudant.sync.internal.util.Misc;
 
 import java.util.List;
 
@@ -38,6 +39,8 @@ public class GetDocumentsWithIdsCallable implements SQLCallable<List<DocumentRev
 
     public GetDocumentsWithIdsCallable(List<String> docIds, String attachmentsDir,
                                        AttachmentStreamFactory attachmentStreamFactory) {
+
+        Misc.checkArgument(!docIds.isEmpty(), "docIds list cannot be empty.");
         this.docIds = docIds;
         this.attachmentsDir = attachmentsDir;
         this.attachmentStreamFactory = attachmentStreamFactory;

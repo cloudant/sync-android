@@ -368,6 +368,7 @@ public class DatabaseImpl implements Database {
             DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNull(docIds, "Input document id list");
+        Misc.checkArgument(!docIds.isEmpty(), "Input document id list must contain document ids");
         try {
             return get (queue.submit(new GetDocumentsWithIdsCallable(docIds, attachmentsDir, attachmentStreamFactory)));
         } catch (ExecutionException e) {
@@ -796,10 +797,12 @@ public class DatabaseImpl implements Database {
      * <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
      * @param revisions a Multimap of document id → revision id
      * @return the subset of given the document id/revisions that are already stored in the database
+     * @throws IllegalArgumentException if {@code revisions} is empty.
      */
     public Map<String, List<String>> revsDiff(final Map<String, List<String>> revisions) {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNull(revisions, "Input revisions");
+        Misc.checkArgument(!revisions.isEmpty(), "revisions cannot be empty");
 
         // TODO hoist down queue.submit to just surround the call to RevsDiffBatchCallable
         try {
