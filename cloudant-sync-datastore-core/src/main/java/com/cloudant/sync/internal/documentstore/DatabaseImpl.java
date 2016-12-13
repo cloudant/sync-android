@@ -379,11 +379,11 @@ public class DatabaseImpl implements Database {
 
     public List<String> getPossibleAncestorRevisionIDs(final String docId,
                                                        final String revId,
-                                                       final int limit) {
+                                                       final int limit) throws DocumentStoreException {
         try {
             return get(queue.submit(new GetPossibleAncestorRevisionIdsCallable(docId, revId, limit)));
         } catch (ExecutionException e) {
-            throw new RuntimeException(e);
+            throw new DocumentStoreException(e);
         }
     }
 

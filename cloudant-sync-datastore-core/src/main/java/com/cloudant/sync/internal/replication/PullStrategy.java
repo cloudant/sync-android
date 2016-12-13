@@ -453,7 +453,7 @@ public class PullStrategy implements ReplicationStrategy {
     }
 
     public Iterable<DocumentRevsList> createTask(List<String> ids,
-                                                 Map<String, List<String>> revisions) {
+                                                 Map<String, List<String>> revisions) throws DocumentStoreException {
 
         List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
 
