@@ -294,7 +294,7 @@ public class PullStrategy implements ReplicationStrategy {
     }
 
     private int processOneChangesBatch(ChangesResultWrapper changeFeeds)
-            throws ExecutionException, InterruptedException, DocumentException {
+            throws ExecutionException, InterruptedException, DocumentException, DocumentStoreException {
         String feed = String.format(
                 "Change feed: { last_seq: %s, change size: %s}",
                 changeFeeds.getLastSeq(),
