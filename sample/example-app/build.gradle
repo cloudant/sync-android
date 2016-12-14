@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.0'
+        classpath 'com.android.tools.build:gradle:2.2.3'
     }
 }
 apply plugin: 'com.android.application'
@@ -23,8 +23,8 @@ dependencies {
     compile project(':cloudant-sync-datastore-core')
 
     // needed for PeriodicReplicationReceiver etc
-    compile 'com.android.support:support-v13:23.3.0'
-    compile 'com.android.support:support-v4:21.0.3'
+    compile 'com.android.support:support-v13:25.0.1'
+    compile 'com.android.support:support-v4:25.0.1'
 }
 
 android {
@@ -32,7 +32,7 @@ android {
     defaultConfig {
         minSdkVersion 15
     }
-    buildToolsVersion "21.0"
+    buildToolsVersion "21.1.2"
 
     packagingOptions {
         exclude 'META-INF/LICENSE.txt'
