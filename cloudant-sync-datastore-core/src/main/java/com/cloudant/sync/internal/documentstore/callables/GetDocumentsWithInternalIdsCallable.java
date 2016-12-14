@@ -23,6 +23,7 @@ import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.CollectionUtils;
 import com.cloudant.sync.internal.util.DatabaseUtils;
+import com.cloudant.sync.internal.util.Misc;
 
 import java.io.Serializable;
 import java.util.ArrayList;

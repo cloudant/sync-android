@@ -19,6 +19,7 @@ import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.DatabaseUtils;
+import com.cloudant.sync.internal.util.Misc;
 
 import java.sql.SQLException;
 import java.util.Collection;
@@ -42,6 +43,7 @@ public class RevsDiffBatchCallable implements SQLCallable<Collection<String>> {
      * @param revs  the rev IDs to check
      */
     public RevsDiffBatchCallable(String docId, Collection<String> revs) {
+        Misc.checkArgument(!revs.isEmpty(), "revs must not be empty.");
         this.docId = docId;
         // Consider all missing to start
         this.missingRevs = new HashSet<String>(revs);

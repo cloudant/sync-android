@@ -25,6 +25,7 @@ import com.cloudant.sync.internal.util.DatabaseUtils;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -70,6 +71,11 @@ public class ChangesCallable implements SQLCallable<Changes> {
                 ids.add(cursor.getLong(0));
                 lastSequence = Math.max(lastSequence, cursor.getLong(1));
             }
+
+            if (ids.isEmpty()){
+                return new Changes(lastSequence, Collections.<InternalDocumentRevision>emptyList());
+            }
+
             List<InternalDocumentRevision> results = new GetDocumentsWithInternalIdsCallable(ids, attachmentsDir, attachmentStreamFactory).call(db);
             if (results.size() != ids.size()) {
                 throw new IllegalStateException(String.format(Locale.ENGLISH,
