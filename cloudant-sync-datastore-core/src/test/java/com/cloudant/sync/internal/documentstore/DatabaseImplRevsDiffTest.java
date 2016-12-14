@@ -31,7 +31,8 @@ public class DatabaseImplRevsDiffTest extends BasicDatastoreTestBase{
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void revsDiff_emptyInput_returnEmpty() {
+    public void revsDiff_emptyInput_returnEmpty() throws Exception
+    {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("revisions cannot be empty");
         datastore.revsDiff(new ValueListMap<String, String>());

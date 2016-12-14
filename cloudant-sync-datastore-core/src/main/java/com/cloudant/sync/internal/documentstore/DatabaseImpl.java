@@ -798,8 +798,9 @@ public class DatabaseImpl implements Database {
      * @param revisions a Multimap of document id → revision id
      * @return the subset of given the document id/revisions that are already stored in the database
      * @throws IllegalArgumentException if {@code revisions} is empty.
+     * @throws DocumentStoreException If it was not possible to calculate the difference between revs.
      */
-    public Map<String, List<String>> revsDiff(final Map<String, List<String>> revisions) {
+    public Map<String, List<String>> revsDiff(final Map<String, List<String>> revisions) throws DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNull(revisions, "Input revisions");
         Misc.checkArgument(!revisions.isEmpty(), "revisions cannot be empty");
@@ -808,10 +809,10 @@ public class DatabaseImpl implements Database {
         try {
             return get(queue.submit(new RevsDiffCallable(revisions)));
         } catch (ExecutionException e) {
-            logger.log(Level.SEVERE, "Failed to do revsdiff", e);
+            String message = "Failed to calculate difference in revisions";
+            logger.log(Level.SEVERE, message, e);
+            throw new DocumentStoreException(message, e);
         }
-
-        return null;
     }
 
     @Override
