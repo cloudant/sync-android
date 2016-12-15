@@ -73,7 +73,7 @@ public class DeleteDocumentCallable implements SQLCallable<InternalDocumentRevis
                     prevRevId});
             boolean exists = c.moveToFirst();
             if (!exists) {
-                throw new DocumentNotFoundException();
+                throw new DocumentNotFoundException(docId);
             }
             // now check it's a leaf revision
             String leafQuery = "SELECT " + DatabaseImpl.METADATA_COLS + " FROM revs, docs WHERE " +

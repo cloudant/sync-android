@@ -34,7 +34,7 @@ import java.util.Map;
  *
  * <p>A {@code DocumentRevision} contains all the information for a single document
  * revision, including its ID and revision ID, along with the document's
- * content for this revision as a {@link DocumentBody} object. Clients will
+ * content for this revision as a {@link DocumentBody} object, and its {@link Attachment}s. Clients will
  * typically set only the revision content rather than the metadata
  * explicitly.</p>
  *
@@ -157,8 +157,8 @@ public class DocumentRevision {
      * returns false.
      *
      * @return A "Full" document revision.
-     * @throws DocumentNotFoundException Thrown if the full document cannot be loaded from the
-     * datastore.
+     * @throws DocumentNotFoundException if the full document cannot be loaded from the Database
+     * @throws DocumentStoreException if there was an error reading from the database
      */
     public DocumentRevision toFullRevision() throws DocumentNotFoundException, DocumentStoreException {
         return this;

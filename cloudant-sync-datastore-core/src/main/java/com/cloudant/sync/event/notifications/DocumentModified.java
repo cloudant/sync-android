@@ -17,6 +17,8 @@ package com.cloudant.sync.event.notifications;
 import com.cloudant.sync.documentstore.DocumentRevision;
 
 /**
+ * Generic event for document create/update/delete
+ *
  * @api_public
  */
 public class DocumentModified implements Notification {

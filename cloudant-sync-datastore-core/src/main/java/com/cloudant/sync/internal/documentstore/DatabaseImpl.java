@@ -633,7 +633,7 @@ public class DatabaseImpl implements Database {
      * would not be possible to tell that the two represent the same revision). This is analogous to
      * using the _new_edits false option in CouchDB
      * (see
-     * <a href="https://wiki.apache.org/couchdb/HTTP_Bulk_Document_API#Posting_Existing_Revisions">
+     * <a target="_blank" href="https://wiki.apache.org/couchdb/HTTP_Bulk_Document_API#Posting_Existing_Revisions">
      * the CouchDB wiki</a> for more detail).
      * <p>
      * If the document was successfully inserted, a
@@ -794,7 +794,7 @@ public class DatabaseImpl implements Database {
      * The output is in same format.
      *
      * @see
-     * <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
+     * <a target="_blank" href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
      * @param revisions a Multimap of document id → revision id
      * @return the subset of given the document id/revisions that are already stored in the database
      * @throws IllegalArgumentException if {@code revisions} is empty.

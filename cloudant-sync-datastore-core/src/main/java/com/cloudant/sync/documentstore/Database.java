@@ -27,30 +27,31 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * <p>The Datastore is the core interaction point for create, delete and update
- * operations (CRUD) for within Cloudant Sync.</p>
+ * <p>The Database is the core interaction point for create, read, update, and delete
+ * operations (CRUD) within Cloudant Sync.</p>
  *
- * <p>The Datastore can be viewed as a pool of heterogeneous JSON documents. One
- * datastore can hold many different types of document, unlike tables within a
- * relational model. The datastore exposes a simple key-value model where the key
+ * <p>The Database can be viewed as a pool of heterogeneous JSON documents. One
+ * Database can hold many different types of document, which differs from tables within a
+ * relational model. The Database exposes a simple key-value model where the key
  * is the document ID combined with a (sometimes optional) revision ID.</p>
  *
  * <p>For a more advanced way of querying the Datastore, see the
  * {@link Query} class</p>
  *
  * <p>Each document consists of a set of revisions, hence most methods within
- * this class operating on {@link DocumentRevision} objects, which carry both a
- * document ID and a revision ID. This forms the basis of the MVCC data model,
+ * this class operate on {@link DocumentRevision} objects, which carry both a
+ * document ID and a revision ID. This forms the basis of the
+ * <a target="_blank" href="http://docs.couchdb.org/en/2.0.0/intro/consistency.html?#no-locking">MVCC</a> data
+ * model,
  * used to ensure safe peer-to-peer replication is possible.</p>
  *
  * <p>Each document is formed of a tree of revisions. Replication can create
  * branches in this tree when changes have been made in two or more places to
  * the same document in-between replications. MVCC exposes these branches as
- * conflicted documents. These conflicts should be resolved by user-code, by
- * marking all but one of the leaf nodes of the branches as "deleted", using
- * the {@link Database#delete(DocumentRevision)}
- * method. When the
- * datastore is next replicated with a remote datastore, this fix will be
+ * conflicted documents. These conflicts can be resolved by logic appropriate to your
+ * application, using a {@link ConflictResolver} and the
+ * {@link #resolveConflicts(String, ConflictResolver)} method. When the
+ * database is next replicated with a remote database, this fix will be
  * propagated, thereby resolving the conflicted document across the set of
  * peers.</p>
  *
@@ -62,7 +63,7 @@ import java.util.List;
 public interface Database {
 
     /**
-     * The sequence number of the datastore when no updates have been made,
+     * The sequence number of the Database when no updates have been made,
      * {@value}.
      */
     long SEQUENCE_NUMBER_START = -1l;
@@ -84,9 +85,10 @@ public interface Database {
      * @param documentId ID of document to retrieve.
      * @return {@code DocumentRevision} of the document
      * @throws DocumentNotFoundException if the document specified was not found
-     * @throws DocumentStoreException if there was an error accessing database
+     * @throws DocumentStoreException if there was an error reading from the database
      */
-    DocumentRevision read(String documentId) throws DocumentNotFoundException, DocumentStoreException;
+    DocumentRevision read(String documentId) throws DocumentNotFoundException,
+            DocumentStoreException;
 
     /**
      * <p>Retrieves a given revision of a document.</p>
@@ -103,7 +105,7 @@ public interface Database {
      * @param revisionId Revision of the document
      * @return {@code DocumentRevision} of the document
      * @throws DocumentNotFoundException if the document specified was not found
-     * @throws DocumentStoreException if there was an error reading the document
+     * @throws DocumentStoreException if there was an error reading from the database
      */
     DocumentRevision read(String documentId, String revisionId) throws
             DocumentNotFoundException, DocumentStoreException;
@@ -114,7 +116,7 @@ public interface Database {
      *
      * <p>{@code true} will still be returned if the document is deleted.</p>
      *
-     * @param documentId id of the document
+     * @param documentId ID of the document
      * @param revisionId revision of the document
      * @return {@code true} if specified document's particular revision exists
      *         in the datastore, {@code false} otherwise.
@@ -128,7 +130,7 @@ public interface Database {
      *
      * <p>{@code true} will still be returned if the document is deleted.</p>
      *
-     * @param documentId id of the document
+     * @param documentId ID of the document
      * @return {@code true} if specified document exists
      *         in the datastore, {@code false} otherwise.
      * @throws DocumentStoreException if there was an error reading from the database
@@ -139,7 +141,8 @@ public interface Database {
      * <p>Enumerates the current winning revision for all documents in the
      * datastore.</p>
      *
-     * <p>Logically, this method takes all the documents in either ascending
+     * <p>Logically, this method takes all the documents sorted by internal ID,
+     * in either ascending
      * or descending order, skips all documents up to {@code offset} then
      * returns up to {@code limit} document revisions, stopping either
      * at {@code limit} or when the list of document is exhausted.</p>
@@ -155,10 +158,10 @@ public interface Database {
 
     /**
      * <p>Enumerates the current winning revision for all documents in the
-     * datastore and return a list of their document identifiers.</p>
+     * datastore and return a list of their document IDs.</p>
      *
-     * @return list of {@code String}.
-     * @throws DocumentStoreException if there was an error reading the document IDs
+     * @return list of document IDs
+     * @throws DocumentStoreException if there was an error reading from the database
      */
     List<String> getIds() throws DocumentStoreException;
 
@@ -169,18 +172,17 @@ public interface Database {
      * in the datastore, they will be skipped and there will be no entry for
      * them in the returned list.</p>
      *
-     * @param documentIds list of document id
+     * @param documentIds list of document IDs.
      * @return list of {@code DocumentRevision} objects.
-     * @throws DocumentStoreException if there was an error retrieving the
-     * documents.
+     * @throws DocumentStoreException if there was an error reading from the database.
      */
     List<DocumentRevision> read(List<String> documentIds) throws DocumentStoreException;
 
     /**
-     * <p>Retrieves the datastore's current sequence number.</p>
+     * <p>Retrieves the current sequence number for the Database.</p>
      *
-     * <p>The datastore's sequence number is incremented every time the
-     * content of the datastore is changed. Each document revision within the
+     * <p>The sequence number is incremented every time the
+     * content of the Database is changed. Each document revision within the
      * datastore has an associated sequence number, describing when the change
      * took place.</p>
      *
@@ -190,6 +192,7 @@ public interface Database {
      * sent. Indexing could also use this in a similar manner.</p>
      *
      * @return the last sequence number
+     * @throws DocumentStoreException if there was an error reading from the database.
      */
     long getLastSequence() throws DocumentStoreException;
 
@@ -197,6 +200,7 @@ public interface Database {
      * <p>Return the number of documents in the datastore</p>
      *
      * @return number of non-deleted documents in datastore
+     * @throws DocumentStoreException if there was an error reading from the database.
      */
     int getDocumentCount() throws DocumentStoreException;
 
@@ -210,6 +214,7 @@ public interface Database {
      *              change set sequence number
      * @return list of the documents and last sequence number of the change set
      *      (checkpoint)
+     * @throws DocumentStoreException if there was an error reading from the database.
      */
     Changes changes(long since, int limit) throws DocumentStoreException;
 
@@ -225,7 +230,8 @@ public interface Database {
      * @return Iterable of String over ids of all Documents with
      *         conflicted revisions
      *
-     * @see <a href="http://wiki.apache.org/couchdb/Replication_and_conflicts">Replication and conflicts</a>
+     * @see <a target="_blank" href="http://wiki.apache.org/couchdb/Replication_and_conflicts">Replication and conflicts</a>
+     * @throws DocumentStoreException if there was an error reading from the database.
      */
     Iterator<String> getConflictedIds() throws DocumentStoreException;
 
@@ -238,7 +244,7 @@ public interface Database {
      * @param docId id of Document to resolve conflicts
      * @param resolver the ConflictResolver used to resolve
      *                 conflicts
-     * @throws ConflictException Found new conflicts while
+     * @throws ConflictException If new conflicts were found while
      *         resolving the existing conflicted revision.
      *         This is very likely caused by new conflicted
      *         revision are added while the resolver is
@@ -264,7 +270,7 @@ public interface Database {
      * @throws AttachmentException if there was an error saving any new attachments
      * @throws InvalidDocumentException if the document body was invalid
      * @throws ConflictException if a document with this document id already exists
-     * @throws DocumentStoreException if there was an error creating the document
+     * @throws DocumentStoreException if there was an error reading from or writing to the database
      * @see Database#getEventBus()
      */
     DocumentRevision create(DocumentRevision rev) throws AttachmentException,
@@ -281,11 +287,11 @@ public interface Database {
      * {@link com.cloudant.sync.event.notifications.DocumentUpdated DocumentUpdated}
      * event is posted on the event bus.</p>
      *
-     * @param rev the <code>DocumentRevision</code> to be updated
-     * @return a <code>DocumentRevision</code> - the updated document
-     * @throws ConflictException <code>rev</code> is not a current revision for this document
-     * @throws AttachmentException if there was an error saving the attachments
-     * @throws DocumentStoreException if there was an error updating the document
+     * @param rev the {@link DocumentRevision} to be updated
+     * @return a {@link DocumentRevision} - the updated document
+     * @throws ConflictException if <code>rev</code> is not a current revision for this document
+     * @throws AttachmentException if there was an error saving any new attachments
+     * @throws DocumentStoreException if there was an error reading from or writing to the database
      * @see Database#getEventBus()
      */
     DocumentRevision update(DocumentRevision rev) throws ConflictException,
@@ -314,7 +320,7 @@ public interface Database {
      * @return a <code>DocumentRevision</code> - the deleted or "tombstone" document
      * @throws ConflictException if the <code>sourceRevisionId</code> is not the current revision
      * @throws DocumentNotFoundException if the <code>DocumentRevision</code> was already deleted
-     * @throws DocumentStoreException if there was an error deleting the document
+     * @throws DocumentStoreException if there was an error reading from or writing to the database
      * @see Database#getEventBus()
      * @see Database#resolveConflicts
      */
@@ -329,8 +335,8 @@ public interface Database {
      * delete} on all leaf revisions</p>
      *
      * @param id the ID of the document to delete leaf nodes for
-     * @return a List of a <code>DocumentRevision</code>s - the deleted or "tombstone" documents
-     * @throws DocumentStoreException if there was an error deleting the document
+     * @return a List of a {@link DocumentRevision}s - the deleted or "tombstone" documents
+     * @throws DocumentStoreException if there was an error reading from or writing to the database
      * @see Database#getEventBus()
      * @see Database#delete(DocumentRevision)
      */
@@ -338,15 +344,16 @@ public interface Database {
 
     /**
      * Compacts the SQL database and disk storage by removing the bodies and attachments of obsolete revisions.
+     * @throws DocumentStoreException if there was an error reading from or writing to the database
      */
     void compact() throws DocumentStoreException;
 
     /**
      * <p>Returns the EventBus which this Datastore posts
      * {@link com.cloudant.sync.event.notifications.DocumentModified Document Notification Events} to.</p>
-     * @return the Datastore's EventBus
+     * @return the EventBus
      *
-     * @see <a href="https://github.com/cloudant/sync-android/blob/master/doc/events.md">
+     * @see <a target="_blank" href="https://github.com/cloudant/sync-android/blob/master/doc/events.md">
      *     Events documentation</a>
      */
     EventBus getEventBus();

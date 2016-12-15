@@ -15,6 +15,8 @@
 package com.cloudant.sync.event.notifications;
 
 /**
+ * Generic event for database create/delete
+ *
  * @api_public
  */
 public class DocumentStoreModified implements Notification {

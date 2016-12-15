@@ -248,7 +248,7 @@ public class DocumentStore {
      * {@link DocumentStoreModified Database Notification Events} to.</p>
      * @return the DocumentStore's EventBus
      *
-     * @see <a href="https://github.com/cloudant/sync-android/blob/master/doc/events.md">
+     * @see <a target="_blank" href="https://github.com/cloudant/sync-android/blob/master/doc/events.md">
      *     Events documentation</a>
      */
     public static EventBus getEventBus() {

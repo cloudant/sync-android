@@ -22,17 +22,17 @@ package com.cloudant.sync.documentstore;
 import java.util.Map;
 
 /**
- * Interface for DocumentRevisionTree body. It is logically a JSON document, and physically stored as a blob underneath.
+ * Interface for {@link DocumentRevision} body. It is logically a JSON document, and physically stored as a blob underneath.
  *
  * <p>{@code DocumentBody} performs a simple serialization/de-serialization between
  * {@code Map<String, Object>} and {@code byte[]}.</p>
  *
  * <ol>
  *   <li>Text literals are de-serialised as {@code java.lang.String}.</li>
- *   <li>Integer number are converted to {@code Integer} or {@code Long}if it
+ *   <li>Integer numbers are converted to {@code Integer} or {@code Long} if it
  *   is bigger than {@code Integer.MAX_VALUE} or smaller than
  *   {@code Integer.MIN_VALUE}.</li>
- *   <li>Decimal number are de-serialised as {@code Double}.</li>
+ *   <li>Decimal numbers are de-serialised as {@code Double}.</li>
  * </ol>
  *
  * <p>If there is any exception with serialization/de-serialization, the entire

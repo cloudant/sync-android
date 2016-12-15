@@ -18,6 +18,14 @@ import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentRevision;
 
 /**
+ * <p>
+ * Event for document delete
+ * </p>
+ *
+ * <p>This event is posted by
+ * {@link Database#delete(DocumentRevision)} and {@link Database#delete(String)}.
+ * </p>
+ *
  * @api_public
  */
 public class DocumentDeleted extends DocumentModified {
@@ -25,9 +33,6 @@ public class DocumentDeleted extends DocumentModified {
     /**
      * Event for document delete
      *
-     * <p>This event is posted by
-     * {@link Database#delete delete}.</p>
-     * 
      * @param prevDocument
      *            Previous document revision
      * @param newDocument
