@@ -28,7 +28,7 @@ import com.cloudant.sync.replication.Replicator;
  *
  * @api_public
  */
-public class ReplicationErrored {
+public class ReplicationErrored implements Notification {
 
     public ReplicationErrored(Replicator replicator, Throwable errorInfo) {
         this.replicator = replicator;

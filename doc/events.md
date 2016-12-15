@@ -39,12 +39,15 @@ eventBus.register(dnc);
 ```
 
 Next, add the methods you want to be called when each event occurs and decorate them with the
-`@Subscribe` annotation. These methods must be visible to the EventBus class.
+`@Subscribe` annotation. These methods and the containing class must be marked public. This means
+that anonymous inner classes cannot be used as event subscribers.
 
 Here the `DocumentNotificationClient` is subscribing to the `DocumentCreated` event. Because the
 events are just classes, they obey the type hierarchy. This means that it is also possible to
 subscribe to the generic `DocumentModified` event to be notified of all Created/Deleted/Updated
-events and then use reflection and downcasting if needed.
+events and then use reflection and downcasting if needed, however if you want to listen for multiple 
+event types eg `DocumentCreated` and `DatastoreCreated` using the same subscriber method, the 
+`Notification` marker interface needs to be used instead.
 
 ```java
 public class DocumentNotificationClient {
