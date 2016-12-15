@@ -10,3 +10,7 @@ services:
 
 before_install:
   - export TERM=dumb
+
+cache:
+  directories:
+  - $HOME/.m2
