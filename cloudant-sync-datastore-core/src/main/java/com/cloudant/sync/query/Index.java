@@ -22,7 +22,14 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * This class provides functionality to manage an index
+ * <p>
+ * A class representing a query index.
+ * </p>
+ * <p>
+ * Comprehensive documentation for the query feature can be found in the project
+ * <a target="_blank" href="https://github.com/cloudant/sync-android/blob/master/doc/query.md">
+ * markdown document.</a>
+ * </p>
  *
  * @api_public
  */
@@ -32,12 +39,31 @@ public class Index {
 
     private static final String TEXT_DEFAULT_TOKENIZER = "simple";
 
+    /**
+     * The json field names to index
+     */
     public final List<FieldSort> fieldNames;
 
+    /**
+     * The unique name of the index. The index name is used to look up indexes for certain
+     * {@link Query} methods.
+     */
     public final String indexName;
 
+    /**
+     * The index type: "json" or "text".
+     */
     public final IndexType indexType;
 
+    /**
+     * <p>
+     * For "text" indexes. The SQLite FTS tokenizer to use when searching text.
+     * </p>
+     * <p>
+     * For more information about tokenizers, see
+     * <a target="_blank" href="https://www.sqlite.org/fts3.html#tokenizer">the SQLite documentation.</a>
+     * </p>
+     */
     public final String tokenize;
 
     /**

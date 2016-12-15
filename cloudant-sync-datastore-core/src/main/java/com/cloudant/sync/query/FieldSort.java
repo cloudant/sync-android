@@ -16,10 +16,14 @@ package com.cloudant.sync.query;
 
 /**
  * Created by tomblench on 28/09/2016.
+ */
+
+/**
+ * The {@code FieldSort} object is used to specify field names and a sort direction
+ * (ascending/descending) for index creation and querying.
  *
  * @api_public
  */
-
 public class FieldSort {
 
     public final String field;

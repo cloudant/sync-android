@@ -258,7 +258,7 @@ public abstract class ReplicationService extends Service
 
     /**
      * Set the {@link ReplicationPolicyManager} to be used by this ReplicationService.
-     * @param replicationPolicyManager
+     * @param replicationPolicyManager the {@link ReplicationPolicyManager}
      */
     public void setReplicationPolicyManager(ReplicationPolicyManager replicationPolicyManager) {
         mReplicationPolicyManager = replicationPolicyManager;

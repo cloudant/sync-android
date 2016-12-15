@@ -19,23 +19,23 @@ package com.cloudant.sync.documentstore;
  *
  * @api_public
  */
+
+/**
+ * Thrown when there is an error saving attachments to local storage or reading
+ * attachments from local storage
+ */
 public class AttachmentException extends DocumentException {
 
-    public AttachmentException(){
-
-    }
-
-    public AttachmentException(String message){
+    public AttachmentException(String message) {
         super(message);
     }
 
-    public AttachmentException(Exception causedBy){
-        super(causedBy);
+    public AttachmentException(String message, Throwable cause) {
+        super(message, cause);
     }
 
-    public AttachmentException(String message, Exception causedBy){
-        super(message, causedBy);
+    public AttachmentException(Throwable cause) {
+        super(cause);
     }
-
 
 }

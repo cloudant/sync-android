@@ -692,7 +692,7 @@ public class CouchClient  {
      * If the id has no missing revision, it should not appear in the Map's key set. If all ids
      * do not have missing revisions, the returned Map should be empty map, but never null.
      *
-     * @see <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
+     * @see <a target="_blank" href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
      */
     public Map<String, MissingRevisions> revsDiff(Map<String, Set<String>> revisions) {
         Misc.checkNotNull(revisions,"Input revisions");

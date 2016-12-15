@@ -21,41 +21,38 @@ package com.cloudant.sync.documentstore;
  */
 public class DocumentNotFoundException extends DocumentException {
 
-    private static String createMessage(String docId, String revId){
-        if(revId != null){
-            return String.format("Could not find document with id %s at revision %s",docId,revId);
-        }else {
-            return String.format("Could not find document with id %s",docId);
-        }
+    public DocumentNotFoundException(String message) {
+        super(message);
     }
 
-    public DocumentNotFoundException() {
+    public DocumentNotFoundException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
+    public DocumentNotFoundException(Throwable cause) {
+        super(cause);
     }
 
     /**
      * Creates a document not found exception with the default message
+     *
      * @param docId The document id of the document that could not be found
      * @param revId The rev id of the document that could not be found
      */
-    public DocumentNotFoundException(String docId, String revId){
+    public DocumentNotFoundException(String docId, String revId) {
         super(createMessage(docId, revId));
     }
 
-
-    public DocumentNotFoundException(String s) {
-        super(s);
+    public DocumentNotFoundException(String docId, String revId, Throwable e) {
+        super(createMessage(docId, revId), e);
     }
 
-    public DocumentNotFoundException(String s, Throwable e) {
-        super(s, e);
+    private static String createMessage(String docId, String revId) {
+        if (revId != null) {
+            return String.format("Could not find document with id %s at revision %s", docId, revId);
+        } else {
+            return String.format("Could not find document with id %s", docId);
+        }
     }
 
-    public DocumentNotFoundException(String docId,String revId, Throwable e){
-        super(createMessage(docId, revId),e);
-    }
-
-    public DocumentNotFoundException(Exception casuedBy) {
-        super(casuedBy);
-    }
 }

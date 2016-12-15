@@ -20,8 +20,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * <p>
  * Annotation to indicate a method should be subscribed to events posted to the {@link EventBus} on
  * which the method's owning instance is registered.
+ * </p>
  * <p>
  * Methods using this annotation must have only a single parameter and must be visible to the
  * EventBus (i.e. the owning class and method itself must be public). The parameter type of the
