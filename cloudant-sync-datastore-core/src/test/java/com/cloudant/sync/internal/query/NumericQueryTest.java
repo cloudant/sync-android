@@ -77,8 +77,8 @@ public class NumericQueryTest extends AbstractQueryTestBase {
         Assert.assertEquals(1, qr.size());
     }
 
-    // throws NPE due to validateNotAFloat failing
-    @Test(expected = NullPointerException.class)
+    // throws QueryException due to validateNotAFloat failing
+    @Test(expected = QueryException.class)
     public void testFloatEqual() throws QueryException {
         Map<String, Object> q = new HashMap<String, Object>();
         q.put("float", defaultFloat);
