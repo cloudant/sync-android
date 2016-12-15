@@ -43,14 +43,14 @@ import java.util.List;
 
 
 /**
- * <p>Handles dealing with the datastore and replication.</p>
+ * <p>Handles dealing with the DocumentStore and replication.</p>
  */
 class TasksModel {
 
     private static final String LOG_TAG = "TasksModel";
 
-    private static final String DATASTORE_MANGER_DIR = "data";
-    private static final String TASKS_DATASTORE_NAME = "tasks";
+    private static final String DOCUMENT_STORE_DIR = "data";
+    private static final String DOCUMENT_STORE_NAME = "tasks";
 
     private DocumentStore mDocumentStore;
 
@@ -65,17 +65,17 @@ class TasksModel {
 
         this.mContext = context;
 
-        // Set up our tasks datastore within its own folder in the applications
+        // Set up our tasks DocumentStore within its own folder in the applications
         // data directory.
         File path = this.mContext.getApplicationContext().getDir(
-                DATASTORE_MANGER_DIR,
+                DOCUMENT_STORE_DIR,
                 Context.MODE_PRIVATE
         );
 
         try {
-            this.mDocumentStore = DocumentStore.getInstance(new File(path, TASKS_DATASTORE_NAME));
+            this.mDocumentStore = DocumentStore.getInstance(new File(path, DOCUMENT_STORE_NAME));
         } catch (DocumentStoreNotOpenedException e) {
-            Log.e(LOG_TAG, "Unable to open Datastore", e);
+            Log.e(LOG_TAG, "Unable to open DocumentStore", e);
         }
 
         Log.d(LOG_TAG, "Set up database at " + path.getAbsolutePath());
@@ -129,11 +129,11 @@ class TasksModel {
     }
 
     /**
-     * Updates a Task document within the datastore.
+     * Updates a Task document within the DocumentStore.
      * @param task task to update
      * @return the updated revision of the Task
      * @throws ConflictException if the task passed in has a rev which doesn't
-     *      match the current rev in the datastore.
+     *      match the current rev in the DocumentStore.
      * @throws DocumentStoreException if there was an error updating the rev for this task
      */
     public Task updateDocument(Task task) throws ConflictException, DocumentStoreException {
@@ -148,10 +148,10 @@ class TasksModel {
     }
 
     /**
-     * Deletes a Task document within the datastore.
+     * Deletes a Task document within the DocumentStore.
      * @param task task to delete
      * @throws ConflictException if the task passed in has a rev which doesn't
-     *      match the current rev in the datastore.
+     *      match the current rev in the DocumentStore.
      * @throws DocumentNotFoundException if the rev for this task does not exist
      * @throws DocumentStoreException if there was an error deleting the rev for this task
      */
@@ -160,7 +160,7 @@ class TasksModel {
     }
 
     /**
-     * <p>Returns all {@code Task} documents in the datastore.</p>
+     * <p>Returns all {@code Task} documents in the DocumentStore.</p>
      */
     public List<Task> allTasks() throws DocumentStoreException {
         int nDocs = this.mDocumentStore.database().getDocumentCount();
@@ -229,7 +229,7 @@ class TasksModel {
         // Stop running replications before reloading the replication
         // settings.
         // The stop() method instructs the replicator to stop ongoing
-        // processes, and to stop making changes to the datastore. Therefore,
+        // processes, and to stop making changes to the DocumentStore. Therefore,
         // we don't clear the listeners because their complete() methods
         // still need to be called once the replications have stopped
         // for the UI to be updated correctly with any changes made before
