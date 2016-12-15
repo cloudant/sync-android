@@ -16,6 +16,7 @@ package com.cloudant.sync.internal.replication;
 
 import com.cloudant.common.CouchTestBase;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
+import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.mazha.CouchConfig;
@@ -35,6 +36,10 @@ import java.io.UnsupportedEncodingException;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ReplicationTestBase extends CouchTestBase {
@@ -90,12 +95,22 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         datastoreWrapper = new DatastoreWrapper(datastore);
     }
 
-    protected void createRemoteDB() {
+    protected void createRemoteDB() throws MalformedURLException, URISyntaxException {
         couchConfig = super.getCouchConfig(getDbName());
+
+        List<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList
+                <HttpConnectionResponseInterceptor>();
+        List<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList
+                <HttpConnectionRequestInterceptor>();
+
+        responseInterceptors.addAll(couchConfig.getResponseInterceptors());
+        requestInterceptors.addAll(couchConfig.getRequestInterceptors());
+
+
         remoteDb = new CouchClientWrapper(new CouchClient(
                 couchConfig.getRootUri(),
-                couchConfig.getRequestInterceptors(),
-                couchConfig.getResponseInterceptors()));
+                requestInterceptors,
+                responseInterceptors));
         remoteDb.createDatabase();
         couchClient = remoteDb.getCouchClient();
     }
@@ -126,28 +141,39 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     }
 
     protected ReplicatorBuilder.Push getPushBuilder() {
-        return ReplicatorBuilder.push().
+        ReplicatorBuilder.Push push = ReplicatorBuilder.push().
                 from(this.documentStore).
-                to(this.couchConfig.getRootUri()).
-                addRequestInterceptors(couchConfig.getRequestInterceptors()).
-                addResponseInterceptors(couchConfig.getResponseInterceptors());
+                to(this.couchConfig.getRootUri())
+                .addRequestInterceptors(couchConfig.getRequestInterceptors(false))
+                .addResponseInterceptors(couchConfig.getResponseInterceptors(false));
+        if (couchConfig.getUsername() != null && couchConfig.getPassword() != null) {
+
+            push.username(couchConfig.getUsername())
+                    .password(couchConfig.getPassword());
+        }
+
+        return push;
     }
 
     protected ReplicatorBuilder.Pull getPullBuilder() {
-        return ReplicatorBuilder.pull().
-                to(this.documentStore).
-                from(this.couchConfig.getRootUri()).
-                addRequestInterceptors(couchConfig.getRequestInterceptors()).
-                addResponseInterceptors(couchConfig.getResponseInterceptors());
+        return this.getPullBuilder(null);
+
     }
 
     protected ReplicatorBuilder.Pull getPullBuilder(PullFilter filter) {
-        return ReplicatorBuilder.pull().
-                to(this.documentStore).
+        ReplicatorBuilder.Pull pull = ReplicatorBuilder.pull().
                 from(this.couchConfig.getRootUri()).
-                addRequestInterceptors(couchConfig.getRequestInterceptors()).
-                addResponseInterceptors(couchConfig.getResponseInterceptors()).
-                filter(filter);
+                to(this.documentStore)
+                .filter(filter)
+                .addRequestInterceptors(couchConfig.getRequestInterceptors(false))
+                .addResponseInterceptors(couchConfig.getResponseInterceptors(false));
+        if (couchConfig.getUsername() != null && couchConfig.getPassword() != null) {
+
+            pull.username(couchConfig.getUsername())
+                    .password(couchConfig.getPassword());
+        }
+
+        return pull;
     }
 
     protected PushStrategy getPushStrategy() {

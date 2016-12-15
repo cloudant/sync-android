@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 IBM Corp. All rights reserved.
+ * Copyright © 2015, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -47,6 +47,9 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
     private T target;
     private S source;
+    private String username;
+    private String password;
+
     private int id = ReplicatorImpl.NULL_ID;
     private List<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList
             <HttpConnectionRequestInterceptor>();
@@ -74,18 +77,30 @@ public abstract class ReplicatorBuilder<S, T, E> {
                     "Protocol %s not supported", uriProtocol));
         }
 
-        if (uri.getUserInfo() != null) {
-            String[] parts = uri.getRawUserInfo().split(":");
+        if (uri.getUserInfo() != null && this.username == null && this.password == null) {
+            String[] parts = uri.getUserInfo().split(":");
             if (parts.length == 2) {
+                this.username = parts[0];
+                this.password = parts[1];
+            }
+        }
 
-                String path = uri.getRawPath();
+        if(this.username == null && this.password == null){
+            return uri;
+        }
+
+
+
+        try {
+            String path = uriPath == null ? "" : uriPath;
+
+            if(path.length() > 0) {
                 int index = path.lastIndexOf("/");
                 if (index == path.length() - 1) {
                     // we need to go back one
                     path = path.substring(0, index);
                     index = path.lastIndexOf("/");
                 }
-
                 path = path.substring(0, index);
 
                 URI baseURI;
@@ -110,6 +125,13 @@ public abstract class ReplicatorBuilder<S, T, E> {
                     throw new RuntimeException(e);
                 }
             }
+
+            URI baseURI = new URI(uriProtocol, null, uriHost, uriPort, path, null, null);
+            CookieInterceptor ci = new CookieInterceptor(username, password, baseURI.toString());
+            requestInterceptors.add(ci);
+            responseInterceptors.add(ci);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
         }
 
         try {
@@ -382,6 +404,40 @@ public abstract class ReplicatorBuilder<S, T, E> {
         //noinspection unchecked
         return (E) this;
     }
+
+    /**
+     * Sets the username to use when authenticating with the server.
+     *
+     * Setting the username and password (using the {@link ReplicatorBuilder#password(String)}) method
+     * takes precedence over credentials passed via the URI.
+     * @param username The username to use when authenticating.
+     * @return The current instance of {@link ReplicatorBuilder}
+     * @throws NullPointerException if {@code username} is {@code null}.
+     */
+    public E username(String username) {
+        Misc.checkNotNull(username, "username");
+        this.username = username;
+        //noinspection unchecked
+        return (E) this;
+    }
+
+    /**
+     * Sets the password to use when authenticating with the server.
+     *
+     * Setting the username (using the {@link ReplicatorBuilder#username(String)}) and password method
+     * takes precedence over credentials passed via the URI.
+     *
+     * @param password The password to use when authenticating.
+     * @return The current instance of {@link ReplicatorBuilder}
+     * @throws NullPointerException if {@code password} is {@code null}.
+     */
+    public E password(String password) {
+        Misc.checkNotNull(password, "password");
+        this.password = password;
+        //noinspection unchecked
+        return (E) this;
+    }
+
 
     /**
      * Builds a replicator by calling {@link #build()} and then {@link Replicator#start()}

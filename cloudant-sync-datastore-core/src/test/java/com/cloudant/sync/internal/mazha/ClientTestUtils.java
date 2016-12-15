@@ -215,8 +215,10 @@ public class ClientTestUtils {
         }
     }
 
-    public static List<String> getRemoteRevisionIDs(URI uri) throws Exception{
+    public static List<String> getRemoteRevisionIDs(URI uri, CouchConfig config) throws Exception{
         HttpConnection connection = Http.GET(uri);
+        connection.requestInterceptors.addAll(config.getRequestInterceptors());
+        connection.responseInterceptors.addAll(config.getResponseInterceptors());
         InputStream in = connection.execute().responseAsInputStream();
 
         JSONObject jsonObject = new JSONObject(new JSONTokener(IOUtils.toString(in)));
