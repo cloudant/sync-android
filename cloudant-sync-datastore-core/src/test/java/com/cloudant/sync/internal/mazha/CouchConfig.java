@@ -20,10 +20,15 @@ package com.cloudant.sync.internal.mazha;
 
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
+import com.cloudant.http.interceptors.CookieInterceptor;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.logging.Logger;
 
 public class CouchConfig {
 
@@ -34,25 +39,90 @@ public class CouchConfig {
     // a reverse proxy
     private URI rootUri;
 
+    private String username;
+
+    private String password;
+
     private List<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList
             <HttpConnectionRequestInterceptor>();
     private List<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList
             <HttpConnectionResponseInterceptor>();
 
     public CouchConfig(URI rootUri) {
-        this.rootUri = rootUri;
+        this(rootUri,
+                Collections.<HttpConnectionRequestInterceptor>emptyList(),
+                Collections.<HttpConnectionResponseInterceptor>emptyList(),
+                null,
+                null);
     }
 
     public CouchConfig(URI rootUri,
                        List<HttpConnectionRequestInterceptor> requestInterceptors,
-                       List<HttpConnectionResponseInterceptor> responseInterceptors) {
+                       List<HttpConnectionResponseInterceptor> responseInterceptors,
+                       String username,
+                       String password) {
         this.rootUri = rootUri;
         this.requestInterceptors = requestInterceptors;
         this.responseInterceptors = responseInterceptors;
+        this.username = username;
+        this.password = password;
+
+    }
+
+
+    public List<HttpConnectionRequestInterceptor> getRequestInterceptors(boolean includeCookie) {
+        CookieInterceptor cookieInterceptor = buildCookieInterceptor();
+        if (includeCookie && cookieInterceptor != null) {
+            List<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList
+                    <HttpConnectionRequestInterceptor>();
+            requestInterceptors.addAll(this.requestInterceptors);
+            requestInterceptors.add(cookieInterceptor);
+            return requestInterceptors;
+        }
+        return requestInterceptors;
+    }
+
+    public List<HttpConnectionResponseInterceptor> getResponseInterceptors(boolean includeCookie) {
+        CookieInterceptor cookieInterceptor = buildCookieInterceptor();
+        if (includeCookie && cookieInterceptor != null) {
+            List<HttpConnectionResponseInterceptor> requestInterceptors = new ArrayList
+                    <HttpConnectionResponseInterceptor>();
+            requestInterceptors.addAll(this.responseInterceptors);
+            requestInterceptors.add(cookieInterceptor);
+            return requestInterceptors;
+        }
+        return responseInterceptors;
+    }
+
+    private CookieInterceptor buildCookieInterceptor() {
+        if (username != null && password != null) {
+            String path = rootUri.getRawPath() == null ? "" : rootUri.getRawPath();
+
+            if (path.length() > 0) {
+                int index = path.lastIndexOf("/");
+                if (index == path.length() - 1) {
+                    // we need to go back one
+                    path = path.substring(0, index);
+                    index = path.lastIndexOf("/");
+                }
+                path = path.substring(0, index);
+            }
+
+            URI baseURI;
+            try {
+                baseURI = new URI(rootUri.getScheme(), null, rootUri.getHost(), rootUri.getPort()
+                        , path, null, null);
+                Logger.getLogger(this.getClass().getCanonicalName()).info(String.format(Locale.ENGLISH, "Cookie info: %s", baseURI));
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+            return new CookieInterceptor(username, password, baseURI.toString());
+        }
+        return null;
     }
 
     public List<HttpConnectionRequestInterceptor> getRequestInterceptors() {
-        return requestInterceptors;
+        return this.getRequestInterceptors(true);
     }
 
     public void setRequestInterceptors(List<HttpConnectionRequestInterceptor> requestInterceptors) {
@@ -60,7 +130,7 @@ public class CouchConfig {
     }
 
     public List<HttpConnectionResponseInterceptor> getResponseInterceptors() {
-        return responseInterceptors;
+        return this.getResponseInterceptors(true);
     }
 
     public void setResponseInterceptors(List<HttpConnectionResponseInterceptor>
@@ -71,4 +141,21 @@ public class CouchConfig {
     public URI getRootUri() {
         return rootUri;
     }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
 }

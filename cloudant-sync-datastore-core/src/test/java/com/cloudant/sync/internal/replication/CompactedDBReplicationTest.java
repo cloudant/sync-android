@@ -20,7 +20,6 @@ import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.mazha.ClientTestUtils;
 import com.cloudant.sync.internal.mazha.CouchDbInfo;
 import com.cloudant.sync.internal.mazha.Response;
-import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
 import com.cloudant.sync.internal.util.AbstractTreeNode;
 
@@ -92,7 +91,7 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
 
         URI getURI = new URI(couchClient.getRootUri().toString() + "/" + documentName + "?revs_info=true");
 
-        List<String> remoteRevs = ClientTestUtils.getRemoteRevisionIDs(getURI);
+        List<String> remoteRevs = ClientTestUtils.getRemoteRevisionIDs(getURI, getCouchConfig(this.getDbName()));
         List<String> localRevs = new ArrayList<String>();
         DocumentRevisionTree localRevsTree = datastore.getAllRevisionsOfDocument(bar.getId());
 

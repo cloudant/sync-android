@@ -160,14 +160,9 @@ public class PullReplicatorTest extends ReplicationTestBase {
                 .to(this.documentStore)
                 .from(this.remoteDb.couchClient.getRootUri())
                 .addRequestInterceptors(interceptorCallCounter)
-                .addResponseInterceptors(interceptorCallCounter);
-        if (TestOptions.COOKIE_AUTH) {
-            CookieInterceptor ci = new CookieInterceptor(TestOptions.COUCH_USERNAME,
-                    TestOptions.COUCH_PASSWORD,
-                    this.remoteDb.couchClient.getRootUri().toString());
-            replicatorBuilder.addRequestInterceptors(ci);
-            replicatorBuilder.addResponseInterceptors(ci);
-        }
+                .addRequestInterceptors(couchConfig.getRequestInterceptors())
+                .addResponseInterceptors(interceptorCallCounter)
+                .addResponseInterceptors(couchConfig.getResponseInterceptors());
         Replicator replicator = replicatorBuilder.build();
 
         replicator.getEventBus().register(listener);
@@ -225,6 +220,28 @@ public class PullReplicatorTest extends ReplicationTestBase {
                         toString()
                 );
         assertCookieInterceptorPresent(p, "name=%F0%9F%8D%B6&password=%F0%9F%8D%B6");
+    }
+
+    @Test
+    public void testCredsAPIOverridesURL() throws Exception {
+        ReplicatorBuilder.Pull pull =  ReplicatorBuilder.pull().to(documentStore)
+                .from(new URI("http://example:password@example.invalid"))
+                .username("user")
+                .password("examplePass");
+        ReplicatorImpl replicator = (ReplicatorImpl) pull.build();
+
+        assertCookieInterceptorPresent(pull, "name=user&password=examplePass");
+    }
+
+    @Test
+    public void testCredsAPIOverridesURLWithPath() throws Exception {
+        ReplicatorBuilder.Pull pull =  ReplicatorBuilder.pull().to(documentStore)
+                .from(new URI("http://example:password@example.invalid/proxy"))
+                .username("user")
+                .password("examplePass");
+        ReplicatorImpl replicator = (ReplicatorImpl) pull.build();
+
+        assertCookieInterceptorPresent(pull, "name=user&password=examplePass");
     }
 
     @Test

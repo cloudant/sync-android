@@ -83,7 +83,7 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
         String dbURI = couchClient.getRootUri().toASCIIString();
         URI getURI = new URI(dbURI + "/" + documentName + "?revs_info=true");
 
-        List<String> remoteRevs = ClientTestUtils.getRemoteRevisionIDs(getURI);
+        List<String> remoteRevs = ClientTestUtils.getRemoteRevisionIDs(getURI, getCouchConfig(getDbName()));
         List<String> localRevs = new ArrayList<String>();
         DocumentRevisionTree localRevsTree = datastore.getAllRevisionsOfDocument(bar.getId());
 
@@ -117,7 +117,7 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
         super.push();
 
         //compare local revs to remote
-        remoteRevs = ClientTestUtils.getRemoteRevisionIDs(getURI);
+        remoteRevs = ClientTestUtils.getRemoteRevisionIDs(getURI, getCouchConfig(getDbName()));
         localRevs = new ArrayList<String>();
         localRevsTree = datastore.getAllRevisionsOfDocument(bar.getId());
 
