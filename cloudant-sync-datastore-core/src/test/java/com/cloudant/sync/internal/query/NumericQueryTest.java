@@ -46,7 +46,7 @@ public class NumericQueryTest extends AbstractQueryTestBase {
         data.put("double", defaultDouble);
         DocumentRevision documentRevision = new DocumentRevision();
         documentRevision.setBody(DocumentBodyFactory.create(data));
-        ds.createDocumentFromRevision(documentRevision);
+        ds.create(documentRevision);
         List<FieldSort> fs = new ArrayList<FieldSort>();
         fs.add(new FieldSort("integer"));
         fs.add(new FieldSort("float"));
