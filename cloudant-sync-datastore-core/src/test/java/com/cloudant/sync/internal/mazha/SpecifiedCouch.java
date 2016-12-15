@@ -29,6 +29,7 @@ import com.cloudant.http.HttpConnectionResponseInterceptor;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * Created by Rhys Short on 30/01/15.
@@ -47,25 +48,15 @@ public class SpecifiedCouch {
             if (COUCH_URI != null) {
                 uriString = String.format("%s/%s", COUCH_URI, dbName);
             }
-            // otherwise build the URI up, but skip username/password from URL if they aren't there
-            // or we are doing cookie auth
+            // otherwise build the URI up
             else {
-                if (COOKIE_AUTH || COUCH_USERNAME == null || COUCH_PASSWORD == null) {
-                    uriString = String.format("%s://%s:%s/%s", HTTP_PROTOCOL, COUCH_HOST, COUCH_PORT, dbName);
-                } else {
-                    uriString = String.format("%s://%s:%s@%s:%s/%s", HTTP_PROTOCOL, COUCH_USERNAME, COUCH_PASSWORD, COUCH_HOST, COUCH_PORT, dbName);
-                }
+                uriString = String.format("%s://%s:%s/%s", HTTP_PROTOCOL, COUCH_HOST, COUCH_PORT, dbName);
             }
-            CouchConfig config = new CouchConfig(new URI(uriString));
-            if (COOKIE_AUTH) {
-                ArrayList<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
-                ArrayList<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList<HttpConnectionResponseInterceptor>();
-                CookieInterceptor cookieInterceptor = new CookieInterceptor(COUCH_USERNAME, COUCH_PASSWORD, uriString);
-                requestInterceptors.add(cookieInterceptor);
-                responseInterceptors.add(cookieInterceptor);
-                config.setRequestInterceptors(requestInterceptors);
-                config.setResponseInterceptors(responseInterceptors);
-            }
+            CouchConfig config = new CouchConfig(new URI(uriString),
+                    Collections.<HttpConnectionRequestInterceptor>emptyList(),
+                    Collections.<HttpConnectionResponseInterceptor>emptyList(),
+                    COUCH_USERNAME,
+                    COUCH_PASSWORD);
             return config;
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);
