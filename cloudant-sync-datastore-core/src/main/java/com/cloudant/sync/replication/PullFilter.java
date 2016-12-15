@@ -45,8 +45,8 @@ import java.util.Map;
  * PullFilter pullFilter = new PullFilter("doc/filterName", map);
  * </pre>
  *
- * @see <a href="http://couchdb.readthedocs.org/en/1.6.x/replication/intro.html#controlling-which-documents-to-replicate">Controlling documents replicated</a>
- * @see <a href="http://docs.couchdb.org/en/1.6.x/couchapp/ddocs.html#filter-functions">Filter functions CouchDB docs</a>
+ * @see <a target="_blank" href="http://couchdb.readthedocs.org/en/1.6.x/replication/intro.html#controlling-which-documents-to-replicate">Controlling documents replicated</a>
+ * @see <a target="_blank" href="http://docs.couchdb.org/en/1.6.x/couchapp/ddocs.html#filter-functions">Filter functions CouchDB docs</a>
  * @api_public
  */
 public class PullFilter {
@@ -91,7 +91,7 @@ public class PullFilter {
      *                   constructing the {@code _changes} feed call for the remote database.
      *                   Integer values should be added as String objects.
      *
-     * @see <a href="http://docs.couchdb.org/en/1.6.x/couchapp/ddocs.html#filter-functions">Filter
+     * @see <a target="_blank" href="http://docs.couchdb.org/en/1.6.x/couchapp/ddocs.html#filter-functions">Filter
      * functions CouchDB docs</a>
      */
     public PullFilter(String filterName, Map<String, String> parameters) {

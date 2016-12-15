@@ -117,7 +117,7 @@ public abstract class SQLDatabase {
      *
      * @return the database version
      *
-     * @see <a href="http://www.sqlite.org/pragma.html#pragma_schema_version">SQLite user_version</a>
+     * @see <a target="_blank" href="http://www.sqlite.org/pragma.html#pragma_schema_version">SQLite user_version</a>
      */
     public abstract int getVersion();
 

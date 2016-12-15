@@ -15,7 +15,7 @@
 package com.cloudant.sync.documentstore;
 
 /**
- * Exception thrown when the directory containing a datastore cannot be deleted.
+ * Thrown when the directory containing a {@link DocumentStore} cannot be deleted.
  *
  * @api_public
  */
