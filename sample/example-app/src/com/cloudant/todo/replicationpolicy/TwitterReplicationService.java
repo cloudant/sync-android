@@ -18,7 +18,6 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.documentstore.DocumentStoreNotOpenedException;
 import com.cloudant.sync.replication.PeriodicReplicationService;
@@ -33,8 +32,8 @@ import java.net.URISyntaxException;
 
 public class TwitterReplicationService extends PeriodicReplicationService<TwitterWifiPeriodicReplicationReceiver> {
     private static final String TAG = "TwitterRS";
-    private static final String TASKS_DATASTORE_NAME = "tweets";
-    private static final String DATASTORE_MANGER_DIR = "data";
+    private static final String DOCUMENT_STORE_DIR = "data";
+    private static final String DOCUMENT_STORE_NAME = "tweets";
     public static int PUSH_REPLICATION_ID = 2;
     public static int PULL_REPLICATION_ID = 3;
 
@@ -52,20 +51,20 @@ public class TwitterReplicationService extends PeriodicReplicationService<Twitte
             URI uri = SettingsActivity.constructTwitterURI(this);
 
             File path = getApplicationContext().getDir(
-                DATASTORE_MANGER_DIR,
+                DOCUMENT_STORE_DIR,
                 Context.MODE_PRIVATE
             );
 
-            Database database = null;
+            DocumentStore documentStore = null;
             try {
-                database = DocumentStore.getInstance(new File(path, TASKS_DATASTORE_NAME)).database;
+                documentStore = DocumentStore.getInstance(new File(path, DOCUMENT_STORE_NAME));
             } catch (DocumentStoreNotOpenedException dsnoe) {
-                Log.e(TAG, "Unable to open Datastore", dsnoe);
+                Log.e(TAG, "Unable to open DocumentStore", dsnoe);
             }
 
-            Replicator pullReplicator = ReplicatorBuilder.pull().from(uri).to(database).withId
+            Replicator pullReplicator = ReplicatorBuilder.pull().from(uri).to(documentStore).withId
                 (PULL_REPLICATION_ID).build();
-            Replicator pushReplicator = ReplicatorBuilder.push().to(uri).from(database).withId
+            Replicator pushReplicator = ReplicatorBuilder.push().to(uri).from(documentStore).withId
                 (PUSH_REPLICATION_ID).build();
 
             // Replications will not begin until setReplicators(Replicator[]) is called.

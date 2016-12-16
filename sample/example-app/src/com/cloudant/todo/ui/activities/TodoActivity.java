@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -36,6 +37,8 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.cloudant.sync.documentstore.ConflictException;
+import com.cloudant.sync.documentstore.DocumentNotFoundException;
+import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.replication.PeriodicReplicationService;
 import com.cloudant.sync.replication.ReplicationService;
 import com.cloudant.todo.R;
@@ -46,6 +49,10 @@ import com.cloudant.todo.replicationpolicy.TodoReplicationService;
 import com.cloudant.todo.replicationpolicy.TwitterReplicationService;
 import com.cloudant.todo.ui.dialogs.ProgressDialog;
 import com.cloudant.todo.ui.dialogs.TaskDialog;
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.net.URISyntaxException;
 import java.util.List;
@@ -135,6 +142,11 @@ public class TodoActivity
             mActionMode = null;
         }
     };
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     //
     // HELPER METHODS
@@ -173,23 +185,38 @@ public class TodoActivity
         intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService
             .COMMAND_START_PERIODIC_REPLICATION);
         startService(intent);
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
         bindService(new Intent(this, TodoReplicationService.class), mConnection, Context
             .BIND_AUTO_CREATE);
         mIsBound = true;
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        AppIndex.AppIndexApi.start(client, getIndexApiAction());
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        AppIndex.AppIndexApi.end(client, getIndexApiAction());
         if (mIsBound) {
             unbindService(mConnection);
             mIsBound = false;
         }
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.disconnect();
     }
 
     @Override
@@ -213,9 +240,13 @@ public class TodoActivity
     }
 
     private void reloadTasksFromModel() {
-        List<Task> tasks = sTasks.allTasks();
-        this.mTaskAdapter = new TaskAdapter(this, tasks);
-        this.setListAdapter(this.mTaskAdapter);
+        try {
+            List<Task> tasks = sTasks.allTasks();
+            this.mTaskAdapter = new TaskAdapter(this, tasks);
+            this.setListAdapter(this.mTaskAdapter);
+        } catch (DocumentStoreException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void createNewTask(String desc) {
@@ -230,7 +261,7 @@ public class TodoActivity
             t.setCompleted(!t.isCompleted());
             t = sTasks.updateDocument(t);
             mTaskAdapter.set(position, t);
-        } catch (ConflictException e) {
+        } catch (ConflictException | DocumentStoreException e) {
             throw new RuntimeException(e);
         }
     }
@@ -243,7 +274,7 @@ public class TodoActivity
             Toast.makeText(TodoActivity.this,
                 "Deleted item : " + t.getDescription(),
                 Toast.LENGTH_SHORT).show();
-        } catch (ConflictException e) {
+        } catch (ConflictException | DocumentNotFoundException | DocumentStoreException e) {
             throw new RuntimeException(e);
         }
     }
@@ -382,4 +413,19 @@ public class TodoActivity
         }
     }
 
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    public Action getIndexApiAction() {
+        Thing object = new Thing.Builder()
+            .setName("Todo Page") // TODO: Define a title for the content shown.
+            // TODO: Make sure this auto-generated URL is correct.
+            .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
+            .build();
+        return new Action.Builder(Action.TYPE_VIEW)
+            .setObject(object)
+            .setActionStatus(Action.STATUS_TYPE_COMPLETED)
+            .build();
+    }
 }

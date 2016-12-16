@@ -25,6 +25,7 @@ dependencies {
     // needed for PeriodicReplicationReceiver etc
     compile 'com.android.support:support-v13:25.0.1'
     compile 'com.android.support:support-v4:25.0.1'
+    compile 'com.google.android.gms:play-services-appindexing:8.4.0'
 }
 
 android {
@@ -79,6 +80,8 @@ subprojects {
 
     sourceCompatibility = 1.6
     targetCompatibility = 1.6
+
+    ext.clientName = 'CloudantSync'
 
     repositories {
         mavenCentral()

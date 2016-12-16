@@ -18,14 +18,14 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.cloudant.sync.documentstore.ConflictException;
-import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentException;
+import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStore;
+import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.DocumentStoreNotOpenedException;
 import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.event.notifications.ReplicationCompleted;
@@ -43,33 +43,36 @@ import java.util.List;
 
 
 /**
- * <p>Handles dealing with the datastore and replication.</p>
+ * <p>Handles dealing with the DocumentStore and replication.</p>
  */
 public class TasksModel {
 
     private static final String LOG_TAG = "TasksModel";
 
-    private static final String DATASTORE_MANGER_DIR = "data";
-    private static final String TASKS_DATASTORE_NAME = "tasks";
-    private final Handler mHandler;
-    private Database mDatabase;
+    private static final String DOCUMENT_STORE_DIR = "data";
+    private static final String DOCUMENT_STORE_NAME = "tasks";
+
+    private DocumentStore mDocumentStore;
+
     private Replicator mPushReplicator;
     private Replicator mPullReplicator;
+
+    private final Handler mHandler;
     private TodoActivity mListener;
 
     public TasksModel(Context context) {
 
-        // Set up our tasks datastore within its own folder in the applications
+        // Set up our tasks DocumentStore within its own folder in the applications
         // data directory.
-        File path = context.getDir(
-            DATASTORE_MANGER_DIR,
+        File path = context.getApplicationContext().getDir(
+            DOCUMENT_STORE_DIR,
             Context.MODE_PRIVATE
         );
+
         try {
-            this.mDatabase = DocumentStore.getInstance(new File(path, TASKS_DATASTORE_NAME))
-                .database;
-        } catch (DocumentStoreNotOpenedException dsnoe) {
-            Log.e(LOG_TAG, "Unable to open Datastore", dsnoe);
+            this.mDocumentStore = DocumentStore.getInstance(new File(path, DOCUMENT_STORE_NAME));
+        } catch (DocumentStoreNotOpenedException e) {
+            Log.e(LOG_TAG, "Unable to open DocumentStore", e);
         }
 
         Log.d(LOG_TAG, "Set up database at " + path.getAbsolutePath());
@@ -115,26 +118,29 @@ public class TasksModel {
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(DocumentBodyFactory.create(task.asMap()));
         try {
-            DocumentRevision created = this.mDatabase.createDocumentFromRevision(rev);
+            DocumentRevision created = this.mDocumentStore.database().create(rev);
             return Task.fromRevision(created);
         } catch (DocumentException de) {
+            return null;
+        } catch (DocumentStoreException de) {
             return null;
         }
     }
 
     /**
-     * Updates a Task document within the datastore.
+     * Updates a Task document within the DocumentStore.
      *
      * @param task task to update
      * @return the updated revision of the Task
-     * @throws ConflictException if the task passed in has a rev which doesn't
-     *                           match the current rev in the datastore.
+     * @throws ConflictException      if the task passed in has a rev which doesn't
+     *                                match the current rev in the DocumentStore.
+     * @throws DocumentStoreException if there was an error updating the rev for this task
      */
-    public Task updateDocument(Task task) throws ConflictException {
+    public Task updateDocument(Task task) throws ConflictException, DocumentStoreException {
         DocumentRevision rev = task.getDocumentRevision();
         rev.setBody(DocumentBodyFactory.create(task.asMap()));
         try {
-            DocumentRevision updated = this.mDatabase.updateDocumentFromRevision(rev);
+            DocumentRevision updated = this.mDocumentStore.database().update(rev);
             return Task.fromRevision(updated);
         } catch (DocumentException de) {
             return null;
@@ -142,22 +148,24 @@ public class TasksModel {
     }
 
     /**
-     * Deletes a Task document within the datastore.
+     * Deletes a Task document within the DocumentStore.
      *
      * @param task task to delete
-     * @throws ConflictException if the task passed in has a rev which doesn't
-     *                           match the current rev in the datastore.
+     * @throws ConflictException         if the task passed in has a rev which doesn't
+     *                                   match the current rev in the DocumentStore.
+     * @throws DocumentNotFoundException if the rev for this task does not exist
+     * @throws DocumentStoreException    if there was an error deleting the rev for this task
      */
-    public void deleteDocument(Task task) throws ConflictException {
-        this.mDatabase.deleteDocumentFromRevision(task.getDocumentRevision());
+    public void deleteDocument(Task task) throws ConflictException, DocumentNotFoundException, DocumentStoreException {
+        this.mDocumentStore.database().delete(task.getDocumentRevision());
     }
 
     /**
-     * <p>Returns all {@code Task} documents in the datastore.</p>
+     * <p>Returns all {@code Task} documents in the DocumentStore.</p>
      */
-    public List<Task> allTasks() {
-        int nDocs = this.mDatabase.getDocumentCount();
-        List<DocumentRevision> all = this.mDatabase.getAllDocuments(0, nDocs, true);
+    public List<Task> allTasks() throws DocumentStoreException {
+        int nDocs = this.mDocumentStore.database().getDocumentCount();
+        List<DocumentRevision> all = this.mDocumentStore.database().read(0, nDocs, true);
         List<Task> tasks = new ArrayList<>();
 
         // Filter all documents down to those of type Task.
@@ -222,7 +230,7 @@ public class TasksModel {
         // Stop running replications before reloading the replication
         // settings.
         // The stop() method instructs the replicator to stop ongoing
-        // processes, and to stop making changes to the datastore. Therefore,
+        // processes, and to stop making changes to the DocumentStore. Therefore,
         // we don't clear the listeners because their complete() methods
         // still need to be called once the replications have stopped
         // for the UI to be updated correctly with any changes made before
@@ -232,8 +240,8 @@ public class TasksModel {
         // Set up the new replicator objects
         URI uri = SettingsActivity.constructTodoURI(context);
 
-        mPullReplicator = ReplicatorBuilder.pull().to(mDatabase).from(uri).build();
-        mPushReplicator = ReplicatorBuilder.push().from(mDatabase).to(uri).build();
+        mPullReplicator = ReplicatorBuilder.pull().to(mDocumentStore).from(uri).build();
+        mPushReplicator = ReplicatorBuilder.push().from(mDocumentStore).to(uri).build();
 
         mPushReplicator.getEventBus().register(this);
         mPullReplicator.getEventBus().register(this);
@@ -270,7 +278,7 @@ public class TasksModel {
      */
     @Subscribe
     public void error(ReplicationErrored re) {
-        Log.e(LOG_TAG, "Replication error:", re.errorInfo.getCause());
+        Log.e(LOG_TAG, "Replication error:", re.errorInfo);
         mHandler.post(new Runnable() {
             @Override
             public void run() {
