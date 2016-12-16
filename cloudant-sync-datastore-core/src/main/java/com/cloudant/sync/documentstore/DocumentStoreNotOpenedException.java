@@ -15,7 +15,7 @@
 package com.cloudant.sync.documentstore;
 
 /**
- * Trown when an existing {@link DocumentStore} cannot be opened or a new {@link DocumentStore}
+ * Thrown when an existing {@link DocumentStore} cannot be opened or a new {@link DocumentStore}
  * cannot be created
  *
  * @api_public

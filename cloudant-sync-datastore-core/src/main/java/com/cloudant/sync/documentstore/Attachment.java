@@ -23,7 +23,8 @@ import java.io.InputStream;
 
 /**
  * <p>
- *   An attachment associated with a CouchDB document
+ *   An <a target="_blank" href="http://docs.couchdb.org/en/2.0.0/intro/api.html#attachments">
+ *   attachment</a> associated with a CouchDB document.
  * </p>
  * <p>
  *   An attachment is identified by a name and has other metadata associated with it such as MIME

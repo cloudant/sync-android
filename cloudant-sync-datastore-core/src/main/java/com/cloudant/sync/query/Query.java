@@ -167,3 +167,4 @@ public interface Query {
             throws QueryException;
 
 }
+
