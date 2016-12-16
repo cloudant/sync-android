@@ -17,7 +17,7 @@ package com.cloudant.sync.documentstore;
 import java.util.List;
 
 /**
- * The {@code ConflictResolver} interface should be implemented by classes which are used to resolve
+ * The {@code ConflictResolver} interface should be implemented by classes resolve
  * conflicts via {@link Database#resolveConflicts(String, ConflictResolver)}.
  *
  * @api_public

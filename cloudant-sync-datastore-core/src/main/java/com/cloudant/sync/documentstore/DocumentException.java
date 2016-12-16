@@ -27,11 +27,11 @@ package com.cloudant.sync.documentstore;
  * {@link DocumentRevision}s or their associated {@link Attachment}s
  * </p>
  * <p>
- * Note that these error cases are distinct from {@link DocumentStoreException}s which are thrown
+ * Note: these error cases are distinct from {@link DocumentStoreException}s which are thrown
  * when an unexpected condition was encountered (for example, an internal SQLite database error).
  * </p>
  * <p>
- * This is the base class of a hierarchy of exceptions: in most cases a more specific
+ * This is the base class of a hierarchy of exceptions. In most cases a more specific
  * exception will be thrown. See the documentation for each subclass for specific details.
  * </p>
  *
