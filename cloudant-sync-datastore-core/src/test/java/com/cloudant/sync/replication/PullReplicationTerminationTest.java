@@ -20,12 +20,12 @@ import com.cloudant.http.HttpConnectionRequestInterceptor;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @Category(RequireRunningCouchDB.class)
@@ -35,19 +35,53 @@ public class PullReplicationTerminationTest extends ReplicationTestBase {
     private static final RuntimeException TEST_EXCEPTION = new RuntimeException("Test Exception");
 
     // Test configuration fields
-    private int docBatches = 3;
-    private int docsPerBatch = 700;
-    private int expectedDocs = docBatches * docsPerBatch;
+    private static final int DOC_BATCHES = 3;
+    private static final int DOCS_PER_BATCH = 700;
+    private static final int EXPECTED_DOCS = DOC_BATCHES * DOCS_PER_BATCH;
+    private static final int CONTENT_SIZE = 512;
+
+    // Generated doc list
+    private static List<List<Foo>> GENERATED_FOO_DOC_BATCHES = new ArrayList<List<Foo>>
+            (DOC_BATCHES);
 
     // Test run fields
     private Replicator replicator = null;
     private ThrowingInterceptor throwingInterceptor = null;
     private TestReplicationListener listener = null;
 
+    // Generate some content of the specified size
+    @BeforeClass
+    public static void generateContent() throws Exception {
+        // Generate a string of contentSize bytes so the documents are not tiny
+        final String abc123 = "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz0123456789";
+        int factor = CONTENT_SIZE / abc123.length() + 1;
+        final StringBuilder contentGenerator = new StringBuilder(factor * abc123.length());
+        for (int i = 0; i < factor; i++) {
+            contentGenerator.append(abc123);
+        }
+        // Trim any excess
+        contentGenerator.setLength(CONTENT_SIZE);
+        final String generatedFoo = contentGenerator.toString();
+
+        // Generate the Foo docs
+        for (int batch = 0; batch < DOC_BATCHES; batch++) {
+            List<Foo> batchDocs = new ArrayList<Foo>(DOCS_PER_BATCH);
+            for (int i = 0; i < DOCS_PER_BATCH; i++) {
+                Foo f = new Foo();
+                String docPrefix = batch + "-" + i + "-";
+                f.setId(docPrefix + CouchUtils.generateDocumentId());
+                f.setRevision(CouchUtils.getFirstRevisionId());
+                f.setFoo(generatedFoo);
+                batchDocs.add(f);
+            }
+            GENERATED_FOO_DOC_BATCHES.add(batchDocs);
+        }
+    }
+
     @Before
     public void customizeReplicatorAndPopulateDb() throws Exception {
         setupTerminationTestReplicator();
-        populateRemoteDb(docBatches, docsPerBatch, 512);
+        populateRemoteDb(DOC_BATCHES, DOCS_PER_BATCH);
     }
 
     private void setupTerminationTestReplicator() {
@@ -56,22 +90,11 @@ public class PullReplicationTerminationTest extends ReplicationTestBase {
         replicator.getEventBus().register((listener = new TestReplicationListener()));
     }
 
-    private void populateRemoteDb(int batches, int docsPerBatch, int contentSize) throws Exception {
-        // Create documents in the remote db
-        Random r = new Random();
-        for (int batch = 0; batch < batches; batch++) {
-            List<Foo> docs = new ArrayList<Foo>(docsPerBatch);
-            for (int i = 0; i < docsPerBatch; i++) {
-                Foo f = new Foo();
-                String docPrefix = batch + "-" + i + "-";
-                f.setId(docPrefix + CouchUtils.generateDocumentId());
-                f.setRevision(CouchUtils.getFirstRevisionId());
-                byte[] bytes = new byte[contentSize];
-                r.nextBytes(bytes);
-                f.setFoo("Foo " + docPrefix + " " + new String(bytes, "UTF-8"));
-                docs.add(f);
-            }
-            remoteDb.getCouchClient().bulkCreateDocs(docs);
+
+    private void populateRemoteDb(int batches, int docsPerBatch) throws Exception {
+        // Create documents in the remote db in batches
+        for (List<Foo> batch : GENERATED_FOO_DOC_BATCHES) {
+            remoteDb.getCouchClient().bulkCreateDocs(batch);
         }
     }
 
@@ -123,7 +146,7 @@ public class PullReplicationTerminationTest extends ReplicationTestBase {
         listener.assertReplicationCompletedOrThrow();
 
         // Validate that the local datastore contains all the documents
-        Assert.assertEquals("The local datastore should contain all the documents", expectedDocs,
+        Assert.assertEquals("The local datastore should contain all the documents", EXPECTED_DOCS,
                 datastore.getDocumentCount());
     }
 
