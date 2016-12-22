@@ -805,9 +805,25 @@ public class DatabaseImpl implements Database {
         Misc.checkNotNull(revisions, "Input revisions");
         Misc.checkArgument(!revisions.isEmpty(), "revisions cannot be empty");
 
-        // TODO hoist down queue.submit to just surround the call to RevsDiffBatchCallable
         try {
-            return get(queue.submit(new RevsDiffCallable(revisions)));
+
+            ValueListMap<String, String> missingRevs = new ValueListMap<String, String>();
+
+            // Break down by docId first to avoid potential rev ID clashes between doc IDs
+            for (Map.Entry<String, List<String>> entry : revisions.entrySet()) {
+                String docId = entry.getKey();
+                List<String> revs = entry.getValue();
+                // Partition into batches to avoid exceeding placeholder limit
+                // The doc ID will use one placeholder, so use limit - 1 for the number of
+                // revs for the remaining placeholders.
+                List<List<String>> batches = CollectionUtils.partition(revs,
+                        SQLITE_QUERY_PLACEHOLDERS_LIMIT - 1);
+
+                for (List<String> revsBatch : batches) {
+                    missingRevs.addValuesToKey(docId, get(queue.submit(new RevsDiffBatchCallable(docId, revsBatch))));
+                }
+            }
+            return missingRevs;
         } catch (ExecutionException e) {
             String message = "Failed to calculate difference in revisions";
             logger.log(Level.SEVERE, message, e);
@@ -1213,37 +1229,6 @@ public class DatabaseImpl implements Database {
         } catch (InterruptedException e) {
             logger.log(Level.SEVERE, "Re-throwing InterruptedException as ExecutionException");
             throw new ExecutionException(e);
-        }
-    }
-
-
-    private static class RevsDiffCallable implements SQLCallable<Map<String, List<String>>> {
-        private final Map<String, List<String>> revisions;
-
-        public RevsDiffCallable(Map<String, List<String>> revisions) {
-            this.revisions = revisions;
-        }
-
-        @Override
-        public Map<String, List<String>> call(SQLDatabase db) throws Exception {
-
-            ValueListMap<String, String> missingRevs = new ValueListMap<String, String>();
-
-            // Break down by docId first to avoid potential rev ID clashes between doc IDs
-            for (Map.Entry<String, List<String>> entry : revisions.entrySet()) {
-                String docId = entry.getKey();
-                List<String> revs = entry.getValue();
-                // Partition into batches to avoid exceeding placeholder limit
-                // The doc ID will use one placeholder, so use limit - 1 for the number of
-                // revs for the remaining placeholders.
-                List<List<String>> batches = CollectionUtils.partition(revs,
-                        SQLITE_QUERY_PLACEHOLDERS_LIMIT - 1);
-
-                for (List<String> revsBatch : batches) {
-                    missingRevs.addValuesToKey(docId, new RevsDiffBatchCallable(docId, revsBatch).call(db));
-                }
-            }
-            return missingRevs;
         }
     }
 
