@@ -47,10 +47,10 @@ import com.cloudant.sync.internal.documentstore.callables.GetConflictedDocumentI
 import com.cloudant.sync.internal.documentstore.callables.GetDocumentCallable;
 import com.cloudant.sync.internal.documentstore.callables.GetDocumentCountCallable;
 import com.cloudant.sync.internal.documentstore.callables.GetDocumentsWithIdsCallable;
-import com.cloudant.sync.internal.documentstore.callables.GetDocumentsWithInternalIdsCallable;
 import com.cloudant.sync.internal.documentstore.callables.GetLastSequenceCallable;
 import com.cloudant.sync.internal.documentstore.callables.GetLocalDocumentCallable;
 import com.cloudant.sync.internal.documentstore.callables.GetPossibleAncestorRevisionIdsCallable;
+import com.cloudant.sync.internal.documentstore.callables.GetPublicIdentifierCallable;
 import com.cloudant.sync.internal.documentstore.callables.GetSequenceCallable;
 import com.cloudant.sync.internal.documentstore.callables.InsertDocumentIDCallable;
 import com.cloudant.sync.internal.documentstore.callables.InsertLocalDocumentCallable;
@@ -1216,25 +1216,6 @@ public class DatabaseImpl implements Database {
         }
     }
 
-
-    private static class GetPublicIdentifierCallable implements SQLCallable<String> {
-        @Override
-        public String call(SQLDatabase db) throws Exception {
-            Cursor cursor = null;
-            try {
-                cursor = db.rawQuery("SELECT value FROM info WHERE key='publicUUID'", null);
-                if (cursor.moveToFirst()) {
-                    return "touchdb_" + cursor.getString(0);
-                } else {
-                    throw new IllegalStateException("Error querying PublicUUID, " +
-                            "it is probably because the sqlDatabase is not probably " +
-                            "initialized.");
-                }
-            } finally {
-                DatabaseUtils.closeCursorQuietly(cursor);
-            }
-        }
-    }
 
     private static class RevsDiffCallable implements SQLCallable<Map<String, List<String>>> {
         private final Map<String, List<String>> revisions;
