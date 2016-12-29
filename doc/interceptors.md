@@ -61,7 +61,7 @@ public HttpConnectionInterceptorContext interceptRequest
 
 The `com.cloudant.http.HttpConnectionInterceptorContext` object provides access to the underlying
 `com.cloudant.http.HttpConnection` and `java.net.HttpURLConnection` classes. This allows you to change
-settings and interact with a connection in ways would could potentially cause
+settings and interact with a connection in ways that could potentially cause
 errors in the replicator.
 
 For example, reading a `java.net.HttpURLConnection` object's input stream will consume
