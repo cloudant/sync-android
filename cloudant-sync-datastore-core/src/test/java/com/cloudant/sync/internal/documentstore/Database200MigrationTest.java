@@ -500,14 +500,14 @@ public class Database200MigrationTest {
     /**
      * Tests if the migration works when the rev tree is set up like:
      *
-     *  id: abc
+     *  ID: abc
      *
      *   1-xxxx
      *
      *   1-xxxxx
      *
      *
-     *  id: def
+     *  ID: def
      *
      *  1-xxx ----> 2 xyz
      *
@@ -587,7 +587,7 @@ public class Database200MigrationTest {
         // Force insert the first
         ds.forceInsert(rev1a, "1-x");
 
-        // fetch back the document we just inserted because we need the numeric id
+        // fetch back the document we just inserted because we need the numeric ID
         final long doc_id = ds.read(OBJECT_ID).getInternalNumericId();
 
         // Now insert a duplicate (don't use forceInsert because that will protect against

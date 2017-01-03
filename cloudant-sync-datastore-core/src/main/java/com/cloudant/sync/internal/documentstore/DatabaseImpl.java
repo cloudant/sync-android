@@ -115,19 +115,19 @@ public class DatabaseImpl implements Database {
             "FROM revs, docs WHERE docs.docid=? AND revs.doc_id=docs.doc_id AND revid=? ORDER BY " +
                     "revs.sequence LIMIT 1";
 
-    // get all document columns for current ("winning") revision of a given doc id
+    // get all document columns for current ("winning") revision of a given doc ID
     public static final String GET_DOCUMENT_CURRENT_REVISION =
             "SELECT " + FULL_DOCUMENT_COLS + " " + CURRENT_REVISION_CLAUSES;
 
-    // get metadata (everything except json) for current ("winning") revision of a given doc id
+    // get metadata (everything except json) for current ("winning") revision of a given doc ID
     public static final String GET_METADATA_CURRENT_REVISION =
             "SELECT " + METADATA_COLS + " " + CURRENT_REVISION_CLAUSES;
 
-    // get all document columns for a given revision and doc id† (see below)
+    // get all document columns for a given revision and doc ID† (see below)
     public static final String GET_DOCUMENT_GIVEN_REVISION =
             "SELECT " + FULL_DOCUMENT_COLS + " " + GIVEN_REVISION_CLAUSES;
 
-    // get metadata (everything except json) for a given revision and doc id† (see below)
+    // get metadata (everything except json) for a given revision and doc ID† (see below)
     public static final String GET_METADATA_GIVEN_REVISION =
             "SELECT " + METADATA_COLS + " " + GIVEN_REVISION_CLAUSES;
 
@@ -304,7 +304,7 @@ public class DatabaseImpl implements Database {
      * <p>The tree contains the complete revision history of the document,
      * including branches for conflicts and deleted leaves.</p>
      *
-     * @param docId  id of the document
+     * @param docId  ID of the document
      * @return {@code DocumentRevisionTree} of the specified document
      */
     public DocumentRevisionTree getAllRevisionsOfDocument(final String docId) {
@@ -406,7 +406,7 @@ public class DatabaseImpl implements Database {
     private static Map<String, InternalDocumentRevision> putDocsIntoMap(List<InternalDocumentRevision> docs) {
         Map<String, InternalDocumentRevision> map = new HashMap<String, InternalDocumentRevision>();
         for (InternalDocumentRevision doc : docs) {
-            // id should be unique cross all docs
+            // ID should be unique cross all docs
             assert !map.containsKey(doc.getId());
             map.put(doc.getId(), doc);
         }
@@ -416,7 +416,7 @@ public class DatabaseImpl implements Database {
     /**
      * <p>Returns the current winning revision of a local document.</p>
      *
-     * @param docId id of the local document
+     * @param docId ID of the local document
      * @return {@code LocalDocument} of the document
      * @throws DocumentNotFoundException if the document ID doesn't exist
      */
@@ -503,11 +503,11 @@ public class DatabaseImpl implements Database {
 
     /**
      * <p>Inserts a local document with an ID and body. Replacing the current local document of the
-     * same id if one is present. </p>
+     * same ID if one is present. </p>
      *
      * <p>Local documents are not replicated between datastores.</p>
      *
-     * @param docId      The document id for the document
+     * @param docId      The document ID for the document
      * @param body       JSON body for the document
      * @return {@code DocumentRevision} of the newly created document
      * @throws DocumentException if there is an error inserting the local document into the database
@@ -775,9 +775,9 @@ public class DatabaseImpl implements Database {
     }
 
     /**
-     * Returns the subset of given the document id/revisions that are not stored in the database.
+     * Returns the subset of given the document ID/revisions that are not stored in the database.
      *
-     * The input revisions is a map, whose key is document id, and value is a list of revisions.
+     * The input revisions is a map, whose key is document ID, and value is a list of revisions.
      * An example input could be (in json format):
      *
      * { "03ee06461a12f3c288bb865b22000170":
@@ -795,8 +795,8 @@ public class DatabaseImpl implements Database {
      *
      * @see
      * <a target="_blank" href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
-     * @param revisions a Multimap of document id → revision id
-     * @return the subset of given the document id/revisions that are already stored in the database
+     * @param revisions a Multimap of document ID → revision ID
+     * @return the subset of given the document ID/revisions that are already stored in the database
      * @throws IllegalArgumentException if {@code revisions} is empty.
      * @throws DocumentStoreException If it was not possible to calculate the difference between revs.
      */
@@ -1104,7 +1104,7 @@ public class DatabaseImpl implements Database {
         } catch (ExecutionException e) {
             // invalid if eg there are keys starting with _
             throwCauseAs(e, InvalidDocumentException.class);
-            // conflictexception if doc id already exists
+            // conflictexception if doc ID already exists
             throwCauseAs(e, ConflictException.class);
             String message = "Failed to create document";
             logger.log(Level.SEVERE, message, e);
@@ -1156,7 +1156,7 @@ public class DatabaseImpl implements Database {
         } catch (ExecutionException e) {
             // invalid if eg there are keys starting with _
             throwCauseAs(e, InvalidDocumentException.class);
-            // conflictexception if rev id is not winning rev
+            // conflictexception if rev ID is not winning rev
             throwCauseAs(e, ConflictException.class);
             String message = "Failed to update document";
             logger.log(Level.SEVERE, message, e);

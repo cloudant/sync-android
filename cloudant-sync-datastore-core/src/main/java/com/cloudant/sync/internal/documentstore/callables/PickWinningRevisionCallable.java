@@ -37,13 +37,13 @@ import java.util.TreeMap;
  */
 public class PickWinningRevisionCallable implements SQLCallable<Void> {
 
-    // get all non-deleted leaf rev ids for a given doc id
+    // get all non-deleted leaf rev ids for a given doc ID
     // gets all revs whose sequence is not a parent of another rev and the rev isn't deleted
     public static final String GET_NON_DELETED_LEAFS = "SELECT revs.revid, revs.sequence FROM " +
             "revs WHERE revs.doc_id = ? AND revs.deleted = 0 AND revs.sequence NOT IN " +
             "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
 
-    // get all leaf rev ids for a given doc id
+    // get all leaf rev ids for a given doc ID
     // gets all revs whose sequence is not a parent of another rev
     public static final String GET_ALL_LEAFS = "SELECT revs.revid, revs.sequence FROM revs " +
             "WHERE revs.doc_id = ? AND revs.sequence NOT IN " +
@@ -78,7 +78,7 @@ public class PickWinningRevisionCallable implements SQLCallable<Void> {
          - The new winner is determined by:
            * consider only non-deleted leafs
            * sort according to the CouchDB sorting algorithm: highest rev wins, if there is a tie
-             then do a lexicographical compare of the revision id strings
+             then do a lexicographical compare of the revision ID strings
            * we do a reverse sort (highest first) and pick the 1st and mark it 'current'
            * special case: if all leafs are deleted, then apply sorting and selection criteria
              above to all leafs

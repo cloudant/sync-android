@@ -61,7 +61,7 @@ public class DeleteDocumentCallable implements SQLCallable<InternalDocumentRevis
 
         CouchUtils.validateRevisionId(prevRevId);
 
-        // get the sequence, numeric document id, current flag for the given revision - if it's a
+        // get the sequence, numeric document ID, current flag for the given revision - if it's a
         // non-deleted leaf
         Cursor c = null;
         long sequence;

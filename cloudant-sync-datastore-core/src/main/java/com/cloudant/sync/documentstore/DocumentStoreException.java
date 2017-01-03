@@ -20,8 +20,8 @@ package com.cloudant.sync.documentstore;
 
 /**
  * <p>
- * Thrown when an unexpected condition was encountered during a {@link DocumentStore} method (for
- * example, an internal SQLite database error).
+ * Thrown when an unexpected condition was encountered during a {@link DocumentStore} method, for
+ * example an internal SQLite database error.
  * </p>
  *
  * @see DocumentException

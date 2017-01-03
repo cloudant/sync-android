@@ -36,8 +36,8 @@ public class DocumentNotFoundException extends DocumentException {
     /**
      * Creates a document not found exception with the default message
      *
-     * @param docId The document id of the document that could not be found
-     * @param revId The rev id of the document that could not be found
+     * @param docId The document ID of the document that could not be found
+     * @param revId The rev ID of the document that could not be found
      */
     public DocumentNotFoundException(String docId, String revId) {
         super(createMessage(docId, revId));
