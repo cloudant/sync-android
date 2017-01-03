@@ -26,12 +26,12 @@ package com.cloudant.sync.documentstore;
  * </p>
  * <p>
  *   Likely causes of this exception include:
- *   <ul>
- *     <li>IO exception whilst saving attachment to local storage.</li>
- *     <li>Error whilst updating attachment information in the database.</li>
- *     <li>Mismatch between signalled attachment size and actual attachment size.</li>
- *   </ul>
  * </p>
+ * <ul>
+ *   <li>IO exception whilst saving attachment to local storage.</li>
+ *   <li>Error whilst updating attachment information in the database.</li>
+ *   <li>Mismatch between signalled attachment size and actual attachment size.</li>
+ * </ul>
  */
 public class AttachmentNotSavedException extends AttachmentException {
 
