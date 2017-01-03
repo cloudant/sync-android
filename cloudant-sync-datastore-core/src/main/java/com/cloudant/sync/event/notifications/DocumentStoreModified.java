@@ -14,16 +14,20 @@
 
 package com.cloudant.sync.event.notifications;
 
+import com.cloudant.sync.documentstore.DocumentStore;
+
 /**
+ * Generic event for {@link DocumentStore} create or delete
+ *
  * @api_public
  */
 public class DocumentStoreModified implements Notification {
 
     /**
-     * Generic event for database create/delete
+     * Generic event for {@link DocumentStore} create or delete
      * 
      * @param dbName
-     *            The name of the Datastore that was created or deleted
+     *            The name of the {@link DocumentStore} that was created or deleted
      */
     public DocumentStoreModified(String dbName) {
         this.dbName = dbName;

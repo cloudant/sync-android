@@ -81,16 +81,16 @@ public abstract class ReplicationService extends Service
          */
         void allReplicationsComplete();
 
-        /** Callback to indicate that the individual replication with the given {@code id} is
+        /** Callback to indicate that the individual replication with the given {@code ID} is
          * complete.
-         * @param id the {@code id} number associated wit the replication that has completed. See
+         * @param id the {@code ID} number associated with the replication that has completed. See
          *           {@link ReplicatorBuilder#withId(int)}.
          */
         void replicationComplete(int id);
 
-        /** Callback to indicate that the individual replication with the given {@code id} has
+        /** Callback to indicate that the individual replication with the given {@code ID} has
          * errored.
-         * @param id the {@code id} number associated wit the replication that has completed. See
+         * @param id the {@code ID} number associated with the replication that has completed. See
          *           {@link ReplicatorBuilder#withId(int)}.
          */
         void replicationErrored(int id);
@@ -258,7 +258,7 @@ public abstract class ReplicationService extends Service
 
     /**
      * Set the {@link ReplicationPolicyManager} to be used by this ReplicationService.
-     * @param replicationPolicyManager
+     * @param replicationPolicyManager the {@link ReplicationPolicyManager}
      */
     public void setReplicationPolicyManager(ReplicationPolicyManager replicationPolicyManager) {
         mReplicationPolicyManager = replicationPolicyManager;

@@ -61,8 +61,8 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         boolean ok1 = NotificationTestUtils.waitForSignal(documentUpdated);
         Assert.assertTrue("Didn't receive document updated event", ok1);
 
-        // now do a force insert with same rev but with a different id - we should get a (2nd) created event
-        DocumentRevision doc2_rev1 = new DocumentRevision("new-id-12345");
+        // now do a force insert with same rev but with a different ID - we should get a (2nd) created event
+        DocumentRevision doc2_rev1 = new DocumentRevision("new-ID-12345");
         doc2_rev1.setBody(bodyOne);
         doc2_rev1.setRevision(doc1_rev1.getRevision());
         datastore.forceInsert(doc2_rev1, revisionHistory,null, null, false);

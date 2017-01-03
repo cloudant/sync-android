@@ -19,7 +19,7 @@ import com.cloudant.sync.event.EventBus;
 
 /**
  * <p>Manages replication between a local
- * {@link Database} and a remote Cloudant or
+ * {@link com.cloudant.sync.documentstore.DocumentStore} and a remote Cloudant or
  * CouchDB database.</p>
  *
  * <p>Create instances using the {@link ReplicatorBuilder} class.</p>

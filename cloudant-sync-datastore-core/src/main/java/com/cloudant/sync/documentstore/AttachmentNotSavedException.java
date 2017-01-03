@@ -19,19 +19,32 @@ package com.cloudant.sync.documentstore;
  *
  * @api_public
  */
+
+/**
+ * <p>
+ *   Thrown when there is an error saving attachments to local storage.
+ * </p>
+ * <p>
+ *   Likely causes of this exception include:
+ * </p>
+ * <ul>
+ *   <li>IO exception whilst saving attachment to local storage.</li>
+ *   <li>Error whilst updating attachment information in the database.</li>
+ *   <li>Mismatch between signalled attachment size and actual attachment size.</li>
+ * </ul>
+ */
 public class AttachmentNotSavedException extends AttachmentException {
 
-    public AttachmentNotSavedException(){}
-
-    public AttachmentNotSavedException(String message){
+    public AttachmentNotSavedException(String message) {
         super(message);
     }
 
-    public AttachmentNotSavedException(Exception causedBy){
-        super(causedBy);
+    public AttachmentNotSavedException(String message, Throwable cause) {
+        super(message, cause);
     }
 
-    public AttachmentNotSavedException(String message, Exception casuedBy){
-        super(message,casuedBy);
+    public AttachmentNotSavedException(Throwable cause) {
+        super(cause);
     }
+
 }

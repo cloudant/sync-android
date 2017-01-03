@@ -29,7 +29,7 @@ import java.util.Map;
 
 /**
  * This is a typical response about the a others along its revisions history information. This is used by a
- * replicator. It only need the content of the latest revision. All the previous revision only have the revision id.
+ * replicator. It only need the content of the latest revision. All the previous revision only have the revision ID.
  *
  * {
  * "_id": "cdb1a2fec33d146fe07a44ea823bf3ae"

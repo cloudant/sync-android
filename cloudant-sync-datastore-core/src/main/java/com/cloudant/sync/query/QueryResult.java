@@ -32,9 +32,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- *  Iterable result of a query executed with {@link QueryImpl}.
+ *  Iterable result of a query executed with {@link Query}.
  *
- *  @see QueryImpl
+ *  @see Query
  *  @api_public
  */
 public class QueryResult implements Iterable<DocumentRevision> {

@@ -429,9 +429,9 @@ public class CouchClient  {
      * </p>
      * <p>
      * Each time the iterator is advanced, a DocumentRevsList is returned, which represents the
-     * leaf nodes and their ancestries for a given document id.
+     * leaf nodes and their ancestries for a given document ID.
      * </p>
-     * @param request A request for 1 or more (id,rev) pairs.
+     * @param request A request for 1 or more (ID,rev) pairs.
      * @param pullAttachmentsInline If true, retrieve attachments as inline base64
      * @return An iterator representing the result of calling the _bulk_docs endpoint.
      */
@@ -458,7 +458,7 @@ public class CouchClient  {
 
         Map<String,ArrayList<DocumentRevs>> revsMap = new HashMap<String,ArrayList<DocumentRevs>>();
 
-        // merge results back in, so there is one list of DocumentRevs per id
+        // merge results back in, so there is one list of DocumentRevs per ID
         for (BulkGetResponse.Result result : response.results) {
             for (BulkGetResponse.Doc doc : result.docs) {
                 if (doc.ok != null) {
@@ -473,7 +473,7 @@ public class CouchClient  {
 
         List<DocumentRevsList> allRevs = new ArrayList<DocumentRevsList>();
 
-        // flatten out revsMap hash so that there is one entry in our return array for each id
+        // flatten out revsMap hash so that there is one entry in our return array for each ID
         for (ArrayList<DocumentRevs> value : revsMap.values()) {
             allRevs.add(new DocumentRevsList(value));
         }
@@ -560,7 +560,7 @@ public class CouchClient  {
         }
     }
 
-    // Document should be complete document include "_id" matches id
+    // Document should be complete document include "_id" matches ID
     public Response update(String id, Object document) {
         Misc.checkNotNullOrEmpty(id, "id");
         Misc.checkNotNull(document, "Document");
@@ -673,7 +673,7 @@ public class CouchClient  {
     /**
      * Returns the subset of given the documentId/revisions that are not stored in the database.
      *
-     * The input revisions is a map, whose key is document id, and value is a list of revisions.
+     * The input revisions is a map, whose key is document ID, and value is a list of revisions.
      * An example input could be (in JSON format):
      *
      * { "03ee06461a12f3c288bb865b22000170":
@@ -689,10 +689,10 @@ public class CouchClient  {
      *
      * The output is in same format.
      *
-     * If the id has no missing revision, it should not appear in the Map's key set. If all ids
+     * If the ID has no missing revision, it should not appear in the Map's key set. If all IDs
      * do not have missing revisions, the returned Map should be empty map, but never null.
      *
-     * @see <a href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
+     * @see <a target="_blank" href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
      */
     public Map<String, MissingRevisions> revsDiff(Map<String, Set<String>> revisions) {
         Misc.checkNotNull(revisions,"Input revisions");

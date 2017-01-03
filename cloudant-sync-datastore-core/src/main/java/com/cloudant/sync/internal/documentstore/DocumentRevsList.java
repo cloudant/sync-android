@@ -44,7 +44,7 @@ import java.util.List;
  * </pre>
  *
  * <p>
- * The list can be iterated in the order of minimum generation id (min-generation). Each
+ * The list can be iterated in the order of minimum generation ID (min-generation). Each
  * <code>DocumentRevs</code> has a list of revisions ids (aka revision history), and "start".
  * The "start" number is largest generation. So the min-generation is:
  * </p>
@@ -57,7 +57,7 @@ import java.util.List;
  *
  * <p>
  * For <code>DocumentRevs</code> with the same "min-generation", the order is un-determined. This is
- * probably the case two document with same id/body are created in different database.
+ * probably the case two document with same ID/body are created in different database.
  * </p>
  *
  * @api_private
@@ -98,7 +98,7 @@ public class DocumentRevsList implements Iterable<DocumentRevs> {
         }
 
         /**
-         * Get the minimum generation id from the <code>DocumentRevs</code>
+         * Get the minimum generation ID from the <code>DocumentRevs</code>
          * @see DocumentRevs
          */
         private int getMinGeneration(DocumentRevs o1) {

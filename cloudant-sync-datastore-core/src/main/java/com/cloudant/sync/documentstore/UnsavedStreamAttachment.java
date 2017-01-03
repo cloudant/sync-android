@@ -18,8 +18,6 @@ package com.cloudant.sync.documentstore;
  * Created by tomblench on 28/04/2014.
  */
 
-import com.cloudant.sync.documentstore.Attachment;
-
 import java.io.IOException;
 import java.io.InputStream;
 

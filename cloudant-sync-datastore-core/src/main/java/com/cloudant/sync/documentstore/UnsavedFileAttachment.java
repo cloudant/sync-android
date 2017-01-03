@@ -14,8 +14,6 @@
 
 package com.cloudant.sync.documentstore;
 
-import com.cloudant.sync.documentstore.Attachment;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -26,7 +24,7 @@ import java.io.InputStream;
  */
 
 /**
- * An Attachment which has been prepared by the user for saving to the database
+ * An Attachment which is read from a file before saving to the database
  *
  * @api_public
  */

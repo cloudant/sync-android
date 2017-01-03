@@ -22,9 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * <p>{@code Changes} objects describe a list of changes to the datastore.</p>
+ * <p>The {@code Changes} object describes a list of changes to the {@link Database}.</p>
  *
- * <p>The object contains a list of the changes between some sequence number
+ * <p>The object contains a list of the changes between a given sequence number
  * (passed to the {@link Database#changes(long, int)} method) and
  * the {@link Changes#lastSequence} field of the object.</p>
  *

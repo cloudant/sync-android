@@ -22,7 +22,14 @@ import java.io.InputStream;
  */
 
 /**
- * Base class for Attachments
+ * <p>
+ *   An <a target="_blank" href="http://docs.couchdb.org/en/2.0.0/intro/api.html#attachments">
+ *   attachment</a> associated with a CouchDB document.
+ * </p>
+ * <p>
+ *   An attachment is identified by a name and has other metadata associated with it such as MIME
+ *   type and encoding.
+ * </p>
  *
  * @api_public
  */
@@ -35,7 +42,7 @@ public abstract class Attachment implements Comparable<Attachment>{
     }
 
     /**
-     * Name of the attachment, must be unique for a given revision
+     * Name of the attachment, must be unique for a given document
      */
     public final String name;
 
@@ -45,23 +52,37 @@ public abstract class Attachment implements Comparable<Attachment>{
     public final String type;
 
     /**
-     * Encoding - Plain or GZIP
+     * <p>
+     *   Encoding - Plain or GZIP
+     * </p>
+     * <p>
+     *   NB: If the encoding is GZIP, {@link #getInputStream()} will automatically decompress the
+     *   stream
+     * </p>
      */
     public final Encoding encoding;
     
     /**
-     * Gets contents of attachments as a stream.
-     *
-     * Caller must call close() when done.
+     * <p>
+     *   Get contents of attachments as a stream.
+     * </p>
+     * <p>
+     *   NB: If the {@link #encoding} encoding is GZIP the stream will be automatically decompressed
+     * </p>
+     * <p>
+     *   Caller must call close() when done.
+     * </p>
      * @return contents of attachments as a stream
-     * @throws IOException there was an error obtaining the stream, eg from disk or network
+     * @throws IOException if there was an error obtaining the stream, eg from disk or network
      */     
     public abstract InputStream getInputStream() throws IOException;
 
+    @Override
     public String toString() {
         return "Attachment: "+name+", type: "+type;
     }
 
+    @Override
     public int compareTo(Attachment other) {
         return name.compareTo(other.name);
     }

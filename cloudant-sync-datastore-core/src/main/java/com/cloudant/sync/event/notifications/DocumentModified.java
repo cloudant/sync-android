@@ -17,17 +17,19 @@ package com.cloudant.sync.event.notifications;
 import com.cloudant.sync.documentstore.DocumentRevision;
 
 /**
+ * Generic event for {@link DocumentRevision} create, update, and delete
+ *
  * @api_public
  */
 public class DocumentModified implements Notification {
 
     /**
-     * Generic event for document create/update/delete
+     * Generic event for {@link DocumentRevision} create, update, and delete
      * 
      * @param prevDocument
-     *            Previous document revision (null for document create)
+     *            Previous {@link DocumentRevision} ({@code null} for document create)
      * @param newDocument
-     *            New document revision
+     *            New {@link DocumentRevision}
      */
 
     public DocumentModified(DocumentRevision prevDocument,

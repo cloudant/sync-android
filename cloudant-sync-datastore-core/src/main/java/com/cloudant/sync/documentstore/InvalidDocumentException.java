@@ -19,11 +19,12 @@ package com.cloudant.sync.documentstore;
  *
  * @api_public
  */
+
+/**
+ * Thrown when a {@link DocumentRevision} contains errors: for example if it contains top-level
+ * JSON keys which are prefixed with an underscore ({@code _}).
+ */
 public class InvalidDocumentException extends RuntimeException {
-
-    public InvalidDocumentException(){
-
-    }
 
     public InvalidDocumentException(String message){
         super(message);

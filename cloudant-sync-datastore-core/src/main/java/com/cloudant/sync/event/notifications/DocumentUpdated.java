@@ -18,6 +18,14 @@ import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentRevision;
 
 /**
+ * <p>
+ * Event for document update
+ * </p>
+ *
+ * <p>This event is posted by
+ * {@link Database#update(DocumentRevision)}
+ * </p>
+ *
  * @api_public
  */
 public class DocumentUpdated extends DocumentModified {
@@ -25,10 +33,6 @@ public class DocumentUpdated extends DocumentModified {
     /**
      * Event for document update
      * 
-     * <p>This event is posted by
-     * {@link Database#update(DocumentRevision)}
-     * </p>
-     *
      * @param prevDocument
      *            Previous document revision
      * @param newDocument

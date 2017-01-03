@@ -375,7 +375,7 @@ public class DatastoreSchemaTests {
             Assert.assertEquals("There should be no documents that have duplicate revisions", 0,
                     result.size());
 
-            // Document with id d834ca038de24bf0ac9f708fcdb63e21 has duplicated attachments on
+            // Document with ID d834ca038de24bf0ac9f708fcdb63e21 has duplicated attachments on
             // lowest seq.
             // Validate that after migration only one remains and it is of the correct name
             List<? extends Attachment> attachments = datastore.attachmentsForRevision(datastore
@@ -385,7 +385,7 @@ public class DatastoreSchemaTests {
             Attachment a = attachments.get(0);
             Assert.assertEquals("The attachment name should be correct", "underground.txt", a.name);
 
-            // Document with id a2359c3503e34c008ec448834583e482 has duplicated attachments on
+            // Document with ID a2359c3503e34c008ec448834583e482 has duplicated attachments on
             // highest seq.
             // Validate that after migration only one remains and it is of the correct name
             attachments = datastore.attachmentsForRevision(datastore
@@ -395,7 +395,7 @@ public class DatastoreSchemaTests {
             a = attachments.get(0);
             Assert.assertEquals("The attachment name should be correct", "underground.txt", a.name);
 
-            // Document with id badad1b3842e4056b013587b49c93308 has duplicated attachments across
+            // Document with ID badad1b3842e4056b013587b49c93308 has duplicated attachments across
             // two seqs.
             // Validate that after migration two different attachments remain
             attachments = datastore.attachmentsForRevision(datastore

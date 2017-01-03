@@ -20,24 +20,36 @@ package com.cloudant.sync.documentstore;
  *
  * @api_public
  */
+
+/**
+ * <p>
+ * Thrown when there is a logic or programmer error reading, creating, updating, or deleting
+ * {@link DocumentRevision}s or their associated {@link Attachment}s
+ * </p>
+ * <p>
+ * Note: these error cases are distinct from {@link DocumentStoreException}s which are thrown
+ * when an unexpected condition was encountered (for example, an internal SQLite database error).
+ * </p>
+ * <p>
+ * This is the base class of a hierarchy of exceptions. In most cases a more specific
+ * exception will be thrown. See the documentation for each subclass for specific details.
+ * </p>
+ *
+ * @see DocumentStoreException
+ */
+
 public class DocumentException extends Exception {
 
-
-    public DocumentException(){
-
-    }
-
-    public DocumentException(String message){
+    public DocumentException(String message) {
         super(message);
     }
 
-    public DocumentException(Throwable causedBy){
-        super(causedBy);
+    public DocumentException(String message, Throwable cause) {
+        super(message, cause);
     }
 
-    public DocumentException(String message,Throwable causedBy){
-        super(message,causedBy);
+    public DocumentException(Throwable cause) {
+        super(cause);
     }
-
 
 }

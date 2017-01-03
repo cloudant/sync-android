@@ -17,7 +17,8 @@ package com.cloudant.sync.documentstore;
 import java.util.List;
 
 /**
- * Interface to implement conflicts resolving algorithm.
+ * The {@code ConflictResolver} interface should be implemented by classes resolve
+ * conflicts via {@link Database#resolveConflicts(String, ConflictResolver)}.
  *
  * @api_public
  */
@@ -25,23 +26,26 @@ public interface ConflictResolver {
 
     /**
      * <p>
-     * Return resolved {@code DocumentRevision}, the returned DocumentRevision
+     * Return the resolved {@link DocumentRevision}.
+     * </p>
+     * <p>
+     * The returned {@link DocumentRevision}
      * will be added to the Document tree as the child of the current winner,
-     * and all the other revisions passed in be deleted.
+     * and all the other revisions in {@code conflicts} will be deleted.
      * </p>
      * <p>
-     * Notice if the returned {@code DocumentRevision} is marked as deleted,
-     * the document will be practically deleted since this deleted revision
-     * will be the new winner revision.
+     * NB: if the returned {@link DocumentRevision} is marked as deleted,
+     * the document will effectively be deleted because all leaf revisions including the new winner
+     * revision will be marked as deleted.
      * </p>
      * <p>
-     * If returned DocumentRevision is null, nothing is changed in Database.
+     * If the returned DocumentRevision is null, nothing is changed in the Database.
      * </p>
      *
-     * @param docId id of the Document with conflicts
-     * @param conflicts list of conflicted DocumentRevision, including
+     * @param docId ID of the {@link DocumentRevision} with conflicts
+     * @param conflicts list of conflicted {@link DocumentRevision}s, including
      *                  current winner
-     * @return resolved DocumentRevision
+     * @return resolved {@link DocumentRevision}
      *
      * @see Database#resolveConflicts(String, ConflictResolver)
      */

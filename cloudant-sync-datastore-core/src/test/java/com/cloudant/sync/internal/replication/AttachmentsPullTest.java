@@ -73,7 +73,7 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         } catch (IOException ioe) {
             Assert.fail("Exception thrown " + ioe);
         }
-        // update revision and attachment on remote (same id) - this tests the other code path of
+        // update revision and attachment on remote (same ID) - this tests the other code path of
         // updating the sequence on the rev
         updateRevisionAndAttachment();
         pull();

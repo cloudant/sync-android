@@ -28,7 +28,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * <p>
  * A publish/subscribe event bus for sync notifications.
+ * </p>
  * <p>
  * This class provides methods for registering and un-registering event subscribers as well as a
  * method for posting an event to the bus. Events are isolated to each specific instance of this

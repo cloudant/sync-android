@@ -16,9 +16,18 @@ package com.cloudant.sync.documentstore;
 
 /**
  * Created by Rhys Short on 05/02/15.
+ */
+
+/**
+ * <p>
+ * Thrown when an unexpected condition was encountered during a {@link DocumentStore} method, for
+ * example an internal SQLite database error.
+ * </p>
  *
+ * @see DocumentException
  * @api_public
  */
+
 public class DocumentStoreException extends Exception {
 
     public DocumentStoreException(String message){

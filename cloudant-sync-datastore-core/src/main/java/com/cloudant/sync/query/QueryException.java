@@ -17,6 +17,10 @@ package com.cloudant.sync.query;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 
 /**
+ * <p>
+ * Thrown when an unexpected condition was encountered during a {@link Query} method, for
+ * example an internal SQLite database error.
+ * </p>
 
  * @api_public
  */
