@@ -42,7 +42,7 @@ public interface ConflictResolver {
      * If the returned DocumentRevision is null, nothing is changed in the Database.
      * </p>
      *
-     * @param docId id of the {@link DocumentRevision} with conflicts
+     * @param docId ID of the {@link DocumentRevision} with conflicts
      * @param conflicts list of conflicted {@link DocumentRevision}s, including
      *                  current winner
      * @return resolved {@link DocumentRevision}

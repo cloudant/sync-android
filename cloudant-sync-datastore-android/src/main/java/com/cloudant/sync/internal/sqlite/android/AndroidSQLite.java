@@ -124,7 +124,7 @@ public class AndroidSQLite extends SQLDatabase {
 
     @Override
     public long insertWithOnConflict(String table, ContentValues initialValues, int conflictAlgorithm) {
-        //android DB will thrown an exception rather than return a -1 row id if there is a failure
+        //android DB will thrown an exception rather than return a -1 row ID if there is a failure
         // so we catch constraintException and return -1
         try {
         return this.database.insertWithOnConflict("\""+table+"\"", null,
