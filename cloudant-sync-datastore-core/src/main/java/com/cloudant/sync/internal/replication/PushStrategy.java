@@ -358,8 +358,8 @@ public class PushStrategy implements ReplicationStrategy {
      * Generate serialised JSON strings and/or MIME multipart/related writer objects for revisions
      * which are missing on the server
      *
-     * @param allTrees batch of document trees, keyed by document id, in local database
-     * @param revisions {@code MissingRevisions} objects, keyed by document id, as returned from
+     * @param allTrees batch of document trees, keyed by document ID, in local database
+     * @param revisions {@code MissingRevisions} objects, keyed by document ID, as returned from
      *                  remote database by querying revs_diff endpoint.
      *
      * @return {@code ItemsToPush} object representing serialised JSON strings and/or MIME
@@ -389,7 +389,7 @@ public class PushStrategy implements ReplicationStrategy {
                 List<? extends Attachment> atts = this.sourceDb.getDbCore().attachmentsForRevision(dr);
 
                 // get common ancestor generation - needed to correctly stub out attachments
-                // closest back (first) instance of one of the possible ancestors rev id in the history tree
+                // closest back (first) instance of one of the possible ancestors rev ID in the history tree
                 int minRevPos = 0;
                 for (InternalDocumentRevision ancestor : path) {
                     if (e.getValue().possible_ancestors != null &&

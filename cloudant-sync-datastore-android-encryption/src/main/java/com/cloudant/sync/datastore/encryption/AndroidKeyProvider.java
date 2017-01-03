@@ -27,7 +27,7 @@ import java.util.logging.Logger;
  *
  * Given an user-provided password and an identifier, it generates a strong key and store it safely
  * in the application's {@link android.content.SharedPreferences}, so the same key can be retrieved
- * later provided that the user supplies the same password and id.
+ * later provided that the user supplies the same password and ID.
  *
  * The password is used to protect the key before saving it to the {@link android.content
  * .SharedPreferences}. The identifier is an

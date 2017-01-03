@@ -152,7 +152,7 @@ public class InternalDocumentRevision extends DocumentRevision implements
      */
     public Map<String, Object> asMap() {
         Map<String, Object> map = getBody().asMap();
-        // add meta properties: id, rev, deleted
+        // add meta properties: ID, rev, deleted
         map.put("_id", id);
         if (revision != null) {
             map.put("_rev", revision);

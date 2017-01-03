@@ -80,7 +80,7 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
         }
     }
 
-    // Delete all leaf revisions based on id
+    // Delete all leaf revisions based on ID
     @Test
     public void deleteAllFromRevision() throws Exception {
         // create 10 child docs

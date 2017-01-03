@@ -458,7 +458,7 @@ public class PullStrategy implements ReplicationStrategy {
         List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
 
         for (String id : ids) {
-            //skip any document with an empty id
+            //skip any document with an empty ID
             if (id.isEmpty()) {
                 logger.info("Found document with empty ID in change feed, skipping");
                 continue;

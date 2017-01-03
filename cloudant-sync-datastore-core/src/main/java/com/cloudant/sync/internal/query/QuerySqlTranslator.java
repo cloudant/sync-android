@@ -134,7 +134,7 @@ class QuerySqlTranslator {
         if (!state.textIndexRequired &&
                       (!state.atLeastOneIndexUsed || state.atLeastOneORIndexMissing)) {
             // If we haven't used a single index or an OR clause is missing an index,
-            // we need to return every document id, so that the post-hoc matcher can
+            // we need to return every document ID, so that the post-hoc matcher can
             // run over every document to manually carry out the query.
             SqlQueryNode sqlNode = new SqlQueryNode();
             Set<String> neededFields = new HashSet<String>(Collections.singletonList("_id"));

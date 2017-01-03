@@ -241,7 +241,7 @@ public interface Database {
      * given {@code ConflictResolver}
      * </p>
      *
-     * @param docId id of Document to resolve conflicts
+     * @param docId ID of Document to resolve conflicts
      * @param resolver the ConflictResolver used to resolve
      *                 conflicts
      * @throws ConflictException If new conflicts were found while
@@ -269,7 +269,7 @@ public interface Database {
      * @return a <code>DocumentRevision</code> - the newly created document
      * @throws AttachmentException if there was an error saving any new attachments
      * @throws InvalidDocumentException if the document body was invalid
-     * @throws ConflictException if a document with this document id already exists
+     * @throws ConflictException if a document with this document ID already exists
      * @throws DocumentStoreException if there was an error reading from or writing to the database
      * @see Database#getEventBus()
      */

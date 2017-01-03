@@ -61,7 +61,7 @@ public class QuerySortTest extends AbstractQueryTestBase {
         indexes.add(indexB);
         smallDocIdSet = new HashSet<String>(Arrays.asList("mike", "john"));
         largeDocIdSet = new HashSet<String>();
-        for (int i = 0; i < 501; i++) {  // 500 max id set for placeholders
+        for (int i = 0; i < 501; i++) {  // 500 max ID set for placeholders
             largeDocIdSet.add(String.format("doc-%d", i));
         }
     }

@@ -39,7 +39,7 @@ import java.util.logging.Logger;
  * revision IDs
  * and "atts_since" (revision IDs for which we know we have attachments)
  *
- * The document id and open revisions are from one row of change feeds. For example, for the
+ * The document ID and open revisions are from one row of change feeds. For example, for the
  * following change feed:
  *
  * {
@@ -61,7 +61,7 @@ import java.util.logging.Logger;
  *    ]
  * }
  *
- * For document with id "2013-09-10T17:47:17.770Z", it has open revisions:
+ * For document with ID "2013-09-10T17:47:17.770Z", it has open revisions:
  *
  *       [
  *         { "rev": "29-3f4dabfb32290e557ac1d16b2e8f069c" },

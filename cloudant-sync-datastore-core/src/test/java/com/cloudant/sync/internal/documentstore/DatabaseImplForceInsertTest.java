@@ -621,7 +621,7 @@ public class DatabaseImplForceInsertTest {
     }
 
     // make a chain of revisions from `start` to `depth` inclusive and then add `conflicts` number
-    // of leaf nodes. the interior nodes are named "1-x" etc (using `id`) and the leaf nodes are
+    // of leaf nodes. the interior nodes are named "1-x" etc (using `ID`) and the leaf nodes are
     // named "12-11-x0" "12-11-x1" etc
     private void makeSubTree(String root, String id, int start, int depth, int conflicts) throws DocumentException {
         int i;
