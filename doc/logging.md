@@ -1,7 +1,7 @@
 Logging
 =====
 
-This document explains how to configure [logging](http://docs.oracle.com/javase/7/docs/api/index.html?java/util/logging/) for sync-android.
+This document explains how to configure [logging](http://docs.oracle.com/javase/7/docs/api/java/util/logging/package-summary.html) for sync-android.
 
 By default sync-android does not set any logging settings, so the system's defaults are used.
 
