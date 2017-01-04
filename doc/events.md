@@ -22,7 +22,7 @@ The `DocumentStore` class posts events about DocumentStores:
 There are also generic `Modified` events for each class: `DocumentModified` and `DocumentStoreModified`
  (more about these later).
 
-There are also events posted about replications:
+There are also events posted by the `Replicator` class about replications:
 
 * `ReplicationCompleted`
 * `ReplicationErrored`
@@ -45,7 +45,7 @@ Here the `DocumentNotificationClient` is subscribing to the `DocumentCreated` ev
 events are just classes, they obey the type hierarchy. This means that it is also possible to
 subscribe to the generic `DocumentModified` event to be notified of all Created/Deleted/Updated
 events and then use reflection and downcasting if needed. However if you want to listen for multiple 
-event types eg `DocumentCreated` and `DatastoreCreated` using the same subscriber method, the 
+event types eg `DocumentCreated` and `DocumentStoreCreated` using the same subscriber method, the 
 `Notification` marker interface needs to be used instead.
 
 ```java
