@@ -1,10 +1,8 @@
 # Replication with Cloudant Sync Android
 
-_This functionality is available in versions 0.3.3 and up._
-
-Replication is used to synchronise data between the local datastore and a
+Replication is used to synchronise data between the local document store and a
 remote database, either a CouchDB instance or a Cloudant database. Many
-datastores can replicate with the same remote database, meaning that
+document stores can replicate with the same remote database, meaning that
 cross-device synchronisation is achieved by setting up replications from each
 device to the remote database.
 
@@ -68,25 +66,25 @@ devices. This web service needs to:
 ### Replication on the Device
 
 From the device side, replication is straightforward. You can replicate from a
-local datastore to a remote database, from a remote database to a local
-datastore, or both ways to implement synchronisation.
+local document store to a remote database, from a remote database to a local
+document store, or both ways to implement synchronisation.
 
 Replications are set up in code on a device. Use `ReplicatorBuilder` to create
 a pre-configured `Replicator` object. Each `Replicator`
 object can be assigned a `Listener` to receive message when replication
 completes or encounters an error.
 
+The replication examples below are 'one-shot' and will run once until
+completion, at which point the local and remote databases will be
+synchronised. [Replication policies](replication-policies.md) allow
+for more complex "policies" to be executed, eg "only replicate when on
+Wifi" or "replicate every 30 minutes".
+
 First we create a simple listener that just sets a CountDownLatch when the
 replication finishes so we can wait for a replication to finish without
 needing to poll:
 
 ```java
-import com.cloudant.sync.event.Subscribe;
-import java.util.concurrent.CountDownLatch;
-import com.cloudant.sync.event.notifications.ReplicationCompleted;
-import com.cloudant.sync.event.notifications.ReplicationErrored;
-import com.cloudant.sync.replication.ErrorInfo;
-
 /**
  * A {@code ReplicationListener} that sets a latch when it's told the
  * replication has finished.
@@ -94,9 +92,9 @@ import com.cloudant.sync.replication.ErrorInfo;
 private class Listener {
 
     private final CountDownLatch latch;
-    public ErrorInfo error = null;
-    public int documentsReplicated;
-    public int batchesReplicated;
+    public List<Throwable> errors = new ArrayList<Throwable>();
+    public int documentsReplicated = 0;
+    public int batchesReplicated = 0;
 
     Listener(CountDownLatch latch) {
         this.latch = latch;
@@ -104,29 +102,26 @@ private class Listener {
 
     @Subscribe
     public void complete(ReplicationCompleted event) {
-        this.documentsReplicated = event.documentsReplicated;
-        this.batchesReplicated = event.batchesReplicated;
+        this.documentsReplicated += event.documentsReplicated;
+        this.batchesReplicated += event.batchesReplicated;
         latch.countDown();
     }
 
     @Subscribe
     public void error(ReplicationErrored event) {
-        this.error = event.errorInfo;
+        this.error.add(event.errorInfo);
         latch.countDown();
     }
 }
 ```
 
-Next we replicate a local datastore to a remote database:
+Next we replicate a local document store to a remote database:
 
 ```java
-import com.cloudant.sync.replication.ReplicatorBuilder;
-import com.cloudant.sync.replication.Replicator;
-
 // Username/password are supplied in the URL and can be Cloudant API keys
 URI uri = new URI("https://username:password@username.cloudant.com/my_database");
 
-Datastore ds = manager.openDatastore("my_datastore");
+DocumentStore ds = DocumentStore.getInstance("my_datastore");
 
 // Create a replicator that replicates changes from the local
 // datastore to the remote database.
@@ -140,8 +135,8 @@ replicator.start();
 latch.await();
 replicator.getEventBus().unregister(listener);
 if (replicator.getState() != Replicator.State.COMPLETE) {
-    System.out.println("Error replicating TO remote");
-    System.out.println(listener.error);
+    System.err.println("Error replicating TO remote");
+    System.err.println(listener.errors);
 } else {
     System.out.println(String.format("Replicated %d documents in %d batches",
             listener.documentsReplicated, listener.batchesReplicated));
@@ -154,7 +149,7 @@ And getting data from a remote database to a local one:
 // Username/password are supplied in the URL and can be Cloudant API keys
 URI uri = new URI("https://username:password@username.cloudant.com/my_database");
 
-Datastore ds = manager.openDatastore("my_datastore");
+DocumentStore ds = DocumentStore.getInstance("my_datastore");
 
 // Create a replicator that replicates changes from the remote
 // database to the local datastore.
@@ -168,8 +163,11 @@ replicator.start();
 latch.await();
 replicator.getEventBus().unregister(listener);
 if (replicator.getState() != Replicator.State.COMPLETE) {
-    System.out.println("Error replicating FROM remote");
-    System.out.println(listener.error);
+    System.err.println("Error replicating FROM remote");
+    System.err.println(listener.errors);
+} else {
+    System.out.println(String.format("Replicated %d documents in %d batches",
+            listener.documentsReplicated, listener.batchesReplicated));
 }
 ```
 
@@ -180,7 +178,7 @@ And running a full sync, that is, two one way replications:
 // Username/password are supplied in the URL and can be Cloudant API keys
 URI uri = new URI("https://username:password@username.cloudant.com/my_database");
 
-Datastore ds = manager.openDatastore("my_datastore");
+DocumentStore ds = DocumentStore.getInstance("my_datastore");
 
 // Create the pull replicator
 Replicator pullReplicator = ReplicatorBuilder.pull().from(uri).to(ds).build();
@@ -205,15 +203,15 @@ latch.await();
 pullReplicator.getEventBus().unregister(listener);
 pushReplicator.getEventBus().unregister(listener);
 
-// Unfortunately in this implementation we'll only record the last error
-// the listener saw
 if (pullReplicator.getState() != Replicator.State.COMPLETE) {
-    System.out.println("Error replicating FROM remote");
-    System.out.println(listener.error);
-}
-if (pushReplicator.getState() != Replicator.State.COMPLETE) {
-    System.out.println("Error replicating TO remote");
-    System.out.println(listener.error);
+    System.err.println("Error replicating FROM remote");
+    System.err.println(listener.errors);
+} else if (pushReplicator.getState() != Replicator.State.COMPLETE) {
+    System.err.println("Error replicating TO remote");
+    System.err.println(listener.errors);
+else {
+    System.out.println(String.format("Replicated %d documents in %d batches",
+            listener.documentsReplicated, listener.batchesReplicated));
 }
 ```
 
@@ -224,14 +222,10 @@ replication completes to avoid a wait for indexing to catch up when the new data
 is first queried:
 
 ```java
-import com.cloudant.sync.replication.ReplicatorBuilder;
-import com.cloudant.sync.replication.Replicator;
-import com.cloudant.sync.query.IndexManager;
-
 // username/password can be Cloudant API keys
 URI uri = new URI("https://username:password@username.cloudant.com/my_database");
 
-Datastore ds = manager.openDatastore("my_datastore");
+DocumentStore ds = DocumentStore.getInstance("my_datastore");
 
 // Create a replicator that replicates changes from the remote
 // database to the local datastore.
@@ -241,8 +235,7 @@ pull.target = ds;
 Replicator replicator = ReplicatorBuilder.pull().from(uri).to(ds).build();
 
 // Create a sample index on type field
-IndexManager indexManager = new IndexManager(ds);
-indexManager.ensureIndexed(Arrays.asList("fieldName"), "indexName");
+ds.query().ensureIndexed(Arrays.asList("fieldName"), "indexName");
 
 // Use a CountDownLatch to provide a lightweight way to wait for completion
 latch = new CountDownLatch(1);
@@ -268,11 +261,6 @@ indexManager.updateAllIndexes();
 the _Filter Function_ that is used and its query parameters.
 
 ```java
-import com.cloudant.sync.replication.ReplicatorBuilder;
-import com.cloudant.sync.replication.Replicator;
-import com.cloudant.sync.replication.PullFilter;
-
-
 Map<String, String> parameters = new HashMap<String, String>();
 parameters.put("key", "value");
 PullFilter filter = new PullFilter("filterDoc/filterFunctionName", parameters);
@@ -285,15 +273,3 @@ Replicator replicator = ReplicatorBuilder.pull()
 
 [1]: http://docs.couchdb.org/en/1.4.x/replication.html#controlling-which-documents-to-replicate
 
-### Deprecated APIs
-
-The following classes are still supported but are deprecated in version 0.13.0.
-They will be soon removed from the library.
-
-```java
-ReplicatorFactory
-Replication
-Replication.Filter
-PullReplication
-PushReplication
-```
