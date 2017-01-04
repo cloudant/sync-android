@@ -54,11 +54,6 @@ public class NumericQueryTest extends AbstractQueryTestBase {
         im.ensureIndexed(fs);
     }
 
-    @After
-    public void after() {
-        ;
-    }
-
     // query two integers are equal to each other
     @Test
     public void testIntegerEqual() throws QueryException {
