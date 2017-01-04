@@ -16,9 +16,11 @@
 
 package com.cloudant.sync.internal.mazha;
 
+import static org.hamcrest.CoreMatchers.hasItem;
+
+import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.sync.internal.common.CouchUtils;
-import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -32,8 +34,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static org.hamcrest.CoreMatchers.hasItem;
 
 @Category(RequireRunningCouchDB.class)
 public class BulkAPITest extends CouchClientTestBase {
@@ -82,7 +82,7 @@ public class BulkAPITest extends CouchClientTestBase {
         List<Response> responses = client.bulkCreateDocs(doc1);
         Assert.assertEquals(0, responses.size());
 
-        Map<String, Object> allRevs = client.getDocRevisions(res1.getId(), revision3, JSONUtils.mapStringToObject());
+        Map<String, Object> allRevs = client.getDocRevisions(res1.getId(), revision3, JSONUtils.STRING_MAP_TYPE_DEF);
 
         int revisionStart = (Integer) ((Map<String, Object>) allRevs.get(CouchConstants._revisions)).get
                 (CouchConstants.start);

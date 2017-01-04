@@ -21,17 +21,16 @@
 package com.cloudant.sync.internal.mazha;
 
 
-import com.cloudant.sync.internal.common.RetriableTask;
 import com.cloudant.http.Http;
 import com.cloudant.http.HttpConnection;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
+import com.cloudant.sync.internal.common.RetriableTask;
 import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
 import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JavaType;
 
 import org.apache.commons.io.IOUtils;
 
@@ -49,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class CouchClient  {
@@ -200,21 +200,38 @@ public class CouchClient  {
 
     // execute HTTP task with retries:
     // return an InputStream if successful or throw an exception
-    private InputStream executeToInputStreamWithRetry(final Callable<ExecuteResult> task) throws CouchException {
+    private <T> T executeWithRetry(final Callable<ExecuteResult> task,
+                                   InputStreamProcessor<T> processor) throws
+            CouchException {
         int attempts = 10;
-        CouchException lastException= null;
+        CouchException lastException = null;
         while (attempts-- > 0) {
             ExecuteResult result = null;
             try {
                 result = task.call();
+                if (result.stream != null) {
+                    // success - process the inputstream
+                    try {
+                        return processor.processStream(result.stream);
+                    } catch (Exception e) {
+                        // Error processing the input stream
+                        if (attempts > 0) {
+                            logger.log(Level.WARNING, "Received an exception during response " +
+                                    "stream processing. A retry will be attempted.", e);
+                        } else {
+                            logger.log(Level.SEVERE, "Response stream processing failed, no " +
+                                    "retries remaining.", e);
+                            throw e;
+                        }
+                    } finally {
+                        result.stream.close();
+                    }
+                }
             } catch (Exception e) {
                 throw new CouchException("Unexpected exception", e, -1);
             }
             lastException = result.exception;
-            if (result.stream != null) {
-                // success - return the inputstream
-                return result.stream;
-            } else if (result.fatal) {
+            if (result.fatal) {
                 // fatal exception - don't attempt any more retries
                 throw result.exception;
             }
@@ -222,30 +239,29 @@ public class CouchClient  {
         throw lastException;
     }
 
-    private <T> T executeToJsonObjectWithRetry(final HttpConnection connection,
-                                               Class<T> c) throws CouchException {
-        InputStream is = this.executeToInputStreamWithRetry(connection);
-        InputStreamReader isr = new InputStreamReader(is, Charset.forName("UTF-8"));
-        try {
-            T json = JSONUtils.fromJson(isr, c);
-            return json;
-        } finally {
-            IOUtils.closeQuietly(is);
-        }
+    private <T> T executeToJsonObjectWithRetry(final HttpConnection connection, final
+    TypeReference<T> type) throws CouchException {
+        return executeWithRetry(connection, new TypeInputStreamProcessor<T>(type));
     }
 
-    private InputStream executeToInputStreamWithRetry(final HttpConnection connection) throws CouchException {
+    private <T> T executeToJsonObjectWithRetry(final HttpConnection connection,
+                                               Class<T> c) throws CouchException {
+        return executeToJsonObjectWithRetry(connection, new CouchClientTypeReference<T>(c));
+    }
+
+    private <T> T executeWithRetry(final HttpConnection connection,
+                                                InputStreamProcessor<T> processor) throws
+            CouchException {
         // all CouchClient requests want to receive application/json responses
         connection.requestProperties.put("Accept", "application/json");
         connection.responseInterceptors.addAll(responseInterceptors);
         connection.requestInterceptors.addAll(requestInterceptors);
-        InputStream is = this.executeToInputStreamWithRetry(new Callable<ExecuteResult>() {
+        return this.executeWithRetry(new Callable<ExecuteResult>() {
             @Override
             public ExecuteResult call() throws Exception {
                 return execute(connection);
             }
-        });
-        return is;
+        }, processor);
     }
 
     public void createDb() {
@@ -307,7 +323,7 @@ public class CouchClient  {
         URI doc = this.uriHelper.documentUri(id);
         try {
             HttpConnection connection = Http.HEAD(doc);
-            this.executeToInputStreamWithRetry(connection);
+            this.executeWithRetry(connection, new NoOpInputStreamProcessor());
             return true;
         } catch (Exception e) {
             return false;
@@ -335,17 +351,7 @@ public class CouchClient  {
         }
     }
 
-    public InputStream getDocumentStream(String id, String rev) {
-        Misc.checkNotNullOrEmpty(id, "id");
-        Misc.checkNotNullOrEmpty(rev, "rev");
-        Map<String, Object> queries = new HashMap<String, Object>();
-        queries.put("rev", rev);
-        final URI doc = this.uriHelper.documentUri(id, queries);
-        HttpConnection connection = Http.GET(doc);
-        return executeToInputStreamWithRetry(connection);
-    }
-
-    public InputStream getAttachmentStream(String id, String rev, String attachmentName, final boolean acceptGzip) {
+    public <T> T processAttachmentStream(String id, String rev, String attachmentName, final boolean acceptGzip, InputStreamProcessor<T> processor) {
         Misc.checkNotNullOrEmpty(id, "id");
         Misc.checkNotNullOrEmpty(rev, "rev");
         Map<String, Object> queries = new HashMap<String, Object>();
@@ -355,7 +361,7 @@ public class CouchClient  {
         if (acceptGzip) {
             connection.requestProperties.put("Accept-Encoding", "gzip");
         }
-        return executeToInputStreamWithRetry(connection);
+        return executeWithRetry(connection, processor);
     }
 
     public void putAttachmentStream(String id, String rev, String attachmentName, String contentType, byte[] attachmentData) {
@@ -366,7 +372,8 @@ public class CouchClient  {
         URI doc = this.uriHelper.attachmentUri(id, queries, attachmentName);
         HttpConnection connection = Http.PUT(doc, contentType);
         connection.setRequestBody(attachmentData);
-        this.executeToInputStreamWithRetry(connection);
+        //TODO check result?
+        executeToJsonObjectWithRetry(connection, Response.class);
     }
 
     /**
@@ -385,7 +392,7 @@ public class CouchClient  {
     public Map<String,Object> getDocConflictRevs(String id)  {
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("conflicts", true);
-        return this.getDocument(id, options, JSONUtils.mapStringToObject());
+        return this.getDocument(id, options, JSONUtils.STRING_MAP_TYPE_DEF);
     }
 
     /**
@@ -417,7 +424,7 @@ public class CouchClient  {
             options.put("att_encoding_info", true);
         }
         options.put("open_revs", JSONUtils.toJson(revisions));
-        return this.getDocument(id, options, JSONUtils.openRevisionList());
+        return this.getDocument(id, options, JSONUtils.OPEN_REVS_LIST_TYPE_DEF);
     }
 
     /**
@@ -478,30 +485,24 @@ public class CouchClient  {
     }
 
     public Map<String, Object> getDocument(String id) {
-        return this.getDocument(id, new HashMap<String, Object>(), JSONUtils.mapStringToObject());
+        return this.getDocument(id, new HashMap<String, Object>(), JSONUtils.STRING_MAP_TYPE_DEF);
     }
 
     public <T> T getDocument(String id, final Class<T> type)  {
-        JavaType javaType = JSONUtils.getTypeFactory().constructType(type);
-        return this.getDocument(id, new HashMap<String, Object>(), javaType);
+        return this.getDocument(id, new HashMap<String, Object>(),
+                new CouchClientTypeReference<T>(type));
     }
 
-    public <T> T getDocument(final String id, final Map<String, Object> options, final JavaType type) {
+    public <T> T getDocument(final String id, final Map<String, Object> options,
+                             final TypeReference<T> type) {
         Misc.checkNotNullOrEmpty(id, "id");
         Misc.checkNotNull(type, "Type");
 
         URI doc = uriHelper.documentUri(id, options);
-        InputStream is = null;
-        try {
-            HttpConnection connection = Http.GET(doc);
-            is = executeToInputStreamWithRetry(connection);
-            T returndoc = JSONUtils.fromJson(new InputStreamReader(is, Charset.forName("UTF-8"))
-                    , type);
-            logger.fine("get returning " + returndoc);
-            return returndoc;
-        } finally {
-            closeQuietly(is);
-        }
+        HttpConnection connection = Http.GET(doc);
+        T returndoc = executeToJsonObjectWithRetry(connection, type);
+        logger.fine("get returning " + returndoc);
+        return returndoc;
     }
 
     public Map<String, Object> getDocument(String id, String rev) {
@@ -513,16 +514,14 @@ public class CouchClient  {
         Misc.checkNotNullOrEmpty(rev, "rev");
         Misc.checkNotNull(type, "Type");
 
-        InputStream is = null;
-        try {
-            is = this.getDocumentStream(id, rev);
-            T returndoc = JSONUtils.fromJson(new InputStreamReader(is, Charset.forName("UTF-8"))
-                    , type);
-            logger.fine("get returning " + returndoc);
-            return returndoc;
-        } finally {
-            closeQuietly(is);
-        }
+        Map<String, Object> queries = new HashMap<String, Object>();
+        queries.put("rev", rev);
+        final URI doc = this.uriHelper.documentUri(id, queries);
+        HttpConnection connection = Http.GET(doc);
+        T returndoc = executeToJsonObjectWithRetry(connection, type);
+        logger.fine("get returning " + returndoc);
+        return returndoc;
+
     }
 
     public <T> T getDocument(String id, String rev, final Class<T> type) {
@@ -536,25 +535,19 @@ public class CouchClient  {
      *
      */
     public DocumentRevs getDocRevisions(String id, String rev) {
-        return getDocRevisions(id, rev, JSONUtils.documentRevs());
+        return getDocRevisions(id, rev,
+                new CouchClientTypeReference<DocumentRevs>(DocumentRevs.class));
     }
 
-    public <T> T getDocRevisions(String id, String rev, JavaType type) {
+    public <T> T getDocRevisions(String id, String rev, TypeReference<T> type) {
         Misc.checkNotNullOrEmpty(id, "id");
         Misc.checkNotNull(rev, "Revision ID");
         Map<String, Object> queries = new HashMap<String, Object>();
         queries.put("revs", "true");
         queries.put("rev", rev);
         URI findRevs = this.uriHelper.documentUri(id, queries);
-
-        InputStream is = null;
-        try {
-            HttpConnection connection = Http.GET(findRevs);
-            is = this.executeToInputStreamWithRetry(connection);
-            return JSONUtils.fromJson(new InputStreamReader(is, Charset.forName("UTF-8")), type);
-        } finally {
-            closeQuietly(is);
-        }
+        HttpConnection connection = Http.GET(findRevs);
+        return executeToJsonObjectWithRetry(connection, type);
     }
 
     // Document should be complete document include "_id" matches ID
@@ -583,40 +576,23 @@ public class CouchClient  {
         return executeToJsonObjectWithRetry(connection, Response.class);
     }
 
-    private void closeQuietly(InputStream is) {
-        try {
-            if (is != null) {
-                is.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private InputStream bulkCreateDocsInputStream(List<?> objects) {
-        Misc.checkNotNull(objects, "Object list");
-        String newEditsVal = "\"new_edits\": false, ";
-        URI uri = this.uriHelper.bulkDocsUri();
-        String payload = String.format("{%s%s%s}", newEditsVal, "\"docs\": ",
-                JSONUtils.toJson(objects));
-        HttpConnection connection = Http.POST(uri, "application/json");
-        connection.setRequestBody(payload);
-        return this.executeToInputStreamWithRetry(connection);
-    }
-
     public List<Response> bulkCreateDocs(Object... objects) {
         return bulkCreateDocs(Arrays.asList(objects));
     }
 
     public List<Response> bulkCreateDocs(List<?> objects) {
-        InputStream is = null;
-        try {
-            is = bulkCreateDocsInputStream(objects);
-            return JSONUtils.fromJsonToList(new InputStreamReader(is, Charset.forName("UTF-8")),
-                    new CouchClientTypeReference<List<Response>>());
-        } finally {
-            closeQuietly(is);
-        }
+        Misc.checkNotNull(objects, "Object list");
+        String newEditsVal = "\"new_edits\": false, ";
+        String payload = String.format("{%s%s%s}", newEditsVal, "\"docs\": ",
+                JSONUtils.toJson(objects));
+        return bulkCreateDocs(payload);
+    }
+
+    private List<Response> bulkCreateDocs(String payload) {
+        URI uri = this.uriHelper.bulkDocsUri();
+        HttpConnection connection = Http.POST(uri, "application/json");
+        connection.setRequestBody(payload);
+        return executeToJsonObjectWithRetry(connection, new CouchClientTypeReference<List<Response>>());
     }
 
     /**
@@ -641,17 +617,7 @@ public class CouchClient  {
     public List<Response> bulkCreateSerializedDocs(List<String> serializedDocs) {
         Misc.checkNotNull(serializedDocs, "Serialized doc list");
         String payload = generateBulkSerializedDocsPayload(serializedDocs);
-        URI uri = this.uriHelper.bulkDocsUri();
-        InputStream is = null;
-        HttpConnection connection = Http.POST(uri, "application/json");
-        connection.setRequestBody(payload);
-        try {
-            is = this.executeToInputStreamWithRetry(connection);
-            return JSONUtils.fromJsonToList(new InputStreamReader(is, Charset.forName("UTF-8")),
-                    new CouchClientTypeReference<List<Response>>());
-        } finally {
-            closeQuietly(is);
-        }
+        return bulkCreateDocs(payload);
     }
 
     private String generateBulkSerializedDocsPayload(List<String> serializedDocs) {
@@ -692,21 +658,13 @@ public class CouchClient  {
      * @see <a target="_blank" href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
      */
     public Map<String, MissingRevisions> revsDiff(Map<String, Set<String>> revisions) {
-        Misc.checkNotNull(revisions,"Input revisions");
+        Misc.checkNotNull(revisions, "Input revisions");
         URI uri = this.uriHelper.revsDiffUri();
         String payload = JSONUtils.toJson(revisions);
-        InputStream is = null;
-        try {
-            HttpConnection connection = Http.POST(uri, "application/json");
-            connection.setRequestBody(payload);
-            is = executeToInputStreamWithRetry(connection);
 
-
-            return JSONUtils.fromJson(new InputStreamReader(is, Charset.forName("UTF-8")),
-                    JSONUtils.mapStringMissingRevisions());
-        } finally {
-            closeQuietly(is);
-        }
+        HttpConnection connection = Http.POST(uri, "application/json");
+        connection.setRequestBody(payload);
+        return executeToJsonObjectWithRetry(connection, JSONUtils.STRING_MISSING_REVS_MAP_TYPE_DEF);
     }
 
     public Response putMultipart(final MultipartAttachmentWriter mpw) {
@@ -742,6 +700,9 @@ public class CouchClient  {
         public Set<String> missing;
     }
 
+    public interface InputStreamProcessor<T> {
+        T processStream(InputStream stream) throws Exception;
+    }
 
     private static class CouchClientTypeReference<T> extends TypeReference<T> {
 
@@ -764,4 +725,29 @@ public class CouchClient  {
 
         }
     }
-}
+
+    private static final class TypeInputStreamProcessor<T> implements InputStreamProcessor<T> {
+
+        private final TypeReference<T> typeReference;
+        TypeInputStreamProcessor(TypeReference<T> typeReference) {
+            this.typeReference = typeReference;
+        }
+
+        @Override
+        public T processStream(InputStream stream) {
+            return JSONUtils.fromJson(new InputStreamReader(stream, Charset.forName
+                    ("UTF-8")), typeReference);
+        }
+    }
+
+    /**
+     * For use with e.g. HEAD requests where there is no InputStream
+     */
+    public static final class NoOpInputStreamProcessor implements InputStreamProcessor<Void> {
+
+        @Override
+        public Void processStream(InputStream stream) {
+            return null;
+        }
+    }
+ }

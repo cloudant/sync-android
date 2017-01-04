@@ -20,7 +20,6 @@ import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.sync.internal.common.PropertyFilterMixIn;
 import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.mazha.Document;
-import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.mazha.OpenRevision;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,7 +31,6 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -52,13 +50,18 @@ public class JSONUtils {
 
     private static final byte[] EMPTY_JSON = "{}".getBytes(Charset.forName("UTF-8"));
 
-
     public final static TypeReference<List<String>> STRING_LIST_TYPE_DEF =
             new TypeReference<List<String>>() {};
 
     public final static TypeReference<Map<String, Object>> STRING_MAP_TYPE_DEF =
             new TypeReference<Map<String, Object>>() {};
 
+    public final static TypeReference<Map<String, CouchClient
+            .MissingRevisions>> STRING_MISSING_REVS_MAP_TYPE_DEF =
+            new TypeReference<Map<String, CouchClient.MissingRevisions>>() {};
+
+    public final static TypeReference<List<OpenRevision>> OPEN_REVS_LIST_TYPE_DEF =
+            new TypeReference<List<OpenRevision>>() {};
 
     private static final ObjectMapper sMapper = new ObjectMapper();
 
@@ -237,26 +240,5 @@ public class JSONUtils {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static TypeFactory getTypeFactory(){
-        return sMapper.getTypeFactory();
-    }
-
-    public static JavaType mapStringToObject(){
-        return JSONUtils.getTypeFactory().constructParametricType(Map.class,String.class,Object.class);
-    }
-
-    public static JavaType mapStringMissingRevisions(){
-        return JSONUtils.getTypeFactory().constructParametricType(Map.class, String.class, CouchClient
-                .MissingRevisions.class);
-    }
-
-    public static JavaType openRevisionList() {
-        return JSONUtils.getTypeFactory().constructParametricType(List.class, OpenRevision.class);
-    }
-
-    public static JavaType documentRevs() {
-        return JSONUtils.getTypeFactory().constructType(DocumentRevs.class);
     }
 }

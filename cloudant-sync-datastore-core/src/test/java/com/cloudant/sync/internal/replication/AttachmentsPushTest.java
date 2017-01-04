@@ -19,6 +19,7 @@ import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.UnsavedFileAttachment;
+import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.replication.PushAttachmentsInline;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 import com.cloudant.sync.util.TestUtils;
@@ -31,13 +32,12 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.hamcrest.CoreMatchers.is;
 
 /**
  * Created by tomblench on 26/03/2014.
@@ -133,9 +133,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         push();
 
         // check it's in the DB
-        InputStream is1 = this.couchClient.getAttachmentStream(id1, newRevision.getRevision(), attachmentName, false);
-        InputStream is2 = new FileInputStream(f);
-        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(is1, is2));
+        assertAttachmentEquality(id1, newRevision.getRevision(), attachmentName, f);
     }
 
     @Test
@@ -157,9 +155,7 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         push();
 
         // check it's in the DB
-        InputStream is1 = this.couchClient.getAttachmentStream(id1, newRevision.getRevision(), attachmentName, false);
-        InputStream is2 = new FileInputStream(f);
-        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(is1, is2));
+        assertAttachmentEquality(id1, newRevision.getRevision(), attachmentName, f);
     }
 
 
@@ -188,12 +184,8 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         push();
 
         // check it's in the DB
-        InputStream is1_1 = this.couchClient.getAttachmentStream(id1, newRevision.getRevision(), attachmentName1, false);
-        InputStream is1_2 = this.couchClient.getAttachmentStream(id1, newRevision.getRevision(), attachmentName2, false);
-        InputStream is2_1 = new FileInputStream(f1);
-        InputStream is2_2 = new FileInputStream(f2);
-        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(is1_1, is2_1));
-        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(is1_2, is2_2));
+        assertAttachmentEquality(id1, newRevision.getRevision(), attachmentName1, f1);
+        assertAttachmentEquality(id1, newRevision.getRevision(), attachmentName2, f2);
     }
 
     @Test
@@ -231,25 +223,10 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         // push replication - att2 should be uploaded
         push();
 
-        InputStream isOriginal1;
-        InputStream isOriginal2;
-
-        InputStream isRev2 = this.couchClient.getAttachmentStream(id1, rev2.getRevision(), attachmentName1, false);
-        InputStream isRev3 = this.couchClient.getAttachmentStream(id1, rev3.getRevision(), attachmentName1, false);
-        InputStream isRev4Att1 = this.couchClient.getAttachmentStream(id1, rev4.getRevision(), attachmentName1, false);
-        InputStream isRev4Att2 = this.couchClient.getAttachmentStream(id1, rev4.getRevision(), attachmentName2, false);
-
-        isOriginal1 = new FileInputStream(f1);
-        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev2, isOriginal1));
-
-        isOriginal1 = new FileInputStream(f1);
-        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev3, isOriginal1));
-
-        isOriginal1 = new FileInputStream(f1);
-        isOriginal2 = new FileInputStream(f2);
-        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev4Att1, isOriginal1));
-        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev4Att2, isOriginal2));
-
+        assertAttachmentEquality(id1, rev2.getRevision(), attachmentName1, f1);
+        assertAttachmentEquality(id1, rev3.getRevision(), attachmentName1, f1);
+        assertAttachmentEquality(id1, rev4.getRevision(), attachmentName1, f1);
+        assertAttachmentEquality(id1, rev4.getRevision(), attachmentName2, f2);
     }
 
     // regression test for FB 46326 - see
@@ -283,17 +260,27 @@ public class AttachmentsPushTest extends ReplicationTestBase {
         // push replication - att1 & att2 should be uploaded
         push();
 
-        InputStream isOriginal1;
-        InputStream isOriginal2;
+        assertAttachmentEquality(id1, rev4.getRevision(), attachmentName1, f1);
+        assertAttachmentEquality(id1, rev4.getRevision(), attachmentName2, f2);
+    }
 
-        InputStream isRev4Att1 = this.couchClient.getAttachmentStream(id1, rev4.getRevision(), attachmentName1, false);
-        InputStream isRev4Att2 = this.couchClient.getAttachmentStream(id1, rev4.getRevision(), attachmentName2, false);
+    void assertAttachmentEquality(String id, String rev, String attachmentName, File f) throws Exception {
+        this.couchClient.processAttachmentStream(id, rev, attachmentName, false, new FileComparingInputStreamProcessor(f));
+    }
 
-        isOriginal1 = new FileInputStream(f1);
-        isOriginal2 = new FileInputStream(f2);
-        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev4Att1, isOriginal1));
-        Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(isRev4Att2, isOriginal2));
+    private static final class FileComparingInputStreamProcessor implements CouchClient.InputStreamProcessor<Void> {
 
+        private final FileInputStream fileStream;
+
+        FileComparingInputStreamProcessor(File f) throws FileNotFoundException {
+            this.fileStream = new FileInputStream(f);
+        }
+
+        @Override
+        public Void processStream(InputStream stream) throws Exception {
+            Assert.assertTrue("Attachment not the same", TestUtils.streamsEqual(stream, fileStream));
+            return null;
+        }
     }
 
 }
