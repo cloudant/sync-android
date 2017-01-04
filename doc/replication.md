@@ -109,7 +109,7 @@ private class Listener {
 
     @Subscribe
     public void error(ReplicationErrored event) {
-        this.error.add(event.errorInfo);
+        this.errors.add(event.errorInfo);
         latch.countDown();
     }
 }
@@ -121,7 +121,7 @@ Next we replicate a local document store to a remote database:
 // Username/password are supplied in the URL and can be Cloudant API keys
 URI uri = new URI("https://username:password@username.cloudant.com/my_database");
 
-DocumentStore ds = DocumentStore.getInstance("my_datastore");
+DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
 
 // Create a replicator that replicates changes from the local
 // datastore to the remote database.
@@ -149,7 +149,7 @@ And getting data from a remote database to a local one:
 // Username/password are supplied in the URL and can be Cloudant API keys
 URI uri = new URI("https://username:password@username.cloudant.com/my_database");
 
-DocumentStore ds = DocumentStore.getInstance("my_datastore");
+DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
 
 // Create a replicator that replicates changes from the remote
 // database to the local datastore.
@@ -178,16 +178,16 @@ And running a full sync, that is, two one way replications:
 // Username/password are supplied in the URL and can be Cloudant API keys
 URI uri = new URI("https://username:password@username.cloudant.com/my_database");
 
-DocumentStore ds = DocumentStore.getInstance("my_datastore");
+DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
 
 // Create the pull replicator
 Replicator pullReplicator = ReplicatorBuilder.pull().from(uri).to(ds).build();
 
 // Create the push replicator
-Replicator pushReplicator = ReplicationBuilder.push().to(uri).from(ds).build();
+Replicator pushReplicator = ReplicatorBuilder.push().to(uri).from(ds).build();
 
 // Use a latch starting at 2 as we're waiting for two replications to finish
-latch = new CountDownLatch(2);
+CountDownLatch latch = new CountDownLatch(2);
 Listener listener = new Listener(latch);
 
 // Set the listener and start for both pull and push replications
@@ -209,7 +209,7 @@ if (pullReplicator.getState() != Replicator.State.COMPLETE) {
 } else if (pushReplicator.getState() != Replicator.State.COMPLETE) {
     System.err.println("Error replicating TO remote");
     System.err.println(listener.errors);
-else {
+} else {
     System.out.println(String.format("Replicated %d documents in %d batches",
             listener.documentsReplicated, listener.batchesReplicated));
 }
@@ -225,20 +225,17 @@ is first queried:
 // username/password can be Cloudant API keys
 URI uri = new URI("https://username:password@username.cloudant.com/my_database");
 
-DocumentStore ds = DocumentStore.getInstance("my_datastore");
+DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
 
 // Create a replicator that replicates changes from the remote
 // database to the local datastore.
-PullReplication pull = new PullReplication();
-pull.source = uri;
-pull.target = ds;
 Replicator replicator = ReplicatorBuilder.pull().from(uri).to(ds).build();
 
 // Create a sample index on type field
-ds.query().ensureIndexed(Arrays.asList("fieldName"), "indexName");
+ds.query().ensureIndexed(Arrays.asList(new FieldSort("fieldName")), "indexName");
 
 // Use a CountDownLatch to provide a lightweight way to wait for completion
-latch = new CountDownLatch(1);
+CountDownLatch latch = new CountDownLatch(1);
 Listener listener = new Listener(latch);
 replicator.getEventBus().register(listener);
 replicator.start();
@@ -246,11 +243,11 @@ latch.await();
 replicator.getEventBus().unregister(listener);
 if (replicator.getState() != Replicator.State.COMPLETE) {
     System.out.println("Error replicating TO remote");
-    System.out.println(listener.error);
+    System.out.println(listener.errors);
 }
 
 // Ensure all indexes are updated after replication
-indexManager.updateAllIndexes();
+ds.query().updateAllIndexes();
 
 ```
 
@@ -265,8 +262,8 @@ Map<String, String> parameters = new HashMap<String, String>();
 parameters.put("key", "value");
 PullFilter filter = new PullFilter("filterDoc/filterFunctionName", parameters);
 Replicator replicator = ReplicatorBuilder.pull()
-                        .from(this.getURI())
-                        .to(this.datastore)
+                        .from(uri))
+                        .to(ds)
                         .filter(filter)
                         .build();
 ```
