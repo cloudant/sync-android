@@ -18,6 +18,7 @@ import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.encryption.KeyProvider;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.documentstore.migrations.SchemaOnlyMigration;
+import com.cloudant.sync.internal.query.callables.DeleteIndexCallable;
 import com.cloudant.sync.internal.query.callables.ListIndexesCallable;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
@@ -25,8 +26,6 @@ import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.Query;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
-import com.cloudant.sync.internal.sqlite.SQLCallable;
-import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.internal.util.Misc;
 
@@ -312,7 +311,7 @@ public class QueryImpl implements Query {
         return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
     }
 
-    protected static String tableNameForIndex(String indexName) {
+    public static String tableNameForIndex(String indexName) {
         return INDEX_TABLE_PREFIX.concat(indexName);
     }
 
@@ -321,29 +320,4 @@ public class QueryImpl implements Query {
     }
 
 
-    private static class DeleteIndexCallable implements SQLCallable<Void> {
-        private final String indexName;
-
-        public DeleteIndexCallable(String indexName) {
-            this.indexName = indexName;
-        }
-
-        @Override
-        public Void call(SQLDatabase database) throws QueryException {
-            try {
-                // Drop the index table
-                String tableName = tableNameForIndex(indexName);
-                String sql = String.format("DROP TABLE \"%s\"", tableName);
-                database.execSQL(sql);
-
-                // Delete the metadata entries
-                String where = " index_name = ? ";
-                database.delete(INDEX_METADATA_TABLE_NAME, where, new String[]{indexName});
-            } catch (SQLException e) {
-                String msg = String.format("Failed to delete index: %s", indexName);
-                throw new QueryException(msg, e);
-            }
-            return null;
-        }
-    }
 }
