@@ -77,7 +77,7 @@ completes or encounters an error.
 The replication examples below are 'one-shot' and will run once until
 completion, at which point the local and remote databases will be
 synchronised. [Replication policies](replication-policies.md) allow
-for more complex "policies" to be executed, eg "only replicate when on
+for more complex "policies" to be executed, for example "only replicate when on
 Wifi" or "replicate every 30 minutes".
 
 First we create a simple listener that just sets a CountDownLatch when the
@@ -119,7 +119,7 @@ Next we replicate a local document store to a remote database:
 
 ```java
 // Username/password are supplied in the URL and can be Cloudant API keys
-URI uri = new URI("https://username:password@username.cloudant.com/my_database");
+URI uri = new URI("https://username:password@examples.cloudant.com/my_database");
 
 DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
 
@@ -147,7 +147,7 @@ And getting data from a remote database to a local one:
 
 ```java
 // Username/password are supplied in the URL and can be Cloudant API keys
-URI uri = new URI("https://username:password@username.cloudant.com/my_database");
+URI uri = new URI("https://username:password@examples.cloudant.com/my_database");
 
 DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
 
@@ -176,7 +176,7 @@ And running a full sync, that is, two one way replications:
 ```java
 
 // Username/password are supplied in the URL and can be Cloudant API keys
-URI uri = new URI("https://username:password@username.cloudant.com/my_database");
+URI uri = new URI("https://username:password@examples.cloudant.com/my_database");
 
 DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
 
@@ -223,7 +223,7 @@ is first queried:
 
 ```java
 // username/password can be Cloudant API keys
-URI uri = new URI("https://username:password@username.cloudant.com/my_database");
+URI uri = new URI("https://username:password@examples.cloudant.com/my_database");
 
 DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
 
