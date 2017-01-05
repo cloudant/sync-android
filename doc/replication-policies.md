@@ -167,8 +167,8 @@ public class MyReplicationService extends PeriodicReplicationService {
 
     private static final String TAG = "MyReplicationService";
 
-    private static final String TASKS_DATASTORE_NAME = "tasks";
-    private static final String DATASTORE_MANGER_DIR = "data";
+    private static final String TASKS_DOCUMENT_STORE_NAME = "tasks";
+    private static final String DOCUMENT_STORE_DIR = "data";
 
     public MyReplicationService() {
         super(MyWifiPeriodicReplicationReceiver.class);
@@ -182,20 +182,19 @@ public class MyReplicationService extends PeriodicReplicationService {
             URI uri = new URI("https", "my_api_key:my_api_secret", "myaccount.cloudant.com", 443, "/" + "mydb", null, null);
 
             File path = context.getApplicationContext().getDir(
-                DATASTORE_MANGER_DIR,
+                DOCUMENT_STORE_DIR,
                 Context.MODE_PRIVATE
             );
 
-            DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
-            Datastore datastore = null;
+            DocumentStore documentStore = null;
             try {
-                datastore = manager.openDatastore(TASKS_DATASTORE_NAME);
-            } catch (DatastoreNotCreatedException dnce) {
-                Log.e(TAG, "Unable to open Datastore", dnce);
+                documentStore = DocumentStore.getInstance(new File(path, TASKS_DOCUMENT_STORE_NAME));
+            } catch (DocumentStoreNotOpenedException dsnoe) {
+                Log.e(TAG, "Unable to open DocumentStore", dsnoe);
             }
 
-            Replicator pullReplicator = ReplicatorBuilder.pull().from(uri).to(datastore).withId(PULL_REPLICATION_ID).build();
-            Replicator pushReplicator = ReplicatorBuilder.push().to(uri).from(datastore).withId(PUSH_REPLICATION_ID).build();
+            Replicator pullReplicator = ReplicatorBuilder.pull().from(uri).to(documentStore).withId(PULL_REPLICATION_ID).build();
+            Replicator pushReplicator = ReplicatorBuilder.push().to(uri).from(documentStore).withId(PUSH_REPLICATION_ID).build();
 
             // Replications will not begin until setReplicators(Replicator[]) is called.
             setReplicators(new Replicator[]{pullReplicator, pushReplicator});
