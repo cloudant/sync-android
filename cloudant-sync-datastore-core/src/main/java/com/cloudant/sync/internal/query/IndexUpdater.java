@@ -19,18 +19,16 @@ import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.documentstore.Changes;
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.internal.query.callables.SequenceNumberForIndexCallable;
 import com.cloudant.sync.internal.query.callables.UpdateMetadataForIndexCallable;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.QueryException;
-import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.sqlite.SQLDatabaseQueue;
-import com.cloudant.sync.internal.util.DatabaseUtils;
 import com.cloudant.sync.internal.util.Misc;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -324,35 +322,6 @@ class IndexUpdater {
         public DBParameter(String tableName, ContentValues contentValues) {
             this.tableName = tableName;
             this.contentValues = contentValues;
-        }
-    }
-
-    private static class SequenceNumberForIndexCallable implements SQLCallable<Long> {
-        private final String indexName;
-
-        public SequenceNumberForIndexCallable(String indexName) {
-            this.indexName = indexName;
-        }
-
-        @Override
-        public Long call(SQLDatabase database) {
-            long result = 0;
-            String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = ?",
-                                       QueryImpl.INDEX_METADATA_TABLE_NAME);
-            Cursor cursor = null;
-            try {
-                cursor = database.rawQuery(sql, new String[]{indexName});
-                if (cursor.getCount() > 0) {
-                    // All rows for a given index will have the same last_sequence
-                    cursor.moveToNext();
-                    result = cursor.getLong(0);
-                }
-            } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Error getting last sequence number. ", e);
-            } finally {
-                DatabaseUtils.closeCursorQuietly(cursor);
-            }
-            return result;
         }
     }
 
