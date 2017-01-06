@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014, 2016 IBM Corp. All rights reserved.
+ * Copyright © 2014, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -16,6 +16,7 @@ package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.internal.query.callables.ListIndexesCallable;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.IndexType;
@@ -122,7 +123,7 @@ class IndexCreator {
         // else fail.
         try {
 
-            List<Index> existingIndexes = listIndexesInDatabaseQueue();
+            List<Index> existingIndexes = queue.submit(new ListIndexesCallable()).get();
             HashMap<String, Index> existingIndexNames = new HashMap<String, Index>();
             for (Index index : existingIndexes) {
                 existingIndexNames.put(index.indexName, index);
@@ -300,13 +301,6 @@ class IndexCreator {
         return false;
     }
 
-    private List<Index> listIndexesInDatabaseQueue() throws ExecutionException,
-                                                                    InterruptedException {
-        Future<List<Index>> indexes = queue.submit(new ListIndexesCallable());
-
-        return indexes.get();
-    }
-
     private String createIndexTableStatementForIndex(String indexName, List<String> columns) {
         String tableName = String.format(Locale.ENGLISH, "\"%s\"", QueryImpl.tableNameForIndex(indexName));
         String cols = Misc.join(" NONE, ", columns);
@@ -351,7 +345,7 @@ class IndexCreator {
      * until we find one which doesn't already exist.
      *
      * We make sure the generated name is not an index already by the list
-     * of index names returned by {@link #listIndexesInDatabaseQueue()} method.
+     * of index names returned by {@link ListIndexesCallable} class.
      * This is because we avoid knowing about how indexes are stored in SQLite, however
      * this means that it is not thread safe, it is possible for a new index with the same
      * name to be created after a copy of the indexes has been taken from the database.
@@ -389,10 +383,4 @@ class IndexCreator {
         }
     }
 
-    private static class ListIndexesCallable implements SQLCallable<List<Index>> {
-        @Override
-        public List<Index> call(SQLDatabase database) throws SQLException {
-            return QueryImpl.listIndexesInDatabase(database);
-        }
-    }
 }
