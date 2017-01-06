@@ -125,16 +125,6 @@ public class IndexTest {
         assertThat(index.equals(index2), is(true));
     }
 
-    @Test
-    public void returnsIndexSettingsAsAString() {
-        Index index = new Index(fieldNames, indexName, IndexType.TEXT);
-        assertThat(IndexCreator.settingsAsJSON(index), is("{\"tokenize\":\"simple\"}"));
-    }
 
-    @Test
-    public void returnsNullIndexSettingsAsAString() {
-        Index index = new Index(fieldNames, indexName);
-        assertThat(IndexCreator.settingsAsJSON(index), is("{}"));
-    }
 
 }
