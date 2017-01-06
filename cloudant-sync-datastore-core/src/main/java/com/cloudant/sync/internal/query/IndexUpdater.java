@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cloudant, Inc. All rights reserved.
+ * Copyright © 2014, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -19,6 +19,7 @@ import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.documentstore.Changes;
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.internal.query.callables.UpdateMetadataForIndexCallable;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.QueryException;
@@ -352,30 +353,6 @@ class IndexUpdater {
                 DatabaseUtils.closeCursorQuietly(cursor);
             }
             return result;
-        }
-    }
-
-    private static class UpdateMetadataForIndexCallable implements SQLCallable<Void> {
-        private final long lastSequence;
-        private final String indexName;
-
-        public UpdateMetadataForIndexCallable(long lastSequence, String indexName) {
-            this.lastSequence = lastSequence;
-            this.indexName = indexName;
-        }
-
-        @Override
-        public Void call(SQLDatabase database) throws QueryException {
-            ContentValues v = new ContentValues();
-            v.put("last_sequence", lastSequence);
-            int row = database.update(QueryImpl.INDEX_METADATA_TABLE_NAME,
-                                      v,
-                                      " index_name = ? ",
-                                      new String[]{indexName});
-            if (row <= 0) {
-                throw new QueryException("Failed to update index metadata for index "+ indexName);
-            }
-            return null;
         }
     }
 
