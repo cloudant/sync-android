@@ -1,4 +1,4 @@
-qHTTP Interceptors
+HTTP Interceptors
 =====
 
 With the release of sync-android version 0.13.0 a new HTTP Interceptor API was introduced.
