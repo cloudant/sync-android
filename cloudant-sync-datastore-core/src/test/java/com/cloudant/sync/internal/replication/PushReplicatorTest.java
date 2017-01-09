@@ -157,6 +157,28 @@ public class PushReplicatorTest extends ReplicationTestBase {
         Assert.assertEquals(3, remoteDb.couchClient.getDbInfo().getDocCount());
     }
 
+    @Test
+    public void testCredsAPIOverridesURL() throws Exception {
+        ReplicatorBuilder.Push push =  ReplicatorBuilder.push().from(documentStore)
+                .to(new URI("http://example:password@example.invalid"))
+                .username("user")
+                .password("examplePass");
+        ReplicatorImpl replicator = (ReplicatorImpl) push.build();
+
+        assertCookieInterceptorPresent(push, "name=user&password=examplePass");
+    }
+
+    @Test
+    public void testCredsAPIOverridesURLWithPath() throws Exception {
+        ReplicatorBuilder.Push push =  ReplicatorBuilder.push().from(documentStore)
+                .to(new URI("http://example:password@example.invalid/proxy"))
+                .username("user")
+                .password("examplePass");
+        ReplicatorImpl replicator = (ReplicatorImpl) push.build();
+
+        assertCookieInterceptorPresent(push, "name=user&password=examplePass");
+    }
+
 
     @Test
     public void replicatorBuilderAddsCookieInterceptorCustomPort() throws Exception {
