@@ -20,7 +20,6 @@ import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,10 +31,9 @@ import java.util.Map;
 
 public class NumericQueryTest extends AbstractQueryTestBase {
 
-    int defaultInt = 42;
-    float defaultFloat = 1.01f;
-    double defaultDouble = 1.01d;
-
+    static final int defaultInt = 42;
+    static final float defaultFloat = 1.01f;
+    static final double defaultDouble = 1.01d;
 
     @Before
     public void before() throws Exception {
