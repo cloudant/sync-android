@@ -1,6 +1,6 @@
-# Datastore encryption
+# DocumentStore encryption
 
-Android’s datastore now supports encryption of all data inside your database 
+Android’s document store now supports encryption of all data inside your database 
 using 256-bit AES: JSON documents, Query indexes and attachments.
 
 JSON documents and Query indexes are stored in SQLite databases. We use
@@ -43,7 +43,7 @@ Once you've included the binaries in your app's build, you need to perform some 
     SQLiteDatabase.loadLibs(this);
     ```
 
-2.	With encryption, two parameters are required in the `openDatastore` call: the 
+2.	With encryption, two parameters are required in the `getInstance` call: the 
     application storage path and a `KeyProvider` object.  The `KeyProvider` interface 
     can be instantiated with the `SimpleKeyProvider` class, which just provides a
     developer or user set encryption key.  Create a new SimpleKeyProvider 
@@ -57,10 +57,9 @@ Once you've included the binaries in your app's build, you need to perform some 
     byte[] key = "testAKeyPasswordtestAKeyPassword".getBytes();  
     KeyProvider keyProvider = new SimpleKeyProvider(key); 
 
-    File path = getApplicationContext().getDir("datastores", MODE_PRIVATE);
-    DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
+    File path = getApplicationContext().getDir("documentstores", MODE_PRIVATE);
 
-    Datastore ds = manager.openDatastore("my_datastore", keyProvider);
+    DocumentStore ds = DocumentStore.getInstance(new File(path, "my_documentstore"), keyProvider);
     ```
     
     Note: The key _must_ be 32 bytes (256-bit key). `"testAKeyPasswordtestAKeyPassword"`
@@ -84,7 +83,7 @@ Example:
 ```java
 KeyProvider keyProvider = new AndroidKeyProvider(context, 
         "ASecretPassword", "AnIdentifier");
-Datastore ds = manager.openDatastore("my_datastore", keyProvider);
+DocumentStore ds = DocumentStore.getInstance(new File(path, "my_documentstore"), keyProvider);
 ```
 
 One example of an identifier might be if multiple users share the same
@@ -106,18 +105,16 @@ protected void onCreate(Bundle savedInstanceState) {
  
     SQLiteDatabase.loadLibs(this);
  
-    // Create a DatastoreManager with encryption using 
+    // Get a DocumentStore instance with encryption using 
     // application internal storage path and a key
-    File path = getApplicationContext().getDir("datastores", MODE_PRIVATE);
+    File path = getApplicationContext().getDir("documentstores", MODE_PRIVATE);
     KeyProvider keyProvider = 
             new SimpleKeyProvider("testAKeyPasswordtestAKeyPassword".getBytes());
  
-    DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
- 
-    Datastore ds = null;
+    DocumentStore ds = null;
     try {
-        ds = manager.openDatastore("my_datastore", keyProvider);
-    } catch (DatastoreNotCreatedException e) {
+        ds = DocumentStore.getInstance(new File(path, "my_documentstore"), keyProvider);
+    } catch (DocumentStoreNotOpenedException e) {
         e.printStackTrace();
     }
         
@@ -168,7 +165,7 @@ saving to disk. There should be no licencing concerns for using JCE.
 Databases are automatically encrypted with
 [SQLCipher][SQLCipher]. SQLCipher requires including its
 [BSD-style license][BSD-style license] and copyright in your application and
-documentation. Therefore, if you use datastore encryption in your application, 
+documentation. Therefore, if you use document store encryption in your application, 
 please follow the instructions mentioned [here](https://www.zetetic.net/sqlcipher/open-source/).
 
 [SQLCipher]: https://www.zetetic.net/sqlcipher/
