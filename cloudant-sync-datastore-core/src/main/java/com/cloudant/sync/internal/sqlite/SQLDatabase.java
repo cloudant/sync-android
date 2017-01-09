@@ -1,4 +1,6 @@
 /*
+ * Copyright © 2017 IBM Corp. All rights reserved.
+ *
  * Copyright © 2013 Cloudant, Inc.
  *
  * Copyright © 2006 The Android Open Source Project
