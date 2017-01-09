@@ -1,4 +1,4 @@
-HTTP Interceptors
+qHTTP Interceptors
 =====
 
 With the release of sync-android version 0.13.0 a new HTTP Interceptor API was introduced.
@@ -21,7 +21,7 @@ In order to add an HTTP Interceptor to a replication, you call the `addRequestIn
 or `addResponseInterceptors` on the `ReplicatorBuilder` class.
 
 One of the built-in interceptors is `BasicAuthInterceptor` which can be used to
-auhenticate with servers where cookie authentication is not supported.
+authenticate with servers where cookie authentication is not supported.
 
 To add an add instance of `BasicAuthInterceptor` to a pull replication, do the following:
 
@@ -42,7 +42,7 @@ replicator.start();
 ## Adding Custom Request Headers
 
 Request Interceptors can be used to add custom HTTP headers by
-accessing the underlying `HttpUrlconnection`, as in this example:
+accessing the underlying `HttpURLConnection`, as in this example:
 
 ```java
 @Override
