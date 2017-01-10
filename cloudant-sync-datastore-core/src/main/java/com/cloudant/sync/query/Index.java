@@ -39,8 +39,6 @@ public class Index {
 
     private static final Logger logger = Logger.getLogger(Index.class.getCanonicalName());
 
-    private static final String TEXT_DEFAULT_TOKENIZER = "simple";
-
     /**
      * The json field names to index
      */
@@ -62,11 +60,14 @@ public class Index {
      * For "text" indexes. The SQLite FTS tokenizer to use when searching text.
      * </p>
      * <p>
+     * For "JSON" indexes this will be null.
+     * </p>
+     * <p>
      * For more information about tokenizers, see
      * <a target="_blank" href="https://www.sqlite.org/fts3.html#tokenizer">the SQLite documentation.</a>
      * </p>
      */
-    public final String tokenize;
+    public final Tokenizer tokenizer;
 
     /**
      * This method sets the index type to the default setting of "json"
@@ -97,12 +98,12 @@ public class Index {
      * @param fieldNames the field names in the index
      * @param indexName the index name or null
      * @param indexType the index type (json or text)
-     * @param tokenize  for text indexes only.
+     * @param tokenizer for text indexes only.
      */
     public Index(List<FieldSort> fieldNames,
                  String indexName,
                  IndexType indexType,
-                 String tokenize) {
+                 Tokenizer tokenizer) {
 
         Misc.checkNotNull(fieldNames, "fieldNames");
         Misc.checkArgument(!fieldNames.isEmpty(), "fieldNames isEmpty()");
@@ -114,16 +115,16 @@ public class Index {
         this.indexType = indexType;
 
         if (indexType == IndexType.TEXT) {
-            if (tokenize == null) {
+            if (tokenizer == null) {
                 // set default tokenizer if one wasn't set
-                this.tokenize = TEXT_DEFAULT_TOKENIZER;
+                this.tokenizer = Tokenizer.DEFAULT;
             } else {
-                this.tokenize = tokenize;
+                this.tokenizer = tokenizer;
             }
         } else {
             // tokenize isn't valid if we're not doing text indexing
-            Misc.checkArgument(tokenize == null, "tokenize must not be null if indexType is JSON");
-            this.tokenize = tokenize;
+            Misc.checkArgument(tokenizer == null, "tokenizer must be null if indexType is JSON");
+            this.tokenizer = null;
         }
 
     }
@@ -150,7 +151,7 @@ public class Index {
         if (indexType != index.indexType) {
             return false;
         }
-        return tokenize == null ? index.tokenize == null : tokenize.equals(index.tokenize);
+        return tokenizer == null ? index.tokenizer == null : tokenizer.equals(index.tokenizer);
 
     }
 
@@ -159,7 +160,18 @@ public class Index {
         int result = fieldNames.hashCode();
         result = 31 * result + indexName.hashCode();
         result = 31 * result + indexType.hashCode();
-        result = 31 * result + (tokenize != null ? tokenize.hashCode() : 0);
+        result = 31 * result + (tokenizer != null ? tokenizer.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "Index{" +
+                "fieldNames=" + fieldNames +
+                ", indexName='" + indexName + '\'' +
+                ", indexType=" + indexType +
+                ", tokenizer=" + tokenizer +
+                '}';
+    }
+
 }

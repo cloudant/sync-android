@@ -28,6 +28,7 @@ import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
+import com.cloudant.sync.query.Tokenizer;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
 
@@ -111,7 +112,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
 
     @Test
     public void canMakeAQueryConsistingOfASingleTextSearch() throws QueryException {
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("comment")), "basic_text", IndexType.TEXT),
+        assertThat(im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("comment")), "basic_text", null).indexName,
                                     is("basic_text"));
 
         // query - { "$text" : { "$search" : "lives in Bristol" } }
@@ -125,7 +126,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
 
     @Test
     public void canMakeAPhraseSearch() throws QueryException {
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("comment")), "basic_text", IndexType.TEXT),
+        assertThat(im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("comment")), "basic_text", null).indexName,
                                     is("basic_text"));
 
         // query - { "$text" : { "$search" : "\"lives in Bristol\"" } }
@@ -139,7 +140,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
 
     @Test
     public void canMakeAQueryTextSearchContainingAnApostrophe() throws QueryException {
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("comment")), "basic_text", IndexType.TEXT),
+        assertThat(im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("comment")), "basic_text", null).indexName,
                                     is("basic_text"));
 
         // query - { "$text" : { "$search" : "He's retired" } }
@@ -153,7 +154,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
 
     @Test
     public void canMakeAQueryConsistingOfASingleTextSearchWithASort() throws QueryException {
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")), "basic_text", IndexType.TEXT),
+        assertThat(im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")), "basic_text", null).indexName,
                                     is("basic_text"));
 
         // query - { "$text" : { "$search" : "best friend" } }
@@ -169,8 +170,8 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
 
     @Test
     public void canMakeANDCompoundQueryWithATextSearch() throws QueryException {
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name")), "basic"), is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")), "basic_text", IndexType.TEXT),
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name")), "basic").indexName, is("basic"));
+        assertThat(im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")), "basic_text", null).indexName,
                    is("basic_text"));
 
         // query - { "name" : "mike", "$text" : { "$search" : "best friend" } }
@@ -185,8 +186,8 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
 
     @Test
     public void canMakeORCompoundQueryWithATextSearch() throws QueryException {
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name")), "basic"), is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("comment")), "basic_text", IndexType.TEXT),
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name")), "basic").indexName, is("basic"));
+        assertThat(im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("comment")), "basic_text", null).indexName,
                    is("basic_text"));
 
         // query - { "$or" : [ { "name" : "mike" }, { "$text" : { "$search" : "best friend" } } ] }
@@ -208,7 +209,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
 
     @Test(expected = IllegalStateException.class)
     public void nullForTextSearchQueryWithoutATextIndex() throws QueryException {
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name")), "basic"), is("basic"));
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name")), "basic").indexName, is("basic"));
 
         // query - { "name" : "mike", "$text" : { "$search" : "best friend" } }
         Map<String, Object> search = new HashMap<String, Object>();
@@ -225,7 +226,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         // So even though "name" exists in the text index, the clause that { "name" : "mike" }
         // expects a JSON index that contains the "name" field.  Since, this query includes a
         // text search clause then all clauses of the query must be satisfied by existing indexes.
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")), "basic_text", IndexType.TEXT),
+        assertThat(im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")), "basic_text", null).indexName,
                    is("basic_text"));
 
         // query - { "$or" : [ { "name" : "mike" }, { "$text" : { "$search" : "best friend" } } ] }
@@ -244,7 +245,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void canMakeATextSearchUsingNonAsciiValues() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "\"صديق له هو\"" } }
         Map<String, Object> search = new HashMap<String, Object>();
@@ -258,7 +259,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void returnsEmptyResultSetForUnmatchedPhraseSearch() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "\"Remus Romulus\"" } }
         Map<String, Object> search = new HashMap<String, Object>();
@@ -272,7 +273,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void returnsCorrectResultSetForNonContiguousWordSearch() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "Remus Romulus" } }
         // - The search predicate "Remus Romulus" normalizes to "Remus AND Romulus" in SQLite
@@ -287,7 +288,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void canQueryUsingEnhancedQuerySyntaxOR() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "Remus OR Romulus" } }
         // - Enhanced query Syntax - logical operators must be uppercase otherwise they will
@@ -306,7 +307,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         Set<String> compileOptions = SQLDatabaseTestUtils.getCompileOptions(indexManagerDatabaseQueue);
         if (compileOptions.containsAll(Arrays.asList("ENABLE_FTS3", "ENABLE_FTS3_PARENTHESIS"))) {
             List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-            assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+            assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
             // query - { "$text" : { "$search" : "Remus NOT Romulus" } }
             // - Enhanced query Syntax - logical operators must be uppercase otherwise they will
@@ -327,7 +328,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
         Set<String> compileOptions = SQLDatabaseTestUtils.getCompileOptions(indexManagerDatabaseQueue);
         if (compileOptions.containsAll(Arrays.asList("ENABLE_FTS3", "ENABLE_FTS3_PARENTHESIS"))) {
             List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-            assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+            assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
             // query - { "$text" : { "$search" : "(Remus OR Romulus) AND \"lives next door\"" } }
             // - Parentheses are used to override SQLite enhanced query syntax operator precedence
@@ -344,7 +345,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void canQueryUsingNEAR() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "\"he lives\" NEAR/2 Bristol" } }
         // - NEAR provides the ability to search for terms/phrases in proximity to each other
@@ -361,7 +362,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void ignoresCapitalizationUsingDefaultTokenizer() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "rEmUs RoMuLuS" } }
         // - Search is generally case-insensitive unless a custom tokenizer is provided
@@ -377,7 +378,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     public void queriesNonStringFieldAsAString() throws QueryException {
         // Text index on age field
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("age"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "12" } }
         Map<String, Object> search = new HashMap<String, Object>();
@@ -392,7 +393,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     public void returnsNullWhenSearchCriteriaNotAString() throws QueryException {
         // Text index on age field
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("age"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : 12 } }
         Map<String, Object> search = new HashMap<String, Object>();
@@ -406,7 +407,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     public void canQueryAcrossMultipleFields() throws QueryException {
         // Text index on name and comment fields
         List<FieldSort> fields = Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "Fred" } }
         //       - Will find both fred12 and fred34 as well as mike12 since Fred is mentioned
@@ -423,7 +424,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     public void canQueryTargetingSpecificFields() throws QueryException {
         // Text index on name and comment fields
         List<FieldSort> fields = Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "name:fred comment:lives in Bristol" } }
         //       - Will only find fred12 since he is the only named fred who's comment
@@ -439,7 +440,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void canQueryUsingPrefixSearches() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "liv* riv*" } }
         Map<String, Object> search = new HashMap<String, Object>();
@@ -453,7 +454,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void returnsEmptyResultSetWhenPrefixSearchesMissingWildcards() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "liv riv" } }
         Map<String, Object> search = new HashMap<String, Object>();
@@ -467,7 +468,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void canQueryUsingID() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "_id:mike*" } }
         Map<String, Object> search = new HashMap<String, Object>();
@@ -482,7 +483,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     public void canQueryUsingPorterTokenizerStemmer() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
         Map<String, String> indexSettings = new HashMap<String, String>();
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT, "porter"), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", new Tokenizer("porter")).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "live" } }
         Map<String, Object> search = new HashMap<String, Object>();
@@ -496,7 +497,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void returnsEmptyResultSetUsingDefaultTokenizerStemmer() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "live" } }
         Map<String, Object> search = new HashMap<String, Object>();
@@ -510,7 +511,7 @@ public class QueryTextSearchTest extends AbstractQueryTestBase {
     @Test
     public void canQueryUsingAnApostrophe() throws QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("comment"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "He's retired" } }
         Map<String, Object> search = new HashMap<String, Object>();

@@ -16,19 +16,18 @@
 package com.cloudant.sync.internal.query.callables;
 
 import com.cloudant.sync.internal.query.QueryImpl;
+import com.cloudant.sync.internal.query.TokenizerHelper;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.DatabaseUtils;
-import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.IndexType;
+import com.cloudant.sync.query.Tokenizer;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Lists the indexes for the database.
@@ -64,9 +63,9 @@ public class ListIndexesCallable implements SQLCallable<List<Index>> {
                         }
                         fieldNames.add(new FieldSort(cursorIndexes.getString(1)));
                     }
-                    Map<String, Object> settingsMap = JSONUtils.deserialize(settings.getBytes(Charset.forName("UTF-8")));
-                    if (settingsMap.containsKey("tokenize") && settingsMap.get("tokenize") instanceof String) {
-                        indexes.add(new Index(fieldNames, indexName, indexType, (String) settingsMap.get("tokenize")));
+                    Tokenizer tokenizer = TokenizerHelper.jsonToTokenizer(settings);
+                    if (tokenizer != null) {
+                        indexes.add(new Index(fieldNames, indexName, indexType, tokenizer));
                     } else {
                         indexes.add(new Index(fieldNames, indexName, indexType));
                     }

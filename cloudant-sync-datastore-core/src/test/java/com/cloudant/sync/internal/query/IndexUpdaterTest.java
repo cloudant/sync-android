@@ -1193,7 +1193,12 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     }
 
     private void createIndex(String indexName, List<FieldSort> fieldNames, IndexType indexType) throws QueryException{
-        assertThat(im.ensureIndexed(fieldNames, indexName, indexType), is(indexName));
+        if (indexType == IndexType.TEXT) {
+            assertThat(im.ensureIndexedText(fieldNames, indexName, null).indexName, is(indexName));
+        } else {
+            assertThat(im.ensureIndexedJson(fieldNames, indexName).indexName, is(indexName));
+
+        }
 
         List<Index> indexes = im.listIndexes();
         assertThat(indexes, hasItem(getIndexNameMatcher(indexName)));

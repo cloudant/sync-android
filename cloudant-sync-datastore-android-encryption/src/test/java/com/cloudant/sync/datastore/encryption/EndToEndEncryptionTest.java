@@ -137,7 +137,7 @@ public class EndToEndEncryptionTest {
 
         Query im = this.database.query();
         try {
-            im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
+            im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), null);
         } finally {
             ((QueryImpl)im).close();
         }
@@ -162,7 +162,7 @@ public class EndToEndEncryptionTest {
 
         Query im = this.database.query();
         try {
-            im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")));
+            im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), null);
         } finally {
             ((QueryImpl)im).close();
         }
@@ -311,7 +311,7 @@ public class EndToEndEncryptionTest {
         // perform a query to ensure we can use special chars
         Query query = database.query();
         try {
-            assertNotNull(query.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "my index"));
+            assertNotNull(query.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "my index"));
 
             // query for the name fred and check that docs are returned.
             Map<String, Object> selector = new HashMap<String, Object>();
