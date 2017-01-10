@@ -17,6 +17,7 @@
 package com.cloudant.sync.internal.query;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -24,6 +25,7 @@ import static org.hamcrest.Matchers.nullValue;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.FieldSort;
+import com.cloudant.sync.query.Tokenizer;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -51,7 +53,7 @@ public class IndexTest {
         assertThat(index.indexName, is("basic"));
         assertThat(index.fieldNames, is(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"))));
         assertThat(index.indexType, Matchers.is(IndexType.JSON));
-        assertThat(index.tokenize, is(nullValue()));
+        assertThat(index.tokenizer, is(nullValue()));
     }
 
     @Test
@@ -60,7 +62,7 @@ public class IndexTest {
         assertThat(index.indexName, is("basic"));
         assertThat(index.fieldNames, is(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"))));
         assertThat(index.indexType, is(IndexType.TEXT));
-        assertThat(index.tokenize, is("simple"));
+        assertThat(index.tokenizer.tokenizerName, is("simple"));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -87,14 +89,14 @@ public class IndexTest {
     @Test(expected = IllegalArgumentException.class)
     public void throwsWhenTokenizeSetForJson() {
         // json indexes do not support tokenize setting.
-        Index index = new Index(fieldNames, indexName, IndexType.JSON, "porter");
+        Index index = new Index(fieldNames, indexName, IndexType.JSON, new Tokenizer("porter"));
     }
 
     @Test
     public void correctlySetsIndexSettings() {
         // text indexes support the tokenize setting.
-        Index index = new Index(fieldNames, indexName, IndexType.TEXT, "porter");
-        assertThat(index.tokenize, is("porter"));
+        Index index = new Index(fieldNames, indexName, IndexType.TEXT, new Tokenizer("porter"));
+        assertThat(index.tokenizer.tokenizerName, is("porter"));
     }
 
     @Test
@@ -114,17 +116,35 @@ public class IndexTest {
     @Test
     public void comparesIndexSettingsAndReturnsInEquality() {
         Index index = new Index(fieldNames, indexName, IndexType.TEXT);
-        Index index2 = new Index(fieldNames, indexName, IndexType.TEXT, "porter");
+        Index index2 = new Index(fieldNames, indexName, IndexType.TEXT, new Tokenizer("porter"));
         assertThat(index.equals(index2), is(false));
     }
 
     @Test
     public void comparesIndexSettingsAndReturnsEquality() {
         Index index = new Index(fieldNames, indexName, IndexType.TEXT);
-        Index index2 = new Index(fieldNames, indexName, IndexType.TEXT, "simple");
+        Index index2 = new Index(fieldNames, indexName, IndexType.TEXT, Tokenizer.DEFAULT);
         assertThat(index.equals(index2), is(true));
     }
 
+    @Test
+    public void returnsIndexSettingsAsAString() {
+        Index index = new Index(fieldNames, indexName, IndexType.TEXT);
+        assertThat(TokenizerHelper.tokenizerToJson(index.tokenizer), containsString("\"tokenize\":\"simple\""));
+        assertThat(TokenizerHelper.tokenizerToJson(index.tokenizer), containsString("\"tokenize_args\":null"));
+    }
 
+    @Test
+    public void returnsIndexSettingsWithArgAsAString() {
+        Index index = new Index(fieldNames, indexName, IndexType.TEXT, new Tokenizer("tokenize", "tokenize_args"));
+        assertThat(TokenizerHelper.tokenizerToJson(index.tokenizer), containsString("\"tokenize\":\"tokenize\""));
+        assertThat(TokenizerHelper.tokenizerToJson(index.tokenizer), containsString("\"tokenize_args\":\"tokenize_args\""));
+    }
+
+    @Test
+    public void returnsNullIndexSettingsAsAString() {
+        Index index = new Index(fieldNames, indexName);
+        assertThat(TokenizerHelper.tokenizerToJson(index.tokenizer), is("{}"));
+    }
 
 }

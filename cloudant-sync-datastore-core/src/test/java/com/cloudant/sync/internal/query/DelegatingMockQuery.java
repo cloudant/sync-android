@@ -20,6 +20,7 @@ import com.cloudant.sync.query.Query;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.query.FieldSort;
+import com.cloudant.sync.query.Tokenizer;
 
 import java.util.List;
 import java.util.Map;
@@ -38,23 +39,13 @@ public abstract class DelegatingMockQuery implements Query {
     }
 
     @Override
-    public String ensureIndexed(List<FieldSort> fieldNames) throws QueryException {
-        return delegate.ensureIndexed(fieldNames);
+    public Index ensureIndexedJson(List<FieldSort> fields, String indexName) throws QueryException {
+        return delegate.ensureIndexedJson(fields, indexName);
     }
 
     @Override
-    public String ensureIndexed(List<FieldSort> fieldNames, String indexName) throws QueryException {
-        return delegate.ensureIndexed(fieldNames, indexName);
-    }
-
-    @Override
-    public String ensureIndexed(List<FieldSort> fieldNames, String indexName, IndexType indexType) throws QueryException {
-        return delegate.ensureIndexed(fieldNames, indexName, indexType);
-    }
-
-    @Override
-    public String ensureIndexed(List<FieldSort> fieldNames, String indexName, IndexType indexType, String tokenize) throws QueryException {
-        return delegate.ensureIndexed(fieldNames,indexName, indexType, tokenize);
+    public Index ensureIndexedText(List<FieldSort> fields, String indexName, Tokenizer tokenizer) throws QueryException {
+        return delegate.ensureIndexedText(fields, indexName, tokenizer);
     }
 
     @Override

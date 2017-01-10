@@ -41,69 +41,58 @@ public class QueryTest extends AbstractIndexTestBase {
 
     @Test
     public void enusureIndexedGeneratesIndexName() throws QueryException {
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"))), is(notNullValue()));
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name")), null), is(notNullValue()));
     }
 
     @Test
-    public void ensureIndexedGeneratesSingleIndexForSameFields() throws QueryException {
-        String indexName = im.ensureIndexed(Collections.singletonList(new FieldSort("name")));
+    public void ensureIndexedJsonGeneratesSingleIndexForSameFields() throws QueryException {
+        String indexName = im.ensureIndexedJson(Collections.singletonList(new FieldSort("name")), null).indexName;
         assertThat("index name should not be null", indexName, is(notNullValue()));
         assertThat("the previously generated index name should be returned",
-                im.ensureIndexed(Collections.singletonList(new FieldSort("name"))),
+                im.ensureIndexedJson(Collections.singletonList(new FieldSort("name")), null).indexName,
                 is(indexName));
 
         assertThat("There should only be 1 index", im.listIndexes().size(), is(1));
     }
 
     @Test
-    public void ensureIndexedGeneratesSingleIndexWithMeta() throws QueryException {
-        String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name"), new FieldSort("_id"), new FieldSort("_rev")));
+    public void ensureIndexedJsonGeneratesSingleIndexWithMeta() throws QueryException {
+        String indexName = im.ensureIndexedJson(Arrays.asList(new FieldSort("name"), new FieldSort("_id"), new FieldSort("_rev")), null).indexName;
         assertThat("index name should not be null", indexName, is(notNullValue()));
         assertThat("the previously generated index name should be returned",
-                im.ensureIndexed(Arrays.asList(new FieldSort("name"), new FieldSort("_id"), new FieldSort("_rev"))),
+                im.ensureIndexedJson(Arrays.asList(new FieldSort("name"), new FieldSort("_id"), new FieldSort("_rev")), null).indexName,
                 is(indexName));
 
         assertThat("There should only be 1 index", im.listIndexes().size(), is(1));
     }
 
     @Test
-    public void ensureIndexedGeneratesSingleIndexRegardlessOfFieldOrder() throws QueryException {
-        String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name"), new FieldSort("otherName")));
+    public void ensureIndexedJsonGeneratesSingleIndexRegardlessOfFieldOrder() throws QueryException {
+        String indexName = im.ensureIndexedJson(Arrays.asList(new FieldSort("name"), new FieldSort("otherName")), null).indexName;
         assertThat("index name should not be null", indexName, is(notNullValue()));
         assertThat("the previously generated index name should be returned",
-                im.ensureIndexed(Arrays.asList(new FieldSort("otherName"), new FieldSort("name"))),
+                im.ensureIndexedJson(Arrays.asList(new FieldSort("otherName"), new FieldSort("name")), null).indexName,
                 is(indexName));
 
         assertThat("There should only be 1 index", im.listIndexes().size(), is(1));
     }
 
     @Test
-    public void ensureIndexedGeneratesTwoIndexesForDifferingFields() throws QueryException {
-        String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name"), new FieldSort("otherName")));
+    public void ensureIndexedJsonGeneratesTwoIndexesForDifferingFields() throws QueryException {
+        String indexName = im.ensureIndexedJson(Arrays.asList(new FieldSort("name"), new FieldSort("otherName")), null).indexName;
         assertThat("index name should not be null", indexName, is(notNullValue()));
         assertThat("the previously generated index name should not be returned",
-                im.ensureIndexed(Arrays.asList( new FieldSort("name"))),
+                im.ensureIndexedJson(Arrays.asList( new FieldSort("name")), null).indexName,
                 is(not(indexName)));
 
         assertThat("There should be 2 indexes", im.listIndexes().size(), is(2));
     }
     @Test
-    public void ensureIndexedGeneratesTwoIndexesForDifferingType() throws QueryException {
-        String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name")), null, IndexType.JSON);
+    public void ensureIndexedJsonGeneratesTwoIndexesForDifferingType() throws QueryException {
+        String indexName = im.ensureIndexedJson(Arrays.asList(new FieldSort("name")), null).indexName;
         assertThat("index name should not be null", indexName, is(notNullValue()));
         assertThat("the previously generated index name should not be returned",
-                im.ensureIndexed(Arrays.asList( new FieldSort("name")), null, IndexType.TEXT),
-                is(not(indexName)));
-
-        assertThat("There should be 2 indexes", im.listIndexes().size(), is(2));
-    }
-
-    @Test
-    public void ensureIndexedGeneratesTwoIndexesForDifferingTokenize() throws QueryException {
-        String indexName =  im.ensureIndexed(Arrays.asList(new FieldSort("name")), null, IndexType.JSON);
-        assertThat("index name should not be null", indexName, is(notNullValue()));
-        assertThat("the previously generated index name should not be returned",
-                im.ensureIndexed(Arrays.asList( new FieldSort("name")), null, IndexType.TEXT, "simple"),
+                im.ensureIndexedText(Arrays.asList( new FieldSort("name")), null, null).indexName,
                 is(not(indexName)));
 
         assertThat("There should be 2 indexes", im.listIndexes().size(), is(2));
@@ -111,10 +100,10 @@ public class QueryTest extends AbstractIndexTestBase {
 
     @Test
     public void ensureIndexGeneratesTwoIndexSecondIndexSuperSet() throws QueryException {
-        String indexName = im.ensureIndexed(Arrays.asList(new FieldSort("name")));
+        String indexName = im.ensureIndexedJson(Arrays.asList(new FieldSort("name")), null).indexName;
         assertThat("index name should not be null", indexName, is(notNullValue()));
         assertThat("the previously generated index name should not be returned",
-                im.ensureIndexed(Arrays.asList( new FieldSort("name"), new FieldSort("otherName"))),
+                im.ensureIndexedJson(Arrays.asList( new FieldSort("name"), new FieldSort("otherName")), null).indexName,
                 is(not(indexName)));
 
         assertThat("There should be 2 indexes", im.listIndexes().size(), is(2));
@@ -122,7 +111,7 @@ public class QueryTest extends AbstractIndexTestBase {
 
     @Test
     public void deleteFailOnNoIndexName() throws QueryException {
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
         assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
 
         try {
@@ -145,7 +134,7 @@ public class QueryTest extends AbstractIndexTestBase {
 
     @Test
     public void deleteFailOnInvalidIndexName() throws QueryException {
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
         assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
 
         try {
@@ -159,31 +148,31 @@ public class QueryTest extends AbstractIndexTestBase {
 
     @Test
     public void createIndexWithSpaceInName() throws QueryException {
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic index");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic index");
         assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic index")));
     }
 
     @Test
          public void createIndexWithSingleQuoteInName() throws QueryException {
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic'index");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic'index");
         assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic'index")));
     }
 
     @Test
     public void createIndexWithSemiColonQuoteInName() throws QueryException {
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic;index");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic;index");
         assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic;index")));
     }
 
     @Test
     public void createIndexWithBracketsInName() throws QueryException {
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic(index)");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic(index)");
         assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic(index)")));
     }
 
     @Test
     public void createIndexWithKeyWordName() throws QueryException {
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "INSERT INDEX");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "INSERT INDEX");
         assertThat(im.listIndexes(), contains(getIndexNameMatcher("INSERT INDEX")));
     }
 
@@ -191,7 +180,7 @@ public class QueryTest extends AbstractIndexTestBase {
 
     @Test
      public void deleteEmptyIndex() throws QueryException {
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
         assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
 
         im.deleteIndex("basic");
@@ -200,9 +189,9 @@ public class QueryTest extends AbstractIndexTestBase {
 
     @Test
     public void deleteTheCorrectEmptyIndex() throws QueryException {
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic2");
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name")), "basic3");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic2");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name")), "basic3");
         assertThat(im.listIndexes().size(), is(3));
         assertThat(im.listIndexes(), containsInAnyOrder(getIndexNameMatcher("basic"), getIndexNameMatcher("basic2"), getIndexNameMatcher("basic3")));
 
@@ -226,7 +215,7 @@ public class QueryTest extends AbstractIndexTestBase {
             ds.create(rev);
         }
 
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
         assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
         im.deleteIndex("basic");
         assertThat(im.listIndexes().isEmpty(), is(true));
@@ -247,9 +236,9 @@ public class QueryTest extends AbstractIndexTestBase {
             ds.create(rev);
         }
 
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic2");
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name")), "basic3");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic2");
+        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name")), "basic3");
         assertThat(im.listIndexes().size(), is(3));
         assertThat(im.listIndexes(), containsInAnyOrder(getIndexNameMatcher("basic"), getIndexNameMatcher("basic2"), getIndexNameMatcher("basic3")));
 
@@ -273,7 +262,7 @@ public class QueryTest extends AbstractIndexTestBase {
             ds.create(rev);
         }
 
-        im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic", IndexType.TEXT);
+        im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("address")), "basic", null);
         assertThat(im.listIndexes(), contains(getIndexNameMatcher("basic")));
 
         im.deleteIndex("basic");

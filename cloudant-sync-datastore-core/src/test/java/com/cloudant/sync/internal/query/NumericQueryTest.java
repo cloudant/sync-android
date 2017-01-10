@@ -49,7 +49,7 @@ public class NumericQueryTest extends AbstractQueryTestBase {
         fs.add(new FieldSort("integer"));
         fs.add(new FieldSort("float"));
         fs.add(new FieldSort("double"));
-        im.ensureIndexed(fs);
+        im.ensureIndexedJson(fs, null);
     }
 
     // query two integers are equal to each other

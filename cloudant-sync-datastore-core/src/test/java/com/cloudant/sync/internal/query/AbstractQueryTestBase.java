@@ -131,8 +131,8 @@ public abstract class AbstractQueryTestBase {
         ds.create(rev);
 
 
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic"), is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "pet"), is("pet"));
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic").indexName, is("basic"));
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "pet").indexName, is("pet"));
     }
 
     // Used to setup document data testing:
@@ -140,9 +140,9 @@ public abstract class AbstractQueryTestBase {
     public void setUpDottedQueryData() throws Exception {
         setUpSharedDocs();
 
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet.name"), new FieldSort("pet.species")), "pet"),
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet.name"), new FieldSort("pet.species")), "pet").indexName,
                 is("pet"));
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet.name.first")), "firstname"),
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet.name.first")), "firstname").indexName,
                 is("firstname"));
     }
 
@@ -214,11 +214,11 @@ public abstract class AbstractQueryTestBase {
     public void setUpOrQueryData() throws Exception {
         setUpSharedDocs();
 
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new FieldSort("name")), "basic"),
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new FieldSort("name")), "basic").indexName,
                 is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet.name"), new FieldSort("pet.species")), "pet"),
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet.name"), new FieldSort("pet.species")), "pet").indexName,
                 is("pet"));
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet.name.first")), "firstname"),
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet.name.first")), "firstname").indexName,
                 is("firstname"));
     }
 
@@ -272,7 +272,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.create(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new FieldSort("name")), "basic"),
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new FieldSort("name")), "basic").indexName,
                 is("basic"));
     }
 
@@ -327,7 +327,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.create(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("age")), "pet"),
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("age")), "pet").indexName,
                 is("pet"));
     }
 
@@ -404,7 +404,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.create(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("score")), "name_score"),
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("score")), "name_score").indexName,
                                     is("name_score"));
     }
 
@@ -419,7 +419,7 @@ public abstract class AbstractQueryTestBase {
             rev.setBody(DocumentBodyFactory.create(bodyMap));
             ds.create(rev);
         }
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("large_field"), new FieldSort("idx")), "large"),
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("large_field"), new FieldSort("idx")), "large").indexName,
                 is("large"));
     }
 
@@ -468,8 +468,8 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.create(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic"), is("basic"));
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "pet"), is("pet"));
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic").indexName, is("basic"));
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "pet").indexName, is("pet"));
     }
 
     // Used to setup document data testing for queries containing a $size operator:
@@ -538,7 +538,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.create(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("age")), "basic"), is("basic"));
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("age")), "basic").indexName, is("basic"));
     }
 
     // Used to setup document data testing for sorting:
@@ -571,7 +571,7 @@ public abstract class AbstractQueryTestBase {
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.create(rev);
 
-        assertThat(im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("age"), new FieldSort("same")), "pet"),
+        assertThat(im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet"), new FieldSort("age"), new FieldSort("same")), "pet").indexName,
                 is("pet"));
     }
 

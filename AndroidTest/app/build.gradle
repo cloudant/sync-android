@@ -114,7 +114,7 @@ task(uploadFixtures, type: AndroidExec) {
     // need to upload the fixtures to the device/emulator external storage
     // this will work irrespective of current working directory due to use of $scriptLocation
 
-    commandLine "adb","push", "-p", "$scriptLocation/../../fixture", "/sdcard/fixture"
+    commandLine "adb","push", "-p", "$scriptLocation/../../fixture/.", "/sdcard/fixture/"
 }
 
 task(clearDeviceLog, type: AndroidExec) {

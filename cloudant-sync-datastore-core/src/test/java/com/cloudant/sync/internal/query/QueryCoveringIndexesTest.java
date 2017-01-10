@@ -135,7 +135,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         bodyMap.put("married", true);
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.create(rev);
-        assertThat(idxMgr.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("married")), "married"), is("married"));
+        assertThat(idxMgr.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("married")), "married").indexName, is("married"));
         // query - { "married" : { "eq" : true } }
         Map<String, Object> marriedOperator = new HashMap<String, Object>();
         marriedOperator.put("$eq", true);
@@ -155,7 +155,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
         bodyMap.put("pet", "cat");
         rev.setBody(DocumentBodyFactory.create(bodyMap));
         ds.create(rev);
-        assertThat(idxMgr.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic index"), is
+        assertThat(idxMgr.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic index").indexName, is
                 ("basic index"));
 
         // query - { "name" : "mike" }
@@ -664,7 +664,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     @Test
     public void canQueryForNonAsciiValues() throws Exception {
         setUpNonAsciiQueryData();
-        assertThat(idxMgr.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("name")), "nonascii"), is("nonascii"));
+        assertThat(idxMgr.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name")), "nonascii").indexName, is("nonascii"));
         // query - { "name" : { "$eq" : "اسم" } }
         Map<String, Object> op = new HashMap<String, Object>();
         op.put("$eq", "اسم");
@@ -677,7 +677,7 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
     @Test
     public void canQueryUsingFieldsWithOddNames() throws Exception {
         setUpNonAsciiQueryData();
-        assertThat(idxMgr.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("اسم"), new FieldSort("datatype"), new FieldSort("age")), "nonascii"),
+        assertThat(idxMgr.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("اسم"), new FieldSort("datatype"), new FieldSort("age")), "nonascii").indexName,
                 is("nonascii"));
         // query - { "اسم" : { "$eq" : "fred" }, "age" : { "$eq" : 12 } }
         Map<String, Object> op1 = new HashMap<String, Object>();
