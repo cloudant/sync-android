@@ -16,15 +16,15 @@ package com.cloudant.sync.documentstore;
 
 import com.cloudant.sync.documentstore.encryption.KeyProvider;
 import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
-import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.event.notifications.DocumentStoreClosed;
 import com.cloudant.sync.event.notifications.DocumentStoreCreated;
 import com.cloudant.sync.event.notifications.DocumentStoreDeleted;
-import com.cloudant.sync.event.notifications.DocumentStoreOpened;
 import com.cloudant.sync.event.notifications.DocumentStoreModified;
-import com.cloudant.sync.query.Query;
+import com.cloudant.sync.event.notifications.DocumentStoreOpened;
+import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.query.QueryImpl;
+import com.cloudant.sync.query.Query;
 
 import org.apache.commons.io.FileUtils;
 
@@ -68,7 +68,7 @@ public class DocumentStore {
 
     private static final String EXTENSIONS_LOCATION_NAME = "extensions";
 
-    private final Database database;
+    private final DatabaseImpl database;
     private final Query query;
     protected final String databaseName; // only used for events
     private final File location; // needed for close/delete
@@ -188,6 +188,18 @@ public class DocumentStore {
     }
 
     /**
+     * WARNING: accessing APIs exposed on the
+     * {@link com.cloudant.sync.documentstore.advanced.Database} class returned by this method is
+     * not required for typical use cases. Refer to the javadoc in the
+     * {@link com.cloudant.sync.documentstore.advanced} package before using this.
+     *
+     * @return interface to advanced database methods
+     */
+    public com.cloudant.sync.documentstore.advanced.Database advanced() {
+        return database;
+    }
+
+    /**
      * <p>
      * Get a reference to the {@link Query} object.
      * </p>
@@ -208,7 +220,7 @@ public class DocumentStore {
         synchronized (documentStores) {
             DocumentStore ds = documentStores.remove(location);
             if (ds != null) {
-                ((DatabaseImpl)database).close();
+                database.close();
                 ((QueryImpl)query).close();
             }
             else {
@@ -255,7 +267,7 @@ public class DocumentStore {
 
     private void closeQuietlyOnException() {
         if (database != null) {
-            ((DatabaseImpl) database).close();
+            database.close();
         }
         if (query != null) {
             ((QueryImpl) query).close();

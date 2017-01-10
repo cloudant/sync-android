@@ -18,8 +18,9 @@ package com.cloudant.sync.internal.common;
 
 import com.cloudant.sync.internal.util.Misc;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public class CouchUtils {
@@ -48,23 +49,23 @@ public class CouchUtils {
         return true;
     }
 
-    /*
-     * Parses the _revisions dict from a document into an array of revision ID strings
+    /**
+     * Get an ascending order revision list from the couch style {@code _revisions} history of
+     * {@code start} and hash {@code ids}.
+     *
+     * @param start the starting generation
+     * @param ids   the list of ID hashes
+     * @return
      */
-    public static List<String> parseCouchDBRevisionHistory(Map<String, Object> docProperties) {
-        Map<String, Object> revisions = (Map<String, Object>) docProperties.get(CouchConstants._revisions);
-        if (revisions == null) {
-            return null;
+    public static List<String> couchStyleRevisionHistoryToFullRevisionIDs(final int start, List<String> ids) {
+        List<String> revisionHistory = new ArrayList<String>();
+        int generation = start;
+        for (String revIdHash : ids) {
+            revisionHistory.add(generation + "-" + revIdHash);
+            generation--;
         }
-        List<String> revIDs = (List<String>) revisions.get(CouchConstants.ids);
-        Integer start = (Integer) revisions.get(CouchConstants.start);
-        if (start != null) {
-            for (int i = 0; i < revIDs.size(); i++) {
-                String revID = revIDs.get(i);
-                revIDs.set(i, Integer.toString(start--) + "-" + revID);
-            }
-        }
-        return revIDs;
+        Collections.reverse(revisionHistory);
+        return revisionHistory;
     }
 
     public static String getFirstLocalDocRevisionId() {

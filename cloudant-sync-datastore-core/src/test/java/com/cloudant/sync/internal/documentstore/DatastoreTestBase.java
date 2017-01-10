@@ -16,34 +16,27 @@
 
 package com.cloudant.sync.internal.documentstore;
 
-import com.cloudant.sync.documentstore.DocumentStore;
-import com.cloudant.sync.util.TestUtils;
+import com.cloudant.common.DocumentStoreTestBase;
 
 import org.junit.After;
 import org.junit.Before;
-
-import java.io.File;
 
 /**
  * Test base for any test suite need a <code>DatastoreManager</code> and <code>Datastore</code> instance. It
  * automatically set up and clean up the temp file directly for you.
  */
-public abstract class DatastoreTestBase {
+public abstract class DatastoreTestBase extends DocumentStoreTestBase {
 
-    String datastore_manager_dir;
     DatabaseImpl datastore = null;
 
     @Before
-    public void setUp() throws Exception {
-        datastore_manager_dir = TestUtils.createTempTestingDir(this.getClass().getName());
-        this.datastore = (DatabaseImpl) (DocumentStore.getInstance(new File
-                (datastore_manager_dir, getClass().getSimpleName()))).database();
+    public void setUpDatabaseImpl() throws Exception {
+        this.datastore = (DatabaseImpl) documentStore.database();
 
     }
 
     @After
-    public void testDown() {
+    public void tearDownDatabaseImpl() {
         datastore.close();
-        TestUtils.deleteTempTestingDir(datastore_manager_dir);
     }
 }
