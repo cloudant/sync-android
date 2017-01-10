@@ -52,7 +52,7 @@ Once you've included the binaries in your app's build, you need to perform some 
     ```java
     // Security risk here: hard-coded key.
     // We recommend using java.util.SecureRandom to generate your key, then
-    // storing securely or retreiving it from elsewhere. 
+    // storing securely or retrieving it from elsewhere. 
     // Or use AndroidKeyProvider, which does this for you.
     byte[] key = "testAKeyPasswordtestAKeyPassword".getBytes();  
     KeyProvider keyProvider = new SimpleKeyProvider(key); 
