@@ -16,6 +16,7 @@ package com.cloudant.sync.internal.sqlite.android;
 
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 
 import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.internal.sqlite.Cursor;
@@ -23,7 +24,6 @@ import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.Misc;
 
 import java.io.File;
-import java.sql.SQLException;
 
 /**
  * @api_private
@@ -49,7 +49,12 @@ public class AndroidSQLite extends SQLDatabase {
 
     @Override
     public void compactDatabase() {
-        database.execSQL("VACUUM");
+        try {
+            database.execSQL("VACUUM");
+        } catch (android.database.SQLException e) {
+            String error = "Fatal error running 'VACUUM', the database is probably malfunctioning.";
+            throw new IllegalStateException(error);
+        }
     }
 
     @Override
@@ -86,15 +91,23 @@ public class AndroidSQLite extends SQLDatabase {
     }
 
     @Override
-    public void execSQL(String sql) throws SQLException {
+    public void execSQL(String sql) throws java.sql.SQLException {
         Misc.checkNotNullOrEmpty(sql.trim(), "Input SQL");
-        this.database.execSQL(sql);
+        try {
+            this.database.execSQL(sql);
+        } catch (android.database.SQLException e) {
+            throw new java.sql.SQLException(e);
+        }
     }
 
     @Override
-    public void execSQL(String sql, Object[] bindArgs) throws SQLException {
+    public void execSQL(String sql, Object[] bindArgs) throws java.sql.SQLException {
         Misc.checkNotNullOrEmpty(sql.trim(), "Input SQL");
-        this.database.execSQL(sql, bindArgs);
+        try {
+            this.database.execSQL(sql, bindArgs);
+        } catch (android.database.SQLException e) {
+            throw new java.sql.SQLException(e);
+        }
     }
 
     @Override
@@ -108,8 +121,12 @@ public class AndroidSQLite extends SQLDatabase {
     }
 
     @Override
-    public Cursor rawQuery(String sql, String[] values) {
-        return new AndroidSQLiteCursor(this.database.rawQuery(sql, values));
+    public Cursor rawQuery(String sql, String[] values) throws java.sql.SQLException {
+        try {
+            return new AndroidSQLiteCursor(this.database.rawQuery(sql, values));
+        } catch (SQLiteException e) {
+            throw new java.sql.SQLException(e);
+        }
     }
 
     @Override
