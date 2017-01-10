@@ -55,10 +55,13 @@ public class SQLDatabaseFactory {
             try {
                 tempInMemoryDB.execSQL(String.format("CREATE VIRTUAL TABLE %s USING FTS4 ( col )",
                         FTS_CHECK_TABLE_NAME));
+                tempInMemoryDB.execSQL(String.format("DROP TABLE %s",
+                    FTS_CHECK_TABLE_NAME));
                 return true;
             } finally {
-                // End the transaction and rollback the virtual table we created because we never
-                // set transaction success.
+                // Some Android devices crashed when we used to roll back the transaction. Now we
+                // drop the table if it was created and then commit it regardless.
+                tempInMemoryDB.setTransactionSuccessful();
                 tempInMemoryDB.endTransaction();
             }
         } catch (SQLException sqle) {
