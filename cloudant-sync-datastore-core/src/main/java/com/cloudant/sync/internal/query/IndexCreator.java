@@ -15,15 +15,25 @@
 package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.documentstore.Database;
+
 import com.cloudant.sync.internal.query.callables.CreateIndexCallable;
 import com.cloudant.sync.internal.query.callables.ListIndexesCallable;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.QueryException;
+import com.cloudant.sync.internal.android.ContentValues;
+import com.cloudant.sync.internal.documentstore.DatabaseImpl;
+import com.cloudant.sync.internal.query.callables.ListIndexesCallable;
+import com.cloudant.sync.internal.sqlite.SQLCallable;
+import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.sqlite.SQLDatabaseFactory;
 import com.cloudant.sync.internal.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.internal.util.Misc;
+import com.cloudant.sync.query.FieldSort;
+import com.cloudant.sync.query.Index;
+import com.cloudant.sync.query.IndexType;
+import com.cloudant.sync.query.QueryException;
 
 import org.apache.commons.codec.binary.Hex;
 
@@ -33,6 +43,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -44,8 +60,9 @@ import java.util.logging.Logger;
  */
 class IndexCreator {
 
+    private final static String GENERATED_INDEX_NAME_PREFIX = "com.cloudant.sync.query.GeneratedIndexName.";
+
     private final Database database;
-    private static Random indexNameRandom = new Random();
 
     private final SQLDatabaseQueue queue;
 
@@ -56,7 +73,7 @@ class IndexCreator {
         this.queue = queue;
     }
 
-    protected static String ensureIndexed(Index index,
+    protected static Index ensureIndexed(Index index,
                                           Database database,
                                           SQLDatabaseQueue queue) throws QueryException {
         IndexCreator executor = new IndexCreator(database, queue);
@@ -73,8 +90,16 @@ class IndexCreator {
      *  @param proposedIndex The object that defines an index.  Includes field list, name, type and options.
      *  @return name of created index
      */
-    private String ensureIndexed(Index proposedIndex) throws QueryException {
-        Misc.checkNotNull(proposedIndex, "proposedIndex");
+    private Index ensureIndexed(Index proposedIndex) throws QueryException {
+
+        for (FieldSort fs : proposedIndex.fieldNames) {
+            if (fs.sort == FieldSort.Direction.DESCENDING) {
+                throw new UnsupportedOperationException("Indexes with Direction.DESCENDING are " +
+                        "not supported. To return data in descending order, create an index with " +
+                        "Direction.ASCENDING fields and execute the subsequent query with " +
+                        "Direction.DESCENDING fields as required.");
+            }
+        }
 
         if (proposedIndex.indexType == IndexType.TEXT) {
             if (!SQLDatabaseFactory.FTS_AVAILABLE) {
@@ -84,13 +109,6 @@ class IndexCreator {
                 throw new QueryException(message);
             }
         }
-
-        // update proposedIndex with all fields ascending
-        ArrayList<FieldSort> updatedFields = new ArrayList<FieldSort>();
-        for (FieldSort f : proposedIndex.fieldNames) {
-            updatedFields.add(new FieldSort(f.field, FieldSort.Direction.ASCENDING));
-        }
-        proposedIndex = new Index(updatedFields, proposedIndex.indexName, proposedIndex.indexType, proposedIndex.tokenize);
 
         final List<FieldSort> fieldNamesList = proposedIndex.fieldNames;
 
@@ -113,60 +131,85 @@ class IndexCreator {
             fieldNamesList.add(0, new FieldSort("_id"));
         }
 
-        // Check the index limit.  Limit is 1 for "text" indexes and unlimited for "json" indexes.
-        // Then check whether the index already exists; return success if it does and is same,
-        // else fail.
+        // get existing indexes
+        List<Index> existingIndexes;
         try {
+            existingIndexes = DatabaseImpl.get(this.queue.submit(new ListIndexesCallable()));
+        } catch (ExecutionException e) {
+            String msg = "Failed to list indexes";
+            logger.log(Level.SEVERE, msg, e);
+            throw new QueryException(msg, e);
+        }
 
-            List<Index> existingIndexes = queue.submit(new ListIndexesCallable()).get();
-            HashMap<String, Index> existingIndexNames = new HashMap<String, Index>();
-            for (Index index : existingIndexes) {
-                existingIndexNames.put(index.indexName, index);
-            }
+        if(proposedIndex.indexName == null){
+            // generate a name for the index.
+            String indexName = GENERATED_INDEX_NAME_PREFIX + proposedIndex.toString();
+            // copy over definition of existing proposed index and create it with this name
+            proposedIndex = new Index(proposedIndex.fieldNames,
+                    indexName,
+                    proposedIndex.indexType,
+                    proposedIndex.tokenizer);
+        }
 
-            if(proposedIndex.indexName == null){
-                // generate a name for the index.
-                String indexName = IndexCreator.generateIndexName(existingIndexNames.keySet());
-                if(indexName == null){
-                    String message = "Failed to generate unique index name";
-                    logger.warning(message);
-                    throw new QueryException(message);
-                }
+        for (Index existingIndex : existingIndexes) {
 
-                proposedIndex = new Index(proposedIndex.fieldNames,
-                                          indexName,
-                        proposedIndex.indexType,
-                        proposedIndex.tokenize);
-            }
-
-            if (indexLimitReached(proposedIndex, existingIndexes)) {
-                String msg = String.format("Index limit reached.  Cannot create index %s.",
-                                           proposedIndex.indexName);
-                logger.log(Level.SEVERE, msg);
+            // Check the index limit.  Limit is 1 for "text" indexes and unlimited for "json" indexes.
+            // If there are any existing "text" indexes, throw an exception
+            if (proposedIndex.indexType == IndexType.TEXT &&
+                    existingIndex.indexType == IndexType.TEXT) {
+                String msg = String.format("Text index limit reached. There is a limit of one " +
+                        "text index per database. There is an existing text index in this " +
+                        "database called \"%s\".",
+                        existingIndex.indexName);
+                logger.log(Level.SEVERE, msg, existingIndex.indexName);
                 throw new QueryException(msg);
             }
-            if (existingIndexNames.containsKey(proposedIndex.indexName)) {
-                Index existingIndex = existingIndexNames.get(proposedIndex.indexName);
-                if (proposedIndex.equals(existingIndex)) {
-                    // index name and fields match existing index, update index and return
-                    IndexUpdater.updateIndex(proposedIndex.indexName,
-                            fieldNamesList,
+
+            //
+            // check if an index of this name already exists
+            //
+            if (existingIndex.indexName.equals(proposedIndex.indexName)) {
+                if (existingIndex.equals(proposedIndex)) {
+                    // we already have an index with this name and the same definition, just update
+                    // it and return it
+                    logger.fine(String.format("Index with name \"%s\" already exists with same " +
+                            "definition", proposedIndex.indexName));
+
+                    IndexUpdater.updateIndex(existingIndex.indexName,
+                            existingIndex.fieldNames,
                             database,
                             queue);
-                    return proposedIndex.indexName;
+                    return existingIndex;
+                } else {
+                    throw new QueryException(String.format("Index with name \"%s\" already exists" +
+                            " but has different definition to requested index", proposedIndex
+                            .indexName));
                 }
             }
-        } catch (ExecutionException e) {
-            String message = "Execution error encountered in listIndexesInDatabaseQueue";
-            logger.log(Level.SEVERE, message, e);
-            throw new QueryException(message, e);
-        } catch (InterruptedException e) {
-            String message = "Execution interrupted error encountered in listIndexesInDatabaseQueue";
-            logger.log(Level.SEVERE, message, e);
-            throw new QueryException(message, e);
+            //
+            // check if an index already exists that matches the request index definition, ignoring name
+            //
+            // construct an index for comparison which has the same values as the proposed index
+            // but the name of the one we're comparing to
+            Index compare = new Index(proposedIndex.fieldNames, existingIndex.indexName, proposedIndex
+                    .indexType, proposedIndex.tokenizer);
+            if (compare.equals(existingIndex)) {
+                // we already have an index with the same definition but a different name, just
+                // update it and return it
+                logger.fine(String.format("Index with name \"%s\" exists which has same " +
+                        "definition of requested index \"%s\"",
+                        existingIndex.indexName, proposedIndex.indexName));
+
+                IndexUpdater.updateIndex(existingIndex.indexName,
+                        existingIndex.fieldNames,
+                        database,
+                        queue);
+                return existingIndex;
+            }
         }
 
         final Index index = proposedIndex;
+
         Future<Void> result = queue.submitTransaction(new CreateIndexCallable(fieldNamesList, index));
 
         // Update the new index if it's been created
@@ -187,7 +230,8 @@ class IndexCreator {
                 database,
                 queue);
 
-        return index.indexName;
+        return index;
+
     }
 
     /**
@@ -209,76 +253,16 @@ class IndexCreator {
         return true;
     }
 
-    /**
-     * Based on the proposed index and the list of existing indexes, this method checks
-     * whether another index can be created.  Currently the limit for TEXT indexes is 1.
-     * JSON indexes are unlimited.
-     *
-     * @param index the proposed index
-     * @param existingIndexes the list of already existing indexes
-     * @return whether the index limit has been reached
-     */
-    protected static boolean indexLimitReached(Index index, List<Index> existingIndexes) {
-        if (index.indexType == IndexType.TEXT) {
-            for (Index existingIndex : existingIndexes) {
-                IndexType type = existingIndex.indexType;
-                if (type == IndexType.TEXT &&
-                    !existingIndex.indexName.equalsIgnoreCase(index.indexName)) {
-                    logger.log(Level.SEVERE,
-                            String.format("The text index %s already exists.  ", existingIndex.indexName) +
-                            "One text index per datastore permitted.  " +
-                            String.format("Delete %s and recreate %s.", existingIndex.indexName, index.indexName));
-                    return true;
-                }
-            }
-        }
+    private String createIndexTableStatementForIndex(String indexName, List<String> columns) {
+        String tableName = String.format(Locale.ENGLISH, "\"%s\"", QueryImpl.tableNameForIndex(indexName));
+        String cols = Misc.join(" NONE, ", columns);
 
-        return false;
+        return String.format("CREATE TABLE %s ( %s NONE )", tableName, cols);
     }
 
-
-
-    /**
-     * Iterate candidate indexNames generated from the indexNameRandom generator
-     * until we find one which doesn't already exist.
-     *
-     * We make sure the generated name is not an index already by the list
-     * of index names returned by {@link ListIndexesCallable} class.
-     * This is because we avoid knowing about how indexes are stored in SQLite, however
-     * this means that it is not thread safe, it is possible for a new index with the same
-     * name to be created after a copy of the indexes has been taken from the database.
-     *
-     * We allow up to 200 random name generations, which should give us many millions
-     * of indexes before a name fails to be generated and makes sure this method doesn't
-     * loop forever.
-     *
-     * @param existingIndexNames The names of the indexes that exist in the database.
-     *
-     * @return The generated index name or {@code null} if it failed.
-     *
-     */
-    private static String generateIndexName(Set<String> existingIndexNames) throws ExecutionException, InterruptedException {
-
-        String indexName = null;
-        Hex hex = new Hex();
-
-        int tries = 0;
-        byte[] randomBytes = new byte[20];
-        while (tries < 200 && indexName == null) {
-            indexNameRandom.nextBytes(randomBytes);
-            String candidate = new String(hex.encode(randomBytes), Charset.forName("UTF-8"));
-
-            if(!existingIndexNames.contains(candidate)){
-                indexName = candidate;
-            }
-            tries++;
-        }
-
-        if (indexName != null) {
-            return indexName;
-        } else {
-            return null;
-        }
-    }
+    private String createIndexIndexStatementForIndex(String indexName, List<String> columns) {
+        String tableName = QueryImpl.tableNameForIndex(indexName);
+        String sqlIndexName = tableName.concat("_index");
+        String cols = Misc.join(",", columns);
 
 }

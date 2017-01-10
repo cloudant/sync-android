@@ -26,13 +26,30 @@ package com.cloudant.sync.query;
  */
 public class FieldSort {
 
+    /**
+     * The field name
+     */
     public final String field;
+
+    /**
+     * The sort direction
+     */
     public final Direction sort;
 
+    /**
+     * Returns a field sort specification with the given field name and the default direction of
+     * {@link Direction#ASCENDING}
+     * @param field the field name
+     */
     public FieldSort(String field) {
         this(field, Direction.ASCENDING);
     }
 
+    /**
+     * Returns a field sort specification with the given field name and direction
+     * @param field the field name
+     * @param sort the sort direction
+     */
     public FieldSort(String field, Direction sort) {
         this.field = field;
         this.sort = sort;
@@ -71,8 +88,17 @@ public class FieldSort {
                 '}';
     }
 
+    /**
+     * Sort direction for fields
+     */
     public enum Direction {
+        /**
+         * Ascending sort direction
+         */
         ASCENDING,
+        /**
+         * Descending sort direction
+         */
         DESCENDING
     };
 

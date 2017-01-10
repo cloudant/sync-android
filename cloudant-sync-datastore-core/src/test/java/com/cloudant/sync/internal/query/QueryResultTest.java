@@ -73,7 +73,7 @@ public class QueryResultTest extends AbstractQueryTestBase {
     public void testQueryGetDocumentsWithIdsFails() throws InterruptedException,
         ExecutionException, QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("pet"));
-        assertThat(im.ensureIndexed(fields, "basic_text", IndexType.TEXT), is("basic_text"));
+        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "cat" } }
         Map<String, Object> search = new HashMap<String, Object>();
