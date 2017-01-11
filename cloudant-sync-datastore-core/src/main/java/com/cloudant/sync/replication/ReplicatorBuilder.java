@@ -154,8 +154,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
         private int changeLimitPerBatch = 500;
 
-        private int batchLimitPerRun = 100;
-
         private int bulkInsertSize = 10;
 
         private PushAttachmentsInline pushAttachmentsInline = PushAttachmentsInline.Small;
@@ -177,7 +175,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
                     super.responseInterceptors);
 
             pushStrategy.changeLimitPerBatch = changeLimitPerBatch;
-            pushStrategy.batchLimitPerRun = batchLimitPerRun;
             pushStrategy.bulkInsertSize = bulkInsertSize;
             pushStrategy.pushAttachmentsInline = pushAttachmentsInline;
             pushStrategy.filter = pushFilter;
@@ -203,17 +200,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
          */
         public Push changeLimitPerBatch(int changeLimitPerBatch) {
             this.changeLimitPerBatch = changeLimitPerBatch;
-            return this;
-        }
-
-        /**
-         * Sets the number of batches to push in one replication run
-         *
-         * @param batchLimitPerRun The number of batches to push in one replication run
-         * @return This instance of {@link ReplicatorBuilder}
-         */
-        public Push batchLimitPerRun(int batchLimitPerRun) {
-            this.batchLimitPerRun = batchLimitPerRun;
             return this;
         }
 
@@ -249,8 +235,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
         private int changeLimitPerBatch = 1000;
 
-        private int batchLimitPerRun = 100;
-
         private int insertBatchSize = 100;
 
         private boolean pullAttachmentsInline = false;
@@ -271,7 +255,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
                     super.responseInterceptors);
 
             pullStrategy.changeLimitPerBatch = changeLimitPerBatch;
-            pullStrategy.batchLimitPerRun = batchLimitPerRun;
             pullStrategy.insertBatchSize = insertBatchSize;
             pullStrategy.pullAttachmentsInline = pullAttachmentsInline;
 
@@ -297,17 +280,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
          */
         public Pull changeLimitPerBatch(int changeLimitPerBatch) {
             this.changeLimitPerBatch = changeLimitPerBatch;
-            return this;
-        }
-
-        /**
-         * Sets the number of batches to pull in one replication run
-         *
-         * @param batchLimitPerRun The number of batches to pull in one replication run
-         * @return This instance of {@link ReplicatorBuilder}
-         */
-        public Pull batchLimitPerRun(int batchLimitPerRun) {
-            this.batchLimitPerRun = batchLimitPerRun;
             return this;
         }
 
