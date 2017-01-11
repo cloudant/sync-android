@@ -66,7 +66,7 @@ public class ChangesCallable implements SQLCallable<Changes> {
         try {
             Long lastSequence = since;
             List<Long> ids = new ArrayList<Long>();
-            cursor = db.rawQuery(DatabaseImpl.SQL_CHANGE_IDS_SINCE_LIMIT, args);
+            cursor = db.rawQuery(CallableSQLConstants.SQL_CHANGE_IDS_SINCE_LIMIT, args);
             while (cursor.moveToNext()) {
                 ids.add(cursor.getLong(0));
                 lastSequence = Math.max(lastSequence, cursor.getLong(1));

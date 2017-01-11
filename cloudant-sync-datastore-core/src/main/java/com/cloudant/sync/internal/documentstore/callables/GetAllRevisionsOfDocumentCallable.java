@@ -60,7 +60,7 @@ public class GetAllRevisionsOfDocumentCallable implements SQLCallable<DocumentRe
     }
 
     public DocumentRevisionTree call(SQLDatabase db) throws DocumentStoreException, AttachmentException {
-        String sql = "SELECT " + DatabaseImpl.FULL_DOCUMENT_COLS + " FROM revs, docs " +
+        String sql = "SELECT " + CallableSQLConstants.FULL_DOCUMENT_COLS + " FROM revs, docs " +
                 "WHERE docs.docid=? AND revs.doc_id = docs.doc_id ORDER BY sequence ASC";
 
         String[] args = {docId};

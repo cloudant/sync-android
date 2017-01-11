@@ -50,8 +50,8 @@ public class GetSequenceCallable implements SQLCallable<Long> {
         Cursor cursor = null;
         try {
             String[] args = (rev == null) ? new String[]{id} : new String[]{id, rev};
-            String sql = (rev == null) ? DatabaseImpl.GET_METADATA_CURRENT_REVISION :
-                    DatabaseImpl.GET_METADATA_GIVEN_REVISION;
+            String sql = (rev == null) ? CallableSQLConstants.GET_METADATA_CURRENT_REVISION :
+                    CallableSQLConstants.GET_METADATA_GIVEN_REVISION;
             cursor = db.rawQuery(sql, args);
             if (cursor.moveToFirst()) {
                 long sequence = cursor.getLong(cursor.getColumnIndex("sequence"));
