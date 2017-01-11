@@ -44,6 +44,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -87,8 +88,6 @@ public class PushStrategy implements ReplicationStrategy {
     public final EventBus eventBus = new EventBus();
 
     public int changeLimitPerBatch = 500;
-
-    public int batchLimitPerRun = 100;
 
     public int bulkInsertSize = 10;
 
@@ -206,12 +205,9 @@ public class PushStrategy implements ReplicationStrategy {
         }
 
         this.state.documentCounter = 0;
-        for (this.state.batchCounter = 1; this.state.batchCounter < this.batchLimitPerRun; this
-                .state.batchCounter++) {
+        while (!this.state.cancel) {
+            this.state.batchCounter++;
 
-            if (this.state.cancel) {
-                return;
-            }
 
             String msg = String.format(
                     "Batch %s started (completed %s changes so far)",
@@ -287,11 +283,20 @@ public class PushStrategy implements ReplicationStrategy {
 
         long endTime = System.currentTimeMillis();
         long deltaTime = endTime - startTime;
-        String msg = String.format(
-                "Push completed in %sms (%s total changes processed)",
-                deltaTime,
-                this.state.documentCounter
-        );
+        String msg;
+        if (this.state.cancel) {
+            msg = String.format(Locale.ENGLISH,
+                            "Push canceled after %sms (%s changes processed)",
+                            deltaTime,
+                            this.state.documentCounter
+                    );
+        } else {
+            msg = String.format(Locale.ENGLISH,
+                    "Push completed in %sms (%s total changes processed)",
+                    deltaTime,
+                    this.state.documentCounter
+            );
+        }
         logger.info(msg);
     }
 
