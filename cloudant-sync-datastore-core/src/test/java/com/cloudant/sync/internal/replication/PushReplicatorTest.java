@@ -338,7 +338,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
             public boolean shouldReplicateDocument(DocumentRevision revision) {
                 return false;
             }
-        }).changeLimitPerBatch(1).batchLimitPerRun(5).build();
+        }).changeLimitPerBatch(1).build();
 
         // Register a listener for the completion event
         TestReplicationListener listener = new TestReplicationListener();
