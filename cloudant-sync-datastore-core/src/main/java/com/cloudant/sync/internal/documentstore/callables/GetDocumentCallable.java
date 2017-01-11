@@ -66,8 +66,8 @@ public class GetDocumentCallable implements SQLCallable<InternalDocumentRevision
         Cursor cursor = null;
         try {
             String[] args = (rev == null) ? new String[]{id} : new String[]{id, rev};
-            String sql = (rev == null) ? DatabaseImpl.GET_DOCUMENT_CURRENT_REVISION :
-                    DatabaseImpl.GET_DOCUMENT_GIVEN_REVISION;
+            String sql = (rev == null) ? CallableSQLConstants.GET_DOCUMENT_CURRENT_REVISION :
+                    CallableSQLConstants.GET_DOCUMENT_GIVEN_REVISION;
             cursor = db.rawQuery(sql, args);
             if (cursor.moveToFirst()) {
                 long sequence = cursor.getLong(3);

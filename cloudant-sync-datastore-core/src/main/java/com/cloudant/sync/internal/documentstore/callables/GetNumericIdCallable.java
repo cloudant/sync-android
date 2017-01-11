@@ -46,7 +46,7 @@ public class GetNumericIdCallable implements SQLCallable<Long> {
     public Long call(SQLDatabase db) throws DocumentStoreException {
         Cursor cursor = null;
         try {
-            String sql = DatabaseImpl.GET_DOC_NUMERIC_ID;
+            String sql = CallableSQLConstants.GET_DOC_NUMERIC_ID;
             cursor = db.rawQuery(sql, new String[]{id});
             if (cursor.moveToFirst()) {
                 long sequence = cursor.getLong(0);
