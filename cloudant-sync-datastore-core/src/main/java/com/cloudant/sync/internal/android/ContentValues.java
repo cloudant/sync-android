@@ -1,4 +1,6 @@
 /*
+ * Copyright © 2017 IBM Corp. All rights reserved.
+ *
  * Modifications allow class to work outside Android framework by
  * Cloudant, Inc., Copyright © 2013 Cloudant, Inc.
  *
