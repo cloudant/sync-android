@@ -61,7 +61,7 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Int
             return Collections.emptyList();
         }
 
-        final String GET_DOCUMENTS_BY_INTERNAL_IDS = "SELECT " + DatabaseImpl.FULL_DOCUMENT_COLS
+        final String GET_DOCUMENTS_BY_INTERNAL_IDS = "SELECT " + CallableSQLConstants.FULL_DOCUMENT_COLS
                 + " FROM revs, docs WHERE revs.doc_id IN ( %s ) AND current = 1 AND docs.doc_id =" +
                 " revs.doc_id";
 

@@ -69,14 +69,14 @@ public class DeleteDocumentCallable implements SQLCallable<InternalDocumentRevis
         boolean current;
         try {
             // first check if it exists
-            c = db.rawQuery(DatabaseImpl.GET_METADATA_GIVEN_REVISION, new String[]{docId,
+            c = db.rawQuery(CallableSQLConstants.GET_METADATA_GIVEN_REVISION, new String[]{docId,
                     prevRevId});
             boolean exists = c.moveToFirst();
             if (!exists) {
                 throw new DocumentNotFoundException(docId);
             }
             // now check it's a leaf revision
-            String leafQuery = "SELECT " + DatabaseImpl.METADATA_COLS + " FROM revs, docs WHERE " +
+            String leafQuery = "SELECT " + CallableSQLConstants.METADATA_COLS + " FROM revs, docs WHERE " +
                     "docs.docid=? AND revs.doc_id=docs.doc_id AND revid=? AND revs.sequence NOT " +
                     "IN (SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
             c = db.rawQuery(leafQuery, new String[]{docId, prevRevId});

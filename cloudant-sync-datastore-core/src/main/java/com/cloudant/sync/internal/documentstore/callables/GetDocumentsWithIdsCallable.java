@@ -48,7 +48,7 @@ public class GetDocumentsWithIdsCallable implements SQLCallable<List<DocumentRev
 
     @Override
     public List<DocumentRevision> call(SQLDatabase db) throws Exception {
-        String sql = String.format("SELECT " + DatabaseImpl.FULL_DOCUMENT_COLS + " FROM revs, docs" +
+        String sql = String.format("SELECT " + CallableSQLConstants.FULL_DOCUMENT_COLS + " FROM revs, docs" +
                 " WHERE docid IN ( %1$s ) AND current = 1 AND docs.doc_id = revs.doc_id " +
                 " ORDER BY docs.doc_id ", DatabaseUtils.makePlaceholders(docIds.size
                 ()));
