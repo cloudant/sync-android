@@ -17,6 +17,7 @@ package com.cloudant.sync.internal.query.callables;
 
 import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.internal.query.QueryImpl;
+import com.cloudant.sync.internal.query.TokenizerHelper;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.Misc;
@@ -51,7 +52,7 @@ public class CreateIndexCallable implements SQLCallable<Void> {
             ContentValues parameters = new ContentValues();
             parameters.put("index_name", index.indexName);
             parameters.put("index_type", index.indexType.toString());
-            parameters.put("index_settings", CreateIndexCallable.settingsAsJSON(index));
+            parameters.put("index_settings", TokenizerHelper.tokenizerToJson(index.tokenizer));
             parameters.put("field_name", fieldName.field);
             parameters.put("last_sequence", 0);
             long rowId = database.insert(QueryImpl.INDEX_METADATA_TABLE_NAME,
@@ -71,7 +72,14 @@ public class CreateIndexCallable implements SQLCallable<Void> {
 
         List<String> statements = new ArrayList<String>();
         if (index.indexType == IndexType.TEXT) {
-            String settings = String.format("tokenize=%s", index.tokenize);
+            String settings;
+            // args optional
+            if (index.tokenizer.tokenizerArguments == null) {
+                settings = String.format("tokenize=%s", index.tokenizer.tokenizerName);
+            } else {
+                settings = String.format("tokenize=%s %s", index.tokenizer.tokenizerName, index
+                        .tokenizer.tokenizerArguments);
+            }
             statements.add(createVirtualTableStatementForIndex(index.indexName,
                     columnList,
                     Collections.singletonList(settings)));
@@ -129,16 +137,4 @@ public class CreateIndexCallable implements SQLCallable<Void> {
         return String.format(Locale.ENGLISH, "CREATE INDEX \"%s\" ON \"%s\" ( %s )", sqlIndexName, tableName, cols);
     }
 
-    /**
-     * Helper to convert the index settings to a JSON string
-     *
-     * @return the JSON representation of the index settings
-     */
-     static String settingsAsJSON(Index i) {
-        // this is a trivial enough operation that we don't need a JSON serializer
-        if (i.tokenize == null) {
-            return "{}";
-        }
-        return "{\"tokenize\":\""+i.tokenize+"\"}";
-    }
 }
