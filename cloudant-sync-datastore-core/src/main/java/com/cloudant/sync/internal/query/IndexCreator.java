@@ -15,18 +15,9 @@
 package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.documentstore.Database;
-
+import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.query.callables.CreateIndexCallable;
 import com.cloudant.sync.internal.query.callables.ListIndexesCallable;
-import com.cloudant.sync.query.FieldSort;
-import com.cloudant.sync.query.Index;
-import com.cloudant.sync.query.IndexType;
-import com.cloudant.sync.query.QueryException;
-import com.cloudant.sync.internal.android.ContentValues;
-import com.cloudant.sync.internal.documentstore.DatabaseImpl;
-import com.cloudant.sync.internal.query.callables.ListIndexesCallable;
-import com.cloudant.sync.internal.sqlite.SQLCallable;
-import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.sqlite.SQLDatabaseFactory;
 import com.cloudant.sync.internal.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.internal.util.Misc;
@@ -35,20 +26,8 @@ import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.QueryException;
 
-import org.apache.commons.codec.binary.Hex;
-
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -252,17 +231,5 @@ class IndexCreator {
 
         return true;
     }
-
-    private String createIndexTableStatementForIndex(String indexName, List<String> columns) {
-        String tableName = String.format(Locale.ENGLISH, "\"%s\"", QueryImpl.tableNameForIndex(indexName));
-        String cols = Misc.join(" NONE, ", columns);
-
-        return String.format("CREATE TABLE %s ( %s NONE )", tableName, cols);
-    }
-
-    private String createIndexIndexStatementForIndex(String indexName, List<String> columns) {
-        String tableName = QueryImpl.tableNameForIndex(indexName);
-        String sqlIndexName = tableName.concat("_index");
-        String cols = Misc.join(",", columns);
 
 }
