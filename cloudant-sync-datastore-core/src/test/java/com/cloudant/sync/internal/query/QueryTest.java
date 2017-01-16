@@ -270,7 +270,7 @@ public class QueryTest extends AbstractIndexTestBase {
 
     @Test
     public void validateTextSearchIsAvailable() throws Exception {
-        assertThat(SQLDatabaseFactory.FTS_AVAILABLE, is(true));
+        assertThat(im.isTextSearchEnabled(), is(true));
     }
 
 }

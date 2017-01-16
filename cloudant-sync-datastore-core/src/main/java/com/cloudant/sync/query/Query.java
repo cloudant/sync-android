@@ -163,5 +163,11 @@ public interface Query {
                      List<FieldSort> sortDocument)
             throws QueryException;
 
+    /**
+     * Returns whether the underlying SQLite instance supports Full Text Search (FTS)
+     * @return whether the underlying SQLite instance supports Full Text Search (FTS)
+     */
+    boolean isTextSearchEnabled();
+
 }
 
