@@ -52,7 +52,7 @@ public class MockMatcherQuery extends DelegatingMockQuery {
                             List<FieldSort> sortDocument) throws QueryException {
         Misc.checkNotNull(query, "query");
 
-        updateAllIndexes();
+        refreshAllIndexes();
 
         MockMatcherQueryExecutor queryExecutor = null;
         try {

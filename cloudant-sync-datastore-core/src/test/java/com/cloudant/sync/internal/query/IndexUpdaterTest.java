@@ -965,7 +965,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         }
         createIndex("basicName", Arrays.<FieldSort>asList(new FieldSort("name")), IndexType.JSON);
 
-        im.updateAllIndexes();
+        im.refreshAllIndexes();
 
         assertThat(getIndexSequenceNumber("basic"), is(6l));
         assertThat(getIndexSequenceNumber("basicName"), is(6l));
@@ -1015,7 +1015,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
         rev.setBody(DocumentBodyFactory.EMPTY);
         ds.create(rev);
 
-        im.updateAllIndexes();
+        im.refreshAllIndexes();
 
         assertThat(getIndexSequenceNumber("basic"), is(7l));
         assertThat(getIndexSequenceNumber("basicName"), is(7l));
@@ -1132,7 +1132,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             rev.setBody(DocumentBodyFactory.create(bodyMap));
             ds.create(rev);
 
-            im.updateAllIndexes();
+            im.refreshAllIndexes();
             exepctedSequence = getIndexSequenceNumber("testIndex");
             Assert.assertEquals("The expected sequence should be 2 for 2 documents created.", 2,
                     exepctedSequence);
@@ -1194,9 +1194,9 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
 
     private void createIndex(String indexName, List<FieldSort> fieldNames, IndexType indexType) throws QueryException{
         if (indexType == IndexType.TEXT) {
-            assertThat(im.ensureIndexedText(fieldNames, indexName, null).indexName, is(indexName));
+            assertThat(im.createTextIndex(fieldNames, indexName, null).indexName, is(indexName));
         } else {
-            assertThat(im.ensureIndexedJson(fieldNames, indexName).indexName, is(indexName));
+            assertThat(im.createJsonIndex(fieldNames, indexName).indexName, is(indexName));
 
         }
 

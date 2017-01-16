@@ -144,12 +144,12 @@ public class QueryImpl implements Query {
     }
 
     @Override
-    public Index ensureIndexedJson(List<FieldSort> fields, String indexName) throws QueryException {
+    public Index createJsonIndex(List<FieldSort> fields, String indexName) throws QueryException {
         return ensureIndexed(fields, indexName, IndexType.JSON, null);
     }
 
     @Override
-    public Index ensureIndexedText(List<FieldSort> fields, String indexName, Tokenizer tokenizer) throws QueryException {
+    public Index createTextIndex(List<FieldSort> fields, String indexName, Tokenizer tokenizer) throws QueryException {
         return ensureIndexed(fields, indexName, IndexType.TEXT, tokenizer);
     }
 
@@ -211,7 +211,7 @@ public class QueryImpl implements Query {
      *
      */
     @Override
-    public void updateAllIndexes() throws QueryException {
+    public void refreshAllIndexes() throws QueryException {
         List<Index> indexes = listIndexes();
 
         IndexUpdater.updateAllIndexes(indexes, database, dbQueue);
@@ -230,7 +230,7 @@ public class QueryImpl implements Query {
                             List<FieldSort> sortDocument) throws QueryException {
         Misc.checkNotNull(query, "query");
 
-        updateAllIndexes();
+        refreshAllIndexes();
 
         QueryExecutor queryExecutor = new QueryExecutor(database, dbQueue);
         List<Index> indexes = listIndexes();
