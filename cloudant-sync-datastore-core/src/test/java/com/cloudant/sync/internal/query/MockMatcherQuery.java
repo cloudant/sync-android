@@ -49,7 +49,7 @@ public class MockMatcherQuery extends DelegatingMockQuery {
                             long skip,
                             long limit,
                             List<String> fields,
-                            List<FieldSort> sortDocument) throws QueryException {
+                            List<FieldSort> sortSpecification) throws QueryException {
         Misc.checkNotNull(query, "query");
 
         refreshAllIndexes();
@@ -62,6 +62,6 @@ public class MockMatcherQuery extends DelegatingMockQuery {
             throw new RuntimeException(e);
         }
         List<Index> indexes = listIndexes();
-        return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
+        return queryExecutor.find(query, indexes, skip, limit, fields, sortSpecification);
     }
 }

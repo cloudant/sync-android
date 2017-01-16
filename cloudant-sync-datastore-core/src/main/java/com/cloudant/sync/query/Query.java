@@ -152,7 +152,7 @@ public interface Query {
      *             pagination)
      * @param limit upper bound for number of documents to return (used for pagination)
      * @param fields list of field names to choose ("project") from the matching documents
-     * @param sortDocument specification of fields to use to order the result
+     * @param sortSpecification specification of fields to use to order the result
      * @return a {@link QueryResult} representing the set of matching documents
      * @throws QueryException if there was a problem executing the query
      */
@@ -160,7 +160,7 @@ public interface Query {
                      long skip,
                      long limit,
                      List<String> fields,
-                     List<FieldSort> sortDocument)
+                     List<FieldSort> sortSpecification)
             throws QueryException;
 
 }

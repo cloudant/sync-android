@@ -227,7 +227,7 @@ public class QueryImpl implements Query {
                             long skip,
                             long limit,
                             List<String> fields,
-                            List<FieldSort> sortDocument) throws QueryException {
+                            List<FieldSort> sortSpecification) throws QueryException {
         Misc.checkNotNull(query, "query");
 
         refreshAllIndexes();
@@ -235,7 +235,7 @@ public class QueryImpl implements Query {
         QueryExecutor queryExecutor = new QueryExecutor(database, dbQueue);
         List<Index> indexes = listIndexes();
 
-        return queryExecutor.find(query, indexes, skip, limit, fields, sortDocument);
+        return queryExecutor.find(query, indexes, skip, limit, fields, sortSpecification);
     }
 
     public static String tableNameForIndex(String indexName) {
