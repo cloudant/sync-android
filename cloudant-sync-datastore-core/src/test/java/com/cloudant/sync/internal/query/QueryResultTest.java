@@ -20,7 +20,6 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
 import com.cloudant.sync.query.FieldSort;
-import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -73,7 +72,7 @@ public class QueryResultTest extends AbstractQueryTestBase {
     public void testQueryGetDocumentsWithIdsFails() throws InterruptedException,
         ExecutionException, QueryException {
         List<FieldSort> fields = Collections.<FieldSort>singletonList(new FieldSort("pet"));
-        assertThat(im.ensureIndexedText(fields, "basic_text", null).indexName, is("basic_text"));
+        assertThat(im.createTextIndex(fields, "basic_text", null).indexName, is("basic_text"));
 
         // query - { "$text" : { "$search" : "cat" } }
         Map<String, Object> search = new HashMap<String, Object>();

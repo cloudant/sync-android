@@ -19,7 +19,6 @@ package com.cloudant.sync.internal.query;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -53,8 +52,8 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     @Test(expected = NullPointerException.class)
     public void preconditionsToCreatingIndexesNullFields() throws QueryException {
         // doesn't create an index on null fields
-        im.ensureIndexedJson(null, "basic");
-        Assert.fail("Expected ensureIndexedJson to throw a NullPointerException");
+        im.createJsonIndex(null, "basic");
+        Assert.fail("Expected createJsonIndex to throw a NullPointerException");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -62,8 +61,8 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         List<FieldSort> fieldNames;
         // doesn't create an index on no fields
         fieldNames = new ArrayList<FieldSort>();
-        im.ensureIndexedJson(fieldNames, "basic");
-        Assert.fail("Expected ensureIndexedJson to throw a IllegalArgumentException");
+        im.createJsonIndex(fieldNames, "basic");
+        Assert.fail("Expected createJsonIndex to throw a IllegalArgumentException");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -71,16 +70,16 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         List<FieldSort> fieldNames = null;
         // doesn't create an index without a name
         fieldNames = new ArrayList<FieldSort>();
-        im.ensureIndexedJson(fieldNames, "");
-        Assert.fail("Expected ensureIndexedJson to throw a IllegalArgumentException");
+        im.createJsonIndex(fieldNames, "");
+        Assert.fail("Expected createJsonIndex to throw a IllegalArgumentException");
     }
 
     @Test(expected = NullPointerException.class)
     public void preconditionsToCreatingIndexesNullType() throws QueryException {
         List<FieldSort> fieldNames = null;
         // doesn't create an index on null index type
-        im.ensureIndexedJson(fieldNames, "basic");
-        Assert.fail("Expected ensureIndexedJson to throw a NullPointerException");
+        im.createJsonIndex(fieldNames, "basic");
+        Assert.fail("Expected createJsonIndex to throw a NullPointerException");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -89,13 +88,13 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         // doesn't create an index if duplicate fields
         fieldNames = Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"), new
                 FieldSort("age"));
-        im.ensureIndexedJson(fieldNames, "basic");
-        Assert.fail("Expected ensureIndexedJson to throw a IllegalArgumentException");
+        im.createJsonIndex(fieldNames, "basic");
+        Assert.fail("Expected createJsonIndex to throw a IllegalArgumentException");
     }
 
     @Test
     public void createIndexOverOneField() throws QueryException {
-        String indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name")), "basic").indexName;
+        String indexName = im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name")), "basic").indexName;
         assertThat(indexName, is("basic"));
 
         List<Index> indexes = im.listIndexes();
@@ -106,7 +105,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
     public void createIndexOverTwoFields() throws QueryException {
-        String indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic").indexName;
+        String indexName = im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic").indexName;
         assertThat(indexName, is("basic"));
 
         List<Index> indexes = im.listIndexes();
@@ -117,7 +116,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
     public void createIndexUsingDottedNotation() throws QueryException {
-        String indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name.first"), new FieldSort("age.years")),
+        String indexName = im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name.first"), new FieldSort("age.years")),
                                             "basic").indexName;
         assertThat(indexName, is("basic"));
 
@@ -131,9 +130,9 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     @SuppressWarnings("unchecked")
     public void createMultipleIndexes() throws QueryException {
 
-        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic");
-        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "another");
-        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("cat")), "petname");
+        im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic");
+        im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "another");
+        im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("cat")), "petname");
 
         // basic has the same definition as another so another won't appear in the output
         List<Index> indexes = im.listIndexes();
@@ -146,7 +145,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
     public void createIndexSpecifiedWithAscOrDesc() throws QueryException {
-        String indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(
+        String indexName = im.createJsonIndex(Arrays.<FieldSort>asList(
                 new FieldSort("name"),
                 new FieldSort("age")), "basic").indexName;
         assertThat(indexName, is("basic"));
@@ -160,13 +159,13 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     // both indexes have same names, definitions same - return the first
     @Test
     public void createIndexWhenIndexNameExistsIdxDefinitionSame() throws QueryException {
-        String indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(
+        String indexName = im.createJsonIndex(Arrays.<FieldSort>asList(
                 new FieldSort("name"),
                 new FieldSort("age")), "basic").indexName;
         assertThat(indexName, is("basic"));
 
         // succeeds when the index definition is the same
-        indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(
+        indexName = im.createJsonIndex(Arrays.<FieldSort>asList(
                 new FieldSort("name"),
                 new FieldSort("age")), "basic").indexName;
         assertThat(indexName, is("basic"));
@@ -176,12 +175,12 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     // both indexes have generated names, definitions same - return the first
     @Test
     public void createIndexWhenIndexNamesGeneratedIdxDefinitionSame() throws QueryException {
-        String indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(
+        String indexName = im.createJsonIndex(Arrays.<FieldSort>asList(
                 new FieldSort("name"),
                 new FieldSort("age")), null).indexName;
 
         // succeeds when the index definition is the same
-        String indexName2 = im.ensureIndexedJson(Arrays.<FieldSort>asList(
+        String indexName2 = im.createJsonIndex(Arrays.<FieldSort>asList(
                 new FieldSort("name"),
                 new FieldSort("age")), null).indexName;
         assertThat(indexName, is(indexName2));
@@ -191,12 +190,12 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     // indexes have different names but the same definitions - return the first
     @Test
     public void createIndexWhenIndexNamesDifferentIdxDefinitionSame() throws QueryException {
-        String indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(
+        String indexName = im.createJsonIndex(Arrays.<FieldSort>asList(
                 new FieldSort("name"),
                 new FieldSort("age")), "basic").indexName;
 
         // creates second index
-        String indexName2 = im.ensureIndexedJson(Arrays.<FieldSort>asList(
+        String indexName2 = im.createJsonIndex(Arrays.<FieldSort>asList(
                 new FieldSort("name"),
                 new FieldSort("age")), "basic2").indexName;
         assertThat(indexName, is(indexName2));
@@ -205,17 +204,17 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
     public void createIndexWhenIndexNameExistsIdxDefinitionDifferent() throws QueryException {
-        String indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(
+        String indexName = im.createJsonIndex(Arrays.<FieldSort>asList(
                 new FieldSort("name"),
                 new FieldSort("age")), "basic").indexName;
         assertThat(indexName, is("basic"));
 
         // fails when the index definition is different
         try {
-            indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(
+            indexName = im.createJsonIndex(Arrays.<FieldSort>asList(
                     new FieldSort("name"),
                     new FieldSort("pet")), "basic").indexName;
-            Assert.fail("ensureIndexedJson should throw QueryException");
+            Assert.fail("createJsonIndex should throw QueryException");
         } catch (QueryException qe) {
             ;
         }
@@ -224,7 +223,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     @Test
     public void createIndexWithJsonType() throws QueryException {
         // supports using the json type
-        String indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(
+        String indexName = im.createJsonIndex(Arrays.<FieldSort>asList(
                 new FieldSort("name"),
                 new FieldSort("age")),
                                             "basic").indexName;
@@ -238,7 +237,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
     public void createIndexWithTextTypeTokenizerNull() throws QueryException {
-        String indexName = im.ensureIndexedText(Arrays.<FieldSort>asList(
+        String indexName = im.createTextIndex(Arrays.<FieldSort>asList(
                 new FieldSort("name"),
                 new FieldSort("age")),
                                             "basic",
@@ -252,7 +251,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
     public void createIndexWithTextTypeTokenizerDefault() throws QueryException {
-        String indexName = im.ensureIndexedText(Arrays.<FieldSort>asList(
+        String indexName = im.createTextIndex(Arrays.<FieldSort>asList(
                 new FieldSort("name"),
                 new FieldSort("age")),
                 "basic",
@@ -267,7 +266,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
     public void createIndexWithTextTypeAndTokenizeSetting() throws QueryException {
-        String indexName = im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")),
+        String indexName = im.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")),
                 "basic",
                 new Tokenizer("porter")).indexName;
         assertThat(indexName, is("basic"));
@@ -280,7 +279,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
     public void createIndexWithTextTypeAndTokenizeSettingWithArgs() throws QueryException {
-        String indexName = im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")),
+        String indexName = im.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")),
                 "basic",
                 new Tokenizer("porter", "unicode61 remove_diacritics 1")).indexName;
         assertThat(indexName, is("basic"));
@@ -294,7 +293,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     // as above, but ask for the index name to be generated
     @Test
     public void createIndexWithTextTypeAndTokenizeSettingWithArgsDefaultName() throws QueryException {
-        String indexName = im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")),
+        String indexName = im.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")),
                 null,
                 new Tokenizer("porter", "unicode61 remove_diacritics 1")).indexName;
         assertThat(indexName, startsWith("com.cloudant.sync.query.GeneratedIndexName.Index"));
@@ -306,10 +305,10 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         assertThat(i.tokenizer.tokenizerArguments, is("unicode61 remove_diacritics 1"));
     }
 
-    // as above but check values returned from ensureIndexedText
+    // as above but check values returned from createTextIndex
     @Test
     public void checkEnsureIndexedReturnsCorrectValues() throws QueryException {
-        Index i = im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")),
+        Index i = im.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")),
                 null,
                 new Tokenizer("porter", "unicode61 remove_diacritics 1"));
         assertThat(i.indexType, is(IndexType.TEXT));
@@ -320,11 +319,11 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test
     public void indexAndTextIndexCanCoexist() throws QueryException {
-        String indexName = im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")),
+        String indexName = im.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")),
                                             "textIndex",
                                             new Tokenizer("porter")).indexName;
         assertThat(indexName, is("textIndex"));
-        indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "jsonIndex").indexName;
+        indexName = im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "jsonIndex").indexName;
         assertThat(indexName, is("jsonIndex"));
         List<Index> indexes = im.listIndexes();
         assertThat(indexes, containsInAnyOrder(IndexMatcherHelpers.getIndexNameMatcher("textIndex"),
@@ -333,15 +332,15 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
 
     @Test(expected = QueryException.class)
     public void correctlyLimitsTextIndexesToOne() throws QueryException {
-        String indexName = im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic", null).indexName;
+        String indexName = im.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), "basic", null).indexName;
         assertThat(indexName, is("basic"));
-        indexName = im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("donuts")), "anotherIndex", null).indexName;
+        indexName = im.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("donuts")), "anotherIndex", null).indexName;
     }
 
     @Test
     public void createIndexUsingNonAsciiText() throws QueryException {
         // can create indexes successfully
-        String indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("اسم"), new FieldSort("datatype"), new FieldSort("ages")),
+        String indexName = im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("اسم"), new FieldSort("datatype"), new FieldSort("ages")),
                                             "basic").indexName;
         assertThat(indexName, is("basic"));
     }
@@ -349,12 +348,12 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     @Test(expected = IllegalArgumentException.class)
     public void createIndexWhereFieldNameContainsDollarSignAtStart() throws QueryException {
         // rejects indexes with $ at start
-       im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("$name"), new FieldSort("datatype")), "basic");
+       im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("$name"), new FieldSort("datatype")), "basic");
     }
     @Test
     public void createIndexWhereFieldNameContainsDollarSignNotAtStart() throws QueryException {
         // creates indexes with $ not at start
-        String indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("na$me"), new FieldSort("datatype$")), "basic").indexName;
+        String indexName = im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("na$me"), new FieldSort("datatype$")), "basic").indexName;
         assertThat(indexName, is("basic"));
     }
 
@@ -384,7 +383,7 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
     // we don't support defining indexes with descending order
     @Test(expected = UnsupportedOperationException.class)
     public void fieldSortDescendingNotSupported() throws QueryException {
-        im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction
+        im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name", FieldSort.Direction
                 .DESCENDING), new FieldSort("age")), null);
     }
 
