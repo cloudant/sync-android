@@ -20,6 +20,7 @@ import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.documentstore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.internal.query.callables.DeleteIndexCallable;
 import com.cloudant.sync.internal.query.callables.ListIndexesCallable;
+import com.cloudant.sync.internal.sqlite.SQLDatabaseFactory;
 import com.cloudant.sync.internal.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.internal.util.Misc;
 import com.cloudant.sync.query.FieldSort;
@@ -246,5 +247,9 @@ public class QueryImpl implements Query {
         return database;
     }
 
+    @Override
+    public boolean isTextSearchEnabled() {
+        return SQLDatabaseFactory.FTS_AVAILABLE;
+    }
 
 }
