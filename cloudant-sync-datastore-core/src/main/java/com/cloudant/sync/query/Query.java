@@ -85,7 +85,7 @@ public interface Query {
      * @return the requested {@link Index}, or the existing {@link Index} (see above)
      * @throws QueryException if there was a problem creating or updating the index
      */
-    Index ensureIndexedJson(List<FieldSort> fields, String indexName) throws QueryException;
+    Index createJsonIndex(List<FieldSort> fields, String indexName) throws QueryException;
 
     /**
      * <p>
@@ -119,7 +119,7 @@ public interface Query {
      * @return the requested {@link Index}, or the existing {@link Index} (see above)
      * @throws QueryException if there was a problem creating or updating the index
      */
-    Index ensureIndexedText(List<FieldSort> fields, String indexName, Tokenizer tokenizer)
+    Index createTextIndex(List<FieldSort> fields, String indexName, Tokenizer tokenizer)
             throws QueryException;
 
     /**
@@ -135,7 +135,7 @@ public interface Query {
      * update
      * @throws QueryException if there was a problem updating the index
      */
-    void updateAllIndexes() throws QueryException;
+    void refreshAllIndexes() throws QueryException;
 
     /**
      * Execute a query to find data

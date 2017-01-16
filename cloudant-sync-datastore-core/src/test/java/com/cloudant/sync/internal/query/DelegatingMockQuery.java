@@ -15,7 +15,6 @@
 package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.query.Index;
-import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.Query;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
@@ -39,13 +38,13 @@ public abstract class DelegatingMockQuery implements Query {
     }
 
     @Override
-    public Index ensureIndexedJson(List<FieldSort> fields, String indexName) throws QueryException {
-        return delegate.ensureIndexedJson(fields, indexName);
+    public Index createJsonIndex(List<FieldSort> fields, String indexName) throws QueryException {
+        return delegate.createJsonIndex(fields, indexName);
     }
 
     @Override
-    public Index ensureIndexedText(List<FieldSort> fields, String indexName, Tokenizer tokenizer) throws QueryException {
-        return delegate.ensureIndexedText(fields, indexName, tokenizer);
+    public Index createTextIndex(List<FieldSort> fields, String indexName, Tokenizer tokenizer) throws QueryException {
+        return delegate.createTextIndex(fields, indexName, tokenizer);
     }
 
     @Override
@@ -54,8 +53,8 @@ public abstract class DelegatingMockQuery implements Query {
     }
 
     @Override
-    public void updateAllIndexes() throws QueryException {
-        delegate.updateAllIndexes();
+    public void refreshAllIndexes() throws QueryException {
+        delegate.refreshAllIndexes();
     }
 
     @Override

@@ -52,9 +52,9 @@ public class QuerySqlTranslatorTest extends AbstractIndexTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        indexName = im.ensureIndexedJson(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("pet")), "basic").indexName;
+        indexName = im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("pet")), "basic").indexName;
         assertThat(indexName, is("basic"));
-        textIndexName = im.ensureIndexedText(Arrays.<FieldSort>asList(new FieldSort("comments")), "basic_text", null).indexName;
+        textIndexName = im.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("comments")), "basic_text", null).indexName;
         assertThat(textIndexName, is("basic_text"));
         indexes = im.listIndexes();
         assertThat(indexes.size(), is(2));
