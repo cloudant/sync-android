@@ -63,8 +63,8 @@ public abstract class DelegatingMockQuery implements Query {
     }
 
     @Override
-    public QueryResult find(Map<String, Object> query, long skip, long limit, List<String> fields, List<FieldSort> sortDocument) throws QueryException {
-        return delegate.find(query, skip, limit, fields, sortDocument);
+    public QueryResult find(Map<String, Object> query, long skip, long limit, List<String> fields, List<FieldSort> sortSpecification) throws QueryException {
+        return delegate.find(query, skip, limit, fields, sortSpecification);
     }
 
     @Override
