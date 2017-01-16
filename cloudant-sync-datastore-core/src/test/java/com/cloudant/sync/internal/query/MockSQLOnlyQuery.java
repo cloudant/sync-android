@@ -52,7 +52,7 @@ public class MockSQLOnlyQuery extends DelegatingMockQuery {
                             List<FieldSort> sortDocument) throws QueryException {
         Misc.checkNotNull(query, "query");
 
-        updateAllIndexes();
+        refreshAllIndexes();
 
         MockSQLOnlyQueryExecutor queryExecutor = null;
         try {

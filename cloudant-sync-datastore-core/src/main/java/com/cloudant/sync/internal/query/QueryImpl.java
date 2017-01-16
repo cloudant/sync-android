@@ -20,23 +20,21 @@ import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.documentstore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.internal.query.callables.DeleteIndexCallable;
 import com.cloudant.sync.internal.query.callables.ListIndexesCallable;
+import com.cloudant.sync.internal.sqlite.SQLDatabaseQueue;
+import com.cloudant.sync.internal.util.Misc;
 import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.query.Index;
 import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.Query;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
-import com.cloudant.sync.internal.sqlite.SQLDatabaseQueue;
-import com.cloudant.sync.internal.util.Misc;
+import com.cloudant.sync.query.Tokenizer;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -145,32 +143,14 @@ public class QueryImpl implements Query {
 
     }
 
-    /**
-     *  Add a single, possibly compound, index for the given field names.
-     *
-     *  This method generates a name for the new index.
-     *
-     *  @param fieldNames List of field names in the sort format
-     *  @return name of created index
-     */
     @Override
-    public String ensureIndexed(List<FieldSort> fieldNames) throws QueryException {
-        return this.ensureIndexed(fieldNames, null);
+    public Index createJsonIndex(List<FieldSort> fields, String indexName) throws QueryException {
+        return ensureIndexed(fields, indexName, IndexType.JSON, null);
     }
 
-
-    /**
-     *  Add a single, possibly compound, index for the given field names.
-     *
-     *  This function generates a name for the new index.
-     *
-     *  @param fieldNames List of field names in the sort format
-     *  @param indexName Name of index to create or null to generate an index name.
-     *  @return name of created index
-     */
     @Override
-    public String ensureIndexed(List<FieldSort> fieldNames, String indexName) throws QueryException {
-        return this.ensureIndexed(fieldNames, indexName, IndexType.JSON);
+    public Index createTextIndex(List<FieldSort> fields, String indexName, Tokenizer tokenizer) throws QueryException {
+        return ensureIndexed(fields, indexName, IndexType.TEXT, tokenizer);
     }
 
     /**
@@ -181,77 +161,24 @@ public class QueryImpl implements Query {
      *  @param fieldNames List of field names in the sort format
      *  @param indexName Name of index to create or null to generate an index name.
      *  @param indexType The type of index (json or text currently supported)
-     *  @return name of created index
-     */
-    @Override
-    public String ensureIndexed(List<FieldSort> fieldNames, String indexName, IndexType indexType) throws QueryException {
-        return ensureIndexed(fieldNames, indexName, indexType, null);
-    }
-
-    /**
-     *  Add a single, possibly compound, index for the given field names.
-     *
-     *  This function generates a name for the new index.
-     *
-     *  @param fieldNames List of field names in the sort format
-     *  @param indexName Name of index to create or null to generate an index name.
-     *  @param indexType The type of index (json or text currently supported)
-     *  @param tokenize
+     *  @param tokenizer
      *                       Only text indexes support settings - Ex. { "tokenize" : "simple" }
      *  @return name of created index
      */
-    @Override
-    public String ensureIndexed(List<FieldSort> fieldNames,
+    private Index ensureIndexed(List<FieldSort> fieldNames,
                                 String indexName,
                                 IndexType indexType,
-                                String tokenize) throws QueryException {
-
-        // If the index name is null, a name should be generated, but first we should check
-        // if an index already exists that matches the request index definition.
-        if (indexName == null) {
-            List<Index> indexes = this.listIndexes();
-            Set<FieldSort> fieldNamesSet = new HashSet<FieldSort>(filterMeta(fieldNames));
-            for (Index index : indexes) {
-                Set<FieldSort> indexFieldNamesSet = new HashSet<FieldSort>(filterMeta(index.fieldNames));
-                if (!indexFieldNamesSet.equals(fieldNamesSet)) {
-                    continue;
-                }
-
-                boolean equalTokenize = tokenize == null ? index.tokenize == null : tokenize.equals(index.tokenize);
-                if(!equalTokenize){
-                    continue;
-                }
-
-
-                if (index.indexType != indexType){
-                    continue;
-                }
-
-                return index.indexName;
-            }
+                                Tokenizer tokenizer) throws QueryException {
+        // synchronized to prevent race conditions in IndexCreator when looking for existing indexes
+        // which have the same name or definition
+        synchronized (this) {
+            return IndexCreator.ensureIndexed(new Index(fieldNames,
+                            indexName,
+                            indexType,
+                            tokenizer),
+                    database,
+                    dbQueue);
         }
-
-        return IndexCreator.ensureIndexed(new Index(fieldNames,
-                        indexName,
-                        indexType,
-                        tokenize),
-                database,
-                dbQueue);
-    }
-
-    /**
-     * Removes meta fields from a field sort list, the meta fields removed are "_id" and "_rev".
-     * Meta fields will always be added if missing by the underlying indexing functions.
-     */
-    private List<FieldSort> filterMeta(List<FieldSort> fields){
-        List<FieldSort> filtered = new ArrayList<FieldSort>();
-        for (FieldSort field: fields){
-            if (field.field.equals("_id") || field.field.equals("_rev")){
-                continue;
-            }
-            filtered.add(field);
-        }
-        return filtered;
     }
 
     /**
@@ -284,7 +211,7 @@ public class QueryImpl implements Query {
      *
      */
     @Override
-    public void updateAllIndexes() throws QueryException {
+    public void refreshAllIndexes() throws QueryException {
         List<Index> indexes = listIndexes();
 
         IndexUpdater.updateAllIndexes(indexes, database, dbQueue);
@@ -303,7 +230,7 @@ public class QueryImpl implements Query {
                             List<FieldSort> sortDocument) throws QueryException {
         Misc.checkNotNull(query, "query");
 
-        updateAllIndexes();
+        refreshAllIndexes();
 
         QueryExecutor queryExecutor = new QueryExecutor(database, dbQueue);
         List<Index> indexes = listIndexes();

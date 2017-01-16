@@ -15,11 +15,11 @@
 package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.query.Index;
-import com.cloudant.sync.query.IndexType;
 import com.cloudant.sync.query.Query;
 import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.query.FieldSort;
+import com.cloudant.sync.query.Tokenizer;
 
 import java.util.List;
 import java.util.Map;
@@ -38,23 +38,13 @@ public abstract class DelegatingMockQuery implements Query {
     }
 
     @Override
-    public String ensureIndexed(List<FieldSort> fieldNames) throws QueryException {
-        return delegate.ensureIndexed(fieldNames);
+    public Index createJsonIndex(List<FieldSort> fields, String indexName) throws QueryException {
+        return delegate.createJsonIndex(fields, indexName);
     }
 
     @Override
-    public String ensureIndexed(List<FieldSort> fieldNames, String indexName) throws QueryException {
-        return delegate.ensureIndexed(fieldNames, indexName);
-    }
-
-    @Override
-    public String ensureIndexed(List<FieldSort> fieldNames, String indexName, IndexType indexType) throws QueryException {
-        return delegate.ensureIndexed(fieldNames, indexName, indexType);
-    }
-
-    @Override
-    public String ensureIndexed(List<FieldSort> fieldNames, String indexName, IndexType indexType, String tokenize) throws QueryException {
-        return delegate.ensureIndexed(fieldNames,indexName, indexType, tokenize);
+    public Index createTextIndex(List<FieldSort> fields, String indexName, Tokenizer tokenizer) throws QueryException {
+        return delegate.createTextIndex(fields, indexName, tokenizer);
     }
 
     @Override
@@ -63,8 +53,8 @@ public abstract class DelegatingMockQuery implements Query {
     }
 
     @Override
-    public void updateAllIndexes() throws QueryException {
-        delegate.updateAllIndexes();
+    public void refreshAllIndexes() throws QueryException {
+        delegate.refreshAllIndexes();
     }
 
     @Override

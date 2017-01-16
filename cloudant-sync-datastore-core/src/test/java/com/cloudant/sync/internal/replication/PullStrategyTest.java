@@ -392,7 +392,7 @@ public class PullStrategyTest extends ReplicationTestBase {
 
         QueryImpl im = (QueryImpl) documentStore.query();
         try {
-            im.ensureIndexed(Arrays.<FieldSort>asList(new FieldSort("diet")), "diet");
+            im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("diet")), "diet");
 
             AnimalDb.populateWithoutFilter(remoteDb.couchClient);
             this.pull(replicator, 10);

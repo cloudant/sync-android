@@ -17,6 +17,8 @@ package com.cloudant.sync.query;
 import java.util.List;
 import java.util.Map;
 
+import com.cloudant.sync.query.FieldSort.Direction;
+
 /**
  * Created by tomblench on 28/09/2016.
  */
@@ -53,77 +55,72 @@ public interface Query {
 
     /**
      * <p>
-     * Create an {@link Index} with an automatically generated name and default options.
+     * Create a JSON {@link Index} for one or more fields with an optional index name, and ensure the
+     * index is up to date.
      * </p>
      * <p>
-     * The default options are {@code indexType=JSON, tokenize=null}.
+     * Note that the sort order on fields for index definitions currently only supports the
+     * {@link Direction#ASCENDING} direction. If there are one or more members of {@code
+     * fields} with a direction of {@link Direction#DESCENDING}, an exception will be thrown.
      * </p>
      * <p>
-     * If an index with these fields and options already exists, then no new index is created, and
-     * the existing equivalent index name is returned.
+     * To return data in descending order, create an index with {@link Direction#ASCENDING} fields
+     * and execute the subsequent query with {@link Direction#DESCENDING} fields as required.
      * </p>
-     * @param fieldNames the fields to index
-     * @return the generated index name, or the existing index name (see above)
-     * @throws QueryException if there was a problem creating the index
+     * <p>
+     * If an index with these fields already exists, then no new index is created, and the
+     * existing equivalent {@link Index} is returned. Note that the existing equivalent index
+     * may have a different name to the one requested.
+     * </p>
+     * <p>
+     * For new indexes, the index data will be created for the first time. For existing indexes, the
+     * index data will be updated by reading all documents in the
+     * {@link com.cloudant.sync.documentstore.DocumentStore} which have changed since the last
+     * update.
+     * </p>
+     *
+     * @param fields the fields to index
+     * @param indexName  the name of the index to be created, or null for an automatically
+     *                   generated name
+     * @return the requested {@link Index}, or the existing {@link Index} (see above)
+     * @throws QueryException if there was a problem creating or updating the index
      */
-    String ensureIndexed(List<FieldSort> fieldNames) throws QueryException;
+    Index createJsonIndex(List<FieldSort> fields, String indexName) throws QueryException;
 
     /**
      * <p>
-     * Create an {@link Index} with a given name and default options.
+     * Create a text {@link Index} for one or more fields with an optional index name and optional
+     * SQLite FTS tokenizer, and ensure the index is up to date.
      * </p>
      * <p>
-     * The default options are {@code indexType=JSON, tokenize=null}.
+     * Note that the sort order on fields for index definitions currently only supports the
+     * {@link Direction#ASCENDING} direction. If there are one or more members of {@code
+     * fields} with a direction of {@link Direction#DESCENDING}, an exception will be thrown.
      * </p>
      * <p>
-     * If an index with these fields and options already exists, then no new index is created, and
-     * the existing equivalent index name is returned.
-     * </p>
-     * @param fieldNames the fields to index
-     * @param indexName the name of the index to be created
-     * @return the requested index name, or the existing index name (see above)
-     * @throws QueryException if there was a problem creating the index
-     */
-    String ensureIndexed(List<FieldSort> fieldNames, String indexName) throws QueryException;
-
-    /**
-     * <p>
-     * Create an {@link Index} with a given name and of a given type.
-     * </p>
-     * <p>
-     * If {@code indexType=TEXT}, then the default tokenizer will be used.
+     * To return data in descending order, create an index with {@link Direction#ASCENDING} fields
+     * and execute the subsequent query with {@link Direction#DESCENDING} fields as required.
      * </p>
      * <p>
      * If an index with these fields and options already exists, then no new index is created, and
-     * the existing equivalent index name is returned.
+     * the existing equivalent {@link Index} is returned. Note that the existing equivalent index
+     * may have a different name to the one requested.
      * </p>
-     * @param fieldNames the fields to index
-     * @param indexName the name of the index to be created
-     * @param indexType the type of the index to be created ({@code text} or {@code JSON})
-     * @return the requested index name, or the existing index name (see above)
-     * @throws QueryException if there was a problem creating the index
+     * <p>
+     * For new indexes, the index data will be created for the first time. For existing indexes, the
+     * index data will be updated by reading all documents in the
+     * {@link com.cloudant.sync.documentstore.DocumentStore} which have changed since the last
+     * update.
+     * </p>
+     * @param fields the fields to index
+     * @param indexName the name of the index to be created, or null for an automatically generated name
+     * @param tokenizer the SQLite FTS tokenizer to use for the text index, or {@code null} or
+     *                  {@link Tokenizer#DEFAULT} for the default tokenizer
+     * @return the requested {@link Index}, or the existing {@link Index} (see above)
+     * @throws QueryException if there was a problem creating or updating the index
      */
-    String ensureIndexed(List<FieldSort> fieldNames, String indexName, IndexType indexType)
+    Index createTextIndex(List<FieldSort> fields, String indexName, Tokenizer tokenizer)
             throws QueryException;
-
-    /**
-     * <p>
-     * Create an {@link Index} with a given name and of a given type and optionally a tokenizer.
-     * </p>
-     * <p>
-     * If an index with these fields and options already exists, then no new index is created, and
-     * the existing equivalent index name is returned.
-     * </p>
-     * @param fieldNames the fields to index
-     * @param indexName the name of the index to be created
-     * @param indexType the type of the index to be created ({@code text} or {@code JSON})
-     * @param tokenize the SQLite FTS tokenizer to use for {@code text} indexes
-     * @return the requested index name, or the existing index name (see above)
-     * @throws QueryException if there was a problem creating the index
-     */    String ensureIndexed(List<FieldSort> fieldNames,
-                         String indexName,
-                         IndexType indexType,
-                         String tokenize) throws QueryException;
 
     /**
      * Delete index metadata and data
@@ -138,7 +135,7 @@ public interface Query {
      * update
      * @throws QueryException if there was a problem updating the index
      */
-    void updateAllIndexes() throws QueryException;
+    void refreshAllIndexes() throws QueryException;
 
     /**
      * Execute a query to find data
