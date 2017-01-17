@@ -25,6 +25,12 @@ public class TestReplicationService extends PeriodicReplicationService {
     private static final String DATASTORE_MANGER_DIR = "data";
     private static final String TAG = "TestReplicationService";
 
+    /** The period between replications for our test PeriodicReplicationService when there are no
+     * components bound to the service. The default is 120 seconds (2 minutes), but the value
+     * may be modified by calling {@link #setUnboundIntervalSeconds(int)}.
+     */
+    private int mUnboundIntervalSeconds = 120;
+
     class TestReceiver extends WifiPeriodicReplicationReceiver<TestReplicationService> {
         public TestReceiver() {
             super(TestReplicationService.class);
@@ -46,10 +52,14 @@ public class TestReplicationService extends PeriodicReplicationService {
     }
 
     protected int getUnboundIntervalInSeconds() {
-        return 120;
+        return mUnboundIntervalSeconds;
     }
-    
+
     protected boolean startReplicationOnBind() {
         return true;
+    }
+
+    public void setUnboundIntervalSeconds(int seconds) {
+        mUnboundIntervalSeconds = seconds;
     }
 }

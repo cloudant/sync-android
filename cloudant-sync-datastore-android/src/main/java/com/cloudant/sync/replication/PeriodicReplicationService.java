@@ -66,11 +66,50 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     private static final String PERIODIC_REPLICATION_ENABLED_SUFFIX
         = ".periodicReplicationsActive";
 
+    /* We store a flag indicating whether periodic replications were explicitly stopped in
+     * SharedPreferences using a key with this suffix. We have to store the flag persistently as
+     * the service may be stopped and started by the operating system. */
+    private static final String EXPLICITLY_STOPPED_SUFFIX = ".explicitlyStopped";
+
     private static final long MILLISECONDS_IN_SECOND = 1000L;
 
+    /**
+     * To start periodic replications, this value should be passed to this service in an Intent
+     * using an Extra with the {@link #EXTRA_COMMAND} key.
+     * @see
+     * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
+     *     Replication Policy User Guide</a> for more details.
+     */
     public static final int COMMAND_START_PERIODIC_REPLICATION = 2;
+
+    /**
+     * To stop periodic replications, this value should be passed to this service in an Intent
+     * using an Extra with the {@link #EXTRA_COMMAND} key.
+     * @see
+     * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
+     *     Replication Policy User Guide</a> for more details.
+     */
     public static final int COMMAND_STOP_PERIODIC_REPLICATION = 3;
+
+    /**
+     * When the device is rebooted, this value should be passed to this service in an Intent
+     * using an Extra with the {@link #EXTRA_COMMAND} key so that replications can be setup again
+     * following a reboot.
+     * @see
+     * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
+     *     Replication Policy User Guide</a> for more details.
+     */
     public static final int COMMAND_DEVICE_REBOOTED = 4;
+
+    /**
+     * When the period between replications has been altered, this value should be passed to this
+     * service in an Intent using an Extra with the {@link #EXTRA_COMMAND} key so that the interval
+     * between replications can be re-evaluated.
+     * @see
+     * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
+     *     Replication Policy User Guide</a> for more details.
+     */
+    public static final int COMMAND_RESET_REPLICATION_TIMERS = 5;
 
     private static final String TAG = "PRS";
 
@@ -125,9 +164,13 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
                     break;
                 case COMMAND_STOP_PERIODIC_REPLICATION:
                     stopPeriodicReplication();
+                    setExplicitlyStopped(true);
                     break;
                 case COMMAND_DEVICE_REBOOTED:
                     resetAlarmDueTimesOnReboot();
+                    break;
+                case COMMAND_RESET_REPLICATION_TIMERS:
+                    restartPeriodicReplications();
                     break;
                 default:
                     // Do nothing
@@ -201,8 +244,20 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
             // to the Service would be unreliable.
             PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
 
+            long initialTriggerTime;
+            if (explicitlyStopped()) {
+                // Replications were explicitly stopped, so we want the first replication to
+                // happen immediately.
+                initialTriggerTime = SystemClock.elapsedRealtime();
+                setExplicitlyStopped(false);
+            } else {
+                // Replications were implicitly stopped (e.g. by rebooting the device), so we
+                // want to resume the previous schedule.
+                initialTriggerTime = getNextAlarmDueElapsedTime();
+            }
+
             alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                getNextAlarmDueElapsedTime(),
+                initialTriggerTime,
                 getIntervalInSeconds() * MILLISECONDS_IN_SECOND,
                 pendingAlarmIntent);
         } else {
@@ -289,6 +344,27 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     private boolean isPeriodicReplicationEnabled() {
         return mPrefs.getBoolean(constructKey(PERIODIC_REPLICATION_ENABLED_SUFFIX),
             false);
+    }
+
+    /**
+     * Set a flag in SharedPreferences to indicate whether periodic replications were explicitly
+     * stopped.
+     * @param explicitlyStopped true to indicate that periodic replications were stopped
+     *                          explicitly by the sending of COMMAND_STOP_PERIODIC_REPLICATION,
+     *                          otherwise false.
+     */
+    private void setExplicitlyStopped(boolean explicitlyStopped) {
+        SharedPreferences.Editor editor = mPrefs.edit();
+        editor.putBoolean(constructKey(EXPLICITLY_STOPPED_SUFFIX), explicitlyStopped);
+        editor.apply();
+    }
+
+    /**
+     * @return The value of the flag stored in SharedPreferences indicating whether periodic
+     * replications were explicitly stopped.
+     */
+    private boolean explicitlyStopped() {
+        return mPrefs.getBoolean(constructKey(EXPLICITLY_STOPPED_SUFFIX), true);
     }
 
     /**
