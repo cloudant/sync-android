@@ -120,7 +120,7 @@ As text indexing relies on SQLite FTS functionality any custom tokenizers need t
 
 [fts]: http://www.sqlite.org/fts3.html#tokenizer
 
-When creating a text index, the `tokenizer` parameter can be set to `null` or `Tokenizer.DEFAULT` to use the default `simple` overriding the default tokenizer setting is done by providing a `tokenize` parameter setting as part of the index settings.  The value should be the same as the tokenizer name given to SQLite when registering that tokenizer.  In the example below we set the tokenizer to `porter`.
+When creating a text index, the `tokenizer` parameter can be set to `null` or `Tokenizer.DEFAULT` to use the default `simple` tokenizer. A different tokenizer can be selected by constructing a `Tokenizer` object. The argument to the constructor should be the same as the tokenizer name given to SQLite when registering that tokenizer. Some tokenizers can also take an argument in which case the two argument variant of the `Tokenizer` constructor can be used. In the example below we set the tokenizer to `porter`.
 
 ```java
 if (im.isTextSearchEnabled()) {
