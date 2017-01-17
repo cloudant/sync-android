@@ -83,7 +83,7 @@ Index createTextIndex(List<FieldSort> fields, String indexName, Tokenizer tokeni
 
 These indexes are persistent across application restarts as they are saved to disk. They are kept up to date as documents change; there's no need to call the `createJsonIndex` or `createTextIndex` method each time your applications starts, though there is no harm in doing so.
 
-The first argument, `fieldNames` is a list of fields to put into the index. The second argument, `indexName` is a name for the index. This is used to delete indexes at a later stage and appears when you list the indexes in the database; `indexName` is optional - if `null` is specified then a name will be generated. For TEXT indexes, `tokenizer` specifies the SQLite FTS tokenizer to use. TODO more on this?
+The first argument, `fieldNames` is a list of fields to put into the index. The second argument, `indexName` is a name for the index. This is used to delete indexes at a later stage and appears when you list the indexes in the database; `indexName` is optional - if `null` is specified then a name will be generated. For TEXT indexes, `tokenizer` specifies the SQLite FTS tokenizer to use.
 
 A field can appear in more than one index. The query engine will select an appropriate index to use for a given query. However, the more indexes you have, the more disk space they will use and the greater the overhead in keeping them up to date.
 
