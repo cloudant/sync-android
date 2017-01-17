@@ -69,13 +69,13 @@ Basic querying of fields benefits but does _not require_ a JSON index. For examp
 
 
 
-Use the following methods to create a JSON index:
+Use the following method to create a JSON index:
 
 ```
 Index createJsonIndex(List<FieldSort> fields, String indexName) throws QueryException;
 ```
 
-Use either of the following methods to create a TEXT index:
+Use the following method to create a TEXT index:
 
 ```
 Index createTextIndex(List<FieldSort> fields, String indexName, Tokenizer tokenizer) throws QueryException;
