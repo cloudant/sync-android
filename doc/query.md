@@ -10,11 +10,11 @@ The aim is that the query you use on our cloud-based database works for your mob
 
 ## Usage
 
-These notes assume familiarity with Cloudant Sync Datastore.
+These notes assume familiarity with Cloudant Sync.
 
 Cloudant Query uses indexes explicitly defined over the fields in the document. Multiple indexes can be created for use in different queries, the same field may end up indexed in more than one index.
 
-Query offers a powerful way to find documents within your datastore. There are a couple of restrictions on field names you need to be aware of before using query:
+Query offers a powerful way to find documents within your document store. There are a couple of restrictions on field names you need to be aware of before using query:
 
 - A dollar sign (`$`) cannot be the first character of any field name.  This is because, when querying, a dollar sign tells the query engine to handle the object as a query operator and not a field.
 - A field with a name that contains a period (`.`) cannot be indexed nor successfully queried.  This is because the query engine assumes dot notation refers to a sub-object.
@@ -28,8 +28,8 @@ For the following examples, assume two things.
 Firstly, we set up an `Query` object, `q`, as follows:
 
 ```java
-File path = getApplicationContext().getDir("datastores");
-DocumentStore ds = DocumentStore.getInstance(new File(path, "my_datastore"));
+File path = getApplicationContext().getDir("document_stores");
+DocumentStore ds = DocumentStore.getInstance(new File(path, "my_document_store"));
 Query q = ds.query();
 ```
 
@@ -39,7 +39,7 @@ This means that there is no `close()` method on the `Query` object, but calling 
 
 The `Query` object provides the ability to manage query indexes and execute queries.
 
-For the examples which follow, assume that these documents are in the datastore:
+For the examples which follow, assume that these documents are in the document store:
 
 ```java
 { "name": "mike",
@@ -582,7 +582,7 @@ the commit log :)
 Overall restrictions:
 
 - Cannot use covering indexes with projection (`fields`) to avoid loading
-  documents from the datastore.
+  documents from the document store.
 
 #### Query syntax
 
