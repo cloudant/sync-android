@@ -164,8 +164,10 @@ public interface Query {
             throws QueryException;
 
     /**
-     * Returns whether the underlying SQLite instance supports Full Text Search (FTS)
-     * @return whether the underlying SQLite instance supports Full Text Search (FTS)
+     * Returns {@code true} if the underlying SQLite instance supports Full Text Search (FTS);
+     * {@code false} otherwise
+     * @return {@code true} if the underlying SQLite instance supports Full Text Search (FTS);
+     * {@code false} otherwise
      */
     boolean isTextSearchEnabled();
 
