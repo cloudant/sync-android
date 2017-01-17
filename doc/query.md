@@ -83,7 +83,7 @@ Index createTextIndex(List<FieldSort> fields, String indexName, Tokenizer tokeni
 
 These indexes are persistent across application restarts as they are saved to disk. They are kept up to date as documents change; there's no need to call the `createJsonIndex` or `createTextIndex` method each time your applications starts, though there is no harm in doing so.
 
-The first argument, `fieldNames` is a list of fields to put into the index. The second argument, `indexName` is a name for the index. This is used to delete indexes at a later stage and appears when you list the indexes in the database; `indexName` is optional - if `null` is specified then a name will be generated. For TEXT indexes, `tokenizer` specifies the SQLite FTS tokenizer to use.
+The first argument, `fields` is a list of fields to put into the index. The second argument, `indexName` is a name for the index. This is used to delete indexes at a later stage and appears when you list the indexes in the database; `indexName` is optional - if `null` is specified then a name will be generated. For TEXT indexes, `tokenizer` specifies the SQLite FTS tokenizer to use.
 
 A field can appear in more than one index. The query engine will select an appropriate index to use for a given query. However, the more indexes you have, the more disk space they will use and the greater the overhead in keeping them up to date.
 
@@ -108,7 +108,7 @@ Since text search relies on SQLite FTS which is a compile time option, we must e
 if (im.isTextSearchEnabled()) {
     // Create a text index over the name and comment fields.
     try {
-        String name = im.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")),
+        Index i = im.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")),
             "basic_text_index", null);
     } catch (QueryException e) {
         // there was an error creating the index
@@ -116,7 +116,7 @@ if (im.isTextSearchEnabled()) {
 }
 ```
 
-As text indexing relies on SQLite FTS functionality any custom tokenizers need to be managed through SQLite.  SQLite privodes the `simple` default tokenizer as well as a number of other tokenizers.  Please refer to [SQLite FTS tokenizers][fts] for additional information on tokenizers.
+As text indexing relies on SQLite FTS functionality any custom tokenizers need to be managed through SQLite.  SQLite provides the `simple` default tokenizer as well as a number of other tokenizers.  Please refer to [SQLite FTS tokenizers][fts] for additional information on tokenizers.
 
 [fts]: http://www.sqlite.org/fts3.html#tokenizer
 
@@ -639,7 +639,7 @@ Here:
 
 <em>many-expressions</em> := <em>expression</em> (&quot;,&quot; <em>expression</em>)*
 
-]<em>expression</em> :=
+<em>expression</em> :=
     <em>compound-expression</em>
     <em>comparison-expression</em>
     <em>text-search-expression</em>
