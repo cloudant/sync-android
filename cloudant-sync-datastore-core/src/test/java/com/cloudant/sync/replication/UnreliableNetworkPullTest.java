@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 IBM Corp. All rights reserved.
+ * Copyright © 2015, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -14,21 +14,13 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.common.ProxyTestBase;
-import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.common.UnreliableProxyTestBase;
 import com.cloudant.common.RequireRunningProxy;
-import com.cloudant.http.Http;
-import com.cloudant.mazha.CouchException;
-import com.cloudant.mazha.Response;
-import com.cloudant.sync.util.TestUtils;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,9 +29,7 @@ import java.util.Map;
  */
 
 @Category(RequireRunningProxy.class)
-public class UnreliableNetworkPullTest extends ProxyTestBase {
-
-    String jsonAddToxic = "{\"enabled\" :true, \"timeout\":50, \"sometimesToxic\": true, \"toxicity\" :0.5}";
+public class UnreliableNetworkPullTest extends UnreliableProxyTestBase {
 
     @Test
     public void unreliableNetworkPullTest() throws Exception {
@@ -49,25 +39,10 @@ public class UnreliableNetworkPullTest extends ProxyTestBase {
         for (int i=0; i<nDocs; i++) {
             createRemoteDocument("doc" + i);
         }
-        this.addToxic();
+        addTimeoutToxic();
         super.pull();
         Assert.assertEquals(nDocs, this.datastore.getAllDocumentIds().size());
         // TODO a number of extra document updates and pulls to ensure checkpointing is correct
-    }
-
-    @Before
-    @Override
-    public void setUp() throws Exception {
-        this.startProxy();
-        super.setUp();
-    }
-
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        this.removeToxic();
-        super.tearDown();
-        this.stopProxy();
     }
 
     private void createRemoteDocument(String docid) {
@@ -80,15 +55,4 @@ public class UnreliableNetworkPullTest extends ProxyTestBase {
         }
         this.remoteDb.create(doc);
     }
-
-    private void addToxic() throws Exception {
-        Http.POST(new URL(String.format("http://%s:%d/proxies/%s/downstream/toxics/timeout",
-                proxyHost, proxyAdminPort, proxyName)), "application/json").setRequestBody(jsonAddToxic).execute();
-    }
-
-    private void removeToxic() throws Exception {
-        Http.DELETE(new URL(String.format("http://%s:%d/proxies/%s/downstream/toxics/timeout",
-                proxyHost, proxyAdminPort, proxyName))).execute();
-    }
-
 }

@@ -12,6 +12,7 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version:'4.11'
     testCompile group: 'org.mockito', name: 'mockito-all', version:'1.9.5'
     testCompile 'commons-validator:commons-validator:1.4.0'
+    testCompile group: 'eu.rekawek.toxiproxy', name: 'toxiproxy-java', version: '2.1.1'
 
     // will probably test on java se, but it doesn't hurt to have android in too
     testCompile project(':cloudant-sync-datastore-javase')
@@ -85,7 +86,10 @@ task unreliableNetworkTest(type: Test, dependsOn: testClasses) {
     systemProperty "test.with.specified.couch", true
     systemProperty "test.couch.port", 8000
     systemProperty "test.couch.proxy.admin.port", 8474
-    systemProperty "test.couch.proxy.target.port", 5984    
+    systemProperty "test.couch.proxy.target.port", 5984
+    // Disable keep-alive for these tests otherwise we eventually fill the pool with good
+    // connections and the toxicity probabilities don't apply as we expect
+    systemProperty "http.keepAlive", false
     // ensure proxy is running!
     filter {        
         includeTestsMatching "com.cloudant.sync.replication.Unreliable*.*"
