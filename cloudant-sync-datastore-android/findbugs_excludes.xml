@@ -27,4 +27,10 @@ A list of known findbugs issues that we cannot fix at this time.
         <Class name="com.cloudant.sync.replication.ReplicationService"/>
         <Field name="mServiceHandler" />
     </Match>
+    <Match>
+       <Bug code="IS" pattern="IS2_INCONSISTENT_SYNC" />
+       <Class name="com.cloudant.sync.replication.PeriodicReplicationService" />
+       <Field name="mBound" />
+    </Match>
+    
 </FindBugsFilter>
