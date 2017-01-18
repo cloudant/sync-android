@@ -174,6 +174,10 @@ checking the return value for `null`. See
 also [this section on exceptions](#changes-to-exceptions) for more
 details on other changes to exception handling.
 
+`createJsonIndex` and `createTextIndex` will return an existing
+equivalent index if it exists, regardless of the requested index
+name. See the javadoc for these methods for more details.
+
 The `close` method has been removed. The native resources used by the
 indexes database are released when the owning `DocumentStore` has
 `close` called on it.
