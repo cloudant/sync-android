@@ -86,7 +86,7 @@ Some event names have changed:
 * `DatabaseClosed` has been renamed to `DocumentStoreClosed`
 * `DatabaseCreated` has been renamed to `DocumentStoreCreated`
 * `DatabaseDeleted` has been renamed to `DocumentStoreDeleted`
-* `DatabaseModified` has been renamed to `DatabaseModified`
+* `DatabaseModified` has been renamed to `DocumentStoreModified`
 * `DatabaseOpened` has been renamed to `DocumentStoreOpened`
 
 # The IndexManager class has been replaced with the `Query` class
