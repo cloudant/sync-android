@@ -7,8 +7,8 @@ All classes are now in the `com.cloudant.sync` package:
 * All private API classes are in the `com.cloudant.sync.internal`
   package. API users should not use these classes as fields, method
   signatures, and implementation details may be subject to
-  change. Directly using these classes are calling their methods in
-  these packages is not supported. These classes have the same status
+  change. Directly using the classes in these packages or calling
+  their methods is not supported. These classes have the same status
   as those marked "API Status: Private" in the javadoc for the 1.x
   versions of the library.
 * Everything else under `com.cloudant.sync` is public API and subject
@@ -45,7 +45,7 @@ DocumentRevision dr = ds.database().read("my-document-id");
 The `getInstance` method will try to create all necessary
 sub-directories in order to construct the path represented by the
 `File` argument. This differs from the behaviour of the 1.x versions
-of the library would would only attempt to create one level of
+of the library which would only attempt to create one level of
 directories.
 
 As the above example shows, "CRUD" (create, read, update, delete)
@@ -70,7 +70,9 @@ counterparts on `Datastore`:
 
 The `throws` clauses on `Database` methods are different to those on
 their counterparts in `Datastore`. Code which calls these methods may
-have to be adjusted to catch different exceptions.
+have to be adjusted to catch different exceptions. See
+also [this section on exceptions](#changes-to-exceptions) for more
+details on other changes to exception handling.
 
 # Changes to the Notifications and Events packages
 
@@ -184,10 +186,10 @@ indexes database are released when the owning `DocumentStore` has
 
 # Changes to the Replicator and `ReplicatorBuilder`
 
-The `batchLimitPerRun` property has been removed the Pull and Push
-replicator builders. There is no limit to the number of batches in a
-replicator run - the replicator will run to completion unless an error
-occurs.
+The `batchLimitPerRun` property has been removed from the Pull and
+Push replicator builders. There is no limit to the number of batches
+in a replicator run - the replicator will run to completion unless an
+error occurs.
 
 # Changes to Exceptions
 
@@ -205,8 +207,8 @@ Situations for which runtime (unchecked) exceptions may be thrown include:
 
 * Incorrect or `null` arguments passed to an API method: in these
   cases `NullPointerException` or `IllegalArgumentException` can be
-  thrown. The developer can defend against these by ensure that
-  correct and nun-`null` arguments are passed to these methods. The
+  thrown. The developer can defend against these by ensuring that
+  correct and non-`null` arguments are passed to these methods. The
   documentation will provide guidance as to what form arguments should
   take and when it is valid for them to be `null`.
 
