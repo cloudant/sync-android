@@ -105,10 +105,10 @@ Since text search relies on SQLite FTS which is a compile time option, we must e
 [enableFTS]: http://www.sqlite.org/fts3.html#section_2
 
 ```java
-if (im.isTextSearchEnabled()) {
+if (q.isTextSearchEnabled()) {
     // Create a text index over the name and comment fields.
     try {
-        Index i = im.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")),
+        Index i = q.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")),
             "basic_text_index", null);
     } catch (QueryException e) {
         // there was an error creating the index
@@ -123,10 +123,10 @@ As text indexing relies on SQLite FTS functionality any custom tokenizers need t
 When creating a text index, the `tokenizer` parameter can be set to `null` or `Tokenizer.DEFAULT` to use the default `simple` tokenizer. A different tokenizer can be selected by constructing a `Tokenizer` object. The argument to the constructor should be the same as the tokenizer name given to SQLite when registering that tokenizer. Some tokenizers can also take an argument in which case the two argument variant of the `Tokenizer` constructor can be used. In the example below we set the tokenizer to `porter`.
 
 ```java
-if (im.isTextSearchEnabled()) {
+if (q.isTextSearchEnabled()) {
     // Create a text index over the name and comment fields.
     try {
-        Index i = im.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")),
+        Index i = q.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")),
             "basic_text_index",
             new Tokenizer("porter"));
     } catch (QueryException e) {
@@ -348,7 +348,7 @@ query.put("$or", Arrays.<Object>asList(petClause, andClause));
 To find documents matching a query, use the `IndexManager` object's `find(Map<String, Object> query)` method. This returns an object that can be used in `for ( : )` loops to enumerate over the results.
 
 ```java
-QueryResult result = im.find(query);
+QueryResult result = q.find(query);
 for (DocumentRevision rev : result) {
     // The returned revision object contains all fields for
     // the object. You cannot project certain fields in the
@@ -386,7 +386,7 @@ The sort specification must use fields from a single index.
 List<FieldSort> sortSpec = new ArrayList<FieldSort>();
 sortSpec.add(new FieldSort("name", Direction.ASCENDING));
 sortSpec.add(new FieldSort("age", Direction.DESCENDING));
-QueryResult queryResult = im.find(query, 0, 0, null, sortSpec);
+QueryResult queryResult = q.find(query, 0, 0, null, sortSpec);
 ```
 
 The one argument constructor for `FieldSort` can be used which uses the default `ASCENDING` direction.
@@ -417,7 +417,7 @@ To project the `name` and `age` fields of the above document:
 
 ```java
 List<String> fields = Arrays.asList("name", "age");
-QueryResult queryResult = im.find(query, 0, 0, fields, null);
+QueryResult queryResult = q.find(query, 0, 0, fields, null);
 ```
 
 Pass `null` as the `fields` argument to disable projection.
@@ -432,7 +432,7 @@ Skip and limit allow retrieving subsets of the results. Amongst other things, th
 To display the twenty-first to thirtieth results:
 
 ```java
-QueryResult result = im.find(query, 20, 10, fields, null);
+QueryResult result = q.find(query, 20, 10, fields, null);
 ```
 
 To disable:
@@ -458,7 +458,7 @@ Take this document as an example:
 You can create an index over the `pet` field:
 
 ```java
-Index i = im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("pet"),
+Index i = q.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("pet"),
                                new FieldSort("basic")), null);
 ```
 
@@ -499,9 +499,9 @@ successful.
 However, if there was one index with `pet` in and another with `name` in, like this:
 
 ```java
-Index indexOne = im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"),
+Index indexOne = q.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"),
                                    new FieldSort("index_one")), null);
-Index indexTwo = im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"),
+Index indexTwo = q.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"),
                                    new FieldSort("index_two")), null);
 ```
 
