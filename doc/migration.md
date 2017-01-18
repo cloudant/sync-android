@@ -5,13 +5,15 @@ Classes in the library have been re-organised to simplify the packaging.
 All classes are now in the `com.cloudant.sync` package:
 
 * All private API classes are in the `com.cloudant.sync.internal`
-  package. API users are discouraged from using this class as fields,
+  package. API users are discouraged from using these classes as fields,
   method signatures, and implementation details may be subject to
   change. These classes have the same status as those marked "API
   Status: Private" in the javadoc for the 1.x versions of the library.
 * Everything else under `com.cloudant.sync` is public API and subject
   to the usual versioning and deprecation practices. API users can
   expect this to be a stable API.
+* Classes in the `com.cloudant.sync.internal` package are not visible
+  in javadoc.
 
 API users will have to adjust their `import` statements
 appropriately. Furthermore, some class names and methods have also
@@ -19,7 +21,7 @@ changed (see below).
 
 # The `Datastore` has been replaced with the `DocumentStore` class
 
-The DatastoreManager class has been removed - TODO example of how to get an instance vs previously
+The `DatastoreManager` class has been removed. Replace instances of
 
 ```java
 File path = getApplicationContext().getDir("datastores"); // Android-specific
@@ -28,6 +30,8 @@ Datastore ds = manager.openDatastore("my_datastore");
 // read a doc
 DocumentRevision dr = ds.getDocument("my-document-id");
 ```
+
+with
 
 ```java
 File path = getApplicationContext().getDir("datastores");
@@ -60,10 +64,35 @@ The `throws` clauses on `Database` methods are different to those on
 their counterparts in `Datastore`. Code which calls these methods may
 have to be adjusted to catch different exceptions.
 
-# Notifications/Events - namespaces
-com.cloudant.sync.notifications -> com.cloudant.sync.event.notifications
+# Notifications and Events packages
+
+Events which were previously in the `com.cloudant.sync.notifications`
+package have moved to the `com.cloudant.sync.event.notifications`
+package.
 
 # The IndexManager class has been replaced with the `Query` class
+
+To obtain a reference to the `Query` object, replace instances of
+
+```java
+Datastore ds; // Datastore instance previously obtained
+IndexManager im = new IndexManager(ds);
+String name = im.ensureIndexed(Arrays.<Object>asList(
+        "name", "age", "pet.species"),
+    "basic");
+```
+
+with
+
+```
+DocumentStore ds; // DocumentStore instance previously obtained
+// create an index
+Index i = ds.query().createJsonIndex(Arrays.<FieldSort>asList(
+        new FieldSort("name"),
+        new FieldSort("age"),
+        new FieldSort("pet.species")),
+    "basic");
+```
 
 The `ensureIndexed` methods have been replaced by `createJsonIndex`
 and `createTextIndex`.
@@ -126,11 +155,4 @@ checking the return value for `null`.
 The `close` method has been removed. The native resources used by the
 indexes database are released when the owning `DocumentStore` has
 `close` called on it.
-
-Existing index selection algorithm changed? TODO
-
-# namespaces - internal
-
-# javadoc - don't show internal
-
 
