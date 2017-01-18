@@ -5,10 +5,12 @@ Classes in the library have been re-organised to simplify the packaging.
 All classes are now in the `com.cloudant.sync` package:
 
 * All private API classes are in the `com.cloudant.sync.internal`
-  package. API users are discouraged from using these classes as fields,
-  method signatures, and implementation details may be subject to
-  change. These classes have the same status as those marked "API
-  Status: Private" in the javadoc for the 1.x versions of the library.
+  package. API users should not use these classes as fields, method
+  signatures, and implementation details may be subject to
+  change. Directly using these classes are calling their methods in
+  these packages is not supported. These classes have the same status
+  as those marked "API Status: Private" in the javadoc for the 1.x
+  versions of the library.
 * Everything else under `com.cloudant.sync` is public API and subject
   to the usual versioning and deprecation practices. API users can
   expect this to be a stable API.
@@ -40,6 +42,12 @@ DocumentStore ds = DocumentStore.getInstance(new File(path, "my_datastore"));
 DocumentRevision dr = ds.database().read("my-document-id");
 ```
 
+The `getInstance` method will try to create all necessary
+sub-directories in order to construct the path represented by the
+`File` argument. This differs from the behaviour of the 1.x versions
+of the library would would only attempt to create one level of
+directories.
+
 As the above example shows, "CRUD" (create, read, update, delete)
 functionality has been migrated to the new `Database` class. Obtain an
 instance of the `Database` class managed by the `Datastore` by calling
@@ -64,11 +72,22 @@ The `throws` clauses on `Database` methods are different to those on
 their counterparts in `Datastore`. Code which calls these methods may
 have to be adjusted to catch different exceptions.
 
-# Notifications and Events packages
+# Changes to the Notifications and Events packages
 
 Events which were previously in the `com.cloudant.sync.notifications`
 package have moved to the `com.cloudant.sync.event.notifications`
 package.
+
+All events now implement the `Notification` marker interface (this
+means it is possible to subscribe to all events).
+
+Some event names have changed:
+
+* `DatabaseClosed` has been renamed to `DocumentStoreClosed`
+* `DatabaseCreated` has been renamed to `DocumentStoreCreated`
+* `DatabaseDeleted` has been renamed to `DocumentStoreDeleted`
+* `DatabaseModified` has been renamed to `DatabaseModified`
+* `DatabaseOpened` has been renamed to `DocumentStoreOpened`
 
 # The IndexManager class has been replaced with the `Query` class
 
@@ -77,6 +96,7 @@ To obtain a reference to the `Query` object, replace instances of
 ```java
 Datastore ds; // Datastore instance previously obtained
 IndexManager im = new IndexManager(ds);
+// create an index
 String name = im.ensureIndexed(Arrays.<Object>asList(
         "name", "age", "pet.species"),
     "basic");
@@ -145,14 +165,46 @@ String indexName = im.createTextIndex(Arrays.<FieldSort>asList(
 object. To obtain the index name, use the `indexName` property of the
 returned index.
 
-`updateAllIndexes` has been renamed `updateAllIndexes`.
+`updateAllIndexes` has been renamed `refreshAllIndexes`.
 
 Methods on the `Query` interface throw checked exceptions rather than
-throwing `null` to indicate an error condition. To check for error
+returning `null` to indicate an error condition. To check for error
 conditions, enclose your existing code in `try/catch` block instead of
-checking the return value for `null`.
+checking the return value for `null`. See
+also [this section on exceptions](#changes-to-exceptions) for more
+details on other changes to exception handling.
 
 The `close` method has been removed. The native resources used by the
 indexes database are released when the owning `DocumentStore` has
 `close` called on it.
 
+# Changes to the Replicator and `ReplicatorBuilder`
+
+The `batchLimitPerRun` property has been removed the Pull and Push
+replicator builders. There is no limit to the number of batches in a
+replicator run - the replicator will run to completion unless an error
+occurs.
+
+# Changes to Exceptions
+
+Almost all API methods will throw checked exceptions instead of
+runtime exceptions. The `throws` clause in the javadoc for each method
+specifies what exceptions are thrown and under what
+circumstances. Additionally there is javadoc documentation for all of
+the custom exceptions.
+
+This differs from the behaviour of the 1.x versions of the library
+which were much more likely to throw runtime exceptions which the
+developer could not anticipate.
+
+Situations for which runtime (unchecked) exceptions may be thrown include:
+
+* Incorrect or `null` arguments passed to an API method: in these
+  cases `NullPointerException` or `IllegalArgumentException` can be
+  thrown. The developer can defend against these by ensure that
+  correct and nun-`null` arguments are passed to these methods. The
+  documentation will provide guidance as to what form arguments should
+  take and when it is valid for them to be `null`.
+
+* Situations which are hard to anticipate and/or recover from. This
+  covers events like out of memory or out of disk space.
