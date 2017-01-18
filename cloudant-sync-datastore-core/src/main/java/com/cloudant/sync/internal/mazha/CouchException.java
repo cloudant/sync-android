@@ -27,7 +27,7 @@ public class CouchException extends RuntimeException {
 
     private int statusCode;
     private String error = "Unknown error";
-    private String reason = "Unkown reason";
+    private String reason = "Unknown reason";
 
     public CouchException() {};
 
