@@ -84,7 +84,7 @@ String name = im.ensureIndexed(Arrays.<Object>asList(
 
 with
 
-```
+```java
 DocumentStore ds; // DocumentStore instance previously obtained
 // create an index
 Index i = ds.query().createJsonIndex(Arrays.<FieldSort>asList(
