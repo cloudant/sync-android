@@ -93,7 +93,7 @@ To index values in sub-documents, use _dotted notation_. This notation puts the 
 // Create an index over the name, age, and species fields.
 try {
     Index i = q.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("pet.species")), "basic");
-} catch (QueryException) {
+} catch (QueryException e) {
     // there was an error creating the index
 }
 ```
