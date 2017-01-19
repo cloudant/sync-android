@@ -31,15 +31,19 @@ DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
 Datastore ds = manager.openDatastore("my_datastore");
 // read a doc
 DocumentRevision dr = ds.getDocument("my-document-id");
+// call close to release resources
+ds.close();
 ```
 
 with
 
 ```java
-File path = getApplicationContext().getDir("datastores");
+File path = getApplicationContext().getDir("datastores"); // Android-specific
 DocumentStore ds = DocumentStore.getInstance(new File(path, "my_datastore"));
 // read a doc
 DocumentRevision dr = ds.database().read("my-document-id");
+// call close to release resources
+ds.close();
 ```
 
 The `getInstance` method will try to create all necessary
@@ -50,10 +54,10 @@ directories.
 
 As the above example shows, "CRUD" (create, read, update, delete)
 functionality has been migrated to the new `Database` class. Obtain an
-instance of the `Database` class managed by the `Datastore` by calling
+instance of the `Database` class managed by the `DocumentStore` by calling
 the `database()` getter method.
 
-The methods on the `Database` methods are different to their
+The method names on the `Database` methods are different to their
 counterparts on `Datastore`:
 
 * `getDocument` has been renamed `read`
@@ -74,23 +78,6 @@ have to be adjusted to catch different exceptions. See
 also [this section on exceptions](#changes-to-exceptions) for more
 details on other changes to exception handling.
 
-# Changes to the Notifications and Events packages
-
-Events which were previously in the `com.cloudant.sync.notifications`
-package have moved to the `com.cloudant.sync.event.notifications`
-package.
-
-All events now implement the `Notification` marker interface (this
-means it is possible to subscribe to all events).
-
-Some event names have changed:
-
-* `DatabaseClosed` has been renamed to `DocumentStoreClosed`
-* `DatabaseCreated` has been renamed to `DocumentStoreCreated`
-* `DatabaseDeleted` has been renamed to `DocumentStoreDeleted`
-* `DatabaseModified` has been renamed to `DocumentStoreModified`
-* `DatabaseOpened` has been renamed to `DocumentStoreOpened`
-
 # The IndexManager class has been replaced with the `Query` class
 
 To obtain a reference to the `Query` object, replace instances of
@@ -102,6 +89,11 @@ IndexManager im = new IndexManager(ds);
 String name = im.ensureIndexed(Arrays.<Object>asList(
         "name", "age", "pet.species"),
     "basic");
+// perform queries etc
+// ...
+// call close to release resources
+im.close();
+ds.close();
 ```
 
 with
@@ -114,12 +106,16 @@ Index i = ds.query().createJsonIndex(Arrays.<FieldSort>asList(
         new FieldSort("age"),
         new FieldSort("pet.species")),
     "basic");
+// perform queries etc
+// ...
+// call close to release resources
+ds.close();
 ```
 
 The `ensureIndexed` methods have been replaced by `createJsonIndex`
 and `createTextIndex`.
 
-The first argument to createJsonIndex and createTextIndex is of type
+The first argument to `createJsonIndex` and `createTextIndex` is of type
 `List<FieldSort>`.
 
 To specify the fields "name" and "age", replace instances of
@@ -183,6 +179,24 @@ name. See the javadoc for these methods for more details.
 The `close` method has been removed. The native resources used by the
 indexes database are released when the owning `DocumentStore` has
 `close` called on it.
+
+# Changes to the Notifications and Events packages
+
+Events which were previously in the `com.cloudant.sync.notifications`
+package have moved to the `com.cloudant.sync.event.notifications`
+package.
+
+All events now implement the `Notification` marker interface (this
+means it is possible to subscribe to all events with one method, if
+required).
+
+Some event names have changed:
+
+* `DatabaseClosed` has been renamed to `DocumentStoreClosed`
+* `DatabaseCreated` has been renamed to `DocumentStoreCreated`
+* `DatabaseDeleted` has been renamed to `DocumentStoreDeleted`
+* `DatabaseModified` has been renamed to `DocumentStoreModified`
+* `DatabaseOpened` has been renamed to `DocumentStoreOpened`
 
 # Changes to the Replicator and `ReplicatorBuilder`
 
