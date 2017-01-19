@@ -66,7 +66,7 @@ functionality has been migrated to the new `Database` class. Obtain an
 instance of the `Database` class managed by the `DocumentStore` by calling
 the `database()` getter method.
 
-The method names on the `Database` methods are different to their
+The method names on the `Database` class are different to their
 counterparts on `Datastore`:
 
 * `getDocument` has been renamed `read`
@@ -176,7 +176,7 @@ returned index.
 
 Methods on the `Query` interface throw checked exceptions rather than
 returning `null` to indicate an error condition. To check for error
-conditions, enclose your existing code in `try/catch` block instead of
+conditions, enclose your existing code in a `try/catch` block instead of
 checking the return value for `null`. See
 also [this section on exceptions](#changes-to-exceptions) for more
 details on other changes to exception handling.
