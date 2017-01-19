@@ -1,3 +1,5 @@
+# Version 2.0 API Migration Guide
+
 There are breaking changes in version 2.0 of the library. This
 document summarises the changes that users of the library will need to
 make in order to migrate their existing code which uses version 1.x of
@@ -7,7 +9,7 @@ The focus is on practical suggestions with code samples. See also
 the [the CHANGES document](../CHANGES.md) which gives a summary of all
 fixes and new features in each version.
 
-# Package changes
+## Package changes
 
 Classes in the library have been re-organised to simplify the packaging.
 
@@ -30,7 +32,7 @@ API users will have to adjust their `import` statements
 appropriately. Furthermore, some class names and methods have also
 changed (see below).
 
-# The `Datastore` has been replaced with the `DocumentStore` class
+## The `Datastore` has been replaced with the `DocumentStore` class
 
 The `DatastoreManager` class has been removed. Replace instances of
 
@@ -87,7 +89,7 @@ have to be adjusted to catch different exceptions. See
 also [this section on exceptions](#changes-to-exceptions) for more
 details on other changes to exception handling.
 
-# The `IndexManager` class has been replaced with the `Query` class
+## The `IndexManager` class has been replaced with the `Query` class
 
 To obtain a reference to the `Query` object, replace instances of
 
@@ -189,7 +191,7 @@ The `close` method has been removed. The native resources used by the
 indexes database are released when the owning `DocumentStore` has
 `close` called on it.
 
-# Changes to the Notifications and Events packages
+## Changes to the Notifications and Events packages
 
 Events which were previously in the `com.cloudant.sync.notifications`
 package have moved to the `com.cloudant.sync.event.notifications`
@@ -207,14 +209,14 @@ Some event names have changed:
 * `DatabaseModified` has been renamed to `DocumentStoreModified`
 * `DatabaseOpened` has been renamed to `DocumentStoreOpened`
 
-# Changes to the Replicator and `ReplicatorBuilder`
+## Changes to the Replicator and `ReplicatorBuilder`
 
 The `batchLimitPerRun` property has been removed from the Pull and
 Push replicator builders. There is no limit to the number of batches
 in a replicator run - the replicator will run to completion unless an
 error occurs.
 
-# Changes to Exceptions
+## Changes to Exceptions
 
 Almost all API methods will throw checked exceptions instead of
 runtime exceptions. The `throws` clause in the javadoc for each method
