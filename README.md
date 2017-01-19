@@ -186,38 +186,30 @@ Once the libraries are added to a project, the basics of adding and reading
 a document are:
 
 ```java
-// Create a DatastoreManager using application internal storage path
-File path = getApplicationContext().getDir("datastores", Context.MODE_PRIVATE);
-DatastoreManager manager = new DatastoreManager(path.getAbsolutePath());
+// Obtain storage path on Android
+File path = getApplicationContext().getDir("documentstores", Context.MODE_PRIVATE);
 
 try {
-    Datastore ds = manager.openDatastore("my_datastore");
+    // Obtain reference to DocumentStore instance, creating it if doesn't exist
+    DocumentStore ds = DocumentStore.getInstance(new File(path, "my_document_store"));
 
     // Create a document
     DocumentRevision revision = new DocumentRevision();
     Map<String, Object> body = new HashMap<String, Object>();
     body.put("animal", "cat");
     revision.setBody(DocumentBodyFactory.create(body));
-    DocumentRevision saved = ds.createDocumentFromRevision(revision);
+    DocumentRevision saved = ds.database().create(revision);
 
     // Add an attachment -- binary data like a JPEG
     UnsavedFileAttachment att1 =
-        new UnsavedFileAttachment(new File("/path/to/image.jpg"), "image/jpeg");
+            new UnsavedFileAttachment(new File("/path/to/image.jpg"), "image/jpeg");
     saved.getAttachments().put(att1.name, att1);
-    DocumentRevision updated = ds.updateDocumentFromRevision(saved);
+    DocumentRevision updated = ds.database().update(saved);
 
     // Read a document
-    DocumentRevision aRevision = ds.getDocument(updated.getId());
-} catch (DatastoreException datastoreException) {
-
-    // this will be thrown if we don't have permissions to write to the
-    // datastore path
-    System.err.println("Problem opening datastore: "+datastoreException);
-} catch (DocumentException documentException) {
-
-    // this will be thrown in case of errors performing CRUD operations on
-    // documents
-    System.err.println("Problem accessing datastore: "+documentException);
+    DocumentRevision aRevision = ds.database().read(updated.getId());
+} catch (DocumentStoreException dse) {
+    System.err.println("Problem opening or accessing DocumentStore: "+dse);
 }
 ```
 
@@ -254,7 +246,7 @@ Replication is simple to get started in the common cases:
 
 ```java
 URI uri = new URI("https://apikey:apipasswd@username.cloudant.com/my_database");
-Datastore ds = manager.openDatastore("my_datastore");
+DocumentStore ds = DocumentStore.getInstance(new File(path, "my_datastore"));
 
 // Replicate from the local to remote database
 Replicator replicator = ReplicatorBuilder.push().from(ds).to(uri).build();
@@ -293,10 +285,11 @@ efficient ways of finding them. We've added an easy-to-use querying API. Once
 the appropriate indexes are set up, querying is as follows:
 
 ```java
+DocumentStore ds; // instance obtained previously
 Map<String, Object> query = new HashMap<String, Object>();
 query.put("name", "mike");
 query.put("pet", "cat");
-QueryResult result = indexManager.find(query);
+QueryResult result = ds.query().find(query);
 
 for (DocumentRevision revision : result) {
     // do something
@@ -306,8 +299,6 @@ for (DocumentRevision revision : result) {
 See [Index and Querying Data](https://github.com/cloudant/sync-android/blob/master/doc/query.md).
 
 For information about migrating your legacy indexing/query code to the new Cloudant Query - Android implementation.
-
-See [Index and Querying Migration](https://github.com/cloudant/sync-android/blob/master/doc/query-migration.md)
 
 ### Conflicts
 
