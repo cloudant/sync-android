@@ -69,7 +69,7 @@ android {
     }
 
     adbOptions {
-        timeOutInMs 3*60*1000 // 3 minutes in ms.
+        timeOutInMs 5*60*1000 // 5 minutes in ms.
     }
 
 }

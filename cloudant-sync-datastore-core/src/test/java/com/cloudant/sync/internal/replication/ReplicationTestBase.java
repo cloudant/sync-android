@@ -20,14 +20,15 @@ import com.cloudant.common.CouchTestBase;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.http.interceptors.CookieInterceptor;
+import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.mazha.CouchConfig;
+import com.cloudant.sync.internal.mazha.CouchException;
+import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
-import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.replication.PullFilter;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
-import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.After;
@@ -113,7 +114,13 @@ public abstract class ReplicationTestBase extends CouchTestBase {
                 couchConfig.getRootUri(),
                 requestInterceptors,
                 responseInterceptors));
-        remoteDb.createDatabase();
+        try {
+            remoteDb.createDatabase();
+        } catch (CouchException e) {
+            // Suppress 412 exceptions in the event a retry has caused us to create twice, but
+            // usually throw
+            if (e.getStatusCode() != 412) throw e;
+        }
         couchClient = remoteDb.getCouchClient();
     }
 
@@ -122,7 +129,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         CouchClientWrapperDbUtils.deleteDbQuietly(remoteDb);
     }
 
-    String getDbName() {
+    protected String getDbName() {
         String dbName = getClass().getSimpleName()+ dbSuffix;
         String regex = "([a-z])([A-Z])";
         String replacement = "$1_$2";

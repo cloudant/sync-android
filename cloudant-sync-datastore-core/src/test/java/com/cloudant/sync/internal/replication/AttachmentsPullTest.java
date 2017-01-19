@@ -17,8 +17,8 @@
 package com.cloudant.sync.internal.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
-import com.cloudant.sync.internal.mazha.Response;
 import com.cloudant.sync.documentstore.Attachment;
+import com.cloudant.sync.internal.mazha.Response;
 import com.cloudant.sync.util.TestUtils;
 
 import org.junit.Assert;
@@ -33,6 +33,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by tomblench on 26/03/2014.
@@ -180,8 +181,6 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         bar._attachments = null;
 
         Response res = remoteDb.update(id, bar);
-        bar = remoteDb.get(BarWithAttachments.class, res.getId());
-
         rev = res.getRev();
     }
 
@@ -192,18 +191,15 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         bar.setAge(35);
 
         Response res = remoteDb.update(id, bar);
-        bar = remoteDb.get(BarWithAttachments.class, res.getId());
-
         rev = res.getRev();
     }
 
-    private void createRevisionAndAttachment() {
+    private void createRevisionAndAttachment() throws Exception {
         BarWithAttachments bar = new BarWithAttachments();
         bar.setName("Tom");
         bar.setAge(34);
 
         Response res = remoteDb.create(bar);
-        bar = remoteDb.get(BarWithAttachments.class, res.getId());
 
         id = res.getId();
         rev = res.getRev();
@@ -211,11 +207,10 @@ public class AttachmentsPullTest extends ReplicationTestBase {
                 attachmentData.getBytes());
 
         // putting attachment will have updated the rev
-        bar = remoteDb.get(BarWithAttachments.class, res.getId());
-        rev = bar.getRevision();
+        rev = getLatestRevision(id, rev);
     }
 
-    private void createRevisionAndBigAttachment() throws IOException {
+    private void createRevisionAndBigAttachment() throws Exception {
         Bar bar = new Bar();
         bar.setName("Tom");
         bar.setAge(34);
@@ -234,11 +229,10 @@ public class AttachmentsPullTest extends ReplicationTestBase {
                 data);
 
         // putting attachment will have updated the rev
-        bar = remoteDb.get(Bar.class, res.getId());
-        rev = bar.getRevision();
+        rev = getLatestRevision(id, rev);
     }
 
-    private void createRevisionAndBigTextAttachment() throws IOException {
+    private void createRevisionAndBigTextAttachment() throws Exception {
         Bar bar = new Bar();
         bar.setName("Tom");
         bar.setAge(34);
@@ -257,12 +251,11 @@ public class AttachmentsPullTest extends ReplicationTestBase {
                 "text/plain", data);
 
         // putting attachment will have updated the rev
-        bar = remoteDb.get(Bar.class, res.getId());
-        rev = bar.getRevision();
+        rev = getLatestRevision(id, rev);
     }
 
 
-    private void updateRevisionAndAttachment() {
+    private void updateRevisionAndAttachment() throws Exception {
         Bar bar = new Bar();
         bar.setName("Dick");
         bar.setAge(33);
@@ -274,8 +267,26 @@ public class AttachmentsPullTest extends ReplicationTestBase {
                 attachmentData2.getBytes());
 
         // putting attachment will have updated the rev
-        bar = remoteDb.get(Bar.class, res.getId());
-        rev = bar.getRevision();
+        rev = getLatestRevision(id, rev);
+    }
+
+    /**
+     * Utility for reading the revision of a document modified by an attachment write.
+     * When we are writing attachments it might take a little time for new revision to appear so we
+     * validate that the rev has incremented from what we currently know about before returning the
+     * latest rev.
+     *
+     * @param docId      the ID of the document to read
+     * @param currentRev the revision currently known about
+     * @return a newer revision identifier
+     */
+    private String getLatestRevision(String docId, String currentRev) throws Exception {
+        String newRev = null;
+        do {
+            newRev = remoteDb.getCouchClient().getDocumentRev(docId);
+            TimeUnit.MILLISECONDS.sleep(500l);
+        } while (currentRev.equals(newRev));
+        return newRev;
     }
 
     // override so we can have custom value for pullAttachmentsInline
