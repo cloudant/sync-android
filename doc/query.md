@@ -7,15 +7,14 @@ Cloudant Query is inspired by MongoDB's query implementation, so users of MongoD
 The aim is that the query you use on our cloud-based database works for your mobile application.
 
 [1]: https://docs.cloudant.com/api/cloudant-query.html
-[2]: https://github.com/cloudant/sync-android
 
 ## Usage
 
-These notes assume familiarity with Cloudant Sync Datastore.
+These notes assume familiarity with Cloudant Sync.
 
 Cloudant Query uses indexes explicitly defined over the fields in the document. Multiple indexes can be created for use in different queries, the same field may end up indexed in more than one index.
 
-Query offers a powerful way to find documents within your datastore. There are a couple of restrictions on field names you need to be aware of before using query:
+Query offers a powerful way to find documents within your document store. There are a couple of restrictions on field names you need to be aware of before using query:
 
 - A dollar sign (`$`) cannot be the first character of any field name.  This is because, when querying, a dollar sign tells the query engine to handle the object as a query operator and not a field.
 - A field with a name that contains a period (`.`) cannot be indexed nor successfully queried.  This is because the query engine assumes dot notation refers to a sub-object.
@@ -26,25 +25,21 @@ Querying is carried out by supplying a query in the form of a map which describe
 
 For the following examples, assume two things.
 
-Firstly, we set up an `IndexManager` object, `im`, as follows:
+Firstly, we set up an `Query` object, `q`, as follows:
 
 ```java
-import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.query.IndexManager;
-
-File path = getApplicationContext().getDir("datastores");
-DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
-Datastore ds = manager.openDatastore("my_datastore");
-IndexManager im = new IndexManager(ds);
+File path = getApplicationContext().getDir("document_stores");
+DocumentStore ds = DocumentStore.getInstance(new File(path, "my_document_store"));
+Query q = ds.query();
 ```
 
-Note: The `IndexManager` object needs to be closed when you have finished using it, to prevent
-leaking of native resources. To close an `IndexManager` instance call the `close()` method.
+Note that DocumentStore instance (`ds` in the code sample above) is responsible for managing the `Query` object.
 
-The `IndexManager` object provides the ability to manage query indexes and execute queries.
+This means that there is no `close()` method on the `Query` object, but calling `close` on the `DocumentStore` which manages the `Query` object will instruct the `Query` object to release resources, causing the `Query` object to become invalid. 
 
-Secondly, these documents are in the datastore:
+The `Query` object provides the ability to manage query indexes and execute queries.
+
+For the examples which follow, assume that these documents are in the document store:
 
 ```java
 { "name": "mike",
@@ -74,31 +69,21 @@ Basic querying of fields benefits but does _not require_ a JSON index. For examp
 
 
 
-Use the following methods to create a JSON index:
+Use the following method to create a JSON index:
 
 ```
-ensureIndexed(List<Object> fieldNames,
-              String indexName)
+Index createJsonIndex(List<FieldSort> fields, String indexName) throws QueryException;
 ```
 
-Use either of the following methods to create a TEXT index:
+Use the following method to create a TEXT index:
 
 ```
-ensureIndexed(List<Object> fieldNames,
-              String indexName,
-              IndexType indexType)
-
-// or
-
-ensureIndexed(List<Object> fieldNames,
-              String indexName,
-              IndexType indexType,
-              Map<String, String> indexSettings)
+Index createTextIndex(List<FieldSort> fields, String indexName, Tokenizer tokenizer) throws QueryException;
 ```
 
-These indexes are persistent across application restarts as they are saved to disk. They are kept up to date as documents change; there's no need to call the `ensureIndexed(...)` method each time your applications starts, though there is no harm in doing so.
+These indexes are persistent across application restarts as they are saved to disk. They are kept up to date as documents change; there's no need to call the `createJsonIndex` or `createTextIndex` method each time your applications starts, though there is no harm in doing so.
 
-The first argument, `fieldNames` is a list of fields to put into the index. The second argument, `indexName` is a name for the index. This is used to delete indexes at a later stage and appears when you list the indexes in the database.  The third argument, `indexType` defines what type of index to create. If not provided, the index type defaults to `JSON`.  The fourth argument, `indexSettings` is comprised of index parameters and their values.  Currently the only valid index setting is `tokenize` and it can only apply to a TEXT index.  If index settings are not provided for a TEXT index, the `tokenize` parameter defaults to the value `simple`.
+The first argument, `fields` is a list of fields to put into the index. The second argument, `indexName` is a name for the index. This is used to delete indexes at a later stage and appears when you list the indexes in the database; `indexName` is optional - if `null` is specified then a name will be generated. For TEXT indexes, `tokenizer` specifies the SQLite FTS tokenizer to use.
 
 A field can appear in more than one index. The query engine will select an appropriate index to use for a given query. However, the more indexes you have, the more disk space they will use and the greater the overhead in keeping them up to date.
 
@@ -106,63 +91,58 @@ To index values in sub-documents, use _dotted notation_. This notation puts the 
 
 ```java
 // Create an index over the name, age, and species fields.
-String name = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet.species"),
-                               "basic");
-if (name == null) {
+try {
+    Index i = q.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("pet.species")), "basic");
+} catch (QueryException e) {
     // there was an error creating the index
 }
 ```
 
 ####Indexing for text search
 
-Since text search relies on SQLite FTS which is a compile time option, we must ensure that SQLite FTS is infact available.  To verify that text search is enabled and that a text index can be created use `isTextSearchEnabled()` before attempting to create a text index.  If text search is not enabled see [compiling and enabling SQLite FTS][enableFTS] and [SQLite Android Bindings][androidBind] for details.
+Since text search relies on SQLite FTS which is a compile time option, we must ensure that SQLite FTS is available.  To verify that text search is enabled and that a text index can be created use `isTextSearchEnabled()` before attempting to create a text index.  If text search is not enabled see [compiling and enabling SQLite FTS][enableFTS] for details.
 
 [enableFTS]: http://www.sqlite.org/fts3.html#section_2
-[androidBind]: https://www.sqlite.org/android/doc/trunk/www/index.wiki
 
 ```java
-if (im.isTextSearchEnabled()) {
+if (q.isTextSearchEnabled()) {
     // Create a text index over the name and comment fields.
-    String name = im.ensureIndexed(Arrays.<Object>asList("name", "comment"),
-                                   "basic_text_index",
-                                   IndexType.TEXT);
-    if (name == null) {
+    try {
+        Index i = q.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")),
+            "basic_text_index", null);
+    } catch (QueryException e) {
         // there was an error creating the index
     }
 }
 ```
 
-As text indexing relies on SQLite FTS functionality any custom tokenizers need to be managed through SQLite.  SQLite comes standard with the "simple" default tokenizer as well as a Porter stemming algorithm tokenizer ("porter").  Please refer to [SQLite FTS tokenizers][fts] for additional information on custom tokenizers.
+As text indexing relies on SQLite FTS functionality any custom tokenizers need to be managed through SQLite.  SQLite provides the `simple` default tokenizer as well as a number of other tokenizers.  Please refer to [SQLite FTS tokenizers][fts] for additional information on tokenizers.
 
-[fts]: http://www.sqlite.org/fts3.html#tokenizer  
+[fts]: http://www.sqlite.org/fts3.html#tokenizer
 
-When creating a text index, overriding the default tokenizer setting is done by providing a `tokenize` parameter setting as part of the index settings.  The value should be the same as the tokenizer name given to SQLite when registering that tokenizer.  In the example below we set the tokenizer to `porter`.
+When creating a text index, the `tokenizer` parameter can be set to `null` or `Tokenizer.DEFAULT` to use the default `simple` tokenizer. A different tokenizer can be selected by constructing a `Tokenizer` object. The argument to the constructor should be the same as the tokenizer name given to SQLite when registering that tokenizer. Some tokenizers can also take an argument in which case the two argument variant of the `Tokenizer` constructor can be used. In the example below we set the tokenizer to `porter`.
 
 ```java
-if (im.isTextSearchEnabled()) {
-    Map<String, String> settings = new HashMap<String, String>();
-    settings.add("tokenize", "porter");
+if (q.isTextSearchEnabled()) {
     // Create a text index over the name and comment fields.
-    String name = im.ensureIndexed(Arrays.<Object>asList("name", "comment"),
-                                   "basic_text_index",
-                                   IndexType.TEXT,
-                                   settings);
-    if (name == null) {
+    try {
+        Index i = q.createTextIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("comment")),
+            "basic_text_index",
+            new Tokenizer("porter"));
+    } catch (QueryException e) {
         // there was an error creating the index
     }
 }
 ```
-
-The `ensureIndexed(...)` methods return the name of the index if it is successful, otherwise they return `null`.
 
 ##### Restrictions
 
-- There is a limit of one text index per datastore.
+- There is a limit of one text index per document store.
 - Text indexes cannot be created on field names containing an `=` sign. This is due to restrictions imposed by SQLite's virtual table syntax.
 
 ####Changing and removing indexes
 
-If an index needs to be changed, first delete the existing index by calling `deleteIndexNamed(String indexName)` where the argument is the index name, then call the appropriate `ensureIndexed(...)` method with the new definition.
+If an index needs to be changed, first delete the existing index by calling `deleteIndex(String indexName)` where the argument is the index name, then call the `createTextIndex` method with the new definition.
 
 #### Indexing document metadata (_id and _rev)
 
@@ -368,7 +348,7 @@ query.put("$or", Arrays.<Object>asList(petClause, andClause));
 To find documents matching a query, use the `IndexManager` object's `find(Map<String, Object> query)` method. This returns an object that can be used in `for ( : )` loops to enumerate over the results.
 
 ```java
-QueryResult result = im.find(query);
+QueryResult result = q.find(query);
 for (DocumentRevision rev : result) {
     // The returned revision object contains all fields for
     // the object. You cannot project certain fields in the
@@ -390,33 +370,28 @@ find(Map<String, Object> query,
      long skip,
      long limit,
      List<String> fields,
-     List<Map<String, String>> sortDocument)
+     List<FieldSort> sortSpecification)
 ```
 
 #### Sorting
 
-Provide a sort document to the extended version of the `find` method to sort the results of a query.
+Provide a sort specification to the extended version of the `find` method to sort the results of a query.
 
-The sort document is a list of fields to sort by. Each field is represented by a map specifying the name of the field to sort by and the direction to sort.
+The sort specifiction is a list of fields to sort by. Each field is represented by a map specifying the name of the field to sort by and the direction to sort.
 
-The sort document must use fields from a single index.
-
-As yet, you can't leave out the sort direction. The sort direction can be `asc` (ascending) or `desc` (descending).
+The sort specification must use fields from a single index.
 
 ```java
-// sort document: [ { "name": "asc" },
-//                  { "age": "desc" } ]
-List<Map<String, String>> sortDocument = new ArrayList<Map<String, String>>();
-Map<String, String> sortByName = new HashMap<String, String>();
-Map<String, String> sortByAge = new HashMap<String, String>();
-sortByName.put("name", "asc");
-sortByAge.put("age", "desc");
-sortDocument.add(sortByName);
-sortDocument.add(sortByAge);
-QueryResult queryResult = im.find(query, 0, 0, null, sortDocument);
+// sort specification: name ascending, age descending
+List<FieldSort> sortSpec = new ArrayList<FieldSort>();
+sortSpec.add(new FieldSort("name", Direction.ASCENDING));
+sortSpec.add(new FieldSort("age", Direction.DESCENDING));
+QueryResult queryResult = q.find(query, 0, 0, null, sortSpec);
 ```
 
-Pass `null` as the `sort` argument to disable sorting.
+The one argument constructor for `FieldSort` can be used which uses the default `ASCENDING` direction.
+
+Pass `null` as the `sortSpecification` argument to disable sorting.
 
 #### Projecting fields
 
@@ -442,7 +417,7 @@ To project the `name` and `age` fields of the above document:
 
 ```java
 List<String> fields = Arrays.asList("name", "age");
-QueryResult queryResult = im.find(query, 0, 0, fields, null);
+QueryResult queryResult = q.find(query, 0, 0, fields, null);
 ```
 
 Pass `null` as the `fields` argument to disable projection.
@@ -457,7 +432,7 @@ Skip and limit allow retrieving subsets of the results. Amongst other things, th
 To display the twenty-first to thirtieth results:
 
 ```java
-QueryResult result = im.find(query, 20, 10, fields, null);
+QueryResult result = q.find(query, 20, 10, fields, null);
 ```
 
 To disable:
@@ -483,8 +458,8 @@ Take this document as an example:
 You can create an index over the `pet` field:
 
 ```java
-String name = im.ensureIndexed(Arrays.<Object>asList("name", "age", "pet"),
-                               "basic");
+Index i = q.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"), new FieldSort("pet"),
+                               new FieldSort("basic")), null);
 ```
 
 Each value of the array is treated as a separate entry in the index. This means that a query such as:
@@ -524,10 +499,10 @@ successful.
 However, if there was one index with `pet` in and another with `name` in, like this:
 
 ```java
-String indexOne = im.ensureIndexed(Arrays.<Object>asList("name", "age"),
-                                   "index_one");
-String indexTwo = im.ensureIndexed(Arrays.<Object>asList("age", "pet"),
-                                   "index_two");
+Index indexOne = q.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age"),
+                                   new FieldSort("index_one")), null);
+Index indexTwo = q.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("age"), new FieldSort("pet"),
+                                   new FieldSort("index_two")), null);
 ```
 
 The document _would_ be indexed in both of these indexes: each index only contains one of
@@ -538,7 +513,7 @@ Also see "Unsupported features", below.
 
 ### Errors
 
-Error reporting is somewhat lacking right now. Presently a `null` return value from the `find` methods or the `ensureIndexed(List<Object> fieldNames, String indexName)` method indicates that something went wrong. Any errors that are encountered are logged but exceptions are not thrown as of yet.
+Methods on the `Query` interface will throw a checked `QueryException` if any errors are encountered.
 
 ## Supported Cloudant Query features
 
@@ -607,7 +582,7 @@ the commit log :)
 Overall restrictions:
 
 - Cannot use covering indexes with projection (`fields`) to avoid loading
-  documents from the datastore.
+  documents from the document store.
 
 #### Query syntax
 
