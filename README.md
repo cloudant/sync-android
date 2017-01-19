@@ -225,14 +225,19 @@ reference for the library. Each jar contains the full javadoc for
 itself and the other jars - this is for convenience at the slight
 expense of duplication.
 
-Note that each class has an "API Status" declaration in the
-javadoc. This status is either "Public" or "Private". The general
-guidance is that API consumers (who are building software which uses
-this library) are discouraged from using "Private" API classes. This
-is because they may expose implementation details of the library which
-may be subject to change without notice or without change to the major
-version number. This behaviour follows the
-[Semantic Versioning 2.0.0 specification](http://semver.org).
+All private API classes are in the `com.cloudant.sync.internal`
+package. API users should not use these classes as fields, method
+signatures, and implementation details may be subject to
+change. Directly using the classes in these packages or calling their
+methods is not supported.
+
+Everything else under `com.cloudant.sync` is public API and subject to
+the usual versioning and deprecation practices. API users can expect
+this to be a stable API. This behaviour follows
+the [Semantic Versioning 2.0.0 specification](http://semver.org).
+
+Classes in the `com.cloudant.sync.internal` package are not visible in
+javadoc.
 
 ### Replicating Data Between Many Devices
 
