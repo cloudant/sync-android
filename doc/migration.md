@@ -78,7 +78,7 @@ have to be adjusted to catch different exceptions. See
 also [this section on exceptions](#changes-to-exceptions) for more
 details on other changes to exception handling.
 
-# The IndexManager class has been replaced with the `Query` class
+# The `IndexManager` class has been replaced with the `Query` class
 
 To obtain a reference to the `Query` object, replace instances of
 
