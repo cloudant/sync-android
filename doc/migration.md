@@ -1,3 +1,12 @@
+There are breaking changes in version 2.0 of the library. This
+document summarises the changes that users of the library will need to
+make in order to migrate their existing code which uses version 1.x of
+the library.
+
+The focus is on practical suggestions with code samples. See also
+the [the CHANGES document](../CHANGES.md) which gives a summary of all
+fixes and new features in each version.
+
 # Package changes
 
 Classes in the library have been re-organised to simplify the packaging.
