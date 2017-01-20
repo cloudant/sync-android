@@ -46,7 +46,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         DocumentRevision rev = this.createDocumentRevision("Tom");
         InternalDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "1-rev", "Jerry");
         this.datastore.forceInsert(newRev, "1-rev");
-        Iterator<String> iterator = this.datastore.getConflictedIds();
+        Iterator<String> iterator = this.datastore.getConflictedIds().iterator();
         List<String> conflictedDocId = CollectionUtils.newArrayList(iterator);
         Assert.assertThat(conflictedDocId, hasSize(1));
         Assert.assertThat(conflictedDocId, hasItems(rev.getId()));
@@ -61,7 +61,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         InternalDocumentRevision newRev2 = this.createDetachedDocumentRevision(rev.getId(), "3-b", "Harry");
         this.datastore.forceInsert(newRev2, "1-b", "2-b", "3-b");
 
-        Iterator<String> iterator = this.datastore.getConflictedIds();
+        Iterator<String> iterator = this.datastore.getConflictedIds().iterator();
         List<String> conflictedDocId = CollectionUtils.newArrayList(iterator);
         Assert.assertThat(conflictedDocId, hasSize(1));
         Assert.assertThat(conflictedDocId, hasItems(rev.getId()));
@@ -74,7 +74,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
         InternalDocumentRevision newRev = this.createDetachedDocumentRevision(rev.getId(), "4-a", "Jerry");
         this.datastore.forceInsert(newRev, "1-a", "2-a", "3-a", "4-a");
 
-        Iterator<String> iterator = this.datastore.getConflictedIds();
+        Iterator<String> iterator = this.datastore.getConflictedIds().iterator();
         List<String> conflictedDocId = CollectionUtils.newArrayList(iterator);
         Assert.assertThat(conflictedDocId, hasSize(0));
     }
@@ -516,7 +516,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
 
     private void testWithConflictCount(int conflictCount) throws Exception {
         List<String> expectedConflicts = createConflictDocuments(conflictCount);
-        Iterator<String> iterator = this.datastore.getConflictedIds();
+        Iterator<String> iterator = this.datastore.getConflictedIds().iterator();
         List<String> actualConflicts = CollectionUtils.newArrayList(iterator);
         Assert.assertThat(actualConflicts, hasSize(expectedConflicts.size()));
         for(String id : expectedConflicts) {
