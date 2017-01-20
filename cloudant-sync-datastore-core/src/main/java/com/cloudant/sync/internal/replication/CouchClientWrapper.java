@@ -241,6 +241,8 @@ public class CouchClientWrapper implements CouchDB {
         }
 
         List<Response> responses = couchClient.bulkCreateSerializedDocs(serializedDocs);
+        // N.B. The successful response to a _bulk_docs using new_edits:false is an empty array
+        // hence this unusual check and throw exception if any responses are returned.
         if(responses != null && responses.size() > 0) {
             logger.severe(String.format("Unknown bulkCreateDocs API error: %s for input: %s",responses,serializedDocs));
             throw new RuntimeException("Unknown bulkCreateDocs api error");
