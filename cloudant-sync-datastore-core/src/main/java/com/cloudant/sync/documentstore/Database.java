@@ -233,7 +233,7 @@ public interface Database {
      * @see <a target="_blank" href="http://wiki.apache.org/couchdb/Replication_and_conflicts">Replication and conflicts</a>
      * @throws DocumentStoreException if there was an error reading from the database.
      */
-    Iterator<String> getConflictedIds() throws DocumentStoreException;
+    Iterable<String> getConflictedIds() throws DocumentStoreException;
 
     /**
      * <p>
