@@ -792,9 +792,9 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public Iterator<String> getConflictedIds() throws DocumentStoreException {
+    public Iterable<String> getConflictedIds() throws DocumentStoreException {
         try {
-            return get(queue.submit(new GetConflictedDocumentIdsCallable())).iterator();
+            return get(queue.submit(new GetConflictedDocumentIdsCallable()));
         } catch (ExecutionException e) {
             String message = "Failed to get conflicted document ids";
             logger.log(Level.SEVERE, message, e);
