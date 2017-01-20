@@ -13,6 +13,7 @@
  */
 
 import com.cloudant.sync.documentstore.Attachment;
+import com.cloudant.sync.documentstore.ConflictResolver;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStore;
@@ -48,19 +49,12 @@ public class CrudSamples {
         DocumentStore ds = DocumentStore.getInstance(new File(path, "my_document_store"));
         DocumentStore ds2 = DocumentStore.getInstance(new File(path, "other_document_store"));
 
-        // Static getInstance() methods on DocumentStore will create and initial a DocumentStore
+        // Static getInstance() methods on DocumentStore will create and initialize a DocumentStore
         // instance if it doesn't already exist, or retrieve an existing one.
-
-        // To close a DocumentStore (which closes the underlying database files and release native
-        // resources):
-        ds.close();
-
-        // To delete a DocumentStore (which closes it first):
-        ds.delete();
 
         // Document CRUD APIs
 
-        // Once you have a DocumentStore instance, you can use it to create, update and
+        // Once you have a DocumentStore instance, you can use it to create, read, update and
         // delete documents
 
         // Create
@@ -69,7 +63,7 @@ public class CrudSamples {
         // set up the initial revision of the document and save that to the datastore.
 
         // Create a document revision object, set its body, ID and attachments
-        // and then call createDocumentFromRevision(DocumentRevision) to add it to the datastore:
+        // and then call create(DocumentRevision) to add it to the datastore:
 
         // Create a document with a document id as the constructor argument
         DocumentRevision rev = new DocumentRevision("doc1");
@@ -88,7 +82,7 @@ public class CrudSamples {
         DocumentRevision revision = ds.database().create(rev);
 
         // The only mandatory property to set before calling
-        // createDocumentFromRevision(DocumentRevision) is the body. An ID will be generated
+        // create(DocumentRevision) is the body. An ID will be generated
         // for documents which don't have docId set.
 
         // Read
@@ -97,6 +91,11 @@ public class CrudSamples {
 
         String docId = revision.getId();
         DocumentRevision retrieved = ds.database().read(docId);
+
+        // if you know the revision ID of a particular revision you want to retrieve, use the 2
+        // argument form of read():
+
+        retrieved = ds.database().read(docId, "4-c88152f475d5ebee7ad222b54e870d73");
 
         // This document is mutable and you can make changes to it, as shown below.
 
@@ -124,6 +123,22 @@ public class CrudSamples {
         // For more, see https://github.com/cloudant/sync-android/blob/master/doc/query.md.
 
         // Conflicts
+
+        // getConflictedIds can be used to retrieve IDs of documents which are in a conflicted
+        // state. resolveConflicts can be used to pick a winning revision and mark all others as
+        // deleted, thus resolving the conflicted state. For more details see
+        // https://github.com/cloudant/sync-android/blob/master/doc/conflicts.md
+
+        for (String conflictedDocId : ds.database().getConflictedIds()) {
+            ds.database().resolveConflicts(conflictedDocId, new ConflictResolver() {
+                @Override
+                public DocumentRevision resolve(String docId, List<? extends DocumentRevision>
+                        conflicts) {
+                    // pick the first revision - not a recommended strategy for a 'real' resolver
+                    return conflicts.get(0);
+                }
+            });
+        }
 
         // Getting all documents
 
@@ -165,14 +180,9 @@ public class CrudSamples {
 
         DocumentRevision saved = ds.database().create(rev);
 
-        // When creating new attachments, use `UnsavedFileAttachment` for data you already have on
-        // disk. Use
-        // `UnsavedStreamAttachment` when you have data which comes from an InputStream or is
-        // already in
+        // Above, we used UnsavedFileAttachment for data which was already on. Use
+        // UnsavedStreamAttachment for data which comes from an InputStream or is already in
         // memory.
-
-        att1 = new UnsavedFileAttachment(
-                new File("/path/to/image.jpg"), "image/jpeg");
 
         byte[] imageData = new byte[256];
         // ByteArrayInputStream adapts imageData to be used as a stream
@@ -205,6 +215,17 @@ public class CrudSamples {
         // or `null`:
 
         updated.setAttachments(null);
+        ds.database().update(updated);
+
+        // Closing and deleting the DocumentStore
+
+        // Finally, to close a DocumentStore (which closes the underlying database files and
+        // releases native resources):
+        ds.close();
+
+        // or to delete a DocumentStore (which closes it first):
+        ds.delete();
+
 
         // ## Cookbook
         //
