@@ -33,12 +33,12 @@ import java.io.InputStream;
 public class UnsavedFileAttachment extends Attachment {
 
     public UnsavedFileAttachment(File file, String type) {
-        super(file.getName(), type, Encoding.Plain);
+        super(file.getName(), type, Encoding.Plain, file.length());
         this.file = file;
     }
 
     public UnsavedFileAttachment(File file, String type, Encoding encoding) {
-        super(file.getName(), type, encoding);
+        super(file.getName(), type, encoding, file.length());
         this.file = file;
     }
 
