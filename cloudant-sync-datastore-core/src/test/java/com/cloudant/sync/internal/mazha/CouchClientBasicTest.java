@@ -410,4 +410,11 @@ public class CouchClientBasicTest extends CouchClientTestBase {
             return false;
         }
     }
+
+    @Test
+    public void getRevision() {
+        Response res = ClientTestUtils.createHelloWorldDoc(client);
+        String rev = client.getDocumentRev(res.getId());
+        Assert.assertEquals("The revisions should be the same", res.getRev(), rev);
+    }
 }

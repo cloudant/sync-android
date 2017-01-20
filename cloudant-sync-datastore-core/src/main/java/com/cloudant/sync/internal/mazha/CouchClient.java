@@ -320,10 +320,8 @@ public class CouchClient  {
     // TODO does this still work the same way we expect it to?
     public boolean contains(String id) {
         Misc.checkNotNullOrEmpty(id, "id");
-        URI doc = this.uriHelper.documentUri(id);
         try {
-            HttpConnection connection = Http.HEAD(doc);
-            this.executeWithRetry(connection, new NoOpInputStreamProcessor());
+            getDocumentRev(id);
             return true;
         } catch (Exception e) {
             return false;
@@ -554,16 +552,34 @@ public class CouchClient  {
     public Response update(String id, Object document) {
         Misc.checkNotNullOrEmpty(id, "id");
         Misc.checkNotNull(document, "Document");
-        if (!this.contains(id)) {
-            throw new NoResourceException("No document for given id: " + id);
-        }
 
-        String json = JSONUtils.toJson(document);
+        // Get the latest rev, will throw if doc doesn't exist
+        getDocumentRev(id);
+
+        return putUpdate(id, document);
+    }
+
+    public Response putUpdate(String id, Object document) {
+        Misc.checkNotNullOrEmpty(id, "id");
+        Misc.checkNotNull(document, "Document");
+
         URI doc = this.uriHelper.documentUri(id);
+        String json = JSONUtils.toJson(document);
         HttpConnection connection = Http.PUT(doc, "application/json");
         connection.setRequestBody(json);
         Response r = executeToJsonObjectWithRetry(connection, Response.class);
         return r;
+    }
+
+    public String getDocumentRev(String id) {
+        URI doc = this.uriHelper.documentUri(id);
+
+        HttpConnection head = Http.HEAD(doc);
+        executeWithRetry(head, new NoOpInputStreamProcessor());
+
+        String rev = head.getConnection().getHeaderField("ETag");
+        // Remove enclosing "" before returning
+        return rev.substring(1, rev.length()-1);
     }
 
     public Response delete(String id, String rev) {
@@ -701,6 +717,7 @@ public class CouchClient  {
     }
 
     public interface InputStreamProcessor<T> {
+
         T processStream(InputStream stream) throws Exception;
     }
 
