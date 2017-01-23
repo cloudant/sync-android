@@ -37,10 +37,11 @@ import java.io.InputStream;
  */
 public abstract class Attachment implements Comparable<Attachment>{
 
-    public Attachment(String name, String type, Encoding encoding) {
+    protected Attachment(String name, String type, Encoding encoding, long length) {
         this.name = name;
         this.type = type;
         this.encoding = encoding;
+        this.length = length;
     }
 
     /**
@@ -63,6 +64,12 @@ public abstract class Attachment implements Comparable<Attachment>{
      * </p>
      */
     public final Encoding encoding;
+
+    /**
+     * The length, in bytes, of the stream returned by {@link #getInputStream()} or -1 if the length
+     * is unknown (for instance if the data is backed by a stream)
+     */
+    public final long length;
     
     /**
      * <p>
