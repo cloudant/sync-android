@@ -37,7 +37,7 @@ import java.io.InputStream;
  */
 public abstract class Attachment implements Comparable<Attachment>{
 
-    public Attachment(String name, String type, Encoding encoding, long length) {
+    protected Attachment(String name, String type, Encoding encoding, long length) {
         this.name = name;
         this.type = type;
         this.encoding = encoding;
