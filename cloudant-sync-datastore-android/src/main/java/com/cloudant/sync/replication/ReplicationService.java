@@ -26,6 +26,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.content.WakefulBroadcastReceiver;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,10 +44,32 @@ public abstract class ReplicationService extends Service
         implements ReplicationPolicyManager.ReplicationsCompletedListener {
 
     public static final String EXTRA_INTENT = "intent";
+
+    /** The key used to identify the command being sent to the service. */
     public static final String EXTRA_COMMAND = "command";
+
     public static final int COMMAND_NONE = -1;
+
+    /**
+     * To start replications, this value should be passed to this service in an Intent using an
+     * Extra with the {@link #EXTRA_COMMAND} key.
+     * @see
+     * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
+     *     Replication Policy User Guide</a> for more details.
+     */
     public static final int COMMAND_START_REPLICATION = 0;
+
+    /**
+     * To stop replications, this value should be passed to this service in an Intent using an
+     * Extra with the {@link #EXTRA_COMMAND} key.
+     * @see
+     * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
+     *     Replication Policy User Guide</a> for more details.
+     */
     public static final int COMMAND_STOP_REPLICATION = 1;
+
+    private static final int INTERNALLY_RESERVED_COMMAND_MAX_USED = 5;
+    private static final int INTERNALLY_RESERVED_COMMAND_MAX = 99;
 
     private Handler mServiceHandler;
     private ReplicationPolicyManager mReplicationPolicyManager;
@@ -131,6 +154,12 @@ public abstract class ReplicationService extends Service
         @Override
         public void handleMessage(Message msg) {
             try {
+                if (msg.arg2 > INTERNALLY_RESERVED_COMMAND_MAX_USED && msg.arg2 <=
+                    INTERNALLY_RESERVED_COMMAND_MAX) {
+                    throw new RuntimeException("ReplicationService received an EXTRA_COMMAND " +
+                        "using an id in the range reserved for internal use. Custom commands must" +
+                        " use an id above " + INTERNALLY_RESERVED_COMMAND_MAX);
+                }
                 // Process the commands passed in msg.arg2.
                 switch (msg.arg2) {
                     case COMMAND_START_REPLICATION:
