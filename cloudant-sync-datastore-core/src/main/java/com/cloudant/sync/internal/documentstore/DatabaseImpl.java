@@ -85,7 +85,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -792,9 +791,9 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
-    public Iterator<String> getConflictedIds() throws DocumentStoreException {
+    public Iterable<String> getConflictedIds() throws DocumentStoreException {
         try {
-            return get(queue.submit(new GetConflictedDocumentIdsCallable())).iterator();
+            return get(queue.submit(new GetConflictedDocumentIdsCallable()));
         } catch (ExecutionException e) {
             String message = "Failed to get conflicted document ids";
             logger.log(Level.SEVERE, message, e);

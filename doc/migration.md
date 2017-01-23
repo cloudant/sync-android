@@ -83,6 +83,9 @@ counterparts on `Datastore`:
 * `deleteDocumentFromRevision` has been renamed `delete`
 * `deleteDocument` has been renamed `delete`
 
+The `getConflictedIds` method now returns `Iterable<String>`. This
+allows the result to be used in an enhanced `for` loop.
+
 The `throws` clauses on `Database` methods are different to those on
 their counterparts in `Datastore`. Code which calls these methods may
 have to be adjusted to catch different exceptions. See
