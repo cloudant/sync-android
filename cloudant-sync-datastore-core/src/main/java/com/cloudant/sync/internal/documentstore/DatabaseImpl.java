@@ -557,20 +557,6 @@ public class DatabaseImpl implements Database {
     }
 
     /**
-     * This method has been deprecated and should not be used.
-     * @see #forceInsert(List)
-     */
-    @Deprecated
-    public void forceInsert(final InternalDocumentRevision rev,
-                            final List<String> revisionHistory,
-                            final Map<String, Object> attachments,
-                            final Map<String[], Map<String, PreparedAttachment>> preparedAttachments,
-                            final boolean pullAttachmentsInline) throws DocumentException {
-        forceInsert(Collections.singletonList(new ForceInsertItem(rev, revisionHistory,
-                attachments, preparedAttachments, pullAttachmentsInline)));
-    }
-
-    /**
      * <p>
      * Inserts one or more revisions of a document into the database. For efficiency, this is
      * performed as one database transaction.
@@ -674,22 +660,21 @@ public class DatabaseImpl implements Database {
      * <p>Equivalent to:</p>
      *
      * <code>
-     *    forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
+     * forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
      * </code>
      *
-     * @param rev A {@code DocumentRevision} containing the information for a revision
-     *            from a remote datastore.
+     * @param rev             A {@code DocumentRevision} containing the information for a revision
+     *                        from a remote datastore.
      * @param revisionHistory The history of the revision being inserted,
      *                        including the rev ID of {@code rev}. This list
      *                        needs to be sorted in ascending order
-     *
-     * @see DatabaseImpl#forceInsert(InternalDocumentRevision, List, Map, Map, boolean)
      * @throws DocumentException if there was an error inserting the revision into the database
      */
     public void forceInsert(InternalDocumentRevision rev, String... revisionHistory) throws
             DocumentException {
         Misc.checkState(this.isOpen(), "Database is closed");
-        this.forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
+        this.forceInsert(Collections.singletonList(new ForceInsertItem(rev, Arrays.asList
+                (revisionHistory), null, null, false)));
     }
 
     private boolean checkRevisionIsInCorrectOrder(List<String> revisionHistory) {
