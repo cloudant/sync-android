@@ -213,7 +213,8 @@ try {
 }
 ```
 
-Read more in [the CRUD document](https://github.com/cloudant/sync-android/blob/master/doc/crud.md).
+Extensive code samples can be found in 
+[the CRUD samples class](https://github.com/cloudant/sync-android/blob/master/doc/CrudSamples.java).
 
 You can also subscribe for notifications of changes in the database, which
 is described in [the events documentation](https://github.com/cloudant/sync-android/blob/master/doc/events.md).

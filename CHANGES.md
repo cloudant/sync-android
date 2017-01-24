@@ -1,6 +1,9 @@
-# Unreleased
- - [FIXED] Issue with double encoding of restricted URL characters in credentials when using
-   `ReplicatorBuilder`.
+# 2.0.0 (unreleased)
+- [NOTE] The "CRUD Guide" markdown document (previously located in
+  `doc/crud.md`) has been migrated to a
+  [java source file](https://github.com/cloudant/sync-android/blob/master/doc/CrudSamples.java).
+- [FIXED] Issue with double encoding of restricted URL characters in credentials when using
+  `ReplicatorBuilder`.
 
 # 1.1.5 (2016-12-08)
 - [FIXED] Issue where replicator would not get the latest revision if `_bulk_get`
