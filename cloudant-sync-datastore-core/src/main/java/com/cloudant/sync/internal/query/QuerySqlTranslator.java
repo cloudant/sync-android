@@ -349,7 +349,6 @@ class QuerySqlTranslator {
                         return isOperatorFoundInClause(operator, Collections
                                 .<Object>singletonList(predicate));
                     }
-                    return false;
                 }
             }
         }
