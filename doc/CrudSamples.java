@@ -29,10 +29,15 @@ import java.util.Map;
 
 /*
  * Code samples to show how to use CRUD (create, read, update, delete)
- * features of the library
+ * features of the library.
  */
 public class CrudSamples {
 
+    /*
+     * Note that these samples are in one method for convenience and readability. This method is not
+     * meant to be executed but serves as a series of "snippets" showing how to use the various API
+     * methods.
+     */
     public void crudSamples() throws Exception {
         
         // DocumentStore and Database:
@@ -45,7 +50,6 @@ public class CrudSamples {
         // File path = getApplicationContext().getDir("document_stores");
 
         // Once you've got a path, it's straightforward to create DocumentStores:
-
         DocumentStore ds = DocumentStore.getInstance(new File(path, "my_document_store"));
         DocumentStore ds2 = DocumentStore.getInstance(new File(path, "other_document_store"));
 
@@ -88,13 +92,11 @@ public class CrudSamples {
         // Read
 
         // Also known as retrieve. Once you have created one or more documents, retrieve them by ID:
-
         String docId = revision.getId();
         DocumentRevision retrieved = ds.database().read(docId);
 
         // if you know the revision ID of a particular revision you want to retrieve, use the 2
         // argument form of read():
-
         retrieved = ds.database().read(docId, "4-c88152f475d5ebee7ad222b54e870d73");
 
         // This document is mutable and you can make changes to it, as shown below.
@@ -102,7 +104,6 @@ public class CrudSamples {
         // Update
 
         // To update a document, make your changes and save the document:
-
         json = retrieved.getBody().asMap();
         json.put("completed", true);
         retrieved.setBody(DocumentBodyFactory.create(json));
@@ -113,8 +114,7 @@ public class CrudSamples {
         // Delete
 
         // To delete a document, you need the current revision:
-
-        ds.database().delete(retrieved);
+        ds.database().delete(updated);
 
         // Indexing and Query
 
@@ -128,7 +128,6 @@ public class CrudSamples {
         // state. resolveConflicts can be used to pick a winning revision and mark all others as
         // deleted, thus resolving the conflicted state. For more details see
         // https://github.com/cloudant/sync-android/blob/master/doc/conflicts.md
-
         for (String conflictedDocId : ds.database().getConflictedIds()) {
             ds.database().resolveConflicts(conflictedDocId, new ConflictResolver() {
                 @Override
@@ -157,11 +156,11 @@ public class CrudSamples {
         // replicated to and from the server in a way which doesn't allow for resuming
         // an upload or download.
         //
-        // Attachments are stored via the `attachments` getters/setters on a DocumentRevision
+        // Attachments are stored via the attachments getters/setters on a DocumentRevision
         // object. This is a map of attachments, keyed by attachment name.
         //
         // To add an attachment to a document, just add (or overwrite) the attachment
-        // in the `attachments` map:
+        // in the attachments map:
 
         // create a body
         rev.setBody(DocumentBodyFactory.create(json));
@@ -180,7 +179,7 @@ public class CrudSamples {
 
         DocumentRevision saved = ds.database().create(rev);
 
-        // Above, we used UnsavedFileAttachment for data which was already on. Use
+        // Above, we used UnsavedFileAttachment for data which was already on. disk Use
         // UnsavedStreamAttachment for data which comes from an InputStream or is already in
         // memory.
 
@@ -194,8 +193,8 @@ public class CrudSamples {
         rev.getAttachments().put(att2.name, att2);
         saved = ds.database().create(rev);
 
-        // To read an attachment, get the `SavedAttachment` from the `attachments`
-        // map. Then use `getInputStream()` to read the data:
+        // To read an attachment, get the SavedAttachment from the attachments
+        // map. Then use getInputStream() to read the data:
 
         retrieved = ds.database().read("myDoc");
         Attachment att = retrieved.getAttachments().get("cute_cat.jpg");
@@ -205,14 +204,14 @@ public class CrudSamples {
         byte[] data = new byte[(int) att.length];
         is.read(data);
 
-        // To remove an attachment, remove it from the `attachments` map:
+        // To remove an attachment, remove it from the attachments map:
 
         retrieved = ds.database().read("myDoc");
         retrieved.getAttachments().remove("cute_cat.jpg");
         updated = ds.database().update(retrieved);
 
-        // To remove all attachments, set the `attachments` property to an empty map
-        // or `null`:
+        // To remove all attachments, set the attachments property to an empty map
+        // or null:
 
         updated.setAttachments(null);
         ds.database().update(updated);
@@ -227,16 +226,16 @@ public class CrudSamples {
         ds.delete();
 
 
-        // ## Cookbook
+        // Cookbook
         //
         // This section shows all the ways (that I could think of) that you can update,
         // modify and delete documents.
         //
-        // ### Creating a new document
+        // Creating a new document
         //
         // This is the simplest case as we don't need to worry about previous revisions.
         //
-        // 1. Add a document with body, but not attachments or ID. You'll get an
+        // Add a document with body, but not attachments or ID. You'll get an
         // autogenerated ID.
         DocumentRevision newRev = new DocumentRevision();
 
@@ -244,13 +243,13 @@ public class CrudSamples {
 
         saved = ds.database().create(newRev);
 
-        // 1. Add a new document to the store with a body and ID, but without attachments.
+        // Add a new document to the store with a body and ID, but without attachments.
         newRev = new DocumentRevision("doc1");
         newRev.setBody(DocumentBodyFactory.create(json));
 
         saved = ds.database().create(newRev);
 
-        // 1. Add a new document to the store with attachments.
+        // Add a new document to the store with attachments.
 
         newRev = new DocumentRevision("doc1");
         newRev.setBody(DocumentBodyFactory.create(json));
@@ -261,7 +260,7 @@ public class CrudSamples {
 
         saved = ds.database().create(newRev);
 
-        // 1. Add a document with body and attachments, but no ID. You'll get an
+        // Add a document with body and attachments, but no ID. You'll get an
         // autogenerated ID.
         newRev = new DocumentRevision();
         newRev.setBody(DocumentBodyFactory.create(json));
@@ -272,104 +271,85 @@ public class CrudSamples {
 
         saved = ds.database().create(rev);
 
-        // 1. You can't create a document without a body (body is the only required property).
+        // You can't create a document without a body (body is the only required property).
         rev = new DocumentRevision();
 
         saved = ds.database().create(rev);
         // will throw java.lang.NullPointerException: Input document body can not be null
 
-        // ### Updating a document
+        // Updating a document
 
         // To update a document, make your changes and save the document.
 
-
-        // 1. Update body for doc that has no attachments, adding no attachments
+        // Update body for doc that has no attachments, adding no attachments
         Map<String, Object> updatedJson = new HashMap<String, Object>();
         updatedJson.put("description", "Buy eggs");
         updatedJson.put("completed", true);
         updatedJson.put("type", "com.cloudant.sync.example.task");
         saved.setBody(DocumentBodyFactory.create(updatedJson));
-
         updated = ds.database().update(saved);
 
-        // 1. Update body for doc with no attachments, adding attachments. The
+        // Update body for doc with no attachments, adding attachments. The
         // attachments map is accessed and modified via the getAttachments()
         // getter.
         saved.setBody(DocumentBodyFactory.create(updatedJson));
         saved.getAttachments().put(att1.name, att1);
-
         updated = ds.database().update(saved);
 
-        // 1. Update body and remove all attachments.
+        // Update body and remove all attachments.
         saved.setBody(DocumentBodyFactory.create(updatedJson));
         saved.setAttachments(null);
-
         updated = ds.database().update(saved);
 
-        // 1. Update the attachments without changing the body, add attachments to a doc
+        // Update the attachments without changing the body, add attachments to a doc
         // that had none.
         saved.getAttachments().put(att1.name, att1);
-
         updated = ds.database().update(saved);
 
-        // 1. Update attachments by copying from another revision.
+        // Update attachments by copying from another revision.
         DocumentRevision anotherDoc = ds.database().read("anotherId");
         saved.getAttachments().putAll(anotherDoc.getAttachments());
-
         updated = ds.database().update(saved);
 
-        // 1. Updating a document using an outdated source revision causes a conflict
+        // Updating a document using an outdated source revision causes a conflict
         saved.setBody(DocumentBodyFactory.create(updatedJson));
-        ds.database().update(saved);
-
-        Map<String, Object> updatedMap2 = new HashMap<String, Object>();
-        updatedMap2.put("goodbye", "world");
-        saved.setBody(DocumentBodyFactory.create(updatedMap2));
-
         updated = ds.database().update(saved);
-        // throws ConflictException
+        // this will throw ConflictException, because updated is now the latest version:
+        ds.database().update(saved);
 
         // For the second set of examples the original document is set up with a body and
         // several attachments:
 
         DocumentRevision revWithAttachments = new DocumentRevision("doc1");
         revWithAttachments.setBody(DocumentBodyFactory.create(json));
-
         revWithAttachments.getAttachments().put(att1.name, att1);
         revWithAttachments.getAttachments().put(att2.name, att2);
-
         DocumentRevision savedWithAttachments = ds.database().create(revWithAttachments);
 
-        // 1. Update body without changing attachments
+        // Update body without changing attachments
         savedWithAttachments.setBody(DocumentBodyFactory.create(updatedJson));
-
         updated = ds.database().update(savedWithAttachments);
         // Should have the same attachments
 
-        // 1. Update the attachments without changing the body, remove attachments
-        saved.getAttachments().remove(att1.name);
-
+        // Update the attachments without changing the body, remove attachments
+        savedWithAttachments.getAttachments().remove(att1.name);
         updated = ds.database().update(savedWithAttachments);
 
-        // 1. Update the attachments without changing the body, add attachments
-        saved.getAttachments().put(att1.name, att1);
-
+        // Update the attachments without changing the body, add attachments
+        savedWithAttachments.getAttachments().put(att1.name, att1);
         updated = ds.database().update(savedWithAttachments);
 
-        // 1. Update the attachments without changing the body, remove all attachments
-        // by setting `null` for attachments map.
+        // Update the attachments without changing the body, remove all attachments
+        // by setting null for attachments map.
         savedWithAttachments.setAttachments(null);
-
         updated = ds.database().update(savedWithAttachments);
 
-        // 1. Update the attachments without changing the body, remove all attachments
+        // Update the attachments without changing the body, remove all attachments
         // by setting an empty dictionary.
         savedWithAttachments.setAttachments(new HashMap<String, Attachment>());
-
         updated = ds.database().update(savedWithAttachments);
 
-        // 1. Copy an attachment from one document to another.
-
+        // Copy an attachment from one document to another.
         DocumentRevision copiedAttachments = new DocumentRevision();
         copiedAttachments.setBody(DocumentBodyFactory.create(json));
         Attachment toCopy = revWithAttachments.getAttachments().get("image.jpg");
@@ -379,29 +359,26 @@ public class CrudSamples {
         // Add attachment to "saved" from "revWithAttachments"
         Attachment savedAttachment = revWithAttachments.getAttachments().get("nameOfAttachment");
         saved.getAttachments().put(savedAttachment.name, savedAttachment);
-
         updated = ds.database().update(saved);
 
-        // ### Deleting a document
+        // Deleting a document
 
-        // 1. You should be able to delete a given revision (i.e., add a tombstone to the end of
+        // You should be able to delete a given revision (i.e., add a tombstone to the end of
         // the branch).
-
         saved = ds.database().read("doc1");
         DocumentRevision deleted = ds.database().delete(saved);
 
-        // This would refuse to delete if `saved` was not a leaf node.
+        // This would refuse to delete if saved was not a leaf node.
 
-
-        // 1. **Advanced** You should also be able to delete a document in its entirety by passing
+        // Advanced: you should also be able to delete a document in its entirety by passing
         // in an ID.
 
         List<DocumentRevision> deleteds = ds.database().delete("doc1");
 
-        // This marks *all* leaf nodes deleted. Make sure to read
-        // [conflicts.md](conflicts.md) before using this method as it can result
-        // in data loss (deleting conflicted versions of documents, not just the
-        // current winner).
+        // This marks *all* leaf nodes deleted. Make sure to read the conflicts documentation at
+        // https://github.com/cloudant/sync-android/blob/master/doc/conflicts.md
+        // before using this method as it can result in data loss (deleting conflicted versions
+        // of documents, not just the current winner).
 
     }
 
