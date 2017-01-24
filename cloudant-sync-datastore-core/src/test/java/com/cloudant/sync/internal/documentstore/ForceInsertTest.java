@@ -30,10 +30,14 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-/*
+
+/**
+ * Tests some notification and attachment behaviour using the internal forceInsert methods.
+ */
 public class ForceInsertTest extends BasicDatastoreTestBase {
 
     static CountDownLatch documentCreated, documentUpdated;
@@ -47,7 +51,8 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
     @Test
     public void notification_forceinsert() throws Exception {
         documentUpdated = new CountDownLatch(1);
-        documentCreated = new CountDownLatch(1); // 2 because the call to createDocument will also fire
+        documentCreated = new CountDownLatch(1); // 2 because the call to createDocument will
+        // also fire
         // create a document and insert the first revision
         DocumentRevision doc1_rev1 = new DocumentRevision();
         doc1_rev1.setBody(bodyOne);
@@ -56,18 +61,20 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         ArrayList<String> revisionHistory = new ArrayList<String>();
         revisionHistory.add(doc1_rev1.getRevision());
         revisionHistory.add("2-revision");
-        doc1_rev1.setRevision("2-revision");
+
+        InternalDocumentRevision rev2 = new DocumentRevisionBuilder().setDocId(doc1_rev1.getId())
+                .setRevId("2-revision").setBody(bodyOne).build();
 
         // now do a force insert - we should get an updated event as it's already there
-        datastore.forceInsert(doc1_rev1, revisionHistory, null, null, false);
+        datastore.forceInsert(rev2, doc1_rev1.getRevision(), "2-revision");
         boolean ok1 = NotificationTestUtils.waitForSignal(documentUpdated);
         Assert.assertTrue("Didn't receive document updated event", ok1);
 
-        // now do a force insert with same rev but with a different ID - we should get a (2nd) created event
-        DocumentRevision doc2_rev1 = new DocumentRevision("new-ID-12345");
-        doc2_rev1.setBody(bodyOne);
-        doc2_rev1.setRevision(doc1_rev1.getRevision());
-        datastore.forceInsert(doc2_rev1, revisionHistory,null, null, false);
+        // now do a force insert with same rev but with a different ID - we should get a (2nd)
+        // created event
+        InternalDocumentRevision doc2_rev1 = new DocumentRevisionBuilder().setDocId
+                ("new-ID-12345").setRevId(rev2.getRevision()).setBody(bodyOne).build();
+        datastore.forceInsert(doc2_rev1, doc1_rev1.getRevision(), "2-revision");
         boolean ok2 = NotificationTestUtils.waitForSignal(documentCreated);
         Assert.assertTrue("Didn't receive document created event", ok2);
     }
@@ -75,7 +82,8 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
     @Test
     public void notification_forceinsertWithAttachments() throws Exception {
 
-        // this test only makes sense if the data is inline base64 (there's no remote server to pull the attachment from)
+        // this test only makes sense if the data is inline base64 (there's no remote server to
+        // pull the attachment from)
         boolean pullAttachmentsInline = true;
 
         // create a document and insert the 1-revision
@@ -96,10 +104,12 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         revisionHistory.add("2-revision");
 
         // now create a document and force insert a 2-revision with attachments
-        DocumentRevision rev2 = new DocumentRevision(doc1_rev1.getId(), "2-revision");
-        rev2.setBody(bodyOne);
+        InternalDocumentRevision rev2 = new DocumentRevisionBuilder().setDocId(doc1_rev1.getId())
+                .setRevId("2-revision").setBody(bodyOne).build();
 
-        datastore.forceInsert(rev2, revisionHistory, atts, null, pullAttachmentsInline);
+        ForceInsertItem fii = new ForceInsertItem(rev2, revisionHistory, atts, null,
+                pullAttachmentsInline);
+        datastore.forceInsert(Collections.singletonList(fii));
 
         // check that we can retrieve attachments from 2-rev after force insert
         Attachment storedAtt = datastore.getAttachment(rev2.getId(), rev2.getRevision(), "att1");
@@ -111,14 +121,16 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
     }
 
     @Test
-    public void notification_forceinsertWithAttachmentsError() throws Exception{
+    public void notification_forceinsertWithAttachmentsError() throws Exception {
 
-        // this test only makes sense if the data is inline base64 (there's no remote server to pull the attachment from)
+        // this test only makes sense if the data is inline base64 (there's no remote server to
+        // pull the attachment from)
         boolean pullAttachmentsInline = true;
 
         // try and force an IOException when setting the attachment, and check everything is OK:
 
-        // create a read only zero-length file where the extensions dir would go, to cause an IO exception
+        // create a read only zero-length file where the extensions dir would go, to cause an IO
+        // exception
         File extensions = new File(datastore.datastoreDir + "/extensions");
         extensions.createNewFile();
         extensions.setWritable(false);
@@ -135,21 +147,28 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
 
         ArrayList<String> revisionHistory = new ArrayList<String>();
         revisionHistory.add(doc1_rev1.getRevision());
-        doc1_rev1.setRevision("2-blah");
-        revisionHistory.add(doc1_rev1.getRevision());
+        InternalDocumentRevision rev2 = new DocumentRevisionBuilder().setDocId(doc1_rev1.getId())
+                .setRevId("2-blah").setBody(bodyOne).build();
+        revisionHistory.add("2-blah");
         // now do a force insert
         //catch the exception thrown se we can look into the database
         try {
-            datastore.forceInsert(doc1_rev1, revisionHistory, atts, null, pullAttachmentsInline);
-        } catch (DocumentException e){
+            ForceInsertItem fii = new ForceInsertItem(rev2, revisionHistory, atts, null,
+                    pullAttachmentsInline);
+            datastore.forceInsert(Collections.singletonList(fii));
+        } catch (DocumentException e) {
             //do nothing.
         }
 
-        // adding the attachment should have failed transactionally, so the rev should not exist as well
-        Assert.assertFalse(datastore.contains(doc1_rev1.getId(), doc1_rev1.getRevision()));
-
-        Attachment storedAtt = datastore.getAttachment(doc1_rev1.getId(), doc1_rev1.getRevision(), "att1");
+        // Check that the attachment is not associated with the original rev
+        Attachment storedAtt = datastore.getAttachment(doc1_rev1.getId(), doc1_rev1.getRevision()
+                , "att1");
         Assert.assertNull(storedAtt);
+
+        // adding the attachment should have failed transactionally, so the rev should not exist
+        // as well
+        Assert.assertFalse(datastore.contains(rev2.getId(), rev2.getRevision()));
+
     }
 
     // some tests don't care about these events so we need to check for null
@@ -166,4 +185,4 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
     }
 
 }
-*/
+
