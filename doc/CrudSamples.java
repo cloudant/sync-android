@@ -179,7 +179,7 @@ public class CrudSamples {
 
         DocumentRevision saved = ds.database().create(rev);
 
-        // Above, we used UnsavedFileAttachment for data which was already on. disk Use
+        // Above, we used UnsavedFileAttachment for data which was already on disk Use
         // UnsavedStreamAttachment for data which comes from an InputStream or is already in
         // memory.
 
