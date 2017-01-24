@@ -345,12 +345,11 @@ class QuerySqlTranslator {
                 Map term = (Map) rawTerm;
                 if (term.size() == 1 && term.values().toArray()[0] instanceof Map) {
                     Map predicate = (Map) term.values().toArray()[0];
-                    if (predicate.get(NOT) != null) {
-                        if (predicate.get(NOT) instanceof Map) {
-                            return isOperatorFoundInClause(operator, Collections.singletonList(predicate));
-                        }
-                        return false;
+                    if (predicate.get(NOT) != null && predicate.get(NOT) instanceof Map) {
+                        return isOperatorFoundInClause(operator, Collections
+                                .<Object>singletonList(predicate));
                     }
+                    return false;
                 }
             }
         }
