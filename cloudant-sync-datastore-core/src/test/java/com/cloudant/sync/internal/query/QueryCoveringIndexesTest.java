@@ -20,6 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.runners.Parameterized.Parameters;
@@ -1704,5 +1705,27 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
                                                                  "john0.6",
                                                                  "john-0.6"));
     }
-    
+
+    // when using $size operator combined with $not operator
+    @Test
+    public void canFindDocumentsUsingNOTAndSIZE() throws Exception {
+        setUpArrayIndexingData();
+        // query - { "pets": { "$not": { "$size":  2 } }
+        Map<String, Object> query = new HashMap<String, Object>();
+        Map<String, Object> notOp = new HashMap<String, Object>();
+        Map<String, Object> sizeOp = new HashMap<String, Object>();
+
+        sizeOp.put("$size", 2);
+        notOp.put("$not", sizeOp);
+        query.put("pet", notOp);
+        QueryResult queryResult = idxMgr.find(query);
+
+        assertThat(queryResult.documentIds(), hasSize(4));
+        assertThat(queryResult.documentIds(), containsInAnyOrder("fred34",
+                "mike34",
+                "fred12",
+                "john22"));
+    }
+
+
 }
