@@ -276,7 +276,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
         ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
                 from(new URI("http://" + encodedUsername + ":" + encodedPassword +
                         "@some-host/path%2Fsome-path-日本")).
-                to(datastore);
+                to(documentStore);
         ReplicatorImpl r = (ReplicatorImpl) p.build();
         // check that user/pass has been removed
         Assert.assertEquals("http://some-host:80/path%2Fsome-path-日本",

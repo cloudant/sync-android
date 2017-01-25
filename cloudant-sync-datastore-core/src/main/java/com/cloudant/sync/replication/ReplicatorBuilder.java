@@ -78,18 +78,21 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         if (uri.getUserInfo() != null && this.username == null && this.password == null) {
-            String[] parts = uri.getUserInfo().split(":");
+            String[] parts = uri.getRawUserInfo().split(":");
             if (parts.length == 2) {
-                this.username = parts[0];
-                this.password = parts[1];
+                try {
+                    this.username = URLDecoder.decode(parts[0], "UTF-8");
+                    this.password = URLDecoder.decode(parts[1], "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    // Should never happen, UTF-8 is required in JVM
+                    throw new RuntimeException(e);
+                }
             }
         }
 
         if(this.username == null && this.password == null){
             return uri;
         }
-
-
 
         try {
             String path = uriPath == null ? "" : uriPath;
@@ -102,32 +105,10 @@ public abstract class ReplicatorBuilder<S, T, E> {
                     index = path.lastIndexOf("/");
                 }
                 path = path.substring(0, index);
-
-                URI baseURI;
-
-                try {
-                    baseURI = new URI(uriProtocol, null, uriHost, uriPort, path, null, null);
-                } catch (URISyntaxException e) {
-                    throw new RuntimeException(e);
-                }
-
-
-                try {
-                    // Decode the creds that came from the URI since they will already have been
-                    // encoded
-                    CookieInterceptor ci = new CookieInterceptor(URLDecoder.decode(parts[0],
-                            "UTF-8"), URLDecoder.decode(parts[1], "UTF-8"), baseURI.toString());
-
-                    requestInterceptors.add(ci);
-                    responseInterceptors.add(ci);
-                } catch (UnsupportedEncodingException e) {
-                    // Should never happen, UTF-8 is required in JVM
-                    throw new RuntimeException(e);
-                }
             }
 
             URI baseURI = new URI(uriProtocol, null, uriHost, uriPort, path, null, null);
-            CookieInterceptor ci = new CookieInterceptor(username, password, baseURI.toString());
+            CookieInterceptor ci = new CookieInterceptor(this.username, this.password, baseURI.toString());
             requestInterceptors.add(ci);
             responseInterceptors.add(ci);
         } catch (URISyntaxException e) {

@@ -376,7 +376,7 @@ public class PushReplicatorTest extends ReplicationTestBase {
         String encodedUsername = "user" + PERCENT_ENCODED_URI_CHARS;
         String encodedPassword = "password" + PERCENT_ENCODED_URI_CHARS;
         ReplicatorBuilder.Push p = ReplicatorBuilder.push().
-                from(datastore).
+                from(documentStore).
                 to(new URI("http://" + encodedUsername + ":" + encodedPassword +
                         "@some-host/path%2Fsome-path-日本"));
         ReplicatorImpl r = (ReplicatorImpl) p.build();
