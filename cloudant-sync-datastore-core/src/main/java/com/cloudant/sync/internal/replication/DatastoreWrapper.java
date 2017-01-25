@@ -111,7 +111,7 @@ class DatastoreWrapper {
     }
 
 
-    public void bulkInsert(DocumentRevsList documentRevsList, Map<String[],List<PreparedAttachment>> preparedAttachments, boolean pullAttachmentsInline) throws DocumentException  {
+    public void bulkInsert(DocumentRevsList documentRevsList, Map<String[],Map<String, PreparedAttachment>> preparedAttachments, boolean pullAttachmentsInline) throws DocumentException  {
         for(DocumentRevs documentRevs: documentRevsList) {
             logger.log(Level.FINEST,"Bulk inserting document revs: %s",documentRevs);
 

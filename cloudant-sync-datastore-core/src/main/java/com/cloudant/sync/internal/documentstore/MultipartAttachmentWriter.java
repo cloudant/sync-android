@@ -59,7 +59,7 @@ import java.util.Map;
  * <p>
  * The stream consists of a first MIME body which is the JSON document itself, which needs to have
  * the <code>_attachments</code> object correctly populated. This is currently done by
- * {@link RevisionHistoryHelper#addAttachments(java.util.List, java.util.Map, boolean, int)}
+ * {@link RevisionHistoryHelper#addAttachments(Map, Map, boolean, int)}
  * </p>
  *
  * <p>
@@ -68,7 +68,7 @@ import java.util.Map;
  * </p>
  *
  * @see CouchClient#putMultipart(MultipartAttachmentWriter)
- * @see RevisionHistoryHelper#addAttachments(java.util.List, java.util.Map, boolean, int)
+ * @see RevisionHistoryHelper#addAttachments(Map, Map, boolean, int)
  * @see <a href target="_blank" =http://couchdb.readthedocs.org/en/latest/api/document/common.html#creating-multiple-attachments>Creating Multiple Attachments</a>
  * @see <a href target="_blank" =http://tools.ietf.org/html/rfc2387>RFC 2387</a>
  *

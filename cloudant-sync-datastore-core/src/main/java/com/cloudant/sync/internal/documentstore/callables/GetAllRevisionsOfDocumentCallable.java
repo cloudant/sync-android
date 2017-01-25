@@ -28,6 +28,7 @@ import com.cloudant.sync.internal.util.DatabaseUtils;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -71,7 +72,7 @@ public class GetAllRevisionsOfDocumentCallable implements SQLCallable<DocumentRe
             cursor = db.rawQuery(sql, args);
             while (cursor.moveToNext()) {
                 long sequence = cursor.getLong(3);
-                List<? extends Attachment> atts = new AttachmentsForRevisionCallable(
+                Map<String, ? extends Attachment> atts = new AttachmentsForRevisionCallable(
                         this.attachmentsDir, this.attachmentStreamFactory, sequence).call(db);
                 InternalDocumentRevision rev = DatabaseImpl.getFullRevisionFromCurrentCursor(cursor, atts);
                 logger.finer("Rev: " + rev);

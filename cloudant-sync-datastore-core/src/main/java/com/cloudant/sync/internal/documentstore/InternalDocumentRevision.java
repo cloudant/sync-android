@@ -115,13 +115,13 @@ public class InternalDocumentRevision extends DocumentRevision implements
     /*
      * Helper used by sub-classes to convert between list and map representation of attachments
      */
-    protected void setAttachmentsInternal(List<? extends Attachment> attachments) {
+    protected void setAttachmentsInternal(Map<String, ? extends Attachment> attachments) {
         if (attachments != null) {
             // this awkward looking way of doing things is to avoid marking the map as being
             // modified
             HashMap<String, Attachment> m = new HashMap<String, Attachment>();
-            for (Attachment att : attachments) {
-                m.put(att.name, att);
+            for (Map.Entry<String, ? extends Attachment> att : attachments.entrySet()) {
+                m.put(att.getKey(), att.getValue());
             }
             this.attachments = SimpleChangeNotifyingMap.wrap(m);
         }

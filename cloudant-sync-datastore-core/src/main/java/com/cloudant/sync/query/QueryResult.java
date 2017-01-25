@@ -219,7 +219,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
         revBuilder.setRevId(rev.getRevision());
         revBuilder.setBody(DocumentBodyFactory.create(body));
         revBuilder.setDeleted(rev.isDeleted());
-        revBuilder.setAttachments(new ArrayList<Attachment>(rev.getAttachments().values()));
+        revBuilder.setAttachments(rev.getAttachments());
         revBuilder.setDatabase(database);
 
         return revBuilder.buildProjected();

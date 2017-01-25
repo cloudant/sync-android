@@ -35,19 +35,13 @@ import java.io.InputStream;
  *
  * @api_public
  */
-public abstract class Attachment implements Comparable<Attachment>{
+public abstract class Attachment {
 
-    protected Attachment(String name, String type, Encoding encoding, long length) {
-        this.name = name;
+    protected Attachment(String type, Encoding encoding, long length) {
         this.type = type;
         this.encoding = encoding;
         this.length = length;
     }
-
-    /**
-     * Name of the attachment, must be unique for a given document
-     */
-    public final String name;
 
     /**
      * MIME type of the attachment
@@ -86,16 +80,6 @@ public abstract class Attachment implements Comparable<Attachment>{
      */     
     public abstract InputStream getInputStream() throws IOException;
 
-    @Override
-    public String toString() {
-        return "Attachment: "+name+", type: "+type;
-    }
-
-    @Override
-    public int compareTo(Attachment other) {
-        return name.compareTo(other.name);
-    }
-
     public enum Encoding {
         /**
          * Plain encoding: the contents are not compressed.
@@ -128,9 +112,6 @@ public abstract class Attachment implements Comparable<Attachment>{
 
         Attachment that = (Attachment) o;
 
-        if (name != null ? !name.equals(that.name) : that.name != null) {
-            return false;
-        }
         if (type != null ? !type.equals(that.type) : that.type != null) {
             return false;
         }
@@ -140,8 +121,7 @@ public abstract class Attachment implements Comparable<Attachment>{
 
     @Override
     public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (type != null ? type.hashCode() : 0);
+        int result = type != null ? type.hashCode() : 0;
         result = 31 * result + (encoding != null ? encoding.hashCode() : 0);
         return result;
     }

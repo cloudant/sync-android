@@ -41,6 +41,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by tomblench on 12/03/2014.
@@ -74,7 +75,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
             Assert.assertArrayEquals(expectedSha1, savedAtt.key);
 
             SavedAttachment savedAtt2 = (SavedAttachment) datastore.attachmentsForRevision
-                    ((InternalDocumentRevision)newRevision).get(0);
+                    ((InternalDocumentRevision)newRevision).get(attachmentName);
             Assert.assertArrayEquals(expectedSha1, savedAtt2.key);
         } catch (FileNotFoundException fnfe) {
             Assert.fail("FileNotFoundException thrown " + fnfe);
@@ -89,15 +90,18 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
         DocumentRevision rev_1 = datastore.create(rev_1Mut);
-        Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_1.txt"), "text/plain");
-        Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/nonexistentfile"), "text/plain");
-        Attachment att3 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_2.txt"), "text/plain");
+        String att1Name = "attachment_1.txt";
+        String att2Name = "nonexistentfile";
+        String att3Name = "attachment_2.txt";
+        Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/"+att1Name), "text/plain");
+        Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/"+att2Name), "text/plain");
+        Attachment att3 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/"+att3Name), "text/plain");
         DocumentRevision newRevision = null;
         try {
             DocumentRevision rev1_mut = rev_1;
-            rev1_mut.getAttachments().put(att1.name, att1);
-            rev1_mut.getAttachments().put(att2.name, att2);
-            rev1_mut.getAttachments().put(att3.name, att3);
+            rev1_mut.getAttachments().put(att1Name, att1);
+            rev1_mut.getAttachments().put(att2Name, att2);
+            rev1_mut.getAttachments().put(att3Name, att3);
             newRevision = datastore.update(rev1_mut);
             Assert.fail("FileNotFoundException not thrown");
         } catch (AttachmentException ae) {
@@ -145,22 +149,25 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
         DocumentRevision rev_1 = datastore.create(rev_1Mut);
-        Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_1.txt"), "text/plain");
-        Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_2.txt"), "text/plain");
-        Attachment att3 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/bonsai-boston.jpg"), "image/jpeg");
+        String att1Name = "attachment_1.txt";
+        String att2Name = "attachment_2.txt";
+        String att3Name = "bonsai-boston.jpg";
+        Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/"+att1Name), "text/plain");
+        Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/"+att2Name), "text/plain");
+        Attachment att3 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/"+att3Name), "image/jpeg");
         DocumentRevision rev2 = null;
 
         DocumentRevision rev_1_mut = rev_1;
-        rev_1_mut.getAttachments().put(att1.name, att1);
-        rev_1_mut.getAttachments().put(att2.name, att2);
-        rev_1_mut.getAttachments().put(att3.name, att3);
+        rev_1_mut.getAttachments().put(att1Name, att1);
+        rev_1_mut.getAttachments().put(att2Name, att2);
+        rev_1_mut.getAttachments().put(att3Name, att3);
         rev2 = datastore.update(rev_1_mut);
         Assert.assertNotNull("Revision null", rev2);
 
         DocumentRevision rev3 = null;
 
         DocumentRevision rev2_mut = rev2;
-        rev2_mut.getAttachments().remove(att1.name);
+        rev2_mut.getAttachments().remove(att1Name);
         rev3 = datastore.update(rev2_mut);
         datastore.compact();
         Assert.assertNotNull("Revision null", rev3);
@@ -200,7 +207,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         Attachment att = new UnsavedFileAttachment(f, "text/plain");
         DocumentRevision rev2 = null;
         DocumentRevision rev_1_mut = rev_1;
-        rev_1_mut.getAttachments().put(att.name, att);
+        rev_1_mut.getAttachments().put(attachmentName, att);
         rev2 = datastore.update(rev_1_mut);
         Assert.assertNotNull("Revision null", rev2);
 
@@ -226,15 +233,17 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         rev_1Mut.setBody(bodyOne);
         DocumentRevision rev_1 = datastore.create(rev_1Mut);
 
-        Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_1.txt"), "text/plain");
-        Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/attachment_2.txt"), "text/plain");
+        String att1Name = "attachment_1.txt";
+        String att2Name = "attachment_2.txt";
+        Attachment att1 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/"+att1Name), "text/plain");
+        Attachment att2 = new UnsavedFileAttachment(TestUtils.loadFixture("fixture/"+att2Name), "text/plain");
         DocumentRevision newRevision = null;
         try {
             DocumentRevision rev_1_mut = rev_1;
-            rev_1_mut.getAttachments().put(att1.name, att1);
-            rev_1_mut.getAttachments().put(att2.name, att2);
+            rev_1_mut.getAttachments().put(att1Name, att1);
+            rev_1_mut.getAttachments().put(att2Name, att2);
             newRevision = datastore.update(rev_1_mut);
-            List<? extends Attachment> attsForRev = datastore.attachmentsForRevision((InternalDocumentRevision)newRevision);
+            Map<String, ? extends Attachment> attsForRev = datastore.attachmentsForRevision((InternalDocumentRevision)newRevision);
             Assert.assertEquals("Didn't get expected number of attachments", 2, attsForRev.size());
         } catch (ConflictException ce){
             Assert.fail("ConflictException thrown: "+ce);
@@ -251,7 +260,8 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         doc2Rev1Mut.setBody(bodyTwo);
         DocumentRevision doc2Rev1 = datastore.create(doc2Rev1Mut);
 
-        File attachmentFile = TestUtils.loadFixture("fixture/attachment_1.txt");
+        String attName = "attachment_1.txt";
+        File attachmentFile = TestUtils.loadFixture("fixture/"+attName);
         Attachment att1 = new UnsavedFileAttachment(attachmentFile, "text/plain");
         Attachment att2 = new UnsavedFileAttachment(attachmentFile, "text/plain");
 
@@ -260,16 +270,16 @@ public class AttachmentTest extends BasicDatastoreTestBase {
 
         try {
             DocumentRevision doc1Rev1_mut = doc1Rev1;
-            doc1Rev1_mut.getAttachments().put(att1.name, att1);
+            doc1Rev1_mut.getAttachments().put(attName, att1);
             newRevisionDoc1 = datastore.update(doc1Rev1_mut);
             Assert.assertNotNull("Doc1 revision is null", newRevisionDoc1);
-            List<? extends Attachment> attsForRev = datastore
+            Map<String, ? extends Attachment> attsForRev = datastore
                 .attachmentsForRevision((InternalDocumentRevision)newRevisionDoc1);
             Assert.assertEquals("Didn't get expected number of attachments", 1,
                 attsForRev.size());
 
             DocumentRevision doc2Rev1_mut = doc2Rev1;
-            doc2Rev1_mut.getAttachments().put(att2.name, att2);
+            doc2Rev1_mut.getAttachments().put(attName, att2);
             newRevisionDoc2 = datastore.update(doc2Rev1_mut);
             Assert.assertNotNull("Doc2 revision is null", newRevisionDoc2);
             attsForRev = datastore.attachmentsForRevision((InternalDocumentRevision)newRevisionDoc2);

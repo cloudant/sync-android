@@ -279,7 +279,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
                 Assert.assertEquals(2, conflicts.size());
                 DocumentRevision rev = conflicts.get(0);
                 rev.setBody(DocumentBodyFactory.create("{\"name\": \"mutable\"}".getBytes()));
-                rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "att1", "text/plain"));
+                rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "text/plain"));
                 return rev;
             }
         });
@@ -306,7 +306,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
             public DocumentRevision resolve(String docId, List<? extends DocumentRevision> conflicts) {
                 Assert.assertEquals(2, conflicts.size());
                 DocumentRevision rev = conflicts.get(0);
-                rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "att1", "text/plain"));
+                rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "text/plain"));
                 return rev;
             }
         });
@@ -342,7 +342,7 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
                     Assert.assertEquals(2, conflicts.size());
                     DocumentRevision rev = new DocumentRevision();
                     rev.setBody(DocumentBodyFactory.create("{\"name\": \"mutable\"}".getBytes()));
-                    rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "att1", "text/plain"));
+                    rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "text/plain"));
                     return rev;
                 }
             });
@@ -588,14 +588,14 @@ public class DatabaseImplConflictsTest extends BasicDatastoreTestBase {
     private DocumentRevision createDocumentRevisionWithAttachment(String name) throws Exception {
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(createDocumentBody(name));
-        rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "att1", "text/plain"));
+        rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "text/plain"));
         return this.datastore.create(rev);
     }
 
     private DocumentRevision updateDocumentRevisionWithAttachment(String docId, String revId, String name) throws Exception {
         DocumentRevision rev = new DocumentRevision(docId, revId);
         rev.setBody(createDocumentBody(name));
-        rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "att1", "text/plain"));
+        rev.getAttachments().put("att1", new UnsavedStreamAttachment(new ByteArrayInputStream("hello".getBytes()), "text/plain"));
         return this.datastore.update(rev);
     }
 

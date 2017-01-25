@@ -27,8 +27,8 @@ import com.cloudant.sync.internal.util.DatabaseUtils;
 
 import java.io.File;
 import java.sql.SQLException;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,7 +37,7 @@ import java.util.logging.Logger;
  *
  * @api_private
  */
-public class AttachmentsForRevisionCallable implements SQLCallable<List<? extends Attachment>> {
+public class AttachmentsForRevisionCallable implements SQLCallable<Map<String, ? extends Attachment>> {
 
     private String attachmentsDir;
     private AttachmentStreamFactory attachmentStreamFactory;
@@ -58,11 +58,11 @@ public class AttachmentsForRevisionCallable implements SQLCallable<List<? extend
     }
 
 
-    public List<? extends Attachment> call(SQLDatabase db) throws AttachmentException {
+    public Map<String, ? extends Attachment> call(SQLDatabase db) throws AttachmentException {
 
         Cursor c = null;
         try {
-            LinkedList<SavedAttachment> atts = new LinkedList<SavedAttachment>();
+            Map<String, SavedAttachment> atts = new HashMap<String, SavedAttachment>();
             c = db.rawQuery(AttachmentManager.SQL_ATTACHMENTS_SELECT_ALL,
                     new String[]{String.valueOf(sequence)});
             while (c.moveToNext()) {
@@ -75,7 +75,7 @@ public class AttachmentsForRevisionCallable implements SQLCallable<List<? extend
                 int revpos = c.getInt(c.getColumnIndex("revpos"));
                 File file = AttachmentManager.fileFromKey(db, key, attachmentsDir, false);
 
-                atts.add(new SavedAttachment(sequence, filename, key, type, Attachment.Encoding
+                atts.put(filename, new SavedAttachment(sequence, filename, key, type, Attachment.Encoding
                         .values()[encoding], length, encodedLength, revpos, file,
                         attachmentStreamFactory));
             }

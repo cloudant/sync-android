@@ -527,7 +527,7 @@ public class DatabaseImpl implements Database {
             cursor = db.rawQuery(sql, args);
             while (cursor.moveToNext()) {
                 long sequence = cursor.getLong(3);
-                List<? extends Attachment> atts = AttachmentManager.attachmentsForRevision(db, attachmentsDir, attachmentStreamFactory
+                Map<String, ? extends Attachment> atts = AttachmentManager.attachmentsForRevision(db, attachmentsDir, attachmentStreamFactory
                         , sequence);
                 InternalDocumentRevision row = getFullRevisionFromCurrentCursor(cursor, atts);
                 result.add(row);
@@ -568,7 +568,7 @@ public class DatabaseImpl implements Database {
     public void forceInsert(final InternalDocumentRevision rev,
                             final List<String> revisionHistory,
                             final Map<String, Object> attachments,
-                            final Map<String[], List<PreparedAttachment>> preparedAttachments,
+                            final Map<String[], Map<String, PreparedAttachment>> preparedAttachments,
                             final boolean pullAttachmentsInline) throws DocumentException {
         forceInsert(Collections.singletonList(new ForceInsertItem(rev, revisionHistory,
                 attachments, preparedAttachments, pullAttachmentsInline)));
@@ -862,13 +862,13 @@ public class DatabaseImpl implements Database {
                                 // We need to work out which of the attachments for the revision are ones
                                 // we can copy over because they exist in the attachment store already and
                                 // which are new, that we need to prepare for insertion.
-                                Collection<Attachment> attachments = newWinnerTx.getAttachments() != null ?
-                                        newWinnerTx.getAttachments().values() : new ArrayList<Attachment>();
-                                final List<PreparedAttachment> preparedNewAttachments =
+                                Map<String, Attachment> attachments = newWinnerTx.getAttachments() != null ?
+                                        newWinnerTx.getAttachments() : new HashMap<String, Attachment>();
+                                final Map<String, PreparedAttachment> preparedNewAttachments =
                                         AttachmentManager.prepareAttachments(attachmentsDir,
                                                 attachmentStreamFactory,
                                                 AttachmentManager.findNewAttachments(attachments));
-                                final List<SavedAttachment> existingAttachments =
+                                final Map<String, SavedAttachment> existingAttachments =
                                         AttachmentManager.findExistingAttachments(attachments);
 
                                 new UpdateDocumentFromRevisionCallable(newWinnerTx,
@@ -907,7 +907,7 @@ public class DatabaseImpl implements Database {
     }
 
     public static InternalDocumentRevision getFullRevisionFromCurrentCursor(Cursor cursor,
-                                                                            List<? extends Attachment>
+                                                                            Map<String, ? extends Attachment>
                                                                              attachments) {
         String docId = cursor.getString(cursor.getColumnIndex("docid"));
         long internalId = cursor.getLong(cursor.getColumnIndex("doc_id"));
@@ -1002,13 +1002,13 @@ public class DatabaseImpl implements Database {
      * @throws AttachmentException if there was an error reading the attachment metadata from the
      * database
      */
-    public List<? extends Attachment> attachmentsForRevision(final InternalDocumentRevision rev) throws
+    public Map<String, ? extends Attachment> attachmentsForRevision(final InternalDocumentRevision rev) throws
             AttachmentException {
         try {
-            return get(queue.submit(new SQLCallable<List<? extends Attachment>>() {
+            return get(queue.submit(new SQLCallable<Map<String, ? extends Attachment>>() {
 
                 @Override
-                public List<? extends Attachment> call(SQLDatabase db) throws Exception {
+                public Map<String, ? extends Attachment> call(SQLDatabase db) throws Exception {
                     return AttachmentManager.attachmentsForRevision(db, attachmentsDir,
                             attachmentStreamFactory, rev.getSequence());
                 }
@@ -1047,13 +1047,12 @@ public class DatabaseImpl implements Database {
         // We need to work out which of the attachments for the revision are ones
         // we can copy over because they exist in the attachment store already and
         // which are new, that we need to prepare for insertion.
-        Collection<Attachment> attachments = rev.getAttachments() != null ? rev.getAttachments()
-                .values() : new ArrayList<Attachment>();
-        final List<PreparedAttachment> preparedNewAttachments =
+        Map<String, Attachment> attachments = rev.getAttachments() != null ? rev.getAttachments() : new HashMap<String, Attachment>();
+        final Map<String, PreparedAttachment> preparedNewAttachments =
                 AttachmentManager.prepareAttachments(attachmentsDir,
                         attachmentStreamFactory,
                         AttachmentManager.findNewAttachments(attachments));
-        final List<SavedAttachment> existingAttachments =
+        final Map<String, SavedAttachment> existingAttachments =
                 AttachmentManager.findExistingAttachments(attachments);
 
         InternalDocumentRevision created = null;
@@ -1103,13 +1102,12 @@ public class DatabaseImpl implements Database {
         // We need to work out which of the attachments for the revision are ones
         // we can copy over because they exist in the attachment store already and
         // which are new, that we need to prepare for insertion.
-        Collection<Attachment> attachments = rev.getAttachments() != null ? rev.getAttachments()
-                .values() : new ArrayList<Attachment>();
-        final List<PreparedAttachment> preparedNewAttachments =
+        Map<String, Attachment> attachments = rev.getAttachments() != null ? rev.getAttachments() : new HashMap<String, Attachment>();
+        final Map<String, PreparedAttachment> preparedNewAttachments =
                 AttachmentManager.prepareAttachments(attachmentsDir,
                         attachmentStreamFactory,
                         AttachmentManager.findNewAttachments(attachments));
-        final List<SavedAttachment> existingAttachments =
+        final Map<String, SavedAttachment> existingAttachments =
                 AttachmentManager.findExistingAttachments(attachments);
 
         try {
