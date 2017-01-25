@@ -272,7 +272,7 @@ public class CouchClientWrapper implements CouchDB {
         // call with last arg `true` to indicate we will accept gzipped data
         InputStream is = this.couchClient.getAttachmentStream(id, rev, attachmentName, true);
         Attachment.Encoding encoding = Attachment.getEncodingFromString(encodingStr);
-        UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is, attachmentName, contentType, encoding);
+        UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is, contentType, encoding);
         return usa;
     }
 

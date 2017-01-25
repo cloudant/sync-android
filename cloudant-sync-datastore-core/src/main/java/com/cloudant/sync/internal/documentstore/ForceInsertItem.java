@@ -26,12 +26,12 @@ public class ForceInsertItem {
     public InternalDocumentRevision rev;
     public List<String> revisionHistory;
     public Map<String, Object> attachments;
-    public Map<String[],List<PreparedAttachment>>preparedAttachments;
+    public Map<String[],Map<String, PreparedAttachment>>preparedAttachments;
     public boolean pullAttachmentsInline;
 
     public ForceInsertItem(InternalDocumentRevision rev, List<String> revisionHistory,
                            Map<String, Object> attachments, Map<String[],
-            List<PreparedAttachment>> preparedAttachments, boolean pullAttachmentsInline) {
+            Map<String, PreparedAttachment>> preparedAttachments, boolean pullAttachmentsInline) {
         this.rev = rev;
         this.revisionHistory = revisionHistory;
         this.attachments = attachments;

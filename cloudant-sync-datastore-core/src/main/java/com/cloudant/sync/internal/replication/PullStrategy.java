@@ -290,12 +290,12 @@ public class PullStrategy implements ReplicationStrategy {
     public static class BatchItem {
 
         public BatchItem(DocumentRevsList revsList,
-                         HashMap<String[], List<PreparedAttachment>> attachments) {
+                         HashMap<String[], Map<String, PreparedAttachment>> attachments) {
             this.revsList = revsList;
             this.attachments = attachments;
         }
 
-        public HashMap<String[], List<PreparedAttachment>> attachments;
+        public HashMap<String[], Map<String, PreparedAttachment>> attachments;
         public DocumentRevsList revsList;
     }
 
@@ -337,8 +337,8 @@ public class PullStrategy implements ReplicationStrategy {
                     // attachments, keyed by docId and revId, so that
                     // we can add the attachments to the correct leaf
                     // nodes
-                    HashMap<String[], List<PreparedAttachment>> atts = new HashMap<String[],
-                            List<PreparedAttachment>>();
+                    HashMap<String[], Map<String, PreparedAttachment>> atts = new HashMap<String[],
+                            Map<String, PreparedAttachment>>();
 
                     // now put together a list of attachments we need to download
                     if (!this.pullAttachmentsInline) {
@@ -346,12 +346,13 @@ public class PullStrategy implements ReplicationStrategy {
                             for (DocumentRevs documentRevs : revsList) {
                                 Map<String, Object> attachments = documentRevs.getAttachments();
                                 // keep track of attachments we are going to prepare
-                                ArrayList<PreparedAttachment> preparedAtts = new
-                                        ArrayList<PreparedAttachment>();
+                                Map<String, PreparedAttachment> preparedAtts = new
+                                        HashMap<String, PreparedAttachment>();
                                 atts.put(new String[]{documentRevs.getId(), documentRevs.getRev()
                                 }, preparedAtts);
 
                                 for (Map.Entry<String, Object> entry : attachments.entrySet()) {
+                                    String attachmentName = entry.getKey();
                                     Map attachmentMetadata = (Map) entry.getValue();
                                     int revpos = (Integer) attachmentMetadata.get("revpos");
                                     String contentType = (String) attachmentMetadata.get
@@ -377,7 +378,7 @@ public class PullStrategy implements ReplicationStrategy {
 
                                         Attachment a = this.targetDb.getDbCore()
                                                 .getAttachment(documentRevs.getId(), revId,
-                                                        entry.getKey());
+                                                        attachmentName);
                                         if (a != null) {
                                             // skip attachment, already got it
                                             continue;
@@ -386,12 +387,12 @@ public class PullStrategy implements ReplicationStrategy {
                                     }
                                     UnsavedStreamAttachment usa = this.sourceDb
                                             .getAttachmentStream(documentRevs.getId(),
-                                                    documentRevs.getRev(), entry.getKey(),
+                                                    documentRevs.getRev(), attachmentName,
                                                     contentType, encoding);
 
                                     // by preparing the attachment here, it is downloaded outside
                                     // of the database transaction
-                                    preparedAtts.add(this.targetDb.prepareAttachment(usa, length,
+                                    preparedAtts.put(attachmentName, this.targetDb.prepareAttachment(usa, length,
                                             encodedLength));
                                 }
                             }

@@ -99,7 +99,7 @@ public class MultipartAttachmentWriterTests {
                 s.append("+");
             }
             byte[] bytes = (s.toString()).getBytes();
-            Attachment att0 = new UnsavedStreamAttachment(new ByteArrayInputStream(bytes), name, "text/plain");
+            Attachment att0 = new UnsavedStreamAttachment(new ByteArrayInputStream(bytes), "text/plain");
             mpw.addAttachment(att0, bytes.length);
         }
         InputStream is = mpw.makeInputStream();

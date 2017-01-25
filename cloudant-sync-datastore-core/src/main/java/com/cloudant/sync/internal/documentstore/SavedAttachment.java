@@ -56,6 +56,7 @@ public class SavedAttachment extends Attachment {
     protected final byte[] key;  // sha of file, used for file path on disk.
     protected final long encodedLength;
     protected final long revpos;
+    protected final String name;
 
     private final File file;
     private final AttachmentStreamFactory attachmentStreamFactory;
@@ -63,8 +64,9 @@ public class SavedAttachment extends Attachment {
     public SavedAttachment(long seq, String name, byte[] key, String type, Encoding encoding,
                               long length, long encodedLength, long revpos, File file,
                               AttachmentStreamFactory asf) {
-        super(name, type, encoding, length);
+        super(type, encoding, length);
 
+        this.name = name;
         this.revpos = revpos;
         this.seq = seq;
         this.key = key == null ? null : Arrays.copyOf(key, key.length);

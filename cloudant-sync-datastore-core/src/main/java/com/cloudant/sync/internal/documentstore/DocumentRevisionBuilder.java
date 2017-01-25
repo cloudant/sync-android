@@ -22,6 +22,7 @@ import com.cloudant.sync.documentstore.DocumentBody;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>Build {@link InternalDocumentRevision}s in a chained manner.</p>
@@ -39,7 +40,7 @@ public class DocumentRevisionBuilder {
     private boolean deleted = false;
     private long docInternalId = -1;
     private long parent = -1;
-    private List<? extends Attachment> attachments = null;
+    private Map<String, ? extends Attachment> attachments = null;
     private Database database = null;
 
     /**
@@ -142,7 +143,7 @@ public class DocumentRevisionBuilder {
      * @param attachments list of attachments associated with the document
      * @return the builder object for chained calls
      */
-    public DocumentRevisionBuilder setAttachments(List<? extends Attachment> attachments) {
+    public DocumentRevisionBuilder setAttachments(Map<String, ? extends Attachment> attachments) {
         this.attachments = attachments;
         return this;
     }
@@ -176,7 +177,7 @@ public class DocumentRevisionBuilder {
         // parent sequence number
         public long parent;
         // attachments associated with this revision
-        public List<? extends Attachment> attachments;
+        public Map<String, ? extends Attachment> attachments;
     }
 
 }

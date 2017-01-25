@@ -144,7 +144,7 @@ public class RevisionHistoryHelper {
      * @see DocumentRevs
      */
     public static Map<String, Object> revisionHistoryToJson(List<InternalDocumentRevision> history,
-                                                            List<? extends Attachment> attachments,
+                                                            Map<String, ? extends Attachment> attachments,
                                                             boolean shouldInline,
                                                             int minRevPos) {
         Misc.checkNotNull(history, "History");
@@ -186,12 +186,12 @@ public class RevisionHistoryHelper {
      *
      * @return a boolean flag determining whether all attachments should be sent inline or not.
      */
-    public static boolean shouldInline(List<? extends Attachment> attachments,
+    public static boolean shouldInline(Map<String, ? extends Attachment> attachments,
                                 PushAttachmentsInline inlinePreference,
                                 int minRevPos) {
         boolean shouldInline = true;
         // first figure out if any attachments don't want to be inlined
-        for (Attachment att : attachments) {
+        for (Attachment att : attachments.values()) {
             SavedAttachment savedAtt = (SavedAttachment) att;
             if (savedAtt.revpos > minRevPos && !savedAtt.shouldInline(inlinePreference)) {
                 // if at least one attachments doesn't want to be inlined, then they all go into
@@ -223,16 +223,16 @@ public class RevisionHistoryHelper {
      * @see MultipartAttachmentWriter
      */
     public static MultipartAttachmentWriter createMultipartWriter(Map<String,Object> revision,
-                                                                  List<? extends Attachment> attachments,
+                                                                  Map<String, ? extends Attachment> attachments,
                                                                   boolean shouldInline,
                                                                   int minRevPos) {
         MultipartAttachmentWriter mpw = null;
         if (!shouldInline) {
             // only build multipart if we're not sending attachments inline
-            for (Attachment att : attachments) {
+            for (Map.Entry<String, ? extends Attachment> att : attachments.entrySet()) {
                 // we need to cast down to SavedAttachment, which we know is what the AttachmentManager gives us
 
-                SavedAttachment savedAtt = (SavedAttachment) att;
+                SavedAttachment savedAtt = (SavedAttachment) att.getValue();
                 try {
                     // add the attachment if it's newer than the minimum revpos and it's not being sent inline
                     if (savedAtt.revpos > minRevPos) {
@@ -257,7 +257,7 @@ public class RevisionHistoryHelper {
      * If the attachment should be inlined, then insert the attachment data as a base64 string
      * If it isn't inlined, set follows=true to show it will be included in the multipart/related
      */
-    private static void addAttachments(List<? extends Attachment> attachments,
+    private static void addAttachments(Map<String, ? extends Attachment> attachments,
                                    Map<String, Object> outMap,
                                    boolean shouldInline,
                                    int minRevPos) {
@@ -266,9 +266,9 @@ public class RevisionHistoryHelper {
 
 
 
-        for (Attachment att : attachments) {
+        for (Map.Entry<String, ? extends Attachment> att : attachments.entrySet()) {
             // we need to cast down to SavedAttachment, which we know is what the AttachmentManager gives us
-            SavedAttachment savedAtt = (SavedAttachment) att;
+            SavedAttachment savedAtt = (SavedAttachment) att.getValue();
             HashMap<String, Object> theAtt = new HashMap<String, Object>();
             try {
                 // add the attachment if it's newer than the minimum revpos
@@ -323,7 +323,7 @@ public class RevisionHistoryHelper {
                 continue;
             }
             // now we are done, add the attachment to the map
-            attsMap.put(att.name, theAtt);
+            attsMap.put(att.getKey(), theAtt);
         }
     }
 

@@ -18,6 +18,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
@@ -52,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipEntry;
@@ -402,12 +404,11 @@ public class DatastoreSchemaTests {
             // Document with ID d834ca038de24bf0ac9f708fcdb63e21 has duplicated attachments on
             // lowest seq.
             // Validate that after migration only one remains and it is of the correct name
-            List<? extends Attachment> attachments = datastore.attachmentsForRevision(datastore
+            Map<String, ? extends Attachment> attachments = datastore.attachmentsForRevision(datastore
                     .read("d834ca038de24bf0ac9f708fcdb63e21"));
             Assert.assertEquals("There should only be one copy of the attachment", 1, attachments
                     .size());
-            Attachment a = attachments.get(0);
-            Assert.assertEquals("The attachment name should be correct", "underground.txt", a.name);
+            Assert.assertThat("The attachment name should be correct", attachments, hasKey("underground.txt"));
 
             // Document with ID a2359c3503e34c008ec448834583e482 has duplicated attachments on
             // highest seq.
@@ -416,8 +417,7 @@ public class DatastoreSchemaTests {
                     .read("a2359c3503e34c008ec448834583e482"));
             Assert.assertEquals("There should only be one copy of the attachment", 1, attachments
                     .size());
-            a = attachments.get(0);
-            Assert.assertEquals("The attachment name should be correct", "underground.txt", a.name);
+            Assert.assertThat("The attachment name should be correct", attachments, hasKey("underground.txt"));
 
             // Document with ID badad1b3842e4056b013587b49c93308 has duplicated attachments across
             // two seqs.
@@ -426,8 +426,8 @@ public class DatastoreSchemaTests {
                     .read("badad1b3842e4056b013587b49c93308"));
             Assert.assertEquals("There should only be two attachments", 2, attachments
                     .size());
-            Assert.assertNotEquals("The attachment names should be different", attachments.get(0)
-                    .name, attachments.get(1).name);
+            Assert.assertThat("The attachment name should be correct", attachments, hasKey("underground.txt"));
+            Assert.assertThat("The attachment name should be correct", attachments, hasKey("bonsai-boston.jpg"));
 
         } finally {
             datastore.close();

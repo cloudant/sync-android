@@ -108,13 +108,12 @@ public class ForceInsertCallable implements SQLCallable<List<DocumentModified>> 
                                 ByteArrayInputStream(data.getBytes("UTF-8")));
                         // inline attachments are automatically decompressed,
                         // so we don't have to worry about that
-                        UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is,
-                                att, type);
+                        UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is, type);
                         try {
                             PreparedAttachment pa = AttachmentManager.prepareAttachment(
                                     attachmentsDir, attachmentStreamFactory, usa);
                             AttachmentManager.addAttachment(db, attachmentsDir, item
-                                    .rev, pa);
+                                    .rev, pa, att);
                         } catch (Exception e) {
                             logger.log(Level.SEVERE, "There was a problem adding the " +
                                             "attachment "
