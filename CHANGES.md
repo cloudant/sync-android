@@ -25,6 +25,7 @@
 - [NOTE] The "CRUD Guide" markdown document (previously located in
   `doc/crud.md`) has been migrated to a
   [java source file](https://github.com/cloudant/sync-android/blob/master/doc/CrudSamples.java).
+  
 - [FIXED] Issue with double encoding of restricted URL characters in credentials when using
   `ReplicatorBuilder`.
 
