@@ -15,8 +15,9 @@
 package com.cloudant.sync.internal.documentstore.callables;
 
 import com.cloudant.sync.documentstore.AttachmentException;
-import com.cloudant.sync.internal.documentstore.DatabaseImpl;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentStoreException;
+import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -68,7 +69,9 @@ public class DoForceInsertNewDocumentWithHistoryCallable implements SQLCallable<
         callable.parentSequence = parentSequence;
         callable.deleted = rev.isDeleted();
         callable.current = true;
-        callable.data = rev.getBody().asBytes();
+        // If the body is null treat it as empty
+        callable.data = rev.getBody() == null ? DocumentBodyFactory.EMPTY.asBytes() : rev.getBody
+                ().asBytes();
         callable.available = true;
         long sequence = callable.call(db);
         return sequence;
