@@ -105,6 +105,20 @@ public class DocumentRevision {
         return deleted;
     }
 
+    /**
+     * To delete a document it is preferable to call {@link Database#delete(DocumentRevision)}.
+     * Some use cases need to do a delete via an update in which case it is possible to
+     * call this method, followed by {@link Database#update(DocumentRevision)}.
+     *
+     * This method sets the document revision's {@code _deleted} flag to true and removes the body
+     * and attachments from the document revision.
+     *
+     */
+    public void setDeleted() {
+        this.deleted = true;
+        this.setBody(DocumentBodyFactory.EMPTY);
+    }
+
     public Map<String, Attachment> getAttachments() {
         return attachments;
     }

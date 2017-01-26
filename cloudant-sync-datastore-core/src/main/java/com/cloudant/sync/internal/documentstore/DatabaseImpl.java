@@ -1081,6 +1081,11 @@ public class DatabaseImpl implements Database {
         Misc.checkArgument(rev.isFullRevision(), "Projected revisions cannot be used to " +
                 "create documents");
 
+        // Shortcut if this is a deletion
+        if (rev.isDeleted()) {
+            return delete(rev);
+        }
+
         // We need to work out which of the attachments for the revision are ones
         // we can copy over because they exist in the attachment store already and
         // which are new, that we need to prepare for insertion.

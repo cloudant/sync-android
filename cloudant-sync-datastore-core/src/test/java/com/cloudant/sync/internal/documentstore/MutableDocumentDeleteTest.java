@@ -135,4 +135,13 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
 
     }
 
+    // Delete a MutableCopy
+    @Test
+    public void deleteViaRevisionUpdate() throws Exception {
+        saved.setDeleted();
+        DocumentRevision deleted = datastore.update(saved);
+        Assert.assertNotNull("Deleted DocumentRevision is null", deleted);
+        Assert.assertTrue("Deleted DocumentRevision is not flagged as deleted", deleted.isDeleted());
+    }
+
 }
