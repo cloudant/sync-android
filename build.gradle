@@ -13,7 +13,7 @@ apply from: 'AndroidExec.gradle'
 
 allprojects {
     group = 'com.cloudant'
-    version = new File('VERSION').text.trim()
+    version = new File(rootDir, 'VERSION').text.trim()
     description = """cloudant-sync"""
     //if the version says "snapshot" anywhere assume it is not a release
     ext.isReleaseVersion = !version.toUpperCase(Locale.ENGLISH).contains("SNAPSHOT")
