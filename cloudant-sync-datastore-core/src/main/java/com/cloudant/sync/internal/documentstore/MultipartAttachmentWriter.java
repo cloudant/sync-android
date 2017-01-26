@@ -267,14 +267,14 @@ public class MultipartAttachmentWriter {
              */
             public int read() throws java.io.IOException {
                 int c;
-                do {
+                while (currentComponentIdx < components.size()) {
                     c = components.get(currentComponentIdx).read();
                     if (c != -1) {
                         return c;
                     } else {
-                        ++currentComponentIdx;
+                        currentComponentIdx++;
                     }
-                } while (currentComponentIdx < components.size());
+                }
                 // we got through all the components, end of stream
                 return -1;
             }
