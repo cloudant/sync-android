@@ -34,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -229,6 +230,11 @@ public class RevisionHistoryHelper {
         MultipartAttachmentWriter mpw = null;
         if (!shouldInline) {
             // only build multipart if we're not sending attachments inline
+
+            // first sort by attachment name - this means that the
+            // entries in the _attachments dictionary are in the same
+            // order as the multiparts
+            attachments = new TreeMap<String, Attachment>(attachments);
             for (Map.Entry<String, ? extends Attachment> att : attachments.entrySet()) {
                 // we need to cast down to SavedAttachment, which we know is what the AttachmentManager gives us
 
@@ -261,11 +267,17 @@ public class RevisionHistoryHelper {
                                    Map<String, Object> outMap,
                                    boolean shouldInline,
                                    int minRevPos) {
+        // Use a LinkedHashMap which has "predictable iteration order" - this means that the
+        // serializer will output the _attachments entries in the same order as the multipart bodies
+        // Note that we have already sorted entries by their key (see below where a TreeMap is used)
+        // se we only need *this* map to have an iteration order which is in the insertion order
         LinkedHashMap<String, Object> attsMap = new LinkedHashMap<String, Object>();
         outMap.put("_attachments", attsMap);
 
-
-
+        // first sort by attachment name - this means that the
+        // entries in the _attachments dictionary are in the same
+        // order as the multiparts
+        attachments = new TreeMap<String, Attachment>(attachments);
         for (Map.Entry<String, ? extends Attachment> att : attachments.entrySet()) {
             // we need to cast down to SavedAttachment, which we know is what the AttachmentManager gives us
             SavedAttachment savedAtt = (SavedAttachment) att.getValue();
