@@ -6,6 +6,12 @@
   the [migration guide](doc/migration.md) for a comprehensive list of
   changes and suggested strategies to migrate your code.
 
+- [BREAKING CHANGE] The `name` field has been removed from
+  `Attachment`. Additionally, the `name` argument has been removed
+  from the `UnsavedStreamAttachment` constructors. The name of the
+  attachment is the key used to add or retrieve the attachment to or
+  from the attachments map.
+
 - [IMPROVED] `DocumentStore.getInstance()` will try to create all
   necessary sub-directories in order to construct the path represented
   by the `File` argument. This differs from the behaviour of the 1.x

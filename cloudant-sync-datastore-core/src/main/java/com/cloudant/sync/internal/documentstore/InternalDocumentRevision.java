@@ -27,7 +27,6 @@ import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.common.SimpleChangeNotifyingMap;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class InternalDocumentRevision extends DocumentRevision implements

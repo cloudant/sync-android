@@ -16,7 +16,6 @@ package com.cloudant.sync.replication;
 
 import com.cloudant.sync.internal.documentstore.RevisionHistoryHelper;
 
-import java.util.List;
 import java.util.Map;
 
 /**

@@ -39,7 +39,7 @@ public class CrudSamples {
      * methods.
      */
     public void crudSamples() throws Exception {
-        
+
         // DocumentStore and Database:
         // The examples below show how to obtain a DocumentStore instance how to obtain the Database
         // object it owns.
@@ -169,13 +169,16 @@ public class CrudSamples {
         // a File object on disk and a MIME type
         UnsavedFileAttachment att1 = new UnsavedFileAttachment(
                 new File("/path/to/image.jpg"), "image/jpeg");
+        // the name can be any unique identifier for a given document ID
+        // it can be used later to look up the attachment within the DocumentRevision
+        String att1Name = "image.jpg";
 
         // As with the document body, you can replace the attachments
         rev.setAttachments(new HashMap<String, Attachment>());
 
         // Or just add or update a single one:
         // (because the getter will always return the underlying map and not a copy)
-        rev.getAttachments().put(att1.name, att1);
+        rev.getAttachments().put(att1Name, att1);
 
         DocumentRevision saved = ds.database().create(rev);
 
@@ -186,11 +189,12 @@ public class CrudSamples {
         byte[] imageData = new byte[256];
         // ByteArrayInputStream adapts imageData to be used as a stream
         UnsavedStreamAttachment att2 = new UnsavedStreamAttachment(
-                new ByteArrayInputStream(imageData), "cute_cat.jpg", "image/jpeg");
+                new ByteArrayInputStream(imageData), "image/jpeg");
+        String att2Name = "cute_cat.jpg";
 
         rev = new DocumentRevision();
-        rev.getAttachments().put(att1.name, att1);
-        rev.getAttachments().put(att2.name, att2);
+        rev.getAttachments().put(att1Name, att1);
+        rev.getAttachments().put(att2Name, att2);
         saved = ds.database().create(rev);
 
         // To read an attachment, get the SavedAttachment from the attachments
@@ -256,7 +260,7 @@ public class CrudSamples {
 
         att1 = new UnsavedFileAttachment(
                 new File("/path/to/image.jpg"), "image/jpeg");
-        newRev.getAttachments().put(att1.name, att1);
+        newRev.getAttachments().put(att1Name, att1);
 
         saved = ds.database().create(newRev);
 
@@ -267,7 +271,7 @@ public class CrudSamples {
 
         att1 = new UnsavedFileAttachment(
                 new File("/path/to/image.jpg"), "image/jpeg");
-        rev.getAttachments().put(att1.name, att1);
+        rev.getAttachments().put(att1Name, att1);
 
         saved = ds.database().create(rev);
 
@@ -293,7 +297,7 @@ public class CrudSamples {
         // attachments map is accessed and modified via the getAttachments()
         // getter.
         saved.setBody(DocumentBodyFactory.create(updatedJson));
-        saved.getAttachments().put(att1.name, att1);
+        saved.getAttachments().put(att1Name, att1);
         updated = ds.database().update(saved);
 
         // Update body and remove all attachments.
@@ -303,7 +307,7 @@ public class CrudSamples {
 
         // Update the attachments without changing the body, add attachments to a doc
         // that had none.
-        saved.getAttachments().put(att1.name, att1);
+        saved.getAttachments().put(att1Name, att1);
         updated = ds.database().update(saved);
 
         // Update attachments by copying from another revision.
@@ -322,8 +326,8 @@ public class CrudSamples {
 
         DocumentRevision revWithAttachments = new DocumentRevision("doc1");
         revWithAttachments.setBody(DocumentBodyFactory.create(json));
-        revWithAttachments.getAttachments().put(att1.name, att1);
-        revWithAttachments.getAttachments().put(att2.name, att2);
+        revWithAttachments.getAttachments().put(att1Name, att1);
+        revWithAttachments.getAttachments().put(att2Name, att2);
         DocumentRevision savedWithAttachments = ds.database().create(revWithAttachments);
 
         // Update body without changing attachments
@@ -332,11 +336,11 @@ public class CrudSamples {
         // Should have the same attachments
 
         // Update the attachments without changing the body, remove attachments
-        savedWithAttachments.getAttachments().remove(att1.name);
+        savedWithAttachments.getAttachments().remove(att1Name);
         updated = ds.database().update(savedWithAttachments);
 
         // Update the attachments without changing the body, add attachments
-        savedWithAttachments.getAttachments().put(att1.name, att1);
+        savedWithAttachments.getAttachments().put(att1Name, att1);
         updated = ds.database().update(savedWithAttachments);
 
         // Update the attachments without changing the body, remove all attachments
@@ -352,13 +356,13 @@ public class CrudSamples {
         // Copy an attachment from one document to another.
         DocumentRevision copiedAttachments = new DocumentRevision();
         copiedAttachments.setBody(DocumentBodyFactory.create(json));
-        Attachment toCopy = revWithAttachments.getAttachments().get("image.jpg");
-        copiedAttachments.getAttachments().put(toCopy.name, toCopy);
+        Attachment toCopy = revWithAttachments.getAttachments().get(att1Name);
+        copiedAttachments.getAttachments().put(att1Name, toCopy);
         savedWithAttachments = ds.database().create(copiedAttachments);
 
         // Add attachment to "saved" from "revWithAttachments"
         Attachment savedAttachment = revWithAttachments.getAttachments().get("nameOfAttachment");
-        saved.getAttachments().put(savedAttachment.name, savedAttachment);
+        saved.getAttachments().put("nameOfAttachment", savedAttachment);
         updated = ds.database().update(saved);
 
         // Deleting a document
