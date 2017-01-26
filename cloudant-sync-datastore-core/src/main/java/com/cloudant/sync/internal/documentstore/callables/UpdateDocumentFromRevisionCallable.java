@@ -24,7 +24,6 @@ import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.Misc;
 
-import java.util.List;
 import java.util.Map;
 
 /**

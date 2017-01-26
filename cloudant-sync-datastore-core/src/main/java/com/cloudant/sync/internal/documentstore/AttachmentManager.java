@@ -16,11 +16,11 @@
 
 package com.cloudant.sync.internal.documentstore;
 
-import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.AttachmentException;
 import com.cloudant.sync.documentstore.AttachmentNotSavedException;
 import com.cloudant.sync.documentstore.DocumentStoreException;
+import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -35,12 +35,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -234,36 +230,36 @@ public class AttachmentManager {
     }
 
     /**
-     * Return a list of the existing attachments in the list passed in.
+     * Return a map of the existing attachments in the map passed in.
      *
      * @param attachments Attachments to search.
-     * @return List of attachments which already exist in the attachment store, or an empty list if none.
+     * @return Map of attachments which already exist in the attachment store, or an empty map if none.
      */
     public static Map<String, SavedAttachment> findExistingAttachments(
             Map<String, ? extends Attachment> attachments) {
-        Map<String, SavedAttachment> list = new HashMap<String, SavedAttachment>();
+        Map<String, SavedAttachment> existingAttachments = new HashMap<String, SavedAttachment>();
         for (Map.Entry<String, ? extends Attachment> a : attachments.entrySet()) {
             if (a instanceof SavedAttachment) {
-                list.put(a.getKey(), (SavedAttachment)a.getValue());
+                existingAttachments.put(a.getKey(), (SavedAttachment)a.getValue());
             }
         }
-        return list;
+        return existingAttachments;
     }
 
     /**
-     * Return a list of the new attachments in the list passed in.
+     * Return a map of the new attachments in the map passed in.
      *
      * @param attachments Attachments to search.
-     * @return List of attachments which need adding to the attachment store, or an empty list if none.
+     * @return Map of attachments which need adding to the attachment store, or an empty map if none.
      */
     public static Map<String, Attachment> findNewAttachments(Map<String, ? extends Attachment> attachments) {
-        Map<String, Attachment> list = new HashMap<String, Attachment>();
+        Map<String, Attachment> newAttachments = new HashMap<String, Attachment>();
         for (Map.Entry<String, ? extends Attachment> a : attachments.entrySet()) {
             if (!(a instanceof SavedAttachment)) {
-                list.put(a.getKey(), a.getValue());
+                newAttachments.put(a.getKey(), a.getValue());
             }
         }
-        return list;
+        return newAttachments;
     }
 
     /**
@@ -272,20 +268,20 @@ public class AttachmentManager {
      *
      * Typically {@code attachments} is found via a call to {@link #findNewAttachments}.
      *
-     * @param attachments List of attachments to prepare.
-     * @return Attachments prepared for inserting into attachment store.
+     * @param attachments Map of attachments to prepare.
+     * @return Map of attachments prepared for inserting into attachment store.
      * @see #findNewAttachments
      */
     public static Map<String, PreparedAttachment> prepareAttachments(String attachmentsDir,
                                                                  AttachmentStreamFactory attachmentStreamFactory,
                                                                  Map<String, Attachment> attachments)
         throws AttachmentException {
-        Map<String, PreparedAttachment> list = new HashMap<String, PreparedAttachment>();
+        Map<String, PreparedAttachment> preparedAttachments = new HashMap<String, PreparedAttachment>();
         for (Map.Entry<String, Attachment> a : attachments.entrySet()) {
             PreparedAttachment pa = AttachmentManager.prepareAttachment(attachmentsDir, attachmentStreamFactory, a.getValue());
-            list.put(a.getKey(), pa);
+            preparedAttachments.put(a.getKey(), pa);
         }
-        return list;
+        return preparedAttachments;
     }
 
     protected static Attachment getAttachment(SQLDatabase db, String attachmentsDir,

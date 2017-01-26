@@ -24,7 +24,6 @@ import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
