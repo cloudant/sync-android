@@ -1073,7 +1073,8 @@ public class DatabaseImpl implements Database {
 
     @Override
     public DocumentRevision update(final DocumentRevision rev)
-            throws AttachmentException, DocumentStoreException, ConflictException {
+            throws AttachmentException, DocumentNotFoundException, ConflictException,
+            DocumentStoreException  {
 
         Misc.checkNotNull(rev, "DocumentRevision");
         Misc.checkState(isOpen(), "Datastore is closed");
@@ -1112,6 +1113,8 @@ public class DatabaseImpl implements Database {
             throwCauseAs(e, InvalidDocumentException.class);
             // conflictexception if rev ID is not winning rev
             throwCauseAs(e, ConflictException.class);
+            // not found if tried to update something that doesn't exist
+            throwCauseAs(e, DocumentNotFoundException.class);
             String message = "Failed to update document";
             logger.log(Level.SEVERE, message, e);
             throw new DocumentStoreException(message, e.getCause());
