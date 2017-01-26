@@ -26,10 +26,11 @@ import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.UnsavedFileAttachment;
+import com.cloudant.sync.documentstore.UnsavedStreamAttachment;
 import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
 import com.cloudant.sync.internal.sqlite.Cursor;
-import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
+import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.Misc;
 import com.cloudant.sync.util.TestUtils;
 
@@ -37,9 +38,12 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -363,5 +367,42 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         IOUtils.contentEquals(
                 new FileInputStream(imageFile),
                 new FileInputStream(imagePatt.tempFile));
+    }
+
+    @Test
+    public void attachmentOrderingTest() throws Exception {
+        DocumentRevision doc = new DocumentRevision();
+        doc.setBody(bodyOne);
+
+        int nAtts = 1000;
+        List<Integer> numbers = new ArrayList<Integer>();
+        for (int i=0; i<nAtts; i++) {
+            numbers.add(i);
+        }
+        Collections.shuffle(numbers);
+        for (int i : numbers) {
+            String name = "attachment_" + i;
+            StringBuilder s = new StringBuilder();
+            s.append("this is some data for ");
+            s.append(name);
+            byte[] bytes = (s.toString()).getBytes();
+            Attachment att0 = new UnsavedStreamAttachment(new ByteArrayInputStream(bytes), "text/plain");
+            doc.getAttachments().put(name, att0);
+        }
+        doc = datastore.create(doc);
+        List<InternalDocumentRevision> path = new ArrayList<InternalDocumentRevision>();
+        path.add((InternalDocumentRevision)doc);
+        boolean shouldInline = false;
+        int minRevPos = 0;
+        Map<String, Object> json = RevisionHistoryHelper.revisionHistoryToJson(path,
+                doc.getAttachments(),
+                shouldInline,
+                minRevPos);
+        MultipartAttachmentWriter mpw = RevisionHistoryHelper.createMultipartWriter(json,
+                doc.getAttachments(),
+                shouldInline,
+                minRevPos);
+        File f = TestUtils.loadFixture("fixture/multipart_1000_atts_ordered.mime");
+        Assert.assertTrue("Streams should be equal", TestUtils.streamsEqual(new FileInputStream(f), mpw.makeInputStream()));
     }
 }
