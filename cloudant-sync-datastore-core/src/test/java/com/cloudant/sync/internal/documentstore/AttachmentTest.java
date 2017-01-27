@@ -42,6 +42,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -376,7 +377,7 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         DocumentRevision doc = new DocumentRevision();
         doc.setBody(bodyOne);
 
-        int nAtts = 1000;
+        int nAtts = 100;
         List<Integer> numbers = new ArrayList<Integer>();
         for (int i=0; i<nAtts; i++) {
             numbers.add(i);
@@ -404,10 +405,10 @@ public class AttachmentTest extends BasicDatastoreTestBase {
                 doc.getAttachments(),
                 shouldInline,
                 minRevPos);
-        File f = TestUtils.loadFixture("fixture/multipart_1000_atts_ordered.regex");
+        File f = TestUtils.loadFixture("fixture/multipart_100_atts_ordered.regex");
         Pattern p = Pattern.compile(IOUtils.toString(new FileInputStream(f)), Pattern.MULTILINE | Pattern.DOTALL);
-        Matcher m = p.matcher(IOUtils.toString(mpw.makeInputStream()));
-
+        String regex = new String(IOUtils.toByteArray(mpw.makeInputStream()), Charset.forName("UTF-8"));
+        Matcher m = p.matcher(regex);
         Assert.assertTrue("Should match pattern", m.matches());
     }
 }

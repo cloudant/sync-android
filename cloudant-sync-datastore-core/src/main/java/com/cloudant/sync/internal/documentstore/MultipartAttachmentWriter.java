@@ -14,10 +14,10 @@
 
 package com.cloudant.sync.internal.documentstore;
 
-import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.http.HttpConnection;
-import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.documentstore.Attachment;
+import com.cloudant.sync.internal.common.CouchConstants;
+import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.util.JSONUtils;
 
 import java.io.ByteArrayInputStream;
@@ -67,12 +67,12 @@ import java.util.Map;
  * <code>true</code> in the <code>_attachments</code> object.
  * </p>
  *
+ * @api_private
  * @see CouchClient#putMultipart(MultipartAttachmentWriter)
  * @see RevisionHistoryHelper#addAttachments(Map, Map, boolean, int)
- * @see <a href target="_blank" =http://couchdb.readthedocs.org/en/latest/api/document/common.html#creating-multiple-attachments>Creating Multiple Attachments</a>
+ * @see
+ * <a href target="_blank" =http://couchdb.readthedocs.org/en/latest/api/document/common.html#creating-multiple-attachments>Creating Multiple Attachments</a>
  * @see <a href target="_blank" =http://tools.ietf.org/html/rfc2387>RFC 2387</a>
- *
- * @api_private
  */
 
 public class MultipartAttachmentWriter {
@@ -85,16 +85,10 @@ public class MultipartAttachmentWriter {
     private byte trailingBoundary[];
     private static byte crlf[] = "\r\n".getBytes(Charset.forName("UTF-8"));
     private byte contentType[];
-    private int currentComponentIdx;
-
-    private ArrayList<InputStream> components;
 
     private String id;
 
     private long contentLength;
-
-    // non-null if there was an IOException thrown when calling Attachment.getInputStream()
-    private IOException deferrredException;
 
     /**
      * Construct a <code>MultipartAttachmentWriter</code> with a default <code>boundary</code>
@@ -109,6 +103,7 @@ public class MultipartAttachmentWriter {
 
     /**
      * Construct a <code>MultipartAttachmentWriter</code> with a specific <code>boundary</code>
+     *
      * @param boundary The boundary sequence used to delimit each part. Must not occur anywhere in
      *                 the data of any part.
      */
@@ -145,8 +140,8 @@ public class MultipartAttachmentWriter {
      *
      * @param body The DocumentRevision to be serialised as JSON
      */
-    public void setBody(Map<String,Object> body) {
-        this.id = (String)body.get(CouchConstants._id);
+    public void setBody(Map<String, Object> body) {
+        this.id = (String) body.get(CouchConstants._id);
         this.bodyBytes = JSONUtils.serializeAsBytes(body);
         contentLength += bodyBytes.length;
     }
@@ -160,7 +155,7 @@ public class MultipartAttachmentWriter {
      * @param length     Size in bytes of attachment, as it will be transmitted over the network
      *                   (that is, after any encoding)
      * @throws IOException if there was an error getting the input stream from the {@code
-     * Attachment}
+     *                     Attachment}
      */
     public void addAttachment(Attachment attachment, long length) throws IOException {
         this.attachments.add(attachment);
@@ -172,6 +167,7 @@ public class MultipartAttachmentWriter {
     /**
      * Make a default partBoundary, consisting of 32 random characters in the range [a-z].
      * It is hoped this will be sufficiently random to not appear anywhere in the payload.
+     *
      * @return The partBoundary
      */
     private String makeBoundary() {
@@ -179,8 +175,8 @@ public class MultipartAttachmentWriter {
         int length = 32;
         int base = 97; //a..z
         int range = 26;
-        while(length-- > 0) {
-            char c = (char)(int)(Math.random()*range+base);
+        while (length-- > 0) {
+            char c = (char) (int) (Math.random() * range + base);
             s.append(c);
         }
         return s.toString();
@@ -208,37 +204,20 @@ public class MultipartAttachmentWriter {
 
     @Override
     public String toString() {
-        return "Multipart/related with "+attachments.size()+" attachments";
+        return "Multipart/related with " + attachments.size() + " attachments";
     }
 
-    private void makeComponents() {
-        components = new ArrayList<InputStream>();
-
-        // preamble
-        components.add(new ByteArrayInputStream(partBoundary));
-        components.add(new ByteArrayInputStream(crlf));
-        components.add(new ByteArrayInputStream(contentType));
-        components.add(new ByteArrayInputStream(crlf));
-        components.add(new ByteArrayInputStream(crlf));
-
-        // body
-        components.add(new ByteArrayInputStream(bodyBytes));
-
-        // each attachment
-        for (Attachment a : attachments) {
-            try {
-                components.add(new ByteArrayInputStream(crlf));
-                components.add(new ByteArrayInputStream(partBoundary));
-                components.add(new ByteArrayInputStream(crlf));
-                components.add(new ByteArrayInputStream(crlf));
-                components.add(a.getInputStream());
-            } catch (IOException ioe) {
-                deferrredException = ioe;
-            }
-        }
-        // close
-        components.add(new ByteArrayInputStream(crlf));
-        components.add(new ByteArrayInputStream(trailingBoundary));
+    /**
+     * Current state representing part of multipart being written (see comment in
+     * {@link WriterInputStream#next()} for details)
+     */
+    private enum State {
+        BEGIN,
+        BODY,
+        BOUNDARY,
+        ATTACHMENT,
+        TRAILING_BOUNDARY,
+        END
     }
 
     public HttpConnection.InputStreamGenerator makeInputStreamGenerator() {
@@ -251,76 +230,128 @@ public class MultipartAttachmentWriter {
     }
 
     public InputStream makeInputStream() {
+        return new WriterInputStream();
+    }
 
-        this.deferrredException = null;
-        currentComponentIdx = 0;
-        this.makeComponents();
+    /**
+     * Utility class to allow the multipart to be accessed as a stream
+     *
+     * This class keeps track of the current part of the multipart being written using a basic state
+     * machine (see comment in {@link #next()} for details)
+     */
+    private class WriterInputStream extends InputStream {
+        int currentAttachment;
+        InputStream currentStream;
+        State state;
 
-        return new InputStream() {
-            @Override
-            /**
-             * Read a single byte from the stream.
-             * @return The next byte in the stream, expressed as an int in the range [0..255].
-             *         If there are no more bytes available, return -1.
-             * @throws java.io.IOException if there was an error reading from one of the internal input streams
-             *
-             */
-            public int read() throws java.io.IOException {
-                int c;
-                while (currentComponentIdx < components.size()) {
-                    c = components.get(currentComponentIdx).read();
-                    if (c != -1) {
-                        return c;
-                    } else {
-                        currentComponentIdx++;
-                    }
-                }
-                // we got through all the components, end of stream
-                return -1;
+        public WriterInputStream() {
+            state = State.BEGIN;
+            currentAttachment = 0;
+        }
+
+        public int read() throws IOException {
+            byte[] b = new byte[1];
+            int amountRead = this.read(b);
+            // read one byte and return its value or -1 if no bytes were read
+            return amountRead == 1 ? b[0] : -1;
+        }
+
+        public int read(byte b[]) throws IOException {
+
+            if (state == State.BEGIN) {
+                state = State.BODY;
+                byte[] bytes = concat(partBoundary, crlf, contentType, crlf, crlf);
+                currentStream = new ByteArrayInputStream(bytes);
             }
 
-            /**
-             * Read at most the next <code>bytes.length</code> bytes from the stream.
-             *
-             * @param bytes A buffer to read the next <i>n</i> bytes into, up to the
-             *              limit of the length of the buffer, or the number of bytes
-             *              available, whichever is lower.
-             * @return The actual number of bytes read, or -1 to signal the end of the
-             * stream has been reached.
-             * @throws java.io.IOException if there was an error reading from one of the
-             *                             internal input streams
-             */
-            @Override
-            public int read(byte[] bytes) throws java.io.IOException {
-                if (deferrredException != null) {
-                    // there was an exception caught when calling Attachment.getInputStream()
-                    // - throw it now
-                    throw deferrredException;
+            int amountRead = 0;
+            int howMuch = 0;
+
+            while (currentStream != null) {
+                // try to read enough bytes to fill the rest of the bytes array
+                howMuch = b.length - amountRead;
+                if (howMuch <= 0) {
+                    break;
                 }
-                int amountRead = 0;
-                int currentOffset = 0;
-                int howMuch = 0;
-                do {
-                    InputStream currentComponent = components.get(currentComponentIdx);
-                    // try to read enough bytes to fill the rest of the bytes array
-                    howMuch = bytes.length - currentOffset;
-                    if (howMuch <= 0) {
-                        break;
-                    }
-                    int read = currentComponent.read(bytes, currentOffset, howMuch);
-                    if (read <= 0) {
-                        currentComponentIdx++;
-                        continue;
-                    }
-                    amountRead += read;
-                    currentOffset += howMuch;
-                } while (currentComponentIdx < components.size());
-
-                // signal EOF if we don't have any more
-                int retnum = amountRead > 0 ? amountRead : -1;
-                return retnum;
-
+                int read = currentStream.read(b, amountRead, howMuch);
+                if (read <= 0) {
+                    currentStream.close();
+                    currentStream = this.next();
+                    continue;
+                }
+                amountRead += read;
             }
-        };
+
+            // signal EOF if we don't have any more
+            int retnum = amountRead > 0 ? amountRead : -1;
+            return retnum;
+        }
+
+        /**
+         * Get the next input stream for the current part of the multipart (body / boundary /
+         * attachment / trailing boundary)
+         *
+         * Advance the current state as follows:
+         * BEGIN -> BODY -> (BOUNDARY -> ATTACHMENT)+ -> TRAILING_BOUNDARY -> END
+         * (where ()+ represents a repeating group of 1..n attachments)
+         *
+         * After the state reaches END, return null
+         *
+         * @return The next input stream for the current part of the multipart, or null
+         */
+        private InputStream next() throws IOException {
+            InputStream nextStream;
+            if (state == State.BODY) {
+                // next state
+                state = State.BOUNDARY;
+                nextStream = new ByteArrayInputStream(bodyBytes);
+            } else if (state == State.BOUNDARY) {
+                // next state
+                state = State.ATTACHMENT;
+                byte[] bytes = concat(crlf, partBoundary, crlf, crlf);
+                nextStream = new ByteArrayInputStream(bytes);
+            } else if (state == State.ATTACHMENT) {
+                // next state
+                if (currentAttachment == attachments.size() -1) {
+                    // got to the end
+                    state = State.TRAILING_BOUNDARY;
+                } else {
+                    // next attachment
+                    state = State.BOUNDARY;
+                }
+                nextStream = attachments.get(currentAttachment++).getInputStream();
+            } else if (state == State.TRAILING_BOUNDARY) {
+                // next state
+                state = State.END;
+                byte[] bytes = concat(crlf, trailingBoundary);
+                nextStream = new ByteArrayInputStream(bytes);
+            } else if (state == State.END) {
+                nextStream = null;
+            } else {
+                throw new RuntimeException("Unknown state");
+            }
+            return nextStream;
+        }
+
+        /**
+         * Utility to concatenate a number of byte arrays
+         *
+         * @param ins 1 or more byte arrays
+         * @return a byte array containing a concatenation of {@code ins}
+         */
+        private byte[] concat(byte[]... ins) {
+            int total = 0;
+            for (byte[] in : ins) {
+                total += in.length;
+            }
+            byte[] out = new byte[total];
+            int current = 0;
+            for (byte[] in : ins) {
+                System.arraycopy(in, 0, out, current, in.length);
+                current += in.length;
+            }
+            return out;
+        }
+
     }
 }
