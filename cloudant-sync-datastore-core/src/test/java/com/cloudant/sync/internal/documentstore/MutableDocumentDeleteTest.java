@@ -57,8 +57,8 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
     public void deleteNullRevision() throws Exception {
         try {
             DocumentRevision deleted = datastore.delete((DocumentRevision)null);
-            Assert.fail("NullPointerException expected");
-        } catch (NullPointerException npe) {
+            Assert.fail("IllegalArgumentException expected");
+        } catch (IllegalArgumentException iae) {
             ;
         }
     }
@@ -122,8 +122,8 @@ public class MutableDocumentDeleteTest extends BasicDatastoreTestBase {
     public void deleteAllNullRevision() throws Exception {
         try {
             List<? extends DocumentRevision> deleted = datastore.delete((String)null);
-            Assert.fail("NullPointerException expected");
-        } catch (NullPointerException npe) {
+            Assert.fail("IllegalArgumentException expected");
+        } catch (IllegalArgumentException iae) {
             ;
         }
     }

@@ -21,14 +21,13 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Internal utility class
+ *
  * @api_private
  */
 public class Misc {
@@ -55,7 +54,7 @@ public class Misc {
             while ((bytesRead = shaFis.read(buf)) != -1) {
                 sha1.update(buf, 0, bytesRead);
             }
-        } catch (NoSuchAlgorithmException e){
+        } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
         return sha1.digest();
@@ -84,22 +83,21 @@ public class Misc {
         }
         return builder.toString();
     }
+
     /**
-     * Check that a parameter is not null and throw NullPointerException with a message of
+     * Check that a parameter is not null and throw IllegalArgumentException with a message of
      * errorMessagePrefix + " must not be null." if it is null, defaulting to "Parameter must not be
      * null.".
      *
      * @param param              the parameter to check
      * @param errorMessagePrefix the prefix of the error message to use for the
      *                           IllegalArgumentException if the parameter was null
-     * @throws NullPointerException if the arg is null.
+     * @throws IllegalArgumentException if the parameter was {@code null}
      */
     public static void checkNotNull(Object param, String errorMessagePrefix) throws
-            NullPointerException {
-        if (param == null) {
-            throw new NullPointerException((errorMessagePrefix != null ? errorMessagePrefix :
-                    "Parameter") + " must not be null.");
-        }
+            IllegalArgumentException {
+        checkArgument(param != null, (errorMessagePrefix != null ? errorMessagePrefix :
+                "Parameter") + " must not be null.");
     }
 
     /**
@@ -114,8 +112,9 @@ public class Misc {
      */
     public static void checkNotNullOrEmpty(String param, String errorMessagePrefix) throws
             IllegalArgumentException {
-        checkArgument(!isStringNullOrEmpty(param), (errorMessagePrefix != null ? errorMessagePrefix :
-              "Parameter") + " must not be " + (param == null ? "null." : "empty."));
+        checkNotNull(param, errorMessagePrefix);
+        checkArgument(!param.isEmpty(), (errorMessagePrefix != null ?
+                errorMessagePrefix : "Parameter") + " must not be empty.");
     }
 
     /**

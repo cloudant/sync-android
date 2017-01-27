@@ -16,17 +16,17 @@
 
 package com.cloudant.sync.internal.replication;
 
-import com.cloudant.sync.internal.mazha.DocumentRevs;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.cloudant.sync.internal.documentstore.DocumentRevsList;
+import com.cloudant.sync.internal.mazha.DocumentRevs;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -120,7 +120,7 @@ public class GetRevisionTaskTest {
 
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void test_null_docId() {
         CouchDB sourceDB = mock(CouchDB.class);
         ArrayList<String> revIds = new ArrayList<String>();
@@ -131,7 +131,7 @@ public class GetRevisionTaskTest {
         new GetRevisionTaskThreaded(sourceDB, requests, pullAttachmentsInline);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void test_null_revId() {
         CouchDB sourceDB = mock(CouchDB.class);
         List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
@@ -139,7 +139,7 @@ public class GetRevisionTaskTest {
         new GetRevisionTaskThreaded(sourceDB, requests, pullAttachmentsInline);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void test_null_sourceDb() {
         ArrayList<String> revIds = new ArrayList<String>();
         revIds.add("revId");

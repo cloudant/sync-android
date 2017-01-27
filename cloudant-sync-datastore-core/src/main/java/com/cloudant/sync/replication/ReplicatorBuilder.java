@@ -365,7 +365,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
      * takes precedence over credentials passed via the URI.
      * @param username The username to use when authenticating.
      * @return The current instance of {@link ReplicatorBuilder}
-     * @throws NullPointerException if {@code username} is {@code null}.
+     * @throws IllegalArgumentException if {@code username} is {@code null}.
      */
     public E username(String username) {
         Misc.checkNotNull(username, "username");
@@ -382,7 +382,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
      *
      * @param password The password to use when authenticating.
      * @return The current instance of {@link ReplicatorBuilder}
-     * @throws NullPointerException if {@code password} is {@code null}.
+     * @throws IllegalArgumentException if {@code password} is {@code null}.
      */
     public E password(String password) {
         Misc.checkNotNull(password, "password");
