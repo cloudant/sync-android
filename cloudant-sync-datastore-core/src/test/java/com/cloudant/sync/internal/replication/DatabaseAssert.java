@@ -105,7 +105,7 @@ public class DatabaseAssert {
 
         Set<String> alreadyChecked = new HashSet<String>();
         Changes changesBatch = datastore.changes(0, BATCH_LIMIT);
-        while(changesBatch.size() > 0) {
+        while(changesBatch.getResults().size() > 0) {
 
             for (DocumentRevision object : changesBatch.getResults()) {
                 ChangeRowAdaptor adaptor = new ChangeRowAdaptor(object);

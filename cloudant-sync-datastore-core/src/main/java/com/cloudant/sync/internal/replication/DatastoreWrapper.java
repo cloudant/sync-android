@@ -16,21 +16,22 @@
 
 package com.cloudant.sync.internal.replication;
 
-import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.AttachmentException;
-import com.cloudant.sync.internal.documentstore.DatabaseImpl;
-import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
-import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.DocumentStoreException;
+import com.cloudant.sync.documentstore.LocalDocument;
+import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
 import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.documentstore.DocumentRevsUtils;
 import com.cloudant.sync.internal.documentstore.ForceInsertItem;
-import com.cloudant.sync.documentstore.LocalDocument;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.PreparedAttachment;
+import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.util.JSONUtils;
 
 import java.util.ArrayList;
@@ -123,10 +124,10 @@ class DatastoreWrapper {
         }
     }
 
-    Map<String, DocumentRevisionTree> getDocumentTrees(List<InternalDocumentRevision> documents) {
+    Map<String, DocumentRevisionTree> getDocumentTrees(List<DocumentRevision> documents) {
         Map<String, DocumentRevisionTree> allDocumentTrees =
                 new HashMap<String, DocumentRevisionTree>();
-        for(InternalDocumentRevision doc: documents) {
+        for(DocumentRevision doc: documents) {
             DocumentRevisionTree tree =
                     this.dbCore.getAllRevisionsOfDocument(doc.getId());
             allDocumentTrees.put(doc.getId(), tree);

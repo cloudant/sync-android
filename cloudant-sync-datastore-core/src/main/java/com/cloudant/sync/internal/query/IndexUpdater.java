@@ -109,7 +109,7 @@ class IndexUpdater {
                 changes = database.changes(lastSequence, 10000);
                 updateIndex(indexName, fieldNames, changes, lastSequence);
                 lastSequence = changes.getLastSequence();
-            } while (changes.size() > 0);
+            } while (changes.getResults().size() > 0);
         } catch (DocumentStoreException e) {
             String message = String.format(Locale.ENGLISH, "Failed to get changes feed from %d", lastSequence);
             logger.log(Level.SEVERE, message, e);
