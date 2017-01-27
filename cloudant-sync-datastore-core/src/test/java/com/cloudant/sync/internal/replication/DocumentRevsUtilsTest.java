@@ -47,7 +47,7 @@ public class DocumentRevsUtilsTest {
         Assert.assertThat(documentRevs.getOthers().keySet(), hasItems("title", "album"));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void createRevisionIdHistory_null_exception() {
         DocumentRevsUtils.createRevisionIdHistory(null);
     }
@@ -92,7 +92,7 @@ public class DocumentRevsUtilsTest {
         Assert.assertEquals("Trouble Two", body.get("title"));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void createDocument_null_exception() {
         DocumentRevsUtils.createDocument(null);
     }

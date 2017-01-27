@@ -22,7 +22,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.runners.Parameterized.Parameters;
 
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
@@ -103,8 +102,8 @@ public class QueryCoveringIndexesTest extends AbstractQueryTestBase {
 
     // When executing AND queries
 
-    @Test(expected = NullPointerException.class)
-    public void returnsNullForNoQuery() throws Exception {
+    @Test(expected = IllegalArgumentException.class)
+    public void throwsIllegalArgumentForNullQuery() throws Exception {
         setUpBasicQueryData();
         idxMgr.find(null);
     }

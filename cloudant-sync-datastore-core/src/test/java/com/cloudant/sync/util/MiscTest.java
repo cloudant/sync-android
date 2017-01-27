@@ -101,7 +101,7 @@ public class MiscTest {
     public void defaultNullObjectCheck() throws Exception {
         try {
             Misc.checkNotNull(null, null);
-        } catch(NullPointerException e) {
+        } catch(IllegalArgumentException e) {
             Assert.assertEquals("Parameter must not be null.", e.getMessage());
         }
     }
@@ -128,7 +128,7 @@ public class MiscTest {
     public void nullObjectCheck() throws Exception {
         try {
             Misc.checkNotNull(null, "Test argument");
-        } catch(NullPointerException e) {
+        } catch(IllegalArgumentException e) {
             Assert.assertEquals("Test argument must not be null.", e.getMessage());
         }
     }

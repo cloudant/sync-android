@@ -17,11 +17,9 @@
 package com.cloudant.sync.internal.query;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
@@ -49,11 +47,11 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         assertThat(indexes.isEmpty(), is(true));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void preconditionsToCreatingIndexesNullFields() throws QueryException {
         // doesn't create an index on null fields
         im.createJsonIndex(null, "basic");
-        Assert.fail("Expected createJsonIndex to throw a NullPointerException");
+        Assert.fail("Expected createJsonIndex to throw a IllegalArgumentException");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -74,12 +72,12 @@ public class IndexCreatorTest extends AbstractIndexTestBase {
         Assert.fail("Expected createJsonIndex to throw a IllegalArgumentException");
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void preconditionsToCreatingIndexesNullType() throws QueryException {
         List<FieldSort> fieldNames = null;
         // doesn't create an index on null index type
         im.createJsonIndex(fieldNames, "basic");
-        Assert.fail("Expected createJsonIndex to throw a NullPointerException");
+        Assert.fail("Expected createJsonIndex to throw a IllegalArgumentException");
     }
 
     @Test(expected = IllegalArgumentException.class)

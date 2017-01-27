@@ -275,7 +275,7 @@ public class CrudSamples {
         rev = new DocumentRevision();
 
         saved = ds.database().create(rev);
-        // will throw java.lang.NullPointerException: Input document body can not be null
+        // will throw java.lang.IllegalArgumentException: Input document body can not be null
 
         // Updating a document
 
