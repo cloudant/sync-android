@@ -35,6 +35,8 @@ public class InternalDocumentRevision extends DocumentRevision implements
 
     private long sequence = -1L;
 
+    protected boolean current;
+
     private long internalNumericId;
 
     private long parent = -1L;
@@ -57,6 +59,14 @@ public class InternalDocumentRevision extends DocumentRevision implements
             this.deleted = false;
             this.attachments = SimpleChangeNotifyingMap.wrap(new HashMap<String, Attachment>());
         }
+    }
+
+    /**
+     * @return {@code true} if this revision is the current winner for the
+     * document.
+     */
+    public boolean isCurrent(){
+        return current;
     }
 
     /**

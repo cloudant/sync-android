@@ -51,7 +51,7 @@ public class BasicDBObjectTest {
         Assert.assertEquals(DOCUMENT_ID, td.getId());
         Assert.assertEquals(REVISION_ID, td.getRevision());
         Assert.assertTrue(td.isDeleted());
-        Assert.assertFalse(td.isCurrent());
+        Assert.assertFalse(((InternalDocumentRevision)td).isCurrent());
         Assert.assertEquals("test data", (String) td.getBody().asMap().get("a"));
     }
 
