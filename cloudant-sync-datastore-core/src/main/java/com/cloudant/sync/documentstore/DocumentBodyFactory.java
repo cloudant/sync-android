@@ -33,7 +33,7 @@ public class DocumentBodyFactory {
      * <p>Returns a {@link DocumentBody}  object representing an empty document body.
      * This instance is shared.</p>
      */
-    public final static DocumentBodyImpl EMPTY = new DocumentBodyImpl(JSONUtils.emptyJSONObjectAsBytes());
+    public final static DocumentBody EMPTY = new DocumentBodyImpl(JSONUtils.emptyJSONObjectAsBytes());
 
     /**
      * <p>Returns a new {@link DocumentBody} object from JSON data.</p>
