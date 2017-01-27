@@ -46,6 +46,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by tomblench on 12/03/2014.
@@ -402,7 +404,10 @@ public class AttachmentTest extends BasicDatastoreTestBase {
                 doc.getAttachments(),
                 shouldInline,
                 minRevPos);
-        File f = TestUtils.loadFixture("fixture/multipart_1000_atts_ordered.mime");
-        Assert.assertTrue("Streams should be equal", TestUtils.streamsEqual(new FileInputStream(f), mpw.makeInputStream()));
+        File f = TestUtils.loadFixture("fixture/multipart_1000_atts_ordered.regex");
+        Pattern p = Pattern.compile(IOUtils.toString(new FileInputStream(f)), Pattern.MULTILINE | Pattern.DOTALL);
+        Matcher m = p.matcher(IOUtils.toString(mpw.makeInputStream()));
+
+        Assert.assertTrue("Should match pattern", m.matches());
     }
 }
