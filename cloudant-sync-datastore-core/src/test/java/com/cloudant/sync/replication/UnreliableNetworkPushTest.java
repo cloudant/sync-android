@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 IBM Corp. All rights reserved.
+ * Copyright © 2015, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -14,20 +14,16 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.common.ProxyTestBase;
+import com.cloudant.common.UnreliableProxyTestBase;
 import com.cloudant.common.RequireRunningProxy;
-import com.cloudant.http.Http;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,20 +33,20 @@ import java.util.Map;
 
 
 @Category(RequireRunningProxy.class)
-public class UnreliableNetworkPushTest extends ProxyTestBase {
-
-
-    String jsonAddToxic = "{\"enabled\" :true, \"timeout\":50, \"sometimesToxic\": true, \"toxicity\" :0.5}";
+public class UnreliableNetworkPushTest extends UnreliableProxyTestBase {
 
     @Test
-    public void unreliableNetworkPullTest() throws Exception {
-        this.addToxic();
+    public void unreliableNetworkPushTest() throws Exception {
+        addTimeoutToxic();
         int nDocs = 500;
         for (int i=0; i<nDocs; i++) {
             createLocalDocument("doc" + i);
         }
         PushResult result = super.push();
+
         Assert.assertEquals(nDocs, result.pushStrategy.getDocumentCounter());
+        // When push completes remove the toxic for the assertion gets
+        removeTimeoutToxic();
         for (int i=0; i<nDocs; i++) {
             try {
                 Map<String, Object> doc = this.remoteDb.get(Map.class, "doc" + i);
@@ -63,20 +59,7 @@ public class UnreliableNetworkPushTest extends ProxyTestBase {
         // TODO a number of extra document updates and pulls to ensure checkpointing is correct
     }
 
-    @Before
-    @Override
-    public void setUp() throws Exception {
-        this.startProxy();
-        super.setUp();
-    }
 
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        this.removeToxic();
-        super.tearDown();
-        this.stopProxy();
-    }
 
     private void createLocalDocument(String docid) throws DocumentException {
         DocumentRevision mdr = new DocumentRevision(docid);
@@ -88,16 +71,6 @@ public class UnreliableNetworkPushTest extends ProxyTestBase {
         }
         mdr.setBody(DocumentBodyFactory.create(doc));
         datastore.createDocumentFromRevision(mdr);
-    }
-
-    private void addToxic() throws Exception {
-        Http.POST(new URL(String.format("http://%s:%d/proxies/%s/downstream/toxics/timeout",
-                proxyHost, proxyAdminPort, proxyName)), "application/json").setRequestBody(jsonAddToxic).execute();
-    }
-
-    private void removeToxic() throws Exception {
-        Http.DELETE(new URL(String.format("http://%s:%d/proxies/%s/downstream/toxics/timeout",
-                proxyHost, proxyAdminPort, proxyName))).execute();
     }
 
 }
