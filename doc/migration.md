@@ -247,3 +247,25 @@ Situations for which runtime (unchecked) exceptions may be thrown include:
 
 The `IntervalTimerReplicationPolicyManager` was moved into the `cloudant-sync-datastore-javase`
 module since it was not suitable for running on Android anyway.
+
+## Changes to `Changes`
+
+Removed `size()` and `getIds()` methods. The behaviour duplicated what was
+already available on the `List` returned from `getResults()`.
+
+Before:
+```java
+getChanges().size();
+getChanges().getIds();
+```
+After:
+```java
+getChanges().getResults().size();
+// Get a list of IDs using a collector (Java 1.8)
+getChanges().getResults().stream().map(DocumentRevision::getId).collect(Collectors.toList());
+// Alternatively, for older APIs, just iterate the DocumentRevisions
+for (DocumentRevision rev : getChanges().getResults()) {
+  // Do something with the ID...
+  rev.getId();
+}
+```

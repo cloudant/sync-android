@@ -16,30 +16,33 @@
 
 package com.cloudant.sync.internal.documentstore;
 
+import static org.hamcrest.CoreMatchers.hasItems;
+
+import com.cloudant.sync.documentstore.Changes;
+import com.cloudant.sync.documentstore.DocumentRevision;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.hasItems;
-
-import com.cloudant.sync.documentstore.Changes;
-import com.cloudant.sync.documentstore.DocumentRevision;
-
 public class ChangesTest extends BasicDatastoreTestBase {
 
     @Test
     public void changes() throws Exception {
-        InternalDocumentRevision[] docs = createThreeDocuments();
-        List<InternalDocumentRevision> docsList = new ArrayList<InternalDocumentRevision>();
+        DocumentRevision[] docs = createThreeDocuments();
+        List<DocumentRevision> docsList = new ArrayList<DocumentRevision>();
         docsList.add(docs[0]);
         docsList.add(docs[1]);
 
-        Changes c = new Changes(101L, docsList);
+        Changes c = new ChangesImpl(101L, docsList);
         Assert.assertEquals(101L, c.getLastSequence());
-        Assert.assertEquals(2, c.size());
-        Assert.assertThat(c.getIds(), hasItems(docs[0].getId(), docs[1].getId()));
         Assert.assertEquals(2, c.getResults().size());
+        List<String> changeIDs = new ArrayList<String>();
+        for (DocumentRevision rev : c.getResults()) {
+            changeIDs.add(rev.getId());
+        }
+        Assert.assertThat(changeIDs, hasItems(docs[0].getId(), docs[1].getId()));
     }
 }

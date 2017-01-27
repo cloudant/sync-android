@@ -16,24 +16,26 @@ package com.cloudant.sync.internal.replication;
 
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
-import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.AttachmentException;
 import com.cloudant.sync.documentstore.Changes;
 import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStoreException;
+import com.cloudant.sync.event.EventBus;
+import com.cloudant.sync.internal.documentstore.ChangesImpl;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
-import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
 import com.cloudant.sync.internal.documentstore.RevisionHistoryHelper;
-import com.cloudant.sync.event.EventBus;
-import com.cloudant.sync.replication.DatabaseNotFoundException;
-import com.cloudant.sync.replication.PushAttachmentsInline;
-import com.cloudant.sync.replication.PushFilter;
+import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.util.CollectionUtils;
 import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
+import com.cloudant.sync.replication.DatabaseNotFoundException;
+import com.cloudant.sync.replication.PushAttachmentsInline;
+import com.cloudant.sync.replication.PushFilter;
 
 import org.apache.commons.codec.binary.Hex;
 
@@ -219,7 +221,7 @@ public class PushStrategy implements ReplicationStrategy {
 
             // Get the next batch of changes and record the size and last sequence
             Changes changes = getNextBatch();
-            final int unfilteredChangesSize = changes.size();
+            final int unfilteredChangesSize = changes.getResults().size();
             final long lastSeq = changes.getLastSequence();
 
             // Count the number of changes processed
@@ -227,10 +229,10 @@ public class PushStrategy implements ReplicationStrategy {
 
             // If there is a filter replace the changes with the filtered list of changes
             if (this.filter != null) {
-                List<InternalDocumentRevision> allowedChanges = new ArrayList<InternalDocumentRevision>(changes
+                List<DocumentRevision> allowedChanges = new ArrayList<DocumentRevision>(changes
                         .getResults().size());
 
-                for (InternalDocumentRevision revision : changes.getResults()) {
+                for (DocumentRevision revision : changes.getResults()) {
                     if (this.filter.shouldReplicateDocument(revision)) {
                         allowedChanges.add(revision);
                     }
@@ -238,7 +240,7 @@ public class PushStrategy implements ReplicationStrategy {
 
                 changes = new FilteredChanges(changes.getLastSequence(), allowedChanges);
             }
-            final int filteredChangesSize = changes.size();
+            final int filteredChangesSize = changes.getResults().size();
 
             // So we can check whether all changes were processed during
             // a log analysis.
@@ -306,8 +308,8 @@ public class PushStrategy implements ReplicationStrategy {
         return this.sourceDb.getDbCore().changes(lastPushSequence, this.changeLimitPerBatch);
     }
 
-    private static class FilteredChanges extends Changes {
-        public FilteredChanges(long lastSequence, List<InternalDocumentRevision> results) {
+    private static class FilteredChanges extends ChangesImpl {
+        public FilteredChanges(long lastSequence, List<DocumentRevision> results) {
             super(lastSequence, results);
         }
     }
@@ -333,11 +335,11 @@ public class PushStrategy implements ReplicationStrategy {
 
         // Process the changes themselves in batches, where we post a batch
         // at a time to the remote database's _bulk_docs endpoint.
-        List<? extends List<InternalDocumentRevision>> batches = CollectionUtils.partition(
+        List<? extends List<DocumentRevision>> batches = CollectionUtils.partition(
                 changes.getResults(),
                 this.bulkInsertSize
         );
-        for (List<InternalDocumentRevision> batch : batches) {
+        for (List<DocumentRevision> batch : batches) {
 
             if (this.state.cancel) { break; }
 

@@ -14,9 +14,10 @@
 
 package com.cloudant.sync.internal.documentstore.callables;
 
-import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
 import com.cloudant.sync.documentstore.Changes;
-import com.cloudant.sync.internal.documentstore.DatabaseImpl;
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
+import com.cloudant.sync.internal.documentstore.ChangesImpl;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
@@ -73,7 +74,7 @@ public class ChangesCallable implements SQLCallable<Changes> {
             }
 
             if (ids.isEmpty()){
-                return new Changes(lastSequence, Collections.<InternalDocumentRevision>emptyList());
+                return new ChangesImpl(lastSequence, Collections.<DocumentRevision>emptyList());
             }
 
             List<InternalDocumentRevision> results = new GetDocumentsWithInternalIdsCallable(ids, attachmentsDir, attachmentStreamFactory).call(db);
@@ -87,7 +88,7 @@ public class ChangesCallable implements SQLCallable<Changes> {
                 ));
             }
 
-            return new Changes(lastSequence, results);
+            return new ChangesImpl(lastSequence, new ArrayList<DocumentRevision>(results));
         } catch (SQLException e) {
             throw new IllegalStateException("Error querying all changes since: " +
                     since + ", limit: " + limit, e);
