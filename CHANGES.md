@@ -34,6 +34,10 @@
   
 - [FIXED] Issue with double encoding of restricted URL characters in credentials when using
   `ReplicatorBuilder`.
+  
+- [FIXED] Issue where push replicating a large number of attachments
+  could exhaust the operating system file handle limit, on some
+  platforms.
 
 # 1.1.5 (2016-12-08)
 - [FIXED] Issue where replicator would not get the latest revision if `_bulk_get`
