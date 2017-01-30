@@ -28,6 +28,7 @@ import com.cloudant.sync.query.Tokenizer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Lists the indexes for the database.
@@ -37,14 +38,16 @@ public class ListIndexesCallable implements SQLCallable<List<Index>> {
     @Override
     public List<Index> call(SQLDatabase db) throws Exception {
         // Accumulate indexes and definitions into a map
-        String sqlIndexNames = String.format("SELECT DISTINCT index_name FROM %s", QueryImpl.INDEX_METADATA_TABLE_NAME);
+        String sqlIndexNames = String.format("SELECT DISTINCT index_name FROM %s", QueryImpl
+                .INDEX_METADATA_TABLE_NAME);
         Cursor cursorIndexNames = null;
         ArrayList<Index> indexes = new ArrayList<Index>();
         try {
             cursorIndexNames = db.rawQuery(sqlIndexNames, new String[]{});
             while (cursorIndexNames.moveToNext()) {
                 String indexName = cursorIndexNames.getString(0);
-                String sqlIndexes = String.format("SELECT index_type, field_name, index_settings FROM %s " +
+                String sqlIndexes = String.format("SELECT index_type, field_name, index_settings " +
+                        "FROM %s " +
                                 "WHERE index_name = ?",
                         QueryImpl.INDEX_METADATA_TABLE_NAME);
                 Cursor cursorIndexes = null;
@@ -57,7 +60,8 @@ public class ListIndexesCallable implements SQLCallable<List<Index>> {
                     while (cursorIndexes.moveToNext()) {
                         if (first) {
                             // first time round
-                            indexType = IndexType.enumValue(cursorIndexes.getString(0));
+                            indexType = IndexType.valueOf(cursorIndexes.getString(0).toUpperCase
+                                    (Locale.ENGLISH));
                             settings = cursorIndexes.getString(2);
                             first = false;
                         }
