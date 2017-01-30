@@ -337,7 +337,7 @@ private ServiceConnection mConnection = new ServiceConnection() {
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         mReplicationService = ((ReplicationService.LocalBinder) service).getService();
-        mReplicationService.addListener(new ReplicationService.SimpleReplicationCompleteListener() {
+        mReplicationService.addListener(new ReplicationPolicyManager.SimpleReplicationsCompletedListener() {
             @Override
             public void replicationComplete(int id) {
                 // Check if this is the pull replication

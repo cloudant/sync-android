@@ -14,15 +14,11 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.sync.event.Subscribe;
-import com.cloudant.sync.event.notifications.ReplicationCompleted;
-import com.cloudant.sync.event.notifications.ReplicationErrored;
+import com.cloudant.sync.internal.replication.ReplicationListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @api_public
@@ -30,8 +26,7 @@ import java.util.Set;
 public class ReplicationPolicyManager {
 
     private final List<Replicator> replicators = new ArrayList<Replicator>();
-    private ReplicationListener replicationListener;
-    private ReplicationsCompletedListener mReplicationsCompletedListener;
+    private final ReplicationListener replicationListener = new ReplicationListener();
 
     public interface ReplicationsCompletedListener {
         void allReplicationsCompleted();
@@ -41,77 +36,10 @@ public class ReplicationPolicyManager {
         void replicationErrored(int id);
     }
 
-    /**
-     * This class is not intended as API, it is public for EventBus access only.
-     * API consumers should not call these methods. See #setReplicationsCompletedListener for more
-     * information on replication lifecycle events.
-     * @api_private
-     */
-    public class ReplicationListener {
-
-        Set<Replicator> replicatorsInProgress;
-
-        ReplicationListener() {
-            replicatorsInProgress = new HashSet<Replicator>();
-        }
-
-        void add(Replicator replicator) {
-            synchronized (replicatorsInProgress) {
-                replicatorsInProgress.add(replicator);
-            }
-        }
-
-        void remove(Replicator replicator) {
-            synchronized (replicatorsInProgress) {
-                if (replicatorsInProgress.remove(replicator)) {
-                    replicator.getEventBus().unregister(this);
-                }
-            }
-        }
-
-        boolean inProgress(Replicator replicator) {
-            synchronized (replicatorsInProgress) {
-                return replicatorsInProgress.contains(replicator);
-            }
-        }
-
-        @Subscribe
-        public void complete(ReplicationCompleted event) {
-            finishedReplication(event.replicator);
-            if (mReplicationsCompletedListener != null) {
-                mReplicationsCompletedListener.replicationCompleted(event.replicator.getId());
-            }
-        }
-
-        @Subscribe
-        public void error(ReplicationErrored event) {
-            finishedReplication(event.replicator);
-            if (mReplicationsCompletedListener != null) {
-                mReplicationsCompletedListener.replicationErrored(event.replicator.getId());
-            }
-        }
-
-        public void finishedReplication(Replicator replicator) {
-            synchronized (replicatorsInProgress) {
-                remove(replicator);
-                if (replicatorsInProgress.size() == 0 && mReplicationsCompletedListener != null) {
-                    mReplicationsCompletedListener.allReplicationsCompleted();
-                }
-            }
-        }
-    }
-
-    public ReplicationPolicyManager() {
-        replicationListener = new ReplicationListener();
-    }
-
     protected void startReplications() {
         synchronized (replicators) {
             for (Replicator replicator : replicators) {
-                if (!replicationListener.inProgress(replicator)) {
-                    replicationListener.add(replicator);
-                    replicator.getEventBus().register(replicationListener);
-
+                if (replicationListener.add(replicator)) {
                     replicator.start();
                 }
             }
@@ -121,8 +49,9 @@ public class ReplicationPolicyManager {
     protected void stopReplications() {
         synchronized (replicators) {
             for (Replicator replicator : replicators) {
-                replicationListener.remove(replicator);
-                replicator.stop();
+                if (replicationListener.remove(replicator)) {
+                    replicator.stop();
+                }
             }
         }
     }
@@ -141,6 +70,26 @@ public class ReplicationPolicyManager {
      *                 events
      */
     public void setReplicationsCompletedListener(ReplicationsCompletedListener listener) {
-        mReplicationsCompletedListener = listener;
+        replicationListener.setReplicationsCompletedListener(listener);
+    }
+
+    /**
+     * A simple {@link ReplicationsCompletedListener}
+     * to save clients having to override every method if they are only interested in a subset of
+     * the events.
+     */
+    public static class SimpleReplicationsCompletedListener implements
+            ReplicationsCompletedListener {
+        @Override
+        public void allReplicationsCompleted() {
+        }
+
+        @Override
+        public void replicationCompleted(int id) {
+        }
+
+        @Override
+        public void replicationErrored(int id) {
+        }
     }
 }
