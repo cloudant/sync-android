@@ -47,9 +47,7 @@ public class ListIndexesCallable implements SQLCallable<List<Index>> {
             while (cursorIndexNames.moveToNext()) {
                 String indexName = cursorIndexNames.getString(0);
                 String sqlIndexes = String.format("SELECT index_type, field_name, index_settings " +
-                        "FROM %s " +
-                                "WHERE index_name = ?",
-                        QueryImpl.INDEX_METADATA_TABLE_NAME);
+                        "FROM %s WHERE index_name = ?", QueryImpl.INDEX_METADATA_TABLE_NAME);
                 Cursor cursorIndexes = null;
                 try {
                     cursorIndexes = db.rawQuery(sqlIndexes, new String[]{indexName});
