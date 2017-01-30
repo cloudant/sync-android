@@ -250,8 +250,17 @@ winning revision.
 
 ## Changes to Replication Policies
 
-The `IntervalTimerReplicationPolicyManager` was moved into the `cloudant-sync-datastore-javase`
+* The `IntervalTimerReplicationPolicyManager` was moved into the `cloudant-sync-datastore-javase`
 module since it was not suitable for running on Android anyway.
+
+* The Android `ReplicationService` now uses the same `ReplicationsCompletedListener` interface as
+the `ReplicationPolicyManager`. The `ReplicationService.ReplicationCompleteListener` has been
+removed and implementers should implement `ReplicationPolicyManager.ReplicationsCompletedListener`
+instead. Migration also requires some minor method renames.
+
+* The `ReplicationService.SimpleReplicationCompleteListener` has been moved to
+`ReplicationPolicyManager.SimpleReplicationsCompletedListener` and now implements
+`ReplicationPolicyManager.ReplicationsCompletedListener`.
 
 ## Changes to `Changes`
 

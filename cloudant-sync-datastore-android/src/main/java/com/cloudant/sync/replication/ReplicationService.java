@@ -26,7 +26,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.content.WakefulBroadcastReceiver;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -45,7 +44,9 @@ public abstract class ReplicationService extends Service
 
     public static final String EXTRA_INTENT = "intent";
 
-    /** The key used to identify the command being sent to the service. */
+    /**
+     * The key used to identify the command being sent to the service.
+     */
     public static final String EXTRA_COMMAND = "command";
 
     public static final int COMMAND_NONE = -1;
@@ -53,18 +54,20 @@ public abstract class ReplicationService extends Service
     /**
      * To start replications, this value should be passed to this service in an Intent using an
      * Extra with the {@link #EXTRA_COMMAND} key.
+     *
      * @see
      * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
-     *     Replication Policy User Guide</a> for more details.
+     * Replication Policy User Guide</a> for more details.
      */
     public static final int COMMAND_START_REPLICATION = 0;
 
     /**
      * To stop replications, this value should be passed to this service in an Intent using an
      * Extra with the {@link #EXTRA_COMMAND} key.
+     *
      * @see
      * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
-     *     Replication Policy User Guide</a> for more details.
+     * Replication Policy User Guide</a> for more details.
      */
     public static final int COMMAND_STOP_REPLICATION = 1;
 
@@ -77,11 +80,13 @@ public abstract class ReplicationService extends Service
     private List<Message> mCommandQueue = new ArrayList<Message>();
 
     /**
-     * Stores the set of {@link ReplicationCompleteListener}s listening for replication complete
+     * Stores the set of {@link ReplicationPolicyManager.ReplicationsCompletedListener}s
+     * listening for replication complete
      * events. Note that all modifications or iterations over mListeners should be protected by
      * synchronization on the mListeners object.
      */
-    private final Set<ReplicationCompleteListener> mListeners = new HashSet<ReplicationCompleteListener>();
+    private final Set<ReplicationPolicyManager.ReplicationsCompletedListener> mListeners = new
+            HashSet<ReplicationPolicyManager.ReplicationsCompletedListener>();
 
     // It's safest to assume we could be transferring a large amount of data in a
     // replication, so we want a high performance WiFi connection even though it
@@ -93,49 +98,10 @@ public abstract class ReplicationService extends Service
     private final IBinder mBinder = new LocalBinder();
 
     interface OperationStartedListener {
-        /** Callback to indicate that an operation has started. */
-        void operationStarted(int operationId);
-    }
-
-    public interface ReplicationCompleteListener {
         /**
-         * Callback to indicate that all replications passed to {@link #setReplicators(Replicator[])}
-         * are complete.
+         * Callback to indicate that an operation has started.
          */
-        void allReplicationsComplete();
-
-        /** Callback to indicate that the individual replication with the given {@code ID} is
-         * complete.
-         * @param id the {@code ID} number associated with the replication that has completed. See
-         *           {@link ReplicatorBuilder#withId(int)}.
-         */
-        void replicationComplete(int id);
-
-        /** Callback to indicate that the individual replication with the given {@code ID} has
-         * errored.
-         * @param id the {@code ID} number associated with the replication that has completed. See
-         *           {@link ReplicatorBuilder#withId(int)}.
-         */
-        void replicationErrored(int id);
-    }
-
-    /**
-     * A simple {@link com.cloudant.sync.replication.ReplicationService.ReplicationCompleteListener}
-     * to save clients having to override every method if they are only interested in a subset of
-     * the events.
-     */
-    public static class SimpleReplicationCompleteListener implements ReplicationCompleteListener {
-        @Override
-        public void allReplicationsComplete() {
-        }
-
-        @Override
-        public void replicationComplete(int id) {
-        }
-
-        @Override
-        public void replicationErrored(int id) {
-        }
+        void operationStarted(int operationId);
     }
 
     // A binder to allow components running in the same process to bind to this Service.
@@ -155,10 +121,10 @@ public abstract class ReplicationService extends Service
         public void handleMessage(Message msg) {
             try {
                 if (msg.arg2 > INTERNALLY_RESERVED_COMMAND_MAX_USED && msg.arg2 <=
-                    INTERNALLY_RESERVED_COMMAND_MAX) {
+                        INTERNALLY_RESERVED_COMMAND_MAX) {
                     throw new RuntimeException("ReplicationService received an EXTRA_COMMAND " +
-                        "using an id in the range reserved for internal use. Custom commands must" +
-                        " use an id above " + INTERNALLY_RESERVED_COMMAND_MAX);
+                            "using an id in the range reserved for internal use. Custom commands " +
+                            "must use an id above " + INTERNALLY_RESERVED_COMMAND_MAX);
                 }
                 // Process the commands passed in msg.arg2.
                 switch (msg.arg2) {
@@ -173,7 +139,8 @@ public abstract class ReplicationService extends Service
                         break;
                 }
             } finally {
-                // Get the Intent used to start the service and release the WakeLock if there is one.
+                // Get the Intent used to start the service and release the WakeLock if there is
+                // one.
                 // Calling completeWakefulIntent is safe even if there is no wakelock held.
                 Intent intent = msg.getData().getParcelable(EXTRA_INTENT);
                 WakefulBroadcastReceiver.completeWakefulIntent(intent);
@@ -194,12 +161,12 @@ public abstract class ReplicationService extends Service
         WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         if (wifiManager != null) {
             mWifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,
-                "ReplicationService");
+                    "ReplicationService");
         }
 
         // Create a background priority thread to so we don't block the process's main thread.
         HandlerThread thread = new HandlerThread("ServiceStartArguments",
-            android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                android.os.Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
 
         // Get the HandlerThread's Looper and use it for our Handler.
@@ -214,8 +181,8 @@ public abstract class ReplicationService extends Service
      *
      * @param replicators An array of the configured {@code Replicator} objects.
      * @throws IllegalArgumentException if {@code replicators} is null or empty.
-     * @throws IllegalStateException if called again after a previous call to this method
-     *         with a valid array of {@code Replicator} objects.
+     * @throws IllegalStateException    if called again after a previous call to this method
+     *                                  with a valid array of {@code Replicator} objects.
      */
     public void setReplicators(Replicator[] replicators) {
         if (mReplicatorsInitialised) {
@@ -236,7 +203,8 @@ public abstract class ReplicationService extends Service
             }
         } else {
             throw new IllegalArgumentException(
-                    "No replications setup. Please pass Replicators to setReplicators(Replicator[])");
+                    "No replications setup. Please pass Replicators to setReplicators" +
+                            "(Replicator[])");
         }
     }
 
@@ -259,7 +227,7 @@ public abstract class ReplicationService extends Service
                     // tail of the queue. These messages will then be
                     // processed once setReplicators(Replicator[]) has been called.
                     if (mCommandQueue.size() == 0 ||
-                        mCommandQueue.get(mCommandQueue.size() - 1).arg2 != msg.arg2) {
+                            mCommandQueue.get(mCommandQueue.size() - 1).arg2 != msg.arg2) {
                         mCommandQueue.add(msg);
                     }
                 }
@@ -287,6 +255,7 @@ public abstract class ReplicationService extends Service
 
     /**
      * Set the {@link ReplicationPolicyManager} to be used by this ReplicationService.
+     *
      * @param replicationPolicyManager the {@link ReplicationPolicyManager}
      */
     public void setReplicationPolicyManager(ReplicationPolicyManager replicationPolicyManager) {
@@ -336,8 +305,8 @@ public abstract class ReplicationService extends Service
     @Override
     public void allReplicationsCompleted() {
         synchronized (mListeners) {
-            for (ReplicationCompleteListener listener : mListeners) {
-                listener.allReplicationsComplete();
+            for (ReplicationPolicyManager.ReplicationsCompletedListener listener : mListeners) {
+                listener.allReplicationsCompleted();
             }
         }
         releaseWifiLockIfHeld();
@@ -347,8 +316,8 @@ public abstract class ReplicationService extends Service
     @Override
     public void replicationCompleted(int id) {
         synchronized (mListeners) {
-            for (ReplicationCompleteListener listener : mListeners) {
-                listener.replicationComplete(id);
+            for (ReplicationPolicyManager.ReplicationsCompletedListener listener : mListeners) {
+                listener.replicationCompleted(id);
             }
         }
     }
@@ -356,29 +325,33 @@ public abstract class ReplicationService extends Service
     @Override
     public void replicationErrored(int id) {
         synchronized (mListeners) {
-            for (ReplicationCompleteListener listener : mListeners) {
+            for (ReplicationPolicyManager.ReplicationsCompletedListener listener : mListeners) {
                 listener.replicationErrored(id);
             }
         }
     }
 
     /**
-     * Add a listener to the set of {@link ReplicationCompleteListener}s that are notified when
+     * Add a listener to the set of
+     * {@link com.cloudant.sync.replication.ReplicationPolicyManager.ReplicationsCompletedListener}s that are notified when
      * replications complete.
+     *
      * @param listener The listener to add.
      */
-    public void addListener(ReplicationCompleteListener listener) {
+    public void addListener(ReplicationPolicyManager.ReplicationsCompletedListener listener) {
         synchronized (mListeners) {
             mListeners.add(listener);
         }
     }
 
     /**
-     * Remove a listener from the set of {@link ReplicationCompleteListener}s that are notified when
+     * Remove a listener from the set of
+     * {@link com.cloudant.sync.replication.ReplicationPolicyManager.ReplicationsCompletedListener}s that are notified when
      * replications complete.
+     *
      * @param listener The listener to remove.
      */
-    public void removeListener(ReplicationCompleteListener listener) {
+    public void removeListener(ReplicationPolicyManager.ReplicationsCompletedListener listener) {
         synchronized (mListeners) {
             mListeners.remove(listener);
         }
@@ -386,6 +359,7 @@ public abstract class ReplicationService extends Service
 
     /**
      * Set a listener to be notified when an operation has started.
+     *
      * @param listener The listener to add
      */
     public void setOperationStartedListener(OperationStartedListener listener) {
