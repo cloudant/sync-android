@@ -243,6 +243,11 @@ Situations for which runtime (unchecked) exceptions may be thrown include:
 * Situations which are hard to anticipate and/or recover from. This
   covers events like out of memory or out of disk space.
 
+## Changes to `DocumentRevision`
+
+Removed `isCurrent()` method, since `database().read(docId)` always returns the current
+winning revision.
+
 ## Changes to Replication Policies
 
 The `IntervalTimerReplicationPolicyManager` was moved into the `cloudant-sync-datastore-javase`

@@ -598,7 +598,7 @@ public class DatabaseImplForceInsertTest {
             Assert.assertEquals(currentLeaf, leafs.get(0));
 
             // also check that none of the other leafs are marked current
-            for (DocumentRevision leaf : leafs.subList(1, leafs.size())) {
+            for (InternalDocumentRevision leaf : leafs.subList(1, leafs.size())) {
                 Assert.assertFalse(
                         "Leaf "+leaf+" should not be marked current. Current state of all leaf nodes: "+leafs,
                         leaf.isCurrent());

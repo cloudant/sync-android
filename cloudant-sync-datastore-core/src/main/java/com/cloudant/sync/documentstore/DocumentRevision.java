@@ -57,8 +57,6 @@ public class DocumentRevision {
      */
     protected boolean deleted;
 
-    protected boolean current;
-
     /**
      * top level key: _attachments
      */
@@ -107,14 +105,6 @@ public class DocumentRevision {
      */
     public boolean isDeleted() {
         return deleted;
-    }
-
-    /**
-     * @return {@code true} if this revision is the current winner for the
-     * document.
-     */
-    public boolean isCurrent(){
-        return current;
     }
 
     public Map<String, Attachment> getAttachments() {
