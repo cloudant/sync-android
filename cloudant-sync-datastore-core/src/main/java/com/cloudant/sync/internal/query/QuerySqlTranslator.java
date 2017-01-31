@@ -337,6 +337,23 @@ class QuerySqlTranslator {
      */
     protected static boolean isOperatorFoundInClause(String operator, List<Object> clause) {
         boolean found = false;
+
+        // first check for the existence of $not so that we can find negated operators:
+        // if we find $not then recurse with the value associated with it in the query map
+        for (Object rawTerm : clause){
+            if (rawTerm instanceof Map) {
+                Map term = (Map) rawTerm;
+                if (term.size() == 1 && term.values().toArray()[0] instanceof Map) {
+                    Map predicate = (Map) term.values().toArray()[0];
+                    if (predicate.get(NOT) != null && predicate.get(NOT) instanceof Map) {
+                        return isOperatorFoundInClause(operator, Collections
+                                .<Object>singletonList(predicate));
+                    }
+                }
+            }
+        }
+
+        // if we didn't find $not then look directly for the operator
         for (Object rawTerm : clause){
             if (rawTerm instanceof Map) {
                 Map term = (Map) rawTerm;
