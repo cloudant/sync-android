@@ -40,18 +40,4 @@ public enum IndexType {
         return super.toString().toLowerCase(Locale.ENGLISH);
     }
 
-    /**
-     * Converts a string to its Enum value.
-     * @param value The string to convert to an enum
-     * @return The enum value for the String or {@code null}
-     */
-    public static IndexType enumValue(String value){
-        if(value.equals(IndexType.JSON.toString())){
-            return IndexType.JSON;
-        } else if (value.equals(IndexType.TEXT.toString())){
-            return IndexType.TEXT;
-        }
-        return null;
-    }
-
 }
