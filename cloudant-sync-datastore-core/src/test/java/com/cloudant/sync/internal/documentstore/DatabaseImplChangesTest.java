@@ -16,20 +16,22 @@
 
 package com.cloudant.sync.internal.documentstore;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import static org.hamcrest.CoreMatchers.hasItems;
 
 import com.cloudant.sync.documentstore.Changes;
 import com.cloudant.sync.documentstore.DocumentRevision;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DatabaseImplChangesTest extends BasicDatastoreTestBase {
 
     @Test
     public void changes_noChanges_nothing() throws Exception {
         Changes changes = datastore.changes(0, 100);
-        Assert.assertEquals(0, changes.size());
         Assert.assertEquals(0, changes.getResults().size());
         Assert.assertEquals(0, changes.getLastSequence());
     }
@@ -39,7 +41,7 @@ public class DatabaseImplChangesTest extends BasicDatastoreTestBase {
         createTwoDocuments();
 
         Changes changes = datastore.changes(0, 100);
-        Assert.assertEquals(2, changes.size());
+        Assert.assertEquals(2, changes.getResults().size());
     }
 
     @Test
@@ -47,12 +49,12 @@ public class DatabaseImplChangesTest extends BasicDatastoreTestBase {
         createTwoDocuments();
 
         Changes changes = datastore.changes(0, 100);
-        Assert.assertEquals(2, changes.size());
+        Assert.assertEquals(2, changes.getResults().size());
         Assert.assertEquals(2, changes.getLastSequence());
 
         // this is the real test, the last sequence of empty changes should NOT be zero!
         Changes changes2 = datastore.changes(2, 100);
-        Assert.assertEquals(0, changes2.size());
+        Assert.assertEquals(0, changes2.getResults().size());
         Assert.assertEquals(2, changes2.getLastSequence());
     }
 
@@ -60,7 +62,7 @@ public class DatabaseImplChangesTest extends BasicDatastoreTestBase {
     public void changes_sinceMinusOno_twoDocumentsShouldBeReturned() throws Exception {
         createTwoDocuments();
         Changes changes = datastore.changes(-1, 100);
-        Assert.assertEquals(2, changes.size());
+        Assert.assertEquals(2, changes.getResults().size());
         Assert.assertEquals(2, changes.getLastSequence());
     }
 
@@ -75,7 +77,7 @@ public class DatabaseImplChangesTest extends BasicDatastoreTestBase {
         createThreeDocuments();
 
         Changes changes = datastore.changes(2, 100);
-        Assert.assertEquals(1, changes.size());
+        Assert.assertEquals(1, changes.getResults().size());
         Assert.assertEquals(4, changes.getLastSequence());
     }
 
@@ -84,15 +86,15 @@ public class DatabaseImplChangesTest extends BasicDatastoreTestBase {
         DocumentRevision[] docs = createThreeDocuments();
         {
             Changes changes = datastore.changes(0, 2);
-            Assert.assertEquals(2, changes.size());
+            Assert.assertEquals(2, changes.getResults().size());
             Assert.assertEquals(2, changes.getLastSequence());
-            Assert.assertThat(changes.getIds(), hasItems(docs[0].getId(), docs[1].getId()));
+            Assert.assertThat(resultsToIDs(changes), hasItems(docs[0].getId(), docs[1].getId()));
         }
 
         {
             Changes changes = datastore.changes(2, 2);
-            Assert.assertEquals(1, changes.size());
-            Assert.assertThat(changes.getIds(), hasItems(docs[2].getId()));
+            Assert.assertEquals(1, changes.getResults().size());
+            Assert.assertThat(resultsToIDs(changes), hasItems(docs[2].getId()));
             Assert.assertEquals(4, changes.getLastSequence());
         }
     }
@@ -101,8 +103,16 @@ public class DatabaseImplChangesTest extends BasicDatastoreTestBase {
     public void changes_limitByTenByThereAreOnlyFourChanges_lastSequenceIsFour() throws Exception {
         DocumentRevision[] docs = createThreeDocuments();
         Changes changes = datastore.changes(0, 10);
-        Assert.assertEquals(3, changes.size());
-        Assert.assertThat(changes.getIds(), hasItems(docs[0].getId(), docs[1].getId(), docs[2].getId()));
+        Assert.assertEquals(3, changes.getResults().size());
+        Assert.assertThat(resultsToIDs(changes), hasItems(docs[0].getId(), docs[1].getId(), docs[2].getId()));
         Assert.assertEquals(4, changes.getLastSequence());
+    }
+    
+    private List<String> resultsToIDs(Changes changes) {
+        List<String> changeIDs = new ArrayList<String>();
+        for (DocumentRevision rev : changes.getResults()) {
+            changeIDs.add(rev.getId());
+        }
+        return changeIDs;
     }
 }

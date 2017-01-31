@@ -16,8 +16,8 @@
 package com.cloudant.sync.internal.query.callables;
 
 import com.cloudant.sync.documentstore.Changes;
+import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.android.ContentValues;
-import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
 import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.internal.query.ValueExtractor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
@@ -51,7 +51,7 @@ public class UpdateIndexCallable implements SQLCallable<Void> {
 
     @Override
     public Void call(SQLDatabase database) throws QueryException {
-        for (InternalDocumentRevision rev : changes.getResults()) {
+        for (DocumentRevision rev : changes.getResults()) {
             // Delete existing values
             String tableName = QueryImpl.tableNameForIndex(indexName);
             database.delete(tableName, " _id = ? ", new String[]{rev.getId()});
@@ -89,7 +89,7 @@ public class UpdateIndexCallable implements SQLCallable<Void> {
      * is an array, however, multiple entries are required.
      */
     @SuppressWarnings("unchecked")
-    private List<DBParameter> parametersToIndexRevision(InternalDocumentRevision rev,
+    private List<DBParameter> parametersToIndexRevision(DocumentRevision rev,
                                                                      String indexName,
                                                                      List<FieldSort> fieldNames) {
         Misc.checkNotNull(rev, "rev");
@@ -161,7 +161,7 @@ public class UpdateIndexCallable implements SQLCallable<Void> {
                                                          List<FieldSort> initialIncludedFields,
                                                          List<Object> initialArgs,
                                                          String indexName,
-                                                         InternalDocumentRevision rev) {
+                                                         DocumentRevision rev) {
         List<FieldSort> includeFieldNames = new ArrayList<FieldSort>();
         includeFieldNames.addAll(initialIncludedFields);
         List<Object> args = new ArrayList<Object>();
