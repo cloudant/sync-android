@@ -298,8 +298,7 @@ public class EndToEndEncryptionTest {
         final Map<String, Attachment> atts = attachmentRevision.getAttachments();
         atts.put(attachmentName, new UnsavedFileAttachment(expectedPlainText, "text/plain"));
         atts.put("non-ascii", new UnsavedStreamAttachment(
-                new ByteArrayInputStream(nonAsciiText.getBytes()),
-                "non-ascii", "text/plain"));
+                new ByteArrayInputStream(nonAsciiText.getBytes()), "text/plain"));
         DocumentRevision updatedWithAttachment = database.database().update(attachmentRevision);
         InputStream in = updatedWithAttachment.getAttachments().get(attachmentName).getInputStream();
         assertTrue("Saved attachment did not read correctly",

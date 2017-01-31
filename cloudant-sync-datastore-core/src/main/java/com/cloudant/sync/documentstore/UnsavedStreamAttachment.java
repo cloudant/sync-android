@@ -30,13 +30,13 @@ import java.io.InputStream;
  */
 public class UnsavedStreamAttachment extends Attachment {
 
-    public UnsavedStreamAttachment(InputStream stream, String name, String type) {
-        super(name, type, Encoding.Plain, -1);
+    public UnsavedStreamAttachment(InputStream stream, String type) {
+        super(type, Encoding.Plain, -1);
         this.stream = stream;
     }
 
-    public UnsavedStreamAttachment(InputStream stream, String name, String type, Encoding encoding) {
-        super(name, type, encoding, -1);
+    public UnsavedStreamAttachment(InputStream stream, String type, Encoding encoding) {
+        super(type, encoding, -1);
         this.stream = stream;
     }
 

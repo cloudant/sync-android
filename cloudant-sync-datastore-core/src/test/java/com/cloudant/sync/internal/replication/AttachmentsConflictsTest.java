@@ -65,7 +65,6 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         DocumentRevision rev2 = this.datastore.create(rev);
         rev2.getAttachments().put("att1", new UnsavedStreamAttachment(
                         new ByteArrayInputStream("hello universe".getBytes()),
-                        "att1",
                         "text/plain")
         );
         this.datastore.update(rev2);
@@ -113,7 +112,6 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         rev.setBody(DocumentBodyFactory.create("{\"foo\": \"local\"}".getBytes()));
         rev.getAttachments().put("att1", new UnsavedStreamAttachment(
                         new ByteArrayInputStream("hello universe".getBytes()),
-                        "att1",
                         "text/plain")
         );
         this.datastore.create(rev);
