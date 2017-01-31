@@ -27,7 +27,7 @@ import java.util.Locale;
 
 /**
  * This class is not intended as API, it is public for EventBus access only.
- * @api_private
+ *
  */
 public class ReplicatorImpl implements Replicator {
 

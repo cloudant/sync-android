@@ -43,9 +43,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-/**
- * @api_private
- */
 public class CouchClientWrapper implements CouchDB {
 
     private final static String LOG_TAG = "CouchClientWrapper";

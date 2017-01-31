@@ -17,8 +17,6 @@ package com.cloudant.sync.documentstore;
 /**
  * Thrown when an existing {@link DocumentStore} cannot be opened or a new {@link DocumentStore}
  * cannot be created
- *
- * @api_public
  */
 
 public class DocumentStoreNotOpenedException extends DocumentStoreException {

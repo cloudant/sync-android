@@ -63,8 +63,6 @@ import java.util.logging.Logger;
  * Users should call {@link #close()} after using a store to shut down in an orderly manner and free
  * up resources.
  * </p>
- *
- * @api_public
  */
 public class DocumentStore {
 

@@ -37,8 +37,6 @@ import java.util.Map;
  * content for this revision as a {@link DocumentBody} object, and its {@link Attachment}s. Clients will
  * typically set only the revision content rather than the metadata
  * explicitly.</p>
- *
- * @api_public
  */
 public class DocumentRevision {
 

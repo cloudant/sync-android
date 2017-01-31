@@ -92,9 +92,6 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * @api_private
- */
 public class DatabaseImpl implements Database {
 
     private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());

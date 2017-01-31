@@ -19,8 +19,6 @@ package com.cloudant.sync.documentstore;
 /**
  * Thrown when there is a conflict updating a {@link Database}, for example trying
  * to update a document but passing in an incorrect revision ID.
- *
- * @api_public
  */
 public class ConflictException extends DocumentException {
 

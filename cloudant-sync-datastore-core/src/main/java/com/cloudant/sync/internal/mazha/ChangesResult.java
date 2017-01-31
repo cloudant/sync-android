@@ -47,7 +47,7 @@ import java.util.Map;
  *    ]
  * }
  *
- * @api_private
+ *
 */
 public class ChangesResult {
 	private List<Row> results;

@@ -20,8 +20,6 @@ import com.cloudant.sync.documentstore.DocumentRevision;
 
 /**
  * Generic event for {@link DocumentRevision} create, update, and delete
- *
- * @api_public
  */
 public class DocumentModified implements Notification {
 

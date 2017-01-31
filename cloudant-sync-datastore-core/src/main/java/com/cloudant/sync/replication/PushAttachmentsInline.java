@@ -38,8 +38,6 @@ import java.util.Map;
  * </p>
  *
  * @see RevisionHistoryHelper
- *
- * @api_public
  */
 
 public enum PushAttachmentsInline {

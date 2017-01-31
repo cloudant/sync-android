@@ -47,7 +47,7 @@ import java.util.Map;
  *
  * @see <a target="_blank" href="http://couchdb.readthedocs.org/en/1.6.x/replication/intro.html#controlling-which-documents-to-replicate">Controlling documents replicated</a>
  * @see <a target="_blank" href="http://docs.couchdb.org/en/1.6.x/couchapp/ddocs.html#filter-functions">Filter functions CouchDB docs</a>
- * @api_public
+ *
  */
 public class PullFilter {
 

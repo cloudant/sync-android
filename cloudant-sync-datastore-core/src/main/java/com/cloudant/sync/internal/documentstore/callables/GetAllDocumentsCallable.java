@@ -27,8 +27,6 @@ import java.util.List;
 /**
  * Get all non-deleted winning Revisions of Documents, ordered by Document ID, starting from
  * `offset` and with maximum `limit` results.
- *
- * @api_private
  */
 public class GetAllDocumentsCallable implements SQLCallable<List<DocumentRevision>> {
 

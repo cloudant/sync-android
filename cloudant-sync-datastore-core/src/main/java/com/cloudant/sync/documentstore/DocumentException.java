@@ -17,8 +17,6 @@ package com.cloudant.sync.documentstore;
 
 /**
  * Created by Rhys Short on 05/02/15.
- *
- * @api_public
  */
 
 /**

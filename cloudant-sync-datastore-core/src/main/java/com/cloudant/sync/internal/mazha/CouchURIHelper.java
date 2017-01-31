@@ -32,8 +32,6 @@ import java.util.Map;
 
 /**
  * Helper class to create url for Couch client.
- *
- * @api_private
  */
 public class CouchURIHelper {
 

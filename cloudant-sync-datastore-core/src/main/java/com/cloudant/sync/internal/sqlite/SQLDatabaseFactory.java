@@ -34,8 +34,6 @@ import java.util.logging.Logger;
 
 /**
  * Factory class to create {@link SQLDatabase}, and update schema
- *
- * @api_private
  */
 public class SQLDatabaseFactory {
 

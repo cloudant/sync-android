@@ -51,8 +51,6 @@ import java.util.logging.Logger;
  * Attachments are stored on disk, in the folder specified by the {@code attachmentsDir}
  * parameter to each method. AttachmentManager assumes it has sole control of this directory.
  * For example, purging and compaction may delete non-attachment files.
- *
- * @api_private
  */
 public class AttachmentManager {
 

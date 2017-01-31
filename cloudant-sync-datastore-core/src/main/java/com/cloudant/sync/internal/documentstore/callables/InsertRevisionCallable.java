@@ -22,8 +22,6 @@ import java.util.logging.Logger;
 
 /**
  * Inserts a new row into the `revs` table, returning new database sequence number.
- *
- * @api_private
  */
 public class InsertRevisionCallable implements SQLCallable<Long> {
     private static final Logger logger = Logger.getLogger(InsertRevisionCallable.class.getCanonicalName());

@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 
 /**
  * Compact datastore by deleting JSON and attachments of non-leaf revisions
- * @api_private
+ *
  */
 public class CompactCallable implements SQLCallable<Void> {
 

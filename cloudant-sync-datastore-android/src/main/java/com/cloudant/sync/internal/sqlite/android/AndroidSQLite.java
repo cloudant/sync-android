@@ -25,9 +25,6 @@ import com.cloudant.sync.internal.util.Misc;
 
 import java.io.File;
 
-/**
- * @api_private
- */
 public class AndroidSQLite extends SQLDatabase {
 
     android.database.sqlite.SQLiteDatabase database = null;

@@ -52,9 +52,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * @api_private
- */
 public class PullStrategy implements ReplicationStrategy {
 
     // internal state which gets reset each time run() is called

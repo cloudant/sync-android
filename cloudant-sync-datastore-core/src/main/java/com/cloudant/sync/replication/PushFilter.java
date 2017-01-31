@@ -42,7 +42,7 @@ import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
  * </code>
  * </pre>
  *
- * @api_public
+ *
  * @see com.cloudant.sync.replication.ReplicatorBuilder.Push#filter(PushFilter)
  */
 public interface PushFilter {

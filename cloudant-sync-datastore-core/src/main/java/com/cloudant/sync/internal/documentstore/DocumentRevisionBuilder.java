@@ -26,8 +26,6 @@ import java.util.Map;
 
 /**
  * <p>Build {@link InternalDocumentRevision}s in a chained manner.</p>
- *
- * @api_private
  */
 public class DocumentRevisionBuilder {
 

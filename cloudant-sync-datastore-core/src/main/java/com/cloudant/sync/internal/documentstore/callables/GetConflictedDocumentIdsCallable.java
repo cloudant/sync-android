@@ -30,8 +30,6 @@ import java.util.logging.Logger;
 /**
  * Get all document IDs of Documents having conflicted Revisions: more than one non-deleted leaf
  * Revision
- *
- * @api_private
  */
 public class GetConflictedDocumentIdsCallable implements SQLCallable<List<String>> {
 

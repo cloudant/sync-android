@@ -31,8 +31,6 @@ import java.util.logging.Logger;
 /**
  * Force insert a Revision where the Document already exists in the local database (ie at least one
  * Revision already exists)
- *
- * @api_private
  */
 public class DoForceInsertExistingDocumentWithHistoryCallable implements SQLCallable<Long> {
 

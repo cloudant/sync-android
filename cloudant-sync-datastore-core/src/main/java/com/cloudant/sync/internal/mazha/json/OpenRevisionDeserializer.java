@@ -26,9 +26,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 
-/**
- * @api_private
- */
 public class OpenRevisionDeserializer extends JsonDeserializer<OpenRevision> {
 
     @Override

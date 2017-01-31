@@ -21,8 +21,6 @@ import com.cloudant.sync.internal.sqlite.SQLDatabase;
 
 /**
  * Insert a new Document ID into the @{docs} table. Required when inserting the first Revision.
- *
- * @api_private
  */
 public class InsertDocumentIDCallable implements SQLCallable<Long> {
 

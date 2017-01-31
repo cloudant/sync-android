@@ -24,9 +24,6 @@ package com.cloudant.sync.internal.mazha;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * @api_private
- */
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class CouchDbInfo {
 	

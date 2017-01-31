@@ -17,8 +17,6 @@ package com.cloudant.sync.documentstore.encryption;
 /**
  * This implementation of KeyProvider always returns a null
  * key.
- *
- * @api_public
  */
 public class NullKeyProvider implements KeyProvider {
 

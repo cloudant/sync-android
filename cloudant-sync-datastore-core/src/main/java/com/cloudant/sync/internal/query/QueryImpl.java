@@ -75,9 +75,6 @@ import java.util.regex.Pattern;
  *  - delete indexes
  *  - execute queries
  *  - update indexes (usually done automatically)
- *
- *
- *  @api_private
  */
 public class QueryImpl implements Query {
 

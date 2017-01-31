@@ -25,7 +25,7 @@ package com.cloudant.sync.documentstore;
  * </p>
  *
  * @see DocumentException
- * @api_public
+ *
  */
 
 public class DocumentStoreException extends Exception {

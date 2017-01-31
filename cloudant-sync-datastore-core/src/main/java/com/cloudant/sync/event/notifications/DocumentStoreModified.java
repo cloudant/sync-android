@@ -20,8 +20,6 @@ import com.cloudant.sync.documentstore.DocumentStore;
 
 /**
  * Generic event for {@link DocumentStore} create or delete
- *
- * @api_public
  */
 public class DocumentStoreModified implements Notification {
 

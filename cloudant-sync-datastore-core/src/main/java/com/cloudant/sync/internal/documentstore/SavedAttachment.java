@@ -31,8 +31,6 @@ import java.util.logging.Logger;
 
 /**
  * An Attachment which has been retrieved from the Database
- *
- * @api_private
  */
 public class SavedAttachment extends Attachment {
 

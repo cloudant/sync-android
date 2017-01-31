@@ -37,8 +37,6 @@ import java.util.logging.Logger;
  * prior to being added to the datastore.
  *
  * In most cases, this class will only be used by the AttachmentManager and DatastoreImpl classes.
- *
- * @api_private
  */
 public class PreparedAttachment {
 

@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**
  * Internal utility class
- * @api_private
+ *
  */
 public class JacksonModule extends SimpleModule {
 

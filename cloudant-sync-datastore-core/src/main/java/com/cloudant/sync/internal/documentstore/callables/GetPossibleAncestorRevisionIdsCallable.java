@@ -30,8 +30,6 @@ import java.util.List;
  * lower than the passed revision's generation. These are 'possible'
  * revisions because the revision IDs returned need not be on the same
  * branch of the document's revision tree as the passed revision.
- *
- * @api_private
  */
 public class GetPossibleAncestorRevisionIdsCallable implements SQLCallable<List<String>> {
     private final String docId;

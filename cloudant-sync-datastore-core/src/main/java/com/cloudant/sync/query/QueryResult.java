@@ -37,7 +37,7 @@ import java.util.NoSuchElementException;
  *  Iterable result of a query executed with {@link Query}.
  *
  *  @see Query
- *  @api_public
+ *
  */
 public class QueryResult implements Iterable<DocumentRevision> {
 

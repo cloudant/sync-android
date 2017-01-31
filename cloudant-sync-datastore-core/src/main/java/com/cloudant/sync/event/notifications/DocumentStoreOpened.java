@@ -32,8 +32,6 @@ import java.io.File;
  * {@link DocumentStore#getInstance(File)} and
  * {@link DocumentStore#getInstance(File, KeyProvider)}
  * </p>
- *
- * @api_public
  */
 public class DocumentStoreOpened extends DocumentStoreModified {
 

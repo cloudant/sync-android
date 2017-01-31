@@ -33,8 +33,6 @@ import java.util.logging.Logger;
 
 /**
  * Get the Document for a given Document ID and Revision ID
- *
- * @api_private
  */
 public class GetDocumentCallable implements SQLCallable<InternalDocumentRevision> {
 

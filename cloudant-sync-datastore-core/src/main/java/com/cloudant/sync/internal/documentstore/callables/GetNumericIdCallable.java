@@ -27,8 +27,6 @@ import java.util.logging.Logger;
 
 /**
  * Get the internal numeric ID for a given Document ID
- *
- * @api_private
  */
 public class GetNumericIdCallable implements SQLCallable<Long> {
 

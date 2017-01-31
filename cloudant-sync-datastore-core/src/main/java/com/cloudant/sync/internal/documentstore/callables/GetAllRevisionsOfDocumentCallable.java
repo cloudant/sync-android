@@ -35,8 +35,6 @@ import java.util.logging.Logger;
  * Get all Revisions for a given Document ID, in the form of a {@code DocumentRevisionTree}
  *
  * @see DocumentRevisionTree
- *
- * @api_private
  */
 public class GetAllRevisionsOfDocumentCallable implements SQLCallable<DocumentRevisionTree> {
 

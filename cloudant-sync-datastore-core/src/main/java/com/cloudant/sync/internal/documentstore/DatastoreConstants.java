@@ -24,9 +24,6 @@ import com.cloudant.sync.internal.util.Misc;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @api_private
- */
 class DatastoreConstants {
 
     public static final Set<String> KNOWN_SPECIAL_KEYS;

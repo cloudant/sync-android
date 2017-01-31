@@ -42,8 +42,6 @@ import java.util.logging.Logger;
  * have been force inserted into the attachments table during a multipart attachment pull during
  * identical replications running in parallel.
  * </p>
- *
- * @api_private
  */
 public class MigrateDatabase100To200 implements Migration {
 

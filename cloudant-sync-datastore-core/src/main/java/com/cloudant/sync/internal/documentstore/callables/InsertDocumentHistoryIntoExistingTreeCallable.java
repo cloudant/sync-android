@@ -32,8 +32,6 @@ import java.util.logging.Logger;
  * Insert a Revision @{code newRevision} into an existing Revision tree according to the history
  * described by @{code revisions}. Stub Revisions described by @{code revisions} are inserted where they do not
  * already exist
- *
- * @api_private
  */
 public class InsertDocumentHistoryIntoExistingTreeCallable implements SQLCallable<Long> {
 

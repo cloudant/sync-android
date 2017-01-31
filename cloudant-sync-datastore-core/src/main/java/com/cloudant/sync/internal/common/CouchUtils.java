@@ -22,9 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * @api_private
- */
 public class CouchUtils {
 
     public static String createUUID() {

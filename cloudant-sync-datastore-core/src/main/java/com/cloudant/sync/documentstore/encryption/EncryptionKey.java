@@ -22,8 +22,6 @@ import java.util.Arrays;
  *
  * SQLCipher requires a 32-byte/256-bit key. This class
  * enforces that.
- *
- * @api_public
  */
 public class EncryptionKey {
 

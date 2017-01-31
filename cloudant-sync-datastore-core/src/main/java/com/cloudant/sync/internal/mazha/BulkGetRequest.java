@@ -26,8 +26,6 @@ import java.util.List;
  * This is in the format which the _bulk_get endpoint understands, where &lt;doc ID, rev ID&gt;
  * pairs are given. If multiple rev IDs are required, then the doc ID needs to be repeated across
  * multiple requests.
- *
- * @api_private
  */
 public class BulkGetRequest {
     public String id;

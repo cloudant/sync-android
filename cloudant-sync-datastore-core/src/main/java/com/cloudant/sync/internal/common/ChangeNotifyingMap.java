@@ -16,9 +16,6 @@ package com.cloudant.sync.internal.common;
 
 import java.util.Map;
 
-/**
- * @api_private
- */
 public interface ChangeNotifyingMap<K, V> extends Map<K, V> {
 
     boolean hasChanged();

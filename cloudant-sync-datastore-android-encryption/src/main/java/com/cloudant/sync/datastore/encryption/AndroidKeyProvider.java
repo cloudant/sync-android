@@ -37,8 +37,6 @@ import java.util.logging.Logger;
  * @see KeyProvider
  * @see KeyManager
  * @see KeyStorage
- *
- * @api_public
  */
 public class AndroidKeyProvider implements KeyProvider {
     private static final Logger LOGGER = Logger.getLogger(AndroidKeyProvider.class

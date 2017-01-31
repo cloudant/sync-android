@@ -35,8 +35,6 @@ import java.util.Locale;
 
 /**
  * A Builder to create a {@link Replicator Object}
- *
- * @api_public
  */
 // S = Source Type, T = target Type, E = Extending class Type
 public abstract class ReplicatorBuilder<S, T, E> {

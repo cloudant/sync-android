@@ -30,8 +30,6 @@ import java.util.logging.Logger;
 
 /**
  * Get the local Document for a given Document ID
- *
- * @api_private
  */
 public class GetLocalDocumentCallable implements SQLCallable<LocalDocument> {
 

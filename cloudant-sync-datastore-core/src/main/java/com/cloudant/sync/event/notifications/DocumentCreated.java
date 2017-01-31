@@ -27,8 +27,6 @@ import com.cloudant.sync.documentstore.DocumentRevision;
  * <p>This event is posted by
  * {@link Database#create(DocumentRevision)}
  * </p>
- *
- * @api_public
  */
 public class DocumentCreated extends DocumentModified {
 

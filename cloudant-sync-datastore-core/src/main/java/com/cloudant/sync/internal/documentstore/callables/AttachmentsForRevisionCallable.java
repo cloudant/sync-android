@@ -34,8 +34,6 @@ import java.util.logging.Logger;
 
 /**
  * Get all Attachments for a given internal sequence number
- *
- * @api_private
  */
 public class AttachmentsForRevisionCallable implements SQLCallable<Map<String, ? extends Attachment>> {
 

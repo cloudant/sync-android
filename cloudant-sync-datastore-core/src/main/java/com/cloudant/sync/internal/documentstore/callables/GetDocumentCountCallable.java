@@ -29,8 +29,6 @@ import java.util.logging.Logger;
  * Get the total number of Documents in the database.
  *
  * Documents where all revisions are deleted are not counted.
- *
- * @api_private
  */
 public class GetDocumentCountCallable implements SQLCallable<Integer> {
 

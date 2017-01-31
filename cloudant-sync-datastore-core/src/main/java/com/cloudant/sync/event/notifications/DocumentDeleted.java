@@ -27,8 +27,6 @@ import com.cloudant.sync.documentstore.DocumentRevision;
  * <p>This event is posted by
  * {@link Database#delete(DocumentRevision)} and {@link Database#delete(String)}.
  * </p>
- *
- * @api_public
  */
 public class DocumentDeleted extends DocumentModified {
 

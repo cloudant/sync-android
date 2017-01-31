@@ -39,9 +39,6 @@ import net.sqlcipher.database.SQLiteException;
 
 import java.io.File;
 
-/**
- * @api_private
- */
 public class AndroidSQLCipherSQLite extends SQLDatabase {
 
     SQLiteDatabase database = null;

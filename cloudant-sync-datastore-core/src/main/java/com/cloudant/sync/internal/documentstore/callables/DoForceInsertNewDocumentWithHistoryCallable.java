@@ -28,8 +28,6 @@ import java.util.logging.Logger;
  * Force insert a Revision where the Document does not exist in the local database (ie no Revisions
  * exist). Since there is no Revision tree (yet), build the initial tree by creating stub Revisions
  * as described by `revHistory` and make `rev` the leaf node of this linear "tree".
- *
- * @api_private
  */
 public class DoForceInsertNewDocumentWithHistoryCallable implements SQLCallable<Long> {
 

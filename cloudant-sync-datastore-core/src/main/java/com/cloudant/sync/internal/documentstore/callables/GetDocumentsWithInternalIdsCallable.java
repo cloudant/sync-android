@@ -33,8 +33,6 @@ import java.util.List;
 
 /**
  * Get a list of the winning (current) Revisions matching a list of internal (numeric) Document IDs
- *
- * @api_private
  */
 public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<InternalDocumentRevision>> {
 

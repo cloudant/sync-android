@@ -26,8 +26,6 @@ import java.util.List;
  * This is in the format which the replicator understands, (also the format used for querying docs
  * with open_revs and for the _revs_diff endpoint) where a list of rev ids is given for each
  * doc ID
- *
- * @api_private
  */
 public class BulkGetRequest {
     String id;

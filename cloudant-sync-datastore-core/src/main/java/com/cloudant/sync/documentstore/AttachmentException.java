@@ -21,8 +21,6 @@ package com.cloudant.sync.documentstore;
 /**
  * Thrown when there is an error saving attachments to local storage or reading
  * attachments from local storage.
- *
- * @api_public
  */
 public class AttachmentException extends DocumentException {
 

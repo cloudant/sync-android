@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
  * Subscribers are called synchronously so methods using this annotation must not perform long
  * running operations and should spawn a separate thread if needed.
  * </p>
- * @api_public
+ *
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

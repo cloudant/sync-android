@@ -20,9 +20,6 @@
 
 package com.cloudant.sync.internal.mazha;
 
-/**
- * @api_private
- */
 public class DocumentConflictException extends CouchException {
 	
 	public DocumentConflictException(String message) {

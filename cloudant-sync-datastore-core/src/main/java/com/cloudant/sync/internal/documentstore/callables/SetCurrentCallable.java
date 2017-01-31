@@ -28,8 +28,6 @@ import com.cloudant.sync.internal.sqlite.SQLDatabase;
  *     case of conflicted document trees. This is updated according to the standard couch
  *     algorithm.
  * </p>
- *
- * @api_private
  */
 
 public class SetCurrentCallable implements SQLCallable<Void> {

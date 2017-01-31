@@ -36,8 +36,6 @@ import java.sql.SQLException;
  *
  * In the same manner as CouchDB, a new leaf Revision which is marked as deleted is created and made
  * the child Revision of the Revision to be deleted.
- *
- * @api_private
  */
 public class DeleteDocumentCallable implements SQLCallable<InternalDocumentRevision> {
 

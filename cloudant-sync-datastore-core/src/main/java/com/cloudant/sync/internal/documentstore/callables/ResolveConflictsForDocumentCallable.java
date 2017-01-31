@@ -22,8 +22,6 @@ import com.cloudant.sync.internal.sqlite.SQLDatabase;
 /**
  * Delete and mark non-current all Document Revisions except the one with the Revision ID
  * {@code revIdKeep}
- *
- * @api_private
  */
 public class ResolveConflictsForDocumentCallable implements SQLCallable<Void> {
 

@@ -127,26 +127,12 @@ subprojects {
     // run javadoc over union of all projects
     gradle.projectsEvaluated {
 
-      // task to invoke custom doclet to audit public/private API tags
-      task auditApi(type: Javadoc, dependsOn: ':cloudant-sync-datastore-core:compileToolsJava') {
-        // for some reason classpath is not already configured
-        classpath = project.sourceSets.main.compileClasspath
-        // tools.jar also needs to be on the classpath for javadoc
-        classpath += files(org.gradle.internal.jvm.Jvm.current().toolsJar)
-        options.doclet = "com.cloudant.doclet.ApiAuditDoclet"
-        // doclet lives in the 'tools' path of the core project
-        options.docletpath = [project(':cloudant-sync-datastore-core').sourceSets.tools.output.classesDir]
-        source project.sourceSets.main.allJava
-      }
-
       javadoc {
 
             options.encoding = "UTF-8"
             options.docEncoding = "UTF-8"
             options.charSet = "UTF-8"
             exclude "**/internal/**"
-            options.tags = ['api_public:tp:API Status: Public',
-                            'api_private:tp:API Status: Private - API users are discouraged from using this class as fields, method signatures, and implementation details may be subject to change']
             options.showFromPublic()
             title = "sync-android ${version} API"
 

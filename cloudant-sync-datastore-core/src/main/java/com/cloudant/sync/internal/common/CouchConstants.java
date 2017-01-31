@@ -16,9 +16,6 @@
 
 package com.cloudant.sync.internal.common;
 
-/**
- * @api_private
- */
 public class CouchConstants {
 
     // Special fields are from: http://wiki.apache.org/couchdb/HTTP_Document_API#Special_Fields
