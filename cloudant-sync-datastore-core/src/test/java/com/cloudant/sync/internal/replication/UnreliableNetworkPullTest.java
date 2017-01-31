@@ -12,7 +12,7 @@
  * and limitations under the License.
  */
 
-package com.cloudant.sync.replication;
+package com.cloudant.sync.internal.replication;
 
 import com.cloudant.common.UnreliableProxyTestBase;
 import com.cloudant.common.RequireRunningProxy;

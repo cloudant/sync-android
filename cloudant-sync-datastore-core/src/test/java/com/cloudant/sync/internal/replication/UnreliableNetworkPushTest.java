@@ -12,13 +12,12 @@
  * and limitations under the License.
  */
 
-package com.cloudant.sync.replication;
+package com.cloudant.sync.internal.replication;
 
-import com.cloudant.common.UnreliableProxyTestBase;
 import com.cloudant.common.RequireRunningProxy;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.common.UnreliableProxyTestBase;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
+import com.cloudant.sync.documentstore.DocumentRevision;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,7 +38,7 @@ public class UnreliableNetworkPushTest extends UnreliableProxyTestBase {
     public void unreliableNetworkPushTest() throws Exception {
         addTimeoutToxic();
         int nDocs = 500;
-        for (int i=0; i<nDocs; i++) {
+        for (int i = 0; i < nDocs; i++) {
             createLocalDocument("doc" + i);
         }
         PushResult result = super.push();
@@ -47,18 +46,16 @@ public class UnreliableNetworkPushTest extends UnreliableProxyTestBase {
         Assert.assertEquals(nDocs, result.pushStrategy.getDocumentCounter());
         // When push completes remove the toxic for the assertion gets
         removeTimeoutToxic();
-        for (int i=0; i<nDocs; i++) {
+        for (int i = 0; i < nDocs; i++) {
             try {
                 Map<String, Object> doc = this.remoteDb.get(Map.class, "doc" + i);
                 Assert.assertEquals("doc" + i, doc.get("_id"));
-            } catch(Exception e) {
-                System.out.println(e);
-                Assert.fail("Couldn't get doc with exception "+e);
+            } catch (Exception e) {
+                Assert.fail("Couldn't get doc with exception " + e);
             }
         }
         // TODO a number of extra document updates and pulls to ensure checkpointing is correct
     }
-
 
 
     private void createLocalDocument(String docid) throws Exception {
@@ -66,11 +63,11 @@ public class UnreliableNetworkPushTest extends UnreliableProxyTestBase {
         Map<String, Object> doc = new HashMap<String, Object>();
         // TODO make a much more complex document
         int nKeys = 50;
-        for (int i=0; i<nKeys; i++) {
-            doc.put("key_"+i, "value_"+i);
+        for (int i = 0; i < nKeys; i++) {
+            doc.put("key_" + i, "value_" + i);
         }
         mdr.setBody(DocumentBodyFactory.create(doc));
-        datastore.createDocumentFromRevision(mdr);
+        datastore.create(mdr);
     }
 
 }
