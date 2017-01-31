@@ -68,7 +68,6 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         pull();
         Attachment a = datastore.getAttachment(id, rev, attachmentName);
         Assert.assertNotNull("Attachment is null", a);
-        Assert.assertEquals(attachmentName, a.name);
         try {
             Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new
                     ByteArrayInputStream(attachmentData.getBytes()), a.getInputStream()));
@@ -81,7 +80,6 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         pull();
         Attachment a2 = datastore.getAttachment(id, rev, attachmentName);
         Assert.assertNotNull("Attachment is null", a2);
-        Assert.assertEquals(attachmentName, a2.name);
         try {
             Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new
                     ByteArrayInputStream(attachmentData2.getBytes()), a2.getInputStream()));
@@ -96,7 +94,6 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         pull();
         Attachment a = datastore.getAttachment(id, rev, bigAttachmentName);
         Assert.assertNotNull("Attachment is null", a);
-        Assert.assertEquals(bigAttachmentName, a.name);
         try {
             Assert.assertTrue("Streams not equal", TestUtils.streamsEqual(new FileInputStream
                     (TestUtils.loadFixture("fixture/" + bigAttachmentName)), a.getInputStream()));
@@ -111,7 +108,6 @@ public class AttachmentsPullTest extends ReplicationTestBase {
         pull();
         Attachment a = datastore.getAttachment(id, rev, bigTextAttachmentName);
         Assert.assertNotNull("Attachment is null", a);
-        Assert.assertEquals(bigTextAttachmentName, a.name);
 
         // check that the attachment is correctly saved to the blob store:
         // get the 1 and only file at the known location and look at the first 2 bytes

@@ -24,7 +24,7 @@ import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.Misc;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * Update body and attachments of Document Revision by inserting a new child Revision with the JSON contents
@@ -35,14 +35,14 @@ import java.util.List;
 public class UpdateDocumentFromRevisionCallable implements SQLCallable<InternalDocumentRevision> {
 
     private DocumentRevision rev;
-    private List<PreparedAttachment> preparedNewAttachments;
-    private List<SavedAttachment> existingAttachments;
+    private Map<String, PreparedAttachment> preparedNewAttachments;
+    private Map<String, SavedAttachment> existingAttachments;
 
     private String attachmentsDir;
     private AttachmentStreamFactory attachmentStreamFactory;
 
-    public UpdateDocumentFromRevisionCallable(DocumentRevision rev, List<PreparedAttachment>
-            preparedNewAttachments, List<SavedAttachment> existingAttachments, String
+    public UpdateDocumentFromRevisionCallable(DocumentRevision rev, Map<String, PreparedAttachment>
+            preparedNewAttachments, Map<String, SavedAttachment> existingAttachments, String
             attachmentsDir, AttachmentStreamFactory attachmentStreamFactory) {
         this.rev = rev;
         this.preparedNewAttachments = preparedNewAttachments;

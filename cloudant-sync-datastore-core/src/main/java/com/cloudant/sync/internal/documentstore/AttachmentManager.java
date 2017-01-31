@@ -16,11 +16,11 @@
 
 package com.cloudant.sync.internal.documentstore;
 
-import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.AttachmentException;
 import com.cloudant.sync.documentstore.AttachmentNotSavedException;
 import com.cloudant.sync.documentstore.DocumentStoreException;
+import com.cloudant.sync.internal.android.ContentValues;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -35,11 +35,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
@@ -106,16 +104,16 @@ public class AttachmentManager {
 
     public static void addAttachmentsToRevision(SQLDatabase db, String attachmentsDir,
                                                 InternalDocumentRevision rev,
-                                                List<PreparedAttachment> attachments)
+                                                Map<String, PreparedAttachment> attachments)
             throws AttachmentNotSavedException {
-        for (PreparedAttachment a : attachments) {
+        for (Map.Entry<String, PreparedAttachment> a : attachments.entrySet()) {
             // go thru prepared attachments and add them
-            AttachmentManager.addAttachment(db, attachmentsDir, rev, a);
+            AttachmentManager.addAttachment(db, attachmentsDir, rev, a.getValue(), a.getKey());
         }
     }
 
     public static void addAttachment(SQLDatabase db, String attachmentsDir,
-                                     InternalDocumentRevision rev, PreparedAttachment a)
+                                     InternalDocumentRevision rev, PreparedAttachment a, String name)
             throws  AttachmentNotSavedException {
 
         // do it this way to only go thru inputstream once
@@ -126,7 +124,6 @@ public class AttachmentManager {
 
         ContentValues values = new ContentValues();
         long sequence = rev.getSequence();
-        String filename = a.attachment.name;
         byte[] sha1 = a.sha1;
         String type = a.attachment.type;
         int encoding = a.attachment.encoding.ordinal();
@@ -135,7 +132,7 @@ public class AttachmentManager {
         long revpos = CouchUtils.generationFromRevId(rev.getRevision());
 
         values.put("sequence", sequence);
-        values.put("filename", filename);
+        values.put("filename", name);
         values.put("key", sha1);
         values.put("type", type);
         values.put("encoding", encoding);
@@ -144,7 +141,7 @@ public class AttachmentManager {
         values.put("revpos", revpos);
 
         // delete and insert in case there is already an attachment at this seq (eg copied over from a previous rev)
-        db.delete("attachments", " filename = ? and sequence = ? ", new String[]{filename,
+        db.delete("attachments", " filename = ? and sequence = ? ", new String[]{name,
                 String.valueOf(sequence)});
         long result = db.insert("attachments", values);
         if (result == -1) {
@@ -233,36 +230,36 @@ public class AttachmentManager {
     }
 
     /**
-     * Return a list of the existing attachments in the list passed in.
+     * Return a map of the existing attachments in the map passed in.
      *
      * @param attachments Attachments to search.
-     * @return List of attachments which already exist in the attachment store, or an empty list if none.
+     * @return Map of attachments which already exist in the attachment store, or an empty map if none.
      */
-    public static List<SavedAttachment> findExistingAttachments(
-            Collection<? extends Attachment> attachments) {
-        ArrayList<SavedAttachment> list = new ArrayList<SavedAttachment>();
-        for (Attachment a : attachments) {
+    public static Map<String, SavedAttachment> findExistingAttachments(
+            Map<String, ? extends Attachment> attachments) {
+        Map<String, SavedAttachment> existingAttachments = new HashMap<String, SavedAttachment>();
+        for (Map.Entry<String, ? extends Attachment> a : attachments.entrySet()) {
             if (a instanceof SavedAttachment) {
-                list.add((SavedAttachment)a);
+                existingAttachments.put(a.getKey(), (SavedAttachment)a.getValue());
             }
         }
-        return list;
+        return existingAttachments;
     }
 
     /**
-     * Return a list of the new attachments in the list passed in.
+     * Return a map of the new attachments in the map passed in.
      *
      * @param attachments Attachments to search.
-     * @return List of attachments which need adding to the attachment store, or an empty list if none.
+     * @return Map of attachments which need adding to the attachment store, or an empty map if none.
      */
-    public static List<Attachment> findNewAttachments(Collection<? extends Attachment> attachments) {
-        ArrayList<Attachment> list = new ArrayList<Attachment>();
-        for (Attachment a : attachments) {
+    public static Map<String, Attachment> findNewAttachments(Map<String, ? extends Attachment> attachments) {
+        Map<String, Attachment> newAttachments = new HashMap<String, Attachment>();
+        for (Map.Entry<String, ? extends Attachment> a : attachments.entrySet()) {
             if (!(a instanceof SavedAttachment)) {
-                list.add(a);
+                newAttachments.put(a.getKey(), a.getValue());
             }
         }
-        return list;
+        return newAttachments;
     }
 
     /**
@@ -271,20 +268,20 @@ public class AttachmentManager {
      *
      * Typically {@code attachments} is found via a call to {@link #findNewAttachments}.
      *
-     * @param attachments List of attachments to prepare.
-     * @return Attachments prepared for inserting into attachment store.
+     * @param attachments Map of attachments to prepare.
+     * @return Map of attachments prepared for inserting into attachment store.
      * @see #findNewAttachments
      */
-    public static List<PreparedAttachment> prepareAttachments(String attachmentsDir,
+    public static Map<String, PreparedAttachment> prepareAttachments(String attachmentsDir,
                                                                  AttachmentStreamFactory attachmentStreamFactory,
-                                                                 List<Attachment> attachments)
+                                                                 Map<String, Attachment> attachments)
         throws AttachmentException {
-        ArrayList<PreparedAttachment> list = new ArrayList<PreparedAttachment>();
-        for (Attachment a : attachments) {
-            PreparedAttachment pa = AttachmentManager.prepareAttachment(attachmentsDir, attachmentStreamFactory, a);
-            list.add(pa);
+        Map<String, PreparedAttachment> preparedAttachments = new HashMap<String, PreparedAttachment>();
+        for (Map.Entry<String, Attachment> a : attachments.entrySet()) {
+            PreparedAttachment pa = AttachmentManager.prepareAttachment(attachmentsDir, attachmentStreamFactory, a.getValue());
+            preparedAttachments.put(a.getKey(), pa);
         }
-        return list;
+        return preparedAttachments;
     }
 
     protected static Attachment getAttachment(SQLDatabase db, String attachmentsDir,
@@ -321,13 +318,13 @@ public class AttachmentManager {
         }
     }
 
-    protected static List<? extends Attachment> attachmentsForRevision(SQLDatabase db, String attachmentsDir,
-                                                                       AttachmentStreamFactory attachmentStreamFactory,
-                                                                       long sequence)
+    protected static Map<String, ? extends Attachment> attachmentsForRevision(SQLDatabase db, String attachmentsDir,
+                                                                              AttachmentStreamFactory attachmentStreamFactory,
+                                                                              long sequence)
             throws AttachmentException {
         Cursor c = null;
         try {
-            LinkedList<SavedAttachment> atts = new LinkedList<SavedAttachment>();
+            Map<String, SavedAttachment> atts = new HashMap<String, SavedAttachment>();
             c = db.rawQuery(SQL_ATTACHMENTS_SELECT_ALL,
                     new String[]{String.valueOf(sequence)});
             while (c.moveToNext()) {
@@ -340,7 +337,7 @@ public class AttachmentManager {
                 int revpos = c.getInt(c.getColumnIndex("revpos"));
                 File file = fileFromKey(db, key, attachmentsDir, false);
                 
-                atts.add(new SavedAttachment(sequence, filename, key, type, Attachment.Encoding
+                atts.put(filename, new SavedAttachment(sequence, filename, key, type, Attachment.Encoding
                         .values()[encoding], length, encodedLength, revpos, file,
                         attachmentStreamFactory));
             }
@@ -376,11 +373,11 @@ public class AttachmentManager {
         }
     }
 
-    public static void copyAttachmentsToRevision(SQLDatabase db, List<SavedAttachment> attachments,
+    public static void copyAttachmentsToRevision(SQLDatabase db, Map<String, SavedAttachment> attachments,
                                                  InternalDocumentRevision rev)
             throws DocumentStoreException {
         try {
-            for (SavedAttachment a : attachments) {
+            for (SavedAttachment a : attachments.values()) {
                 // go thru existing (from previous rev) and new (from another document) saved attachments
                 // and add them (the effect on existing attachments is to copy them forward to this revision)
                 long parentSequence = a.seq;

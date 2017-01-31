@@ -247,3 +247,8 @@ Situations for which runtime (unchecked) exceptions may be thrown include:
 
 Removed `isCurrent()` method, since `database().read(docId)` always returns the current
 winning revision.
+
+## Changes to Replication Policies
+
+The `IntervalTimerReplicationPolicyManager` was moved into the `cloudant-sync-datastore-javase`
+module since it was not suitable for running on Android anyway.

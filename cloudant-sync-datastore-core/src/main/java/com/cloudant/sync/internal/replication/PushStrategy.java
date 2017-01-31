@@ -391,7 +391,7 @@ public class PushStrategy implements ReplicationStrategy {
 
                 // get the attachments for the leaf of this path
                 InternalDocumentRevision dr = path.get(0);
-                List<? extends Attachment> atts = this.sourceDb.getDbCore().attachmentsForRevision(dr);
+                Map<String, ? extends Attachment> atts = this.sourceDb.getDbCore().attachmentsForRevision(dr);
 
                 // get common ancestor generation - needed to correctly stub out attachments
                 // closest back (first) instance of one of the possible ancestors rev ID in the history tree
