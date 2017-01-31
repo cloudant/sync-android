@@ -94,7 +94,7 @@ public class RevisionHistoryHelperTest {
         RevisionHistoryHelper.revisionHistoryToJson(d);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void revisionHistoryToJson_null_exception() {
         RevisionHistoryHelper.revisionHistoryToJson(null);
     }

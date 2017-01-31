@@ -49,7 +49,7 @@ public class DocumentRevsListTest {
         documentRevs.add(documentRevs2);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void null_exception() {
         new DocumentRevsList(null);
     }

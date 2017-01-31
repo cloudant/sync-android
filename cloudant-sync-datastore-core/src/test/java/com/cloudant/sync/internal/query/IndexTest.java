@@ -70,8 +70,8 @@ public class IndexTest {
         Index index = new Index(new ArrayList<FieldSort>(), indexName);
     }
 
-    @Test(expected = NullPointerException.class)
-    public void returnsNullWhenNullFields() {
+    @Test(expected = IllegalArgumentException.class)
+    public void throwsIllegalArgumentWhenNullFields() {
         Index index = new Index(null, indexName);
     }
 
