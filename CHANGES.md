@@ -117,7 +117,7 @@
   `MutableDocumentRevision` classes have been removed, in order to
   simplify use of API methods. All code using this library will need
   to be updated to use the `DocumentRevision` class. See the updated
-  [CRUD guide](https://github.com/cloudant/sync-android/blob/master/doc/crud.md)
+  [CRUD guide](https://github.com/cloudant/sync-android/blob/master/doc/CrudSamples.java)
   for examples of how to use this class.
 - [BREAKING CHANGE] Index type is now defined as an enum. This affects
  the following APIs:
