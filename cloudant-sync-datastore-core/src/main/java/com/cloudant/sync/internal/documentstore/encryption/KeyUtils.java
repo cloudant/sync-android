@@ -21,8 +21,6 @@ import org.apache.commons.codec.binary.Hex;
 
 /**
  * Utility methods for manipulating keys.
- *
- * @api_private
  */
 public class KeyUtils {
 

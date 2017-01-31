@@ -32,8 +32,6 @@ import java.util.logging.Logger;
  * <a target="_blank" href="https://github.com/cloudant/sync-android/blob/master/doc/query.md">
  * markdown document.</a>
  * </p>
- *
- * @api_public
  */
 public class Index {
 

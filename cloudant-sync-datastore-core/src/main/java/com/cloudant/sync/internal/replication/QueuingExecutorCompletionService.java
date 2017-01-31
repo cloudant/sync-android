@@ -36,8 +36,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @param <Q> reQuest type
  * @param <R> Response type
- *
- * @api_private
  */
 public abstract class QueuingExecutorCompletionService<Q, R> extends ExecutorCompletionService<R> {
 

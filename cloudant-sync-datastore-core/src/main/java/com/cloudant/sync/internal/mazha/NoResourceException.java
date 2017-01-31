@@ -16,9 +16,6 @@
 
 package com.cloudant.sync.internal.mazha;
 
-/**
- * @api_private
- */
 public class NoResourceException extends CouchException {
 
     public NoResourceException(String message) {

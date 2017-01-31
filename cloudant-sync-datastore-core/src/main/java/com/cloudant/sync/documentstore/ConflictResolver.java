@@ -21,8 +21,6 @@ import java.util.List;
 /**
  * The {@code ConflictResolver} interface should be implemented by classes resolve
  * conflicts via {@link Database#resolveConflicts(String, ConflictResolver)}.
- *
- * @api_public
  */
 public interface ConflictResolver {
 

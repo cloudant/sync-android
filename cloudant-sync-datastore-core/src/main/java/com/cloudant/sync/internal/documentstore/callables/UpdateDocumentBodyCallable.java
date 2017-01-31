@@ -27,8 +27,6 @@ import com.cloudant.sync.internal.util.Misc;
 /**
  * Update body of Document Revision by inserting a new child Revision with the JSON contents
  * {@code body}
- *
- * @api_private
  */
 public class UpdateDocumentBodyCallable implements SQLCallable<InternalDocumentRevision> {
 

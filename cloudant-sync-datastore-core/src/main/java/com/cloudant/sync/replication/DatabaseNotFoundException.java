@@ -24,8 +24,6 @@ package com.cloudant.sync.replication;
 
 /**
  * Thrown when a given remote database does not exist.
- *
- * @api_public
  */
 public class DatabaseNotFoundException extends Exception {
     public DatabaseNotFoundException(String s) {

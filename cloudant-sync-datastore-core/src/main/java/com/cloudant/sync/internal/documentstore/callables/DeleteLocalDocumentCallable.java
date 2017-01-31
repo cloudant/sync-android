@@ -20,8 +20,6 @@ import com.cloudant.sync.internal.sqlite.SQLDatabase;
 
 /**
  * Delete a local (non-replicated) Document
- *
- * @api_private
  */
 public class DeleteLocalDocumentCallable implements SQLCallable<Void> {
 

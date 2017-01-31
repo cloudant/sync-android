@@ -33,8 +33,6 @@ import java.util.logging.Logger;
  * there is already a Revision tree for this Document ID (the only material difference between these
  * callables is an extra insert into the `docs` table). Because there is no common ancestor, the
  * result is a "forest" of trees.
- *
- * @api_private
  */
 public class InsertDocumentHistoryToNewTreeCallable implements SQLCallable<Long> {
 

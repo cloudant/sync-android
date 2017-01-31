@@ -51,9 +51,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
-/**
- * @api_private
- */
 public class CouchClient  {
 
     private CouchURIHelper uriHelper;

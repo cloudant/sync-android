@@ -27,8 +27,6 @@ import java.util.logging.Logger;
 
 /**
  * Insert a local (non-replicated) Document
- *
- * @api_private
  */
 public class InsertLocalDocumentCallable implements SQLCallable<LocalDocument> {
 

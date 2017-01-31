@@ -22,9 +22,6 @@ import com.cloudant.sync.internal.util.Misc;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-/**
- * @api_private
- */
 public class QueryBuilder {
 
     private static final Pattern sLimitPattern =

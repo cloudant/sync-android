@@ -27,8 +27,6 @@ import java.util.logging.Logger;
 
 /**
  * Get the internal sequence number for a given a revision
- *
- * @api_private
  */
 public class GetSequenceCallable implements SQLCallable<Long> {
 

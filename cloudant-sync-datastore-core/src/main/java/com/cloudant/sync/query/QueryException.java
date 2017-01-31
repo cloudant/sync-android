@@ -22,7 +22,7 @@ import com.cloudant.sync.documentstore.DocumentStoreException;
  * example an internal SQLite database error.
  * </p>
 
- * @api_public
+ *
  */
 public class QueryException extends DocumentStoreException {
     public QueryException(Throwable causedBy){

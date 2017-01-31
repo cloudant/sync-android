@@ -43,7 +43,7 @@ import java.util.Map;
 
 /**
  * Internal utility class
- * @api_private
+ *
  */
 public class JSONUtils {
 

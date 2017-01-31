@@ -24,8 +24,6 @@ import java.util.logging.Logger;
  * encrypted datastore.
  *
  * @see KeyProvider
- *
- * @api_public
  */
 public class CachingKeyProvider implements KeyProvider {
 

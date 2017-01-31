@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @param <K> the type of key
  * @param <V> the type of values
- * @api_private
+ *
  */
 public class ValueListMap<K, V> extends ConcurrentHashMap<K, List<V>> {
 

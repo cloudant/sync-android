@@ -27,8 +27,6 @@ import com.cloudant.sync.replication.Replicator;
  *      <li>incorrect credentials</li>
  *      <li>network connection unavailable</li>
  * </ul>
- *
- * @api_public
  */
 public class ReplicationErrored implements Notification {
 

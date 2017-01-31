@@ -27,9 +27,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @api_private
- */
 public final class DocumentBodyImpl implements DocumentBody {
 
     private byte[] bytes;

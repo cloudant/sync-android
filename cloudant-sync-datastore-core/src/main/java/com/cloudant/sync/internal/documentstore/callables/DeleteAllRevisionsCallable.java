@@ -30,8 +30,6 @@ import java.util.List;
 
 /**
  * Delete all Revisions for a given Document ID
- *
- * @api_private
  */
 public class DeleteAllRevisionsCallable implements SQLCallable<List<DocumentRevision>> {
 

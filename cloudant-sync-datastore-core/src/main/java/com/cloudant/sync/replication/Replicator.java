@@ -27,8 +27,6 @@ import com.cloudant.sync.event.EventBus;
  * <p>Create instances using the {@link ReplicatorBuilder} class.</p>
  *
  * <p>The replicator is thread safe.</p>
- *
- * @api_public
  */
 public interface Replicator {
 

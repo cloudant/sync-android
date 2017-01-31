@@ -29,8 +29,6 @@ import java.util.Map;
 /**
  * Update body and attachments of Document Revision by inserting a new child Revision with the JSON contents
  * {@code rev.body} and the new and existing attachments {@code preparedNewAttachments} and {@code existingAttachments}
- *
- * @api_private
  */
 public class UpdateDocumentFromRevisionCallable implements SQLCallable<InternalDocumentRevision> {
 

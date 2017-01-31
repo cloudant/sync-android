@@ -29,8 +29,6 @@ import java.util.Set;
 /**
  * Checks the supplied collection of revisions for the given document ID and returns a
  * collection containing only those entries that are missing from the database.
- *
- * @api_private
  */
 
 public class RevsDiffBatchCallable implements SQLCallable<Collection<String>> {

@@ -23,8 +23,6 @@ import java.util.Map;
 
 /**
  * Created by tomblench on 10/02/16.
- *
- * @api_private
  */
 public class SimpleChangeNotifyingMap {
 

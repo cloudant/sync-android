@@ -41,8 +41,6 @@ import com.cloudant.sync.query.FieldSort.Direction;
  * <a target="_blank" href="https://github.com/cloudant/sync-android/blob/master/doc/query.md">
  * markdown document.</a>
  * </p>
- *
- * @api_public
  */
 public interface Query {
 

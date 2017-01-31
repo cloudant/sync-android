@@ -18,9 +18,6 @@ package com.cloudant.sync.internal.sqlite.android;
 
 import com.cloudant.sync.internal.sqlite.Cursor;
 
-/**
- * @api_private
- */
 public class AndroidSQLiteCursor implements Cursor {
 
     private android.database.Cursor internalCursor;

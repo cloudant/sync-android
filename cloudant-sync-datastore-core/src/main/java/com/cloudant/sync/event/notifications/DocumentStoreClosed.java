@@ -22,8 +22,6 @@ import com.cloudant.sync.documentstore.DocumentStore;
  * <p>Event for DocumentStore closed.</p>
  *
  * <p>This event is posted by {@link DocumentStore#close()}</p>
- *
- * @api_public
  */
 public class DocumentStoreClosed extends DocumentStoreModified {
 

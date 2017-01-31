@@ -16,8 +16,6 @@ package com.cloudant.sync.internal.documentstore.encryption;
 
 /**
  * Class to hold encryption related constants.
- *
- * @api_private
  */
 public class EncryptionConstants {
 

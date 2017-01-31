@@ -27,8 +27,6 @@ import java.io.InputStream;
 
 /**
  * An Attachment which is read from a file before saving to the database
- *
- * @api_public
  */
 public class UnsavedFileAttachment extends Attachment {
 

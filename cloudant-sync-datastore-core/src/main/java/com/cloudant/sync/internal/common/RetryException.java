@@ -16,9 +16,6 @@
 
 package com.cloudant.sync.internal.common;
 
-/**
- * @api_private
- */
 public class RetryException extends RuntimeException {
     public RetryException(String s, Exception e) {
         super(s, e);

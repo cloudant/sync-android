@@ -33,8 +33,6 @@ import java.util.Locale;
 /**
  * Return the list of changes to the datastore, starting at a given `since` sequence value, limited
  * to a maximum number of `limit` changes
- *
- * @api_private
  */
 public class ChangesCallable implements SQLCallable<Changes> {
 

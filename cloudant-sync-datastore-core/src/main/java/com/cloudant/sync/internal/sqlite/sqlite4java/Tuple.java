@@ -21,9 +21,6 @@ import com.cloudant.sync.internal.sqlite.Cursor;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @api_private
- */
 public class Tuple {
 
     private final List<Integer> desc;

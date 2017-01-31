@@ -39,8 +39,6 @@ import java.util.logging.Logger;
 
 /**
  * Force insert a list of items (Revisions) obtained by pull Replication into the local database
- *
- * @api_private
  */
 public class ForceInsertCallable implements SQLCallable<List<DocumentModified>> {
 

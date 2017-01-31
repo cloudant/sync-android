@@ -19,9 +19,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @api_private
- */
 public class CollectionUtils {
 
     public static <E> List<List<E>> partition(List<E> list, int partitionSize) {

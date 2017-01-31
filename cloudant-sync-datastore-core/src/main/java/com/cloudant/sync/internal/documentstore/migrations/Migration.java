@@ -18,8 +18,6 @@ import com.cloudant.sync.internal.sqlite.SQLDatabase;
 
 /**
  * Interface defining methods for running migration.
- *
- * @api_private
  */
 public interface Migration {
 

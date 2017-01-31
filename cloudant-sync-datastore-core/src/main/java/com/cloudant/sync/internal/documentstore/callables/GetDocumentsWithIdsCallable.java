@@ -27,8 +27,6 @@ import java.util.List;
 
 /**
  * Get a List of Document Revisions by Document ID
- *
- * @api_private
  */
 public class GetDocumentsWithIdsCallable implements SQLCallable<List<DocumentRevision>> {
 

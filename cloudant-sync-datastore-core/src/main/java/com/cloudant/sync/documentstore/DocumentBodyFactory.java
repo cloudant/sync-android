@@ -24,8 +24,6 @@ import java.util.Map;
 /**
  * <p>Factory class to create DocumentBody objects from either JSON byte-streams
  * or java Map objects.</p>
- *
- * @api_public
  */
 public class DocumentBodyFactory {
 

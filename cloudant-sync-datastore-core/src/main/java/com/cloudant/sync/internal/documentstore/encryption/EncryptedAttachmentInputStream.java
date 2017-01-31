@@ -58,8 +58,6 @@ import javax.crypto.spec.SecretKeySpec;
  * Body:
  * AES CBC Encrypted file content.
  * </pre>
- *
- * @api_private
  */
 public class EncryptedAttachmentInputStream extends FilterInputStream {
 

@@ -18,8 +18,6 @@ import java.util.Locale;
 
 /**
  * Denotes the type for an query Index.
- *
- * @api_public
  */
 public enum IndexType {
 

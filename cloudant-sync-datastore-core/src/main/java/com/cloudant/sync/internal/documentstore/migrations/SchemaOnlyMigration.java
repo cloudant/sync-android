@@ -20,8 +20,6 @@ import java.util.Arrays;
 
 /**
  * Runs a database migration which consists only of SQL statements.
- *
- * @api_private
  */
 public class SchemaOnlyMigration implements Migration {
 

@@ -26,8 +26,6 @@ import java.util.List;
 
 /**
  * Retrieve all docIds from the database.
- *
- * @api_private
  */
 public class GetAllDocumentIdsCallable implements SQLCallable<List<String>> {
     @Override

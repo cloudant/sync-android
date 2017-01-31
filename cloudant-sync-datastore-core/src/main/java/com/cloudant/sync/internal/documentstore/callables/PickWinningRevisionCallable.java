@@ -32,8 +32,6 @@ import java.util.TreeMap;
 /**
  * Callable that evaluates leaf nodes to identify the winning revision for a particular document ID.
  * Marks all revisions as not current, before marking a single winner.
- *
- * @api_private
  */
 public class PickWinningRevisionCallable implements SQLCallable<Void> {
 

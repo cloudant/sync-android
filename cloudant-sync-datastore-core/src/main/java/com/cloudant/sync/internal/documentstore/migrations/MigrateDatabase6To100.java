@@ -28,8 +28,6 @@ import org.apache.commons.codec.binary.Hex;
  * This change is a breaking change because after the migration, older versions of the code
  * will not be able to find attachments on disk because they will look for the path based
  * on the hex of the key rather than going via the attachments table.
- *
- * @api_private
  */
 public class MigrateDatabase6To100 implements Migration {
 

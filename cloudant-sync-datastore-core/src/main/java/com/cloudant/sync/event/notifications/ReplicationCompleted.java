@@ -26,8 +26,6 @@ import com.cloudant.sync.replication.Replicator;
  * worker threads.</p>
  *
  * <p>Continuous replications (when implemented) will never complete.</p>
- *
- * @api_public
  */
 public class ReplicationCompleted implements Notification {
 

@@ -20,9 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @api_public
- */
 public class ReplicationPolicyManager {
 
     private final List<Replicator> replicators = new ArrayList<Replicator>();

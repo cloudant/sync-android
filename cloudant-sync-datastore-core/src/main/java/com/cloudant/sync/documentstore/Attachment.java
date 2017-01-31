@@ -32,8 +32,6 @@ import java.io.InputStream;
  *   An attachment is identified by a name and has other metadata associated with it such as MIME
  *   type and encoding.
  * </p>
- *
- * @api_public
  */
 public abstract class Attachment {
 

@@ -23,8 +23,6 @@ import com.cloudant.sync.documentstore.DocumentStore;
  *
  * <p>This event is posted by
  * {@link DocumentStore#delete()}</p>
- *
- * @api_public
  */
 public class DocumentStoreDeleted extends DocumentStoreModified {
 

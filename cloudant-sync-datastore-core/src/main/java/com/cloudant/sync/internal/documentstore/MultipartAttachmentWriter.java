@@ -67,7 +67,7 @@ import java.util.Map;
  * <code>true</code> in the <code>_attachments</code> object.
  * </p>
  *
- * @api_private
+ *
  * @see CouchClient#putMultipart(MultipartAttachmentWriter)
  * @see RevisionHistoryHelper#addAttachments(Map, Map, boolean, int)
  * @see

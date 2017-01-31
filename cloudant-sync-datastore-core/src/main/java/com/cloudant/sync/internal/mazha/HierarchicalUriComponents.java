@@ -28,9 +28,6 @@ import com.cloudant.sync.internal.util.Misc;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 
-/**
- * @api_private
- */
 public class HierarchicalUriComponents {
 
     /**

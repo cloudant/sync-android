@@ -142,8 +142,6 @@ import java.util.TreeMap;
  *
  * @see Database#resolveConflicts(String, ConflictResolver)
  * @see ConflictResolver
- *
- * @api_private
  */
 @SuppressWarnings("serial")
 public class DocumentRevisionTree {

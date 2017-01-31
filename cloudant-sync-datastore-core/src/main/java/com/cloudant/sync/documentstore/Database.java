@@ -56,8 +56,6 @@ import java.util.List;
  *
  * @see DocumentRevision
  * @see Query
- * @api_public
- *
  */
 public interface Database {
 

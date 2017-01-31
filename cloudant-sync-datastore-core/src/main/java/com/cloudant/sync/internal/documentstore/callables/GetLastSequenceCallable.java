@@ -28,8 +28,6 @@ import java.util.logging.Logger;
 
 /**
  * Get the most recent (highest) sequence number for the database
- *
- * @api_private
  */
 public class GetLastSequenceCallable implements SQLCallable<Long> {
 

@@ -20,9 +20,6 @@ import com.cloudant.sync.internal.sqlite.Cursor;
 
 import java.util.List;
 
-/**
- * @api_private
- */
 public class SQLiteCursor implements Cursor {
 
     private int position = -1;
