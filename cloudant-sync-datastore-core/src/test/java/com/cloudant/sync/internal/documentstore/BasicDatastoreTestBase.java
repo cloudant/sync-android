@@ -89,7 +89,7 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
         CouchUtils.validateDocumentId(rev.getId());
         CouchUtils.validateRevisionId(rev.getRevision());
         Assert.assertEquals(1, CouchUtils.generationFromRevId(rev.getRevision()));
-        Assert.assertTrue(rev.isCurrent());
+        Assert.assertTrue(((InternalDocumentRevision)rev).isCurrent());
         Assert.assertTrue(((InternalDocumentRevision)rev).getParent() == -1L);
     }
 
@@ -97,6 +97,6 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
         Assert.assertNotNull(rev);
         CouchUtils.validateDocumentId(rev.getId());
         Assert.assertEquals("1-local", rev.getRevision());
-        Assert.assertTrue(rev.isCurrent());
+        Assert.assertTrue(((InternalDocumentRevision)rev).isCurrent());
     }
 }

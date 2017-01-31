@@ -140,17 +140,17 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
     public void updateDocument_existingDocument_success() throws Exception {
         DocumentRevision rev_1Mut = new DocumentRevision();
         rev_1Mut.setBody(bodyOne);
-        DocumentRevision rev_1 = datastore.create(rev_1Mut);
+        InternalDocumentRevision rev_1 = (InternalDocumentRevision) datastore.create(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
 
         DocumentRevision rev_2Mut = rev_1;
         rev_2Mut.setBody(bodyTwo);
         DocumentRevision rev_2 = datastore.update(rev_2Mut);
         Assert.assertEquals(2, CouchUtils.generationFromRevId(rev_2.getRevision()));
-        Assert.assertTrue(((DocumentRevision)rev_2).isCurrent()); // new revision is current revision
+        Assert.assertTrue(((InternalDocumentRevision)rev_2).isCurrent()); // new revision is current revision
 
-        DocumentRevision rev_1_again = datastore.read(rev_1.getId(), rev_1.getRevision());
-        Assert.assertTrue(((DocumentRevision)rev_1).isCurrent()); // rev_1 is still marked as "current", and developer need query db to get the latest data, yikes :(
+        InternalDocumentRevision rev_1_again = datastore.read(rev_1.getId(), rev_1.getRevision());
+        Assert.assertTrue(rev_1.isCurrent()); // rev_1 is still marked as "current", and developer need query db to get the latest data, yikes :(
         Assert.assertFalse(rev_1_again.isCurrent());
 
         DocumentRevision rev_3Mut = rev_2;
@@ -228,7 +228,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         Assert.assertTrue(deletedRev.isCurrent());
 
         DocumentRevisionTree tree = this.datastore.getAllRevisionsOfDocument(rev1.getId());
-        DocumentRevision rev2 = (DocumentRevision) tree.getCurrentRevision();
+        InternalDocumentRevision rev2 = tree.getCurrentRevision();
         Assert.assertEquals(2, CouchUtils.generationFromRevId(rev2.getRevision()));
         Assert.assertTrue(rev2.isDeleted());
         Assert.assertTrue(rev2.isCurrent());
@@ -292,7 +292,7 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         Assert.assertEquals(3, CouchUtils.generationFromRevId(newInsertedRevisionId));
         DocumentRevision newInsertedRevision = this.datastore.read(rev1a.getId(), newInsertedRevisionId);
         Assert.assertTrue(newInsertedRevision.isDeleted());
-        Assert.assertFalse(newInsertedRevision.isCurrent());
+        Assert.assertFalse(((InternalDocumentRevision)newInsertedRevision).isCurrent());
     }
 
     private InternalDocumentRevision createDetachedDocumentRevision(String docId, String rev, DocumentBody body) {
@@ -328,21 +328,21 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
         DocumentRevision rev_1 = datastore.create(rev_1Mut);
         validateNewlyCreatedDocument(rev_1);
 
-        DocumentRevision revRead_1 = datastore.read(rev_1.getId(), rev_1.getRevision());
+        InternalDocumentRevision revRead_1 = datastore.read(rev_1.getId(), rev_1.getRevision());
         Assert.assertTrue(revRead_1.isCurrent());
 
         DocumentRevision rev_2Mut = rev_1;
         rev_2Mut.setBody(bodyTwo);
         datastore.update(rev_2Mut);
 
-        DocumentRevision revRead_2 = datastore.read(rev_1.getId(), rev_1.getRevision());
+        InternalDocumentRevision revRead_2 = datastore.read(rev_1.getId(), rev_1.getRevision());
         Assert.assertFalse(revRead_2.isCurrent());
 
-        DocumentRevision revRead_3 = datastore.read(rev_1.getId());
+        InternalDocumentRevision revRead_3 = datastore.read(rev_1.getId());
         Assert.assertTrue(revRead_3.isCurrent());
         Assert.assertEquals(2, CouchUtils.generationFromRevId(revRead_3.getRevision()));
 
-        DocumentRevision revRead_3_2 = datastore.read(rev_1.getId());
+        InternalDocumentRevision revRead_3_2 = datastore.read(rev_1.getId());
         Assert.assertTrue(revRead_3_2.isCurrent());
         Assert.assertEquals(2, CouchUtils.generationFromRevId(revRead_3_2.getRevision()));
     }
