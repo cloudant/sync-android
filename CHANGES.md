@@ -3,7 +3,7 @@
   there are a large number of breaking changes to package names,
   classes and methods. API users will need to make changes to their
   existing code in order to use this version of the library. Consult
-  the [migration guide](doc/migration.md) for a comprehensive list of
+  the [migration guide](https://github.com/cloudant/sync-android/blob/2.0.0/doc/migration.md) for a comprehensive list of
   changes and suggested strategies to migrate your code.
 
 - [BREAKING CHANGE] The `name` field has been removed from
@@ -30,7 +30,7 @@
   
 - [NOTE] The "CRUD Guide" markdown document (previously located in
   `doc/crud.md`) has been migrated to a
-  [java source file](https://github.com/cloudant/sync-android/blob/master/doc/CrudSamples.java).
+  [java source file](https://github.com/cloudant/sync-android/blob/2.0.0/doc/CrudSamples.java).
   
 - [FIXED] Issue with double encoding of restricted URL characters in credentials when using
   `ReplicatorBuilder`.
@@ -105,19 +105,19 @@
   reflect the compatibility status of API changes.
 - [IMPROVED] Javadoc output now shows "API Status" of "Public" or
   "Private" for each class. See
-  [the last paragraph of this section of the README](https://github.com/cloudant/sync-android/blob/master/README.md#overview-of-the-library)
+  [the last paragraph of this section of the README](https://github.com/cloudant/sync-android/blob/1.0.0/README.md#overview-of-the-library)
   for more details.
 - [NEW] Added filtering for push replications.
 - [BREAKING CHANGE] The `EventBus` APIs have been changed from the Google Guava
   (`com.google.common.eventbus`) to our own `com.cloudant.sync.event` API. The new implementation
   has increased restrictions on visibility of `@Subscribe` annotated methods. See the
-  [Event guide](https://github.com/cloudant/sync-android/blob/master/doc/events.md) and javadoc for
+  [Event guide](https://github.com/cloudant/sync-android/blob/1.0.0/doc/events.md) and javadoc for
   details.
 - [BREAKING CHANGE] The `BasicDocumentRevision` and
   `MutableDocumentRevision` classes have been removed, in order to
   simplify use of API methods. All code using this library will need
   to be updated to use the `DocumentRevision` class. See the updated
-  [CRUD guide](https://github.com/cloudant/sync-android/blob/master/doc/CrudSamples.java)
+  [CRUD guide](https://github.com/cloudant/sync-android/blob/1.0.0/doc/crud.md)
   for examples of how to use this class.
 - [BREAKING CHANGE] Index type is now defined as an enum. This affects
  the following APIs:
@@ -176,11 +176,11 @@ need to be retrieved asynchronously.
 
 # 0.14.0 (2015-11-3)
 - [BREAKING CHANGE] Removed `setCustomHeaders` from `CouchConfig`. See
-  [Http Interceptors](https://github.com/cloudant/sync-android/blob/master/doc/interceptors.md)
+  [Http Interceptors](https://github.com/cloudant/sync-android/blob/0.14.0/doc/interceptors.md)
   for a code sample which shows how to add custom request headers
   using an HTTP Request Interceptor.
 - [NEW] Added replication policies, allowing users to easily create policies such as "Replicate
-   every 2 hours, only when on Wifi". See the [Replication Policies User Guide](doc/replication-policies.md).
+   every 2 hours, only when on Wifi". See the [Replication Policies User Guide](https://github.com/cloudant/sync-android/blob/0.14.0/REPLICATION_POLICIES.md).
 - [IMPROVED] Replication reliability when transferring data over unreliable
   networks.
 
@@ -202,7 +202,7 @@ when creating a pull replication if `PullFilter` is `null`.
 
 # 0.13.0 (2015-08-13)
 - [BREAKING CHANGE] Moved code for encryption on Android to the
-  `sync-android-encryption` subproject. See the instructions in the [README](https://github.com/cloudant/sync-android/blob/master/README.md)
+  `sync-android-encryption` subproject. See the instructions in the [README](https://github.com/cloudant/sync-android/blob/0.13.0/README.md)
   file for how to include `sync-android-encryption` in your project.
 - [BREAKING CHANGE] Removed Configuration options from `CouchConfig` which are not used
    by the HTTP Layer. See commit [815026c](https://github.com/cloudant/sync-android/commit/815026c14caf86a8cbb105af0b30f7fb73a46871)
@@ -212,7 +212,7 @@ when creating a pull replication if `PullFilter` is `null`.
 - [NEW] New fields `documentsReplicated` and `batchesReplicated` added
   to ReplicationCompleted class
 - [NEW] New `ReplicatorBuilder` API. This should be used to create replications in the future.
-- [NEW] HTTP Interceptor API. See [Http Interceptors](https://github.com/cloudant/sync-android/blob/master/doc/interceptors.md) for details.
+- [NEW] HTTP Interceptor API. See [Http Interceptors](https://github.com/cloudant/sync-android/blob/0.13.0/doc/interceptors.md) for details.
 - [DEPRECATED] Deprecated the  following classes: `ReplicatorFactory`, `Replication`,
   `PullReplication` and `PushReplication`.
 
@@ -245,10 +245,10 @@ when creating a pull replication if `PullFilter` is `null`.
 
 - [NEW] Encryption of all data is now supported using 256-bit AES:
   JSON documents, Query indexes and attachments. See
-  [encryption documentation](https://github.com/cloudant/sync-android/blob/master/doc/encryption.md)
+  [encryption documentation](https://github.com/cloudant/sync-android/blob/0.12.0/doc/encryption.md)
   for details.
 - [NEW] Added query text search support.  See
-  [query documentation](https://github.com/cloudant/sync-android/blob/master/doc/query.md)
+  [query documentation](https://github.com/cloudant/sync-android/blob/0.12.0/doc/query.md)
   for details.
 - [NEW] Use HttpURLConnection instead of Apache HttpClient to
   significantly reduce dependency footprint.
@@ -256,7 +256,7 @@ when creating a pull replication if `PullFilter` is `null`.
 - [FIX] Fixed encoding of `+` characters in query strings.
 - [REMOVED] Removed `oneway` methods from ReplicatorFactory. Users
   should use the method described in the
-  [replication documentation](https://github.com/cloudant/sync-android/blob/master/doc/replication.md)
+  [replication documentation](https://github.com/cloudant/sync-android/blob/0.12.0/doc/replication.md)
   instead.
 - [NEW] Added query support for the `$mod` operator.
 
@@ -279,7 +279,7 @@ when creating a pull replication if `PullFilter` is `null`.
   supported by the version of the library opening it.
 - [REMOVED] Removed legacy indexing/query code.  Users should instead
   use the new Cloudant Query - Mobile functionality.  A
-  [migration document](https://github.com/cloudant/sync-android/tree/master/doc/query-migration.md)
+  [migration document](https://github.com/cloudant/sync-android/blob/0.11.0/doc/query-migration.md)
   exists for users that need to transition from the legacy
   implementation to the new one.
 - [FIX] Fix attachment handling error which could cause push
