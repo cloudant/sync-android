@@ -1,12 +1,16 @@
-//  Copyright (c) 2015 IBM Cloudant. All rights reserved.
-//
-//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
-//  except in compliance with the License. You may obtain a copy of the License at
-//  http://www.apache.org/licenses/LICENSE-2.0
-//  Unless required by applicable law or agreed to in writing, software distributed under the
-//  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-//  either express or implied. See the License for the specific language governing permissions
-//  and limitations under the License.
+/*
+ * Copyright © 2015 IBM Corp. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
 
 package com.cloudant.http;
 
@@ -14,9 +18,9 @@ import com.cloudant.common.CouchTestBase;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.common.TestOptions;
 import com.cloudant.http.interceptors.CookieInterceptor;
-import com.cloudant.mazha.CouchClient;
-import com.cloudant.mazha.CouchConfig;
-import com.cloudant.mazha.json.JSONHelper;
+import com.cloudant.sync.internal.mazha.CouchClient;
+import com.cloudant.sync.internal.mazha.CouchConfig;
+import com.cloudant.sync.internal.util.JSONUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -186,8 +190,7 @@ public class HttpTest extends CouchTestBase {
         Assert.assertEquals(2, conn.getConnection().getResponseCode() / 100);
 
         //check the json
-        JSONHelper helper = new JSONHelper();
-        Map<String, Object> jsonRes = helper.fromJson(new InputStreamReader(conn.getConnection()
+        Map<String, Object> jsonRes = JSONUtils.fromJson(new InputStreamReader(conn.getConnection()
                 .getInputStream()));
 
         Assert.assertTrue(jsonRes.containsKey("ok"));

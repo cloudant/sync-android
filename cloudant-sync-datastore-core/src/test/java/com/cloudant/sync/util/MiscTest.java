@@ -1,5 +1,7 @@
-/**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+/*
+ * Copyright © 2017 IBM Corp. All rights reserved.
+ *
+ * Copyright © 2013 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -13,6 +15,8 @@
  */
 
 package com.cloudant.sync.util;
+
+import com.cloudant.sync.internal.util.Misc;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -97,7 +101,7 @@ public class MiscTest {
     public void defaultNullObjectCheck() throws Exception {
         try {
             Misc.checkNotNull(null, null);
-        } catch(NullPointerException e) {
+        } catch(IllegalArgumentException e) {
             Assert.assertEquals("Parameter must not be null.", e.getMessage());
         }
     }
@@ -124,7 +128,7 @@ public class MiscTest {
     public void nullObjectCheck() throws Exception {
         try {
             Misc.checkNotNull(null, "Test argument");
-        } catch(NullPointerException e) {
+        } catch(IllegalArgumentException e) {
             Assert.assertEquals("Test argument must not be null.", e.getMessage());
         }
     }

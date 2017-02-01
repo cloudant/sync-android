@@ -14,7 +14,7 @@
 
 package com.cloudant.common;
 
-import com.cloudant.sync.replication.ReplicationTestBase;
+import com.cloudant.sync.internal.replication.ReplicationTestBase;
 
 import org.junit.After;
 import org.junit.AfterClass;

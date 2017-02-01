@@ -1,3 +1,17 @@
+/*
+ * Copyright © 2016 IBM Corp. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
 package com.cloudant.sync.replication;
 
 import android.app.AlarmManager;
@@ -23,37 +37,77 @@ import android.util.Log;
  *           responsible for handling the alarms triggered by the {@link AlarmManager} at
  *           the intervals when replication is required and handles resetting of alarms after
  *           reboot of the device.
- *
- * @api_public
  */
 public abstract class PeriodicReplicationService<T extends PeriodicReplicationReceiver>
     extends ReplicationService {
 
     /* Name of the SharedPreferences file used to store alarm times. We store the alarm
      * times in preferences so we can reset the alarms as accurately as possible after reboot
-     * and so we can adjust alarm times when components bind to or unbind from this Service. */
+     * and so we can adjust alarm times when components bind to or unbind from this Service.
+     * So that multiple PeriodicReplicationService instances can be used in one application without
+     * interfering with each other, the preferences in this file are stored using keys prefixed with
+     * the name of the concrete class implementing the PeriodicReplicationService. */
     private static final String PREFERENCES_FILE_NAME = "com.cloudant.preferences";
 
-    /* We store the elapsed time since booting at which the next alarm is due in SharedPreferences
-     * using this key. This is used to adjust alarm times when components bind to or unbind from
-     * this Service. */
-    private static final String PREFERENCE_ALARM_DUE_ELAPSED_TIME = "com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed";
+    /* We store the elapsed time since booting at which the last alarm occurred in SharedPreferences
+     * using a key with this suffix. This is used to set the initial alarm time when periodic
+     * replications are started. */
+    private static final String LAST_ALARM_ELAPSED_TIME_SUFFIX = ".lastAlarmElapsed";
 
-    /* We store the wall-clock time at which the next alarm is due in SharedPreferences
-     * using this key. This is used to set the initial alarm after a reboot. */
-    private static final String PREFERENCE_ALARM_DUE_CLOCK_TIME = "com.cloudant.sync.replication.PeriodicReplicationService.alarmDueClock";
+    /* We store the wall-clock time at which the last alarm occurred in SharedPreferences
+     * using a key with this suffix. This is used to set the initial alarm after a reboot. */
+    private static final String LAST_ALARM_CLOCK_TIME_SUFFIX = ".lastAlarmClock";
 
     /* We store a flag indicating whether periodic replications are enabled in SharedPreferences
-     * using this key. We have to store the flag persistently as the service may be stopped and
-     * started by the operating system. */
-    private static final String PREFERENCE_PERIODIC_REPLICATION_ENABLED
-        = "com.cloudant.sync.replication.PeriodicReplicationService.periodicReplicationsActive";
+     * using a key with this suffix. We have to store the flag persistently as the service may be
+     * stopped and started by the operating system. */
+    private static final String PERIODIC_REPLICATION_ENABLED_SUFFIX
+        = ".periodicReplicationsActive";
 
-    private static final int MILLISECONDS_IN_SECOND = 1000;
+    /* We store a flag indicating whether periodic replications were explicitly stopped in
+     * SharedPreferences using a key with this suffix. We have to store the flag persistently as
+     * the service may be stopped and started by the operating system. */
+    private static final String EXPLICITLY_STOPPED_SUFFIX = ".explicitlyStopped";
 
+    private static final long MILLISECONDS_IN_SECOND = 1000L;
+
+    /**
+     * To start periodic replications, this value should be passed to this service in an Intent
+     * using an Extra with the {@link #EXTRA_COMMAND} key.
+     * @see
+     * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
+     *     Replication Policy User Guide</a> for more details.
+     */
     public static final int COMMAND_START_PERIODIC_REPLICATION = 2;
+
+    /**
+     * To stop periodic replications, this value should be passed to this service in an Intent
+     * using an Extra with the {@link #EXTRA_COMMAND} key.
+     * @see
+     * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
+     *     Replication Policy User Guide</a> for more details.
+     */
     public static final int COMMAND_STOP_PERIODIC_REPLICATION = 3;
+
+    /**
+     * When the device is rebooted, this value should be passed to this service in an Intent
+     * using an Extra with the {@link #EXTRA_COMMAND} key so that replications can be setup again
+     * following a reboot.
+     * @see
+     * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
+     *     Replication Policy User Guide</a> for more details.
+     */
     public static final int COMMAND_DEVICE_REBOOTED = 4;
+
+    /**
+     * When the period between replications has been altered, this value should be passed to this
+     * service in an Intent using an Extra with the {@link #EXTRA_COMMAND} key so that the interval
+     * between replications can be re-evaluated.
+     * @see
+     * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
+     *     Replication Policy User Guide</a> for more details.
+     */
+    public static final int COMMAND_RESET_REPLICATION_TIMERS = 5;
 
     private static final String TAG = "PRS";
 
@@ -63,6 +117,36 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
 
     protected PeriodicReplicationService(Class<T> clazz) {
         this.clazz = clazz;
+    }
+
+    /**
+     * If the stored preferences are in the old format, upgrade them to the new format so that
+     * the app continues to work after upgrade to this version.
+     */
+    private void upgradePreferences() {
+        String alarmDueElapsed = "com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed";
+        if (mPrefs.contains(alarmDueElapsed)) {
+            // These are old style preferences. We need to rewrite them in the new form that allows
+            // multiple replication policies.
+            String alarmDueClock = "com.cloudant.sync.replication.PeriodicReplicationService.alarmDueClock";
+            String replicationsActive = "com.cloudant.sync.replication.PeriodicReplicationService.periodicReplicationsActive";
+            long elapsed = mPrefs.getLong(alarmDueElapsed, 0);
+            long clock = mPrefs.getLong(alarmDueClock, 0);
+            boolean enabled = mPrefs.getBoolean(replicationsActive, false);
+
+            SharedPreferences.Editor editor = mPrefs.edit();
+            editor.putLong(constructKey(LAST_ALARM_ELAPSED_TIME_SUFFIX),
+                elapsed - (getIntervalInSeconds() * MILLISECONDS_IN_SECOND));
+            editor.putLong(constructKey(LAST_ALARM_CLOCK_TIME_SUFFIX),
+                clock - (getIntervalInSeconds() * MILLISECONDS_IN_SECOND));
+            editor.putBoolean(constructKey(PERIODIC_REPLICATION_ENABLED_SUFFIX), enabled);
+
+            editor.remove(alarmDueElapsed);
+            editor.remove(alarmDueClock);
+            editor.remove(replicationsActive);
+
+            editor.apply();
+        }
     }
 
     protected class ServiceHandler extends ReplicationService.ServiceHandler {
@@ -78,9 +162,13 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
                     break;
                 case COMMAND_STOP_PERIODIC_REPLICATION:
                     stopPeriodicReplication();
+                    setExplicitlyStopped(true);
                     break;
                 case COMMAND_DEVICE_REBOOTED:
                     resetAlarmDueTimesOnReboot();
+                    break;
+                case COMMAND_RESET_REPLICATION_TIMERS:
+                    restartPeriodicReplications();
                     break;
                 default:
                     // Do nothing
@@ -99,6 +187,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     @Override
     public void onCreate() {
         mPrefs = getSharedPreferences(PREFERENCES_FILE_NAME, Context.MODE_PRIVATE);
+        upgradePreferences();
         super.onCreate();
     }
 
@@ -106,7 +195,6 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     public synchronized IBinder onBind(Intent intent) {
         mBound = true;
         if (isPeriodicReplicationEnabled()) {
-            updateAlarmTimeOnBind();
             restartPeriodicReplications();
         } else if (startReplicationOnBind()) {
             startPeriodicReplication();
@@ -119,7 +207,6 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
         super.onUnbind(intent);
         mBound = false;
         if (isPeriodicReplicationEnabled()) {
-            updateAlarmTimeOnUnbind();
             restartPeriodicReplications();
         }
         // Ensure onRebind is called when new clients bind to the service.
@@ -131,7 +218,6 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
         super.onRebind(intent);
         mBound = true;
         if (isPeriodicReplicationEnabled()) {
-            updateAlarmTimeOnBind();
             restartPeriodicReplications();
         } else if (startReplicationOnBind()) {
             startPeriodicReplication();
@@ -141,7 +227,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     @Override
     protected void startReplications() {
         super.startReplications();
-        setNextAlarmDue(getIntervalInSeconds() * MILLISECONDS_IN_SECOND);
+        setLastAlarmTime(0);
     }
 
     /** Start periodic replications. */
@@ -156,8 +242,20 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
             // to the Service would be unreliable.
             PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
 
+            long initialTriggerTime;
+            if (explicitlyStopped()) {
+                // Replications were explicitly stopped, so we want the first replication to
+                // happen immediately.
+                initialTriggerTime = SystemClock.elapsedRealtime();
+                setExplicitlyStopped(false);
+            } else {
+                // Replications were implicitly stopped (e.g. by rebooting the device), so we
+                // want to resume the previous schedule.
+                initialTriggerTime = getNextAlarmDueElapsedTime();
+            }
+
             alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                getNextAlarmDueElapsedTime(),
+                initialTriggerTime,
                 getIntervalInSeconds() * MILLISECONDS_IN_SECOND,
                 pendingAlarmIntent);
         } else {
@@ -189,37 +287,42 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     }
 
     /**
-     * Store the time of the next alarm both as elapsed time since boot (using
+     * Store the time the alarm last fired, both as elapsed time since boot (using
      * {@link SystemClock#elapsedRealtime()}) and as standard "wall" clock time (using
      * {@link System#currentTimeMillis()}. We generally want to set our alarms based on the elapsed
      * time since booting as that is not affected by the system clock being reset. However, we use
      * the clock time to set the alarm after a reboot as clearly in this case the time since boot is
      * useless.
-     * @param intervalMillis The time interval in milliseconds until the next alarm.
+     * @param millisBeforeNow The number of milliseconds before the current time at which to record
+     *                        that the alarm should have last fired.
      */
-    private void setNextAlarmDue(long intervalMillis) {
+    private void setLastAlarmTime(long millisBeforeNow) {
         SharedPreferences.Editor editor = mPrefs.edit();
-        editor.putLong(PREFERENCE_ALARM_DUE_ELAPSED_TIME,
-            SystemClock.elapsedRealtime() + intervalMillis);
-        editor.putLong(PREFERENCE_ALARM_DUE_CLOCK_TIME,
-            System.currentTimeMillis() + intervalMillis);
+        editor.putLong(constructKey(LAST_ALARM_ELAPSED_TIME_SUFFIX),
+            SystemClock.elapsedRealtime() - millisBeforeNow);
+        editor.putLong(constructKey(LAST_ALARM_CLOCK_TIME_SUFFIX),
+            System.currentTimeMillis() - millisBeforeNow);
         editor.apply();
     }
 
     /**
-     * @return The SharedPreferences value indicating the time since the device was booted,
-     * at which the next periodic replication should begin.
+     * @return The time since the device was booted at which the next periodic replication should
+     * begin, calculated by adding the replication interval to the SharedPreferences value
+     * storing the time since device boot at which the last periodic replication began.
      */
     private long getNextAlarmDueElapsedTime() {
-        return mPrefs.getLong(PREFERENCE_ALARM_DUE_ELAPSED_TIME, 0);
+        return mPrefs.getLong(constructKey(LAST_ALARM_ELAPSED_TIME_SUFFIX), 0)
+            + (getIntervalInSeconds() * MILLISECONDS_IN_SECOND);
     }
 
     /**
-     * @return The SharedPreferences value indicating the wall clock time at which the next
-     * periodic replication should begin.
+     * @return The wall clock time at which the next periodic replication should begin, calculated
+     * by adding the replication interval to the SharedPreferences value storing the wall clock time
+     * at which the last periodic replication began.
      */
     private long getNextAlarmDueClockTime() {
-        return mPrefs.getLong(PREFERENCE_ALARM_DUE_CLOCK_TIME, 0);
+        return mPrefs.getLong(constructKey(LAST_ALARM_CLOCK_TIME_SUFFIX), 0)
+            + (getIntervalInSeconds() * MILLISECONDS_IN_SECOND);
     }
 
     /**
@@ -228,7 +331,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      */
     private void setPeriodicReplicationEnabled(boolean running) {
         SharedPreferences.Editor editor = mPrefs.edit();
-        editor.putBoolean(PREFERENCE_PERIODIC_REPLICATION_ENABLED, running);
+        editor.putBoolean(constructKey(PERIODIC_REPLICATION_ENABLED_SUFFIX), running);
         editor.apply();
     }
 
@@ -237,7 +340,29 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * replications are currently enabled.
      */
     private boolean isPeriodicReplicationEnabled() {
-        return mPrefs.getBoolean(PREFERENCE_PERIODIC_REPLICATION_ENABLED, false);
+        return mPrefs.getBoolean(constructKey(PERIODIC_REPLICATION_ENABLED_SUFFIX),
+            false);
+    }
+
+    /**
+     * Set a flag in SharedPreferences to indicate whether periodic replications were explicitly
+     * stopped.
+     * @param explicitlyStopped true to indicate that periodic replications were stopped
+     *                          explicitly by the sending of COMMAND_STOP_PERIODIC_REPLICATION,
+     *                          otherwise false.
+     */
+    private void setExplicitlyStopped(boolean explicitlyStopped) {
+        SharedPreferences.Editor editor = mPrefs.edit();
+        editor.putBoolean(constructKey(EXPLICITLY_STOPPED_SUFFIX), explicitlyStopped);
+        editor.apply();
+    }
+
+    /**
+     * @return The value of the flag stored in SharedPreferences indicating whether periodic
+     * replications were explicitly stopped.
+     */
+    private boolean explicitlyStopped() {
+        return mPrefs.getBoolean(constructKey(EXPLICITLY_STOPPED_SUFFIX), true);
     }
 
     /**
@@ -247,27 +372,36 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      */
     private void resetAlarmDueTimesOnReboot() {
         // As the device has been rebooted, we use clock time rather than elapsed time since
-        // booting to set the interval for the first alarm as the elapsed time since boot will
-        // have been reset.
+        // booting to set check whether we missed any alarms while the device was off and to
+        // make sure the next alarm time isn't too far in the future (indicating the system clock
+        // has been reset).
         //
-        // We subtract the current time from the next expected alarm time. If it's less than
-        // zero, that means we missed an alarm when the device was off, so we schedule a
-        // replication immediately.  There is a slight risk that we might set it wrongly if the
-        // system clock has been reset since the last alarm was fired.  Therefore, we check that
-        // we're not setting the initial interval for the alarm to any later than
-        // getIntervalInSeconds() after the current time so we minimise the impact of the system
-        // clock being reset an will at most have to wait for the normal interval time.
+        // We subtract the current time from the next expected alarm time and then do the
+        // following checks:
+        // * If it's less than zero, that means we missed an alarm when the device was off, so
+        //   we schedule a replication immediately by setting the last alarm time to a time
+        //   getIntervalInSeconds() ago.
+        // * If it's more than getIntervalInSeconds() in the future, that means the system clock
+        //   has been reset since the last alarm was fired.  Therefore, we check that the initial
+        //   interval for the alarm is no later than getIntervalInSeconds() after the
+        //   current time so we minimise the impact of the system clock being reset and will at most
+        //   have to wait for the normal interval time.
+        // * Otherwise, the clock time for the alarm seems reasonable, but we still need to update
+        //   the SharedPreference for the elapsed time since boot at which the last alarm would have
+        //   fired as that currently refers to the time since boot from the previous boot of the
+        //   device.
+        //
         // We don't actually setup the AlarmManager here as it is up to the subclass to determine
         // if all other conditions for the replication policy are met and determine whether to
         // restart replications after a reboot.
         setPeriodicReplicationEnabled(false);
         long initialInterval = getNextAlarmDueClockTime() - System.currentTimeMillis();
         if (initialInterval < 0) {
-            initialInterval = 0;
-            setNextAlarmDue(initialInterval);
+            setLastAlarmTime(getIntervalInSeconds() * MILLISECONDS_IN_SECOND);
         } else if (initialInterval > getIntervalInSeconds() * MILLISECONDS_IN_SECOND) {
-            initialInterval = getIntervalInSeconds() * MILLISECONDS_IN_SECOND;
-            setNextAlarmDue(initialInterval);
+            setLastAlarmTime(0);
+        } else {
+            setLastAlarmTime((getIntervalInSeconds() * MILLISECONDS_IN_SECOND) - initialInterval);
         }
     }
 
@@ -283,26 +417,8 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
         }
     }
 
-    /** Update the SharedPreferences to store the time the next alarm is due at using the
-     *  bound time interval between replications.
-     */
-    private void updateAlarmTimeOnBind() {
-        long dueTime = getNextAlarmDueElapsedTime();
-        long newDueTime = dueTime - (getUnboundIntervalInSeconds() * MILLISECONDS_IN_SECOND)
-            + (getBoundIntervalInSeconds() * MILLISECONDS_IN_SECOND)
-            - SystemClock.elapsedRealtime();
-        setNextAlarmDue(newDueTime);
-    }
-
-    /** Update the SharedPreferences to store the time the next alarm is due at using the
-     *  unbound time interval between replications.
-     */
-    private void updateAlarmTimeOnUnbind() {
-        long dueTime = getNextAlarmDueElapsedTime();
-        long newDueTime = dueTime - (getBoundIntervalInSeconds() * MILLISECONDS_IN_SECOND)
-            + (getUnboundIntervalInSeconds() * MILLISECONDS_IN_SECOND)
-            - SystemClock.elapsedRealtime();
-        setNextAlarmDue(newDueTime);
+    private String constructKey(String suffix) {
+        return getClass().getName() + suffix;
     }
 
     /**

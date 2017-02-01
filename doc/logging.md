@@ -1,14 +1,13 @@
 Logging
 =====
 
-In version TBD we migrated from our own logging code to using [java.util.logging](http://docs.oracle.com/javase/7/docs/api/index.html?java/util/logging/) for logging. This document explains how to configure java.util.logging for android-sync.
+This document explains how to configure [logging](http://docs.oracle.com/javase/7/docs/api/java/util/logging/package-summary.html) for sync-android.
 
+By default sync-android does not set any logging settings, so the system's defaults are used.
 
-By default android-sync does not set any logging settings, so the system's defaults are used.
+There are two ways to configure `java.util.logging`. It can be configured via a properties file or programatically. 
 
-There are two ways to configure java.util.logging. It can be configured via a properties file or programatically. 
-
-###Configuring using the properties file
+### Configuring using the properties file
 
 An example configuration for logging to the console:
 
@@ -46,7 +45,7 @@ or to set up logging on application start up (Java SE)
 $ java -jar myApplication.jar -Djava.util.logging.config.file=/path/to/logging/config
 ```
 
-###Configuring the log manager programatically
+### Configuring the log manager programatically
 
 An example on how to configure `java.util.logging` programatically to log to the console with level `INFO` or higher:
 

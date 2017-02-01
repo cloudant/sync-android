@@ -1,24 +1,30 @@
-//  Copyright (c) 2014 Cloudant. All rights reserved.
-//
-//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
-//  except in compliance with the License. You may obtain a copy of the License at
-//
-//    http://www.apache.org/licenses/LICENSE-2.0
-//
-//  Unless required by applicable law or agreed to in writing, software distributed under the
-//  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-//  either express or implied. See the License for the specific language governing permissions
-//  and limitations under the License.
+/*
+ * Copyright © 2017 IBM Corp. All rights reserved.
+ *
+ * Copyright © 2014 Cloudant, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
 
 package com.cloudant.sync.query;
 
-import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.datastore.DocumentRevisionBuilder;
-import com.cloudant.sync.util.CollectionUtils;
+import com.cloudant.sync.documentstore.Attachment;
+import com.cloudant.sync.documentstore.Database;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.DocumentStoreException;
+import com.cloudant.sync.internal.documentstore.DocumentRevisionBuilder;
+import com.cloudant.sync.internal.query.QueryImpl;
+import com.cloudant.sync.internal.query.UnindexedMatcher;
+import com.cloudant.sync.internal.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,30 +34,30 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- *  Iterable result of a query executed with {@link IndexManager}.
+ *  Iterable result of a query executed with {@link Query}.
  *
- *  @see IndexManager
- *  @api_public
+ *  @see Query
+ *
  */
 public class QueryResult implements Iterable<DocumentRevision> {
 
     private final static int DEFAULT_BATCH_SIZE = 50;
 
     private final List<String> originalDocIds;
-    private final Datastore datastore;
+    private final Database database;
     private final List<String> fields;
     private final long skip;
     private final long limit;
     private final UnindexedMatcher matcher;
 
     public QueryResult(List<String> originalDocIds,
-                       Datastore datastore,
+                       Database database,
                        List<String> fields,
                        long skip,
                        long limit,
                        UnindexedMatcher matcher) {
         this.originalDocIds = originalDocIds;
-        this.datastore = datastore;
+        this.database = database;
         this.fields = fields;
         this.skip = skip;
         this.limit = limit;
@@ -62,7 +68,6 @@ public class QueryResult implements Iterable<DocumentRevision> {
      *  Returns the number of documents in this query result.
      *
      *  @return the number of documents {@code DocumentRevision} in this query result.
-     *  @throws QueryException if the document ids for this query cannot be retrieved
      */
     public int size() {
         return documentIds().size();
@@ -75,7 +80,6 @@ public class QueryResult implements Iterable<DocumentRevision> {
      *  consistent with the iterator results.
      *
      *  @return list of the document ids
-     *  @throws QueryException if the document ids for this query cannot be retrieved
      */
     public List<String> documentIds() {
         List<String> documentIds = new ArrayList<String>();
@@ -88,7 +92,6 @@ public class QueryResult implements Iterable<DocumentRevision> {
 
     /**
      * @return a newly created Iterator over the query results
-     * @throws QueryException if the document ids for this query cannot be retrieved
      */
     @Override
     public Iterator<DocumentRevision> iterator() {
@@ -151,7 +154,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
                     range.length = Math.min(DEFAULT_BATCH_SIZE, originalDocIds.size() - range.location);
                     List<String> batch = originalDocIds.subList(range.location,
                         range.location + range.length);
-                    List<DocumentRevision> docs = datastore.getDocumentsWithIds(batch);
+                    List<? extends DocumentRevision> docs = database.read(batch);
                     for (DocumentRevision rev : docs) {
                         DocumentRevision innerRev;
                         innerRev = rev;  // Allows us to replace later if projecting
@@ -168,7 +171,7 @@ public class QueryResult implements Iterable<DocumentRevision> {
                         }
 
                         if (fields != null && !fields.isEmpty()) {
-                            innerRev = projectFields(fields, rev, datastore);
+                            innerRev = projectFields(fields, rev, database);
                         }
 
                         docList.add(innerRev);
@@ -192,15 +195,16 @@ public class QueryResult implements Iterable<DocumentRevision> {
                     }
                 }
                 return docList.iterator();
-            } catch (DocumentException e) {
-                throw new QueryException(e);
+            } catch (DocumentStoreException dse) {
+                // TODO - not sure what the right thing is here
+                throw new NoSuchElementException(dse.toString());
             }
         }
     }
 
     private DocumentRevision projectFields(List<String> fields,
                                            DocumentRevision rev,
-                                           Datastore datastore) {
+                                                   Database database) {
         // grab the map filter fields and rebuild object
         Map<String, Object> originalBody = rev.getBody().asMap();
         Map<String, Object> body = new HashMap<String, Object>();
@@ -215,8 +219,8 @@ public class QueryResult implements Iterable<DocumentRevision> {
         revBuilder.setRevId(rev.getRevision());
         revBuilder.setBody(DocumentBodyFactory.create(body));
         revBuilder.setDeleted(rev.isDeleted());
-        revBuilder.setAttachments(new ArrayList<Attachment>(rev.getAttachments().values()));
-        revBuilder.setDatastore(datastore);
+        revBuilder.setAttachments(rev.getAttachments());
+        revBuilder.setDatabase(database);
 
         return revBuilder.buildProjected();
     }

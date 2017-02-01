@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -20,8 +20,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * <p>
  * Annotation to indicate a method should be subscribed to events posted to the {@link EventBus} on
  * which the method's owning instance is registered.
+ * </p>
  * <p>
  * Methods using this annotation must have only a single parameter and must be visible to the
  * EventBus (i.e. the owning class and method itself must be public). The parameter type of the
@@ -31,7 +33,7 @@ import java.lang.annotation.Target;
  * Subscribers are called synchronously so methods using this annotation must not perform long
  * running operations and should spawn a separate thread if needed.
  * </p>
- * @api_public
+ *
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

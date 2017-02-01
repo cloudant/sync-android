@@ -15,22 +15,19 @@ your class:
 - To modify the outgoing request, `HTTPConnectionRequestInterceptor`.
 - To examine the incoming response, `HTTPConnectionResponseInterceptor`.
 
-For an example of how to implement a interceptor, see  the `CookieInterceptor` class.
+For an example of how to implement a interceptor, see the `CookieInterceptor` class.
 
 In order to add an HTTP Interceptor to a replication, you call the `addRequestInterceptors`
 or `addResponseInterceptors` on the `ReplicatorBuilder` class.
 
-For example, this is how to add an instance of `CookieInterceptor` to a pull replication:
+One of the built-in interceptors is `BasicAuthInterceptor` which can be used to
+authenticate with servers where cookie authentication is not supported.
+
+To add an add instance of `BasicAuthInterceptor` to a pull replication, do the following:
 
 ```java
-import com.cloudant.sync.replication.Replicator
-import com.cloudant.sync.replication.ReplicatorBuilder
-import com.cloudant.sync.datastore.Datastore
-import com.cloudant.sync.http.CookieFilter
-
-
-Datastore ds =  manager.open("my_datastore");
-CookieInterceptor interceptor = new CookieInterceptor("username","password");
+DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
+BasicAuthInterceptor interceptor = new BasicAuthInterceptor("username:password");
 
 Replicator replicator = ReplicatorBuilder.pull()
               .from(new URI("https://username.cloudant.com"))
@@ -45,7 +42,7 @@ replicator.start();
 ## Adding Custom Request Headers
 
 Request Interceptors can be used to add custom HTTP headers by
-accessing the underlying `HttpUrlconnection`, as in this example:
+accessing the underlying `HttpURLConnection`, as in this example:
 
 ```java
 @Override

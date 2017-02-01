@@ -1,5 +1,7 @@
-/**
- * Copyright (c) 2015 Cloudant, Inc. All rights reserved.
+/*
+ * Copyright © 2017 IBM Corp. All rights reserved.
+ *
+ * Copyright © 2015 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -14,7 +16,7 @@
 
 package com.cloudant.todo;
 
-import com.cloudant.sync.datastore.DocumentRevision;
+import com.cloudant.sync.documentstore.DocumentRevision;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -80,7 +82,7 @@ public class Task {
         Task t = new Task();
         t.rev = rev;
         // this could also be done by a fancy object mapper
-        Map<String, Object> map = rev.asMap();
+        Map<String, Object> map = rev.getBody().asMap();
         if(map.containsKey("type") && map.get("type").equals(Task.DOC_TYPE)) {
             t.setType((String) map.get("type"));
             t.setCompleted((Boolean) map.get("completed"));

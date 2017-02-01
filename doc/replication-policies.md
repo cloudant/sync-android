@@ -87,8 +87,17 @@ key is `ReplicationService.EXTRA_COMMAND`, and whose value is one of:
 * `ReplicationService.COMMAND_START_REPLICATION` This starts the replicators.
 * `ReplicationService.COMMAND_STOP_REPLICATION` This stops replicators in progress.
 * `PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION` This starts the periodic replications when you are using the `PeriodicReplicationService`.
+The replications will occur immediately the first time this message is sent or if they were previously stopped explicitly by sending
+`PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION`. However, if replications were previously stopped implicitly (e.g.
+by rebooting the device), then the existing replication schedule will be resumed.
 * `PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION` This stops the periodic replications when you are using the `PeriodicReplicationService`.
-* `PeriodicReplicationService.COMMAND_DEVICE_REBOOTED` This resets the periodic replications aafter the device has rebooted when you are using the `PeriodicReplicationService`. This will be automatically called if your subclass of `PeriodicReplicationReceiver` calls through to the `onReceive()` method of `PeriodicReplicationReceiver`.
+* `PeriodicReplicationService.COMMAND_DEVICE_REBOOTED` This resets the periodic replications after the device has rebooted when you are using the
+`PeriodicReplicationService`. This will be automatically called if your subclass of `PeriodicReplicationReceiver` calls through to the `onReceive()` method of `PeriodicReplicationReceiver`.
+* `PeriodicReplicationService.COMMAND_RESET_REPLICATION_TIMERS` This re-evaluates the timers used by the `PeriodicReplicationService` by calling
+`getBoundIntervalInSeconds()` or `getUnboundIntervalInSeconds()`. This is useful if you allow the replication interval to be dynamically changed.
+For example, if you allow users to change the replication intervals in your app's settings (which should cause your implementations of
+`getBoundIntervalInSeconds()` and/or `getUnboundIntervalInSeconds()` to return a different result after a change), once the change has been made,
+you should send an `Intent` with this Extra so that the changes are applied to the `PeriodicReplicationService` immediately.
 
 For example, from a subclass of `PeriodicReplicationReceiver`, you might call:
 
@@ -104,6 +113,9 @@ If you want to start replications from anywhere other than a `PeriodicReplicatio
 `startWakefulService(context, intent)` with `startService(intent)` in the above example and do any
 [`WakeLock`](http://developer.android.com/reference/android/os/PowerManager.WakeLock.html)
 management you require yourself.
+
+If you need to create a custom subclass of `ReplicationService` and you add additional commands passed using the `ReplicationService.EXTRA_COMMAND`
+key, you should use command IDs above 99. The IDs 99 and below are reserved for internal use.
 
 #### WifiPeriodicReplicationReceiver
 
@@ -167,8 +179,8 @@ public class MyReplicationService extends PeriodicReplicationService {
 
     private static final String TAG = "MyReplicationService";
 
-    private static final String TASKS_DATASTORE_NAME = "tasks";
-    private static final String DATASTORE_MANGER_DIR = "data";
+    private static final String TASKS_DOCUMENT_STORE_NAME = "tasks";
+    private static final String DOCUMENT_STORE_DIR = "data";
 
     public MyReplicationService() {
         super(MyWifiPeriodicReplicationReceiver.class);
@@ -182,20 +194,19 @@ public class MyReplicationService extends PeriodicReplicationService {
             URI uri = new URI("https", "my_api_key:my_api_secret", "myaccount.cloudant.com", 443, "/" + "mydb", null, null);
 
             File path = context.getApplicationContext().getDir(
-                DATASTORE_MANGER_DIR,
+                DOCUMENT_STORE_DIR,
                 Context.MODE_PRIVATE
             );
 
-            DatastoreManager manager = DatastoreManager.getInstance(path.getAbsolutePath());
-            Datastore datastore = null;
+            DocumentStore documentStore = null;
             try {
-                datastore = manager.openDatastore(TASKS_DATASTORE_NAME);
-            } catch (DatastoreNotCreatedException dnce) {
-                Log.e(TAG, "Unable to open Datastore", dnce);
+                documentStore = DocumentStore.getInstance(new File(path, TASKS_DOCUMENT_STORE_NAME));
+            } catch (DocumentStoreNotOpenedException dsnoe) {
+                Log.e(TAG, "Unable to open DocumentStore", dsnoe);
             }
 
-            Replicator pullReplicator = ReplicatorBuilder.pull().from(uri).to(datastore).withId(PULL_REPLICATION_ID).build();
-            Replicator pushReplicator = ReplicatorBuilder.push().to(uri).from(datastore).withId(PUSH_REPLICATION_ID).build();
+            Replicator pullReplicator = ReplicatorBuilder.pull().from(uri).to(documentStore).withId(PULL_REPLICATION_ID).build();
+            Replicator pushReplicator = ReplicatorBuilder.push().to(uri).from(documentStore).withId(PUSH_REPLICATION_ID).build();
 
             // Replications will not begin until setReplicators(Replicator[]) is called.
             setReplicators(new Replicator[]{pullReplicator, pushReplicator});
@@ -326,7 +337,7 @@ private ServiceConnection mConnection = new ServiceConnection() {
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         mReplicationService = ((ReplicationService.LocalBinder) service).getService();
-        mReplicationService.addListener(new ReplicationService.SimpleReplicationCompleteListener() {
+        mReplicationService.addListener(new ReplicationPolicyManager.SimpleReplicationsCompletedListener() {
             @Override
             public void replicationComplete(int id) {
                 // Check if this is the pull replication

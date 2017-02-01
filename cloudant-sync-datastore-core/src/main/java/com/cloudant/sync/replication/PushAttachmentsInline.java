@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2015, 2016 IBM Corp. All rights reserved.
+/*
+ * Copyright © 2015, 2016 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -14,7 +14,9 @@
 
 package com.cloudant.sync.replication;
 
-import java.util.List;
+import com.cloudant.sync.internal.documentstore.RevisionHistoryHelper;
+
+import java.util.Map;
 
 /**
  * <p>
@@ -32,12 +34,10 @@ import java.util.List;
  * Note that all attachments belonging to a pushed revision are either sent via multipart/related,
  * or all inline in JSON body, as a base64-encoded string.
  * Further details of this can be found at
- * {@link com.cloudant.sync.datastore.RevisionHistoryHelper#shouldInline(List, PushAttachmentsInline, int)}
+ * {@link RevisionHistoryHelper#shouldInline(Map, PushAttachmentsInline, int)} 
  * </p>
  *
- * @see com.cloudant.sync.datastore.RevisionHistoryHelper
- *
- * @api_public
+ * @see RevisionHistoryHelper
  */
 
 public enum PushAttachmentsInline {

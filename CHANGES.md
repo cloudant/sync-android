@@ -1,6 +1,46 @@
-# Unreleased
- - [FIXED] Issue with double encoding of restricted URL characters in credentials when using
-   `ReplicatorBuilder`.
+# 2.0.0 (unreleased)
+- [BREAKING CHANGE] With the release of version 2.0 of the library,
+  there are a large number of breaking changes to package names,
+  classes and methods. API users will need to make changes to their
+  existing code in order to use this version of the library. Consult
+  the [migration guide](doc/migration.md) for a comprehensive list of
+  changes and suggested strategies to migrate your code.
+
+- [BREAKING CHANGE] The `name` field has been removed from
+  `Attachment`. Additionally, the `name` argument has been removed
+  from the `UnsavedStreamAttachment` constructors. The name of the
+  attachment is the key used to add or retrieve the attachment to or
+  from the attachments map.
+
+- [IMPROVED] `DocumentStore.getInstance()` will try to create all
+  necessary sub-directories in order to construct the path represented
+  by the `File` argument. This differs from the behaviour of the 1.x
+  versions of the library which would only attempt to create one level
+  of directories.
+
+- [IMPROVED] The `batchLimitPerRun` property has been removed from the
+  Pull and Push replicator builders. There is no limit to the number
+  of batches in a replicator run - the replicator will run to
+  completion unless an error occurs.
+
+- [IMPROVED] Removed limitation on `DocumentStore` names. Under the
+  old `Datastore` API, the directory containing the SQLite database
+  had to conform to the CouchDB database name restrictions. This no
+  longer applies.
+  
+- [NOTE] The "CRUD Guide" markdown document (previously located in
+  `doc/crud.md`) has been migrated to a
+  [java source file](https://github.com/cloudant/sync-android/blob/master/doc/CrudSamples.java).
+  
+- [FIXED] Issue with double encoding of restricted URL characters in credentials when using
+  `ReplicatorBuilder`.
+
+- [FIXED] Issue where push replicating a large number of attachments
+  could exhaust the operating system file handle limit, on some
+  platforms.
+
+- [FIXED] Issue querying indexed fields when combining the `$not` and
+  `$size` operators.
 
 # 1.1.5 (2016-12-08)
 - [FIXED] Issue where replicator would not get the latest revision if `_bulk_get`

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 IBM Corp. All rights reserved.
+ * Copyright © 2015 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -14,7 +14,8 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.sync.util.Misc;
+import com.cloudant.sync.internal.replication.PullStrategy;
+import com.cloudant.sync.internal.util.Misc;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,9 +45,9 @@ import java.util.Map;
  * PullFilter pullFilter = new PullFilter("doc/filterName", map);
  * </pre>
  *
- * @see <a href="http://couchdb.readthedocs.org/en/1.6.x/replication/intro.html#controlling-which-documents-to-replicate">Controlling documents replicated</a>
- * @see <a href="http://docs.couchdb.org/en/1.6.x/couchapp/ddocs.html#filter-functions">Filter functions CouchDB docs</a>
- * @api_public
+ * @see <a target="_blank" href="http://couchdb.readthedocs.org/en/1.6.x/replication/intro.html#controlling-which-documents-to-replicate">Controlling documents replicated</a>
+ * @see <a target="_blank" href="http://docs.couchdb.org/en/1.6.x/couchapp/ddocs.html#filter-functions">Filter functions CouchDB docs</a>
+ *
  */
 public class PullFilter {
 
@@ -90,7 +91,7 @@ public class PullFilter {
      *                   constructing the {@code _changes} feed call for the remote database.
      *                   Integer values should be added as String objects.
      *
-     * @see <a href="http://docs.couchdb.org/en/1.6.x/couchapp/ddocs.html#filter-functions">Filter
+     * @see <a target="_blank" href="http://docs.couchdb.org/en/1.6.x/couchapp/ddocs.html#filter-functions">Filter
      * functions CouchDB docs</a>
      */
     public PullFilter(String filterName, Map<String, String> parameters) {
@@ -119,7 +120,7 @@ public class PullFilter {
      * String are the same for different calls. This is important
      * because the String can therefore be part of the replication ID.</p>
      *
-     * @return Query string like representation of the filter
+     * @return query string like representation of the filter
      *
      * @see PullStrategy#getReplicationId()
      */

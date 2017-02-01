@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2015 IBM Cloudant, Inc. All rights reserved.
+/*
+ * Copyright © 2015 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -20,6 +20,10 @@ import org.junit.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.cloudant.sync.documentstore.encryption.EncryptionKey;
+import com.cloudant.sync.documentstore.encryption.KeyProvider;
+import com.cloudant.sync.internal.documentstore.encryption.KeyUtils;
+
 public class KeyUtilsTest {
 
     @Test
@@ -33,19 +37,6 @@ public class KeyUtilsTest {
             @Override
             public EncryptionKey getEncryptionKey() {
                 return null;
-            }
-        }));
-    }
-
-    @Test
-    public void sqlCipherKeyForKeyProvider_nullKeyBytes() {
-        final EncryptionKey key = mock(EncryptionKey.class);
-        when(key.getKey()).thenReturn(null);
-
-        Assert.assertNull(KeyUtils.sqlCipherKeyForKeyProvider(new KeyProvider() {
-            @Override
-            public EncryptionKey getEncryptionKey() {
-                return key;
             }
         }));
     }

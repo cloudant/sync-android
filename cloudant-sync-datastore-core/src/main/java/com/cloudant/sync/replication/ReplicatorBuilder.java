@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 IBM Corp. All rights reserved.
+ * Copyright © 2015, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -18,7 +18,11 @@ import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.http.internal.interceptors.UserAgentInterceptor;
-import com.cloudant.sync.datastore.Datastore;
+import com.cloudant.sync.documentstore.DocumentStore;
+import com.cloudant.sync.internal.replication.PullStrategy;
+import com.cloudant.sync.internal.replication.PushStrategy;
+import com.cloudant.sync.internal.replication.ReplicatorImpl;
+import com.cloudant.sync.internal.util.Misc;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -27,11 +31,10 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A Builder to create a {@link Replicator Object}
- *
- * @api_public
  */
 // S = Source Type, T = target Type, E = Extending class Type
 public abstract class ReplicatorBuilder<S, T, E> {
@@ -42,6 +45,9 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
     private T target;
     private S source;
+    private String username;
+    private String password;
+
     private int id = ReplicatorImpl.NULL_ID;
     private List<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList
             <HttpConnectionRequestInterceptor>();
@@ -57,49 +63,24 @@ public abstract class ReplicatorBuilder<S, T, E> {
         String uriHost = uri.getHost();
         String uriPath = uri.getRawPath();
 
-        //Check if port exists
+        // assign default port if it hasn't been set
+        // and check that we support the protocol
         int uriPort = uri.getPort();
-        if (uriPort < 0) {
-            if ("http".equals(uriProtocol)) {
-                uriPort = 80;
-            } else if ("https".equals(uriProtocol)) {
-                uriPort = 443;
-            } else {
-                throw new RuntimeException("Unknown protocol: "+uriProtocol);
-            }
+        if ("http".equals(uriProtocol)) {
+            uriPort = uriPort < 0 ? 80 : uriPort;
+        } else if ("https".equals(uriProtocol)) {
+            uriPort = uriPort < 0 ? 443 : uriPort;
+        } else {
+            throw new IllegalArgumentException(String.format(Locale.ENGLISH,
+                    "Protocol %s not supported", uriProtocol));
         }
 
-        if (uri.getUserInfo() != null) {
+        if (uri.getUserInfo() != null && this.username == null && this.password == null) {
             String[] parts = uri.getRawUserInfo().split(":");
             if (parts.length == 2) {
-
-                String path = uri.getRawPath();
-                int index = path.lastIndexOf("/");
-                if (index == path.length() - 1) {
-                    // we need to go back one
-                    path = path.substring(0, index);
-                    index = path.lastIndexOf("/");
-                }
-
-                path = path.substring(0, index);
-
-                URI baseURI;
-
                 try {
-                    baseURI = new URI(uriProtocol, null, uriHost, uriPort, path, null, null);
-                } catch (URISyntaxException e) {
-                    throw new RuntimeException(e);
-                }
-
-
-                try {
-                    // Decode the creds that came from the URI since they will already have been
-                    // encoded
-                    CookieInterceptor ci = new CookieInterceptor(URLDecoder.decode(parts[0],
-                            "UTF-8"), URLDecoder.decode(parts[1], "UTF-8"), baseURI.toString());
-
-                    requestInterceptors.add(ci);
-                    responseInterceptors.add(ci);
+                    this.username = URLDecoder.decode(parts[0], "UTF-8");
+                    this.password = URLDecoder.decode(parts[1], "UTF-8");
                 } catch (UnsupportedEncodingException e) {
                     // Should never happen, UTF-8 is required in JVM
                     throw new RuntimeException(e);
@@ -107,28 +88,50 @@ public abstract class ReplicatorBuilder<S, T, E> {
             }
         }
 
+        if(this.username == null && this.password == null){
+            return uri;
+        }
+
+        try {
+            String path = uriPath == null ? "" : uriPath;
+
+            if(path.length() > 0) {
+                int index = path.lastIndexOf("/");
+                if (index == path.length() - 1) {
+                    // we need to go back one
+                    path = path.substring(0, index);
+                    index = path.lastIndexOf("/");
+                }
+                path = path.substring(0, index);
+            }
+
+            URI baseURI = new URI(uriProtocol, null, uriHost, uriPort, path, null, null);
+            CookieInterceptor ci = new CookieInterceptor(this.username, this.password, baseURI.toString());
+            requestInterceptors.add(ci);
+            responseInterceptors.add(ci);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+
         try {
             //Remove user credentials from url
-            URI redacted = new URI(uriProtocol
+            return new URI(uriProtocol
                     + "://"
                     + uriHost
                     + ":"
                     + uriPort
                     + (uriPath != null ? uriPath : ""));
-            return redacted;
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+        } catch (URISyntaxException use) {
+            throw new RuntimeException("Failed to construct URI", use);
         }
     }
 
     /**
      * A Push Replication Builder
      */
-    public static class Push extends ReplicatorBuilder<Datastore, URI, Push> {
+    public static class Push extends ReplicatorBuilder<DocumentStore, URI, Push> {
 
         private int changeLimitPerBatch = 500;
-
-        private int batchLimitPerRun = 100;
 
         private int bulkInsertSize = 10;
 
@@ -139,21 +142,18 @@ public abstract class ReplicatorBuilder<S, T, E> {
         @Override
         public Replicator build() {
 
-            if (super.source == null || super.target == null) {
-                throw new IllegalStateException("Source and target cannot be null");
-            }
-
+            Misc.checkState(super.source != null && super.target != null,
+                    "Source and target cannot be null");
 
             // add cookie interceptor and remove creds from URI if required
             super.target = super.addCookieInterceptorIfRequired(super.target);
 
-            PushStrategy pushStrategy = new PushStrategy(super.source,
+            PushStrategy pushStrategy = new PushStrategy(super.source.database(),
                     super.target,
                     super.requestInterceptors,
                     super.responseInterceptors);
 
             pushStrategy.changeLimitPerBatch = changeLimitPerBatch;
-            pushStrategy.batchLimitPerRun = batchLimitPerRun;
             pushStrategy.bulkInsertSize = bulkInsertSize;
             pushStrategy.pushAttachmentsInline = pushAttachmentsInline;
             pushStrategy.filter = pushFilter;
@@ -183,17 +183,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         * Sets the number of batches to push in one replication run
-         *
-         * @param batchLimitPerRun The number of batches to push in one replication run
-         * @return This instance of {@link ReplicatorBuilder}
-         */
-        public Push batchLimitPerRun(int batchLimitPerRun) {
-            this.batchLimitPerRun = batchLimitPerRun;
-            return this;
-        }
-
-        /**
          * Sets the number of documents to bulk insert into the CouchDB instance at a time
          *
          * @param bulkInsertSize The number of documents to bulk insert into the CouchDB instance at a time
@@ -219,13 +208,11 @@ public abstract class ReplicatorBuilder<S, T, E> {
     /**
      * A Pull Replication Builder
      */
-    public static class Pull extends ReplicatorBuilder<URI, Datastore, Pull> {
+    public static class Pull extends ReplicatorBuilder<URI, DocumentStore, Pull> {
 
         private PullFilter pullPullFilter = null;
 
         private int changeLimitPerBatch = 1000;
-
-        private int batchLimitPerRun = 100;
 
         private int insertBatchSize = 100;
 
@@ -234,21 +221,19 @@ public abstract class ReplicatorBuilder<S, T, E> {
         @Override
         public Replicator build() {
 
-            if (super.source == null || super.target == null) {
-                throw new IllegalStateException("Source and target cannot be null");
-            }
+            Misc.checkState(super.source != null && super.target != null,
+                    "Source and target cannot be null");
 
             // add cookie interceptor and remove creds from URI if required
             super.source = super.addCookieInterceptorIfRequired(super.source);
 
             PullStrategy pullStrategy = new PullStrategy(super.source,
-                    super.target,
+                    super.target.database(),
                     pullPullFilter,
                     super.requestInterceptors,
                     super.responseInterceptors);
 
             pullStrategy.changeLimitPerBatch = changeLimitPerBatch;
-            pullStrategy.batchLimitPerRun = batchLimitPerRun;
             pullStrategy.insertBatchSize = insertBatchSize;
             pullStrategy.pullAttachmentsInline = pullAttachmentsInline;
 
@@ -274,17 +259,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
          */
         public Pull changeLimitPerBatch(int changeLimitPerBatch) {
             this.changeLimitPerBatch = changeLimitPerBatch;
-            return this;
-        }
-
-        /**
-         * Sets the number of batches to pull in one replication run
-         *
-         * @param batchLimitPerRun The number of batches to pull in one replication run
-         * @return This instance of {@link ReplicatorBuilder}
-         */
-        public Pull batchLimitPerRun(int batchLimitPerRun) {
-            this.batchLimitPerRun = batchLimitPerRun;
             return this;
         }
 
@@ -381,6 +355,40 @@ public abstract class ReplicatorBuilder<S, T, E> {
         //noinspection unchecked
         return (E) this;
     }
+
+    /**
+     * Sets the username to use when authenticating with the server.
+     *
+     * Setting the username and password (using the {@link ReplicatorBuilder#password(String)}) method
+     * takes precedence over credentials passed via the URI.
+     * @param username The username to use when authenticating.
+     * @return The current instance of {@link ReplicatorBuilder}
+     * @throws IllegalArgumentException if {@code username} is {@code null}.
+     */
+    public E username(String username) {
+        Misc.checkNotNull(username, "username");
+        this.username = username;
+        //noinspection unchecked
+        return (E) this;
+    }
+
+    /**
+     * Sets the password to use when authenticating with the server.
+     *
+     * Setting the username (using the {@link ReplicatorBuilder#username(String)}) and password method
+     * takes precedence over credentials passed via the URI.
+     *
+     * @param password The password to use when authenticating.
+     * @return The current instance of {@link ReplicatorBuilder}
+     * @throws IllegalArgumentException if {@code password} is {@code null}.
+     */
+    public E password(String password) {
+        Misc.checkNotNull(password, "password");
+        this.password = password;
+        //noinspection unchecked
+        return (E) this;
+    }
+
 
     /**
      * Builds a replicator by calling {@link #build()} and then {@link Replicator#start()}

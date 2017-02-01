@@ -1,5 +1,7 @@
-/**
- * Copyright (c) 2013 Cloudant, Inc. All rights reserved.
+/*
+ * Copyright © 2017 IBM Corp. All rights reserved.
+ *
+ * Copyright © 2013 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -13,6 +15,8 @@
  */
 
 package com.cloudant.sync.util;
+
+import com.cloudant.sync.internal.util.AbstractTreeNode;
 
 import org.junit.Assert;
 import org.junit.Before;

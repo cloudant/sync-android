@@ -1,11 +1,11 @@
-/**
- * Copyright (c) 2015 IBM Cloudant. All rights reserved.
- * <p/>
+/*
+ * Copyright © 2015 IBM Corp. All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
- * <p/>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language governing permissions
@@ -21,17 +21,23 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.cloudant.sync.datastore.Attachment;
-import com.cloudant.sync.datastore.ConflictException;
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.sync.datastore.DatastoreNotCreatedException;
-import com.cloudant.sync.datastore.DocumentBodyFactory;
-import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.datastore.UnsavedFileAttachment;
-import com.cloudant.sync.datastore.UnsavedStreamAttachment;
-import com.cloudant.sync.query.IndexManager;
+import com.cloudant.sync.documentstore.Attachment;
+import com.cloudant.sync.documentstore.AttachmentException;
+import com.cloudant.sync.documentstore.DocumentNotFoundException;
+import com.cloudant.sync.documentstore.DocumentStoreException;
+import com.cloudant.sync.documentstore.DocumentStoreNotOpenedException;
+import com.cloudant.sync.documentstore.DocumentStore;
+import com.cloudant.sync.documentstore.ConflictException;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.encryption.SimpleKeyProvider;
+import com.cloudant.sync.internal.documentstore.encryption.EncryptedAttachmentInputStream;
+import com.cloudant.sync.documentstore.UnsavedFileAttachment;
+import com.cloudant.sync.documentstore.UnsavedStreamAttachment;
+import com.cloudant.sync.query.FieldSort;
+import com.cloudant.sync.internal.query.QueryImpl;
+import com.cloudant.sync.query.Query;
+import com.cloudant.sync.query.QueryException;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.util.TestUtils;
 
@@ -91,34 +97,36 @@ public class EndToEndEncryptionTest {
     public boolean dataShouldBeEncrypted;
 
     String datastoreManagerDir;
-    DatastoreManager datastoreManager;
-    Datastore datastore;
+    DocumentStore database;
 
     // Magic bytes are "SQLite format 3" + null-terminator
     byte[] sqlCipherMagicBytes = hexStringToByteArray("53514c69746520666f726d6174203300");
     byte[] expectedFirstAttachmentByte = new byte[]{ 1 };
 
     @Before
-    public void setUp() throws DatastoreNotCreatedException {
+    public void setUp() throws DocumentStoreNotOpenedException {
         datastoreManagerDir = TestUtils.createTempTestingDir(this.getClass().getName());
-        datastoreManager = DatastoreManager.getInstance(this.datastoreManagerDir);
 
-        if(dataShouldBeEncrypted) {
-            this.datastore = this.datastoreManager.openDatastore(getClass().getSimpleName(),
-                    new SimpleKeyProvider(KEY));
+        if (dataShouldBeEncrypted) {
+            this.database = DocumentStore.getInstance(new File(this.datastoreManagerDir, "EndToEndEncryptionTest"), new
+                    SimpleKeyProvider(KEY));
         } else {
-            this.datastore = this.datastoreManager.openDatastore(getClass().getSimpleName());
+            this.database = DocumentStore.getInstance(new File(this.datastoreManagerDir, "EndToEndEncryptionTest"));
         }
     }
 
     @After
     public void tearDown() {
-        datastore.close();
+        try {
+            database.close();
+        } catch (Exception e) {
+            // ignore "documentstore already closed" exceptions
+        }
         TestUtils.deleteTempTestingDir(datastoreManagerDir);
     }
 
     @Test
-    public void jsonDataEncrypted() throws IOException {
+    public void jsonDataEncrypted() throws IOException, QueryException {
         File jsonDatabase = new File(datastoreManagerDir
                 + File.separator + "EndToEndEncryptionTest"
                 + File.separator + "db.sync");
@@ -127,11 +135,11 @@ public class EndToEndEncryptionTest {
         // database operation to ensure the database exists on disk before we look at
         // it.
 
-        IndexManager im = new IndexManager(this.datastore);
+        Query im = this.database.query();
         try {
-            im.ensureIndexed(Arrays.<Object>asList("name", "age"));
+            im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), null);
         } finally {
-            im.close();
+            ((QueryImpl)im).close();
         }
 
         InputStream in = new FileInputStream(jsonDatabase);
@@ -150,13 +158,13 @@ public class EndToEndEncryptionTest {
     }
 
     @Test
-    public void indexDataEncrypted() throws IOException {
+    public void indexDataEncrypted() throws IOException, QueryException {
 
-        IndexManager im = new IndexManager(this.datastore);
+        Query im = this.database.query();
         try {
-            im.ensureIndexed(Arrays.<Object>asList("name", "age"));
+            im.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("age")), null);
         } finally {
-            im.close();
+            ((QueryImpl)im).close();
         }
 
         File jsonDatabase = new File(datastoreManagerDir
@@ -181,7 +189,8 @@ public class EndToEndEncryptionTest {
     }
 
     @Test
-    public void attachmentsDataEncrypted() throws IOException, DocumentException, InvalidKeyException {
+    public void attachmentsDataEncrypted() throws IOException, DocumentStoreException,
+            AttachmentException, ConflictException, InvalidKeyException {
 
         DocumentRevision rev = new DocumentRevision();
         rev.setBody(DocumentBodyFactory.create(new HashMap<String, String>()));
@@ -193,7 +202,7 @@ public class EndToEndEncryptionTest {
                 expectedPlainText, "text/plain");
         rev.getAttachments().put("EncryptedAttachmentTest_plainText", attachment);
 
-        datastore.createDocumentFromRevision(rev);
+        database.database().create(rev);
 
         File attachmentsFolder = new File(datastoreManagerDir
                 + File.separator + "EndToEndEncryptionTest"
@@ -227,14 +236,14 @@ public class EndToEndEncryptionTest {
      * supplying the wrong key will result in attempting to decrypt using that key,
      * which should fail in both cases.
      */
-    @Test(expected = DatastoreNotCreatedException.class)
-    public void testCannotOpenDatabaseWithWrongKey() throws DatastoreNotCreatedException {
+    @Test(expected = DocumentStoreNotOpenedException.class)
+    public void testCannotOpenDatabaseWithWrongKey() throws DocumentStoreNotOpenedException {
 
         // First close the datastore, as otherwise DatastoreManager's uniquing just
         // gives us back the existing instance which has the correct key.
-        datastore.close();
+        database.close();
 
-        this.datastoreManager.openDatastore(getClass().getSimpleName(),
+        DocumentStore.getInstance(new File(this.datastoreManagerDir, "EndToEndEncryptionTest"),
                 new SimpleKeyProvider(WRONG_KEY));
     }
 
@@ -242,7 +251,8 @@ public class EndToEndEncryptionTest {
      * A basic check things round trip successfully.
      */
     @Test
-    public void readAndWriteDocument() throws DocumentException, IOException {
+    public void readAndWriteDocument() throws DocumentStoreException, AttachmentException,
+            ConflictException, DocumentNotFoundException, IOException {
 
         String documentId = "a-test-document";
         final String nonAsciiText = "摇;摃:xx\uD83D\uDC79⌚️\uD83D\uDC7D";
@@ -255,11 +265,11 @@ public class EndToEndEncryptionTest {
         // Create
         DocumentRevision rev = new DocumentRevision(documentId);
         rev.setBody(DocumentBodyFactory.create(documentBody));
-        DocumentRevision saved = datastore.createDocumentFromRevision(rev);
+        DocumentRevision saved = database.database().create(rev);
         assertNotNull(saved);
 
         // Read
-        DocumentRevision retrieved = datastore.getDocument(documentId);
+        DocumentRevision retrieved = database.database().read(documentId);
         assertNotNull(retrieved);
         Map<String, Object> retrievedBody = retrieved.getBody().asMap();
         assertEquals("mike", retrievedBody.get("name"));
@@ -272,7 +282,7 @@ public class EndToEndEncryptionTest {
         Map<String, Object> updateBody = retrieved.getBody().asMap();
         updateBody.put("name", "fred");
         update.setBody(DocumentBodyFactory.create(updateBody));
-        DocumentRevision updated = datastore.updateDocumentFromRevision(update);
+        DocumentRevision updated = database.database().update(update);
         assertNotNull(updated);
         Map<String, Object> updatedBody = updated.getBody().asMap();
         assertEquals("fred", updatedBody.get("name"));
@@ -288,9 +298,8 @@ public class EndToEndEncryptionTest {
         final Map<String, Attachment> atts = attachmentRevision.getAttachments();
         atts.put(attachmentName, new UnsavedFileAttachment(expectedPlainText, "text/plain"));
         atts.put("non-ascii", new UnsavedStreamAttachment(
-                new ByteArrayInputStream(nonAsciiText.getBytes()),
-                "non-ascii", "text/plain"));
-        DocumentRevision updatedWithAttachment = datastore.updateDocumentFromRevision(attachmentRevision);
+                new ByteArrayInputStream(nonAsciiText.getBytes()), "text/plain"));
+        DocumentRevision updatedWithAttachment = database.database().update(attachmentRevision);
         InputStream in = updatedWithAttachment.getAttachments().get(attachmentName).getInputStream();
         assertTrue("Saved attachment did not read correctly",
                 IOUtils.contentEquals(new FileInputStream(expectedPlainText), in));
@@ -299,26 +308,26 @@ public class EndToEndEncryptionTest {
                 IOUtils.contentEquals(new ByteArrayInputStream(nonAsciiText.getBytes()), in));
 
         // perform a query to ensure we can use special chars
-        IndexManager indexManager = new IndexManager(datastore);
+        Query query = database.query();
         try {
-            assertNotNull(indexManager.ensureIndexed(Arrays.<Object>asList("name", "pet"), "my index"));
+            assertNotNull(query.createJsonIndex(Arrays.<FieldSort>asList(new FieldSort("name"), new FieldSort("pet")), "my index"));
 
             // query for the name fred and check that docs are returned.
             Map<String, Object> selector = new HashMap<String, Object>();
             selector.put("name", "fred");
-            QueryResult queryResult = indexManager.find(selector);
+            QueryResult queryResult = query.find(selector);
             assertNotNull(queryResult);
         } finally {
-            indexManager.close();
+            ((QueryImpl)query).close();
         }
         // Delete
         try {
-            datastore.deleteDocumentFromRevision(saved);
+            database.database().delete(saved);
             fail("Deleting document from old revision succeeded");
         } catch (ConflictException ex) {
             // Expected exception
         }
-        DocumentRevision deleted = datastore.deleteDocumentFromRevision(updatedWithAttachment);
+        DocumentRevision deleted = database.database().delete(updatedWithAttachment);
         assertNotNull(deleted);
         assertEquals(true, deleted.isDeleted());
     }

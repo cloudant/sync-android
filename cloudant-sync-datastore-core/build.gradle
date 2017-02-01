@@ -96,6 +96,13 @@ task unreliableNetworkTest(type: Test, dependsOn: testClasses) {
     }
 }
 
+task compileCrudSamples(type: JavaCompile, dependsOn: compileJava) {
+    source = "../doc/CrudSamples.java"
+    // add previously compiled library classes to classpath
+    classpath = files(sourceSets.main.compileClasspath, sourceSets.main.output.classesDir)
+    destinationDir = sourceSets.main.output.classesDir
+}
+
 //for Ant filter for "processResources" task
 import org.apache.tools.ant.filters.ReplaceTokens
 processResources {
