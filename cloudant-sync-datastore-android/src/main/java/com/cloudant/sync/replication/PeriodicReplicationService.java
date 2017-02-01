@@ -123,7 +123,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * If the stored preferences are in the old format, upgrade them to the new format so that
      * the app continues to work after upgrade to this version.
      */
-    private void upgradePreferences() {
+    protected void upgradePreferences() {
         String alarmDueElapsed = "com.cloudant.sync.replication.PeriodicReplicationService.alarmDueElapsed";
         if (mPrefs.contains(alarmDueElapsed)) {
             // These are old style preferences. We need to rewrite them in the new form that allows

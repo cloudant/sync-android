@@ -262,6 +262,43 @@ instead. Migration also requires some minor method renames.
 `ReplicationPolicyManager.SimpleReplicationsCompletedListener` and now implements
 `ReplicationPolicyManager.ReplicationsCompletedListener`.
 
+* It is now possible to have multiple subclasses of `PeriodicReplicationService` in the same Android app without
+them interfering with each other. If you have not used replication policies involving a `PeriodicReplicationService`
+prior to upgrading to sync-android 2.0.0, there is no special handling required and the rest of this section may be
+ignored. However, there is one use-case that requires special handling: If you had
+used a replication policy in an app built against a pre-2.0.0 release of sync-android and are now
+moving to multiple `PeriodicReplicationService`s. In this case, you should override the `upgradePreferences()`
+method with an empty method for any `PeriodicReplicationService`s you are adding. Any
+`PeriodicReplicationService` that had existed in an app built against a pre-2.0.0 version of sync-android
+should not have its `upgradePreferences()` method overridden. For example:
+    ```java
+    public class MyOriginalReplicationService extends PeriodicReplicationService {
+        // This class existed in an app that used sync-android version < 2.0.0
+        // so we don't override upgradePreferences()
+    ...
+    }
+
+    public class MyNewReplicationService extends PeriodicReplicationService {
+        // This class is new since upgrading to sync-android version >= 2.0.0
+        // so we must override upgradePreferences() to do nothing.
+
+        @Override
+        protected void upgradePreferences() {
+        }
+    ...
+    }
+
+    public class MyOtherNewReplicationService extends PeriodicReplicationService {
+        // This class is also new since upgrading to sync-android version >= 2.0.0
+        // so we must override upgradePreferences() to do nothing.
+
+        @Override
+        protected void upgradePreferences() {
+        }
+    ...
+    }
+    ```
+
 ## Changes to `Changes`
 
 Removed `size()` and `getIds()` methods. The behaviour duplicated what was
