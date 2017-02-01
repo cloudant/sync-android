@@ -89,7 +89,7 @@ needing to poll:
  * A {@code ReplicationListener} that sets a latch when it's told the
  * replication has finished.
  */
-private class Listener {
+public class Listener {
 
     private final CountDownLatch latch;
     public List<Throwable> errors = new ArrayList<Throwable>();
