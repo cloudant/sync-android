@@ -16,13 +16,11 @@
 
 package com.cloudant.sync.internal.documentstore;
 
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
-import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.internal.util.Misc;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,13 +45,9 @@ public class DocumentRevsUtils {
         int generation = CouchUtils.generationFromRevId(latestRevision);
         assert generation == documentRevs.getRevisions().getStart();
 
-        List<String> revisionHistory = new ArrayList<String>();
-        for (String revision : documentRevs.getRevisions().getIds()) {
-            revisionHistory.add(generation + "-" + revision);
-            generation--;
-        }
-        Collections.reverse(revisionHistory);
-        logger.log(Level.FINER,"Revisions history: "+revisionHistory);
+        List<String> revisionHistory = CouchUtils.couchStyleRevisionHistoryToFullRevisionIDs
+                (generation, documentRevs.getRevisions().getIds());
+        logger.log(Level.FINER, "Revisions history: " + revisionHistory);
         return revisionHistory;
     }
 

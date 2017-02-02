@@ -28,11 +28,11 @@ import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.InvalidDocumentException;
 import com.cloudant.sync.documentstore.LocalDocument;
+import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.documentstore.callables.GetDocumentsWithInternalIdsCallable;
 import com.cloudant.sync.internal.sqlite.Cursor;
-import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
-import com.cloudant.sync.internal.common.CouchUtils;
+import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.DatabaseUtils;
 import com.cloudant.sync.internal.util.JSONUtils;
 
@@ -604,6 +604,14 @@ public class CrudImplDatabaseTest extends BasicDatastoreTestBase {
             Assert.assertTrue("leaf body must not be empty after compaction", leaf.getBody().asMap().size() > 0);
         }
 
+    }
+
+    @Test(expected = DocumentNotFoundException.class)
+    public void updateNonExistentDocument() throws Exception {
+        // Create a rev that doesn't exist
+        DocumentRevision rev_1Mut = new DocumentRevision("anyid", "1-abc");
+        rev_1Mut.setBody(bodyOne);
+        datastore.update(rev_1Mut);
     }
 
     private void getAllDocuments_testCountAndOffset(int objectCount, List<DocumentRevision> expectedDocumentRevisions, boolean descending) throws DocumentStoreException {

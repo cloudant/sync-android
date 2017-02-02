@@ -19,12 +19,13 @@ package com.cloudant.sync.internal.documentstore;
 import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.common.CouchUtils;
-import com.cloudant.sync.util.TestUtils;;
+import com.cloudant.sync.util.TestUtils;
 
-import org.junit.Assert;
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
+
+;
 
 public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
 
@@ -38,17 +39,11 @@ public abstract class BasicDatastoreTestBase extends DatastoreTestBase {
 
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentOneFile));
         bodyOne = new DocumentBodyImpl(jsonData);
 
         jsonData = FileUtils.readFileToByteArray(TestUtils.loadFixture(documentTwoFile));
         bodyTwo = new DocumentBodyImpl(jsonData);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.testDown();
     }
 
     void createTwoDocuments() throws Exception {

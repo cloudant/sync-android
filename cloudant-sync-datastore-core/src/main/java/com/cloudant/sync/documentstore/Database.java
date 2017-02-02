@@ -287,12 +287,13 @@ public interface Database {
      * @param rev the {@link DocumentRevision} to be updated
      * @return a {@link DocumentRevision} - the updated document
      * @throws ConflictException if <code>rev</code> is not a current revision for this document
+     * @throws DocumentNotFoundException if the {@code rev} being updated does not exist
      * @throws AttachmentException if there was an error saving any new attachments
      * @throws DocumentStoreException if there was an error reading from or writing to the database
      * @see Database#getEventBus()
      */
     DocumentRevision update(DocumentRevision rev) throws ConflictException,
-            AttachmentException, DocumentStoreException;
+            AttachmentException, DocumentStoreException, DocumentNotFoundException;
 
     /**
      * <p>Deletes a document from the datastore.</p>

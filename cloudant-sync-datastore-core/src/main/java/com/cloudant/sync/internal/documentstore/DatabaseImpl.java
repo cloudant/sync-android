@@ -19,21 +19,27 @@
 
 package com.cloudant.sync.internal.documentstore;
 
-import com.cloudant.sync.documentstore.DocumentRevision;
-import com.cloudant.sync.internal.common.CouchUtils;
-import com.cloudant.sync.internal.common.ValueListMap;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.AttachmentException;
 import com.cloudant.sync.documentstore.Changes;
 import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.ConflictResolver;
 import com.cloudant.sync.documentstore.Database;
-import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
+import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.InvalidDocumentException;
 import com.cloudant.sync.documentstore.LocalDocument;
+import com.cloudant.sync.documentstore.encryption.KeyProvider;
+import com.cloudant.sync.event.EventBus;
+import com.cloudant.sync.event.notifications.DocumentCreated;
+import com.cloudant.sync.event.notifications.DocumentDeleted;
+import com.cloudant.sync.event.notifications.DocumentModified;
+import com.cloudant.sync.event.notifications.DocumentUpdated;
+import com.cloudant.sync.internal.common.CouchUtils;
+import com.cloudant.sync.internal.common.ValueListMap;
 import com.cloudant.sync.internal.documentstore.callables.ChangesCallable;
 import com.cloudant.sync.internal.documentstore.callables.CompactCallable;
 import com.cloudant.sync.internal.documentstore.callables.DeleteAllRevisionsCallable;
@@ -59,15 +65,9 @@ import com.cloudant.sync.internal.documentstore.callables.ResolveConflictsForDoc
 import com.cloudant.sync.internal.documentstore.callables.RevsDiffBatchCallable;
 import com.cloudant.sync.internal.documentstore.callables.SetCurrentCallable;
 import com.cloudant.sync.internal.documentstore.callables.UpdateDocumentFromRevisionCallable;
-import com.cloudant.sync.documentstore.encryption.KeyProvider;
 import com.cloudant.sync.internal.documentstore.migrations.MigrateDatabase100To200;
 import com.cloudant.sync.internal.documentstore.migrations.MigrateDatabase6To100;
 import com.cloudant.sync.internal.documentstore.migrations.SchemaOnlyMigration;
-import com.cloudant.sync.event.EventBus;
-import com.cloudant.sync.event.notifications.DocumentCreated;
-import com.cloudant.sync.event.notifications.DocumentDeleted;
-import com.cloudant.sync.event.notifications.DocumentModified;
-import com.cloudant.sync.event.notifications.DocumentUpdated;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -92,7 +92,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class DatabaseImpl implements Database {
+public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.advanced.Database {
 
     private static final Logger logger = Logger.getLogger(DatabaseImpl.class.getCanonicalName());
 
@@ -557,20 +557,6 @@ public class DatabaseImpl implements Database {
     }
 
     /**
-     * This method has been deprecated and should not be used.
-     * @see #forceInsert(List)
-     */
-    @Deprecated
-    public void forceInsert(final InternalDocumentRevision rev,
-                            final List<String> revisionHistory,
-                            final Map<String, Object> attachments,
-                            final Map<String[], Map<String, PreparedAttachment>> preparedAttachments,
-                            final boolean pullAttachmentsInline) throws DocumentException {
-        forceInsert(Collections.singletonList(new ForceInsertItem(rev, revisionHistory,
-                attachments, preparedAttachments, pullAttachmentsInline)));
-    }
-
-    /**
      * <p>
      * Inserts one or more revisions of a document into the database. For efficiency, this is
      * performed as one database transaction.
@@ -600,34 +586,7 @@ public class DatabaseImpl implements Database {
      * </p>
      *
      *
-     * @param items one or more revisions to insert. Each {@code ForceInsertItem} consists of:
-     * <ul>
-     * <li>
-     * <b>rev</b> A {@code DocumentRevision} containing the information for a revision
-     * from a remote datastore.
-     * </li>
-     * <li>
-     * <b>revisionHistory</b> The history of the revision being inserted,
-     * including the rev ID of {@code rev}. This list
-     * needs to be sorted in ascending order
-     * </li>
-     * <li>
-     * <b>attachments</b> Attachments metadata and optionally data if {@code
-     * pullAttachmentsInline} true
-     * </li>
-     * <li>
-     * <b>preparedAttachments</b> Non-empty if {@code pullAttachmentsInline} false.
-     * Attachments that have already been prepared, this is a
-     * Map of String[docId,revId] → list of attachments
-     * </li>
-     * <li>
-     * <b>pullAttachmentsInline</b> If true, use {@code attachments} metadata and data directly
-     * from received JSON to add new attachments for this revision.
-     * Else use {@code preparedAttachments} which were previously
-     * downloaded and prepared by processOneChangesBatch in
-     * BasicPullStrategy
-     * </li>
-     * </ul>
+     * @param items one or more revisions to insert.
      *
      * @see Database#getEventBus()
      * @throws DocumentException if there was an error inserting the revision or its attachments
@@ -674,22 +633,21 @@ public class DatabaseImpl implements Database {
      * <p>Equivalent to:</p>
      *
      * <code>
-     *    forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
+     * forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
      * </code>
      *
-     * @param rev A {@code DocumentRevision} containing the information for a revision
-     *            from a remote datastore.
+     * @param rev             A {@code DocumentRevision} containing the information for a revision
+     *                        from a remote datastore.
      * @param revisionHistory The history of the revision being inserted,
      *                        including the rev ID of {@code rev}. This list
      *                        needs to be sorted in ascending order
-     *
-     * @see DatabaseImpl#forceInsert(InternalDocumentRevision, List, Map, Map, boolean)
      * @throws DocumentException if there was an error inserting the revision into the database
      */
     public void forceInsert(InternalDocumentRevision rev, String... revisionHistory) throws
             DocumentException {
         Misc.checkState(this.isOpen(), "Database is closed");
-        this.forceInsert(rev, Arrays.asList(revisionHistory), null, null, false);
+        this.forceInsert(Collections.singletonList(new ForceInsertItem(rev, Arrays.asList
+                (revisionHistory), null, null, false)));
     }
 
     private boolean checkRevisionIsInCorrectOrder(List<String> revisionHistory) {
@@ -1088,12 +1046,18 @@ public class DatabaseImpl implements Database {
 
     @Override
     public DocumentRevision update(final DocumentRevision rev)
-            throws AttachmentException, DocumentStoreException, ConflictException {
+            throws AttachmentException, DocumentNotFoundException, ConflictException,
+            DocumentStoreException  {
 
         Misc.checkNotNull(rev, "DocumentRevision");
         Misc.checkState(isOpen(), "Datastore is closed");
         Misc.checkArgument(rev.isFullRevision(), "Projected revisions cannot be used to " +
                 "create documents");
+
+        // Shortcut if this is a deletion
+        if (rev.isDeleted()) {
+            return delete(rev);
+        }
 
         // We need to work out which of the attachments for the revision are ones
         // we can copy over because they exist in the attachment store already and
@@ -1127,6 +1091,8 @@ public class DatabaseImpl implements Database {
             throwCauseAs(e, InvalidDocumentException.class);
             // conflictexception if rev ID is not winning rev
             throwCauseAs(e, ConflictException.class);
+            // not found if tried to update something that doesn't exist
+            throwCauseAs(e, DocumentNotFoundException.class);
             String message = "Failed to update document";
             logger.log(Level.SEVERE, message, e);
             throw new DocumentStoreException(message, e.getCause());
@@ -1191,4 +1157,44 @@ public class DatabaseImpl implements Database {
         }
     }
 
+    @Override
+    public void createWithHistory(DocumentRevision revision, int revisionsStart, List<String>
+            revisionsIDs) throws DocumentException {
+
+        // Check the arguments for validity
+        Misc.checkNotNull(revision, "DocumentRevision");
+        Misc.checkArgument(revisionsStart > 0, "revisionsStart must be greater than zero, but was" +
+                " " + revisionsStart + ".");
+        Misc.checkArgument(revisionsIDs != null && revisionsIDs.size() > 0, "revisionsIDs history" +
+                " list must not be null or empty.");
+
+        Map<String, Attachment> attachments = revision.getAttachments();
+        Collections.list(Collections.enumeration(revision.getAttachments().values()));
+
+        InternalDocumentRevision internalRev = new DocumentRevisionBuilder()
+                .setDocId(revision.getId())
+                .setRevId(revision.getRevision())
+                .setBody(revision.getBody())
+                .setAttachments(attachments)
+                .setDeleted(revision.isDeleted())
+                .build();
+
+        Map<String[], Map<String, PreparedAttachment>> preparedAttachments = Collections
+                .singletonMap
+                        (new String[]{revision.getId(), revision.getRevision()}, AttachmentManager
+                                .prepareAttachments(attachmentsDir, attachmentStreamFactory,
+                                        attachments));
+
+        // Couch _revisions.ids are newest -> oldest without a generation, so we need to manipulate
+        // them for forceInsert to an ascending order list with generational prefix
+        List<String> revIDs = CouchUtils.couchStyleRevisionHistoryToFullRevisionIDs
+                (revisionsStart, revisionsIDs);
+
+
+        // Note attachmentsMetadata map is not used when pullAttachmentsInline=false so call with
+        // null. See com.cloudant.sync.internal.documentstore.callables.ForceInsertCallable.call()
+        // for reference.
+        forceInsert(Collections.singletonList(new ForceInsertItem(internalRev,
+                revIDs, null, preparedAttachments, false)));
+    }
 }

@@ -35,6 +35,7 @@ import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.util.JSONUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,7 +121,8 @@ class DatastoreWrapper {
 
             List<String> revisions = DocumentRevsUtils.createRevisionIdHistory(documentRevs);
             Map<String, Object> attachments = documentRevs.getAttachments();
-            dbCore.forceInsert(doc, revisions, attachments,preparedAttachments, pullAttachmentsInline);
+            dbCore.forceInsert(Collections.singletonList(new ForceInsertItem(doc, revisions,
+                    attachments, preparedAttachments, pullAttachmentsInline)));
         }
     }
 
