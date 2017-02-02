@@ -47,7 +47,7 @@ import java.util.List;
 /**
  * <p>Handles dealing with the DocumentStore and replication.</p>
  */
-class TasksModel {
+public class TasksModel {
 
     private static final String LOG_TAG = "TasksModel";
 
