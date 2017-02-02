@@ -17,7 +17,13 @@
 stage('Build') {
     // Checkout, build and assemble the source and doc
     node {
-        checkout scm
+        checkout([
+            $class: 'GitSCM',
+            branches: scm.branches,
+            doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+            extensions: scm.extensions + [[$class: 'CleanBeforeCheckout']],
+            userRemoteConfigs: scm.userRemoteConfigs
+        ])
         sh './gradlew clean assemble'
         stash name: 'built'
     }
