@@ -1,3 +1,0 @@
-include 'cloudant-sync-datastore-core'
-include 'cloudant-sync-datastore-android'
-include 'cloudant-sync-datastore-javase'
