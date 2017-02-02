@@ -10,7 +10,7 @@ MVCC data-model is used to do this. This page describes how it works.
 
 ## Replication
 
-The Sync datastore participates in master-less replication with
+The Sync DocumentStore participates in master-less replication with
 [Cloudant][cloudant]
 or [Apache CouchDB][couch]. What this means is that there is no canonical
 copy of the documents in each database. One of the main results of this
@@ -56,7 +56,7 @@ in the tree.
 ### What are conflicts?
 
 When a document has been replicated to more than one place, it's possible to
-edit it concurrently in two places. When the datastores storing the document
+edit it concurrently in two places. When the DocumentStores containing the document
 then replicate with each other again, they each add their changes to the
 document's tree. This causes an extra branch to be added to the tree for
 each concurrent set of changes. When this happens, the document is said to be
@@ -64,9 +64,9 @@ _conflicted_. This creates multiple current revisions of the document, one for
 each of the concurrent changes.
 
 Say we last replicated the document above at the `2-x` revision. We make
-two changes locally (`3-x` and `4-x`) and the remote datastore has a single
+two changes locally (`3-x` and `4-x`) and the remote DocumentStore has a single
 change made to it (`3-y`). On replicating back from the remote, the local
-datastore ends up with a document like this:
+DocumentStore ends up with a document like this:
 
 ```
   replicated from remote
@@ -83,7 +83,7 @@ We now have two non-deleted leaf nodes: the document is conflicted.
 
 ### The "winning" revision
 
-To make things easier, calling `Datastore#getDocument(...)` returns one of
+To make things easier, calling `Database#read(...)` returns one of
 the leaf nodes of the branches of the conflicted document. It selects the
 node to return in an arbitrary but deterministic way, which means that all
 replicas of the database will return the same revision for the document. The
@@ -109,16 +109,16 @@ a helper method to streamline the process of resolving conflicts.
 
 ### Finding conflicted documents
 
-There's a method on the `Datastore` interface:
+There's a method on the `Database` interface:
 
 ```java
-Iterator<String> getConflictedDocumentIds();
+Iterator<String> getConflictedIds();
 ```
 
 This method returns an iterator over the document IDs:
 
 ```java
-for (String docId : datastore.getConflictedDocumentIds()) {
+for (String docId : database.getConflictedIds()) {
     System.out.println(docId);
 }
 ```
@@ -127,8 +127,8 @@ for (String docId : datastore.getConflictedDocumentIds()) {
 
 Once you've found the list of documents, you need to resolve them. This is
 done one-by-one, passing a class able to resolve conflicts and a document
-ID to the `resolveConflictsForDocument(String, ConflictResolver)` method
-of the `Datastore` interface.
+ID to the `resolveConflicts(String, ConflictResolver)` method
+of the `Database` interface.
 
 The `ConflictResolver` interface has one method:
 
@@ -166,7 +166,7 @@ class MergeResolver implements ConflictResolver {
 }
 ```
 
-Conceptually, the `resolveConflictsForDocument` method does the following:
+Conceptually, the `resolveConflicts` method does the following:
 
 1. Get all the non-deleted leaf node revisions for the document.
 
@@ -199,7 +199,7 @@ is no longer conflicted.
 
 All this happens inside a transaction, ensuring consistency.
 
-This resolution can be replicated to the remote document store, bringing
+This resolution can be replicated to the remote DocumentStore, bringing
 the two databases into a consistent state.
 
 ### Simple example
@@ -208,10 +208,10 @@ You could imagine an application running the following method
 via a timer to periodically fix up any conflicts:
 
 ```java
-public void resolveConflicts(Datastore datastore) {
+public void resolveConflicts(DocumentStore ds) {
     ConflictResolver pickFirst = new PickFirstResolver();
-    for (String docId : datastore.getConflictedDocumentIds()) {
-        datastore.resolveConflictsForDocument(docId, pickFirst);
+    for (String docId : ds.database().getConflictedIds()) {
+        ds.database().resolveConflicts(docId, pickFirst);
     }
 }
 ```

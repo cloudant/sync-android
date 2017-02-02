@@ -215,9 +215,9 @@ if (pullReplicator.getState() != Replicator.State.COMPLETE) {
 }
 ```
 
-### Using IndexManager with replication
+### Using `Query` with replication
 
-When using IndexManager for querying data, we recommend you update after
+When using `Query` for querying data, we recommend you update after
 replication completes to avoid a wait for indexing to catch up when the new data
 is first queried:
 
@@ -232,7 +232,7 @@ DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
 Replicator replicator = ReplicatorBuilder.pull().from(uri).to(ds).build();
 
 // Create a sample index on type field
-ds.query().ensureIndexed(Arrays.asList(new FieldSort("fieldName")), "indexName");
+ds.query().createJsonIndex(Arrays.asList(new FieldSort("fieldName")), "indexName");
 
 // Use a CountDownLatch to provide a lightweight way to wait for completion
 CountDownLatch latch = new CountDownLatch(1);
@@ -247,7 +247,7 @@ if (replicator.getState() != Replicator.State.COMPLETE) {
 }
 
 // Ensure all indexes are updated after replication
-ds.query().updateAllIndexes();
+ds.query().refreshAllIndexes();
 
 ```
 

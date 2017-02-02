@@ -1076,7 +1076,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             im.close();
         }
 
-        // Get a new IndexManager instance and extract its queue
+        // Get a new Query instance and extract its queue
         im = new QueryImpl(ds, new File(ds.getPath(), "extensions"), new NullKeyProvider());
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
 
@@ -1117,7 +1117,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             im.close();
         }
 
-        // Get a new IndexManager instance and extract its queue
+        // Get a new Query instance and extract its queue
         im = new QueryImpl(ds, new File(ds.getPath(), "extensions"),  new NullKeyProvider());
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
 
@@ -1140,7 +1140,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
             im.close();
         }
 
-        // Get a new IndexManager instance and extract its queue
+        // Get a new Query instance and extract its queue
         im = new QueryImpl(ds, new File(ds.getPath(), "extensions"),  new NullKeyProvider());
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         // Check that the updates are still there
