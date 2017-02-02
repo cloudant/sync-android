@@ -92,7 +92,7 @@ task unreliableNetworkTest(type: Test, dependsOn: testClasses) {
     systemProperty "http.keepAlive", false
     // ensure proxy is running!
     filter {        
-        includeTestsMatching "com.cloudant.sync.replication.Unreliable*.*"
+        includeTestsMatching "com.cloudant.sync.internal.replication.Unreliable*.*"
     }
 }
 
