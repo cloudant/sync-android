@@ -476,7 +476,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
         setUpWithoutCoveringIndexesQueryData();
         // query - { "town" : "bristol" }
         // indexes - No user defined indexes found.  Retrieves
-        //           document ids directly from the datastore.
+        //           document IDs directly from the datastore.
         idxMgr.deleteIndex("basic");
         idxMgr.deleteIndex("pet");
         assertThat(idxMgr.listIndexes(), is(empty()));

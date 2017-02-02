@@ -34,7 +34,7 @@ import java.util.List;
  * relational model. The Database exposes a simple key-value model where the key
  * is the document ID combined with a (sometimes optional) revision ID.</p>
  *
- * <p>For a more advanced way of querying the Datastore, see the
+ * <p>For a more advanced way of querying the DocumentStore, see the
  * {@link Query} class</p>
  *
  * <p>Each document consists of a set of revisions, hence most methods within
@@ -91,7 +91,7 @@ public interface Database {
      * <p>Retrieves a given revision of a document.</p>
      *
      * <p>This method gets the revision of a document with a given ID. As the
-     * datastore prunes the content of old revisions to conserve space, this
+     * DocumentStore prunes the content of old revisions to conserve space, this
      * revision may contain the metadata but not content of the revision.</p>
      *
      * <p>Previously deleted documents can be retrieved
@@ -108,7 +108,7 @@ public interface Database {
             DocumentNotFoundException, DocumentStoreException;
 
     /**
-     * <p>Returns whether this datastore contains a particular revision of
+     * <p>Returns whether this DocumentStore contains a particular revision of
      * a document.</p>
      *
      * <p>{@code true} will still be returned if the document is deleted.</p>
@@ -116,27 +116,27 @@ public interface Database {
      * @param documentId ID of the document
      * @param revisionId revision of the document
      * @return {@code true} if specified document's particular revision exists
-     *         in the datastore, {@code false} otherwise.
+     *         in the DocumentStore, {@code false} otherwise.
      * @throws DocumentStoreException if there was an error reading from the database
      */
     boolean contains(String documentId, String revisionId) throws DocumentStoreException;
 
     /**
-     * <p>Returns whether this datastore contains any revisions of a document.
+     * <p>Returns whether this DocumentStore contains any revisions of a document.
      * </p>
      *
      * <p>{@code true} will still be returned if the document is deleted.</p>
      *
      * @param documentId ID of the document
      * @return {@code true} if specified document exists
-     *         in the datastore, {@code false} otherwise.
+     *         in the DocumentStore, {@code false} otherwise.
      * @throws DocumentStoreException if there was an error reading from the database
      */
     boolean contains(String documentId) throws DocumentStoreException;
 
     /**
      * <p>Enumerates the current winning revision for all documents in the
-     * datastore.</p>
+     * DocumentStore.</p>
      *
      * <p>Logically, this method takes all the documents sorted by internal ID,
      * in either ascending
@@ -155,7 +155,7 @@ public interface Database {
 
     /**
      * <p>Enumerates the current winning revision for all documents in the
-     * datastore and return a list of their document IDs.</p>
+     * DocumentStore and return a list of their document IDs.</p>
      *
      * @return list of document IDs
      * @throws DocumentStoreException if there was an error reading from the database
@@ -166,7 +166,7 @@ public interface Database {
      * <p>Returns the current winning revisions for a set of documents.</p>
      *
      * <p>If the {@code documentIds} list contains document IDs not present
-     * in the datastore, they will be skipped and there will be no entry for
+     * in the DocumentStore, they will be skipped and there will be no entry for
      * them in the returned list.</p>
      *
      * @param documentIds list of document IDs.
@@ -180,7 +180,7 @@ public interface Database {
      *
      * <p>The sequence number is incremented every time the
      * content of the Database is changed. Each document revision within the
-     * datastore has an associated sequence number, describing when the change
+     * DocumentStore has an associated sequence number, describing when the change
      * took place.</p>
      *
      * <p>The sequence number is particularly useful to find out the changes
@@ -194,9 +194,9 @@ public interface Database {
     long getLastSequence() throws DocumentStoreException;
 
     /**
-     * <p>Return the number of documents in the datastore</p>
+     * <p>Return the number of documents in the DocumentStore</p>
      *
-     * @return number of non-deleted documents in datastore
+     * @return number of non-deleted documents in DocumentStore
      * @throws DocumentStoreException if there was an error reading from the database.
      */
     int getDocumentCount() throws DocumentStoreException;
@@ -216,7 +216,7 @@ public interface Database {
     Changes changes(long since, int limit) throws DocumentStoreException;
 
     /**
-     * <p>Return {@code @Iterable<String>} over ids to all the Documents with
+     * <p>Return {@code @Iterable<String>} over IDs to all the Documents with
      * conflicted revisions.</p>
      *
      * <p>Document is modeled as a tree. If a document has at least two leaf
@@ -224,7 +224,7 @@ public interface Database {
      * conflicted revisions of the document.
      * </p>
      *
-     * @return Iterable of String over ids of all Documents with
+     * @return Iterable of String over IDs of all Documents with
      *         conflicted revisions
      *
      * @see <a target="_blank" href="http://wiki.apache.org/couchdb/Replication_and_conflicts">Replication and conflicts</a>
@@ -234,8 +234,8 @@ public interface Database {
 
     /**
      * <p>
-     * Resolve conflicts for specified Document using the
-     * given {@code ConflictResolver}
+     * Resolve conflicts for a specified Document using the
+     * given {@code ConflictResolver}.
      * </p>
      *
      * @param docId ID of Document to resolve conflicts
@@ -274,7 +274,7 @@ public interface Database {
             InvalidDocumentException, ConflictException, DocumentStoreException;
 
     /**
-     * <p>Updates a document that exists in the datastore with with body and attachments
+     * <p>Updates a document that exists in the DocumentStore with with body and attachments
      * from <code>rev</code>.
      * </p>
      *
@@ -296,7 +296,7 @@ public interface Database {
             AttachmentException, DocumentStoreException, DocumentNotFoundException;
 
     /**
-     * <p>Deletes a document from the datastore.</p>
+     * <p>Deletes a document from the DocumentStore.</p>
      *
      * <p>This operation leaves a "tombstone" for the deleted document, so that
      * future replication operations can successfully replicate the deletion.
@@ -347,7 +347,7 @@ public interface Database {
     void compact() throws DocumentStoreException;
 
     /**
-     * <p>Returns the EventBus which this Datastore posts
+     * <p>Returns the EventBus which this DocumentStore posts
      * {@link com.cloudant.sync.event.notifications.DocumentModified Document Notification Events} to.</p>
      * @return the EventBus
      *

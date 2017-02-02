@@ -22,7 +22,7 @@ public interface Changes {
      * <p>This number isn't necessarily the same as the sequence number of the
      * last {@code DocumentRevision} in the list of changes.</p>
      *
-     * @return last sequence number of the changes set
+     * @return last sequence number of the changes set.
      */
     long getLastSequence();
 

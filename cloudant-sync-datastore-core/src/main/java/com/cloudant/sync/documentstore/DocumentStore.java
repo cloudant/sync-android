@@ -57,9 +57,10 @@ import java.util.logging.Logger;
  * </p>
  *
  * <p>
- * In most cases, users are advised to open store instances and use them for the entire lifetime of
- * their application. This is more efficient than opening and closing instances for the same
- * underlying file system location multiple times throughout the lifetime of the application.
+ * In most cases, users are advised to obtain a single store instance via
+ * {@link DocumentStore#getInstance} and use it for the entire lifetime of their application.
+ * This is more efficient than opening and closing instances for the same underlying file system
+ * location multiple times throughout the lifetime of the application.
  * Users should call {@link #close()} after using a store to shut down in an orderly manner and free
  * up resources.
  * </p>
@@ -74,7 +75,7 @@ public class DocumentStore {
     private final File location; // needed for close/delete
     private final File extensionsLocation; // for extensions: currently attachments and indexes
 
-    /* This map should only be accessed inside synchronized(openDatastores) blocks */
+    /* This map should only be accessed inside synchronized(documentStores) blocks */
     private static final Map<File, DocumentStore> documentStores = new HashMap<File, DocumentStore>();
 
     private static EventBus eventBus = new EventBus();
@@ -215,6 +216,13 @@ public class DocumentStore {
         return query;
     }
 
+    /**
+     * <p>
+     * Closes the DocumentStore instance.
+     * If multiple references are held to the {@link DocumentStore} instance, then this method
+     * should only be called when all objects are finished using the instance.
+     * </p>
+     */
     @SuppressWarnings("unchecked")
     public void close() {
         synchronized (documentStores) {
@@ -230,22 +238,30 @@ public class DocumentStore {
         eventBus.post(new DocumentStoreClosed(databaseName));
     }
 
+    /**
+     * <p>
+     * Deletes the DocumentStore instance.
+     * </p>
+     *
+     * @throws DocumentStoreNotDeletedException if the DocumentStore doesn't exist on disk or
+     * if there was an error deleting the DocumentStore directory.
+     */
     public void delete() throws DocumentStoreNotDeletedException {
         try {
             this.close();
         } catch (Exception e) {
-            // caught exception could be something benign like datastore already closed, so just log
+            // caught exception could be something benign like DocumentStore already closed, so just log
             logger.log(Level.WARNING, "Caught exception whilst closing DocumentStore in delete()", e);
         }
         if (!location.exists()) {
-            String msg = String.format("Datastore %s doesn't exist on disk", location);
+            String msg = String.format("DocumentStore %s doesn't exist on disk", location);
             logger.warning(msg);
             throw new DocumentStoreNotDeletedException(msg);
         } else {
             try {
                 FileUtils.deleteDirectory(location);
             } catch (IOException ioe) {
-                String msg = String.format("Datastore %s not deleted", location);
+                String msg = String.format("DocumentStore %s not deleted", location);
                 logger.log(Level.WARNING, msg, ioe);
                 throw new DocumentStoreNotDeletedException(msg, ioe);
             }
@@ -254,7 +270,7 @@ public class DocumentStore {
     }
 
     /**
-     * <p>Returns the EventBus which this Datastore posts
+     * <p>Returns the EventBus which this DocumentStore posts
      * {@link DocumentStoreModified Database Notification Events} to.</p>
      * @return the DocumentStore's EventBus
      *

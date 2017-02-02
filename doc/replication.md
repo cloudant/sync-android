@@ -124,7 +124,7 @@ URI uri = new URI("https://username:password@examples.cloudant.com/my_database")
 DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
 
 // Create a replicator that replicates changes from the local
-// datastore to the remote database.
+// DocumentStore to the remote database.
 Replicator replicator = ReplicatorBuilder.push().to(uri).from(ds).build();
 
 // Use a CountDownLatch to provide a lightweight way to wait for completion
@@ -152,7 +152,7 @@ URI uri = new URI("https://username:password@examples.cloudant.com/my_database")
 DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
 
 // Create a replicator that replicates changes from the remote
-// database to the local datastore.
+// database to the local DocumentStore.
 Replicator replicator = ReplicatorBuilder.pull().from(uri).to(ds).build();
 
 // Use a CountDownLatch to provide a lightweight way to wait for completion
@@ -228,7 +228,7 @@ URI uri = new URI("https://username:password@examples.cloudant.com/my_database")
 DocumentStore ds = DocumentStore.getInstance(new File("my_datastore"));
 
 // Create a replicator that replicates changes from the remote
-// database to the local datastore.
+// database to the local DocumentStore.
 Replicator replicator = ReplicatorBuilder.pull().from(uri).to(ds).build();
 
 // Create a sample index on type field

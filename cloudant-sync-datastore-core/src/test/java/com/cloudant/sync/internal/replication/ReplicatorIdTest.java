@@ -52,7 +52,7 @@ public class ReplicatorIdTest {
         when(mockDatabase.getPath()).thenReturn(new File("/abc"));
     }
 
-    // source/target switched, so ids should be different
+    // source/target switched, so IDs should be different
     @Test
     public void pullNotEqualToPush() throws Exception {
         PullStrategy pull = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()

@@ -18,10 +18,10 @@ import java.util.logging.Logger;
 
 /**
  * Given a user-provided {@link KeyProvider}, it provides an in-memory cache for retrieving an
- * {@link EncryptionKey}. This improves performance when multiple encrypted datastores are used.
+ * {@link EncryptionKey}. This improves performance when multiple encrypted DocumentStores are used.
  *
  * This class implements the interface {@link KeyProvider} and it can be used to create an
- * encrypted datastore.
+ * encrypted DocumentStore.
  *
  * @see KeyProvider
  */
@@ -36,7 +36,7 @@ public class CachingKeyProvider implements KeyProvider {
      * Creates a {@link CachingKeyProvider} containing a {@link KeyProvider} whose {@link
      * EncryptionKey} can be cached
      *
-     * @param keyProvider The {@link KeyProvider} to use for encrypting a datastore
+     * @param keyProvider The {@link KeyProvider} to use for encrypting a DocumentStore
      */
     public CachingKeyProvider(KeyProvider keyProvider) {
         if (keyProvider == null) {

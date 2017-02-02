@@ -34,9 +34,9 @@ import java.util.logging.Logger;
 
 /**
  * An attachment which has been been copied to a temporary location and had its sha1 calculated,
- * prior to being added to the datastore.
+ * prior to being added to the DocumentStore.
  *
- * In most cases, this class will only be used by the AttachmentManager and DatastoreImpl classes.
+ * In most cases, this class will only be used by the AttachmentManager and DatabaseImpl classes.
  */
 public class PreparedAttachment {
 

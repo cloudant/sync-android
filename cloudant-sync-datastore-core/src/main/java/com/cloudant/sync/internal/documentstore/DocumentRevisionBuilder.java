@@ -147,8 +147,8 @@ public class DocumentRevisionBuilder {
     }
 
     /**
-     * <p>Sets the datastore for this builder.</p>
-     * @param database the datastore
+     * <p>Sets the DocumentStore for this builder.</p>
+     * @param database the DocumentStore
      * @return the builder object for chained calls
      */
     public DocumentRevisionBuilder setDatabase(Database database) {

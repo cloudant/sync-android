@@ -74,12 +74,12 @@ public class QueryResult implements Iterable<DocumentRevision> {
     }
 
     /**
-     *  Returns a list of the document ids in this query result.
+     *  Returns a list of the document IDs in this query result.
      *
-     *  This method is implemented this way to ensure that the list of document ids is
+     *  This method is implemented this way to ensure that the list of document IDs is
      *  consistent with the iterator results.
      *
-     *  @return list of the document ids
+     *  @return list of the document IDs
      */
     public List<String> documentIds() {
         List<String> documentIds = new ArrayList<String>();

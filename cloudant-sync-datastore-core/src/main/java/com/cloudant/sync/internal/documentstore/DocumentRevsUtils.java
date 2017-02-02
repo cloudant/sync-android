@@ -30,13 +30,13 @@ public class DocumentRevsUtils {
     private static final Logger logger = Logger.getLogger(DocumentRevsUtils.class.getCanonicalName());
 
     /**
-     * Create the list of the revision ids in ascending order.
+     * Create the list of the revision IDs in ascending order.
      *
      * The DocumentRevs is for a single tree. There should be one DocumentRevs for each open revision.
      * @param documentRevs a deserialised JSON document including the _revisions structure. See
      * <a target="_blank" href="http://docs.couchdb.org/en/latest/api/document/common.html#getting-a-list-of-revisions">
      * Getting a List of Revisions</a> for more information.
-     * @return list of revision ids in ascending order
+     * @return list of revision IDs in ascending order
      */
     public static List<String> createRevisionIdHistory(DocumentRevs documentRevs) {
         validateDocumentRevs(documentRevs);

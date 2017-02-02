@@ -18,10 +18,9 @@ import java.util.Arrays;
 
 /**
  * Class to enforce restrictions on encryption keys used
- * with the datastore.
+ * with the DocumentStore.
  *
- * SQLCipher requires a 32-byte/256-bit key. This class
- * enforces that.
+ * Note: SQLCipher requires a 32-byte/256-bit key.
  */
 public class EncryptionKey {
 

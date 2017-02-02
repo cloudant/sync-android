@@ -89,6 +89,13 @@ public abstract class Attachment {
         Gzip
     }
 
+    /**
+     * <p>
+     *   Returns the {@link #encoding} encoding using the string in the attachment's JSON metadata.
+     * </p>
+     * @param encodingString the string containing the attachment's {@link #encoding} encoding.
+     * @return the attachment's {@link #encoding} encoding.
+     */
     public static Encoding getEncodingFromString(String encodingString){
         if(encodingString == null || encodingString.isEmpty() || encodingString.equalsIgnoreCase("Plain")){
             return Encoding.Plain;

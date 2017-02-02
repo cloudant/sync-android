@@ -23,12 +23,12 @@ import java.util.Map;
 
 
 /**
- * <p>A single revision of a document within a datastore.</p>
+ * <p>A single revision of a document within a DocumentStore.</p>
  *
- * <p>Documents within the datastore are in fact trees of document revisions,
+ * <p>Documents within the DocumentStore are in fact trees of document revisions,
  * with one document marked as the current winner at any point. Branches in
  * the tree are caused when a document is edited in more than one place before
- * being replicated between datastores. The consuming application is responsible
+ * being replicated between DocumentStores. The consuming application is responsible
  * for finding active branches (also called conflicts), and marking the leaf
  * nodes of all branches but one deleted (thereby resolving the conflict).</p>
  *
@@ -66,7 +66,7 @@ public class DocumentRevision {
     protected DocumentBody body;
 
     public DocumentRevision() {
-        // BasicDatastore#create will assign an ID
+        // DatabaseImpl#create will assign an ID
         this(null);
     }
 
@@ -155,7 +155,7 @@ public class DocumentRevision {
      * {@link QueryImpl#find(Map, long, long, List, List)} using the
      * {@code fields} option to limit the fields returned, a revision will be missing data so it
      * cannot be regarded as a full revision. If the document is a full revision, this method will
-     * only attempt to load the full revision from the datastore if {@link InternalDocumentRevision#isFullRevision()}
+     * only attempt to load the full revision from the DocumentStore if {@link InternalDocumentRevision#isFullRevision()}
      * returns false.
      *
      * @return A "Full" document revision.

@@ -34,7 +34,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *  Handles updating indexes for a given datastore.
+ *  Handles updating indexes for a given DocumentStore.
  */
 class IndexUpdater {
 
@@ -45,8 +45,9 @@ class IndexUpdater {
     private static final Logger logger = Logger.getLogger(IndexUpdater.class.getName());
 
     /**
-     *  Constructs a new CDTQQueryExecutor using the indexes in 'database' to index documents from
-     *  'datastore'.
+     *  Constructs a new IndexUpdater.
+     *  @param database the {@link Database} containing the documents to query.
+     *  @param queue the {@link SQLDatabaseQueue} queue used for accessing the indexes database.
      */
     public IndexUpdater(Database database, SQLDatabaseQueue queue) {
         this.database = database;
@@ -59,7 +60,7 @@ class IndexUpdater {
      *  These indexes are assumed to already exist.
      *
      *  @param indexes Map of indexes and their definitions.
-     *  @param database The local datastore
+     *  @param database The local {@link Database}
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */
@@ -78,7 +79,7 @@ class IndexUpdater {
      *
      *  @param indexName Name of index to update
      *  @param fieldNames List of field names in the sort format
-     *  @param database The local datastore
+     *  @param database The local {@link Database}
      *  @param queue The executor service queue
      *  @return index update success status (true/false)
      */

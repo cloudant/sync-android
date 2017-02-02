@@ -64,10 +64,10 @@ public class CrudSamples {
         // Create
 
         // Documents are represented as a set of revisions. To create a document, you
-        // set up the initial revision of the document and save that to the datastore.
+        // set up the initial revision of the document and save that to the DocumentStore.
 
         // Create a document revision object, set its body, ID and attachments
-        // and then call create(DocumentRevision) to add it to the datastore:
+        // and then call create(DocumentRevision) to add it to the DocumentStore:
 
         // Create a document with a document id as the constructor argument
         DocumentRevision rev = new DocumentRevision("doc1");
@@ -150,7 +150,7 @@ public class CrudSamples {
 
         // Using attachments
 
-        // You can associate attachments with the JSON documents in your datastores.
+        // You can associate attachments with the JSON documents in your DocumentStores.
         // Attachments are blobs of binary data, such as photos or short sound snippets.
         // They should be of small length -- maximum a few MB -- because they are
         // replicated to and from the server in a way which doesn't allow for resuming

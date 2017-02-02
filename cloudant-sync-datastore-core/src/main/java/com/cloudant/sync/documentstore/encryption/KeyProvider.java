@@ -13,17 +13,14 @@
  */
 
 package com.cloudant.sync.documentstore.encryption;
-
 /**
  * Classes implementing this interface provide encryption
- * keys used by the datastore when encryption is enabled.
- *
- * Created by Mike Rhodes on 11/05/15.
+ * keys used by the DocumentStore when encryption is enabled.
  */
 public interface KeyProvider {
 
     /**
-     * @return the encryption key used to encrypt datastore data
+     * @return the encryption key used to encrypt DocumentStore data
      */
     EncryptionKey getEncryptionKey();
 }

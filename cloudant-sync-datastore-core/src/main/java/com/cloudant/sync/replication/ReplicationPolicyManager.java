@@ -20,16 +20,33 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Manages the coordination of starting/stopping all replicators used in a replication policy, and
+ * provides monitoring of when replications have completed.
+ */
 public class ReplicationPolicyManager {
 
     private final List<Replicator> replicators = new ArrayList<Replicator>();
     private final ReplicationListener replicationListener = new ReplicationListener();
 
+    /**
+     * Interface with methods to receive callbacks for different termination states
+     * of the replications configured by a replication policy.
+     */
     public interface ReplicationsCompletedListener {
+        /**
+         * Gets called back when all replicators completed.
+         */
         void allReplicationsCompleted();
-
+        /**
+         * Gets called back when a replication completed.
+         * @param id the replication ID
+         */
         void replicationCompleted(int id);
-
+        /**
+         * Gets called back when a replication has an error.
+         * @param id the replication ID
+         */
         void replicationErrored(int id);
     }
 

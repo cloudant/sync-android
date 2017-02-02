@@ -22,7 +22,7 @@ import com.cloudant.sync.internal.util.DatabaseUtils;
 import org.apache.commons.codec.binary.Hex;
 
 /**
- * Migration from datastore JSON database version 6 to 100, which requires migration of data
+ * Migration from DocumentStore JSON database version 6 to 100, which requires migration of data
  * between tables with a transform in Java code along the way.
  *
  * This change is a breaking change because after the migration, older versions of the code
