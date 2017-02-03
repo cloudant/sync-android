@@ -6,8 +6,8 @@
 [latest]: https://github.com/cloudant/sync-android/releases/latest
 
 The _todo-sync_ Android application shows how to do basic CRUD
-(create, read, update, delete) with the local Datastore and how to
-replicate between a remote Cloudant database and a local Datastore.
+(create, read, update, delete) with the local DocumentStore and how to
+replicate between a remote Cloudant database and a local DocumentStore.
 
 The application is a simple example of a "to-do" list with items which
 can be created, marked "done", and deleted.

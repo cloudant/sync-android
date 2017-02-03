@@ -58,7 +58,7 @@ public class MigrateDatabase100To200 implements Migration {
     public void runMigration(SQLDatabase db) throws Exception {
         Cursor c = null;
         try {
-            // Find docs with duplicate revision ids and get the lowest sequence for that revision
+            // Find docs with duplicate revision IDs and get the lowest sequence for that revision
             List<DocRevSequence> lowestDuplicateRevs = new ArrayList<DocRevSequence>();
             c = db.rawQuery("SELECT doc_id, revid, min(sequence) FROM revs GROUP BY doc_id, revid" +
                     " HAVING COUNT(*) > 1;", null);

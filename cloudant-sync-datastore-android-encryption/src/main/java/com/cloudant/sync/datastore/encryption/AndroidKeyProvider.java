@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 
 /**
  * This class implements the interface {@link KeyProvider} and it can be used to create an
- * encrypted datastore.
+ * encrypted DocumentStore.
  *
  * Given an user-provided password and an identifier, it generates a strong key and store it safely
  * in the application's {@link android.content.SharedPreferences}, so the same key can be retrieved
@@ -32,7 +32,7 @@ import java.util.logging.Logger;
  * The password is used to protect the key before saving it to the {@link android.content
  * .SharedPreferences}. The identifier is an
  * easy way to have more than one encryption key in the same app, the only condition is to provide
- * different ids for each of them.
+ * different IDs for each of them.
  *
  * @see KeyProvider
  * @see KeyManager

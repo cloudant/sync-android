@@ -47,7 +47,7 @@ import java.util.List;
  *
  * <p>
  * The list can be iterated in the order of minimum generation ID (min-generation). Each
- * <code>DocumentRevs</code> has a list of revisions ids (aka revision history), and "start".
+ * <code>DocumentRevs</code> has a list of revisions IDs (aka revision history), and "start".
  * The "start" number is largest generation. So the min-generation is:
  * </p>
  * <pre>

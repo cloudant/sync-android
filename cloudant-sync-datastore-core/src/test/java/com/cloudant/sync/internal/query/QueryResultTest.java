@@ -66,7 +66,7 @@ public class QueryResultTest extends AbstractQueryTestBase {
 
     /*
      * Perform a simple query then drop the revs table from the database before attempting
-     * to get the document ids from the QueryResult.
+     * to get the document IDs from the QueryResult.
      */
     @Test(expected = NoSuchElementException.class)
     public void testQueryGetDocumentsWithIdsFails() throws InterruptedException,
@@ -89,7 +89,7 @@ public class QueryResultTest extends AbstractQueryTestBase {
             }
         }).get();
 
-        // Attempt to retrieve the document ids. This should fail with an
+        // Attempt to retrieve the document IDs. This should fail with an
         // NoSuchElementException because the revs table has been dropped.
         queryResult.documentIds();
     }

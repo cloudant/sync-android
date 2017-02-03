@@ -72,7 +72,7 @@ public class InternalDocumentRevision extends DocumentRevision implements
      * <p>Returns the sequence number of this revision.</p>
      *
      * <p>The sequence number is unique across the database, it is updated
-     * for every modification to the datastore.</p>
+     * for every modification to the DocumentStore.</p>
      *
      * @return the sequence number of this revision.
      */
@@ -90,7 +90,7 @@ public class InternalDocumentRevision extends DocumentRevision implements
      * <p>Returns the internal numeric ID of this document revision.</p>
      *
      * <p>This can be useful for efficient storage by plugins extending the
-     * datastore.</p>
+     * DocumentStore.</p>
      *
      * @return the internal numeric ID of this document revision.
      */
@@ -104,7 +104,7 @@ public class InternalDocumentRevision extends DocumentRevision implements
      * <p>If this number is less than or equal to zero, it means this
      * revision is the root of a document tree. A document may have more than
      * one tree, under certain circumstances, such as two documents with the
-     * same ID being created in different datastores that are later replicated
+     * same ID being created in different DocumentStores that are later replicated
      * across.</p>
      *
      * @return the sequence number of this revision's parent revision.
@@ -199,7 +199,7 @@ public class InternalDocumentRevision extends DocumentRevision implements
 
     /**
      * @return Whether the body has been modified since this DocumentRevision was constructed or
-     * retrieved from the Datastore.
+     * retrieved from the DocumentStore.
      */
     public boolean isBodyModified() {
         return bodyModified;

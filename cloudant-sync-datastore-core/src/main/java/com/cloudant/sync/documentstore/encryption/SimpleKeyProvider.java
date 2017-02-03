@@ -18,7 +18,7 @@ package com.cloudant.sync.documentstore.encryption;
 /**
  * SimpleKeyProvider simply takes raw key bytes in its
  * constructor and uses these to provide that key to
- * datastore methods.
+ * DocumentStore methods.
  */
 public class SimpleKeyProvider implements KeyProvider {
 

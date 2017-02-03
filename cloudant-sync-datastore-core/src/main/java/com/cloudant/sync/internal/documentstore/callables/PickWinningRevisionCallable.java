@@ -35,13 +35,13 @@ import java.util.TreeMap;
  */
 public class PickWinningRevisionCallable implements SQLCallable<Void> {
 
-    // get all non-deleted leaf rev ids for a given doc ID
+    // get all non-deleted leaf rev IDs for a given doc ID
     // gets all revs whose sequence is not a parent of another rev and the rev isn't deleted
     public static final String GET_NON_DELETED_LEAFS = "SELECT revs.revid, revs.sequence FROM " +
             "revs WHERE revs.doc_id = ? AND revs.deleted = 0 AND revs.sequence NOT IN " +
             "(SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
 
-    // get all leaf rev ids for a given doc ID
+    // get all leaf rev IDs for a given doc ID
     // gets all revs whose sequence is not a parent of another rev
     public static final String GET_ALL_LEAFS = "SELECT revs.revid, revs.sequence FROM revs " +
             "WHERE revs.doc_id = ? AND revs.sequence NOT IN " +

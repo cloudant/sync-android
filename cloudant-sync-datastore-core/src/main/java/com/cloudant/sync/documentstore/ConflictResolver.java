@@ -45,7 +45,7 @@ public interface ConflictResolver {
      * @param docId ID of the {@link DocumentRevision} with conflicts
      * @param conflicts list of conflicted {@link DocumentRevision}s, including
      *                  current winner
-     * @return resolved {@link DocumentRevision}
+     * @return the resolved {@link DocumentRevision}.
      *
      * @see Database#resolveConflicts(String, ConflictResolver)
      */

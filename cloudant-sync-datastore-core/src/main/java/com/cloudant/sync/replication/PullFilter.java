@@ -101,10 +101,18 @@ public class PullFilter {
         this.parameters = Collections.unmodifiableMap(internalParams);
     }
 
+    /**
+     * Returns the filter function name.  For example, {@code filterDoc/filterFunctionName}.
+     * @return filter function name
+     */
      public String getName() {
         return this.name;
     }
 
+    /**
+     * Returns the filter function's parameters.
+     * @return parameters for the function
+     */
      public Map<String, String> getParameters() {
         return this.parameters;
     }

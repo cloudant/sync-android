@@ -25,7 +25,7 @@ import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
  * Interface for filtering documents during a push replication.
  * </P>
  * <P>
- * Example usage - a filter for replicating only documents with an ID beginning with the letter a:
+ * Example usage: a filter for replicating only documents with an ID beginning with the letter a:
  * </P>
  * <pre>
  * <code>

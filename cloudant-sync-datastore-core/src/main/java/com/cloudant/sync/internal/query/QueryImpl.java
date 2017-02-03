@@ -64,7 +64,7 @@ import java.util.regex.Pattern;
 // There is a single SQLite index created on all columns of this table.
 //
 // N.b.: _id and _rev are automatically added to all indexes to allow them to be used to
-// project DocumentRevisions without the need to load a document from the datastore.
+// project DocumentRevisions without the need to load a document from the DocumentStores.
 
 /**
  *  Main interface to Cloudant query.
@@ -94,7 +94,7 @@ public class QueryImpl implements Query {
     private final SQLDatabaseQueue dbQueue;
 
     /**
-     *  Constructs a new {@link Query} which indexes documents in 'datastore'
+     *  Constructs a new IndexManager which indexes documents in the DocumentStore.
      *  @param database The {@link Database} to index
      */
     public QueryImpl(Database database, File extensionsLocation, KeyProvider keyProvider) throws IOException, SQLException {

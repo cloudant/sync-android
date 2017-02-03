@@ -46,7 +46,7 @@ import java.util.logging.Logger;
 /**
  * An AttachmentManager handles attachment related tasks: adding, removing and retrieving
  * attachments for documents from disk. It handles both disk read/write and managing the
- * attachment related tables in the datastore's database.
+ * attachment related tables in the DocumentStore's database.
  *
  * Attachments are stored on disk, in the folder specified by the {@code attachmentsDir}
  * parameter to each method. AttachmentManager assumes it has sole control of this directory.
@@ -168,8 +168,8 @@ public class AttachmentManager {
             a.tempFile.delete();
         } catch (FileNotFoundException e) {
             //If we had an error moving the file, but we already have a copy of the attachment in
-            // the datastore, we can ignore the problem as a copy of the data is already in the
-            // datastore. Otherwise, we must throw an exception.
+            // the DocumentStore, we can ignore the problem as a copy of the data is already in the
+            // DocumentStore. Otherwise, we must throw an exception.
             if(!newFile.exists()){
                 throw new AttachmentNotSavedException(e);
             }
@@ -189,11 +189,11 @@ public class AttachmentManager {
 
     /**
      * Creates a PreparedAttachment from {@code attachment}, preparing it for insertion into
-     * the datastore.
+     * the DocumentStore.
      *
      *
      * @param attachmentStreamFactory
-     * @param attachment Attachment to prepare for insertion into datastore
+     * @param attachment Attachment to prepare for insertion into DocumentStore
      * @return PreparedAttachment, which can be used in addAttachment methods
      * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
      *                  attachment data.
@@ -408,7 +408,7 @@ public class AttachmentManager {
     }
 
     /**
-     * Called by BasicDatastore on the execution queue, this needs have the db passed ot it
+     * Called by DatabaseImpl on the execution queue, this needs to have the db passed to it.
      * @param db database to purge attachments from
      */
     public static void purgeAttachments(SQLDatabase db, String attachmentsDir) {

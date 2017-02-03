@@ -35,7 +35,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *  Handles creating indexes for a given datastore.
+ *  Handles creating indexes for a given DocumentStore.
  */
 class IndexCreator {
 

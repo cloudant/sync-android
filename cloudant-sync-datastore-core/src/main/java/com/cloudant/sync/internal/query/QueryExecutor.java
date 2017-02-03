@@ -42,7 +42,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *  Handles querying indexes for a given datastore.
+ *  Handles querying indexes for a given DocumentStore.
  */
 class QueryExecutor {
 
@@ -54,8 +54,9 @@ class QueryExecutor {
     private static final int SMALL_RESULT_SET_SIZE_THRESHOLD = 500;
 
     /**
-     *  Constructs a new QueryExecutor using the indexes in 'database' to find documents from
-     *  'datastore'.
+     *  Constructs a new QueryExecutor.
+     *  @param database the {@link Database} containing the documents to query.
+     *  @param queue the {@link SQLDatabaseQueue} queue used for accessing the indexes database.
      */
     QueryExecutor(Database database, SQLDatabaseQueue queue) {
         this.database = database;
@@ -66,7 +67,7 @@ class QueryExecutor {
      *  Execute the query passed using the selection of index definition provided.
      *
      *  The index definitions are presumed to already exist and be up to date for the
-     *  datastore and database passed to the constructor.
+     *  {@link Database} and its underlying {@link SQLDatabaseQueue} passed to the constructor.
      *
      *  @param query query to execute.
      *  @param indexes indexes to use (this method will select the most appropriate).
@@ -257,7 +258,7 @@ class QueryExecutor {
                     }
                 } else {
                     // No SQL exists so we are now forced to go directly to the
-                    // document datastore to retrieve the list of document ids.
+                    // document DocumentStore to retrieve the list of document IDs.
                     docIds = database.getIds();
                 }
 
@@ -330,7 +331,7 @@ class QueryExecutor {
      *
      *  Method assumes `sortDocument` is valid.
      *
-     *  @param docIdSet The original set of document ids
+     *  @param docIdSet The original set of document IDs
      *  @param sortDocument Array of ordering definitions
      *                      [ { "fieldName" : "asc" }, { "fieldName2", "desc" } ]
      *  @param indexes dictionary of indexes

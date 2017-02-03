@@ -16,7 +16,6 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.event.EventBus;
 
 /**
@@ -67,7 +66,7 @@ public interface Replicator {
      * <p>Stops an in-progress replication.</p>
      *
      * <p>Already replicated changes will remain
-     * in the datastore database.</p>
+     * in the DocumentStore database.</p>
      *
      * <p>{@code stop} can be called from any thread. It will initiate a
      * shutdown process and return immediately.</p>
@@ -158,6 +157,11 @@ public interface Replicator {
      */
     EventBus getEventBus();
 
+    /**
+     * <p>Returns the replicator ID.</p>
+     *
+     * @return the replicator ID
+     */
     int getId();
 }
 

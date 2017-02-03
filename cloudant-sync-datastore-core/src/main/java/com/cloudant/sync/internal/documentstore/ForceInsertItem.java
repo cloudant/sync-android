@@ -30,7 +30,7 @@ public class ForceInsertItem {
 
     /**
      * @param rev                   A {@code DocumentRevision} containing the information for a
-     *                              revision from a remote datastore.
+     *                              revision from a remote server.
      * @param revisionHistory       The history of the revision being inserted, including the rev
      *                              ID of {@code rev}. This list needs to be sorted in ascending
      *                              order.

@@ -55,7 +55,7 @@ public class AttachmentStreamFactory {
     /**
      * Creates a factory Attachment objects can use to read/write attachments.
      *
-     * @param keyProvider Datastore's key provider object. This object can cope with key providers
+     * @param keyProvider DocumentStore's key provider object. This object can cope with key providers
      *                    that return null keys.
      */
     public AttachmentStreamFactory(KeyProvider keyProvider) {

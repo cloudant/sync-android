@@ -34,12 +34,12 @@ import java.util.TreeMap;
 
 /**
  * <p>Describes the document tree for a single
- * document within the datastore.</p>
+ * document within the DocumentStore.</p>
  *
  * <p>A document within a {@link Database} is actually a collection of trees
  * of revisions. These trees describe the history of the document, and are the
  * core of the MVCC data model which allows data to be safely replicated
- * between datastores. Replication consists of copying parts of the tree
+ * between DocumentStores. Replication consists of copying parts of the tree
  * in the source database that are not present in the target database to the
  * target database.</p>
  *
@@ -60,15 +60,15 @@ import java.util.TreeMap;
  * of events:</p>
  *
  * <ol>
- *     <li>A document is created in datastore A and replicated to datastore
+ *     <li>A document is created in DocumentStore A and replicated to DocumentStore
  *     B.</li>
  *     <li>The document is edited in both A and B.</li>
- *     <li>Datastore B is then replicated back to A, bringing with it the
+ *     <li>DocumentStore B is then replicated back to A, bringing with it the
  *     changes in the document.</li>
  * </ol>
  *
  * <p>As described above, replication merges the parts of a document tree not
- * in the target datastore into the target datastore. This means we now have
+ * in the target DocumentStore into the target DocumentStore. This means we now have
  * a branched tree containing the edits from both A and B:</p>
  *
  * <pre>
@@ -101,8 +101,8 @@ import java.util.TreeMap;
  * </pre>
  *
  * <p>Finally, a document may have multiple document trees. This can happen if
- * a document with the same ID is created in two datastores, and subsequently
- * these two datastores are replicated:</p>
+ * a document with the same ID is created in two DocumentStores, and subsequently
+ * these two DocumentStores are replicated:</p>
  *
  * <pre>
  *     1  → 2  → 3
@@ -113,7 +113,7 @@ import java.util.TreeMap;
  * <p>As an aside, this document has three conflicting revisions, which should
  * be resolved as described above.</p>
  *
- * <p>There can obviously be more than two roots, as a many datastores can
+ * <p>There can obviously be more than two roots, as a many DocumentStores can
  * replicate together.</p>
  *
  * <p>At this point, it's possible to note that

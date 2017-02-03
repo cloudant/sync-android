@@ -23,7 +23,7 @@ import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import java.util.logging.Logger;
 
 /**
- * Compact datastore by deleting JSON and attachments of non-leaf revisions
+ * Compact DocumentStore by deleting JSON and attachments of non-leaf revisions
  *
  */
 public class CompactCallable implements SQLCallable<Void> {

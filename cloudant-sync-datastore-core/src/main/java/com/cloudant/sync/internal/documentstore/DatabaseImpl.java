@@ -121,7 +121,7 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
     /** Name used to get storage folder for attachments */
     private static final String ATTACHMENTS_EXTENSION_NAME = "com.cloudant.attachments";
 
-    /** Directory where attachments are stored for this datastore */
+    /** Directory where attachments are stored for this DocumentStore */
     private final String attachmentsDir;
 
     /**
@@ -131,9 +131,9 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
     private final AttachmentStreamFactory attachmentStreamFactory;
 
     /**
-     * Constructor for single thread SQLCipher-based datastore.
-     * @param location The location where the datastore will be opened/created
-     * @param extensionsLocation The location where the datastore's extensions are stored
+     * Constructor for single thread SQLCipher-based DocumentStore.
+     * @param location The location where the DocumentStore will be opened/created
+     * @param extensionsLocation The location where the DocumentStore's extensions are stored
      * @param provider The key provider object that contains the user-defined SQLCipher key
      * @throws SQLException
      * @throws IOException
@@ -460,7 +460,7 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
      * <p>Inserts a local document with an ID and body. Replacing the current local document of the
      * same ID if one is present. </p>
      *
-     * <p>Local documents are not replicated between datastores.</p>
+     * <p>Local documents are not replicated between DocumentStores.</p>
      *
      * @param docId      The document ID for the document
      * @param body       JSON body for the document
@@ -537,12 +537,12 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
     }
 
     /**
-     * <p>Returns the datastore's unique identifier.</p>
+     * <p>Returns the DocumentStore's unique identifier.</p>
      *
-     * <p>This is used for the checkpoint document in a remote datastore
+     * <p>This is used for the checkpoint document in a remote DocumentStore
      * during replication.</p>
      *
-     * @return a unique identifier for the datastore.
+     * @return a unique identifier for the DocumentStore.
      * @throws DocumentStoreException if there was an error retrieving the unique identifier from the
      * database
      */
@@ -637,7 +637,7 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
      * </code>
      *
      * @param rev             A {@code DocumentRevision} containing the information for a revision
-     *                        from a remote datastore.
+     *                        from a remote DocumentStore.
      * @param revisionHistory The history of the revision being inserted,
      *                        including the rev ID of {@code rev}. This list
      *                        needs to be sorted in ascending order
@@ -897,7 +897,7 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
     /**
      * <p>
      * Read attachment stream to a temporary location and calculate sha1,
-     * prior to being added to the datastore.
+     * prior to being added to the DocumentStore.
      * </p>
      * <p>
      * Used by replicator when receiving new/updated attachments
@@ -907,7 +907,7 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
      * @param length        Size in bytes of attachment as signalled by "length" metadata property
      * @param encodedLength Size in bytes of attachment, after encoding, as signalled by
      *                      "encoded_length" metadata property
-     * @return A prepared attachment, ready to be added to the datastore
+     * @return A prepared attachment, ready to be added to the DocumentStore
      * @throws AttachmentException if there was an error preparing the attachment, e.g., reading
      *                             attachment data.
      */
