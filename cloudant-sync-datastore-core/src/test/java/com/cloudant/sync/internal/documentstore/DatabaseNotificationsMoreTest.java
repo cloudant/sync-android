@@ -117,8 +117,8 @@ public class DatabaseNotificationsMoreTest {
         Assert.assertThat(documentStoreClosed.get(0).dbName, endsWith("test123"));
 
         // After database is closed, when it is opened, the
-        // DatabaseOpened event should be fired, but the
-        // DatabaseCreated event should NOT be fired.
+        // DocumentStoreOpened event should be fired, but the
+        // DocumentStoreCreated event should NOT be fired.
         this.clearAllEventList();
         DocumentStore ds1 = DocumentStore.getInstance(new File(datastoreManagerDir, "test123"));
         try {

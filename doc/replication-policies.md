@@ -330,7 +330,7 @@ private boolean mIsBound;
 
 Now we add a [`ServiceConnection`](http://developer.android.com/reference/android/content/ServiceConnection.html)
 to our [`Activity`](http://developer.android.com/reference/android/app/Activity.html)
-to allow us to handle binding and unbinding from our `MyReplicationService`. This enables us to get a reference to the service when we bind to it and add a listener for `replicationComplete` to the [`Service`](http://developer.android.com/reference/android/app/Service.html):
+to allow us to handle binding and unbinding from our `MyReplicationService`. This enables us to get a reference to the service when we bind to it and add a listener for `replicationCompleted` to the [`Service`](http://developer.android.com/reference/android/app/Service.html):
 
 ```java
 private ServiceConnection mConnection = new ServiceConnection() {
@@ -339,7 +339,7 @@ private ServiceConnection mConnection = new ServiceConnection() {
         mReplicationService = ((ReplicationService.LocalBinder) service).getService();
         mReplicationService.addListener(new ReplicationPolicyManager.SimpleReplicationsCompletedListener() {
             @Override
-            public void replicationComplete(int id) {
+            public void replicationCompleted(int id) {
                 // Check if this is the pull replication
                 if (id == MyReplicationService.PULL_REPLICATION_ID) {
                     mHandler.post(new Runnable() {

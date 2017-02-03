@@ -94,7 +94,7 @@ public class QueryImpl implements Query {
     private final SQLDatabaseQueue dbQueue;
 
     /**
-     *  Constructs a new IndexManager which indexes documents in 'datastore'
+     *  Constructs a new {@link Query} which indexes documents in 'datastore'
      *  @param database The {@link Database} to index
      */
     public QueryImpl(Database database, File extensionsLocation, KeyProvider keyProvider) throws IOException, SQLException {

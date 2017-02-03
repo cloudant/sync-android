@@ -32,7 +32,7 @@
   `doc/crud.md`) has been migrated to a
   [java source file](https://github.com/cloudant/sync-android/blob/2.0.0/doc/CrudSamples.java).
 
-- [NEW] `databaseWithAdvancedAPIs()` getter on `DocumentStore` for specialist advanced use cases.
+- [NEW] `advanced()` getter on `DocumentStore` for specialist advanced use cases.
   Adds support for creating specific document revisions with history.
 
 - [FIXED] Issue with double encoding of restricted URL characters in credentials when using

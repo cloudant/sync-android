@@ -345,7 +345,7 @@ query.put("$or", Arrays.<Object>asList(petClause, andClause));
 
 ### Executing queries
 
-To find documents matching a query, use the `IndexManager` object's `find(Map<String, Object> query)` method. This returns an object that can be used in `for ( : )` loops to enumerate over the results.
+To find documents matching a query, use the `Query` object's `find(Map<String, Object> query)` method. This returns an object that can be used in `for ( : )` loops to enumerate over the results.
 
 ```java
 QueryResult result = q.find(query);
