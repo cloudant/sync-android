@@ -104,10 +104,25 @@ public class CouchClientWrapper implements CouchDB {
         Misc.checkNotNullOrEmpty(checkpointId, "Checkpoint id");
         Misc.checkNotNullOrEmpty(sequence, "Sequence");
         String replicatorLocalDocId = getCheckpointLocalDocId(checkpointId);
-        if (couchClient.contains(replicatorLocalDocId)) {
-            updateCheckpoint(replicatorLocalDocId, sequence);
-        } else {
-            createCheckpoint(replicatorLocalDocId, sequence);
+
+        RemoteCheckpointDoc checkpointDoc;
+        try {
+            checkpointDoc = couchClient.getDocument(replicatorLocalDocId, RemoteCheckpointDoc
+                    .class);
+            // If it existed, update the sequence
+            checkpointDoc.setLastSequence(sequence);
+        } catch (NoResourceException e) {
+            // Didn't exist yet, but we'll create it now so don't worry
+            checkpointDoc = new RemoteCheckpointDoc(sequence);
+        }
+
+        // Write the new or updated doc
+        try {
+            Response response = couchClient.putUpdate(replicatorLocalDocId, checkpointDoc);
+            logger.fine(String.format("Response: %s", response));
+        } catch (DocumentConflictException e) {
+            // Could happen if we retried, but had already succeeded, so suppress.
+            // Worst case the checkpoint isn't written and we replicate a little extra next time.
         }
     }
 
@@ -190,22 +205,6 @@ public class CouchClientWrapper implements CouchDB {
     @Override
     public Response delete(String id, String rev) {
         return couchClient.delete(id, rev);
-    }
-
-
-    private void createCheckpoint(String checkpointDocId, String sequence) {
-        RemoteCheckpointDoc checkpointDoc = new RemoteCheckpointDoc(sequence);
-        checkpointDoc.setId(checkpointDocId);
-        Response response = couchClient.create(checkpointDoc);
-        logger.fine(String.format("Response: %s",response));
-    }
-
-    private void updateCheckpoint(String checkpointDocId, String sequence) {
-        RemoteCheckpointDoc checkpointDoc = couchClient.getDocument(
-                checkpointDocId, RemoteCheckpointDoc.class);
-        checkpointDoc.setLastSequence(sequence);
-        Response response = couchClient.update(checkpointDocId, checkpointDoc);
-        logger.fine(String.format("Response: %s",response));
     }
 
     public void createDatabase() {
