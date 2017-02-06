@@ -54,6 +54,8 @@ stage('QA') {
         Android:
         {
             node('android') {
+                // Clean the directory before un-stashing
+                deleteDir()
                 unstash name: 'built'
                 try {
                     sh './gradlew -Dtest.with.specified.couch=true  -Dtest.couch.host=cloudantsync002.bristol.uk.ibm.com -Dtest.couch.port=5984 -Dtest.couch.ignore.compaction=true -Dtest.couch.ignore.auth.headers=true -b AndroidTest/build.gradle uploadFixtures connectedCheck'
