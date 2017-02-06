@@ -253,14 +253,17 @@ winning revision.
 * The `IntervalTimerReplicationPolicyManager` was moved into the `cloudant-sync-datastore-javase`
 module since it was not suitable for running on Android anyway.
 
-* The Android `ReplicationService` now uses the same `ReplicationsCompletedListener` interface as
-the `ReplicationPolicyManager`. The `ReplicationService.ReplicationCompleteListener` has been
-removed and implementers should implement `ReplicationPolicyManager.ReplicationsCompletedListener`
+* The `ReplicationPolicyManager.ReplicationsCompletedListener` interface has been moved to
+ `com.cloudant.sync.replication.PolicyReplicationsCompletedListener`.
+
+* The Android `ReplicationService` now uses the same `PolicyReplicationsCompletedListener` interface
+ as the `ReplicationPolicyManager`. The `ReplicationService.ReplicationCompleteListener` has been
+removed and implementers should implement `PolicyReplicationsCompletedListener`
 instead. Migration also requires some minor method renames.
 
 * The `ReplicationService.SimpleReplicationCompleteListener` has been moved to
-`ReplicationPolicyManager.SimpleReplicationsCompletedListener` and now implements
-`ReplicationPolicyManager.ReplicationsCompletedListener`.
+`PolicyReplicationsCompletedListener.SimpleListener` and now implements the
+`PolicyReplicationsCompletedListener` interface.
 
 * It is now possible to have multiple subclasses of `PeriodicReplicationService` in the same Android app without
 them interfering with each other. If you have not used replication policies involving a `PeriodicReplicationService`

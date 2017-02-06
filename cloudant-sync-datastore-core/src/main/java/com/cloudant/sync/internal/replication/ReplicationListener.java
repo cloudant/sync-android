@@ -3,7 +3,7 @@ package com.cloudant.sync.internal.replication;
 import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.event.notifications.ReplicationCompleted;
 import com.cloudant.sync.event.notifications.ReplicationErrored;
-import com.cloudant.sync.replication.ReplicationPolicyManager;
+import com.cloudant.sync.replication.PolicyReplicationsCompletedListener;
 import com.cloudant.sync.replication.Replicator;
 
 import java.util.HashSet;
@@ -12,16 +12,15 @@ import java.util.Set;
 /**
  * This class is not intended as API, it is public for EventBus access only.
  * API consumers should not call these methods. Forwards events from the EventBus to a
- * {@link com.cloudant.sync.replication.ReplicationPolicyManager.ReplicationsCompletedListener}.
+ * {@link PolicyReplicationsCompletedListener}.
  */
 public class ReplicationListener {
 
     private final Set<Replicator> replicatorsInProgress = new HashSet<Replicator>();
-    private ReplicationPolicyManager.ReplicationsCompletedListener replicationsCompletedListener
+    private PolicyReplicationsCompletedListener replicationsCompletedListener
             = null;
 
-    public void setReplicationsCompletedListener(ReplicationPolicyManager
-                                                         .ReplicationsCompletedListener
+    public void setReplicationsCompletedListener(PolicyReplicationsCompletedListener
                                                          replicationsCompletedListener) {
         this.replicationsCompletedListener = replicationsCompletedListener;
     }

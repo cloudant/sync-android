@@ -38,7 +38,7 @@ import java.util.Set;
  * lifecycle and handle being killed or restarted by the operating system
  */
 public abstract class ReplicationService extends Service
-        implements ReplicationPolicyManager.ReplicationsCompletedListener {
+        implements PolicyReplicationsCompletedListener {
 
     public static final String EXTRA_INTENT = "intent";
 
@@ -78,13 +78,13 @@ public abstract class ReplicationService extends Service
     private List<Message> mCommandQueue = new ArrayList<Message>();
 
     /**
-     * Stores the set of {@link ReplicationPolicyManager.ReplicationsCompletedListener}s
+     * Stores the set of {@link PolicyReplicationsCompletedListener}s
      * listening for replication complete
      * events. Note that all modifications or iterations over mListeners should be protected by
      * synchronization on the mListeners object.
      */
-    private final Set<ReplicationPolicyManager.ReplicationsCompletedListener> mListeners = new
-            HashSet<ReplicationPolicyManager.ReplicationsCompletedListener>();
+    private final Set<PolicyReplicationsCompletedListener> mListeners = new
+            HashSet<PolicyReplicationsCompletedListener>();
 
     // It's safest to assume we could be transferring a large amount of data in a
     // replication, so we want a high performance WiFi connection even though it
@@ -303,7 +303,7 @@ public abstract class ReplicationService extends Service
     @Override
     public void allReplicationsCompleted() {
         synchronized (mListeners) {
-            for (ReplicationPolicyManager.ReplicationsCompletedListener listener : mListeners) {
+            for (PolicyReplicationsCompletedListener listener : mListeners) {
                 listener.allReplicationsCompleted();
             }
         }
@@ -314,7 +314,7 @@ public abstract class ReplicationService extends Service
     @Override
     public void replicationCompleted(int id) {
         synchronized (mListeners) {
-            for (ReplicationPolicyManager.ReplicationsCompletedListener listener : mListeners) {
+            for (PolicyReplicationsCompletedListener listener : mListeners) {
                 listener.replicationCompleted(id);
             }
         }
@@ -323,7 +323,7 @@ public abstract class ReplicationService extends Service
     @Override
     public void replicationErrored(int id) {
         synchronized (mListeners) {
-            for (ReplicationPolicyManager.ReplicationsCompletedListener listener : mListeners) {
+            for (PolicyReplicationsCompletedListener listener : mListeners) {
                 listener.replicationErrored(id);
             }
         }
@@ -331,12 +331,12 @@ public abstract class ReplicationService extends Service
 
     /**
      * Add a listener to the set of
-     * {@link com.cloudant.sync.replication.ReplicationPolicyManager.ReplicationsCompletedListener}s that are notified when
+     * {@link PolicyReplicationsCompletedListener}s that are notified when
      * replications complete.
      *
      * @param listener The listener to add.
      */
-    public void addListener(ReplicationPolicyManager.ReplicationsCompletedListener listener) {
+    public void addListener(PolicyReplicationsCompletedListener listener) {
         synchronized (mListeners) {
             mListeners.add(listener);
         }
@@ -344,12 +344,12 @@ public abstract class ReplicationService extends Service
 
     /**
      * Remove a listener from the set of
-     * {@link com.cloudant.sync.replication.ReplicationPolicyManager.ReplicationsCompletedListener}s that are notified when
+     * {@link PolicyReplicationsCompletedListener}s that are notified when
      * replications complete.
      *
      * @param listener The listener to remove.
      */
-    public void removeListener(ReplicationPolicyManager.ReplicationsCompletedListener listener) {
+    public void removeListener(PolicyReplicationsCompletedListener listener) {
         synchronized (mListeners) {
             mListeners.remove(listener);
         }
