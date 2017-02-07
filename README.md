@@ -203,7 +203,7 @@ try {
     // Add an attachment -- binary data like a JPEG
     UnsavedFileAttachment att1 =
             new UnsavedFileAttachment(new File("/path/to/image.jpg"), "image/jpeg");
-    saved.getAttachments().put(att1.name, att1);
+    saved.getAttachments().put("image.jpg", att1);
     DocumentRevision updated = ds.database().update(saved);
 
     // Read a document
