@@ -1,4 +1,4 @@
-# 2.0.0 (unreleased)
+# 2.0.0 (2017-02-07)
 - [BREAKING CHANGE] With the release of version 2.0 of the library,
   there are a large number of breaking changes to package names,
   classes and methods. API users will need to make changes to their
@@ -18,7 +18,7 @@
   versions of the library which would only attempt to create one level
   of directories.
 
-- [IMPROVED] The `batchLimitPerRun` property has been removed from the
+- [REMOVED] The `batchLimitPerRun` property has been removed from the
   Pull and Push replicator builders. There is no limit to the number
   of batches in a replicator run - the replicator will run to
   completion unless an error occurs.
