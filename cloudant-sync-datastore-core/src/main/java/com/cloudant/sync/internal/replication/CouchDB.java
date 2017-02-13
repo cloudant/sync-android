@@ -16,14 +16,13 @@
 
 package com.cloudant.sync.internal.replication;
 
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.internal.documentstore.DocumentRevsList;
+import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
 import com.cloudant.sync.internal.mazha.ChangesResult;
 import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.mazha.Response;
-import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
-import com.cloudant.sync.internal.documentstore.DocumentRevsList;
-import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
-import com.cloudant.sync.documentstore.UnsavedStreamAttachment;
 import com.cloudant.sync.replication.PullFilter;
 
 import java.util.Collection;
@@ -58,10 +57,11 @@ interface CouchDB {
     void bulkCreateSerializedDocs(List<String> serializedDocs);
     List<Response> putMultiparts(List<MultipartAttachmentWriter> multiparts);
     Map<String, CouchClient.MissingRevisions> revsDiff(Map<String, Set<String>> revisions);
-    UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType, String encoding);
 
     Iterable<DocumentRevsList> bulkGetRevisions(List<BulkGetRequest> requests,
                                                    boolean pullAttachmentsInline);
     boolean isBulkSupported();
+
+    <T> T pullAttachmentWithRetry(String id, String rev, String name, CouchClient.InputStreamProcessor<T> streamProcessor);
 
 }

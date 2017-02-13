@@ -16,9 +16,16 @@
 
 package com.cloudant.sync.internal.mazha;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.core.Is.is;
+
+import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.sync.internal.common.CouchUtils;
-import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.internal.util.JSONUtils;
 
 import org.junit.Assert;
@@ -27,9 +34,6 @@ import org.junit.experimental.categories.Category;
 
 import java.util.List;
 import java.util.Map;
-
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.core.Is.is;
 
 @Category(RequireRunningCouchDB.class)
 public class GetDocumentRevsTest extends CouchClientTestBase {
@@ -53,7 +57,7 @@ public class GetDocumentRevsTest extends CouchClientTestBase {
     public void getDocRevisions_idAndRevAndMapClass_revsMustBeReturned() {
         Response[] responses = createAndUpdateDocumentAndReturnRevisions();
         Map<String, Object> revs = client.getDocRevisions(responses[1].getId(), responses[1].getRev(),
-                JSONUtils.mapStringToObject());
+                JSONUtils.STRING_MAP_TYPE_DEF);
 
         Assert.assertThat(revs.keySet(), hasItem(CouchConstants._revisions));
 

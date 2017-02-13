@@ -83,7 +83,7 @@ public class PullReplicationTerminationTest extends ReplicationTestBase {
     @Before
     public void customizeReplicatorAndPopulateDb() throws Exception {
         setupTerminationTestReplicator();
-        populateRemoteDb(DOC_BATCHES, DOCS_PER_BATCH);
+        populateRemoteDb();
     }
 
     private void setupTerminationTestReplicator() {
@@ -93,7 +93,7 @@ public class PullReplicationTerminationTest extends ReplicationTestBase {
     }
 
 
-    private void populateRemoteDb(int batches, int docsPerBatch) throws Exception {
+    private void populateRemoteDb() throws Exception {
         // Create documents in the remote db in batches
         for (List<Foo> batch : GENERATED_FOO_DOC_BATCHES) {
             remoteDb.getCouchClient().bulkCreateDocs(batch);

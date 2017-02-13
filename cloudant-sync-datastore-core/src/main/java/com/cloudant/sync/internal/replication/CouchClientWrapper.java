@@ -1,7 +1,7 @@
 /*
- * Copyright © 2013 Cloudant, Inc. All rights reserved.
+ * Copyright © 2016, 2017 IBM Corp. All rights reserved.
  *
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2013 Cloudant, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -18,22 +18,21 @@ package com.cloudant.sync.internal.replication;
 
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
+import com.cloudant.sync.internal.documentstore.DocumentRevsList;
+import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
 import com.cloudant.sync.internal.mazha.ChangesResult;
 import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.mazha.CouchException;
+import com.cloudant.sync.internal.mazha.DocumentConflictException;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
+import com.cloudant.sync.internal.mazha.NoResourceException;
 import com.cloudant.sync.internal.mazha.OkOpenRevision;
 import com.cloudant.sync.internal.mazha.OpenRevision;
 import com.cloudant.sync.internal.mazha.Response;
-import com.cloudant.sync.documentstore.Attachment;
-import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
-import com.cloudant.sync.internal.documentstore.DocumentRevsList;
-import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
-import com.cloudant.sync.documentstore.UnsavedStreamAttachment;
-import com.cloudant.sync.replication.PullFilter;
 import com.cloudant.sync.internal.util.Misc;
+import com.cloudant.sync.replication.PullFilter;
 
-import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -105,10 +104,25 @@ public class CouchClientWrapper implements CouchDB {
         Misc.checkNotNullOrEmpty(checkpointId, "Checkpoint id");
         Misc.checkNotNullOrEmpty(sequence, "Sequence");
         String replicatorLocalDocId = getCheckpointLocalDocId(checkpointId);
-        if (couchClient.contains(replicatorLocalDocId)) {
-            updateCheckpoint(replicatorLocalDocId, sequence);
-        } else {
-            createCheckpoint(replicatorLocalDocId, sequence);
+
+        RemoteCheckpointDoc checkpointDoc;
+        try {
+            checkpointDoc = couchClient.getDocument(replicatorLocalDocId, RemoteCheckpointDoc
+                    .class);
+            // If it existed, update the sequence
+            checkpointDoc.setLastSequence(sequence);
+        } catch (NoResourceException e) {
+            // Didn't exist yet, but we'll create it now so don't worry
+            checkpointDoc = new RemoteCheckpointDoc(sequence);
+        }
+
+        // Write the new or updated doc
+        try {
+            Response response = couchClient.putUpdate(replicatorLocalDocId, checkpointDoc);
+            logger.fine(String.format("Response: %s", response));
+        } catch (DocumentConflictException e) {
+            // Could happen if we retried, but had already succeeded, so suppress.
+            // Worst case the checkpoint isn't written and we replicate a little extra next time.
         }
     }
 
@@ -193,22 +207,6 @@ public class CouchClientWrapper implements CouchDB {
         return couchClient.delete(id, rev);
     }
 
-
-    private void createCheckpoint(String checkpointDocId, String sequence) {
-        RemoteCheckpointDoc checkpointDoc = new RemoteCheckpointDoc(sequence);
-        checkpointDoc.setId(checkpointDocId);
-        Response response = couchClient.create(checkpointDoc);
-        logger.fine(String.format("Response: %s",response));
-    }
-
-    private void updateCheckpoint(String checkpointDocId, String sequence) {
-        RemoteCheckpointDoc checkpointDoc = couchClient.getDocument(
-                checkpointDocId, RemoteCheckpointDoc.class);
-        checkpointDoc.setLastSequence(sequence);
-        Response response = couchClient.update(checkpointDocId, checkpointDoc);
-        logger.fine(String.format("Response: %s",response));
-    }
-
     public void createDatabase() {
         couchClient.createDb();
     }
@@ -242,6 +240,8 @@ public class CouchClientWrapper implements CouchDB {
         }
 
         List<Response> responses = couchClient.bulkCreateSerializedDocs(serializedDocs);
+        // N.B. The successful response to a _bulk_docs using new_edits:false is an empty array
+        // hence this unusual check and throw exception if any responses are returned.
         if(responses != null && responses.size() > 0) {
             logger.severe(String.format("Unknown bulkCreateDocs API error: %s for input: %s",responses,serializedDocs));
             throw new RuntimeException("Unknown bulkCreateDocs api error");
@@ -265,17 +265,14 @@ public class CouchClientWrapper implements CouchDB {
     }
 
     @Override
-    public UnsavedStreamAttachment getAttachmentStream(String id, String rev, String attachmentName, String contentType, String encodingStr) {
-        // call with last arg `true` to indicate we will accept gzipped data
-        InputStream is = this.couchClient.getAttachmentStream(id, rev, attachmentName, true);
-        Attachment.Encoding encoding = Attachment.getEncodingFromString(encodingStr);
-        UnsavedStreamAttachment usa = new UnsavedStreamAttachment(is, contentType, encoding);
-        return usa;
+    public boolean isBulkSupported() {
+        return this.couchClient.isBulkSupported();
     }
 
     @Override
-    public boolean isBulkSupported() {
-        return this.couchClient.isBulkSupported();
+    public <T> T pullAttachmentWithRetry(String id, String rev, String name, CouchClient
+            .InputStreamProcessor<T> streamProcessor) {
+        return couchClient.processAttachmentStream(id, rev, name, true, streamProcessor);
     }
 
 }

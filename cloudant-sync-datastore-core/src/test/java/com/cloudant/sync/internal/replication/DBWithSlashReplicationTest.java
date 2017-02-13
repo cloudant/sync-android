@@ -155,7 +155,7 @@ public class DBWithSlashReplicationTest extends ReplicationTestBase {
     }
 
     @Override
-    String getDbName() {
-        return "dbwith%2Faslash";
+    protected String getDbName() {
+        return "dbwith%2Faslash_" + super.getDbName();
     }
 }

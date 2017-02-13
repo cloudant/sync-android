@@ -18,23 +18,23 @@ package com.cloudant.sync.internal.replication;
 
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
-import com.cloudant.sync.internal.mazha.ChangesResult;
-import com.cloudant.sync.internal.mazha.CouchClient;
-import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.DocumentException;
+import com.cloudant.sync.event.EventBus;
 import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.documentstore.PreparedAttachment;
-import com.cloudant.sync.documentstore.UnsavedStreamAttachment;
-import com.cloudant.sync.event.EventBus;
-import com.cloudant.sync.replication.DatabaseNotFoundException;
-import com.cloudant.sync.replication.PullFilter;
+import com.cloudant.sync.internal.mazha.ChangesResult;
+import com.cloudant.sync.internal.mazha.CouchClient;
+import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.util.CollectionUtils;
 import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
+import com.cloudant.sync.replication.DatabaseNotFoundException;
+import com.cloudant.sync.replication.PullFilter;
+
 
 import org.apache.commons.codec.binary.Hex;
 
@@ -382,15 +382,14 @@ public class PullStrategy implements ReplicationStrategy {
                                         }
 
                                     }
-                                    UnsavedStreamAttachment usa = this.sourceDb
-                                            .getAttachmentStream(documentRevs.getId(),
-                                                    documentRevs.getRev(), attachmentName,
-                                                    contentType, encoding);
 
                                     // by preparing the attachment here, it is downloaded outside
                                     // of the database transaction
-                                    preparedAtts.put(attachmentName, this.targetDb.prepareAttachment(usa, length,
-                                            encodedLength));
+                                    preparedAtts.put(attachmentName, this.sourceDb.pullAttachmentWithRetry
+                                            (documentRevs.getId(), documentRevs.getRev(), entry
+                                                    .getKey(), new AttachmentPullProcessor(this
+                                                    .targetDb, entry.getKey(), contentType,
+                                                    encoding, length, encodedLength)));
                                 }
                             }
                         } catch (Exception e) {

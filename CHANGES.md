@@ -1,3 +1,6 @@
+# Unreleased
+- [IMPROVED] Increased the resilience of replication to network failures.
+
 # 2.0.0 (2017-02-07)
 - [BREAKING CHANGE] With the release of version 2.0 of the library,
   there are a large number of breaking changes to package names,

@@ -26,15 +26,12 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -171,18 +168,6 @@ public class CouchClientBasicTest extends CouchClientTestBase {
     }
 
     @Test
-    public void getDocumentInputStream_id_success() {
-        Response res = ClientTestUtils.createHelloWorldDoc(client);
-        InputStream is = client.getDocumentStream(res.getId(), res.getRev());
-        try {
-            Map<String, Object> doc = JSONUtils.fromJson(new InputStreamReader(is));
-            assertHelloWorldMapObject(res, doc);
-        } finally {
-            IOUtils.closeQuietly(is);
-        }
-    }
-
-    @Test
     public void getDocument_id_success() {
         Response res = ClientTestUtils.createHelloWorldDoc(client);
         Map<String, Object> doc = client.getDocument(res.getId());
@@ -196,11 +181,6 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         Assert.assertEquals(res.getId(), doc.get(CouchConstants._id));
         Assert.assertTrue(doc.containsKey(CouchConstants._rev));
         Assert.assertEquals(res.getRev(), doc.get(CouchConstants._rev));
-    }
-
-    @Test(expected = NoResourceException.class)
-    public void getDocumentInputStream_idNotExist_exception() {
-        client.getDocumentStream("id_not_exist", "1-no_such_rev");
     }
 
     @Test(expected = NoResourceException.class)
@@ -245,24 +225,6 @@ public class CouchClientBasicTest extends CouchClientTestBase {
             Assert.assertNotNull(fooVersion1);
             Assert.assertThat(fooVersion1.getRevision(), startsWith("1-"));
         }
-    }
-
-    @Test
-    public void getDocumentInputStream_idRev_success() {
-        Response res = ClientTestUtils.createHelloWorldDoc(client);
-        InputStream is = client.getDocumentStream(res.getId(), res.getRev());
-        try {
-            Map<String, Object> doc = JSONUtils.fromJson(new InputStreamReader(is));
-            assertHelloWorldMapObject(res, doc);
-        } finally {
-            IOUtils.closeQuietly(is);
-        }
-    }
-
-    @Test(expected = NoResourceException.class)
-    public void getDocumentInputStream_idRevNotExist_exception() {
-        Response res = ClientTestUtils.createHelloWorldDoc(client);
-        client.getDocumentStream(res.getId(), "1-revnotexist");
     }
 
     @Test(expected = NoResourceException.class)
@@ -447,5 +409,12 @@ public class CouchClientBasicTest extends CouchClientTestBase {
         } catch (CouchException ce) {
             return false;
         }
+    }
+
+    @Test
+    public void getRevision() {
+        Response res = ClientTestUtils.createHelloWorldDoc(client);
+        String rev = client.getDocumentRev(res.getId());
+        Assert.assertEquals("The revisions should be the same", res.getRev(), rev);
     }
 }
