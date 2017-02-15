@@ -20,8 +20,6 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
-import java.util.concurrent.SynchronousQueue;
-
 /**
  * <p>This class extends {@link PeriodicReplicationReceiver} so that periodic replications are only
  * started when the device is connected to a WiFi network and are stopped when the device
