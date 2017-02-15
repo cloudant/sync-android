@@ -256,7 +256,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
         setPeriodicReplicationEnabled(true);
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent alarmIntent = new Intent(this, clazz);
-        alarmIntent.setAction(PeriodicReplicationReceiver.constructAlarmAction(getClass()));
+        alarmIntent.setAction(PeriodicReplicationReceiver.ALARM_ACTION);
         // We need to use a BroadcastReceiver rather than sending the Intent directly to the
         // Service to ensure the device wakes up if it's asleep. Sending the Intent directly
         // to the Service would be unreliable.
@@ -286,7 +286,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
             setPeriodicReplicationEnabled(false);
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             Intent alarmIntent = new Intent(this, clazz);
-            alarmIntent.setAction(PeriodicReplicationReceiver.constructAlarmAction(getClass()));
+            alarmIntent.setAction(PeriodicReplicationReceiver.ALARM_ACTION);
             PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
 
             alarmManager.cancel(pendingAlarmIntent);

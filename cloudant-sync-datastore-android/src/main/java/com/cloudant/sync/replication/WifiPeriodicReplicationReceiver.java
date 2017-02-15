@@ -110,8 +110,7 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
                 serviceIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, command);
                 startWakefulService(context, serviceIntent);
             }
-        } else if (!constructAlarmAction(clazz).equals(intent.getAction()) || isConnectedToWifi
-            (context)) {
+        } else if (!ALARM_ACTION.equals(intent.getAction()) || isConnectedToWifi (context)) {
             // Pass on the processing to the superclass if this is not an alarm, or if it's an
             // alarm and we're connected to WiFi.
            super.onReceive(context, intent);
