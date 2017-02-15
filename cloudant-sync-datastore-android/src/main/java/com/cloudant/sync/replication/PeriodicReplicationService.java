@@ -69,9 +69,12 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * the service may be stopped and started by the operating system. */
     private static final String EXPLICITLY_STOPPED_SUFFIX = ".explicitlyStopped";
 
-    /* We store a flag indicating whether a replication is currently in progress in
-     * SharedPreferences using a key with this suffix. We have to store the flag persistently as
-     * the service may be stopped and started by the operating system. */
+    /* We store a flag indicating whether there are replications pending in
+     * SharedPreferences using a key with this suffix. Replications may be pending because they
+     * are currently in progress and have not yet completed, or becasue a previous scheduled
+     * replication didn't take place because the conditions for replication were not met. We have
+     * to store the flag persistently as the service may be stopped and started by the operating
+     * system. */
     private static final String REPLICATIONS_PENDING_SUFFIX = ".replicationsPending";
 
     private static final long MILLISECONDS_IN_SECOND = 1000L;
