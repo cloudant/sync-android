@@ -16,8 +16,11 @@ package com.cloudant.sync.replication;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+
+import java.util.concurrent.SynchronousQueue;
 
 /**
  * <p>This class extends {@link PeriodicReplicationReceiver} so that periodic replications are only
@@ -69,6 +72,8 @@ import android.net.NetworkInfo;
 public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicationService>
     extends PeriodicReplicationReceiver {
 
+    private static final String WAS_ON_WIFI_SUFFIX = ".wasOnWifi";
+
     protected WifiPeriodicReplicationReceiver(Class<T> clazz) {
         super(clazz);
     }
@@ -77,20 +82,41 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
     public void onReceive(Context context, Intent intent) {
         if (ConnectivityManager.CONNECTIVITY_ACTION.equals(intent.getAction())) {
 
-            int command;
-            if (isConnectedToWifi(context)) {
+            int command = ReplicationService.COMMAND_NONE;
+            boolean isConnectedToWifi = isConnectedToWifi(context);
+
+            if (isConnectedToWifi == wasOnWifi(context)) {
+                // This receiver will get a CONNECTIVITY_ACTION when we disconnect from networks
+                // as well as when we connect to networks. We only want to do anything if we were
+                // we were on WiFi and now are not, or were not on WiFi and now are.
+                return;
+            }else if (isConnectedToWifi) {
                 // State has changed to connected.
-                command = PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION;
-            } else {
+                setWasOnWifi(context, true);
+                if (PeriodicReplicationService.replicationsPending(context, clazz)) {
+                    // There was a replication in progress when we lost WiFi, so restart
+                    // replication immediately.
+                    command = ReplicationService.COMMAND_START_REPLICATION;
+                }
+            } else if (!isConnectedToWifi(context)) {
                 // State has changed to disconnected.
-                command = PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION;
+                setWasOnWifi(context, false);
+
+                command = ReplicationService.COMMAND_STOP_REPLICATION;
             }
-            Intent serviceIntent = new Intent(context.getApplicationContext(), clazz);
-            serviceIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, command);
-            startWakefulService(context, serviceIntent);
+
+            if (command != ReplicationService.COMMAND_NONE) {
+                Intent serviceIntent = new Intent(context.getApplicationContext(), clazz);
+                serviceIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, command);
+                startWakefulService(context, serviceIntent);
+            }
+        } else if (!constructAlarmAction(clazz).equals(intent.getAction()) || isConnectedToWifi
+            (context)) {
+            // Pass on the processing to the superclass if this is not an alarm, or if it's an
+            // alarm and we're connected to WiFi.
+           super.onReceive(context, intent);
         } else {
-            // Pass on the processing to the superclass to handle alarms and reboot.
-            super.onReceive(context, intent);
+            PeriodicReplicationService.setReplicationsPending(context, clazz, true);
         }
     }
 
@@ -102,6 +128,24 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
         return activeNetwork != null
             && activeNetwork.getType() == ConnectivityManager.TYPE_WIFI
             && activeNetwork.isConnectedOrConnecting();
+    }
+
+    public void setWasOnWifi(Context context, boolean onWifi) {
+        SharedPreferences prefs = context.getSharedPreferences(PeriodicReplicationService
+            .PREFERENCES_FILE_NAME, Context
+            .MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(PeriodicReplicationService.constructKey(clazz,
+            WAS_ON_WIFI_SUFFIX), onWifi);
+        editor.apply();
+    }
+
+    private boolean wasOnWifi(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PeriodicReplicationService
+            .PREFERENCES_FILE_NAME, Context
+            .MODE_PRIVATE);
+        return prefs.getBoolean(PeriodicReplicationService.constructKey(clazz,
+            WAS_ON_WIFI_SUFFIX), false);
     }
 
 }

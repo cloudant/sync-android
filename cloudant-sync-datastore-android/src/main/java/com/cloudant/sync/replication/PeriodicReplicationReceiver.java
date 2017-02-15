@@ -34,7 +34,7 @@ import android.support.v4.content.WakefulBroadcastReceiver;
  */
 public class PeriodicReplicationReceiver<T extends PeriodicReplicationService> extends WakefulBroadcastReceiver {
 
-    static final String ALARM_ACTION = "com.cloudant.sync.replication.PeriodicReplicationReceiver.Alarm";
+    private static final String ALARM_ACTION_SUFFIX = ".Alarm";
 
     Class<T> clazz;
 
@@ -46,7 +46,7 @@ public class PeriodicReplicationReceiver<T extends PeriodicReplicationService> e
     public void onReceive(Context context, Intent intent) {
         if (intent != null) {
             int command = PeriodicReplicationService.COMMAND_NONE;
-            if (ALARM_ACTION.equals(intent.getAction())) {
+            if (constructAlarmAction(clazz).equals(intent.getAction())) {
                 command = PeriodicReplicationService.COMMAND_START_REPLICATION;
             } else if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
                 command = PeriodicReplicationService.COMMAND_DEVICE_REBOOTED;
@@ -58,5 +58,9 @@ public class PeriodicReplicationReceiver<T extends PeriodicReplicationService> e
                 startWakefulService(context, serviceIntent);
             }
         }
+    }
+
+    static String constructAlarmAction(Class<? extends PeriodicReplicationService> clazz) {
+        return clazz.getName() + ALARM_ACTION_SUFFIX;
     }
 }

@@ -47,7 +47,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * So that multiple PeriodicReplicationService instances can be used in one application without
      * interfering with each other, the preferences in this file are stored using keys prefixed with
      * the name of the concrete class implementing the PeriodicReplicationService. */
-    private static final String PREFERENCES_FILE_NAME = "com.cloudant.preferences";
+    static final String PREFERENCES_FILE_NAME = "com.cloudant.preferences";
 
     /* We store the elapsed time since booting at which the last alarm occurred in SharedPreferences
      * using a key with this suffix. This is used to set the initial alarm time when periodic
@@ -68,6 +68,11 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * SharedPreferences using a key with this suffix. We have to store the flag persistently as
      * the service may be stopped and started by the operating system. */
     private static final String EXPLICITLY_STOPPED_SUFFIX = ".explicitlyStopped";
+
+    /* We store a flag indicating whether a replication is currently in progress in
+     * SharedPreferences using a key with this suffix. We have to store the flag persistently as
+     * the service may be stopped and started by the operating system. */
+    private static final String REPLICATIONS_PENDING_SUFFIX = ".replicationsPending";
 
     private static final long MILLISECONDS_IN_SECOND = 1000L;
 
@@ -159,16 +164,20 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
             switch (msg.arg2) {
                 case COMMAND_START_PERIODIC_REPLICATION:
                     startPeriodicReplication();
+                    releaseWakeLock();
                     break;
                 case COMMAND_STOP_PERIODIC_REPLICATION:
                     stopPeriodicReplication();
                     setExplicitlyStopped(true);
+                    releaseWakeLock();
                     break;
                 case COMMAND_DEVICE_REBOOTED:
                     resetAlarmDueTimesOnReboot();
+                    releaseWakeLock();
                     break;
                 case COMMAND_RESET_REPLICATION_TIMERS:
                     restartPeriodicReplications();
+                    releaseWakeLock();
                     break;
                 default:
                     // Do nothing
@@ -228,39 +237,44 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     protected void startReplications() {
         super.startReplications();
         setLastAlarmTime(0);
+        setReplicationsPending(this, getClass(), true);
     }
 
     /** Start periodic replications. */
     public synchronized void startPeriodicReplication() {
         if (!isPeriodicReplicationEnabled()) {
-            setPeriodicReplicationEnabled(true);
-            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            Intent alarmIntent = new Intent(this, clazz);
-            alarmIntent.setAction(PeriodicReplicationReceiver.ALARM_ACTION);
-            // We need to use a BroadcastReceiver rather than sending the Intent directly to the
-            // Service to ensure the device wakes up if it's asleep. Sending the Intent directly
-            // to the Service would be unreliable.
-            PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
-
-            long initialTriggerTime;
-            if (explicitlyStopped()) {
-                // Replications were explicitly stopped, so we want the first replication to
-                // happen immediately.
-                initialTriggerTime = SystemClock.elapsedRealtime();
-                setExplicitlyStopped(false);
-            } else {
-                // Replications were implicitly stopped (e.g. by rebooting the device), so we
-                // want to resume the previous schedule.
-                initialTriggerTime = getNextAlarmDueElapsedTime();
-            }
-
-            alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                initialTriggerTime,
-                getIntervalInSeconds() * MILLISECONDS_IN_SECOND,
-                pendingAlarmIntent);
+            startPeriodicReplicationUnconditionally();
         } else {
             Log.i(TAG, "Attempted to start an already running alarm manager");
         }
+    }
+
+    private synchronized void startPeriodicReplicationUnconditionally() {
+        setPeriodicReplicationEnabled(true);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent alarmIntent = new Intent(this, clazz);
+        alarmIntent.setAction(PeriodicReplicationReceiver.constructAlarmAction(getClass()));
+        // We need to use a BroadcastReceiver rather than sending the Intent directly to the
+        // Service to ensure the device wakes up if it's asleep. Sending the Intent directly
+        // to the Service would be unreliable.
+        PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
+
+        long initialTriggerTime;
+        if (explicitlyStopped()) {
+            // Replications were explicitly stopped, so we want the first replication to
+            // happen immediately.
+            initialTriggerTime = SystemClock.elapsedRealtime();
+            setExplicitlyStopped(false);
+        } else {
+            // Replications were implicitly stopped (e.g. by rebooting the device), so we
+            // want to resume the previous schedule.
+            initialTriggerTime = getNextAlarmDueElapsedTime();
+        }
+
+        alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            initialTriggerTime,
+            getIntervalInSeconds() * MILLISECONDS_IN_SECOND,
+            pendingAlarmIntent);
     }
 
     /** Stop replications currently in progress and cancel future scheduled replications. */
@@ -269,7 +283,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
             setPeriodicReplicationEnabled(false);
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             Intent alarmIntent = new Intent(this, clazz);
-            alarmIntent.setAction(PeriodicReplicationReceiver.ALARM_ACTION);
+            alarmIntent.setAction(PeriodicReplicationReceiver.constructAlarmAction(getClass()));
             PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
 
             alarmManager.cancel(pendingAlarmIntent);
@@ -390,11 +404,6 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
         //   the SharedPreference for the elapsed time since boot at which the last alarm would have
         //   fired as that currently refers to the time since boot from the previous boot of the
         //   device.
-        //
-        // We don't actually setup the AlarmManager here as it is up to the subclass to determine
-        // if all other conditions for the replication policy are met and determine whether to
-        // restart replications after a reboot.
-        setPeriodicReplicationEnabled(false);
         long initialInterval = getNextAlarmDueClockTime() - System.currentTimeMillis();
         if (initialInterval < 0) {
             setLastAlarmTime(getIntervalInSeconds() * MILLISECONDS_IN_SECOND);
@@ -402,6 +411,13 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
             setLastAlarmTime(0);
         } else {
             setLastAlarmTime((getIntervalInSeconds() * MILLISECONDS_IN_SECOND) - initialInterval);
+        }
+
+        // Restart periodic replications if they were running before reboot.
+        // TODO: Can we preserve the old behaviour and have this new behaviour? Otherwise this
+        // TODO: probably becomes a major version release!
+        if (isPeriodicReplicationEnabled()) {
+            startPeriodicReplicationUnconditionally();
         }
     }
 
@@ -417,8 +433,56 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
         }
     }
 
-    private String constructKey(String suffix) {
-        return getClass().getName() + suffix;
+    String constructKey(String suffix) {
+        return constructKey(getClass(), suffix);
+    }
+
+    static String constructKey(Class<? extends PeriodicReplicationService> prsClass,
+                                       String suffix) {
+        return prsClass.getName() + suffix;
+    }
+
+    @Override
+    public void allReplicationsCompleted() {
+        super.allReplicationsCompleted();
+        setReplicationsPending(this, getClass(), false);
+    }
+
+    @Override
+    public void replicationErrored(int id) {
+        super.replicationErrored(id);
+    }
+
+    /**
+     * Sets whether there are replications pending. This may be because replications are
+     * currently in progress and have not yet completed, or because a previous scheduled
+     * replication didn't take place because the conditions for replication were not met.
+     * @param context
+     * @param prsClass
+     * @param pending true if there is a replication pending, or false otherwise.
+     */
+    public static void setReplicationsPending(Context context, Class<? extends
+        PeriodicReplicationService> prsClass, boolean pending) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFERENCES_FILE_NAME, Context
+            .MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(constructKey(prsClass, REPLICATIONS_PENDING_SUFFIX), pending);
+        editor.apply();
+    }
+
+    /**
+     * Gets whether there are replications pending. Replications may be pending because they are
+     * currently in progress and have not yet completed, or because a previous scheduled
+     * replication didn't take place because the conditions for replication were not met.
+     * @param context
+     * @param prsClass
+     * @return
+     */
+    public static boolean replicationsPending(Context context, Class<? extends
+        PeriodicReplicationService> prsClass) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFERENCES_FILE_NAME, Context
+            .MODE_PRIVATE);
+        return prefs.getBoolean(constructKey(prsClass, REPLICATIONS_PENDING_SUFFIX), true);
     }
 
     /**

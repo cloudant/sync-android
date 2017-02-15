@@ -76,6 +76,7 @@ public abstract class ReplicationService extends Service
     private ReplicationPolicyManager mReplicationPolicyManager;
     private boolean mReplicatorsInitialised;
     private List<Message> mCommandQueue = new ArrayList<Message>();
+    private Intent mWakefulIntent;
 
     /**
      * Stores the set of {@link PolicyReplicationsCompletedListener}s
@@ -137,12 +138,6 @@ public abstract class ReplicationService extends Service
                         break;
                 }
             } finally {
-                // Get the Intent used to start the service and release the WakeLock if there is
-                // one.
-                // Calling completeWakefulIntent is safe even if there is no wakelock held.
-                Intent intent = msg.getData().getParcelable(EXTRA_INTENT);
-                WakefulBroadcastReceiver.completeWakefulIntent(intent);
-
                 notifyOperationStarted(msg.arg2);
             }
         }
@@ -208,6 +203,11 @@ public abstract class ReplicationService extends Service
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // Store the Intent used to start the service.
+        if (mWakefulIntent == null) {
+            mWakefulIntent = intent;
+        }
+
         // Extract the command from the given Intent and pass it to our handler to process the
         // command on a separate thread.
         if (intent != null && intent.hasExtra(EXTRA_COMMAND)) {
@@ -289,6 +289,15 @@ public abstract class ReplicationService extends Service
         }
     }
 
+    protected void releaseWakeLock() {
+        if (mWakefulIntent != null) {
+            // Release the WakeLock if there is one. Calling completeWakefulIntent is safe even if
+            // there is no wakelock held.
+            WakefulBroadcastReceiver.completeWakefulIntent(mWakefulIntent);
+            mWakefulIntent = null; // TODO:Remove this.
+        }
+    }
+
     /**
      * Stop replications currently in progress and terminate this Service.
      */
@@ -296,6 +305,7 @@ public abstract class ReplicationService extends Service
         if (mReplicationPolicyManager != null) {
             mReplicationPolicyManager.stopReplications();
             releaseWifiLockIfHeld();
+            releaseWakeLock();
         }
         stopSelf();
     }
@@ -308,6 +318,7 @@ public abstract class ReplicationService extends Service
             }
         }
         releaseWifiLockIfHeld();
+        releaseWakeLock();
         stopSelf();
     }
 
