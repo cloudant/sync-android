@@ -451,11 +451,6 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
         setReplicationsPending(this, getClass(), false);
     }
 
-    @Override
-    public void replicationErrored(int id) {
-        super.replicationErrored(id);
-    }
-
     /**
      * Sets whether there are replications pending. This may be because replications are
      * currently in progress and have not yet completed, or because a previous scheduled
