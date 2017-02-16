@@ -17,6 +17,7 @@ package com.cloudant.sync.replication;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.test.AndroidTestCase;
@@ -26,16 +27,20 @@ import org.junit.Test;
 import org.junit.BeforeClass;
 import org.mockito.Mockito;
 
-import java.lang.Override;
 import java.util.List;
 import java.util.ArrayList;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class WifiPeriodicReplicationReceiverTest extends AndroidTestCase {
 
     private WifiPeriodicReplicationReceiver mReceiver;
     private TestContext mMockContext;
+    private SharedPreferences mMockPreferences = mock(SharedPreferences.class);
+    private SharedPreferences.Editor mMockPreferencesEditor;
 
     class TestContext extends MockContext {
         private List<Intent> mIntentsReceived = new ArrayList<Intent>();
@@ -49,6 +54,11 @@ public class WifiPeriodicReplicationReceiverTest extends AndroidTestCase {
         @Override
         public Context getApplicationContext() {
             return this;
+        }
+
+        @Override
+        public SharedPreferences getSharedPreferences(String name, int mode) {
+            return mMockPreferences;
         }
 
         @Override
@@ -137,71 +147,93 @@ public class WifiPeriodicReplicationReceiverTest extends AndroidTestCase {
 
     /**
      * Check that when {@link WifiPeriodicReplicationReceiver} receives
-     * {@link ConnectivityManager#CONNECTIVITY_ACTION} and WiFi is connected,
-     * an {@link Intent} is sent out to start the Service
+     * {@link ConnectivityManager#CONNECTIVITY_ACTION} and WiFi is connected and there is a pending
+     * replication an {@link Intent} is sent out to start the Service
      * {@link ReplicationService} associated with
      * {@link WifiPeriodicReplicationReceiver} containing the extra
      * {@link ReplicationService#EXTRA_COMMAND} with the value
-     * {@link PeriodicReplicationService#COMMAND_START_PERIODIC_REPLICATION}.
+     * {@link PeriodicReplicationService#COMMAND_START_REPLICATION}.
      */
     public void testWifiConnected() {
         Intent intent = new Intent(ConnectivityManager.CONNECTIVITY_ACTION);
 
         mMockContext.setMockConnectivityManager(ConnectivityManager.TYPE_WIFI, true);
+        when(mMockPreferences.getBoolean(ReplicationService.class.getName() + ".wasOnWifi",
+            false)).thenReturn(false);
+        when(mMockPreferences.getBoolean(ReplicationService.class.getName() + "" +
+            ".replicationsPending", true)).thenReturn(true);
+
+        mMockPreferencesEditor = mock(SharedPreferences.Editor.class);
+        when(mMockPreferences.edit()).thenReturn(mMockPreferencesEditor);
 
         mReceiver.onReceive(mMockContext, intent);
+        verify(mMockPreferencesEditor, times(1)).putBoolean(ReplicationService.class.getName() + ".wasOnWifi",
+            true);
         assertEquals(1, mMockContext.getIntentsReceived().size());
 
         Intent receivedIntent = mMockContext.getIntentsReceived().get(0);
         assertEquals(ReplicationService.class.getName(), receivedIntent.getComponent().getClassName());
         assertNull(receivedIntent.getAction());
-        assertEquals(PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION, receivedIntent.getIntExtra(ReplicationService.EXTRA_COMMAND, ReplicationService.COMMAND_NONE));
+        assertEquals(PeriodicReplicationService.COMMAND_START_REPLICATION, receivedIntent.getIntExtra(ReplicationService.EXTRA_COMMAND, ReplicationService.COMMAND_NONE));
     }
 
     /**
      * Check that when {@link WifiPeriodicReplicationReceiver} receives
      * {@link ConnectivityManager#CONNECTIVITY_ACTION} and WiFi is not connected,
-     * an {@link Intent} is sent out to start the Service
+     * an {@link Intent} is sent out to stop the Service
      * {@link ReplicationService} associated with
      * {@link WifiPeriodicReplicationReceiver} containing the extra
      * {@link ReplicationService#EXTRA_COMMAND} with the value
-     * {@link PeriodicReplicationService#COMMAND_STOP_PERIODIC_REPLICATION}.
+     * {@link PeriodicReplicationService#COMMAND_STOP_REPLICATION}.
      */
     public void testWifiDisconnected() {
         Intent intent = new Intent(ConnectivityManager.CONNECTIVITY_ACTION);
 
         mMockContext.setMockConnectivityManager(ConnectivityManager.TYPE_WIFI, false);
+        when(mMockPreferences.getBoolean(ReplicationService.class.getName() + ".wasOnWifi",
+            false)).thenReturn(true);
+        mMockPreferencesEditor = mock(SharedPreferences.Editor.class);
+        when(mMockPreferences.edit()).thenReturn(mMockPreferencesEditor);
 
         mReceiver.onReceive(mMockContext, intent);
+        verify(mMockPreferencesEditor, times(1)).putBoolean(ReplicationService.class.getName() + ".wasOnWifi",
+            false);
         assertEquals(1, mMockContext.getIntentsReceived().size());
 
         Intent receivedIntent = mMockContext.getIntentsReceived().get(0);
         assertEquals(ReplicationService.class.getName(), receivedIntent.getComponent().getClassName());
         assertNull(receivedIntent.getAction());
-        assertEquals(PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION, receivedIntent.getIntExtra(ReplicationService.EXTRA_COMMAND, ReplicationService.COMMAND_NONE));
+        assertEquals(PeriodicReplicationService.COMMAND_STOP_REPLICATION, receivedIntent.getIntExtra(ReplicationService.EXTRA_COMMAND, ReplicationService.COMMAND_NONE));
     }
 
     /**
      * Check that when {@link WifiPeriodicReplicationReceiver} receives
      * {@link ConnectivityManager#CONNECTIVITY_ACTION} and the device is connected to
-     * a non-WiFi network, an {@link Intent} is sent out to start the Service
+     * a non-WiFi network, an {@link Intent} is sent out to stop the Service
      * {@link ReplicationService} associated with
      * {@link WifiPeriodicReplicationReceiver} containing the extra
      * {@link ReplicationService#EXTRA_COMMAND} with the value
-     * {@link PeriodicReplicationService#COMMAND_STOP_PERIODIC_REPLICATION}.
+     * {@link PeriodicReplicationService#COMMAND_STOP_REPLICATION}.
      */
     public void testConnectedToMobileNetwork() {
         Intent intent = new Intent(ConnectivityManager.CONNECTIVITY_ACTION);
 
         mMockContext.setMockConnectivityManager(ConnectivityManager.TYPE_MOBILE, true);
+        when(mMockPreferences.getBoolean(ReplicationService.class.getName() + ".wasOnWifi",
+            false)).thenReturn(true);
+        mMockPreferencesEditor = mock(SharedPreferences.Editor.class);
+        when(mMockPreferences.edit()).thenReturn(mMockPreferencesEditor);
 
         mReceiver.onReceive(mMockContext, intent);
+        verify(mMockPreferencesEditor, times(1)).putBoolean(ReplicationService.class.getName() + ".wasOnWifi",
+            false);
+
         assertEquals(1, mMockContext.getIntentsReceived().size());
 
         Intent receivedIntent = mMockContext.getIntentsReceived().get(0);
         assertEquals(ReplicationService.class.getName(), receivedIntent.getComponent().getClassName());
         assertNull(receivedIntent.getAction());
-        assertEquals(PeriodicReplicationService.COMMAND_STOP_PERIODIC_REPLICATION, receivedIntent.getIntExtra(ReplicationService.EXTRA_COMMAND, ReplicationService.COMMAND_NONE));
+        assertEquals(PeriodicReplicationService.COMMAND_STOP_REPLICATION, receivedIntent.getIntExtra(ReplicationService.EXTRA_COMMAND, ReplicationService.COMMAND_NONE));
     }
 
     /**
