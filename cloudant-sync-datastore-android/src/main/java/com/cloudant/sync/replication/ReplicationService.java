@@ -76,7 +76,8 @@ public abstract class ReplicationService extends Service
     private ReplicationPolicyManager mReplicationPolicyManager;
     private boolean mReplicatorsInitialised;
     private List<Message> mCommandQueue = new ArrayList<Message>();
-    private Intent mWakefulIntent;
+    private Intent mStartReplicationsIntent;
+    private int mStartReplicationsId;
 
     /**
      * Stores the set of {@link PolicyReplicationsCompletedListener}s
@@ -125,13 +126,20 @@ public abstract class ReplicationService extends Service
                             "using an id in the range reserved for internal use. Custom commands " +
                             "must use an id above " + INTERNALLY_RESERVED_COMMAND_MAX);
                 }
+
+                Intent intent = msg.getData().getParcelable(EXTRA_INTENT);
+
                 // Process the commands passed in msg.arg2.
                 switch (msg.arg2) {
                     case COMMAND_START_REPLICATION:
+                        mStartReplicationsIntent = intent;
+                        mStartReplicationsId = msg.arg1;
                         startReplications();
                         break;
                     case COMMAND_STOP_REPLICATION:
                         stopReplications();
+                        releaseWakeLock(intent);
+                        stopSelf(msg.arg1);
                         break;
                     default:
                         // Do nothing
@@ -150,12 +158,6 @@ public abstract class ReplicationService extends Service
     @Override
     public void onCreate() {
         super.onCreate();
-
-        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        if (wifiManager != null) {
-            mWifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,
-                    "ReplicationService");
-        }
 
         // Create a background priority thread to so we don't block the process's main thread.
         HandlerThread thread = new HandlerThread("ServiceStartArguments",
@@ -203,11 +205,6 @@ public abstract class ReplicationService extends Service
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Store the Intent used to start the service.
-        if (mWakefulIntent == null) {
-            mWakefulIntent = intent;
-        }
-
         // Extract the command from the given Intent and pass it to our handler to process the
         // command on a separate thread.
         if (intent != null && intent.hasExtra(EXTRA_COMMAND)) {
@@ -268,6 +265,13 @@ public abstract class ReplicationService extends Service
         if (mReplicationPolicyManager != null) {
             // Make sure we've got a WiFi lock so that the wifi isn't switched off while we're
             // trying to replicate.
+            if (mWifiLock == null) {
+                WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                if (wifiManager != null) {
+                    mWifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+                        "ReplicationService");
+                }
+            }
             if (mWifiLock != null) {
                 synchronized (mWifiLock) {
                     if (!mWifiLock.isHeld()) {
@@ -289,12 +293,11 @@ public abstract class ReplicationService extends Service
         }
     }
 
-    protected void releaseWakeLock() {
-        if (mWakefulIntent != null) {
+    protected void releaseWakeLock(Intent intent) {
+        if (intent != null) {
             // Release the WakeLock if there is one. Calling completeWakefulIntent is safe even if
             // there is no wakelock held.
-            WakefulBroadcastReceiver.completeWakefulIntent(mWakefulIntent);
-            mWakefulIntent = null; // TODO:Remove this.
+            WakefulBroadcastReceiver.completeWakefulIntent(intent);
         }
     }
 
@@ -305,9 +308,7 @@ public abstract class ReplicationService extends Service
         if (mReplicationPolicyManager != null) {
             mReplicationPolicyManager.stopReplications();
             releaseWifiLockIfHeld();
-            releaseWakeLock();
         }
-        stopSelf();
     }
 
     @Override
@@ -318,8 +319,8 @@ public abstract class ReplicationService extends Service
             }
         }
         releaseWifiLockIfHeld();
-        releaseWakeLock();
-        stopSelf();
+        releaseWakeLock(mStartReplicationsIntent);
+        stopSelf(mStartReplicationsId);
     }
 
     @Override

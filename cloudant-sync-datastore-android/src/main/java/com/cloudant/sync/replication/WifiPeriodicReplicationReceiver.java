@@ -78,9 +78,10 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        int command = ReplicationService.COMMAND_NONE;
+
         if (ConnectivityManager.CONNECTIVITY_ACTION.equals(intent.getAction())) {
 
-            int command = ReplicationService.COMMAND_NONE;
             boolean isConnectedToWifi = isConnectedToWifi(context);
 
             if (isConnectedToWifi == wasOnWifi(context)) {
@@ -88,7 +89,7 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
                 // as well as when we connect to networks. We only want to do anything if we were
                 // we were on WiFi and now are not, or were not on WiFi and now are.
                 return;
-            }else if (isConnectedToWifi) {
+            } else if (isConnectedToWifi) {
                 // State has changed to connected.
                 setWasOnWifi(context, true);
                 if (PeriodicReplicationService.replicationsPending(context, clazz)) {
@@ -103,18 +104,31 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
                 command = ReplicationService.COMMAND_STOP_REPLICATION;
             }
 
-            if (command != ReplicationService.COMMAND_NONE) {
-                Intent serviceIntent = new Intent(context.getApplicationContext(), clazz);
-                serviceIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, command);
-                startWakefulService(context, serviceIntent);
+        } else if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+            super.onReceive(context, intent);
+
+            /* As well as the normal processing after a reboot, we want to restart periodic
+               replications if they were active prior to reboot. We always want the restart of
+               periodic replications as when a replication is due, we only pass it on from here if
+               we're connected to WiFi. */
+            if (PeriodicReplicationService.isPeriodicReplicationEnabled(context, clazz)) {
+                command = PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION;
             }
-        } else if (!ALARM_ACTION.equals(intent.getAction()) || isConnectedToWifi (context)) {
+        } else if (!ALARM_ACTION.equals(intent.getAction()) || isConnectedToWifi
+            (context)) {
             // Pass on the processing to the superclass if this is not an alarm, or if it's an
             // alarm and we're connected to WiFi.
            super.onReceive(context, intent);
         } else {
             PeriodicReplicationService.setReplicationsPending(context, clazz, true);
         }
+
+        if (command != ReplicationService.COMMAND_NONE) {
+            Intent serviceIntent = new Intent(context.getApplicationContext(), clazz);
+            serviceIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, command);
+            startWakefulService(context, serviceIntent);
+        }
+
     }
 
     public static boolean isConnectedToWifi(Context context) {
@@ -127,7 +141,7 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
             && activeNetwork.isConnectedOrConnecting();
     }
 
-    public void setWasOnWifi(Context context, boolean onWifi) {
+    private void setWasOnWifi(Context context, boolean onWifi) {
         SharedPreferences prefs = context.getSharedPreferences(PeriodicReplicationService
             .PREFERENCES_FILE_NAME, Context
             .MODE_PRIVATE);
@@ -144,5 +158,4 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
         return prefs.getBoolean(PeriodicReplicationService.constructKey(clazz,
             WAS_ON_WIFI_SUFFIX), false);
     }
-
 }

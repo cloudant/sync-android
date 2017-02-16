@@ -164,23 +164,29 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
 
         @Override
         public void handleMessage(Message msg) {
+            Intent intent = msg.getData().getParcelable(EXTRA_INTENT);
+
             switch (msg.arg2) {
                 case COMMAND_START_PERIODIC_REPLICATION:
                     startPeriodicReplication();
-                    releaseWakeLock();
+                    releaseWakeLock(intent);
+                    stopSelf(msg.arg1);
                     break;
                 case COMMAND_STOP_PERIODIC_REPLICATION:
                     stopPeriodicReplication();
                     setExplicitlyStopped(true);
-                    releaseWakeLock();
+                    releaseWakeLock(intent);
+                    stopSelf(msg.arg1);
                     break;
                 case COMMAND_DEVICE_REBOOTED:
                     resetAlarmDueTimesOnReboot();
-                    releaseWakeLock();
+                    releaseWakeLock(intent);
+                    stopSelf(msg.arg1);
                     break;
                 case COMMAND_RESET_REPLICATION_TIMERS:
                     restartPeriodicReplications();
-                    releaseWakeLock();
+                    releaseWakeLock(intent);
+                    stopSelf(msg.arg1);
                     break;
                 default:
                     // Do nothing
@@ -246,38 +252,34 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     /** Start periodic replications. */
     public synchronized void startPeriodicReplication() {
         if (!isPeriodicReplicationEnabled()) {
-            startPeriodicReplicationUnconditionally();
+            setPeriodicReplicationEnabled(true);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            Intent alarmIntent = new Intent(this, clazz);
+            alarmIntent.setAction(PeriodicReplicationReceiver.ALARM_ACTION);
+            // We need to use a BroadcastReceiver rather than sending the Intent directly to the
+            // Service to ensure the device wakes up if it's asleep. Sending the Intent directly
+            // to the Service would be unreliable.
+            PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
+
+            long initialTriggerTime;
+            if (explicitlyStopped()) {
+                // Replications were explicitly stopped, so we want the first replication to
+                // happen immediately.
+                initialTriggerTime = SystemClock.elapsedRealtime();
+                setExplicitlyStopped(false);
+            } else {
+                // Replications were implicitly stopped (e.g. by rebooting the device), so we
+                // want to resume the previous schedule.
+                initialTriggerTime = getNextAlarmDueElapsedTime();
+            }
+
+            alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                initialTriggerTime,
+                getIntervalInSeconds() * MILLISECONDS_IN_SECOND,
+                pendingAlarmIntent);
         } else {
             Log.i(TAG, "Attempted to start an already running alarm manager");
         }
-    }
-
-    private synchronized void startPeriodicReplicationUnconditionally() {
-        setPeriodicReplicationEnabled(true);
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent alarmIntent = new Intent(this, clazz);
-        alarmIntent.setAction(PeriodicReplicationReceiver.ALARM_ACTION);
-        // We need to use a BroadcastReceiver rather than sending the Intent directly to the
-        // Service to ensure the device wakes up if it's asleep. Sending the Intent directly
-        // to the Service would be unreliable.
-        PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
-
-        long initialTriggerTime;
-        if (explicitlyStopped()) {
-            // Replications were explicitly stopped, so we want the first replication to
-            // happen immediately.
-            initialTriggerTime = SystemClock.elapsedRealtime();
-            setExplicitlyStopped(false);
-        } else {
-            // Replications were implicitly stopped (e.g. by rebooting the device), so we
-            // want to resume the previous schedule.
-            initialTriggerTime = getNextAlarmDueElapsedTime();
-        }
-
-        alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-            initialTriggerTime,
-            getIntervalInSeconds() * MILLISECONDS_IN_SECOND,
-            pendingAlarmIntent);
     }
 
     /** Stop replications currently in progress and cancel future scheduled replications. */
@@ -361,6 +363,14 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
             false);
     }
 
+    public static boolean isPeriodicReplicationEnabled(Context context,
+                                                        Class <? extends
+                                                            PeriodicReplicationService> prsClass) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFERENCES_FILE_NAME, Context
+            .MODE_PRIVATE);
+        return prefs.getBoolean(constructKey(prsClass, PERIODIC_REPLICATION_ENABLED_SUFFIX), false);
+    }
+
     /**
      * Set a flag in SharedPreferences to indicate whether periodic replications were explicitly
      * stopped.
@@ -407,6 +417,11 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
         //   the SharedPreference for the elapsed time since boot at which the last alarm would have
         //   fired as that currently refers to the time since boot from the previous boot of the
         //   device.
+        //
+        // We don't actually setup the AlarmManager here as it is up to the subclass to determine
+        // if all other conditions for the replication policy are met and determine whether to
+        // restart replications after a reboot.
+        setPeriodicReplicationEnabled(false);
         long initialInterval = getNextAlarmDueClockTime() - System.currentTimeMillis();
         if (initialInterval < 0) {
             setLastAlarmTime(getIntervalInSeconds() * MILLISECONDS_IN_SECOND);
@@ -414,13 +429,6 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
             setLastAlarmTime(0);
         } else {
             setLastAlarmTime((getIntervalInSeconds() * MILLISECONDS_IN_SECOND) - initialInterval);
-        }
-
-        // Restart periodic replications if they were running before reboot.
-        // TODO: Can we preserve the old behaviour and have this new behaviour? Otherwise this
-        // TODO: probably becomes a major version release!
-        if (isPeriodicReplicationEnabled()) {
-            startPeriodicReplicationUnconditionally();
         }
     }
 
