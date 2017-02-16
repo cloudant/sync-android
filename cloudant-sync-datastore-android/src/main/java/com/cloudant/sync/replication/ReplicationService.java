@@ -159,6 +159,12 @@ public abstract class ReplicationService extends Service
     public void onCreate() {
         super.onCreate();
 
+        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        if (wifiManager != null) {
+            mWifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+                "ReplicationService");
+        }
+
         // Create a background priority thread to so we don't block the process's main thread.
         HandlerThread thread = new HandlerThread("ServiceStartArguments",
                 android.os.Process.THREAD_PRIORITY_BACKGROUND);
@@ -265,13 +271,6 @@ public abstract class ReplicationService extends Service
         if (mReplicationPolicyManager != null) {
             // Make sure we've got a WiFi lock so that the wifi isn't switched off while we're
             // trying to replicate.
-            if (mWifiLock == null) {
-                WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-                if (wifiManager != null) {
-                    mWifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,
-                        "ReplicationService");
-                }
-            }
             if (mWifiLock != null) {
                 synchronized (mWifiLock) {
                     if (!mWifiLock.isHeld()) {
