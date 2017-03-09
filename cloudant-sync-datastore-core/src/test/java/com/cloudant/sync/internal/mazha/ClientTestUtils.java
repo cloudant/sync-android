@@ -201,8 +201,10 @@ public class ClientTestUtils {
     }
 
 
-    public static int executeHttpPostRequest(URI uri, String payload) {
-        HttpConnection connection = Http.connect("POST", uri, "application/json");
+    public static int executeHttpPostRequest(URI uri, String payload, CouchConfig config) {
+        HttpConnection connection = Http.POST(uri, "application/json");
+        connection.requestInterceptors.addAll(config.getRequestInterceptors());
+        connection.responseInterceptors.addAll(config.getResponseInterceptors());
         try {
             connection.setRequestBody(payload);
             connection.execute();
