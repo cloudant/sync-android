@@ -1,7 +1,7 @@
 #!groovy
 
 /*
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -57,11 +57,13 @@ stage('QA') {
                 // Clean the directory before un-stashing
                 deleteDir()
                 unstash name: 'built'
-                try {
-                    sh './gradlew -Dtest.with.specified.couch=true  -Dtest.couch.host=cloudantsync002.bristol.uk.ibm.com -Dtest.couch.port=5984 -Dtest.couch.ignore.compaction=true -Dtest.couch.ignore.auth.headers=true -b AndroidTest/build.gradle uploadFixtures connectedCheck'
-                } finally {
+                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'couchdb', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASSWORD']]) {
+                    try {
+                        sh './gradlew -Dtest.with.specified.couch=true  -Dtest.couch.username=$DB_USER -Dtest.couch.password=$DB_PASSWORD -Dtest.couch.host=cloudantsync002.bristol.uk.ibm.com -Dtest.couch.port=5984 -Dtest.couch.ignore.compaction=true -Dtest.couch.ignore.auth.headers=true -b AndroidTest/build.gradle uploadFixtures connectedCheck'
+                    } finally {
                     junit '**/build/**/*.xml'
-                    archiveArtifacts artifacts: '**/build/**/*.log'
+                        archiveArtifacts artifacts: '**/build/**/*.log'
+                    }
                 }
             }
         }
