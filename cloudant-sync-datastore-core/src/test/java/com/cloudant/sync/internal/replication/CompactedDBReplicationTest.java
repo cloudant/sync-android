@@ -76,7 +76,7 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
 
         URI postURI = new URI(couchClient.getRootUri().toString() + "/_compact");
 
-        Assert.assertEquals(202, ClientTestUtils.executeHttpPostRequest(postURI, ""));
+        Assert.assertEquals(202, ClientTestUtils.executeHttpPostRequest(postURI, "", couchConfig));
         CouchDbInfo info = couchClient.getDbInfo();
 
         while(info.isCompactRunning()) {
