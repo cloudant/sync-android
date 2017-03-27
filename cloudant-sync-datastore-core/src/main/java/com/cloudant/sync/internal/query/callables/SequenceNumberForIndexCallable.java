@@ -15,6 +15,7 @@
 
 package com.cloudant.sync.internal.query.callables;
 
+import com.cloudant.sync.internal.query.QueryConstants;
 import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
@@ -40,7 +41,7 @@ public class SequenceNumberForIndexCallable implements SQLCallable<Long> {
     public Long call(SQLDatabase database) {
         long result = 0;
         String sql = String.format("SELECT last_sequence FROM %s WHERE index_name = ?",
-                QueryImpl.INDEX_METADATA_TABLE_NAME);
+                QueryConstants.INDEX_METADATA_TABLE_NAME);
         Cursor cursor = null;
         try {
             cursor = database.rawQuery(sql, new String[]{indexName});

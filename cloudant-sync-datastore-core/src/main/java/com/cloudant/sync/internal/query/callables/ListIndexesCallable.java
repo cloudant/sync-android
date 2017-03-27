@@ -15,6 +15,7 @@
 
 package com.cloudant.sync.internal.query.callables;
 
+import com.cloudant.sync.internal.query.QueryConstants;
 import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.internal.query.TokenizerHelper;
 import com.cloudant.sync.internal.sqlite.Cursor;
@@ -38,7 +39,7 @@ public class ListIndexesCallable implements SQLCallable<List<Index>> {
     @Override
     public List<Index> call(SQLDatabase db) throws Exception {
         // Accumulate indexes and definitions into a map
-        String sqlIndexNames = String.format("SELECT DISTINCT index_name FROM %s", QueryImpl
+        String sqlIndexNames = String.format("SELECT DISTINCT index_name FROM %s", QueryConstants
                 .INDEX_METADATA_TABLE_NAME);
         Cursor cursorIndexNames = null;
         ArrayList<Index> indexes = new ArrayList<Index>();
@@ -47,7 +48,7 @@ public class ListIndexesCallable implements SQLCallable<List<Index>> {
             while (cursorIndexNames.moveToNext()) {
                 String indexName = cursorIndexNames.getString(0);
                 String sqlIndexes = String.format("SELECT index_type, field_name, index_settings " +
-                        "FROM %s WHERE index_name = ?", QueryImpl.INDEX_METADATA_TABLE_NAME);
+                        "FROM %s WHERE index_name = ?", QueryConstants.INDEX_METADATA_TABLE_NAME);
                 Cursor cursorIndexes = null;
                 try {
                     cursorIndexes = db.rawQuery(sqlIndexes, new String[]{indexName});

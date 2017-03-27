@@ -78,14 +78,6 @@ import java.util.regex.Pattern;
  */
 public class QueryImpl implements Query {
 
-    private static final String DB_FILE_NAME = "indexes.sqlite";
-
-    private static final String INDEX_TABLE_PREFIX = "_t_cloudant_sync_query_index_";
-    public static final String INDEX_METADATA_TABLE_NAME = "_t_cloudant_sync_query_metadata";
-
-    private static final String EXTENSION_NAME = "com.cloudant.sync.query";
-    private static final String INDEX_FIELD_NAME_PATTERN = "^[a-zA-Z][a-zA-Z0-9_]*$";
-
     private static final Logger logger = Logger.getLogger(QueryImpl.class.getName());
 
     private final Database database;
@@ -99,10 +91,10 @@ public class QueryImpl implements Query {
      */
     public QueryImpl(Database database, File extensionsLocation, KeyProvider keyProvider) throws IOException, SQLException {
         this.database = database;
-        validFieldName = Pattern.compile(INDEX_FIELD_NAME_PATTERN);
+        validFieldName = Pattern.compile(QueryConstants.INDEX_FIELD_NAME_PATTERN);
 
-        File indexesLocation = new File(extensionsLocation, EXTENSION_NAME);
-        File indexesDatabaseFile = new File(indexesLocation, DB_FILE_NAME);
+        File indexesLocation = new File(extensionsLocation, QueryConstants.EXTENSION_NAME);
+        File indexesDatabaseFile = new File(indexesLocation, QueryConstants.DB_FILE_NAME);
 
         dbQueue = new SQLDatabaseQueue(indexesDatabaseFile, keyProvider);
         dbQueue.updateSchema(new SchemaOnlyMigration(QueryConstants.getSchemaVersion1()), 1);
@@ -237,7 +229,7 @@ public class QueryImpl implements Query {
     }
 
     public static String tableNameForIndex(String indexName) {
-        return INDEX_TABLE_PREFIX.concat(indexName);
+        return QueryConstants.INDEX_TABLE_PREFIX.concat(indexName);
     }
 
     protected Database getDatabase() {

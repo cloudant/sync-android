@@ -16,7 +16,7 @@
 
 package com.cloudant.sync.internal.query;
 
-final class QueryConstants {
+public final class QueryConstants {
 
     public static final String AND = "$and";
 
@@ -54,9 +54,19 @@ final class QueryConstants {
         throw new AssertionError();
     }
 
+    public static final String DB_FILE_NAME = "indexes.sqlite";
+
+    public static final String INDEX_TABLE_PREFIX = "_t_cloudant_sync_query_index_";
+
+    public static final String INDEX_METADATA_TABLE_NAME = "_t_cloudant_sync_query_metadata";
+
+    public static final String EXTENSION_NAME = "com.cloudant.sync.query";
+
+    public static final String INDEX_FIELD_NAME_PATTERN = "^[a-zA-Z][a-zA-Z0-9_]*$";
+
     public static String[] getSchemaVersion1() {
         return new String[] {
-                "CREATE TABLE " + QueryImpl.INDEX_METADATA_TABLE_NAME + " ( " +
+                "CREATE TABLE " + INDEX_METADATA_TABLE_NAME + " ( " +
                 "        index_name TEXT NOT NULL, " +
                 "        index_type TEXT NOT NULL, " +
                 "        field_name TEXT NOT NULL, " +
@@ -66,7 +76,7 @@ final class QueryConstants {
 
     public static String[] getSchemaVersion2() {
         return new String[] {
-                "ALTER TABLE " + QueryImpl.INDEX_METADATA_TABLE_NAME +
+                "ALTER TABLE " + INDEX_METADATA_TABLE_NAME +
                 "        ADD COLUMN index_settings TEXT NULL;"
         };
     }

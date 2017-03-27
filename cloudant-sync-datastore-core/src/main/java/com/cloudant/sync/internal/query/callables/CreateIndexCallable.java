@@ -16,6 +16,7 @@
 package com.cloudant.sync.internal.query.callables;
 
 import com.cloudant.sync.internal.android.ContentValues;
+import com.cloudant.sync.internal.query.QueryConstants;
 import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.internal.query.TokenizerHelper;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
@@ -55,7 +56,7 @@ public class CreateIndexCallable implements SQLCallable<Void> {
             parameters.put("index_settings", TokenizerHelper.tokenizerToJson(index.tokenizer));
             parameters.put("field_name", fieldName.field);
             parameters.put("last_sequence", 0);
-            long rowId = database.insert(QueryImpl.INDEX_METADATA_TABLE_NAME,
+            long rowId = database.insert(QueryConstants.INDEX_METADATA_TABLE_NAME,
                     parameters);
             if (rowId < 0) {
                 throw new QueryException("Error inserting index metadata");
