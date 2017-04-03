@@ -47,8 +47,11 @@ public class PeriodicReplicationReceiver<T extends PeriodicReplicationService> e
         if (intent != null) {
             int command = PeriodicReplicationService.COMMAND_NONE;
             if (ALARM_ACTION.equals(intent.getAction())) {
+                Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Received alarm");
                 command = PeriodicReplicationService.COMMAND_START_REPLICATION;
             } else if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+                Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Received boot " +
+                    "completed");
                 command = PeriodicReplicationService.COMMAND_DEVICE_REBOOTED;
             }
 
@@ -56,6 +59,7 @@ public class PeriodicReplicationReceiver<T extends PeriodicReplicationService> e
                 Intent serviceIntent = new Intent(context.getApplicationContext(), clazz);
                 serviceIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, command);
                 startWakefulService(context, serviceIntent);
+                Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Acquired wake lock");
             }
         }
     }

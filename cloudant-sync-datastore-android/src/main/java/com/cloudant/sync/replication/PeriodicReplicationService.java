@@ -24,7 +24,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
-import android.util.Log;
 
 /**
  * This {@link android.app.Service} is an abstract class that is the basis for creating a service
@@ -211,6 +210,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
 
     @Override
     public synchronized IBinder onBind(Intent intent) {
+        Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": onBind called");
         mBound = true;
         if (isPeriodicReplicationEnabled()) {
             restartPeriodicReplications();
@@ -222,6 +222,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
 
     @Override
     public synchronized boolean onUnbind(Intent intent) {
+        Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": onUnbind called");
         super.onUnbind(intent);
         mBound = false;
         if (isPeriodicReplicationEnabled()) {
@@ -233,6 +234,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
 
     @Override
     public synchronized void onRebind(Intent intent) {
+        Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": onRebind called");
         super.onRebind(intent);
         mBound = true;
         if (isPeriodicReplicationEnabled()) {
@@ -267,10 +269,16 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
                 // happen immediately.
                 initialTriggerTime = SystemClock.elapsedRealtime();
                 setExplicitlyStopped(false);
+                Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": starting periodic " +
+                    "replications immediately, with interval " + getIntervalInSeconds() +
+                    " seconds");
             } else {
                 // Replications were implicitly stopped (e.g. by rebooting the device), so we
                 // want to resume the previous schedule.
                 initialTriggerTime = getNextAlarmDueElapsedTime();
+                Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": starting periodic replications in " +
+                    ((initialTriggerTime - SystemClock.elapsedRealtime()) / MILLISECONDS_IN_SECOND) + "seconds, " +
+                    "with interval " + getIntervalInSeconds() + " seconds");
             }
 
             alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
@@ -284,6 +292,8 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
 
     /** Stop replications currently in progress and cancel future scheduled replications. */
     public synchronized void stopPeriodicReplication() {
+        Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Stopping periodic " +
+            "replications");
         if (isPeriodicReplicationEnabled()) {
             setPeriodicReplicationEnabled(false);
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
@@ -349,6 +359,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * @param running true to indicate that periodic replications are enabled, otherwise false.
      */
     private void setPeriodicReplicationEnabled(boolean running) {
+        Log.d(ReplicationService.TAG, "setPeriodicReplicationEnabled: " + running);
         SharedPreferences.Editor editor = mPrefs.edit();
         editor.putBoolean(constructKey(PERIODIC_REPLICATION_ENABLED_SUFFIX), running);
         editor.apply();
@@ -438,8 +449,10 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      */
     private int getIntervalInSeconds() {
         if (mBound) {
+            Log.d(ReplicationService.TAGJS, getClass().getSimpleName() + ": getIntervalInSeconds returns the bound interval: " + getBoundIntervalInSeconds());
             return getBoundIntervalInSeconds();
         } else {
+            Log.d(ReplicationService.TAGJS, getClass().getSimpleName() + ": getIntervalInSeconds returns the unbound interval: " + getUnboundIntervalInSeconds());
             return getUnboundIntervalInSeconds();
         }
     }
@@ -463,8 +476,8 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * Sets whether there are replications pending. This may be because replications are
      * currently in progress and have not yet completed, or because a previous scheduled
      * replication didn't take place because the conditions for replication were not met.
-     * @param context
-     * @param prsClass
+     * @param context A Context.
+     * @param prsClass The class implementing the PeriodicReplicationService.
      * @param pending true if there is a replication pending, or false otherwise.
      */
     public static void setReplicationsPending(Context context, Class<? extends
@@ -480,9 +493,9 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * Gets whether there are replications pending. Replications may be pending because they are
      * currently in progress and have not yet completed, or because a previous scheduled
      * replication didn't take place because the conditions for replication were not met.
-     * @param context
-     * @param prsClass
-     * @return
+     * @param context A Context.
+     * @param prsClass The class implementing the PeriodicReplicationService.
+     * @return true if there are replications pending and false otherwise.
      */
     public static boolean replicationsPending(Context context, Class<? extends
         PeriodicReplicationService> prsClass) {

@@ -40,6 +40,8 @@ import java.util.Set;
 public abstract class ReplicationService extends Service
         implements PolicyReplicationsCompletedListener {
 
+    public static final String TAG = "BMHBMH5";
+
     public static final String EXTRA_INTENT = "intent";
 
     /**
@@ -157,6 +159,8 @@ public abstract class ReplicationService extends Service
 
     @Override
     public void onCreate() {
+        Log.d(ReplicationService.TAG, ReplicationService.this.getClass()
+            .getSimpleName() + ": onCreate called");
         super.onCreate();
 
         WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -173,6 +177,13 @@ public abstract class ReplicationService extends Service
         // Get the HandlerThread's Looper and use it for our Handler.
         Looper serviceLooper = thread.getLooper();
         mServiceHandler = getHandler(serviceLooper);
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(ReplicationService.TAG, ReplicationService.this.getClass()
+            .getSimpleName() + ": onDestroy called");
+        super.onDestroy();
     }
 
     /**
@@ -211,6 +222,11 @@ public abstract class ReplicationService extends Service
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(ReplicationService.TAG, ReplicationService.this.getClass()
+                .getSimpleName() +
+                ": onStartCommand (id = " + startId + ")received " + intent.getIntExtra
+                (EXTRA_COMMAND, COMMAND_NONE));
+
         // Extract the command from the given Intent and pass it to our handler to process the
         // command on a separate thread.
         if (intent != null && intent.hasExtra(EXTRA_COMMAND)) {
@@ -275,9 +291,12 @@ public abstract class ReplicationService extends Service
                 synchronized (mWifiLock) {
                     if (!mWifiLock.isHeld()) {
                         mWifiLock.acquire();
+                        Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Acquired " +
+                            "WiFi lock");
                     }
                 }
             }
+            Log.d(TAG, getClass().getSimpleName() + ": Starting replications");
             mReplicationPolicyManager.startReplications();
         }
     }
@@ -287,6 +306,8 @@ public abstract class ReplicationService extends Service
             synchronized (mWifiLock) {
                 if (mWifiLock.isHeld()) {
                     mWifiLock.release();
+                    Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Released " +
+                        "WiFi lock");
                 }
             }
         }
@@ -298,6 +319,8 @@ public abstract class ReplicationService extends Service
             // there is no wakelock held.
             WakefulBroadcastReceiver.completeWakefulIntent(intent);
         }
+        Log.d(ReplicationService.TAG, ReplicationService.this.getClass().getSimpleName() +
+            ": Released wake lock");
     }
 
     /**
@@ -308,6 +331,7 @@ public abstract class ReplicationService extends Service
             mReplicationPolicyManager.stopReplications();
             releaseWifiLockIfHeld();
         }
+        Log.d(TAG, getClass().getSimpleName() + ": Stopping replications");
     }
 
     @Override
@@ -317,6 +341,7 @@ public abstract class ReplicationService extends Service
                 listener.allReplicationsCompleted();
             }
         }
+        Log.d(TAG, getClass().getSimpleName() + ": Replications completed");
         releaseWifiLockIfHeld();
         releaseWakeLock(mStartReplicationsIntent);
         stopSelf(mStartReplicationsId);
