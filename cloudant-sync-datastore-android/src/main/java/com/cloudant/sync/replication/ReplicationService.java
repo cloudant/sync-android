@@ -29,9 +29,7 @@ import android.support.v4.content.WakefulBroadcastReceiver;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 
 /**
@@ -41,9 +39,6 @@ import java.util.Set;
  */
 public abstract class ReplicationService extends Service
         implements PolicyReplicationsCompletedListener {
-
-    public static final String TAG = "BMH4BMH";
-    public static final String TAGJS = "BMH4JS";
 
     public static final String EXTRA_INTENT = "intent";
 
@@ -90,7 +85,7 @@ public abstract class ReplicationService extends Service
      * events. Note that all modifications or iterations over mListeners should be protected by
      * synchronization on the mListeners object.
      */
-    private final HashSet<PolicyReplicationsCompletedListener> mListeners = new
+    private final Set<PolicyReplicationsCompletedListener> mListeners = new
             HashSet<PolicyReplicationsCompletedListener>();
 
     // It's safest to assume we could be transferring a large amount of data in a
@@ -162,8 +157,6 @@ public abstract class ReplicationService extends Service
 
     @Override
     public void onCreate() {
-        Log.d(ReplicationService.TAG, ReplicationService.this.getClass()
-            .getSimpleName() + ": onCreate called");
         super.onCreate();
 
         WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -180,13 +173,6 @@ public abstract class ReplicationService extends Service
         // Get the HandlerThread's Looper and use it for our Handler.
         Looper serviceLooper = thread.getLooper();
         mServiceHandler = getHandler(serviceLooper);
-    }
-
-    @Override
-    public void onDestroy() {
-        Log.d(ReplicationService.TAG, ReplicationService.this.getClass()
-            .getSimpleName() + ": onDestroy called");
-        super.onDestroy();
     }
 
     /**
@@ -225,11 +211,6 @@ public abstract class ReplicationService extends Service
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(ReplicationService.TAG, ReplicationService.this.getClass()
-                .getSimpleName() +
-                ": onStartCommand (id = " + startId + ")received " + intent.getIntExtra
-                (EXTRA_COMMAND, COMMAND_NONE));
-
         // Extract the command from the given Intent and pass it to our handler to process the
         // command on a separate thread.
         if (intent != null && intent.hasExtra(EXTRA_COMMAND)) {
@@ -294,12 +275,9 @@ public abstract class ReplicationService extends Service
                 synchronized (mWifiLock) {
                     if (!mWifiLock.isHeld()) {
                         mWifiLock.acquire();
-                        Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Acquired " +
-                            "WiFi lock");
                     }
                 }
             }
-            Log.d(TAG, getClass().getSimpleName() + ": Starting replications");
             mReplicationPolicyManager.startReplications();
         }
     }
@@ -309,8 +287,6 @@ public abstract class ReplicationService extends Service
             synchronized (mWifiLock) {
                 if (mWifiLock.isHeld()) {
                     mWifiLock.release();
-                    Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Released " +
-                        "WiFi lock");
                 }
             }
         }
@@ -322,8 +298,6 @@ public abstract class ReplicationService extends Service
             // there is no wakelock held.
             WakefulBroadcastReceiver.completeWakefulIntent(intent);
         }
-        Log.d(ReplicationService.TAG, ReplicationService.this.getClass().getSimpleName() +
-            ": Released wake lock");
     }
 
     /**
@@ -334,21 +308,15 @@ public abstract class ReplicationService extends Service
             mReplicationPolicyManager.stopReplications();
             releaseWifiLockIfHeld();
         }
-        Log.d(TAG, getClass().getSimpleName() + ": Stopping replications");
     }
 
     @Override
     public void allReplicationsCompleted() {
-        Set<PolicyReplicationsCompletedListener> listenersCopy;
         synchronized (mListeners) {
-            // Clone the hash set so that if the callbacks need to remove themselves as listeners
-            // they can use the removeListener() method without interfering with our iteration.
-            listenersCopy = (HashSet) mListeners.clone();
+            for (PolicyReplicationsCompletedListener listener : mListeners) {
+                listener.allReplicationsCompleted();
+            }
         }
-        for (PolicyReplicationsCompletedListener listener : listenersCopy) {
-            listener.allReplicationsCompleted();
-        }
-        Log.d(TAG, getClass().getSimpleName() + ": Replications completed");
         releaseWifiLockIfHeld();
         releaseWakeLock(mStartReplicationsIntent);
         stopSelf(mStartReplicationsId);
@@ -356,27 +324,19 @@ public abstract class ReplicationService extends Service
 
     @Override
     public void replicationCompleted(int id) {
-        Set<PolicyReplicationsCompletedListener> listenersCopy;
         synchronized (mListeners) {
-            // Clone the hash set so that if the callbacks need to remove themselves as listeners
-            // they can use the removeListener() method without interfering with our iteration.
-            listenersCopy = (HashSet) mListeners.clone();
-        }
-        for (PolicyReplicationsCompletedListener listener : listenersCopy) {
-            listener.replicationCompleted(id);
+            for (PolicyReplicationsCompletedListener listener : mListeners) {
+                listener.replicationCompleted(id);
+            }
         }
     }
 
     @Override
     public void replicationErrored(int id) {
-        Set<PolicyReplicationsCompletedListener> listenersCopy;
         synchronized (mListeners) {
-            // Clone the hash set so that if the callbacks need to remove themselves as listeners
-            // they can use the removeListener() method without interfering with our iteration.
-            listenersCopy = (HashSet) mListeners.clone();
-        }
-        for (PolicyReplicationsCompletedListener listener : listenersCopy) {
-            listener.replicationErrored(id);
+            for (PolicyReplicationsCompletedListener listener : mListeners) {
+                listener.replicationErrored(id);
+            }
         }
     }
 

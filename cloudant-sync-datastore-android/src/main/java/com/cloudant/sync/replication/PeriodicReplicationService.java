@@ -16,18 +16,15 @@ package com.cloudant.sync.replication;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
+import android.util.Log;
 
 /**
  * This {@link android.app.Service} is an abstract class that is the basis for creating a service
@@ -123,13 +120,11 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     private static final String TAG = "PRS";
 
     private SharedPreferences mPrefs;
-    Class<T> classPeriodicReplicationReceiver;
-    Class classReplicationJobService;
+    Class<T> clazz;
     protected boolean mBound;
-    private boolean mUseJobScheduler;
 
-    protected PeriodicReplicationService(Class<T> classPeriodicReplicationReceiver) {
-        this.classPeriodicReplicationReceiver = classPeriodicReplicationReceiver;
+    protected PeriodicReplicationService(Class<T> clazz) {
+        this.clazz = clazz;
     }
 
     /**
@@ -211,18 +206,11 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     public void onCreate() {
         mPrefs = getSharedPreferences(PREFERENCES_FILE_NAME, Context.MODE_PRIVATE);
         upgradePreferences();
-
-        // Prevent anyone overriding the useJobSchedulerIfPossible method from inadvertently using
-        // it below API Level 21.
-        mUseJobScheduler = useJobSchedulerIfPossible() && Build.VERSION.SDK_INT >= 21;
-        Log.d(ReplicationService.TAGJS, getClass().getSimpleName() + ": we are " +
-            (mUseJobScheduler ? "" : "NOT ") + "using the JobScheduler");
         super.onCreate();
     }
 
     @Override
     public synchronized IBinder onBind(Intent intent) {
-        Log.d(ReplicationService.TAGJS, getClass().getSimpleName() + ": onBind called");
         mBound = true;
         if (isPeriodicReplicationEnabled()) {
             restartPeriodicReplications();
@@ -234,7 +222,6 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
 
     @Override
     public synchronized boolean onUnbind(Intent intent) {
-        Log.d(ReplicationService.TAGJS, getClass().getSimpleName() + ": onUnbind called");
         super.onUnbind(intent);
         mBound = false;
         if (isPeriodicReplicationEnabled()) {
@@ -246,7 +233,6 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
 
     @Override
     public synchronized void onRebind(Intent intent) {
-        Log.d(ReplicationService.TAGJS, getClass().getSimpleName() + ": onRebind called");
         super.onRebind(intent);
         mBound = true;
         if (isPeriodicReplicationEnabled()) {
@@ -267,7 +253,8 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     public synchronized void startPeriodicReplication() {
         if (!isPeriodicReplicationEnabled()) {
             setPeriodicReplicationEnabled(true);
-            Intent alarmIntent = new Intent(this, classPeriodicReplicationReceiver);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            Intent alarmIntent = new Intent(this, clazz);
             alarmIntent.setAction(PeriodicReplicationReceiver.ALARM_ACTION);
             // We need to use a BroadcastReceiver rather than sending the Intent directly to the
             // Service to ensure the device wakes up if it's asleep. Sending the Intent directly
@@ -280,88 +267,31 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
                 // happen immediately.
                 initialTriggerTime = SystemClock.elapsedRealtime();
                 setExplicitlyStopped(false);
-                Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": starting periodic " +
-                    "replications immediately, with interval " + getIntervalInSeconds() +
-                    " seconds");
             } else {
                 // Replications were implicitly stopped (e.g. by rebooting the device), so we
                 // want to resume the previous schedule.
                 initialTriggerTime = getNextAlarmDueElapsedTime();
-                Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": starting periodic replications in " +
-                    ((initialTriggerTime - SystemClock.elapsedRealtime()) / MILLISECONDS_IN_SECOND) + "seconds, " +
-                    "with interval " + getIntervalInSeconds() + " seconds");
             }
 
-            if (!mUseJobScheduler) {
-                AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-                alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    initialTriggerTime,
-                    getIntervalInSeconds() * MILLISECONDS_IN_SECOND,
-                    pendingAlarmIntent);
-            } else if (classReplicationJobService != null && ReplicationJobService.class
-                    .isAssignableFrom(classReplicationJobService)) {
-                ComponentName jobServiceComponent = new ComponentName(this, classReplicationJobService);
-
-                JobInfo.Builder builder = new JobInfo.Builder(getJobSchedulerId(), jobServiceComponent);
-                builder.setPersisted(true);
-                builder.setPeriodic(getIntervalInSeconds() * MILLISECONDS_IN_SECOND);
-                customiseJobInfo(builder);
-                JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                jobScheduler.schedule(builder.build());
-
-                Log.d(ReplicationService.TAGJS, getClass().getSimpleName() + ": starting the " +
-                    "JobScheduler with JobId=" + getJobSchedulerId());
-            } else {
-                Log.e(ReplicationService.TAGJS, getClass().getSimpleName() + ": requested to use " +
-                    "JobScheduler but incorrect constructor called by subclass");
-            }
+            alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                initialTriggerTime,
+                getIntervalInSeconds() * MILLISECONDS_IN_SECOND,
+                pendingAlarmIntent);
         } else {
             Log.i(TAG, "Attempted to start an already running alarm manager");
         }
     }
 
-    protected void customiseJobInfo(JobInfo.Builder builder) {
-
-    }
-
-    protected boolean useJobSchedulerIfPossible() {
-        //TODO: Do we want to base this on the target version and use JobScheduler only
-        // if the targetSdkVersion is greater than 24, or should we simply use
-        // JobScheduler on any API version we can (API 21 or above)?
-        // Our problem is that WifiPeriodicReplicationReceiver won't let us receive the
-        // CONNECTIVITY_ACTION in API level 24 and above, so we only need this for the
-        // WifiPeriodicReplicationReceiver.
-
-        // TODO: Using only JobScheduler, would probably hugely simplify replication
-        // policies, as they achieve a lot of what we want. I guess we'd still need a
-        // broadcast receiver to handle resetting the JobScheduler after reboot (I assume
-        // that's necessary, but I should check or test it to find out).
-
-        return Build.VERSION.SDK_INT >= 21;
-//        return getApplicationInfo().targetSdkVersion >= 24;
-    }
-
     /** Stop replications currently in progress and cancel future scheduled replications. */
     public synchronized void stopPeriodicReplication() {
-        Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Stopping periodic " +
-            "replications");
         if (isPeriodicReplicationEnabled()) {
             setPeriodicReplicationEnabled(false);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            Intent alarmIntent = new Intent(this, clazz);
+            alarmIntent.setAction(PeriodicReplicationReceiver.ALARM_ACTION);
+            PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
 
-            if (!mUseJobScheduler) {
-                AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-                Intent alarmIntent = new Intent(this, classPeriodicReplicationReceiver);
-                alarmIntent.setAction(PeriodicReplicationReceiver.ALARM_ACTION);
-                PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
-
-                alarmManager.cancel(pendingAlarmIntent);
-            } else {
-                Log.d(ReplicationService.TAGJS, getClass().getSimpleName() + ": Cancelling " +
-                    "JobScheduler " +
-                        "with JobId=" + getJobSchedulerId());
-                JobScheduler jobScheduler = (JobScheduler)getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                jobScheduler.cancel(getJobSchedulerId());
-            }
+            alarmManager.cancel(pendingAlarmIntent);
 
             stopReplications();
         } else {
@@ -419,7 +349,6 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * @param running true to indicate that periodic replications are enabled, otherwise false.
      */
     private void setPeriodicReplicationEnabled(boolean running) {
-        Log.d(ReplicationService.TAG, "setPeriodicReplicationEnabled: " + running);
         SharedPreferences.Editor editor = mPrefs.edit();
         editor.putBoolean(constructKey(PERIODIC_REPLICATION_ENABLED_SUFFIX), running);
         editor.apply();
@@ -509,10 +438,8 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      */
     private int getIntervalInSeconds() {
         if (mBound) {
-            Log.d(ReplicationService.TAGJS, getClass().getSimpleName() + ": getIntervalInSeconds returns the bound interval: " + getBoundIntervalInSeconds());
             return getBoundIntervalInSeconds();
         } else {
-            Log.d(ReplicationService.TAGJS, getClass().getSimpleName() + ": getIntervalInSeconds returns the unbound interval: " + getUnboundIntervalInSeconds());
             return getUnboundIntervalInSeconds();
         }
     }
@@ -536,8 +463,8 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * Sets whether there are replications pending. This may be because replications are
      * currently in progress and have not yet completed, or because a previous scheduled
      * replication didn't take place because the conditions for replication were not met.
-     * @param context A Context.
-     * @param prsClass The class implementing the PeriodicReplicationService.
+     * @param context
+     * @param prsClass
      * @param pending true if there is a replication pending, or false otherwise.
      */
     public static void setReplicationsPending(Context context, Class<? extends
@@ -553,29 +480,15 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * Gets whether there are replications pending. Replications may be pending because they are
      * currently in progress and have not yet completed, or because a previous scheduled
      * replication didn't take place because the conditions for replication were not met.
-     * @param context A Context.
-     * @param prsClass The class implementing the PeriodicReplicationService.
-     * @return true if there are replications pending and false otherwise.
+     * @param context
+     * @param prsClass
+     * @return
      */
     public static boolean replicationsPending(Context context, Class<? extends
         PeriodicReplicationService> prsClass) {
         SharedPreferences prefs = context.getSharedPreferences(PREFERENCES_FILE_NAME, Context
             .MODE_PRIVATE);
         return prefs.getBoolean(constructKey(prsClass, REPLICATIONS_PENDING_SUFFIX), true);
-    }
-
-    public void setReplicationJobServiceClass(Class replicationJobServiceClass) {
-        if (replicationJobServiceClass != null && ReplicationJobService.class
-            .isAssignableFrom(replicationJobServiceClass)) {
-            classReplicationJobService = replicationJobServiceClass;
-        } else {
-            throw new RuntimeException("setReplicationJobServiceClass called with class that is " +
-                "not a ReplicationJobService");
-        }
-    }
-
-    protected int getJobSchedulerId() {
-        return 0;
     }
 
     /**

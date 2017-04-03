@@ -97,27 +97,27 @@ subprojects {
     }
 
     //findbugs
-//    apply plugin: 'findbugs'
-//    findbugs {
-//        toolVersion = "3.0.1"
-//        reportLevel = System.getProperty("findbugs.report.level","low")
-//        //the code base is pretty small so use max effort
-//        effort = "max"
-//        // We don't want to run findbugs on the test code yet
-//        sourceSets = [sourceSets.main]
-//        // Exclude a couple of known bugs until we get the chance to fix them
-//        if (file("findbugs_excludes.xml").exists()) {
-//            excludeFilter = file("findbugs_excludes.xml")
-//        }
-//    }
-//    tasks.withType(FindBugs) {
-//        // Currently only one report type can be used toggle which with a property
-//        boolean generateXML = Boolean.getBoolean("findbugs.xml.report")
-//        reports {
-//            xml.enabled = generateXML
-//            html.enabled = !generateXML
-//        }
-//    }
+    apply plugin: 'findbugs'
+    findbugs {
+        toolVersion = "3.0.1"
+        reportLevel = System.getProperty("findbugs.report.level","low")
+        //the code base is pretty small so use max effort
+        effort = "max"
+        // We don't want to run findbugs on the test code yet
+        sourceSets = [sourceSets.main]
+        // Exclude a couple of known bugs until we get the chance to fix them
+        if (file("findbugs_excludes.xml").exists()) {
+            excludeFilter = file("findbugs_excludes.xml")
+        }
+    }
+    tasks.withType(FindBugs) {
+        // Currently only one report type can be used toggle which with a property
+        boolean generateXML = Boolean.getBoolean("findbugs.xml.report")
+        reports {
+            xml.enabled = generateXML
+            html.enabled = !generateXML
+        }
+    }
 
     //
     // *** DOCS AND PUBLISHING ***

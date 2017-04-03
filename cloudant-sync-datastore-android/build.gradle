@@ -1,15 +1,7 @@
 dependencies {
     compile project(':cloudant-sync-datastore-core')
 
-    Properties localProps = new Properties()
-    def localPropsStream = new FileInputStream(file("${rootProject.projectDir}/local.properties"))
-    try {
-       localProps.load(localPropsStream)
-       def sdkDir = localProps.get("sdk.dir")
-       compile files(sdkDir + '/platforms/android-25/android.jar')
-    } finally {
-       localPropsStream.close()
-    }
+    compile group: 'com.google.android', name: 'android', version:'4.0.1.2'
 
     // for unit tests
     testCompile 'org.hamcrest:hamcrest-all:1.3'

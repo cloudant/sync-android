@@ -24,7 +24,6 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -41,7 +40,6 @@ import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.replication.PeriodicReplicationService;
-import com.cloudant.sync.replication.PolicyReplicationsCompletedListener;
 import com.cloudant.sync.replication.ReplicationPolicyManager;
 import com.cloudant.sync.replication.ReplicationService;
 import com.cloudant.todo.R;
@@ -57,7 +55,6 @@ import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import java.io.File;
 import java.net.URISyntaxException;
 import java.util.List;
 
@@ -88,7 +85,7 @@ public class TodoActivity
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mReplicationService = ((ReplicationService.LocalBinder) service).getService();
-            mReplicationService.addListener(new PolicyReplicationsCompletedListener.SimpleListener() {
+            mReplicationService.addListener(new ReplicationPolicyManager.SimpleReplicationsCompletedListener() {
                 @Override
                 public void replicationCompleted(final int id) {
                     // Check if this is the pull replication
@@ -181,18 +178,14 @@ public class TodoActivity
         // while its active.
         sTasks.setReplicationListener(this);
 
+        // Load the tasks from the model
+        this.reloadTasksFromModel();
+
         // Start the tweet download service.
         Intent intent = new Intent(getApplicationContext(), TwitterReplicationService.class);
         intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService
             .COMMAND_START_PERIODIC_REPLICATION);
         startService(intent);
-
-        // Start the TodoNote replication service.
-        Intent intent2 = new Intent(getApplicationContext(), TodoReplicationService.class);
-        intent2.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService
-            .COMMAND_START_PERIODIC_REPLICATION);
-        startService(intent2);
-
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
@@ -201,10 +194,6 @@ public class TodoActivity
     @Override
     protected void onStart() {
         super.onStart();
-
-        // Load the tasks from the model
-        this.reloadTasksFromModel();
-
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client.connect();

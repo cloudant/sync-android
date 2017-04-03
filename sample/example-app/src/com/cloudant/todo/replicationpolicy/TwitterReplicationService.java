@@ -30,8 +30,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class TwitterReplicationService extends
-    PeriodicReplicationService<TwitterWifiPeriodicReplicationReceiver> {
+public class TwitterReplicationService extends PeriodicReplicationService<TwitterWifiPeriodicReplicationReceiver> {
     private static final String TAG = "TwitterRS";
     private static final String DOCUMENT_STORE_DIR = "data";
     private static final String DOCUMENT_STORE_NAME = "tweets";
@@ -40,7 +39,6 @@ public class TwitterReplicationService extends
 
     public TwitterReplicationService() {
         super(TwitterWifiPeriodicReplicationReceiver.class);
-        setReplicationJobServiceClass(TwitterReplicationJobService.class);
     }
 
     @Override
@@ -93,10 +91,4 @@ public class TwitterReplicationService extends
         // Trigger replications when a client binds to the service only if we're on WiFi.
         return WifiPeriodicReplicationReceiver.isConnectedToWifi(this);
     }
-
-    @Override
-    protected int getJobSchedulerId() {
-        return 1;
-    }
-
 }

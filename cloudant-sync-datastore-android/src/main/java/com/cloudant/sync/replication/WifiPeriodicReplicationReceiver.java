@@ -81,8 +81,6 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
         int command = ReplicationService.COMMAND_NONE;
 
         if (ConnectivityManager.CONNECTIVITY_ACTION.equals(intent.getAction())) {
-            Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Received a " +
-                "CONNECTIVITY_ACTION");
 
             boolean isConnectedToWifi = isConnectedToWifi(context);
 
@@ -90,9 +88,6 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
                 // This receiver will get a CONNECTIVITY_ACTION when we disconnect from networks
                 // as well as when we connect to networks. We only want to do anything if we were
                 // we were on WiFi and now are not, or were not on WiFi and now are.
-                Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": We didn't change to" +
-                    " a different network type (wasOnWifi = " + wasOnWifi(context) + ", " +
-                    "isConnectedToWifi = " + isConnectedToWifi + ")");
                 return;
             } else if (isConnectedToWifi) {
                 // State has changed to connected.
@@ -101,18 +96,11 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
                     // There was a replication in progress when we lost WiFi, so restart
                     // replication immediately.
                     command = ReplicationService.COMMAND_START_REPLICATION;
-                    Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Connected to " +
-                        "Wifi. Restarting replications as there was previously a replication in " +
-                        "progress");
-                } else {
-                    Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Connected to " +
-                        "Wifi. No replication in progress when we lost Wifi, so we do nothing");
                 }
             } else if (!isConnectedToWifi(context)) {
                 // State has changed to disconnected.
                 setWasOnWifi(context, false);
 
-                Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Disconnected from Wifi");
                 command = ReplicationService.COMMAND_STOP_REPLICATION;
             }
 
@@ -124,12 +112,7 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
                periodic replications as when a replication is due, we only pass it on from here if
                we're connected to WiFi. */
             if (PeriodicReplicationService.isPeriodicReplicationEnabled(context, clazz)) {
-                Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Received boot " +
-                    "completed, periodic replications being resumed");
                 command = PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION;
-            } else {
-                Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Received boot " +
-                    "completed, periodic replications NOT resumed");
             }
         } else if (!ALARM_ACTION.equals(intent.getAction()) || isConnectedToWifi
             (context)) {
@@ -138,16 +121,12 @@ public abstract class WifiPeriodicReplicationReceiver<T extends PeriodicReplicat
            super.onReceive(context, intent);
         } else {
             PeriodicReplicationService.setReplicationsPending(context, clazz, true);
-            Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": We received an " +
-                "ALARM_ACTION, but we're not on Wifi, so we just set a replication pending so " +
-                "when we get back on Wifi the replication will take place.");
         }
 
         if (command != ReplicationService.COMMAND_NONE) {
             Intent serviceIntent = new Intent(context.getApplicationContext(), clazz);
             serviceIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, command);
             startWakefulService(context, serviceIntent);
-            Log.d(ReplicationService.TAG, getClass().getSimpleName() + ": Acquired wake lock");
         }
 
     }
