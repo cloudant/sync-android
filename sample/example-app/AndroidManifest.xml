@@ -59,6 +59,15 @@
         <service
             android:name=".replicationpolicy.TodoReplicationService"
             android:exported="false"/>
+
+        <service android:name=".replicationpolicy.TwitterJobService"
+                 android:permission="android.permission.BIND_JOB_SERVICE"
+                 android:exported="false"/>
+
+        <service android:name=".replicationpolicy.TodoJobService"
+                 android:permission="android.permission.BIND_JOB_SERVICE"
+                 android:exported="false"/>
+
         <!-- ATTENTION: This was auto-generated to add Google Play services to your project for
      App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
         <meta-data

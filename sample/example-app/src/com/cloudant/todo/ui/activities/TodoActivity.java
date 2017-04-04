@@ -14,8 +14,11 @@
 
 package com.cloudant.todo.ui.activities;
 
+import android.annotation.TargetApi;
 import android.app.FragmentManager;
 import android.app.ListActivity;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -23,6 +26,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -39,6 +43,8 @@ import android.widget.Toast;
 import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.documentstore.DocumentStoreException;
+import com.cloudant.sync.event.Subscribe;
+import com.cloudant.sync.event.notifications.ReplicationCompleted;
 import com.cloudant.sync.replication.PeriodicReplicationService;
 import com.cloudant.sync.replication.PolicyReplicationsCompletedListener;
 import com.cloudant.sync.replication.ReplicationPolicyManager;
@@ -47,7 +53,9 @@ import com.cloudant.todo.R;
 import com.cloudant.todo.Task;
 import com.cloudant.todo.TaskAdapter;
 import com.cloudant.todo.TasksModel;
+import com.cloudant.todo.replicationpolicy.TodoJobService;
 import com.cloudant.todo.replicationpolicy.TodoReplicationService;
+import com.cloudant.todo.replicationpolicy.TwitterJobService;
 import com.cloudant.todo.replicationpolicy.TwitterReplicationService;
 import com.cloudant.todo.ui.dialogs.ProgressDialog;
 import com.cloudant.todo.ui.dialogs.TaskDialog;
@@ -64,6 +72,9 @@ public class TodoActivity
     implements OnSharedPreferenceChangeListener {
 
     private static final String LOG_TAG = "TodoActivity";
+    private static final int TODO_JOB_SCHEDULER_ID = 0;
+    private static final int TWITTER_JOB_SCHEDULER_ID = 1;
+    private static final int MILLISECONDS_IN_SECOND = 1000;
 
     private static final String FRAG_PROGRESS = "fragment_progress";
     private static final String FRAG_NEW_TASK = "fragment_new_task";
@@ -81,6 +92,8 @@ public class TodoActivity
 
     // Flag indicating whether the Activity is currently bound to the Service.
     private boolean mIsBound;
+
+    private boolean mUseJobScheduler;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -182,11 +195,18 @@ public class TodoActivity
         // Load the tasks from the model
         this.reloadTasksFromModel();
 
-        // Start the tweet download service.
-        Intent intent = new Intent(getApplicationContext(), TwitterReplicationService.class);
-        intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService
-            .COMMAND_START_PERIODIC_REPLICATION);
-        startService(intent);
+        if (Build.VERSION.SDK_INT >= 21) {
+            // Use the JobScheduler.
+            cancelTwitterJobService();
+            startTwitterJobService(true);
+        } else {
+            // Use replication policies.
+            // Start the tweet download service.
+            Intent intent = new Intent(getApplicationContext(), TwitterReplicationService.class);
+            intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService
+                .COMMAND_START_PERIODIC_REPLICATION);
+            startService(intent);
+        }
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
@@ -198,8 +218,16 @@ public class TodoActivity
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client.connect();
-        bindService(new Intent(this, TodoReplicationService.class), mConnection, Context
-            .BIND_AUTO_CREATE);
+        if (Build.VERSION.SDK_INT >= 21) {
+            // Use the JobScheduler.
+            TodoJobService.getEventBus().register(this);
+            TwitterJobService.getEventBus().register(this); // TODO: Temporary
+            cancelTodoJobService();
+            startTodoJobService(true);
+        } else {
+            bindService(new Intent(this, TodoReplicationService.class), mConnection, Context
+                .BIND_AUTO_CREATE);
+        }
         mIsBound = true;
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -213,12 +241,68 @@ public class TodoActivity
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         AppIndex.AppIndexApi.end(client, getIndexApiAction());
         if (mIsBound) {
-            unbindService(mConnection);
+            if (Build.VERSION.SDK_INT >= 21) {
+//                TodoJobService.getEventBus().unregister(this);
+                cancelTodoJobService();
+                startTodoJobService(false);
+            } else {
+                unbindService(mConnection);
+            }
             mIsBound = false;
         }
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client.disconnect();
+    }
+
+    @TargetApi(21)
+    private void startTwitterJobService(boolean bound) {
+        Log.d(TwitterJobService.TAG, "Using the JobScheduler");
+        ComponentName jobServiceComponent = new ComponentName(this, TwitterJobService.class);
+
+        JobInfo.Builder builder = new JobInfo.Builder(TWITTER_JOB_SCHEDULER_ID, jobServiceComponent);
+        builder.setPersisted(true);
+        String pref = bound ? SettingsActivity.TWITTER_BOUND_REPLICATION_MINUTES :
+            SettingsActivity.TWITTER_UNBOUND_REPLICATION_MINUTES;
+        builder.setPeriodic(Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(this).getString
+            (pref, "0")) * 60 *
+            MILLISECONDS_IN_SECOND);
+        builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        jobScheduler.schedule(builder.build());
+        Log.d(TwitterJobService.TAG, getClass().getSimpleName() + ": starting the " +
+            "Twitter JobScheduler with JobId=" + TWITTER_JOB_SCHEDULER_ID);
+    }
+
+    @TargetApi(21)
+    private void cancelTwitterJobService() {
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        jobScheduler.cancel(TWITTER_JOB_SCHEDULER_ID);
+    }
+
+    @TargetApi(21)
+    private void startTodoJobService(boolean bound) {
+        Log.d(TodoJobService.TAG, "Using the JobScheduler");
+        ComponentName jobServiceComponent = new ComponentName(this, TodoJobService.class);
+
+        JobInfo.Builder builder = new JobInfo.Builder(TODO_JOB_SCHEDULER_ID, jobServiceComponent);
+        builder.setPersisted(true);
+        String pref = bound ? SettingsActivity.TODO_BOUND_REPLICATION_MINUTES :
+            SettingsActivity.TODO_UNBOUND_REPLICATION_MINUTES;
+        builder.setPeriodic(Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(this).getString
+            (pref, "0")) * 60 *
+            MILLISECONDS_IN_SECOND);
+        builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        jobScheduler.schedule(builder.build());
+        Log.d(TodoJobService.TAG, getClass().getSimpleName() + ": starting the " +
+            "Todo JobScheduler with JobId=" + TODO_JOB_SCHEDULER_ID);
+    }
+
+    @TargetApi(21)
+    private void cancelTodoJobService() {
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        jobScheduler.cancel(TODO_JOB_SCHEDULER_ID);
     }
 
     @Override
@@ -430,4 +514,23 @@ public class TodoActivity
             .setActionStatus(Action.STATUS_TYPE_COMPLETED)
             .build();
     }
+
+    @Subscribe
+    public void complete(final ReplicationCompleted event) {
+        Log.d(TodoJobService.TAG, "Received an event onto the static event bus");
+        Log.d("BMHReplTrace", "Finished replicating for ID=" + event.replicator.getId());
+        if (event.replicator.getId() == TodoJobService.PULL_REPLICATION_ID) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(TodoActivity.this, "Finished replicating (ID=" + event.replicator
+                        .getId() +")", Toast.LENGTH_LONG).show();
+                    if (mIsBound) {
+                        reloadTasksFromModel();
+                    }
+                }
+            });
+        }
+    }
+
 }
