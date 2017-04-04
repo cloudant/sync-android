@@ -31,7 +31,7 @@ public class TodoJobService extends JobService {
     public static int PUSH_REPLICATION_ID = 0;
     public static int PULL_REPLICATION_ID = 1;
 
-    private ReplicationTask mReplicationTask;
+    private ReplicationTask mReplicationTask = new ReplicationTask();
 
     private JobParameters mJobParameters;
 
@@ -122,7 +122,6 @@ public class TodoJobService extends JobService {
 
         // If we have a periodic job we need to check this due to a bug in the JobScheduler.
         if (!jobParameters.isOverrideDeadlineExpired()) {
-            mReplicationTask = new ReplicationTask();
             mReplicationTask.execute();
         } else {
             Log.e(TAG, "Android JobScheduler bug occurred. Not starting job");
