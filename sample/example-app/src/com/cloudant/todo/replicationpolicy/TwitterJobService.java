@@ -48,7 +48,7 @@ public class TwitterJobService extends JobService {
         @Subscribe
         public void complete(ReplicationCompleted event) {
             latch.countDown();
-            Log.d(TAG, "Posting the event onto the static event bus");
+            Log.d(TAG, "Posting the event onto the static event bus ID=" + event.replicator.getId());
             sEventBus.post(event);
         }
 
