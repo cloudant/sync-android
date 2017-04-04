@@ -17,6 +17,7 @@ package com.cloudant.todo.ui.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
@@ -131,17 +132,27 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     }
 
     private void resetTodoReplicationTimers() {
-        Intent intent = new Intent(getApplicationContext(), TodoReplicationService.class);
-        intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService
-            .COMMAND_RESET_REPLICATION_TIMERS);
-        startService(intent);
+        if (Build.VERSION.SDK_INT >= 21) {
+            TodoActivity.cancelTodoJobService(getApplicationContext());
+            TodoActivity.startTodoJobService(getApplicationContext(), true);
+        } else {
+            Intent intent = new Intent(getApplicationContext(), TodoReplicationService.class);
+            intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService
+                .COMMAND_RESET_REPLICATION_TIMERS);
+            startService(intent);
+        }
     }
 
     private void resetTwitterReplicationTimers() {
-        Intent intent = new Intent(getApplicationContext(), TwitterReplicationService.class);
-        intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService
-            .COMMAND_RESET_REPLICATION_TIMERS);
-        startService(intent);
+        if (Build.VERSION.SDK_INT >= 21) {
+            TodoActivity.cancelTwitterJobService(getApplicationContext());
+            TodoActivity.startTwitterJobService(getApplicationContext(), false);
+        } else {
+            Intent intent = new Intent(getApplicationContext(), TwitterReplicationService.class);
+            intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService
+                .COMMAND_RESET_REPLICATION_TIMERS);
+            startService(intent);
+        }
     }
 
     @Override

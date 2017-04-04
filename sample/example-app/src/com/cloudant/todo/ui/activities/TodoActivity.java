@@ -197,8 +197,8 @@ public class TodoActivity
 
         if (Build.VERSION.SDK_INT >= 21) {
             // Use the JobScheduler.
-            cancelTwitterJobService();
-            startTwitterJobService(true);
+            cancelTwitterJobService(getApplicationContext());
+            startTwitterJobService(getApplicationContext(), true);
         } else {
             // Use replication policies.
             // Start the tweet download service.
@@ -221,9 +221,8 @@ public class TodoActivity
         if (Build.VERSION.SDK_INT >= 21) {
             // Use the JobScheduler.
             TodoJobService.getEventBus().register(this);
-            TwitterJobService.getEventBus().register(this); // TODO: Temporary
-            cancelTodoJobService();
-            startTodoJobService(true);
+            cancelTodoJobService(getApplicationContext());
+            startTodoJobService(getApplicationContext(), true);
         } else {
             bindService(new Intent(this, TodoReplicationService.class), mConnection, Context
                 .BIND_AUTO_CREATE);
@@ -242,9 +241,9 @@ public class TodoActivity
         AppIndex.AppIndexApi.end(client, getIndexApiAction());
         if (mIsBound) {
             if (Build.VERSION.SDK_INT >= 21) {
-//                TodoJobService.getEventBus().unregister(this);
-                cancelTodoJobService();
-                startTodoJobService(false);
+                TodoJobService.getEventBus().unregister(this);
+                cancelTodoJobService(getApplicationContext());
+                startTodoJobService(getApplicationContext(), false);
             } else {
                 unbindService(mConnection);
             }
@@ -256,52 +255,60 @@ public class TodoActivity
     }
 
     @TargetApi(21)
-    private void startTwitterJobService(boolean bound) {
+    public static void startTwitterJobService(Context context, boolean bound) {
         Log.d(TwitterJobService.TAG, "Using the JobScheduler");
-        ComponentName jobServiceComponent = new ComponentName(this, TwitterJobService.class);
+        ComponentName jobServiceComponent = new ComponentName(context, TwitterJobService.class);
 
         JobInfo.Builder builder = new JobInfo.Builder(TWITTER_JOB_SCHEDULER_ID, jobServiceComponent);
         builder.setPersisted(true);
         String pref = bound ? SettingsActivity.TWITTER_BOUND_REPLICATION_MINUTES :
             SettingsActivity.TWITTER_UNBOUND_REPLICATION_MINUTES;
-        builder.setPeriodic(Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(this).getString
+        builder.setPeriodic(Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(context)
+            .getString
             (pref, "0")) * 60 *
             MILLISECONDS_IN_SECOND);
+        builder.setBackoffCriteria(50, JobInfo.BACKOFF_POLICY_LINEAR);
         builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);
-        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context
+            .JOB_SCHEDULER_SERVICE);
         jobScheduler.schedule(builder.build());
-        Log.d(TwitterJobService.TAG, getClass().getSimpleName() + ": starting the " +
+        Log.d(TwitterJobService.TAG, "TodoActivity: starting the " +
             "Twitter JobScheduler with JobId=" + TWITTER_JOB_SCHEDULER_ID);
     }
 
     @TargetApi(21)
-    private void cancelTwitterJobService() {
-        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    public static void cancelTwitterJobService(Context context) {
+        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context
+            .JOB_SCHEDULER_SERVICE);
         jobScheduler.cancel(TWITTER_JOB_SCHEDULER_ID);
     }
 
     @TargetApi(21)
-    private void startTodoJobService(boolean bound) {
+    public static void startTodoJobService(Context context, boolean bound) {
         Log.d(TodoJobService.TAG, "Using the JobScheduler");
-        ComponentName jobServiceComponent = new ComponentName(this, TodoJobService.class);
+        ComponentName jobServiceComponent = new ComponentName(context, TodoJobService.class);
 
         JobInfo.Builder builder = new JobInfo.Builder(TODO_JOB_SCHEDULER_ID, jobServiceComponent);
         builder.setPersisted(true);
         String pref = bound ? SettingsActivity.TODO_BOUND_REPLICATION_MINUTES :
             SettingsActivity.TODO_UNBOUND_REPLICATION_MINUTES;
-        builder.setPeriodic(Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(this).getString
+        builder.setPeriodic(Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(context)
+            .getString
             (pref, "0")) * 60 *
             MILLISECONDS_IN_SECOND);
+        builder.setBackoffCriteria(50, JobInfo.BACKOFF_POLICY_LINEAR);
         builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);
-        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context
+            .JOB_SCHEDULER_SERVICE);
         jobScheduler.schedule(builder.build());
-        Log.d(TodoJobService.TAG, getClass().getSimpleName() + ": starting the " +
+        Log.d(TodoJobService.TAG, "TodoActivity: starting the " +
             "Todo JobScheduler with JobId=" + TODO_JOB_SCHEDULER_ID);
     }
 
     @TargetApi(21)
-    private void cancelTodoJobService() {
-        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    public static void cancelTodoJobService(Context context) {
+        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context
+            .JOB_SCHEDULER_SERVICE);
         jobScheduler.cancel(TODO_JOB_SCHEDULER_ID);
     }
 
