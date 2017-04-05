@@ -40,6 +40,7 @@ import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.replication.PeriodicReplicationService;
+import com.cloudant.sync.replication.PolicyReplicationsCompletedListener;
 import com.cloudant.sync.replication.ReplicationPolicyManager;
 import com.cloudant.sync.replication.ReplicationService;
 import com.cloudant.todo.R;
@@ -85,7 +86,7 @@ public class TodoActivity
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mReplicationService = ((ReplicationService.LocalBinder) service).getService();
-            mReplicationService.addListener(new ReplicationPolicyManager.SimpleReplicationsCompletedListener() {
+            mReplicationService.addListener(new PolicyReplicationsCompletedListener.SimpleListener() {
                 @Override
                 public void replicationCompleted(final int id) {
                     // Check if this is the pull replication
