@@ -1,9 +1,10 @@
 buildscript {
     repositories {
         mavenCentral()
+        jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'com.android.tools.build:gradle:2.3.0'
     }
 }
 apply plugin: 'com.android.application'
@@ -11,34 +12,36 @@ apply plugin: 'idea'
 
 repositories {
     // enable this to build from latest snapshot release
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+    // maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     mavenLocal()
     mavenCentral()
 }
 
 dependencies {
     // change version to 'latest.integration' to build from latest snapshot release
-    compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'latest' +
-            '.integration')
+    //    compile(group: 'com.cloudant', name: 'cloudant-sync-datastore-android', version:'latest.release')
+    compile files('libs/cloudant-client-2.8.1-SNAPSHOT.jar')
+    compile files('libs/cloudant-sync-datastore-android-2.0.1-SNAPSHOT.jar')
+    compile files('libs/cloudant-sync-datastore-core-2.0.1-SNAPSHOT.jar')
+    compile group: 'com.cloudant', name: 'cloudant-http', version:'2.7.0'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.1.1'
 
     // needed for PeriodicReplicationReceiver etc
-    compile 'com.android.support:support-v13:25.1.0'
-    compile 'com.android.support:support-v4:25.1.0'
+    compile 'com.android.support:support-v13:25.3.0'
+    compile 'com.android.support:support-v4:25.3.0'
     compile 'com.google.android.gms:play-services-appindexing:9.8.0'
 }
 
 android {
-    compileSdkVersion 21
+    compileSdkVersion 25
     defaultConfig {
         minSdkVersion 15
     }
-    buildToolsVersion "21.1.2"
-
+    buildToolsVersion '25.0.2'
     packagingOptions {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
     }
-
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
@@ -62,7 +65,6 @@ android {
         debug.setRoot('build-types/debug')
         release.setRoot('build-types/release')
     }
-
     buildTypes {
         release {
             minifyEnabled true
@@ -70,5 +72,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard.cfg'
         }
     }
-
+    productFlavors {
+    }
 }

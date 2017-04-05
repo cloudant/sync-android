@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <!-- We want to restart our periodic replications after a reboot. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <application
         android:allowBackup="true"
@@ -59,6 +60,17 @@
         <service
             android:name=".replicationpolicy.TodoReplicationService"
             android:exported="false"/>
+
+        <service
+            android:name=".replicationpolicy.TodoReplicationJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="false"/>
+
+        <service
+            android:name=".replicationpolicy.TwitterReplicationJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="false"/>
+
         <!-- ATTENTION: This was auto-generated to add Google Play services to your project for
      App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
         <meta-data

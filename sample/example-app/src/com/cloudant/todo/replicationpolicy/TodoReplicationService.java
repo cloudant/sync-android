@@ -40,6 +40,7 @@ public class TodoReplicationService extends
 
     public TodoReplicationService() {
         super(TodoWifiPeriodicReplicationReceiver.class);
+        setReplicationJobServiceClass(TodoReplicationJobService.class);
     }
 
     @Override
@@ -89,5 +90,10 @@ public class TodoReplicationService extends
     protected boolean startReplicationOnBind() {
         // Trigger replications when a client binds to the service only if we're on WiFi.
         return WifiPeriodicReplicationReceiver.isConnectedToWifi(this);
+    }
+
+    @Override
+    protected int getJobSchedulerId() {
+        return 0;
     }
 }

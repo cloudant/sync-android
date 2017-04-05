@@ -122,6 +122,7 @@ public class WifiPeriodicReplicationReceiverTest extends AndroidTestCase {
     public void setUp() {
         mReceiver = new Receiver();
         mMockContext = new TestContext();
+        mMockPreferences = mock(SharedPreferences.class);
     }
 
     /**
@@ -137,6 +138,10 @@ public class WifiPeriodicReplicationReceiverTest extends AndroidTestCase {
         Intent intent = new Intent(Intent.ACTION_BOOT_COMPLETED);
 
         mReceiver.onReceive(mMockContext, intent);
+        when(mMockContext.getSharedPreferences("com.cloudant.preferences", Context.MODE_PRIVATE)).thenReturn(mMockPreferences);
+        when(mMockPreferences.getBoolean(ReplicationService.class.getName() + ".periodicReplicationsActive",
+            false))
+            .thenReturn(false);
         assertEquals(1, mMockContext.getIntentsReceived().size());
 
         Intent receivedIntent = mMockContext.getIntentsReceived().get(0);
