@@ -14,6 +14,27 @@ intervals.
 
 ## Android replication policies
 
+If your Android app is targeting Android 5.0 (API level 21) or above it is recommended that you use Android's [`JobScheduler`](https://developer.android.com/reference/android/app/job/JobScheduler.html)
+rather than the Replication Policies described in this section. Using the `JobScheduler` you can set various conditions
+for replication much like with Replication Policies and they make even more efficient use of device resources than Replication Policies.
+See the section [Replication using the JobScheduler](#replication-using-the-jobscheduler) for examples and advice regarding using
+the `JobScheduler`.
+
+If your app is targeting Android 7.0 (API level 24) or above, the `WifiPeriodicReplicationReceiver` will not work correctly because
+apps declaring a `BroadcastReceiver` in their manifest no longer receive the `android.net.conn.CONNECTIVITY_CHANGE` event. In
+this case, you must use `JobScheduler`.
+
+If you want your app to run on pre Android 5.0 and post Android 5.0, there are three options:
+1. If you are happy to make your app dependent on Google Play Services, you can use the [Firebase JobDispatcher](https://github.com/firebase/firebase-jobdispatcher-android)
+to have a `JobScheduler` compatible API that works on older versions of Android.
+1. You can use the Android `JobScheduler` on API level 21 and above and Replication Policies for API levels below 21.
+See [Mixing JobScheduler and Replication Policies](#mixing-jobscheduler-and-replication-policies).
+1. You can use Replication Policies on their own. Although Replication Policies are quite efficient in terms of their
+battery and processor use, you will get further benefits in these areas by using the `JobScheduler` where possible.
+For this reason, using only Replication Policies is not recommended.
+
+### Overview
+
 Replication policies on Android run in a [`Service`](http://developer.android.com/reference/android/app/Service.html)
 to allow them to run independently of your main application and to allow
 them to be restarted if they are killed by the operating system.  To use replication policies, you need to subclass
@@ -383,5 +404,265 @@ protected void onStop() {
         mIsBound = false;
     }
 }
+```
+
+# Replication using the JobScheduler
+
+The [`JobScheduler`](https://developer.android.com/reference/android/app/job/JobScheduler.html) is a 
+standard part of the Android API, so there is plenty of information available about how to use it.
+
+## Example
+The following example shows how we could configure the JobScheduler to perform a replication where:
+* We want replications to occur roughly every hour.
+* We only ever want replications to occur when the device is connected to an unmetered network (e.g. WiFi).
+* We want to do sync replications (pull and push).
+* After the device has rebooted, we want replications to continue in the same way as prior to the reboot.
+
+### JobService
+
+First, we create a [`JobService`](https://developer.android.com/reference/android/app/job/JobService.html)
+that performs the replications. In this example we do both a pull and a push replication. We also use a
+static `EventBus` and repost the events from the replicator's event buses onto this event bus.
+We could, for example, register an Activity with the event bus so that the Activity can be notified
+when pull replications are complete so we can update the UI.
+
+
+```java
+public class MyJobService extends JobService {
+
+    public static int PUSH_REPLICATION_ID = 0;
+    public static int PULL_REPLICATION_ID = 1;
+
+    public static final String TAG = "MyJobService";
+
+    private static final String DOCUMENT_STORE_DIR = "data";
+    private static final String DOCUMENT_STORE_NAME = "tasks";
+
+    private ReplicationTask mReplicationTask = new ReplicationTask();
+
+    private JobParameters mJobParameters;
+
+    private static EventBus sEventBus = new EventBus();
+
+    // Create a simple listener that can be attached to the replications so that we can wait
+    // for all replications to complete.
+    public class Listener {
+
+        private final CountDownLatch latch;
+
+        Listener(CountDownLatch latch) {
+            this.latch = latch;
+        }
+
+        @Subscribe
+        public void complete(ReplicationCompleted event) {
+            latch.countDown();
+            sEventBus.post(event);
+        }
+
+        @Subscribe
+        public void error(ReplicationErrored event) {
+            latch.countDown();
+        }
+    }
+
+    // Use an AsyncTask to run the replications off the main thread.
+    class ReplicationTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                URI uri = new URI("https", "my_api_key:my_api_secret", "myaccount.cloudant.com", 443, "/" + "mydb", null, null);
+
+                File path = getApplicationContext().getDir(
+                    DOCUMENT_STORE_DIR,
+                    Context.MODE_PRIVATE
+                );
+
+                DocumentStore documentStore = null;
+                try {
+                    documentStore = DocumentStore.getInstance(new File(path, DOCUMENT_STORE_NAME));
+                } catch (DocumentStoreNotOpenedException dsnoe) {
+                    Log.e(TAG, "Unable to open DocumentStore", dsnoe);
+                }
+
+                Replicator pullReplicator = ReplicatorBuilder.pull().from(uri).to(documentStore).withId
+                    (PULL_REPLICATION_ID).build();
+                Replicator pushReplicator = ReplicatorBuilder.push().to(uri).from(documentStore).withId
+                    (PUSH_REPLICATION_ID).build();
+
+                // Setup the CountDownLatch for our two replications.
+                CountDownLatch latch = new CountDownLatch(2);
+                Listener listener = new Listener(latch);
+                pullReplicator.getEventBus().register(listener);
+                pullReplicator.start();
+                pushReplicator.getEventBus().register(listener);
+                pushReplicator.start();
+
+                // Wait for both replications to complete.
+                latch.await();
+                pullReplicator.getEventBus().unregister(listener);
+                pushReplicator.getEventBus().unregister(listener);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                Log.i(TAG, "ReplicationTask has been cancelled");
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            // Replications finished successfully.
+            jobFinished(mJobParameters, false);
+        }
+
+        @Override
+        protected void onCancelled(Void aVoid) {
+            // Replications were cancelled. Request rescheduling.
+            jobFinished(mJobParameters, true);
+        }
+    }
+
+    @Override
+    public boolean onStartJob(JobParameters jobParameters) {
+        mJobParameters = jobParameters;
+
+        if (!jobParameters.isOverrideDeadlineExpired()) {
+            mReplicationTask.execute();
+        } else {
+            // An undocumented feature of the JobScheduler is that for a periodic job it
+            // will call onStartJob at the end of the period regardless of whether
+            // the other conditions for the job are met. However, when it does it
+            // for this reason, jobParameters.isOverrideDeadlineExpired() will
+            // be true. Since we only want to replicate if all the conditions for
+            // the job are true, we just ignore this case and jobFinished().
+            jobFinished(mJobParameters, false);
+        }
+
+        // Work is being done on a separate thread.
+        return true;
+    }
+
+    @Override
+    public boolean onStopJob(JobParameters jobParameters) {
+        mReplicationTask.cancel(true);
+
+        // We want the job rescheduled next time the conditions for execution are met.
+        return true;
+    }
+
+    public static EventBus getEventBus() {
+        return sEventBus;
+    }
+}
+```
+
+### Configuring the JobScheduler
+
+We also need to configure the JobScheduler to run `MyJobService` when the relevant
+conditions for replication are met:
+
+```java
+private static final int MY_JOB_ID = 0;
+
+...
+
+ComponentName jobServiceComponent = new ComponentName(this, MyJobService.class);
+JobInfo.Builder builder = new JobInfo.Builder(MY_JOB_ID, jobServiceComponent);
+builder.setPersisted(true);  // Persist across reboots
+builder.setPeriodic(60 * 60 * 1000); // 1 hour
+builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);
+
+JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+jobScheduler.schedule(builder.build());
+```
+
+### AndroidManifest.xml
+
+Now we add our [`JobService`](#JobService) to the `AndroidManifest.xml`:
+
+```xml
+<service android:name=".MyJobService"
+         android:permission="android.permission.BIND_JOB_SERVICE"
+         android:exported="false"/>
+```
+
+Because we want our `JobService` to persist across reboots, our app must have the following permission declared in the `AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+```
+
+## Mixing JobScheduler and Replication Policies
+
+If you want to use a combination of Replication Policies and `JobScheduler`, follow the [Replication Policy](#android-replication-policies)
+guidance above and everywhere you send a message to your `ReplicationService`, make a conditional call dependent on API
+level to start/cancel/restart the `JobScheduler` with your `JobService` with any necessary changes to the configuration
+of your `JobService`.
+
+To make this easier, we declare methods to start and cancel our JobScheduler tasks. You may wish to make them
+static and add parameters to allow changes to be made to the setup of the job, e.g.:
+
+```java
+@TargetApi(21)
+public static void startJobService(Context context, long period) {
+    ComponentName jobServiceComponent = new ComponentName(context, MyJobService.class);
+    JobInfo.Builder builder = new JobInfo.Builder(MY_JOB_ID, jobServiceComponent);
+    builder.setPersisted(true);  // Persist across reboots
+    builder.setPeriodic(period);
+    builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);
+
+    JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    jobScheduler.schedule(builder.build());
+}
+
+@TargetApi(21)
+public static void cancelJobService(Context context) {
+    JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    jobScheduler.cancel(MY_JOB_ID);
+}
+```
+
+Then, for example, to start a periodic replication we execute different code depending on the API level
+running on the device:
+
+```java
+if (Build.VERSION.SDK_INT >= 21) {
+    // Use the JobScheduler.
+    long periodMilliseconds = 60 * 60 * 1000; // 1 hour
+    startJobService(context, periodMilliseconds);
+} else {
+    // Use replication policies.
+    Intent intent = new Intent(getApplicationContext(), MyReplicationService.class);
+    intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION);
+    startService(intent);
+}
+```
+
+If the periodicity of your replications is stored in shared preferences, the implementation of your `ReplicationService`
+for your Replication Policy might contain something like:
+
+```java
+@Override
+protected int getUnboundIntervalInSeconds() {
+    return Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(this).getString("unbound_period", "0"));
+}
+```
+
+Then, when the shared preference has changed, you will probably want to cancel and restart the JobScheduler
+and force the Replication Policy to re-evaluate the periodicity depending on the Android API level, for example:
+```java
+if (Build.VERSION.SDK_INT >= 21) {
+    // Use the JobScheduler.
+    cancelJobService(context);
+    startJobService(context, Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(this).getString("unbound_period", "0")));
+} else {
+    // Use replication policies.
+    Intent intent = new Intent(getApplicationContext(), MyReplicationService.class);
+    intent.putExtra(ReplicationService.EXTRA_COMMAND, PeriodicReplicationService.COMMAND_RESET_REPLICATION_TIMERS);
+    startService(intent);
+}
+
 ```
 

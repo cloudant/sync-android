@@ -20,7 +20,8 @@ package com.cloudant.sync.replication;
  */
 public interface PolicyReplicationsCompletedListener {
     /**
-     * Gets called back when all replicators completed.
+     * Gets called back when all replicators completed, whether due to normal completion or
+     * completion due to error.
      */
     void allReplicationsCompleted();
     /**
