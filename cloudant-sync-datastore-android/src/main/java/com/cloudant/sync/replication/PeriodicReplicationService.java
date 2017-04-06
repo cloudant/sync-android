@@ -47,7 +47,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * So that multiple PeriodicReplicationService instances can be used in one application without
      * interfering with each other, the preferences in this file are stored using keys prefixed with
      * the name of the concrete class implementing the PeriodicReplicationService. */
-    private static final String PREFERENCES_FILE_NAME = "com.cloudant.preferences";
+    static final String PREFERENCES_FILE_NAME = "com.cloudant.preferences";
 
     /* We store the elapsed time since booting at which the last alarm occurred in SharedPreferences
      * using a key with this suffix. This is used to set the initial alarm time when periodic
@@ -68,6 +68,14 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * SharedPreferences using a key with this suffix. We have to store the flag persistently as
      * the service may be stopped and started by the operating system. */
     private static final String EXPLICITLY_STOPPED_SUFFIX = ".explicitlyStopped";
+
+    /* We store a flag indicating whether there are replications pending in
+     * SharedPreferences using a key with this suffix. Replications may be pending because they
+     * are currently in progress and have not yet completed, or becasue a previous scheduled
+     * replication didn't take place because the conditions for replication were not met. We have
+     * to store the flag persistently as the service may be stopped and started by the operating
+     * system. */
+    private static final String REPLICATIONS_PENDING_SUFFIX = ".replicationsPending";
 
     private static final long MILLISECONDS_IN_SECOND = 1000L;
 
@@ -156,19 +164,29 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
 
         @Override
         public void handleMessage(Message msg) {
+            Intent intent = msg.getData().getParcelable(EXTRA_INTENT);
+
             switch (msg.arg2) {
                 case COMMAND_START_PERIODIC_REPLICATION:
                     startPeriodicReplication();
+                    releaseWakeLock(intent);
+                    stopSelf(msg.arg1);
                     break;
                 case COMMAND_STOP_PERIODIC_REPLICATION:
                     stopPeriodicReplication();
                     setExplicitlyStopped(true);
+                    releaseWakeLock(intent);
+                    stopSelf(msg.arg1);
                     break;
                 case COMMAND_DEVICE_REBOOTED:
                     resetAlarmDueTimesOnReboot();
+                    releaseWakeLock(intent);
+                    stopSelf(msg.arg1);
                     break;
                 case COMMAND_RESET_REPLICATION_TIMERS:
                     restartPeriodicReplications();
+                    releaseWakeLock(intent);
+                    stopSelf(msg.arg1);
                     break;
                 default:
                     // Do nothing
@@ -228,6 +246,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
     protected void startReplications() {
         super.startReplications();
         setLastAlarmTime(0);
+        setReplicationsPending(this, getClass(), true);
     }
 
     /** Start periodic replications. */
@@ -344,6 +363,14 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
             false);
     }
 
+    public static boolean isPeriodicReplicationEnabled(Context context,
+                                                        Class <? extends
+                                                            PeriodicReplicationService> prsClass) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFERENCES_FILE_NAME, Context
+            .MODE_PRIVATE);
+        return prefs.getBoolean(constructKey(prsClass, PERIODIC_REPLICATION_ENABLED_SUFFIX), false);
+    }
+
     /**
      * Set a flag in SharedPreferences to indicate whether periodic replications were explicitly
      * stopped.
@@ -417,8 +444,51 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
         }
     }
 
-    private String constructKey(String suffix) {
-        return getClass().getName() + suffix;
+    String constructKey(String suffix) {
+        return constructKey(getClass(), suffix);
+    }
+
+    static String constructKey(Class<? extends PeriodicReplicationService> prsClass,
+                                       String suffix) {
+        return prsClass.getName() + suffix;
+    }
+
+    @Override
+    public void allReplicationsCompleted() {
+        super.allReplicationsCompleted();
+        setReplicationsPending(this, getClass(), false);
+    }
+
+    /**
+     * Sets whether there are replications pending. This may be because replications are
+     * currently in progress and have not yet completed, or because a previous scheduled
+     * replication didn't take place because the conditions for replication were not met.
+     * @param context
+     * @param prsClass
+     * @param pending true if there is a replication pending, or false otherwise.
+     */
+    public static void setReplicationsPending(Context context, Class<? extends
+        PeriodicReplicationService> prsClass, boolean pending) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFERENCES_FILE_NAME, Context
+            .MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(constructKey(prsClass, REPLICATIONS_PENDING_SUFFIX), pending);
+        editor.apply();
+    }
+
+    /**
+     * Gets whether there are replications pending. Replications may be pending because they are
+     * currently in progress and have not yet completed, or because a previous scheduled
+     * replication didn't take place because the conditions for replication were not met.
+     * @param context
+     * @param prsClass
+     * @return
+     */
+    public static boolean replicationsPending(Context context, Class<? extends
+        PeriodicReplicationService> prsClass) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFERENCES_FILE_NAME, Context
+            .MODE_PRIVATE);
+        return prefs.getBoolean(constructKey(prsClass, REPLICATIONS_PENDING_SUFFIX), true);
     }
 
     /**

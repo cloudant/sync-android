@@ -565,8 +565,8 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
     /**
      * Check that when an intent is sent to the {@link PeriodicReplicationService} indicating that
      * a replication should be started, a {@link android.net.wifi.WifiManager.WifiLock} is acquired,
-     * the {@link ReplicationPolicyManager} is started and the last alarm times in SharedPreferences
-     * are updated to the current time.
+     * the {@link ReplicationPolicyManager} is started, the last alarm times in SharedPreferences
+     * are updated to the current time and the replications pending flag is set to true.
      */
     @Test
     public void testOnStartCommandStartReplication() {
@@ -609,6 +609,17 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
             checkElapsedTime(expectedElapsedTime, prefsValues.get(0));
             checkClockPreferenceName(prefsKeys.get(1));
             checkClockTime(expectedRealTime, prefsValues.get(1));
+
+            ArgumentCaptor<String> captorPrefKeys2 = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<Boolean> captorPrefValues2 = ArgumentCaptor.forClass(Boolean.class);
+            List<String> prefKeys = captorPrefKeys2.getAllValues();
+            List<Boolean> prefValues = captorPrefValues2.getAllValues();
+            verify(mMockPreferencesEditor, times(1)).putBoolean
+                (captorPrefKeys2.capture(),
+                    captorPrefValues2.capture());
+
+            assertEquals(PREFERENCE_CLASS_NAME + ".replicationsPending", prefKeys.get(0));
+            assertTrue("Replications pending flag should be true", prefValues.get(0));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -617,7 +628,8 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
     /**
      * Check that when an intent is sent to the {@link PeriodicReplicationService} indicating that
      * a replication should be stopped, the {@link android.net.wifi.WifiManager.WifiLock} is
-     * released and the {@link ReplicationPolicyManager} is stopped.
+     * released, the {@link ReplicationPolicyManager} is stopped and the replications pending flag
+     * remains true.
      */
     @Test
     public void testOnStartCommandStopReplication() {
@@ -652,10 +664,22 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
         stopIntent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, PeriodicReplicationService.COMMAND_STOP_REPLICATION);
         service.onStartCommand(stopIntent, 0, 0);
         service.setReplicators(mMockReplicators);
+
         try {
             assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS, TimeUnit.SECONDS));
             verify(mMockWifiLock, times(1)).release();
             verify(mMockReplicationPolicyManager, times(1)).stopReplications();
+
+            ArgumentCaptor<String> captorPrefKeys = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<Boolean> captorPrefValues = ArgumentCaptor.forClass(Boolean.class);
+            List<String> prefKeys = captorPrefKeys.getAllValues();
+            List<Boolean> prefValues = captorPrefValues.getAllValues();
+            verify(mMockPreferencesEditor, times(1)).putBoolean
+                    (captorPrefKeys.capture(),
+                            captorPrefValues.capture());
+
+            assertEquals(PREFERENCE_CLASS_NAME + ".replicationsPending", prefKeys.get(0));
+            assertTrue("Replications pending flag should be true", prefValues.get(0));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
