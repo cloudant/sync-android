@@ -14,10 +14,10 @@
 
 package com.cloudant.sync.internal.documentstore.callables;
 
+import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.internal.common.CouchUtils;
-import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
@@ -30,6 +30,7 @@ import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
 
 import java.sql.SQLException;
+import java.util.Collections;
 
 /**
  * Delete a Document for given Document ID and Revision ID.
@@ -125,6 +126,7 @@ public class DeleteDocumentCallable implements SQLCallable<InternalDocumentRevis
                 .setCurrent(current)
                 .setBody(DocumentBodyFactory.create(JSONUtils.emptyJSONObjectAsBytes()))
                 .setSequence(newSequence)
+                .setAttachments(Collections.<String, Attachment>emptyMap())
                 .build();
     }
 

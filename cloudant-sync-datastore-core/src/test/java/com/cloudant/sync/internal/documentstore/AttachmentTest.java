@@ -23,8 +23,10 @@ import com.cloudant.sync.documentstore.Attachment;
 import com.cloudant.sync.documentstore.AttachmentException;
 import com.cloudant.sync.documentstore.AttachmentNotSavedException;
 import com.cloudant.sync.documentstore.ConflictException;
+import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.documentstore.DocumentRevision;
+import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.documentstore.UnsavedFileAttachment;
 import com.cloudant.sync.documentstore.UnsavedStreamAttachment;
 import com.cloudant.sync.documentstore.encryption.NullKeyProvider;
@@ -45,6 +47,7 @@ import java.io.FileNotFoundException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -411,4 +414,54 @@ public class AttachmentTest extends BasicDatastoreTestBase {
         Matcher m = p.matcher(regex);
         Assert.assertTrue("Should match pattern", m.matches());
     }
+
+    // test for regression on fetching attachments after deleting revision which previously had no
+    // attachments
+    @Test
+    public void getAttachmentsOnDeletedRevisionNoAttachments() throws Exception {
+
+        DocumentRevision revision = new DocumentRevision();
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("animal", "cat");
+        revision.setBody(DocumentBodyFactory.create(body));
+
+        // create rev
+        DocumentRevision saved = documentStore.database().create(revision);
+        Map<String, Attachment> attachments = saved.getAttachments();
+        Assert.assertTrue(attachments.isEmpty());
+
+        DocumentRevision deleted = documentStore.database().delete(saved);
+        attachments = deleted.getAttachments();
+
+        Assert.assertTrue(attachments.isEmpty());
+    }
+
+
+    // test for regression on fetching attachments after deleting revision which previously had some
+    // attachments
+    @Test
+    public void getAttachmentsOnDeletedRevisionSomeAttachments() throws Exception {
+
+        DocumentRevision revision = new DocumentRevision();
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("animal", "cat");
+        revision.setBody(DocumentBodyFactory.create(body));
+
+        // add attachment
+        String imageAttachmentName = "bonsai-boston.jpg";
+        File imageFile = TestUtils.loadFixture("fixture/" + imageAttachmentName);
+        Attachment att = new UnsavedFileAttachment(imageFile, "image/jpeg");
+        revision.getAttachments().put(imageAttachmentName, att);
+
+        //create rev
+        DocumentRevision saved = documentStore.database().create(revision);
+        Map<String, Attachment> attachments = saved.getAttachments();
+        Assert.assertEquals(attachments.size(), 1);
+
+        DocumentRevision deleted = documentStore.database().delete(saved);
+        attachments = deleted.getAttachments();
+
+        Assert.assertTrue(attachments.isEmpty());
+    }
+
 }
