@@ -15,6 +15,7 @@
 
 package com.cloudant.sync.internal.query.callables;
 
+import com.cloudant.sync.internal.query.QueryConstants;
 import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -42,7 +43,7 @@ public class DeleteIndexCallable implements SQLCallable<Void> {
 
             // Delete the metadata entries
             String where = " index_name = ? ";
-            database.delete(QueryImpl.INDEX_METADATA_TABLE_NAME, where, new String[]{indexName});
+            database.delete(QueryConstants.INDEX_METADATA_TABLE_NAME, where, new String[]{indexName});
         } catch (SQLException e) {
             String msg = String.format("Failed to delete index: %s", indexName);
             throw new QueryException(msg, e);

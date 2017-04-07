@@ -1162,7 +1162,7 @@ public class IndexUpdaterTest extends AbstractIndexTestBase {
     private long getIndexSequenceNumber(String indexName) throws Exception {
         String where = String.format("index_name = \"%s\" group by last_sequence", indexName);
         final String sql = String.format("SELECT last_sequence FROM %s where %s",
-                                   QueryImpl.INDEX_METADATA_TABLE_NAME,
+                                   QueryConstants.INDEX_METADATA_TABLE_NAME,
                                    where);
 
        return indexManagerDatabaseQueue.submit(new SQLCallable<Long>() {

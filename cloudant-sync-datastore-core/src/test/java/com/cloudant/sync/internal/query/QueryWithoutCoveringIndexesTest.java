@@ -94,7 +94,7 @@ public class QueryWithoutCoveringIndexesTest extends AbstractQueryTestBase {
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(im, is(notNullValue()));
         assertThat(indexManagerDatabaseQueue, is(notNullValue()));
-        String[] metadataTableList = new String[] { QueryImpl.INDEX_METADATA_TABLE_NAME };
+        String[] metadataTableList = new String[] { QueryConstants.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue, metadataTableList);
     }
 

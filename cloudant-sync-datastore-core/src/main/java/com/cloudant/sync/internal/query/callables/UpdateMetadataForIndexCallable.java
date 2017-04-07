@@ -16,6 +16,7 @@
 package com.cloudant.sync.internal.query.callables;
 
 import com.cloudant.sync.internal.android.ContentValues;
+import com.cloudant.sync.internal.query.QueryConstants;
 import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -37,7 +38,7 @@ public class UpdateMetadataForIndexCallable implements SQLCallable<Void> {
     public Void call(SQLDatabase database) throws QueryException {
         ContentValues v = new ContentValues();
         v.put("last_sequence", lastSequence);
-        int row = database.update(QueryImpl.INDEX_METADATA_TABLE_NAME,
+        int row = database.update(QueryConstants.INDEX_METADATA_TABLE_NAME,
                                   v,
                                   " index_name = ? ",
                                   new String[]{indexName});

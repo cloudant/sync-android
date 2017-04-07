@@ -49,7 +49,7 @@ public abstract class AbstractIndexTestBase {
         assertThat(im, is(notNullValue()));
         indexManagerDatabaseQueue = TestUtils.getDBQueue(im);
         assertThat(indexManagerDatabaseQueue, is(notNullValue()));
-        String[] metadataTableList = new String[] { QueryImpl.INDEX_METADATA_TABLE_NAME };
+        String[] metadataTableList = new String[] { QueryConstants.INDEX_METADATA_TABLE_NAME };
         SQLDatabaseTestUtils.assertTablesExist(indexManagerDatabaseQueue,
                                                metadataTableList);
     }
