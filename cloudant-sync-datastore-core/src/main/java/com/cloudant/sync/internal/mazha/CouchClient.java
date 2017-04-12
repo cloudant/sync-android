@@ -90,7 +90,6 @@ public class CouchClient  {
                               String responseMessage,
                               Throwable cause)
         {
-            this.responseCode = responseCode;
             boolean needsCouchException = false;
             switch(responseCode / 100) {
                 case 1:
@@ -145,7 +144,6 @@ public class CouchClient  {
 
         InputStream stream;
         CouchException exception;
-        int responseCode;
         boolean fatal;
     }
 
@@ -695,20 +693,27 @@ public class CouchClient  {
 
     public boolean isBulkSupported() {
         URI bulkGet = this.uriHelper.documentUri("_bulk_get");
-        HttpConnection connection = Http.GET(bulkGet);
-        connection.responseInterceptors.addAll(responseInterceptors);
-        connection.requestInterceptors.addAll(requestInterceptors);
-        ExecuteResult result = this.execute(connection);
-        switch (result.responseCode) {
-            case 404:
-                // not found: _bulk_get not supported
-                return false;
-            case 405:
-                // method not allowed: this endpoint exists, we called with the wrong method
-                return true;
-            default:
-                throw(result.exception);
+        HttpConnection get = Http.GET(bulkGet);
+        Throwable cause = null;
+        try {
+            executeWithRetry(get, new NoOpInputStreamProcessor());
+        } catch (CouchException ce) {
+            switch (ce.getStatusCode()) {
+                case 404:
+                    // not found: _bulk_get not supported
+                    return false;
+                case 405:
+                    // method not allowed: this endpoint exists, we called with the wrong method
+                    return true;
+                default:
+                    // will re-throw with this as cause since we didn't understand the result
+                    cause = ce;
+            }
         }
+        // if we got here, we either ran out of retries or couldn't figure out the response code
+        // so all we can do is throw an exception
+        throw new RuntimeException("Could not determine if the _bulk_get endpoint is supported",
+                cause);
     }
 
     public static class MissingRevisions {
