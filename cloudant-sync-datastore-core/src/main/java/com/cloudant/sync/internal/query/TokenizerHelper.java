@@ -49,22 +49,26 @@ public class TokenizerHelper {
     /**
      * Convert serialized options into Tokenizer, or null if options not present
      * (this will be the case for JSON indexes)
+     *
      * @param json Serialized options, as stored in database
      * @return a {@link Tokenizer} representing these options, or null
      */
     public static Tokenizer jsonToTokenizer(String json) {
-        Map<String, Object> settingsMap = JSONUtils.deserialize(json.getBytes(Charset.forName("UTF-8")));
-        if (settingsMap.containsKey(TOKENIZE) && settingsMap.get(TOKENIZE) instanceof String) {
-            // optional arguments
-            String tokenizerArguments = null;
-            if (settingsMap.containsKey(TOKENIZE_ARGS) && settingsMap.get(TOKENIZE_ARGS) instanceof String) {
-                tokenizerArguments = (String)settingsMap.get(TOKENIZE_ARGS);
-            }
-            String tokenizer = (String)settingsMap.get(TOKENIZE);
-            return new Tokenizer(tokenizer, tokenizerArguments);
-        } else {
-            return null;
-        }
-    }
+        if (json != null) {
+            Map<String, Object> settingsMap = JSONUtils.deserialize(json.getBytes(Charset.forName
+                    ("UTF-8")));
 
+            if (settingsMap.containsKey(TOKENIZE) && settingsMap.get(TOKENIZE) instanceof String) {
+                // optional arguments
+                String tokenizerArguments = null;
+                if (settingsMap.containsKey(TOKENIZE_ARGS) && settingsMap.get(TOKENIZE_ARGS)
+                        instanceof String) {
+                    tokenizerArguments = (String) settingsMap.get(TOKENIZE_ARGS);
+                }
+                String tokenizer = (String) settingsMap.get(TOKENIZE);
+                return new Tokenizer(tokenizer, tokenizerArguments);
+            }
+        }
+        return null;
+    }
 }

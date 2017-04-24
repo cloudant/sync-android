@@ -1,5 +1,6 @@
 # Unreleased
 - [IMPROVED] Increased the resilience of replication to network failures.
+- [FIXED] NPE when accessing indexes created in earlier versions that were migrated to version 2.
 
 # 2.0.0 (2017-02-07)
 - [BREAKING CHANGE] With the release of version 2.0 of the library,
