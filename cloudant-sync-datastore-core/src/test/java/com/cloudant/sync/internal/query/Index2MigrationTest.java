@@ -16,6 +16,7 @@ package com.cloudant.sync.internal.query;
 
 import static org.junit.Assert.assertEquals;
 
+import com.cloudant.sync.internal.documentstore.Database200MigrationTest;
 import com.cloudant.sync.internal.documentstore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -32,9 +33,14 @@ public class Index2MigrationTest extends AbstractIndexTestBase {
 
     /**
      * Version 2 of the index includes an additional index_settings column, which defaults to a null
-     * value. This method pretends we have a
+     * value. This method creates a version 2 index and then moves the table to a temporary table.
+     * It rolls the index database version back to 0 and steps forward the schema versions; creating
+     * a version 1 index table. It then copies the created index metadata (excluding the new column)
+     * from the temporary table into the version 1 table having the effect of creating the required
+     * index with version metadata.
      *
      * @throws Exception
+     * @see Database200MigrationTest#setUp()
      */
     @Before
     public void createIndexAndRollback() throws Exception {
