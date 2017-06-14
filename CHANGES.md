@@ -1,3 +1,9 @@
+# 2.0.2 (Unreleased)
+- [FIXED] Removed cloudant-sync-datastore-android project's dependency
+  on com.google.android:android. This dependency was inadvertently
+  made a run-time dependency where it should have been a build-time
+  dependency.
+
 # 2.0.1 (2017-04-26)
 - [IMPROVED] Increased the resilience of replication to network failures.
 - [FIXED] NPE when accessing indexes created in earlier versions that were

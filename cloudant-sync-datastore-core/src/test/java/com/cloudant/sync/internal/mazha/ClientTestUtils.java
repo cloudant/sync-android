@@ -26,14 +26,13 @@ import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.http.Http;
 import com.cloudant.http.HttpConnection;
+import com.cloudant.sync.internal.util.JSONUtils;
 
 import org.apache.commons.io.IOUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 import org.junit.Assert;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -225,13 +224,12 @@ public class ClientTestUtils {
         connection.responseInterceptors.addAll(config.getResponseInterceptors());
         InputStream in = connection.execute().responseAsInputStream();
 
-        JSONObject jsonObject = new JSONObject(new JSONTokener(IOUtils.toString(in)));
-        JSONArray revsInfo = jsonObject.getJSONArray("_revs_info");
+        Map<String, Object> m = JSONUtils.fromJson(new InputStreamReader(in));
+        List<Object> revsInfo = (List<Object>)m.get("_revs_info");
+        List<String> revisions = new ArrayList<String>(revsInfo.size());
 
-        List<String> revisions = new ArrayList<String>(revsInfo.length());
-
-        for(int i=0; i<revsInfo.length(); i++){
-            revisions.add(revsInfo.getJSONObject(i).getString("rev"));
+        for(Object rev : revsInfo){
+            revisions.add(((Map<String, String>)rev).get("rev"));
         }
 
         return revisions;
