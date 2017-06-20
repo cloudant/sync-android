@@ -1,5 +1,5 @@
-# 2.0.2 (Unreleased)
-- [FIXED] Removed cloudant-sync-datastore-android project's dependency
+# 2.0.2 (2017-06-20)
+- [FIXED] Removed cloudant-sync-datastore-android project dependency
   on com.google.android:android. This dependency was inadvertently
   made a run-time dependency where it should have been a build-time
   dependency.
