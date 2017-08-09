@@ -63,3 +63,7 @@ logger.addHandler (consoleHandler);
 //set the logger to log messages with level FINE or higher
 logger.setLevel (Level.FINE);
 ```
+
+### Logging HTTP requests
+
+Enabling logging for `com.cloudant.http` classes will provide debug information about HTTP requests and responses. `FINE` logging will include request and response URLs and status codes. `FINER` level logging will include request and response HTTP headers. Note that this logging may include sensitive information such as encoded credentials in HTTP headers.
