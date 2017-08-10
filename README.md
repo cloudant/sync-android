@@ -2,17 +2,12 @@
 
 [![Build Status](https://travis-ci.org/cloudant/sync-android.svg?branch=master)](https://travis-ci.org/cloudant/sync-android)
 
-[![maven-central-core](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-core.svg?label=maven-central core)](http://search.maven.org/#search|ga|1|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-core")
-[![javadoc-core](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-core.svg?label=javadoc-core)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-core)
-
-[![maven-central-android](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-android.svg?label=maven-central android)](http://search.maven.org/#search|ga|1|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-android")
-[![javadoc-android](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-android.svg?label=javadoc-android)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-android)
-
-[![maven-central-android-encryption](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-android-encryption.svg?label=maven-central android-encryption)](http://search.maven.org/#search|ga|1|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-android-encryption")
-[![javadoc-android-encryption](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-android.svg?label=javadoc-android-encryption)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-android)
-
-[![maven-central-javase](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-javase.svg?label=maven-central javase)](http://search.maven.org/#search|ga|1|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-javase")
-[![javadoc-javase](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-javase.svg?label=javadoc-javase)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-javase)
+| Artifact | Links |
+| ---|--- |
+| Core | [![maven-central-core](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-core.svg?label=maven-central%20core)](http://search.maven.org/#search\|ga\|1\|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-core") [![javadoc-core](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-core.svg?label=javadoc-core)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-core) |
+| Android | [![maven-central-android](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-android.svg?label=maven-central%20android)](http://search.maven.org/#search\|ga\|1\|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-android") [![javadoc-android](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-android.svg?label=javadoc-android)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-android) |
+| Android (encryption) | [![maven-central-android-encryption](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-android-encryption.svg?label=maven-central%20android-encryption)](http://search.maven.org/#search\|ga\|1\|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-android-encryption") [![javadoc-android-encryption](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-android-encryption.svg?label=javadoc-android-encryption)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-android-encryption)
+| Java SE | [![maven-central-javase](https://img.shields.io/maven-central/v/com.cloudant/cloudant-sync-datastore-javase.svg?label=maven-central%20javase)](http://search.maven.org/#search\|ga\|1\|g:"com.cloudant"%20AND%20a:"cloudant-sync-datastore-javase") [![javadoc-javase](http://www.javadoc.io/badge/com.cloudant/cloudant-sync-datastore-javase.svg?label=javadoc-javase)](http://www.javadoc.io/doc/com.cloudant/cloudant-sync-datastore-javase)
 
 **Applications use Cloudant Sync to store, index and query local JSON data on a
 device and to synchronise data between many devices. Synchronisation is under
