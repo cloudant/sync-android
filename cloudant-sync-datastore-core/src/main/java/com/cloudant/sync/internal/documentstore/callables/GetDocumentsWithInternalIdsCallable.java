@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -19,6 +19,7 @@ import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentException;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.internal.documentstore.helpers.GetRevisionsFromRawQuery;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.CollectionUtils;
@@ -80,7 +81,7 @@ public class GetDocumentsWithInternalIdsCallable implements SQLCallable<List<Int
             for (int i = 0; i < batch.size(); i++) {
                 args[i] = Long.toString(batch.get(i));
             }
-            result.addAll(DatabaseImpl.getRevisionsFromRawQuery(db, sql, args, attachmentsDir,
+            result.addAll(GetRevisionsFromRawQuery.get(db, sql, args, attachmentsDir,
                     attachmentStreamFactory));
         }
 

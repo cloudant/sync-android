@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -20,6 +20,7 @@ import com.cloudant.sync.documentstore.ConflictException;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentBody;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.internal.documentstore.helpers.InsertNewWinnerRevisionAdaptor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.Misc;
@@ -63,7 +64,7 @@ public class UpdateDocumentBodyCallable implements SQLCallable<InternalDocumentR
         }
 
         new SetCurrentCallable(preRevision.getSequence(), false).call(db);
-        InsertRevisionCallable insertRevisionCallable = DatabaseImpl.insertNewWinnerRevisionAdaptor(body, preRevision);
+        InsertRevisionCallable insertRevisionCallable = InsertNewWinnerRevisionAdaptor.insert(body, preRevision);
         String newRevisionId = insertRevisionCallable.revId;
         insertRevisionCallable.call(db);
         // TODO build the new DocumentRevision instead of retrieving the whole document again

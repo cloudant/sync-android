@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -18,6 +18,7 @@ import com.cloudant.sync.internal.documentstore.AttachmentManager;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.internal.documentstore.helpers.InsertStubRevisionAdaptor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.util.Misc;
@@ -66,7 +67,7 @@ public class InsertDocumentHistoryIntoExistingTreeCallable implements SQLCallabl
             String revId = revisions.get(i);
             long seq = new GetSequenceCallable(newRevision.getId(), revId).call(db);
             if (seq == -1) {
-                seq = DatabaseImpl.insertStubRevisionAdaptor(docNumericID, revId, parentSeq).call(db);
+                seq = InsertStubRevisionAdaptor.insert(docNumericID, revId, parentSeq).call(db);
                 new SetCurrentCallable(parentSeq, false).call(db);
             }
             parentSeq = seq;

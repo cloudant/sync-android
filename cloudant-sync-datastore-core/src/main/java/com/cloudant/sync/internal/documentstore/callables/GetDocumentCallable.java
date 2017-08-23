@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -21,6 +21,7 @@ import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.documentstore.DocumentNotFoundException;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.internal.documentstore.helpers.GetFullRevisionFromCurrentCursor;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
@@ -71,7 +72,7 @@ public class GetDocumentCallable implements SQLCallable<InternalDocumentRevision
                 long sequence = cursor.getLong(3);
                 Map<String, ? extends Attachment> atts = new AttachmentsForRevisionCallable(
                         this.attachmentsDir, this.attachmentStreamFactory, sequence).call(db);
-                return DatabaseImpl.getFullRevisionFromCurrentCursor(cursor, atts);
+                return GetFullRevisionFromCurrentCursor.get(cursor, atts);
             } else {
                 throw new DocumentNotFoundException(id, rev);
             }
