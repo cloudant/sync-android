@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -18,6 +18,7 @@ import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.documentstore.AttachmentStreamFactory;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.internal.documentstore.helpers.GetRevisionsFromRawQuery;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 
@@ -54,7 +55,7 @@ public class GetAllDocumentsCallable implements SQLCallable<List<DocumentRevisio
                 " ORDER BY docs.doc_id %1$s, revid DESC LIMIT %2$s OFFSET %3$s ",
                 (descending ? "DESC" : "ASC"), limit, offset);
 
-        return new ArrayList<DocumentRevision>(DatabaseImpl.getRevisionsFromRawQuery(db, sql,
+        return new ArrayList<DocumentRevision>(GetRevisionsFromRawQuery.get(db, sql,
                 new String[]{}, attachmentsDir, attachmentStreamFactory));
 
     }

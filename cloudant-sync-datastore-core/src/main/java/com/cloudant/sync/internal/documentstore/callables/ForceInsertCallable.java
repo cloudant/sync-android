@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -131,11 +131,9 @@ public class ForceInsertCallable implements SQLCallable<List<DocumentModified>> 
                             String rev = key[1];
                             try {
                                 InternalDocumentRevision doc = new GetDocumentCallable(id, rev, attachmentsDir, attachmentStreamFactory).call(db);
-                                if (doc != null) {
                                     AttachmentManager.addAttachmentsToRevision(db,
                                             attachmentsDir, doc, item
                                                     .preparedAttachments.get(key));
-                                }
                             } catch (DocumentNotFoundException e) {
                                 //safe to continue, previously getDocumentInQueue
                                 // could return

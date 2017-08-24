@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2017 IBM Corp. All rights reserved.
  *
  * Original iOS version by  Jens Alfke, ported to Android by Marty Schoch
  * Copyright © 2012 Couchbase, Inc. All rights reserved.
@@ -343,31 +343,6 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
         }
     }
 
-    public static List<DocumentRevision> sortDocumentsAccordingToIdList(List<String> docIds,
-                                                                                List<InternalDocumentRevision> docs) {
-        Map<String, InternalDocumentRevision> idToDocs = putDocsIntoMap(docs);
-        List<DocumentRevision> results = new ArrayList<DocumentRevision>();
-        for (String id : docIds) {
-            if (idToDocs.containsKey(id)) {
-                results.add(idToDocs.remove(id));
-            } else {
-                logger.fine("No document found for id: " + id);
-            }
-        }
-        assert idToDocs.size() == 0;
-        return results;
-    }
-
-    private static Map<String, InternalDocumentRevision> putDocsIntoMap(List<InternalDocumentRevision> docs) {
-        Map<String, InternalDocumentRevision> map = new HashMap<String, InternalDocumentRevision>();
-        for (InternalDocumentRevision doc : docs) {
-            // ID should be unique cross all docs
-            assert !map.containsKey(doc.getId());
-            map.put(doc.getId(), doc);
-        }
-        return map;
-    }
-
     /**
      * <p>Returns the current winning revision of a local document.</p>
      *
@@ -497,43 +472,6 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
             throw new DocumentNotFoundException(docId, null, e);
         }
 
-    }
-
-    public static InsertRevisionCallable insertStubRevisionAdaptor(long docNumericId, String revId, long
-            parentSequence) {
-        // don't copy attachments
-        InsertRevisionCallable callable = new InsertRevisionCallable();
-        callable.docNumericId = docNumericId;
-        callable.revId = revId;
-        callable.parentSequence = parentSequence;
-        callable.deleted = false;
-        callable.current = false;
-        callable.data = JSONUtils.emptyJSONObjectAsBytes();
-        callable.available = false;
-        return callable;
-    }
-
-    public static List<InternalDocumentRevision> getRevisionsFromRawQuery(SQLDatabase db, String sql, String[]
-            args, String attachmentsDir, AttachmentStreamFactory attachmentStreamFactory)
-            throws DocumentException,
-            DocumentStoreException {
-        List<InternalDocumentRevision> result = new ArrayList<InternalDocumentRevision>();
-        Cursor cursor = null;
-        try {
-            cursor = db.rawQuery(sql, args);
-            while (cursor.moveToNext()) {
-                long sequence = cursor.getLong(3);
-                Map<String, ? extends Attachment> atts = AttachmentManager.attachmentsForRevision(db, attachmentsDir, attachmentStreamFactory
-                        , sequence);
-                InternalDocumentRevision row = getFullRevisionFromCurrentCursor(cursor, atts);
-                result.add(row);
-            }
-        } catch (SQLException e) {
-            throw new DocumentStoreException(e);
-        } finally {
-            DatabaseUtils.closeCursorQuietly(cursor);
-        }
-        return result;
     }
 
     /**
@@ -842,56 +780,6 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
             }
         }
 
-    }
-
-    public static InsertRevisionCallable insertNewWinnerRevisionAdaptor(DocumentBody newWinner,
-                                           InternalDocumentRevision oldWinner)
-            throws AttachmentException, DocumentStoreException {
-        String newRevisionId = CouchUtils.generateNextRevisionId(oldWinner.getRevision());
-
-        InsertRevisionCallable callable = new InsertRevisionCallable();
-        callable.docNumericId = oldWinner.getInternalNumericId();
-        callable.revId = newRevisionId;
-        callable.parentSequence = oldWinner.getSequence();
-        callable.deleted = false;
-        callable.current = true;
-        callable.data = newWinner.asBytes();
-        callable.available = true;
-        return callable;
-    }
-
-    public static InternalDocumentRevision getFullRevisionFromCurrentCursor(Cursor cursor,
-                                                                            Map<String, ? extends Attachment>
-                                                                             attachments) {
-        String docId = cursor.getString(cursor.getColumnIndex("docid"));
-        long internalId = cursor.getLong(cursor.getColumnIndex("doc_id"));
-        String revId = cursor.getString(cursor.getColumnIndex("revid"));
-        long sequence = cursor.getLong(cursor.getColumnIndex("sequence"));
-        byte[] json = cursor.getBlob(cursor.getColumnIndex("json"));
-        boolean current = cursor.getInt(cursor.getColumnIndex("current")) > 0;
-        boolean deleted = cursor.getInt(cursor.getColumnIndex("deleted")) > 0;
-
-        long parent = -1L;
-        if (cursor.columnType(cursor.getColumnIndex("parent")) == Cursor.FIELD_TYPE_INTEGER) {
-            parent = cursor.getLong(cursor.getColumnIndex("parent"));
-        } else if (cursor.columnType(cursor.getColumnIndex("parent")) == Cursor.FIELD_TYPE_NULL) {
-        } else {
-            throw new RuntimeException("Unexpected type: " + cursor.columnType(cursor
-                    .getColumnIndex("parent")));
-        }
-
-        DocumentRevisionBuilder builder = new DocumentRevisionBuilder()
-                .setDocId(docId)
-                .setRevId(revId)
-                .setBody(DocumentBodyImpl.bodyWith(json))
-                .setDeleted(deleted)
-                .setSequence(sequence)
-                .setInternalId(internalId)
-                .setCurrent(current)
-                .setParent(parent)
-                .setAttachments(attachments);
-
-        return builder.build();
     }
 
     /**

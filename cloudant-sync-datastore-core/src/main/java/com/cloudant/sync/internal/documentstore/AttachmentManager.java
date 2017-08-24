@@ -316,7 +316,7 @@ public class AttachmentManager {
         }
     }
 
-    protected static Map<String, ? extends Attachment> attachmentsForRevision(SQLDatabase db, String attachmentsDir,
+    public static Map<String, ? extends Attachment> attachmentsForRevision(SQLDatabase db, String attachmentsDir,
                                                                               AttachmentStreamFactory attachmentStreamFactory,
                                                                               long sequence)
             throws AttachmentException {
@@ -334,7 +334,7 @@ public class AttachmentManager {
                 long encodedLength = c.getInt(c.getColumnIndex("encoded_length"));
                 int revpos = c.getInt(c.getColumnIndex("revpos"));
                 File file = fileFromKey(db, key, attachmentsDir, false);
-                
+
                 atts.put(filename, new SavedAttachment(sequence, filename, key, type, Attachment.Encoding
                         .values()[encoding], length, encodedLength, revpos, file,
                         attachmentStreamFactory));

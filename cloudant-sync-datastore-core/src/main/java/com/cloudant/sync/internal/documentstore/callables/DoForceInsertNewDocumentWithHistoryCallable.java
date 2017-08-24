@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -19,6 +19,7 @@ import com.cloudant.sync.documentstore.DocumentBodyFactory;
 import com.cloudant.sync.documentstore.DocumentStoreException;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.documentstore.InternalDocumentRevision;
+import com.cloudant.sync.internal.documentstore.helpers.InsertStubRevisionAdaptor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 
@@ -59,7 +60,7 @@ public class DoForceInsertNewDocumentWithHistoryCallable implements SQLCallable<
         long parentSequence = 0L;
         for (int i = 0; i < revHistory.size() - 1; i++) {
             // Insert stub node
-            parentSequence = DatabaseImpl.insertStubRevisionAdaptor(docNumericID, revHistory.get(i),
+            parentSequence = InsertStubRevisionAdaptor.insert(docNumericID, revHistory.get(i),
                     parentSequence).call(db);
         }
         // Insert the leaf node (don't copy attachments)
