@@ -16,18 +16,21 @@
 
 def runTests(testEnv, isAndroid) {
     node(isAndroid ? 'android' : null) {
+        // make a copy of the env
+        def localTestEnv = []
+        localTestEnv.addAll(testEnv)
         if (isAndroid) {
             // Android tests run on static hardware so clean the dir
             deleteDir()
-            testEnv.add('GRADLE_TARGET=-b AndroidTest/build.gradle uploadFixtures connectedCheck')
+            localTestEnv.add('GRADLE_TARGET=-b AndroidTest/build.gradle uploadFixtures connectedCheck')
         } else {
-            testEnv.add('GRADLE_TARGET=integrationTest')
+            localTestEnv.add('GRADLE_TARGET=integrationTest')
         }
         // Unstash the built content
         unstash name: 'built'
 
         //Set up the environment and run the tests
-        withEnv(testEnv) {
+        withEnv(localTestEnv) {
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: env.CREDS_ID, usernameVariable: 'DB_USER', passwordVariable: 'DB_PASSWORD']]) {
                 try {
                     sh './gradlew -Dtest.with.specified.couch=true -Dtest.couch.username=$DB_USER -Dtest.couch.password=$DB_PASSWORD -Dtest.couch.host=$DB_HOST -Dtest.couch.port=$DB_PORT -Dtest.couch.http=$DB_HTTP -Dtest.couch.ignore.compaction=$DB_IGNORE_COMPACTION -Dtest.couch.ignore.auth.headers=true $GRADLE_TARGET'
