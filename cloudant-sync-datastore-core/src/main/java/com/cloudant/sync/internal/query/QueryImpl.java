@@ -16,10 +16,13 @@ package com.cloudant.sync.internal.query;
 
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.encryption.KeyProvider;
+import com.cloudant.sync.event.Subscribe;
+import com.cloudant.sync.internal.PurgeNotification;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.documentstore.migrations.SchemaOnlyMigration;
 import com.cloudant.sync.internal.query.callables.DeleteIndexCallable;
 import com.cloudant.sync.internal.query.callables.ListIndexesCallable;
+import com.cloudant.sync.internal.query.callables.PurgeCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabaseFactory;
 import com.cloudant.sync.internal.sqlite.SQLDatabaseQueue;
 import com.cloudant.sync.internal.util.Misc;
@@ -239,6 +242,12 @@ public class QueryImpl implements Query {
     @Override
     public boolean isTextSearchEnabled() {
         return SQLDatabaseFactory.FTS_AVAILABLE;
+    }
+
+    @Subscribe
+    public void onPurge(PurgeNotification purgeNotification) {
+        PurgeCallable purgeCallable = new PurgeCallable(purgeNotification.documentId, purgeNotification.revisionId);
+        dbQueue.submit(purgeCallable);
     }
 
 }

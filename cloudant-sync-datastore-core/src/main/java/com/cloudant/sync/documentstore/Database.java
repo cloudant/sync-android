@@ -356,6 +356,8 @@ public interface Database {
      */
     EventBus getEventBus();
 
+    void purge(final DocumentRevision rev);
+
 
 }
 
