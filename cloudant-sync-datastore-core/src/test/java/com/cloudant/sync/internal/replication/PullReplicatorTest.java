@@ -18,7 +18,7 @@ package com.cloudant.sync.internal.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.common.TestOptions;
-import com.cloudant.http.interceptors.CookieInterceptor;
+import com.cloudant.http.internal.interceptors.CookieInterceptor;
 import com.cloudant.sync.replication.PullFilter;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
@@ -311,6 +311,33 @@ public class PullReplicatorTest extends ReplicationTestBase {
                 from(new URI("gopher://localhost/abc")).
                 to(documentStore);
         p.build();
+    }
+
+    @Test
+    public void replicatorBuilderAddsIamInterceptor() throws Exception {
+        String apiKey = "abc123";
+        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().from(new URI("http://example.com/path")).
+                to(documentStore).
+                iamApiKey(apiKey);
+        // although the replicator isn't used, the interceptor check expects the presence of the
+        // header interceptor, which only gets added if build() is called
+        ReplicatorImpl r = (ReplicatorImpl) p.build();
+        assertIamCookieInterceptorPresent(p);
+    }
+
+    // as above test, but ensure IAM API key takes precedence over username/password
+    @Test
+    public void replicatorBuilderAddsIamInterceptorWhenUsernamePasswordPresent() throws Exception {
+        String apiKey = "abc123";
+        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().from(new URI("http://example.com/path")).
+                to(documentStore).
+                username("username").
+                password("password").
+                iamApiKey(apiKey);
+        // although the replicator isn't used, the interceptor check expects the presence of the
+        // header interceptor, which only gets added if build() is called
+        ReplicatorImpl r = (ReplicatorImpl) p.build();
+        assertIamCookieInterceptorPresent(p);
     }
 
 }

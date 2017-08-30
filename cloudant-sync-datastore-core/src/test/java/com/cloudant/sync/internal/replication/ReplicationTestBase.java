@@ -19,7 +19,9 @@ package com.cloudant.sync.internal.replication;
 import com.cloudant.common.CouchTestBase;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
-import com.cloudant.http.interceptors.CookieInterceptor;
+import com.cloudant.http.internal.interceptors.CookieInterceptor;
+import com.cloudant.http.internal.interceptors.CookieInterceptorBase;
+import com.cloudant.http.internal.interceptors.IamCookieInterceptor;
 import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.mazha.CouchConfig;
@@ -238,12 +240,28 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         Assert.assertEquals(CookieInterceptor.class, reqIList.get(1).getClass());
         Assert.assertEquals(1, respIList.size());
         Assert.assertEquals(CookieInterceptor.class, respIList.get(0).getClass());
-        CookieInterceptor ci = (CookieInterceptor)reqIList.get(1);
-        Field srbField = CookieInterceptor.class.getDeclaredField("sessionRequestBody");
+        CookieInterceptorBase ci = (CookieInterceptorBase)reqIList.get(1);
+        Field srbField = CookieInterceptorBase.class.getDeclaredField("sessionRequestBody");
         srbField.setAccessible(true);
         byte[] srb = (byte[])srbField.get(ci);
         String srbString = new String(srb);
         Assert.assertEquals(expectedRequestBody, srbString);
+    }
+
+    protected void assertIamCookieInterceptorPresent(ReplicatorBuilder p)
+            throws NoSuchFieldException, IllegalAccessException {
+        // peek inside these private fields to see that interceptors have been set
+        Field reqI = ReplicatorBuilder.class.getDeclaredField("requestInterceptors");
+        Field respI = ReplicatorBuilder.class.getDeclaredField("responseInterceptors");
+        reqI.setAccessible(true);
+        respI.setAccessible(true);
+        List<HttpConnectionRequestInterceptor> reqIList = (List)reqI.get(p);
+        List<HttpConnectionRequestInterceptor> respIList = (List)respI.get(p);
+        // This relies on the UserAgentInterceptor being added before the  IamCookieInterceptor.
+        Assert.assertEquals(2, reqIList.size());
+        Assert.assertEquals(IamCookieInterceptor.class, reqIList.get(1).getClass());
+        Assert.assertEquals(1, respIList.size());
+        Assert.assertEquals(IamCookieInterceptor.class, respIList.get(0).getClass());
     }
 
     protected class PushResult {

@@ -1,3 +1,9 @@
+# 2.1.0 (Unreleased)
+- [NEW] Added support for authenticating with IAM API keys. See
+  [README](https://github.com/cloudant/sync-android/blob/2.1.0/README.md) and the
+  [Bluemix documentation](https://console.bluemix.net/docs/services/Cloudant/guides/iam.html#ibm-cloud-identity-and-access-management)
+  for more details.
+
 # 2.0.2 (2017-06-20)
 - [FIXED] Removed cloudant-sync-datastore-android project dependency
   on com.google.android:android. This dependency was inadvertently
