@@ -20,6 +20,7 @@ import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.internal.sqlite.Cursor;
 import com.cloudant.sync.internal.sqlite.SQLCallable;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
+import com.cloudant.sync.internal.util.DatabaseUtils;
 
 import java.util.logging.Logger;
 
@@ -62,7 +63,7 @@ public class PurgeCallable implements SQLCallable<Void> {
             }
             logger.info(String.format("purged %d rows", nRowsTotal));
         } finally {
-            cursorIndexNames.close();
+            DatabaseUtils.closeCursorQuietly(cursorIndexNames);
         }
         return null;
     }
