@@ -1090,7 +1090,7 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
 
     public void purge(final DocumentRevision rev) {
         // purge rev and attachments...
-        PurgeCallable pc = new PurgeCallable(rev.getId(), rev.getRevision());
+        PurgeCallable pc = new PurgeCallable(rev.getId(), rev.getRevision(), attachmentsDir);
         queue.submit(pc);
         // send event on message bus so Query can perform purge
         eventBus.post(new PurgeNotification(rev.getId(), rev.getRevision()));
