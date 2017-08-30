@@ -45,6 +45,8 @@ public class PurgeCallable implements SQLCallable<Void> {
 
     @Override
     public Void call(SQLDatabase db) throws Exception {
+        // TODO fixup the tree if necessary by joining this node's parent to its child
+        // TODO also fix the current flag if necessary when purging a leaf node
         System.out.println("PurgeCallable documentstore");
         int nRows = db.delete("revs",
                 "doc_id = (select doc_id from docs where docid = ?) AND revid = ?",
