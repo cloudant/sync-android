@@ -102,4 +102,6 @@ public class TestOptions {
     public static final Boolean IGNORE_AUTH_HEADERS = Boolean.valueOf(
             System.getProperty("test.couch.ignore.auth.headers", Boolean.TRUE.toString()));
 
+    public static final String COUCH_IAM_API_KEY = System.getProperty("test.couch.iam.api.key");
+
 }

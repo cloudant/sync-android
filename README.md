@@ -261,7 +261,20 @@ Read more in [the replication docs](https://github.com/cloudant/sync-android/blo
 ### Authentication
 
 Sync-android uses session cookies by default to authenticate with the server if
-credentials are provided with in the URL. If you want more fine-grained control over authentication, provide an interceptor to perform the authentication for each request. For example, if you are using middleware such as [Envoy][envoy], you can use
+credentials are provided with in the URL. 
+
+To use an IAM API key on IBM Bluemix, use the `iamApiKey` method when
+building the `Replicator` object:
+
+```java
+Replicator replicator = ReplicatorBuilder.push()
+  .from(ds)
+  .to(uri)
+  .iamApiKey("exampleApiKey")
+  .build();
+```
+
+If you want more fine-grained control over authentication, provide an interceptor to perform the authentication for each request. For example, if you are using middleware such as [Envoy][envoy], you can use
 the `BasicAuthInterceptor` to add basic authentication to requests.
 
 Example:

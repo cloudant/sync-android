@@ -414,4 +414,32 @@ public class PushReplicatorTest extends ReplicationTestBase {
         p.build();
     }
 
+    @Test
+    public void replicatorBuilderAddsIamInterceptor() throws Exception {
+        String apiKey = "abc123";
+        ReplicatorBuilder.Push p = ReplicatorBuilder.push().from(documentStore).
+                to(new URI("http://example.com/path")).
+                iamApiKey(apiKey);
+        // although the replicator isn't used, the interceptor check expects the presence of the
+        // header interceptor, which only gets added if build() is called
+        ReplicatorImpl r = (ReplicatorImpl) p.build();
+        assertIamCookieInterceptorPresent(p);
+    }
+
+    // as above test, but ensure IAM API key takes precedence over username/password
+    @Test
+    public void replicatorBuilderAddsIamInterceptorWhenUsernamePasswordPresent() throws Exception {
+        String apiKey = "abc123";
+        ReplicatorBuilder.Push p = ReplicatorBuilder.push().from(documentStore).
+                to(new URI("http://example.com/path")).
+                username("username").
+                password("password").
+                iamApiKey(apiKey);
+        // although the replicator isn't used, the interceptor check expects the presence of the
+        // header interceptor, which only gets added if build() is called
+        ReplicatorImpl r = (ReplicatorImpl) p.build();
+        assertIamCookieInterceptorPresent(p);
+    }
+
+
 }

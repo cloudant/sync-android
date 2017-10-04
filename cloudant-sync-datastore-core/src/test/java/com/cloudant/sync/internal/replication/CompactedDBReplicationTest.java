@@ -56,6 +56,7 @@ public class CompactedDBReplicationTest extends ReplicationTestBase {
         // skip test if we are doing cookie auth, we don't have the interceptor chain to do it
         // when we call ClientTestUtils.executeHttpPostRequest
         if(TestOptions.COOKIE_AUTH){return;}
+        if(TestOptions.COUCH_IAM_API_KEY != null){return;}
 
         String documentName;
         Bar bar = BarUtils.createBar(remoteDb, "Bob", 12);

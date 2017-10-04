@@ -14,9 +14,11 @@
 
 package com.cloudant.sync.replication;
 
+import com.cloudant.http.HttpConnectionInterceptor;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
-import com.cloudant.http.interceptors.CookieInterceptor;
+import com.cloudant.http.internal.interceptors.CookieInterceptor;
+import com.cloudant.http.internal.interceptors.IamCookieInterceptor;
 import com.cloudant.http.internal.interceptors.UserAgentInterceptor;
 import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.internal.replication.PullStrategy;
@@ -25,8 +27,10 @@ import com.cloudant.sync.internal.replication.ReplicatorImpl;
 import com.cloudant.sync.internal.util.Misc;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,24 +48,31 @@ public abstract class ReplicatorBuilder<S, T, E> {
                     "META-INF/com.cloudant.sync.client.properties");
 
     private T target;
+
     private S source;
+
     private String username;
+
     private String password;
 
     private int id = ReplicatorImpl.NULL_ID;
+
     private List<HttpConnectionRequestInterceptor> requestInterceptors = new ArrayList
             <HttpConnectionRequestInterceptor>();
+
     private List<HttpConnectionResponseInterceptor> responseInterceptors = new ArrayList
             <HttpConnectionResponseInterceptor>();
+
+    private String iamApiKey = null;
 
     private ReplicatorBuilder(){
         requestInterceptors.add(USER_AGENT_INTERCEPTOR);
     }
 
-    private URI addCookieInterceptorIfRequired(URI uri) {
+    private int getDefaultPort(URI uri) {
+
         String uriProtocol = uri.getScheme();
-        String uriHost = uri.getHost();
-        String uriPath = uri.getRawPath();
+
 
         // assign default port if it hasn't been set
         // and check that we support the protocol
@@ -75,6 +86,10 @@ public abstract class ReplicatorBuilder<S, T, E> {
                     "Protocol %s not supported", uriProtocol));
         }
 
+        return uriPort;
+    }
+
+    private void setUserInfo(URI uri) {
         if (uri.getUserInfo() != null && this.username == null && this.password == null) {
             String[] parts = uri.getRawUserInfo().split(":");
             if (parts.length == 2) {
@@ -86,31 +101,13 @@ public abstract class ReplicatorBuilder<S, T, E> {
                     throw new RuntimeException(e);
                 }
             }
-        }
 
+        }
+    }
+
+    private URI scrubUri(URI uri, String uriHost, String uriPath, String uriProtocol, int uriPort) {
         if(this.username == null && this.password == null){
             return uri;
-        }
-
-        try {
-            String path = uriPath == null ? "" : uriPath;
-
-            if(path.length() > 0) {
-                int index = path.lastIndexOf("/");
-                if (index == path.length() - 1) {
-                    // we need to go back one
-                    path = path.substring(0, index);
-                    index = path.lastIndexOf("/");
-                }
-                path = path.substring(0, index);
-            }
-
-            URI baseURI = new URI(uriProtocol, null, uriHost, uriPort, path, null, null);
-            CookieInterceptor ci = new CookieInterceptor(this.username, this.password, baseURI.toString());
-            requestInterceptors.add(ci);
-            responseInterceptors.add(ci);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
         }
 
         try {
@@ -124,6 +121,58 @@ public abstract class ReplicatorBuilder<S, T, E> {
         } catch (URISyntaxException use) {
             throw new RuntimeException("Failed to construct URI", use);
         }
+
+    }
+
+    private URI getBaseUri(String uriHost, String uriPath, String uriProtocol, int uriPort) {
+        try {
+            String path = uriPath == null ? "" : uriPath;
+
+            if (path.length() > 0) {
+                int index = path.lastIndexOf("/");
+                if (index == path.length() - 1) {
+                    // we need to go back one
+                    path = path.substring(0, index);
+                    index = path.lastIndexOf("/");
+                }
+                path = path.substring(0, index);
+            }
+
+            return new URI(uriProtocol, null, uriHost, uriPort, path, null, null);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void setAuthInterceptor(String uriHost, String uriPath, String uriProtocol, int uriPort) {
+        if (iamApiKey != null) {
+            URI baseURI = getBaseUri(uriHost, uriPath, uriProtocol, uriPort);
+            IamCookieInterceptor ici = new IamCookieInterceptor(iamApiKey, baseURI.toString());
+            requestInterceptors.add(ici);
+            responseInterceptors.add(ici);
+
+        } else if (this.username != null && this.password != null) {
+            URI baseURI = getBaseUri(uriHost, uriPath, uriProtocol, uriPort);
+            CookieInterceptor ci = new CookieInterceptor(this.username, this.password, baseURI.toString());
+            requestInterceptors.add(ci);
+            responseInterceptors.add(ci);
+        }
+    }
+
+    // - set default port if needed and validate protocol (http(s))
+    // - scrub out username and password if given, and pass it into cookie interceptor or discard it if we're doing IAM
+    // - add IAM interceptor if needed
+    // - else add cookie interceptor if needed
+    private URI addAuthInterceptorIfRequired(URI uri) {
+
+        String uriProtocol = uri.getScheme();
+        String uriHost = uri.getHost();
+        String uriPath = uri.getRawPath();
+
+        int uriPort = getDefaultPort(uri);
+        setUserInfo(uri);
+        setAuthInterceptor(uriHost, uriPath, uriProtocol, uriPort);
+        return scrubUri(uri, uriHost, uriPath, uriProtocol, uriPort);
     }
 
     /**
@@ -146,7 +195,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
                     "Source and target cannot be null");
 
             // add cookie interceptor and remove creds from URI if required
-            super.target = super.addCookieInterceptorIfRequired(super.target);
+            super.target = super.addAuthInterceptorIfRequired(super.target);
 
             PushStrategy pushStrategy = new PushStrategy(super.source.database(),
                     super.target,
@@ -203,6 +252,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             this.pushAttachmentsInline = pushAttachmentsInline;
             return this;
         }
+
     }
 
     /**
@@ -225,7 +275,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
                     "Source and target cannot be null");
 
             // add cookie interceptor and remove creds from URI if required
-            super.source = super.addCookieInterceptorIfRequired(super.source);
+            super.source = super.addAuthInterceptorIfRequired(super.source);
 
             PullStrategy pullStrategy = new PullStrategy(super.source,
                     super.target.database(),
@@ -312,6 +362,30 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
     public E withId(int id) {
         this.id = id;
+        //noinspection unchecked
+        return (E) this;
+    }
+
+    /**
+     * <p>
+     *     Sets the IAM API key to use for authenticating requests.
+     * </p>
+     * <p>
+     *     Note: the replicator will only use IAM to authenticate requests. This means that the
+     *     userinfo part of the URL, if set, will be ignored.
+     * </p>
+     * <p>
+     *     See the
+     *     <a href="https://console.bluemix.net/docs/services/Cloudant/guides/iam.html#ibm-cloud-identity-and-access-management" target="_blank">
+     *         Bluemix Identity and Access Management
+     *     </a> documentation for more details.
+     * </p>
+     *
+     * @param iamApiKey The API key
+     * @return This instance of {@link ReplicatorBuilder}
+     */
+    public E iamApiKey(String iamApiKey) {
+        this.iamApiKey = iamApiKey;
         //noinspection unchecked
         return (E) this;
     }

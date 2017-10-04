@@ -22,7 +22,6 @@ import static com.cloudant.common.TestOptions.COUCH_URI;
 import static com.cloudant.common.TestOptions.COUCH_USERNAME;
 import static com.cloudant.common.TestOptions.HTTP_PROTOCOL;
 
-import com.cloudant.http.interceptors.CookieInterceptor;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 
@@ -53,8 +52,8 @@ public class SpecifiedCouch {
                 uriString = String.format("%s://%s:%s/%s", HTTP_PROTOCOL, COUCH_HOST, COUCH_PORT, dbName);
             }
             CouchConfig config = new CouchConfig(new URI(uriString),
-                    Collections.<HttpConnectionRequestInterceptor>emptyList(),
-                    Collections.<HttpConnectionResponseInterceptor>emptyList(),
+                    new ArrayList<HttpConnectionRequestInterceptor>(),
+                    new ArrayList<HttpConnectionResponseInterceptor>(),
                     COUCH_USERNAME,
                     COUCH_PASSWORD);
             return config;
