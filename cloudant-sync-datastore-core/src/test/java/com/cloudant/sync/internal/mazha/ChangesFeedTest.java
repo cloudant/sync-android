@@ -22,6 +22,8 @@ import org.junit.experimental.categories.Category;
 
 import com.cloudant.common.RequireRunningCouchDB;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +42,7 @@ public class ChangesFeedTest extends CouchClientTestBase {
         Object lastSeq = "0";
 
         { // Two docs changed
-            ChangesResult changes = client.changes(lastSeq);
+            ChangesResult changes = getChangesSince(lastSeq);
             Map<String, List<String>> changedRevIds = findChangedRevisionIds(changes);
 
             Assert.assertThat(changedRevIds.size(), is(equalTo(2)));
@@ -54,7 +56,7 @@ public class ChangesFeedTest extends CouchClientTestBase {
         Response res3 = ClientTestUtils.createHelloWorldDoc(client);
 
         { // One doc changed
-            ChangesResult changes = client.changes(lastSeq);
+            ChangesResult changes = getChangesSince(lastSeq);
             Map<String, List<String>> changedRevIds = findChangedRevisionIds(changes);
 
             Assert.assertThat(changedRevIds.size(), is(equalTo(1)));
@@ -65,7 +67,7 @@ public class ChangesFeedTest extends CouchClientTestBase {
         }
 
         { // No changes
-            ChangesResult changes = client.changes(lastSeq);
+            ChangesResult changes = getChangesSince(lastSeq);
             Assert.assertTrue(changes.size() == 0);
         }
     }
@@ -85,7 +87,7 @@ public class ChangesFeedTest extends CouchClientTestBase {
     @Test(expected = NoResourceException.class)
     public void changes_dbNotExist_exception() {
         client.deleteDb();
-        client.changes("1");
+        getChangesSince("1");
     }
 
     @Test
@@ -94,12 +96,43 @@ public class ChangesFeedTest extends CouchClientTestBase {
     }
 
     @Test
+    public void changes_dbChangesMustSuccessfullyReturnWithSeqInterval() throws IOException,
+            URISyntaxException {
+        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(client.getRootUri()));
+        Response res1 = ClientTestUtils.createHelloWorldDoc(client);
+        Response res2 = ClientTestUtils.createHelloWorldDoc(client);
+        ClientTestUtils.createHelloWorldDoc(client);
+        Object lastSeq = "0";
+
+        {
+            // Use batch interval and seq_interval of 4
+            ChangesResult changes = client.changes(lastSeq, 4);
+            Map<String, List<String>> changedRevIds = findChangedRevisionIds(changes);
+
+            Assert.assertThat(changedRevIds.size(), is(equalTo(3)));
+            Assert.assertThat(changedRevIds.keySet(), hasItems(res1.getId(), res2.getId()));
+            Assert.assertThat(changedRevIds.get(res1.getId()), hasItem(res1.getRev()));
+            Assert.assertThat(changedRevIds.get(res2.getId()), hasItem(res2.getRev()));
+            // last two shouldn't have seq
+            Assert.assertNull(changes.getResults().get(1).getSeq());
+            Assert.assertNull(changes.getResults().get(2).getSeq());
+
+            lastSeq = changes.getLastSeq();
+        }
+
+        { // No changes
+            ChangesResult changes = getChangesSince(lastSeq);
+            Assert.assertTrue(changes.size() == 0);
+        }
+    }
+
+    @Test
     public void changes_dbWithConflicts_changesMustSuccessfullyReturn() {
         ClientTestUtils.createHelloWorldDoc(client);
         Object lastSeq = "0";
 
         {
-            ChangesResult changes = client.changes(lastSeq);
+            ChangesResult changes = getChangesSince(lastSeq);
             Assert.assertEquals(1, changes.size());
             lastSeq = changes.getLastSeq();
         }
@@ -109,7 +142,7 @@ public class ChangesFeedTest extends CouchClientTestBase {
         Response res2 = ClientTestUtils.createHelloWorldDoc(client);
 
         {
-            ChangesResult changes = client.changes(lastSeq);
+            ChangesResult changes = getChangesSince(lastSeq);
             Assert.assertEquals(2, changes.size());
 
             List<String> doc1ChangedRevs = findChangesRevs(changes, res1.getId());
@@ -122,7 +155,7 @@ public class ChangesFeedTest extends CouchClientTestBase {
         }
     }
 
-    public List<String> findChangesRevs(ChangesResult changes, String id) {
+    private List<String> findChangesRevs(ChangesResult changes, String id) {
         List<String> changedRevs = new ArrayList<String>();
         for(ChangesResult.Row row : changes.getResults()) {
             if(row.getId().equals(id)) {
@@ -132,5 +165,9 @@ public class ChangesFeedTest extends CouchClientTestBase {
             }
         }
         return changedRevs;
+    }
+
+    private ChangesResult getChangesSince(Object since) {
+        return client.changes(since, null);
     }
 }

@@ -31,9 +31,13 @@ import com.cloudant.sync.internal.util.JSONUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -233,6 +237,13 @@ public class ClientTestUtils {
         }
 
         return revisions;
+    }
+
+    public static boolean isCouchDBV2(URI uri) throws URISyntaxException, IOException {
+        URI root = new URI(uri.getScheme() + "://" + uri.getAuthority());
+        HttpConnection connection = Http.GET(root);
+        String response = connection.execute().responseAsString();
+        return response.contains("\"version\":\"2.");
     }
 
 

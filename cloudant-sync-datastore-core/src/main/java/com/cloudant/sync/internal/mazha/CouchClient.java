@@ -284,10 +284,6 @@ public class CouchClient  {
         return options;
     }
 
-    public ChangesResult changes(Object since) {
-        return this.changes(since, null);
-    }
-
     public ChangesResult changes(Object since, Integer limit) {
         return this.changes(null, null, since, limit);
     }
@@ -305,6 +301,12 @@ public class CouchClient  {
         }
         if (limit != null) {
             options.put("limit", limit);
+        }
+        // seq_interval: improve performance and reduce load on the remote database
+        if(limit != null) {
+            options.put("seq_interval", limit);
+        } else {
+            options.put("seq_interval", 1000);
         }
         return this.changes(options);
     }
