@@ -3,6 +3,7 @@
   [README](https://github.com/cloudant/sync-android/blob/2.1.0/README.md) and the
   [Bluemix documentation](https://console.bluemix.net/docs/services/Cloudant/guides/iam.html#ibm-cloud-identity-and-access-management)
   for more details.
+- [IMPROVED] Updated documentation by replacing deprecated links with the latest Bluemix or CouchDB links.
 
 # 2.0.2 (2017-06-20)
 - [FIXED] Removed cloudant-sync-datastore-android project dependency

@@ -32,11 +32,6 @@ This library is for Android and Java SE; an [iOS][ios] version is also available
 
 [ios]: https://github.com/cloudant/CDTDatastore
 
-If you have questions, please join our [mailing list][mlist] and drop us a
-line.
-
-[mlist]: https://groups.google.com/forum/#!forum/cloudant-sync
-
 ## Using in your project
 
 The library is published via Maven Central and using it in your project should
@@ -331,7 +326,18 @@ back to full health.
 Learn more about this essential process in the
 [conflicts documentation](https://github.com/cloudant/sync-android/blob/master/doc/conflicts.md).
 
-## Known Issues
+## Issues
+
+Before opening a new issue please consider the following:
+* Only the latest release is supported. If at all possible please try to reproduce the issue using
+the latest version.
+* Please check the [existing issues](https://github.com/cloudant/sync-android/issues)
+to see if the problem has already been reported. Note that the default search
+includes only open issues, but it may already have been closed.
+* Cloudant customers should contact Cloudant support for urgent issues.
+* When opening a new issue [here in github](../../issues) please complete the template fully.
+
+#### Known Issues
 
 Some users on certain older versions of Android have reported the
 following exception:
@@ -343,13 +349,19 @@ To fix this issue, add the following dependency to your application's
 
 `compile 'com.google.code.findbugs:jsr305:3.0.0'`
 
+
+## Related documentation
+
+* [Cloudant docs](https://console.bluemix.net/docs/services/Cloudant/cloudant.html#overview)
+* [Cloudant Learning Center](https://developer.ibm.com/clouddataservices/cloudant-learning-center/)
+
+## Development
+
+For information about contributing, building, and running tests see the [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Contributors
 
 See [CONTRIBUTORS](CONTRIBUTORS).
-
-## Contributing to the project
-
-See [CONTRIBUTING](CONTRIBUTING.md).
 
 ## License
 

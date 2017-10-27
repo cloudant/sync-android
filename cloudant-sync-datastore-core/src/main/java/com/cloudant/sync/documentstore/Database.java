@@ -40,7 +40,7 @@ import java.util.List;
  * <p>Each document consists of a set of revisions, hence most methods within
  * this class operate on {@link DocumentRevision} objects, which carry both a
  * document ID and a revision ID. This forms the basis of the
- * <a target="_blank" href="http://docs.couchdb.org/en/2.0.0/intro/consistency.html?#no-locking">MVCC</a> data
+ * <a target="_blank" href="http://docs.couchdb.org/en/latest/intro/consistency.html?#no-locking">MVCC</a> data
  * model,
  * used to ensure safe peer-to-peer replication is possible.</p>
  *

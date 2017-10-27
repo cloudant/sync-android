@@ -268,5 +268,5 @@ Replicator replicator = ReplicatorBuilder.pull()
                         .build();
 ```
 
-[1]: http://docs.couchdb.org/en/1.4.x/replication.html#controlling-which-documents-to-replicate
+[1]: http://docs.couchdb.org/en/latest/replication/intro.html#controlling-which-documents-to-replicate
 

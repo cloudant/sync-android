@@ -55,7 +55,7 @@ public abstract class ReplicationService extends Service
      *
      * @see
      * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
-     * Replication Policy User Guide</a> for more details.
+     * Replication Policy User Guide</a>
      */
     public static final int COMMAND_START_REPLICATION = 0;
 
@@ -65,7 +65,7 @@ public abstract class ReplicationService extends Service
      *
      * @see
      * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
-     * Replication Policy User Guide</a> for more details.
+     * Replication Policy User Guide</a>
      */
     public static final int COMMAND_STOP_REPLICATION = 1;
 

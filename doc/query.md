@@ -6,7 +6,7 @@ Cloudant Query is inspired by MongoDB's query implementation, so users of MongoD
 
 The aim is that the query you use on our cloud-based database works for your mobile application.
 
-[1]: https://docs.cloudant.com/api/cloudant-query.html
+[1]: https://console.bluemix.net/docs/services/Cloudant/api/cloudant_query.html#query
 
 ## Usage
 
@@ -161,7 +161,7 @@ Query documents are `Map` objects that use the [Cloudant Query `selector`][sel]
 syntax. Several features of Cloudant Query are not yet supported in this implementation.
 See below for more details.
 
-[sel]: https://docs.cloudant.com/api/cloudant-query.html#selector-syntax
+[sel]: https://console.bluemix.net/docs/services/Cloudant/api/cloudant_query.html#selector-syntax
 
 #### Equality and comparisons
 
