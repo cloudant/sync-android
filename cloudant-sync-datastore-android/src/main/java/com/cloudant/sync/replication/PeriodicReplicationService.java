@@ -84,7 +84,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * using an Extra with the {@link #EXTRA_COMMAND} key.
      * @see
      * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
-     *     Replication Policy User Guide</a> for more details.
+     *     Replication Policy User Guide</a>
      */
     public static final int COMMAND_START_PERIODIC_REPLICATION = 2;
 
@@ -93,7 +93,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * using an Extra with the {@link #EXTRA_COMMAND} key.
      * @see
      * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
-     *     Replication Policy User Guide</a> for more details.
+     *     Replication Policy User Guide</a>
      */
     public static final int COMMAND_STOP_PERIODIC_REPLICATION = 3;
 
@@ -103,7 +103,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * following a reboot.
      * @see
      * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
-     *     Replication Policy User Guide</a> for more details.
+     *     Replication Policy User Guide</a>
      */
     public static final int COMMAND_DEVICE_REBOOTED = 4;
 
@@ -113,7 +113,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
      * between replications can be re-evaluated.
      * @see
      * <a href="http://github.com/cloudant/sync-android/blob/master/doc/replication-policies.md#controlling-the-replication-service">
-     *     Replication Policy User Guide</a> for more details.
+     *     Replication Policy User Guide</a>
      */
     public static final int COMMAND_RESET_REPLICATION_TIMERS = 5;
 

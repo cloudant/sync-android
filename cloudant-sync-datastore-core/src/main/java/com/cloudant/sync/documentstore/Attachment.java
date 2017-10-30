@@ -25,7 +25,7 @@ import java.io.InputStream;
 
 /**
  * <p>
- *   An <a target="_blank" href="http://docs.couchdb.org/en/2.0.0/intro/api.html#attachments">
+ *   An <a target="_blank" href="http://docs.couchdb.org/en/latest/intro/api.html#attachments">
  *   attachment</a> associated with a CouchDB document.
  * </p>
  * <p>
