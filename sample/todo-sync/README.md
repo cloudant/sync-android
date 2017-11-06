@@ -88,3 +88,6 @@ Once installed, the default settings entered in the XML file above should appear
 To test your connection, add a couple of tasks and hit "Upload (Push)" from the menu in the top right. You should see the JSON documents appear in your Cloudant database. Changes to the documents in the Cloudant database will be replicated back to the device when you tap "Download (Pull)".
 
 If you see "Replication Error" rather than "Replication Complete" as a popup message, check the logs using `adb` to see what the exception was.
+
+**Note:** If you require ProGuard and your app has a different namespace, you'll need an additional `keep` in `proguard.cfg` to preserve the `@Subscribe` methods that are reflectively invoked.
+
