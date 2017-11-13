@@ -62,9 +62,11 @@ For `DocumentStore` events there is a similar superclass: `DocumentStoreModified
 
 Whether to use these generic events or one method per event type is simply a matter of style.
 
-Note that subscribing methods are invoked synchronously. This means that it is important to
+Note that subscribing methods are:
+- invoked synchronously. This means that it is important to
 return quickly from the subscribing method - otherwise performance of the `Database` or
 `DocumentStore` could be impaired.
+- invoked reflectively and will need specific excludes if using ProGuard.
 
 If the subscribing method needs to start long-running tasks, we recommend you use an
 asynchronous approach such as spawning a thread and returning immediately.
