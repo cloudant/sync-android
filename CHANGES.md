@@ -4,6 +4,8 @@
   [Bluemix documentation](https://console.bluemix.net/docs/services/Cloudant/guides/iam.html#ibm-cloud-identity-and-access-management)
   for more details.
 - [IMPROVED] Updated documentation by replacing deprecated links with the latest Bluemix or CouchDB links.
+- [IMPROVED] Added `seq_interval` to improve `Changes` API throughput when replicating from
+             a CouchDB 2.x endpoint.
 
 # 2.0.2 (2017-06-20)
 - [FIXED] Removed cloudant-sync-datastore-android project dependency
