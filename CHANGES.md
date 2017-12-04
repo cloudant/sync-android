@@ -1,8 +1,7 @@
-# 2.1.0 (Unreleased)
-- [NEW] Added support for authenticating with IAM API keys. See
-  [README](https://github.com/cloudant/sync-android/blob/2.1.0/README.md) and the
-  [Bluemix documentation](https://console.bluemix.net/docs/services/Cloudant/guides/iam.html#ibm-cloud-identity-and-access-management)
-  for more details.
+# 2.1.0 (2017-12-04)
+- [NEW] Added API for upcoming IBM Cloud Identity and Access
+  Management support for Cloudant on IBM Cloud. Note: IAM API key
+  support is not yet enabled in the service.
 - [IMPROVED] Updated documentation by replacing deprecated links with the latest Bluemix or CouchDB links.
 - [IMPROVED] Added `seq_interval` to improve `Changes` API throughput when replicating from
              a CouchDB 2.x endpoint.
