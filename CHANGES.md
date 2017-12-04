@@ -6,7 +6,7 @@
 - [IMPROVED] Updated documentation by replacing deprecated links with the latest Bluemix or CouchDB links.
 - [IMPROVED] Added `seq_interval` to improve `Changes` API throughput when replicating from
              a CouchDB 2.x endpoint.
-- [UPGRADED] Upgraded to version 2.10.0 of the `cloudant-http` library.
+- [UPGRADED] Upgraded to version 2.11.0 of the `cloudant-http` library.
 
 # 2.0.2 (2017-06-20)
 - [FIXED] Removed cloudant-sync-datastore-android project dependency
