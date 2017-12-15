@@ -77,7 +77,7 @@ public class DeleteDocumentCallable implements SQLCallable<InternalDocumentRevis
             // now check it's a leaf revision
             String leafQuery = "SELECT " + CallableSQLConstants.METADATA_COLS + " FROM revs, docs WHERE " +
                     "docs.docid=? AND revs.doc_id=docs.doc_id AND revid=? AND revs.sequence NOT " +
-                    "IN (SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
+                    "IN (SELECT DISTINCT parent FROM revs revs_inner WHERE parent NOT NULL AND revs_inner.doc_id=docs.doc_id) ";
             c = db.rawQuery(leafQuery, new String[]{docId, prevRevId});
             boolean isLeaf = c.moveToFirst();
             if (!isLeaf) {
