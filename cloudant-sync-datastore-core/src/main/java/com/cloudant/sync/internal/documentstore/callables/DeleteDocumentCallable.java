@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2018 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -77,7 +77,7 @@ public class DeleteDocumentCallable implements SQLCallable<InternalDocumentRevis
             // now check it's a leaf revision
             String leafQuery = "SELECT " + CallableSQLConstants.METADATA_COLS + " FROM revs, docs WHERE " +
                     "docs.docid=? AND revs.doc_id=docs.doc_id AND revid=? AND revs.sequence NOT " +
-                    "IN (SELECT DISTINCT parent FROM revs WHERE parent NOT NULL) ";
+                    "IN (SELECT DISTINCT parent FROM revs revs_inner WHERE parent NOT NULL AND revs_inner.doc_id=docs.doc_id) ";
             c = db.rawQuery(leafQuery, new String[]{docId, prevRevId});
             boolean isLeaf = c.moveToFirst();
             if (!isLeaf) {
