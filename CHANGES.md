@@ -1,3 +1,8 @@
+# Unreleased
+- [IMPROVED] Improved efficiency of sub-query when picking winning
+  revisions. This improves performance when inserting revisions,
+  including during pull replication.
+
 # 2.1.0 (2017-12-04)
 - [NEW] Added API for upcoming IBM Cloud Identity and Access
   Management support for Cloudant on IBM Cloud. Note: IAM API key
