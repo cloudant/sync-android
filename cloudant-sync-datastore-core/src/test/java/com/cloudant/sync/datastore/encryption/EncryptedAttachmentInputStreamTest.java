@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 IBM Corp. All rights reserved.
+ * Copyright © 2015, 2018 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -15,13 +15,12 @@
 package com.cloudant.sync.datastore.encryption;
 
 import com.cloudant.sync.internal.documentstore.encryption.EncryptedAttachmentInputStream;
-import com.cloudant.sync.matcher.CauseMatcher;
 import com.cloudant.sync.util.TestUtils;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.Assert;
 import org.junit.rules.ExpectedException;
 
 import java.io.File;
@@ -29,8 +28,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
-
-import javax.crypto.IllegalBlockSizeException;
 
 /**
  * Test encrypting an attachment to check correct on disk format is read.
@@ -84,25 +81,6 @@ public class EncryptedAttachmentInputStreamTest {
                 "fixture/EncryptedAttachmentTest_truncatedIV");
         InputStream encryptedInputStream = new EncryptedAttachmentInputStream(
                 new FileInputStream(encryptedAttachmentBlob), EncryptionTestConstants.key16Byte);
-    }
-
-    /**
-     * Test when we read file shorter than block multiple that an IOException escapes.
-     */
-    @Test
-    public void testReadingTruncatedDataFile() throws IOException, InvalidKeyException {
-        exception.expect(IOException.class);
-        exception.expectCause(new CauseMatcher(IllegalBlockSizeException.class));
-
-        File encryptedAttachmentBlob = TestUtils.loadFixture(
-                "fixture/EncryptedAttachmentTest_truncatedData");
-        InputStream encryptedInputStream = new EncryptedAttachmentInputStream(
-                new FileInputStream(encryptedAttachmentBlob), EncryptionTestConstants.key16Byte);
-
-        //noinspection StatementWithEmptyBody
-        while (encryptedInputStream.read(new byte[1024]) != -1) {
-            // just read the data
-        }
     }
 
     @Test(expected=InvalidKeyException.class)
