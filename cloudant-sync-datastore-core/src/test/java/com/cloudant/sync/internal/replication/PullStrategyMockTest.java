@@ -33,6 +33,7 @@ import com.cloudant.sync.internal.mazha.OpenRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.event.Subscribe;
 import com.cloudant.sync.internal.util.JSONUtils;
+import com.cloudant.sync.replication.PullFilter;
 import com.cloudant.sync.util.TestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -156,7 +157,7 @@ public class PullStrategyMockTest extends ReplicationTestBase {
     @Test
     public void testReplicationDocWithEmptyId() throws Exception {
         CouchDB mockRemoteDb = mock(CouchDB.class);
-        when(mockRemoteDb.changes(null, null, 1000)).then(new Answer<Object>() {
+        when(mockRemoteDb.changes((PullFilter) null, null, 1000)).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 FileReader fr = new FileReader(TestUtils.loadFixture

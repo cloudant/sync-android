@@ -29,6 +29,7 @@ import com.cloudant.sync.internal.mazha.CouchException;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.replication.PullFilter;
+import com.cloudant.sync.replication.PullSelector;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 import com.cloudant.sync.util.TestUtils;
@@ -167,7 +168,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     }
 
     protected ReplicatorBuilder.Pull getPullBuilder() {
-        return this.getPullBuilder(null);
+        return this.getPullBuilder((PullFilter)null);
 
     }
 
@@ -176,6 +177,22 @@ public abstract class ReplicationTestBase extends CouchTestBase {
                 from(this.couchConfig.getRootUri()).
                 to(this.documentStore)
                 .filter(filter)
+                .addRequestInterceptors(couchConfig.getRequestInterceptors(false))
+                .addResponseInterceptors(couchConfig.getResponseInterceptors(false));
+        if (couchConfig.getUsername() != null && couchConfig.getPassword() != null) {
+
+            pull.username(couchConfig.getUsername())
+                    .password(couchConfig.getPassword());
+        }
+
+        return pull;
+    }
+
+    protected ReplicatorBuilder.Pull getPullBuilder(PullSelector selector) {
+        ReplicatorBuilder.Pull pull = ReplicatorBuilder.pull().
+                from(this.couchConfig.getRootUri()).
+                to(this.documentStore)
+                .selector(selector)
                 .addRequestInterceptors(couchConfig.getRequestInterceptors(false))
                 .addResponseInterceptors(couchConfig.getResponseInterceptors(false));
         if (couchConfig.getUsername() != null && couchConfig.getPassword() != null) {
@@ -197,6 +214,10 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     protected PullStrategy getPullStrategy(PullFilter filter) {
         return (PullStrategy)((ReplicatorImpl)this.getPullBuilder(filter).build()).strategy;
+    }
+
+    protected PullStrategy getPullStrategy(PullSelector selector) {
+        return (PullStrategy)((ReplicatorImpl)this.getPullBuilder(selector).build()).strategy;
     }
 
     protected PushResult push() throws Exception {
