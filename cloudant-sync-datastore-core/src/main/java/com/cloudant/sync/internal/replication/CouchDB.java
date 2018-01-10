@@ -24,6 +24,7 @@ import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.mazha.DocumentRevs;
 import com.cloudant.sync.internal.mazha.Response;
 import com.cloudant.sync.replication.PullFilter;
+import com.cloudant.sync.replication.PullSelector;
 
 import java.util.Collection;
 import java.util.List;
@@ -49,6 +50,7 @@ interface CouchDB {
 
     ChangesResult changes(Object lastSequence, int limit);
     ChangesResult changes(PullFilter filter, Object lastSequence, int limit);
+    ChangesResult changes(PullSelector selector, Object lastSequence, int limit);
     List<DocumentRevs> getRevisions(String documentId,
                                            Collection<String> revisionIds,
                                            Collection<String> attsSince,

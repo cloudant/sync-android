@@ -32,6 +32,7 @@ import com.cloudant.sync.internal.mazha.OpenRevision;
 import com.cloudant.sync.internal.mazha.Response;
 import com.cloudant.sync.internal.util.Misc;
 import com.cloudant.sync.replication.PullFilter;
+import com.cloudant.sync.replication.PullSelector;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -137,6 +138,14 @@ public class CouchClientWrapper implements CouchDB {
             return couchClient.changes(lastSequence, limit);
         } else {
             return couchClient.changes(filter.getName(), filter.getParameters(), lastSequence, limit);
+        }
+    }
+
+    public ChangesResult changes(PullSelector selector, Object lastSequence, int limit) {
+        if (selector == null) {
+            return couchClient.changes(lastSequence, limit);
+        } else {
+            return couchClient.changes(selector.getSelector() , lastSequence, limit);
         }
     }
 

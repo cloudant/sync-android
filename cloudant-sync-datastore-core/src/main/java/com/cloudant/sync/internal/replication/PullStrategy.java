@@ -34,6 +34,7 @@ import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
 import com.cloudant.sync.replication.DatabaseNotFoundException;
 import com.cloudant.sync.replication.PullFilter;
+import com.cloudant.sync.replication.PullSelector;
 
 
 import org.apache.commons.codec.binary.Hex;
@@ -81,6 +82,7 @@ public class PullStrategy implements ReplicationStrategy {
     CouchDB sourceDb;
 
     PullFilter filter;
+    PullSelector selector;
 
     DatastoreWrapper targetDb;
 
@@ -100,18 +102,23 @@ public class PullStrategy implements ReplicationStrategy {
     public PullStrategy(URI source,
                         Database target,
                         PullFilter filter,
+                        PullSelector selector,
                         List<HttpConnectionRequestInterceptor> requestInterceptors,
                         List<HttpConnectionResponseInterceptor> responseInterceptors) {
         this.filter = filter;
+        this.selector = selector;
         this.sourceDb = new CouchClientWrapper(new CouchClient(source, requestInterceptors,
                 responseInterceptors));
         this.targetDb = new DatastoreWrapper((DatabaseImpl) target);
         String replicatorName;
-        if (filter == null) {
-            replicatorName = String.format("%s <-- %s ", target.getPath(), source);
-        } else {
+        if (filter != null) {
             replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source,
                     filter.getName());
+        } if (selector != null ) {
+            replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source,
+                    selector.getSelector());
+        } else {
+            replicatorName = String.format("%s <-- %s ", target.getPath(), source);
         }
         this.name = String.format("%s [%s]", LOG_TAG, replicatorName);
     }
@@ -432,6 +439,8 @@ public class PullStrategy implements ReplicationStrategy {
         dict.put("target", this.targetDb.getIdentifier());
         if (filter != null) {
             dict.put("filter", this.filter.toQueryString());
+        } else if (selector != null) {
+            dict.put("selector", this.selector.getSelector());
         }
         // get raw SHA-1 of dictionary
         try {
