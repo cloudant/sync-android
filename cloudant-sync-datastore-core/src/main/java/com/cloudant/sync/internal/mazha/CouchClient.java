@@ -311,9 +311,36 @@ public class CouchClient  {
         return this.changes(options);
     }
 
+    public ChangesResult changes(String selector, Object since, Integer limit) {
+        Map<String, Object> options = getDefaultChangeFeedOptions();
+        if(selector != null) {
+            options.put("filter", "_selector");
+        }
+        if(since != null) {
+            options.put("since", since);
+        }
+        if (limit != null) {
+            options.put("limit", limit);
+        }
+        // seq_interval: improve performance and reduce load on the remote database
+        if(limit != null) {
+            options.put("seq_interval", limit);
+        } else {
+            options.put("seq_interval", 1000);
+        }
+        return this.changes(selector, options);
+    }
+
     public ChangesResult changes(final Map<String, Object> options) {
         URI changesFeedUri = uriHelper.changesUri(options);
         HttpConnection connection = Http.GET(changesFeedUri);
+        return executeToJsonObjectWithRetry(connection, ChangesResult.class);
+    }
+
+    public ChangesResult changes(String selector, final Map<String, Object> options) {
+        URI changesFeedUri = uriHelper.changesUri(options);
+        HttpConnection connection = Http.POST(changesFeedUri,"application/json");
+        connection.setRequestBody(selector);
         return executeToJsonObjectWithRetry(connection, ChangesResult.class);
     }
 
