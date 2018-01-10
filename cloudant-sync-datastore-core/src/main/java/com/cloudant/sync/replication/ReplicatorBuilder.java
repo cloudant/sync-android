@@ -262,6 +262,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
         private PullFilter pullPullFilter = null;
 
+        private PullSelector pullPullSelector = null;
+
         private int changeLimitPerBatch = 1000;
 
         private int insertBatchSize = 100;
@@ -280,6 +282,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             PullStrategy pullStrategy = new PullStrategy(super.source,
                     super.target.database(),
                     pullPullFilter,
+                    pullPullSelector,
                     super.requestInterceptors,
                     super.responseInterceptors);
 
@@ -298,6 +301,17 @@ public abstract class ReplicatorBuilder<S, T, E> {
          */
         public Pull filter(PullFilter pullPullFilter) {
             this.pullPullFilter = pullPullFilter;
+            return this;
+        }
+
+        /**
+         * Sets the selector to use for a pull replication
+         *
+         * @param pullPullSelector The Selector to use during a pull replication
+         * @return This instance of {@link ReplicatorBuilder}
+         */
+        public Pull selector(PullSelector pullPullSelector) {
+            this.pullPullSelector = pullPullSelector;
             return this;
         }
 
