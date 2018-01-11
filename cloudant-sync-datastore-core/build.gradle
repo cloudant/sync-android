@@ -53,7 +53,8 @@ test {
         'com.cloudant.common.SystemTest', \
         'com.cloudant.common.RequireRunningCouchDB', \
         'com.cloudant.common.PerformanceTest', \
-        'com.cloudant.common.RequireRunningProxy'
+        'com.cloudant.common.RequireRunningProxy', \
+        'com.cloudant.common.RequireCloudant'
     }
 }
 
