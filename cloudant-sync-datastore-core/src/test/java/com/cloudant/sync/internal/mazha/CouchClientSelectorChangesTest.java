@@ -18,6 +18,7 @@ package com.cloudant.sync.internal.mazha;
 
 import static org.hamcrest.Matchers.hasSize;
 
+import com.cloudant.common.RequireCloudant;
 import com.cloudant.common.RequireRunningCouchDB;
 
 import org.junit.Assert;
@@ -25,7 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-@Category(RequireRunningCouchDB.class)
+@Category(RequireCloudant.class)
 public class CouchClientSelectorChangesTest extends CouchClientTestBase {
 
     @Before

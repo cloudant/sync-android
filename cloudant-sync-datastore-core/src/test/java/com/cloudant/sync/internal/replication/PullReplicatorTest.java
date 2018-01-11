@@ -16,6 +16,7 @@
 
 package com.cloudant.sync.internal.replication;
 
+import com.cloudant.common.RequireCloudant;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.common.TestOptions;
 import com.cloudant.http.internal.interceptors.CookieInterceptor;

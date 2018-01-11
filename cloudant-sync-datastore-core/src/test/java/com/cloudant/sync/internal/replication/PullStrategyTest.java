@@ -33,7 +33,6 @@ import com.cloudant.sync.query.FieldSort;
 import com.cloudant.sync.internal.query.QueryImpl;
 import com.cloudant.sync.query.QueryResult;
 import com.cloudant.sync.replication.PullFilter;
-import com.cloudant.sync.replication.PullSelector;
 import com.cloudant.sync.replication.Replicator;
 
 import org.junit.Assert;
@@ -294,79 +293,6 @@ public class PullStrategyTest extends ReplicationTestBase {
     private void resetCheckpoint() throws Exception {
         DatastoreWrapper wrapper = new DatastoreWrapper(this.datastore);
         wrapper.putCheckpoint(this.remoteDb.getIdentifier(), "0");
-    }
-
-    @Test
-    public void pull_filterSelectorBirdFromAnimalDb_twoDocShouldBePulled() throws Exception {
-        PullSelector selector = new PullSelector("{\"selector\":{\"class\":\"bird\"}}");
-        PullStrategy replicator = super.getPullStrategy(selector);
-
-        Assert.assertEquals(0, datastore.getDocumentCount());
-
-        AnimalDb.populate(remoteDb.couchClient);
-        this.pull(replicator, 2);
-
-        Assert.assertEquals(2, datastore.getDocumentCount());
-        String[] birds = {"snipe", "kookaburra"};
-        for (String mammal : birds) {
-            Assert.assertTrue(datastore.contains(mammal));
-        }
-    }
-
-    @Test
-    public void
-    pull_filterSelectorMammalFromAnimalDbUsingParameterizedFilter_eightDocShouldBePulled()
-            throws Exception {
-        PullSelector selector = new PullSelector("{\"selector\":{\"class\":\"mammal\"}}");
-        PullStrategy replicator = super.getPullStrategy(selector);
-
-        Assert.assertEquals(0, datastore.getDocumentCount());
-
-        AnimalDb.populate(remoteDb.couchClient);
-        this.pull(replicator, 8);
-
-        Assert.assertEquals(8, datastore.getDocumentCount());
-        String[] mammals = {"aardvark", "badger", "elephant", "giraffe", "lemur", "llama",
-                "panda", "zebra"};
-        for (String mammal : mammals) {
-            Assert.assertTrue(datastore.contains(mammal));
-        }
-    }
-
-    @Test
-    public void pull_filterSelectorSmallFromAnimalDbUsingIntegerFilter_eightDocShouldBePulled()
-            throws Exception {
-        PullSelector selector = new PullSelector("{\"selector\":{\"max_length\":{\"$lte\":2}}}");
-        PullStrategy replicator = super.getPullStrategy(selector);
-
-        Assert.assertEquals(0, datastore.getDocumentCount());
-
-        AnimalDb.populate(remoteDb.couchClient);
-        this.pull(replicator, 6);
-
-        Assert.assertEquals(6, datastore.getDocumentCount());
-        String[] mammals = {"badger", "kookaburra", "lemur", "llama", "panda", "snipe"};
-        for (String mammal : mammals) {
-            Assert.assertTrue(mammal + " should be in the datastore", datastore.contains(mammal));
-        }
-    }
-
-    @Test
-    public void pull_filterSelectorSmallFromAnimalDbUsingNullFilter_eightDocShouldBePulled()
-            throws Exception {
-        PullSelector selector = new PullSelector("{\"selector\":{\"chinese_name\":\"\u718a\u732b\"}}");
-        PullStrategy replicator = super.getPullStrategy(selector);
-
-        Assert.assertEquals(0, datastore.getDocumentCount());
-
-        AnimalDb.populate(remoteDb.couchClient);
-        this.pull(replicator, 1);
-
-        Assert.assertEquals(1, datastore.getDocumentCount());
-        String[] mammals = {"panda"};
-        for (String mammal : mammals) {
-            Assert.assertTrue(mammal + " should be in the datastore", datastore.contains(mammal));
-        }
     }
 
     @Test
