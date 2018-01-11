@@ -20,6 +20,7 @@ import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.common.TestOptions;
 import com.cloudant.http.internal.interceptors.CookieInterceptor;
 import com.cloudant.sync.replication.PullFilter;
+import com.cloudant.sync.replication.PullSelector;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 
@@ -108,6 +109,18 @@ public class PullReplicatorTest extends ReplicationTestBase {
         Replicator replicator = ReplicatorBuilder.pull()
                 .from(this.source)
                 .to(this.documentStore)
+                .build();
+
+        Assert.assertNotNull(replicator);
+    }
+
+    @Test
+    public void testPullReplicationCreatedSuccessfullyWithSelector() throws Exception {
+
+        Replicator replicator = ReplicatorBuilder.pull()
+                .from(this.source)
+                .to(this.documentStore)
+                .selector(new PullSelector("{\"selector\":{\"class\":\"a_class\"}}"))
                 .build();
 
         Assert.assertNotNull(replicator);
