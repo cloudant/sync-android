@@ -24,6 +24,7 @@ import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.replication.PullFilter;
+import com.cloudant.sync.replication.PullSelector;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 
 import org.junit.Assert;
@@ -166,4 +167,35 @@ public class ReplicatorIdTest {
                 pull2.getReplicationId());
     }
 
+    // two pull reps, one with selector, one without, not equal
+    @Test
+    public void pullWithSelectorNotEqual() throws Exception {
+        PullStrategy pull1 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
+                .from(new URI
+                        ("http://default-host/default-database")).to(mockDocumentStore).build
+                        ()).strategy;
+        PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
+                .from(new URI
+                        ("http://default-host/default-database")).to(mockDocumentStore)
+                .selector(new PullSelector("{\"selector\":{\"class\":\"mammal\"}}")).build()).strategy;
+
+        Assert.assertNotEquals(pull1.getReplicationId(),
+                pull2.getReplicationId());
+    }
+
+    // two pull reps, both with different filters, not equal
+    @Test
+    public void pullWithDifferentSelectorsNotEqual() throws Exception {
+        PullStrategy pull1 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
+                .from(new URI
+                        ("http://default-host/default-database")).to(mockDocumentStore)
+                .selector(new PullSelector("{\"selector\":{\"class\":\"mammal\"}}")).build()).strategy;
+        PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
+                .from(new URI
+                        ("http://default-host/default-database")).to(mockDocumentStore)
+                .selector(new PullSelector("{\"selector\":{\"class\":\"bird\"}}")).build()).strategy;
+
+        Assert.assertNotEquals(pull1.getReplicationId(),
+                pull2.getReplicationId());
+    }
 }
