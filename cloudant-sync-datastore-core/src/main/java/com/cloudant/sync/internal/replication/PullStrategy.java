@@ -114,8 +114,7 @@ public class PullStrategy implements ReplicationStrategy {
         if (filter != null) {
             replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source,
                     filter.getName());
-        }
-        if (selector != null) {
+        } else if (selector != null) {
             replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source,
                     selector.getSelector());
         } else {
@@ -398,10 +397,12 @@ public class PullStrategy implements ReplicationStrategy {
                                     // of the database transaction
                                     preparedAtts.put(attachmentName, this.sourceDb
                                             .pullAttachmentWithRetry
-                                            (documentRevs.getId(), documentRevs.getRev(), entry
-                                                    .getKey(), new AttachmentPullProcessor(this
-                                                    .targetDb, entry.getKey(), contentType,
-                                                    encoding, length, encodedLength)));
+                                                    (documentRevs.getId(), documentRevs.getRev(),
+                                                            entry
+                                                            .getKey(), new
+                                                                    AttachmentPullProcessor(this
+                                                            .targetDb, entry.getKey(), contentType,
+                                                            encoding, length, encodedLength)));
                                 }
                             }
                         } catch (Exception e) {
