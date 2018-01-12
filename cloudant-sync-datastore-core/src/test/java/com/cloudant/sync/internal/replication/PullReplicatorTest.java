@@ -16,10 +16,7 @@
 
 package com.cloudant.sync.internal.replication;
 
-import com.cloudant.common.RequireCloudant;
 import com.cloudant.common.RequireRunningCouchDB;
-import com.cloudant.common.TestOptions;
-import com.cloudant.http.internal.interceptors.CookieInterceptor;
 import com.cloudant.sync.replication.PullFilter;
 import com.cloudant.sync.replication.PullSelector;
 import com.cloudant.sync.replication.Replicator;
@@ -71,7 +68,8 @@ public class PullReplicatorTest extends ReplicationTestBase {
         replicator.start();
         Assert.assertEquals(Replicator.State.STARTED, replicator.getState());
 
-        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+        while (replicator.getState() != Replicator.State.COMPLETE && replicator.getState() !=
+                Replicator.State.ERROR) {
             Thread.sleep(1000);
         }
 
@@ -127,6 +125,18 @@ public class PullReplicatorTest extends ReplicationTestBase {
         Assert.assertNotNull(replicator);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testPullReplicationSelectorAndFilterIncompatible() throws Exception {
+
+        Replicator replicator = ReplicatorBuilder.pull()
+                .from(this.source)
+                .to(this.documentStore)
+                .selector(new PullSelector("{\"selector\":{\"class\":\"a_class\"}}"))
+                .filter(new PullFilter("a_filter"))
+                .build();
+
+    }
+
     @Test
     public void testPullReplicationCreatedSuccessfullyWithFilter() throws Exception {
 
@@ -142,12 +152,12 @@ public class PullReplicatorTest extends ReplicationTestBase {
     @Test
     public void testPullReplicationCreatedSuccessfullyWithFilterAndParams() throws Exception {
 
-        Map<String,String> params = new HashMap<String,String>();
-        params.put("a","parameter");
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("a", "parameter");
         Replicator replicator = ReplicatorBuilder.pull()
                 .from(this.source)
                 .to(this.documentStore)
-                .filter(new PullFilter("a_filter",params))
+                .filter(new PullFilter("a_filter", params))
                 .build();
 
         Assert.assertNotNull(replicator);
@@ -156,11 +166,11 @@ public class PullReplicatorTest extends ReplicationTestBase {
     @Test
     public void testPullReplicationCreatedSuccessfullyWithFilterAndEmptyParams() throws Exception {
 
-        Map<String,String> params = new HashMap<String,String>();
+        Map<String, String> params = new HashMap<String, String>();
         Replicator replicator = ReplicatorBuilder.pull()
                 .from(this.source)
                 .to(this.documentStore)
-                .filter(new PullFilter("a_filter",params))
+                .filter(new PullFilter("a_filter", params))
                 .build();
 
         Assert.assertNotNull(replicator);
@@ -184,7 +194,8 @@ public class PullReplicatorTest extends ReplicationTestBase {
         replicator.getEventBus().register(listener);
         replicator.start();
 
-        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+        while (replicator.getState() != Replicator.State.COMPLETE && replicator.getState() !=
+                Replicator.State.ERROR) {
             Thread.sleep(50);
         }
 
@@ -201,10 +212,11 @@ public class PullReplicatorTest extends ReplicationTestBase {
     public void replicatorCanBeReused() throws Exception {
         ReplicatorBuilder replicatorBuilder = super.getPullBuilder();
         Replicator replicator = replicatorBuilder.build();
-        ReplicationStrategy replicationStrategy = ((ReplicatorImpl)replicator).strategy;
+        ReplicationStrategy replicationStrategy = ((ReplicatorImpl) replicator).strategy;
         replicator.start();
         // replicate 2 docs created at test setup
-        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+        while (replicator.getState() != Replicator.State.COMPLETE && replicator.getState() !=
+                Replicator.State.ERROR) {
             Thread.sleep(50);
         }
         // check document counter has been incremented
@@ -212,9 +224,10 @@ public class PullReplicatorTest extends ReplicationTestBase {
         Bar bar3 = BarUtils.createBar(remoteDb, "Test", 52);
         couchClient.create(bar3);
         replicator.start();
-        ReplicationStrategy replicationStrategy2 = ((ReplicatorImpl)replicator).strategy;
+        ReplicationStrategy replicationStrategy2 = ((ReplicatorImpl) replicator).strategy;
         // replicate 3rd doc
-        while(replicator.getState() != Replicator.State.COMPLETE && replicator.getState() != Replicator.State.ERROR) {
+        while (replicator.getState() != Replicator.State.COMPLETE && replicator.getState() !=
+                Replicator.State.ERROR) {
             Thread.sleep(50);
         }
         // check document counter has been reset since last replication and incremented
@@ -227,20 +240,20 @@ public class PullReplicatorTest extends ReplicationTestBase {
         ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
                 from(new URI("http://🍶:🍶@some-host:123/path%2Fsome-path-日本")).
                 to(documentStore);
-        ReplicatorImpl r = (ReplicatorImpl)p.build();
+        ReplicatorImpl r = (ReplicatorImpl) p.build();
         // check that user/pass has been removed
         Assert.assertEquals("http://some-host:123/path%2Fsome-path-日本",
-                (((CouchClientWrapper)(((PullStrategy)r.strategy).sourceDb)).
+                (((CouchClientWrapper) (((PullStrategy) r.strategy).sourceDb)).
                         getCouchClient().
                         getRootUri()).
                         toString()
-                );
+        );
         assertCookieInterceptorPresent(p, "name=%F0%9F%8D%B6&password=%F0%9F%8D%B6");
     }
 
     @Test
     public void testCredsAPIOverridesURL() throws Exception {
-        ReplicatorBuilder.Pull pull =  ReplicatorBuilder.pull().to(documentStore)
+        ReplicatorBuilder.Pull pull = ReplicatorBuilder.pull().to(documentStore)
                 .from(new URI("http://example:password@example.invalid"))
                 .username("user")
                 .password("examplePass");
@@ -251,7 +264,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
 
     @Test
     public void testCredsAPIOverridesURLWithPath() throws Exception {
-        ReplicatorBuilder.Pull pull =  ReplicatorBuilder.pull().to(documentStore)
+        ReplicatorBuilder.Pull pull = ReplicatorBuilder.pull().to(documentStore)
                 .from(new URI("http://example:password@example.invalid/proxy"))
                 .username("user")
                 .password("examplePass");
@@ -265,7 +278,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
         ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
                 from(new URI("http://🍶:🍶@some-host/path%2Fsome-path-日本")).
                 to(documentStore);
-        ReplicatorImpl r = (ReplicatorImpl)p.build();
+        ReplicatorImpl r = (ReplicatorImpl) p.build();
         // check that user/pass has been removed
         Assert.assertEquals("http://some-host:80/path%2Fsome-path-日本",
                 (((CouchClientWrapper) (((PullStrategy) r.strategy).sourceDb)).
@@ -273,7 +286,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
                         getRootUri()).
                         toString()
         );
-       assertCookieInterceptorPresent(p, "name=%F0%9F%8D%B6&password=%F0%9F%8D%B6");
+        assertCookieInterceptorPresent(p, "name=%F0%9F%8D%B6&password=%F0%9F%8D%B6");
     }
 
     /**
@@ -302,7 +315,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
         assertCookieInterceptorPresent(p, "name=" + encodedUsername + "&password=" +
                 encodedPassword);
     }
-    
+
     @Test(expected = IllegalStateException.class)
     public void replicatorBuilderNoSource() {
         ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().
@@ -330,7 +343,8 @@ public class PullReplicatorTest extends ReplicationTestBase {
     @Test
     public void replicatorBuilderAddsIamInterceptor() throws Exception {
         String apiKey = "abc123";
-        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().from(new URI("http://example.com/path")).
+        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().from(new URI("http://example" +
+                ".com/path")).
                 to(documentStore).
                 iamApiKey(apiKey);
         // although the replicator isn't used, the interceptor check expects the presence of the
@@ -343,7 +357,8 @@ public class PullReplicatorTest extends ReplicationTestBase {
     @Test
     public void replicatorBuilderAddsIamInterceptorWhenUsernamePasswordPresent() throws Exception {
         String apiKey = "abc123";
-        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().from(new URI("http://example.com/path")).
+        ReplicatorBuilder.Pull p = ReplicatorBuilder.pull().from(new URI("http://example" +
+                ".com/path")).
                 to(documentStore).
                 username("username").
                 password("password").

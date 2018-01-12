@@ -1,7 +1,5 @@
 /*
- * Copyright © 2017 IBM Corp. All rights reserved.
- *
- * Copyright © 2013 Cloudant, Inc. All rights reserved.
+ * Copyright © 2018 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +17,7 @@ package com.cloudant.sync.internal.mazha;
 import static org.hamcrest.Matchers.hasSize;
 
 import com.cloudant.common.RequireCloudant;
-import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.sync.replication.PullSelector;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,14 +35,15 @@ public class CouchClientSelectorChangesTest extends CouchClientTestBase {
 
     @Test
     public void changes_selector() {
-        String animalBirdSelector = "{\"selector\":{\"class\":\"bird\"}}";
+        PullSelector animalBirdSelector = new PullSelector("{\"selector\":{\"class\":\"bird\"}}");
         ChangesResult changes = client.changes(animalBirdSelector, null, 5);
         Assert.assertThat(changes.getResults(), hasSize(2));
     }
 
     @Test
     public void changes_selectorAndMoreThanLimitNumberOfDocs() {
-        String animalMammalSelector = "{\"selector\":{\"class\":\"mammal\"}}";
+        PullSelector animalMammalSelector = new PullSelector
+                ("{\"selector\":{\"class\":\"mammal\"}}");
         ChangesResult firstChangeSet = client.changes(animalMammalSelector, null, 5);
         Assert.assertThat(firstChangeSet.getResults(), hasSize(5));
 
