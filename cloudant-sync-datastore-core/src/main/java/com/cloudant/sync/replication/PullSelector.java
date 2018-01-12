@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 IBM Corp. All rights reserved.
+ * Copyright © 2018 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -11,9 +11,8 @@
  * either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package com.cloudant.sync.replication;
 
-import java.util.Map;
+package com.cloudant.sync.replication;
 
 /**
  * <p>Provides the mango query selector for filter criteria to be used
@@ -27,9 +26,9 @@ import java.util.Map;
  * </pre>
  *
  * @see
- * <a target="_blank" href="http://docs.couchdb.org/en/latest/replication/intro.html#controlling-which-documents-to-replicate">Controlling documents replicated</a>
+ * <a target="_blank" href="https://console.bluemix.net/docs/services/Cloudant/api/replication.html#selector-field">Controlling documents replicated</a>
  * @see
- * <a target="_blank" href="http://docs.couchdb.org/en/latest/replication/replicator.html#selectorobj">Selector Objects</a>
+ * <a target="_blank" href="https://console.bluemix.net/docs/services/Cloudant/api/cloudant_query.html#selector-syntax">Selector syntax</a>
  */
 
 public class PullSelector {
@@ -38,7 +37,7 @@ public class PullSelector {
     /**
      * Constructs a selector object.
      *
-     * @param selector expression. The {@code selector} argument is mangi query expression
+     * @param selector expression. The {@code selector} argument is mango query expression
      *                 as passed to
      *                 the {@code filter} parameter of CouchDB's {@code _changes} feed.
      */
@@ -48,6 +47,7 @@ public class PullSelector {
 
     /**
      * Returns the selector definition.
+     *
      * @return selector expression.
      */
     public String getSelector() {
