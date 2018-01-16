@@ -34,8 +34,6 @@ import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
 import com.cloudant.sync.replication.DatabaseNotFoundException;
 import com.cloudant.sync.replication.PullFilter;
-import com.cloudant.sync.replication.PullSelector;
-
 
 import org.apache.commons.codec.binary.Hex;
 
@@ -82,7 +80,7 @@ public class PullStrategy implements ReplicationStrategy {
     CouchDB sourceDb;
 
     PullFilter filter;
-    PullSelector selector;
+    String selector;
 
     DatastoreWrapper targetDb;
 
@@ -102,7 +100,7 @@ public class PullStrategy implements ReplicationStrategy {
     public PullStrategy(URI source,
                         Database target,
                         PullFilter filter,
-                        PullSelector selector,
+                        String selector,
                         List<HttpConnectionRequestInterceptor> requestInterceptors,
                         List<HttpConnectionResponseInterceptor> responseInterceptors) {
         this.filter = filter;
@@ -115,8 +113,7 @@ public class PullStrategy implements ReplicationStrategy {
             replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source,
                     filter.getName());
         } else if (selector != null) {
-            replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source,
-                    selector.getSelector());
+            replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source, selector);
         } else {
             replicatorName = String.format("%s <-- %s ", target.getPath(), source);
         }
@@ -446,7 +443,7 @@ public class PullStrategy implements ReplicationStrategy {
         if (filter != null) {
             dict.put("filter", this.filter.toQueryString());
         } else if (selector != null) {
-            dict.put("selector", this.selector.getSelector());
+            dict.put("selector", this.selector);
         }
         // get raw SHA-1 of dictionary
         try {

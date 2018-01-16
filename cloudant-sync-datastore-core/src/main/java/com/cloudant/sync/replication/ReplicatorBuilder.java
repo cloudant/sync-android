@@ -266,7 +266,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
         private PullFilter pullPullFilter = null;
 
-        private PullSelector pullPullSelector = null;
+        private String pullPullSelector = null;
 
         private int changeLimitPerBatch = 1000;
 
@@ -311,12 +311,20 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         * Sets the selector to use for a pull replication
+         * <p>Provides the mango query selector for filter criteria to be used
+         * when a pull replication calls the source database's {@code _changes} feed.
+         * </p>
          *
-         * @param pullPullSelector The Selector to use during a pull replication
+         * @see
+         * <a target="_blank" href="https://console.bluemix.net/docs/services/Cloudant/api/replication.html#selector-field">Controlling documents replicated</a>
+         * @see
+         * <a target="_blank" href="https://console.bluemix.net/docs/services/Cloudant/api/cloudant_query.html#selector-syntax">Selector syntax</a>
+         *
+         * @param pullPullSelector The {@code pullPullSelector} argument is a mango query expression
+         *                         as passed to the {@code filter} parameter of CouchDB's {@code _changes} feed.
          * @return This instance of {@link ReplicatorBuilder}
          */
-        public Pull selector(PullSelector pullPullSelector) {
+        public Pull selector(String pullPullSelector) {
             this.pullPullSelector = pullPullSelector;
             return this;
         }

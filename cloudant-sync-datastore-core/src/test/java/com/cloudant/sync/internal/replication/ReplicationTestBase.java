@@ -29,7 +29,6 @@ import com.cloudant.sync.internal.mazha.CouchException;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.replication.PullFilter;
-import com.cloudant.sync.replication.PullSelector;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 import com.cloudant.sync.util.TestUtils;
@@ -188,7 +187,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         return pull;
     }
 
-    protected ReplicatorBuilder.Pull getPullBuilder(PullSelector selector) {
+    protected ReplicatorBuilder.Pull getPullBuilder(String selector) {
         ReplicatorBuilder.Pull pull = ReplicatorBuilder.pull().
                 from(this.couchConfig.getRootUri()).
                 to(this.documentStore)
@@ -216,7 +215,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         return (PullStrategy)((ReplicatorImpl)this.getPullBuilder(filter).build()).strategy;
     }
 
-    protected PullStrategy getPullStrategy(PullSelector selector) {
+    protected PullStrategy getPullStrategy(String selector) {
         return (PullStrategy)((ReplicatorImpl)this.getPullBuilder(selector).build()).strategy;
     }
 

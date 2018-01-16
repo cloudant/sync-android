@@ -16,7 +16,6 @@ package com.cloudant.sync.internal.replication;
 
 import com.cloudant.common.RequireCloudant;
 import com.cloudant.sync.internal.mazha.AnimalDb;
-import com.cloudant.sync.replication.PullSelector;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -37,7 +36,7 @@ public class PullStrategySelectorTest extends ReplicationTestBase {
 
     @Test
     public void pull_filterSelectorBirdFromAnimalDb_twoDocShouldBePulled() throws Exception {
-        PullSelector selector = new PullSelector("{\"selector\":{\"class\":\"bird\"}}");
+        String selector ="{\"selector\":{\"class\":\"bird\"}}";
         PullStrategy replicator = super.getPullStrategy(selector);
 
         Assert.assertEquals(0, datastore.getDocumentCount());
@@ -56,7 +55,7 @@ public class PullStrategySelectorTest extends ReplicationTestBase {
     public void
     pull_filterSelectorMammalFromAnimalDbUsingParameterizedFilter_eightDocShouldBePulled()
             throws Exception {
-        PullSelector selector = new PullSelector("{\"selector\":{\"class\":\"mammal\"}}");
+        String selector = "{\"selector\":{\"class\":\"mammal\"}}";
         PullStrategy replicator = super.getPullStrategy(selector);
 
         Assert.assertEquals(0, datastore.getDocumentCount());
@@ -75,7 +74,7 @@ public class PullStrategySelectorTest extends ReplicationTestBase {
     @Test
     public void pull_filterSelectorSmallFromAnimalDbUsingIntegerFilter_eightDocShouldBePulled()
             throws Exception {
-        PullSelector selector = new PullSelector("{\"selector\":{\"max_length\":{\"$lte\":2}}}");
+        String selector = "{\"selector\":{\"max_length\":{\"$lte\":2}}}";
         PullStrategy replicator = super.getPullStrategy(selector);
 
         Assert.assertEquals(0, datastore.getDocumentCount());
@@ -93,8 +92,7 @@ public class PullStrategySelectorTest extends ReplicationTestBase {
     @Test
     public void pull_filterSelectorSmallFromAnimalDbUsingNullFilter_eightDocShouldBePulled()
             throws Exception {
-        PullSelector selector = new PullSelector
-                ("{\"selector\":{\"chinese_name\":\"\u718a\u732b\"}}");
+       String selector = "{\"selector\":{\"chinese_name\":\"\u718a\u732b\"}}";
         PullStrategy replicator = super.getPullStrategy(selector);
 
         Assert.assertEquals(0, datastore.getDocumentCount());

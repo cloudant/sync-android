@@ -17,7 +17,6 @@ package com.cloudant.sync.internal.mazha;
 import static org.hamcrest.Matchers.hasSize;
 
 import com.cloudant.common.RequireCloudant;
-import com.cloudant.sync.replication.PullSelector;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,15 +34,14 @@ public class CouchClientSelectorChangesTest extends CouchClientTestBase {
 
     @Test
     public void changes_selector() {
-        PullSelector animalBirdSelector = new PullSelector("{\"selector\":{\"class\":\"bird\"}}");
+        String animalBirdSelector = "{\"selector\":{\"class\":\"bird\"}}";
         ChangesResult changes = client.changes(animalBirdSelector, null, 5);
         Assert.assertThat(changes.getResults(), hasSize(2));
     }
 
     @Test
     public void changes_selectorAndMoreThanLimitNumberOfDocs() {
-        PullSelector animalMammalSelector = new PullSelector
-                ("{\"selector\":{\"class\":\"mammal\"}}");
+        String animalMammalSelector = "{\"selector\":{\"class\":\"mammal\"}}";
         ChangesResult firstChangeSet = client.changes(animalMammalSelector, null, 5);
         Assert.assertThat(firstChangeSet.getResults(), hasSize(5));
 

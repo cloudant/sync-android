@@ -18,7 +18,6 @@ package com.cloudant.sync.internal.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.sync.replication.PullFilter;
-import com.cloudant.sync.replication.PullSelector;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 
@@ -119,7 +118,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
         Replicator replicator = ReplicatorBuilder.pull()
                 .from(this.source)
                 .to(this.documentStore)
-                .selector(new PullSelector("{\"selector\":{\"class\":\"a_class\"}}"))
+                .selector("{\"selector\":{\"class\":\"a_class\"}}")
                 .build();
 
         Assert.assertNotNull(replicator);
@@ -131,7 +130,7 @@ public class PullReplicatorTest extends ReplicationTestBase {
         Replicator replicator = ReplicatorBuilder.pull()
                 .from(this.source)
                 .to(this.documentStore)
-                .selector(new PullSelector("{\"selector\":{\"class\":\"a_class\"}}"))
+                .selector("{\"selector\":{\"class\":\"a_class\"}}")
                 .filter(new PullFilter("a_filter"))
                 .build();
 

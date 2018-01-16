@@ -24,7 +24,6 @@ import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.replication.PullFilter;
-import com.cloudant.sync.replication.PullSelector;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 
 import org.junit.Assert;
@@ -177,7 +176,7 @@ public class ReplicatorIdTest {
         PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
                         ("http://default-host/default-database")).to(mockDocumentStore)
-                .selector(new PullSelector("{\"selector\":{\"class\":\"mammal\"}}")).build()).strategy;
+                .selector("{\"selector\":{\"class\":\"mammal\"}}").build()).strategy;
 
         Assert.assertNotEquals(pull1.getReplicationId(),
                 pull2.getReplicationId());
@@ -189,11 +188,11 @@ public class ReplicatorIdTest {
         PullStrategy pull1 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
                         ("http://default-host/default-database")).to(mockDocumentStore)
-                .selector(new PullSelector("{\"selector\":{\"class\":\"mammal\"}}")).build()).strategy;
+                .selector("{\"selector\":{\"class\":\"mammal\"}}").build()).strategy;
         PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
                         ("http://default-host/default-database")).to(mockDocumentStore)
-                .selector(new PullSelector("{\"selector\":{\"class\":\"bird\"}}")).build()).strategy;
+                .selector("{\"selector\":{\"class\":\"bird\"}}").build()).strategy;
 
         Assert.assertNotEquals(pull1.getReplicationId(),
                 pull2.getReplicationId());

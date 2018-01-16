@@ -31,7 +31,6 @@ import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
 import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
 import com.cloudant.sync.replication.PullFilter;
-import com.cloudant.sync.replication.PullSelector;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.apache.commons.io.IOUtils;
@@ -324,26 +323,19 @@ public class CouchClient {
         return this.changes(options);
     }
 
-    public ChangesResult changes(PullSelector selector, Object since, Integer limit) {
+    public ChangesResult changes(String selector, Object since, Integer limit) {
+        Misc.checkNotNullOrEmpty(selector,null);
         Map<String, Object> options = getParametrizedChangeFeedOptions(since, limit);
-        String selectorExpression = null;
-        if (selector != null) {
-            selectorExpression = selector.getSelector();
-            options.put("filter", "_selector");
-        }
-        return this.changes(selectorExpression, options);
+        options.put("filter", "_selector");
+        URI changesFeedUri = uriHelper.changesUri(options);
+        HttpConnection connection = Http.POST(changesFeedUri, "application/json");
+        connection.setRequestBody(selector);
+        return executeToJsonObjectWithRetry(connection, ChangesResult.class);
     }
 
     public ChangesResult changes(final Map<String, Object> options) {
         URI changesFeedUri = uriHelper.changesUri(options);
         HttpConnection connection = Http.GET(changesFeedUri);
-        return executeToJsonObjectWithRetry(connection, ChangesResult.class);
-    }
-
-    public ChangesResult changes(String selector, final Map<String, Object> options) {
-        URI changesFeedUri = uriHelper.changesUri(options);
-        HttpConnection connection = Http.POST(changesFeedUri, "application/json");
-        connection.setRequestBody(selector);
         return executeToJsonObjectWithRetry(connection, ChangesResult.class);
     }
 
