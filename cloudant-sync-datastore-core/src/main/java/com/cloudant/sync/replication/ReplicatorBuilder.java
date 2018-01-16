@@ -314,6 +314,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
          * <p>Provides the mango query selector for filter criteria to be used
          * when a pull replication calls the source database's {@code _changes} feed.
          * </p>
+         * Note: Selectors are supported only when replicating against a CouchDB 2.x compliant database
          *
          * @see
          * <a target="_blank" href="https://console.bluemix.net/docs/services/Cloudant/api/replication.html#selector-field">Controlling documents replicated</a>
