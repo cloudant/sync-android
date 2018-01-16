@@ -415,8 +415,8 @@ public class CouchClient {
      * "hello" : "world",
      * "name" : "Tom",
      * "_conflicts" : [
-     * "2-d9789a01da0c41aeb3d86ff039f461f6",
-     * "2-65ddd7d56da84f25af544e84a3267ccf" ]
+     *   "2-d9789a01da0c41aeb3d86ff039f461f6",
+     *   "2-65ddd7d56da84f25af544e84a3267ccf" ]
      * }
      */
     public Map<String, Object> getDocConflictRevs(String id) {
@@ -440,8 +440,7 @@ public class CouchClient {
 
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("revs", true);
-        // by adding latest we should never receive a "missing" response from the server. A
-        // descendant
+        // by adding latest we should never receive a "missing" response from the server. A descendant
         // of the revision requested will be returned even if it has been deleted.
         options.put("latest", true);
         // only pull attachments inline if we're configured to
@@ -648,8 +647,7 @@ public class CouchClient {
     }
 
     /**
-     * Bulk insert a list of document that are serialized to JSON data already. For performance
-     * reasons,
+     * Bulk insert a list of document that are serialized to JSON data already. For performance reasons,
      * the JSON doc is not validated.
      *
      * @param serializedDocs array of JSON documents
@@ -693,14 +691,14 @@ public class CouchClient {
      * An example input could be (in JSON format):
      *
      * { "03ee06461a12f3c288bb865b22000170":
-     * [
-     * "1-b2e54331db828310f3c772d6e042ac9c",
-     * "2-3a24009a9525bde9e4bfa8a99046b00d"
-     * ],
-     * "82e04f650661c9bdb88c57e044000a4b":
-     * [
-     * "3-bb39f8c740c6ffb8614c7031b46ac162"
-     * ]
+     *     [
+     *       "1-b2e54331db828310f3c772d6e042ac9c",
+     *       "2-3a24009a9525bde9e4bfa8a99046b00d"
+     *     ],
+     *   "82e04f650661c9bdb88c57e044000a4b":
+     *     [
+     *       "3-bb39f8c740c6ffb8614c7031b46ac162"
+     *     ]
      * }
      *
      * The output is in same format.
