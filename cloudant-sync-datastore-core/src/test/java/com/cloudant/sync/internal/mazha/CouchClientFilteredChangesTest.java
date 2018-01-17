@@ -20,13 +20,12 @@ import static org.hamcrest.Matchers.hasSize;
 
 import com.cloudant.common.CollectionFactory;
 import com.cloudant.common.RequireRunningCouchDB;
+import com.cloudant.sync.replication.PullFilter;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.util.Map;
 
 @Category(RequireRunningCouchDB.class)
 public class CouchClientFilteredChangesTest extends CouchClientTestBase {
@@ -39,26 +38,26 @@ public class CouchClientFilteredChangesTest extends CouchClientTestBase {
 
     @Test
     public void changes_filteredWoParameter() {
-        String filter = "animal/bird";
-        ChangesResult changes = client.changes(filter, null, null, 5);
+        PullFilter filter = new PullFilter("animal/bird");
+        ChangesResult changes = client.changes(filter, null, 5);
         Assert.assertThat(changes.getResults(), hasSize(2));
     }
 
     @Test
     public void changes_filteredWoParameterAndMoreThanLimitNumberOfDocs() {
-        String filter = "animal/mammal";
-        ChangesResult firstChangeSet = client.changes(filter, null, null, 5);
+        PullFilter filter = new PullFilter("animal/mammal");
+        ChangesResult firstChangeSet = client.changes(filter, null, 5);
         Assert.assertThat(firstChangeSet.getResults(), hasSize(5));
 
-        ChangesResult secondChangeSet = client.changes(filter, null, firstChangeSet.getLastSeq(), 5);
+        ChangesResult secondChangeSet = client.changes(filter, firstChangeSet.getLastSeq(), 5);
         Assert.assertThat(secondChangeSet.getResults(), hasSize(3));
     }
 
     @Test
     public void changes_filteredWithParameter() {
-        String filter = "animal/by_class";
-        Map<String, String> parameters = CollectionFactory.MAP.of("class", "mammal");
-        ChangesResult changes = client.changes(filter, parameters, null, 100);
+        PullFilter filter = new PullFilter("animal/by_class",
+                CollectionFactory.MAP.of("class", "mammal"));
+        ChangesResult changes = client.changes(filter, null, 100);
         Assert.assertThat(changes.getResults(), hasSize(8));
     }
 }

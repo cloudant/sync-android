@@ -16,11 +16,8 @@ package com.cloudant.sync.internal.replication;
 
 
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
-
 
 import com.cloudant.sync.documentstore.DocumentRevision;
 import com.cloudant.sync.internal.documentstore.DocumentRevisionTree;
@@ -76,7 +73,7 @@ public class MissingRevsReplicationTest extends ReplicationTestBase {
                 return changesResult;
 
             }
-        }).when(clientMock).changes(anyString(), anyMapOf(String.class, String.class), Matchers.anyObject(), anyInt());
+        }).when(clientMock).changes(Matchers.anyObject(), anyInt());
 
         // Do the pull replication
         pull();

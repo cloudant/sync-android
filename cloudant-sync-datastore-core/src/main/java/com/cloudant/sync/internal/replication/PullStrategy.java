@@ -35,7 +35,6 @@ import com.cloudant.sync.internal.util.Misc;
 import com.cloudant.sync.replication.DatabaseNotFoundException;
 import com.cloudant.sync.replication.PullFilter;
 
-
 import org.apache.commons.codec.binary.Hex;
 
 import java.io.ByteArrayInputStream;
@@ -81,6 +80,7 @@ public class PullStrategy implements ReplicationStrategy {
     CouchDB sourceDb;
 
     PullFilter filter;
+    String selector;
 
     DatastoreWrapper targetDb;
 
@@ -100,18 +100,22 @@ public class PullStrategy implements ReplicationStrategy {
     public PullStrategy(URI source,
                         Database target,
                         PullFilter filter,
+                        String selector,
                         List<HttpConnectionRequestInterceptor> requestInterceptors,
                         List<HttpConnectionResponseInterceptor> responseInterceptors) {
         this.filter = filter;
+        this.selector = selector;
         this.sourceDb = new CouchClientWrapper(new CouchClient(source, requestInterceptors,
                 responseInterceptors));
         this.targetDb = new DatastoreWrapper((DatabaseImpl) target);
         String replicatorName;
-        if (filter == null) {
-            replicatorName = String.format("%s <-- %s ", target.getPath(), source);
-        } else {
+        if (filter != null) {
             replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source,
                     filter.getName());
+        } else if (selector != null) {
+            replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source, selector);
+        } else {
+            replicatorName = String.format("%s <-- %s ", target.getPath(), source);
         }
         this.name = String.format("%s [%s]", LOG_TAG, replicatorName);
     }
@@ -221,7 +225,7 @@ public class PullStrategy implements ReplicationStrategy {
         }
 
         this.state.documentCounter = 0;
-        while(!this.state.cancel) {
+        while (!this.state.cancel) {
             this.state.batchCounter++;
 
             String msg = String.format(
@@ -297,7 +301,8 @@ public class PullStrategy implements ReplicationStrategy {
     }
 
     private int processOneChangesBatch(ChangesResultWrapper changeFeeds)
-            throws ExecutionException, InterruptedException, DocumentException, DocumentStoreException {
+            throws ExecutionException, InterruptedException, DocumentException,
+            DocumentStoreException {
         String feed = String.format(
                 "Change feed: { last_seq: %s, change size: %s}",
                 changeFeeds.getLastSeq(),
@@ -320,7 +325,9 @@ public class PullStrategy implements ReplicationStrategy {
 
             List<BatchItem> batchesToInsert = new ArrayList<BatchItem>();
 
-            if (this.state.cancel) { break; }
+            if (this.state.cancel) {
+                break;
+            }
 
             try {
                 Iterable<DocumentRevsList> result = createTask(batch, missingRevisions);
@@ -385,11 +392,14 @@ public class PullStrategy implements ReplicationStrategy {
 
                                     // by preparing the attachment here, it is downloaded outside
                                     // of the database transaction
-                                    preparedAtts.put(attachmentName, this.sourceDb.pullAttachmentWithRetry
-                                            (documentRevs.getId(), documentRevs.getRev(), entry
-                                                    .getKey(), new AttachmentPullProcessor(this
-                                                    .targetDb, entry.getKey(), contentType,
-                                                    encoding, length, encodedLength)));
+                                    preparedAtts.put(attachmentName, this.sourceDb
+                                            .pullAttachmentWithRetry
+                                                    (documentRevs.getId(), documentRevs.getRev(),
+                                                            entry
+                                                            .getKey(), new
+                                                                    AttachmentPullProcessor(this
+                                                            .targetDb, entry.getKey(), contentType,
+                                                            encoding, length, encodedLength)));
                                 }
                             }
                         } catch (Exception e) {
@@ -432,10 +442,13 @@ public class PullStrategy implements ReplicationStrategy {
         dict.put("target", this.targetDb.getIdentifier());
         if (filter != null) {
             dict.put("filter", this.filter.toQueryString());
+        } else if (selector != null) {
+            dict.put("selector", this.selector);
         }
         // get raw SHA-1 of dictionary
         try {
-            byte[] sha1Bytes = Misc.getSha1(new ByteArrayInputStream(JSONUtils.serializeAsBytes(dict)));
+            byte[] sha1Bytes = Misc.getSha1(new ByteArrayInputStream(JSONUtils.serializeAsBytes
+                    (dict)));
             // return SHA-1 as a hex string
             byte[] sha1Hex = new Hex().encode(sha1Bytes);
             return new String(sha1Hex, Charset.forName("UTF-8"));
@@ -447,16 +460,26 @@ public class PullStrategy implements ReplicationStrategy {
     private ChangesResultWrapper nextBatch() throws DocumentStoreException {
         final Object lastCheckpoint = this.targetDb.getCheckpoint(this.getReplicationId());
         logger.fine("last checkpoint " + lastCheckpoint);
-        ChangesResult changeFeeds = this.sourceDb.changes(
-                this.filter,
-                lastCheckpoint,
-                this.changeLimitPerBatch);
+
+        ChangesResult changeFeeds = null;
+        if (this.selector != null) {
+            changeFeeds = this.sourceDb.changes(
+                    this.selector,
+                    lastCheckpoint,
+                    this.changeLimitPerBatch);
+        } else {
+            changeFeeds = this.sourceDb.changes(
+                    this.filter,
+                    lastCheckpoint,
+                    this.changeLimitPerBatch);
+        }
         logger.finer("changes feed: " + JSONUtils.toPrettyJson(changeFeeds));
         return new ChangesResultWrapper(changeFeeds);
     }
 
     public Iterable<DocumentRevsList> createTask(List<String> ids,
-                                                 Map<String, List<String>> revisions) throws DocumentStoreException {
+                                                 Map<String, List<String>> revisions) throws
+            DocumentStoreException {
 
         List<BulkGetRequest> requests = new ArrayList<BulkGetRequest>();
 

@@ -14,7 +14,6 @@
 
 package com.cloudant.sync.replication;
 
-import com.cloudant.http.HttpConnectionInterceptor;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.http.internal.interceptors.CookieInterceptor;
@@ -27,10 +26,8 @@ import com.cloudant.sync.internal.replication.ReplicatorImpl;
 import com.cloudant.sync.internal.util.Misc;
 
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,7 +62,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
     private String iamApiKey = null;
 
-    private ReplicatorBuilder(){
+    private ReplicatorBuilder() {
         requestInterceptors.add(USER_AGENT_INTERCEPTOR);
     }
 
@@ -106,7 +103,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
     }
 
     private URI scrubUri(URI uri, String uriHost, String uriPath, String uriProtocol, int uriPort) {
-        if(this.username == null && this.password == null){
+        if (this.username == null && this.password == null) {
             return uri;
         }
 
@@ -144,7 +141,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
     }
 
-    private void setAuthInterceptor(String uriHost, String uriPath, String uriProtocol, int uriPort) {
+    private void setAuthInterceptor(String uriHost, String uriPath, String uriProtocol, int
+            uriPort) {
         if (iamApiKey != null) {
             URI baseURI = getBaseUri(uriHost, uriPath, uriProtocol, uriPort);
             IamCookieInterceptor ici = new IamCookieInterceptor(iamApiKey, baseURI.toString());
@@ -153,14 +151,16 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
         } else if (this.username != null && this.password != null) {
             URI baseURI = getBaseUri(uriHost, uriPath, uriProtocol, uriPort);
-            CookieInterceptor ci = new CookieInterceptor(this.username, this.password, baseURI.toString());
+            CookieInterceptor ci = new CookieInterceptor(this.username, this.password, baseURI
+                    .toString());
             requestInterceptors.add(ci);
             responseInterceptors.add(ci);
         }
     }
 
     // - set default port if needed and validate protocol (http(s))
-    // - scrub out username and password if given, and pass it into cookie interceptor or discard it if we're doing IAM
+    // - scrub out username and password if given, and pass it into cookie interceptor or discard
+    // it if we're doing IAM
     // - add IAM interceptor if needed
     // - else add cookie interceptor if needed
     private URI addAuthInterceptorIfRequired(URI uri) {
@@ -211,11 +211,12 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
-         *  Sets the filter to use for this replication
+         * Sets the filter to use for this replication
+         *
          * @param filter the filter to use for this replication
          * @return This instance of {@link ReplicatorBuilder}
          */
-        public Push filter(PushFilter filter){
+        public Push filter(PushFilter filter) {
             this.pushFilter = filter;
             return this;
         }
@@ -223,7 +224,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
         /**
          * Sets the number of changes to fetch from the _changes feed per batch
          *
-         * @param changeLimitPerBatch The number of changes to fetch from the _changes feed per batch
+         * @param changeLimitPerBatch The number of changes to fetch from the _changes feed per
+         *                            batch
          * @return This instance of {@link ReplicatorBuilder}
          */
         public Push changeLimitPerBatch(int changeLimitPerBatch) {
@@ -234,7 +236,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
         /**
          * Sets the number of documents to bulk insert into the CouchDB instance at a time
          *
-         * @param bulkInsertSize The number of documents to bulk insert into the CouchDB instance at a time
+         * @param bulkInsertSize The number of documents to bulk insert into the CouchDB instance
+         *                       at a time
          * @return This instance of {@link ReplicatorBuilder}
          */
         public Push bulkInsertSize(int bulkInsertSize) {
@@ -245,7 +248,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
         /**
          * Sets the strategy to decide whether to push attachments inline or separately
          *
-         * @param pushAttachmentsInline The strategy to decide whether to push attachments inline or separately
+         * @param pushAttachmentsInline The strategy to decide whether to push attachments inline
+         *                              or separately
          * @return This instance of {@link ReplicatorBuilder}
          */
         public Push pushAttachmentsInline(PushAttachmentsInline pushAttachmentsInline) {
@@ -262,6 +266,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
         private PullFilter pullPullFilter = null;
 
+        private String pullPullSelector = null;
+
         private int changeLimitPerBatch = 1000;
 
         private int insertBatchSize = 100;
@@ -273,6 +279,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
             Misc.checkState(super.source != null && super.target != null,
                     "Source and target cannot be null");
+            Misc.checkState(this.pullPullFilter == null || this.pullPullSelector == null,
+                    "Filter and selector cannot be defined at the same time");
 
             // add cookie interceptor and remove creds from URI if required
             super.source = super.addAuthInterceptorIfRequired(super.source);
@@ -280,6 +288,7 @@ public abstract class ReplicatorBuilder<S, T, E> {
             PullStrategy pullStrategy = new PullStrategy(super.source,
                     super.target.database(),
                     pullPullFilter,
+                    pullPullSelector,
                     super.requestInterceptors,
                     super.responseInterceptors);
 
@@ -302,9 +311,30 @@ public abstract class ReplicatorBuilder<S, T, E> {
         }
 
         /**
+         * <p>Provides the mango query selector for filter criteria to be used
+         * when a pull replication calls the source database's {@code _changes} feed.
+         * </p>
+         * Note: Selectors are supported only when replicating against a CouchDB 2.x compliant database
+         *
+         * @see
+         * <a target="_blank" href="https://console.bluemix.net/docs/services/Cloudant/api/replication.html#selector-field">Controlling documents replicated</a>
+         * @see
+         * <a target="_blank" href="https://console.bluemix.net/docs/services/Cloudant/api/cloudant_query.html#selector-syntax">Selector syntax</a>
+         *
+         * @param pullPullSelector The {@code pullPullSelector} argument is a mango query expression
+         *                         as passed to the {@code filter} parameter of CouchDB's {@code _changes} feed.
+         * @return This instance of {@link ReplicatorBuilder}
+         */
+        public Pull selector(String pullPullSelector) {
+            this.pullPullSelector = pullPullSelector;
+            return this;
+        }
+
+        /**
          * Sets the number of changes to fetch from the _changes feed per batch
          *
-         * @param changeLimitPerBatch The number of changes to fetch from the _changes feed per batch
+         * @param changeLimitPerBatch The number of changes to fetch from the _changes feed per
+         *                            batch
          * @return This instance of {@link ReplicatorBuilder}
          */
         public Pull changeLimitPerBatch(int changeLimitPerBatch) {
@@ -315,7 +345,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
         /**
          * Sets the number of documents to insert into the SQLite database in one transaction
          *
-         * @param insertBatchSize The number of documents to insert into the SQLite database in one transaction
+         * @param insertBatchSize The number of documents to insert into the SQLite database in
+         *                        one transaction
          * @return This instance of {@link ReplicatorBuilder}
          */
         public Pull insertBatchSize(int insertBatchSize) {
@@ -368,17 +399,17 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
     /**
      * <p>
-     *     Sets the IAM API key to use for authenticating requests.
+     * Sets the IAM API key to use for authenticating requests.
      * </p>
      * <p>
-     *     Note: the replicator will only use IAM to authenticate requests. This means that the
-     *     userinfo part of the URL, if set, will be ignored.
+     * Note: the replicator will only use IAM to authenticate requests. This means that the
+     * userinfo part of the URL, if set, will be ignored.
      * </p>
      * <p>
-     *     See the
-     *     <a href="https://console.bluemix.net/docs/services/Cloudant/guides/iam.html#ibm-cloud-identity-and-access-management" target="_blank">
-     *         Bluemix Identity and Access Management
-     *     </a> documentation for more details.
+     * See the
+     * <a href="https://console.bluemix.net/docs/services/Cloudant/guides/iam.html#ibm-cloud-identity-and-access-management" target="_blank">
+     * Bluemix Identity and Access Management
+     * </a> documentation for more details.
      * </p>
      *
      * @param iamApiKey The API key
@@ -392,39 +423,45 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
     /**
      * Variable argument version of {@link #addRequestInterceptors(List)}
+     *
      * @param interceptors The request interceptors to add.
      * @return The current instance of {@link ReplicatorBuilder}
      */
-    public E addRequestInterceptors(HttpConnectionRequestInterceptor... interceptors){
+    public E addRequestInterceptors(HttpConnectionRequestInterceptor... interceptors) {
         return addRequestInterceptors(Arrays.asList(interceptors));
     }
 
     /**
-     * Adds interceptors to the list of request interceptors to use for each request made by this replication.
+     * Adds interceptors to the list of request interceptors to use for each request made by this
+     * replication.
+     *
      * @param interceptors The request interceptors to add.
      * @return The current instance of {@link ReplicatorBuilder}
      */
-    public E addRequestInterceptors(List<HttpConnectionRequestInterceptor> interceptors){
+    public E addRequestInterceptors(List<HttpConnectionRequestInterceptor> interceptors) {
         this.requestInterceptors.addAll(interceptors);
         //noinspection unchecked
-        return (E)this;
+        return (E) this;
     }
 
     /**
      * Variable argument version of {@link #addResponseInterceptors(List)}
+     *
      * @param interceptors The response interceptors to add.
      * @return The current instance of {@link ReplicatorBuilder}
      */
-    public E addResponseInterceptors(HttpConnectionResponseInterceptor... interceptors){
+    public E addResponseInterceptors(HttpConnectionResponseInterceptor... interceptors) {
         return addResponseInterceptors(Arrays.asList(interceptors));
     }
 
     /**
-     * Adds interceptors to the list of response interceptors to use for each response received by this replication.
+     * Adds interceptors to the list of response interceptors to use for each response received
+     * by this replication.
+     *
      * @param interceptors The response interceptors to add.
      * @return The current instance of {@link ReplicatorBuilder}
      */
-    public E addResponseInterceptors(List<HttpConnectionResponseInterceptor> interceptors){
+    public E addResponseInterceptors(List<HttpConnectionResponseInterceptor> interceptors) {
         this.responseInterceptors.addAll(interceptors);
         //noinspection unchecked
         return (E) this;
@@ -433,8 +470,10 @@ public abstract class ReplicatorBuilder<S, T, E> {
     /**
      * Sets the username to use when authenticating with the server.
      *
-     * Setting the username and password (using the {@link ReplicatorBuilder#password(String)}) method
+     * Setting the username and password (using the {@link ReplicatorBuilder#password(String)})
+     * method
      * takes precedence over credentials passed via the URI.
+     *
      * @param username The username to use when authenticating.
      * @return The current instance of {@link ReplicatorBuilder}
      * @throws IllegalArgumentException if {@code username} is {@code null}.
@@ -449,7 +488,8 @@ public abstract class ReplicatorBuilder<S, T, E> {
     /**
      * Sets the password to use when authenticating with the server.
      *
-     * Setting the username (using the {@link ReplicatorBuilder#username(String)}) and password method
+     * Setting the username (using the {@link ReplicatorBuilder#username(String)}) and password
+     * method
      * takes precedence over credentials passed via the URI.
      *
      * @param password The password to use when authenticating.

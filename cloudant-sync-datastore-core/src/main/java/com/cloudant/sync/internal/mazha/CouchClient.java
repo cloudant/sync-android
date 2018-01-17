@@ -30,6 +30,7 @@ import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
 import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
+import com.cloudant.sync.replication.PullFilter;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.apache.commons.io.IOUtils;
@@ -51,7 +52,7 @@ import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class CouchClient  {
+public class CouchClient {
 
     private CouchURIHelper uriHelper;
     private List<HttpConnectionRequestInterceptor> requestInterceptors;
@@ -65,11 +66,11 @@ public class CouchClient  {
         this.requestInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
         this.responseInterceptors = new ArrayList<HttpConnectionResponseInterceptor>();
 
-        if(requestInterceptors != null) {
+        if (requestInterceptors != null) {
             this.requestInterceptors.addAll(requestInterceptors);
         }
 
-        if(responseInterceptors != null) {
+        if (responseInterceptors != null) {
             this.responseInterceptors.addAll(responseInterceptors);
         }
     }
@@ -82,16 +83,14 @@ public class CouchClient  {
     // - stream non-null and exception null: the call was successful, result in stream
     // - stream null and exception non-null: the call was unsuccessful, details in exception
     // - fatal: set to true when exception non-null, indicates call should not be retried
-    private static class ExecuteResult
-    {
+    private static class ExecuteResult {
         private ExecuteResult(InputStream stream,
                               InputStream errorStream,
                               int responseCode,
                               String responseMessage,
-                              Throwable cause)
-        {
+                              Throwable cause) {
             boolean needsCouchException = false;
-            switch(responseCode / 100) {
+            switch (responseCode / 100) {
                 case 1:
                 case 2:
                     // 1xx and 2xx are OK
@@ -103,7 +102,8 @@ public class CouchClient  {
                     break;
                 case 3:
                     // 3xx redirection
-                    throw new CouchException("Unexpected redirection (3xx) code encountered", responseCode);
+                    throw new CouchException("Unexpected redirection (3xx) code encountered",
+                            responseCode);
                 case 4:
                     // 4xx errors normally mean we are not authenticated so we shouldn't retry
                     this.fatal = true;
@@ -135,7 +135,8 @@ public class CouchClient  {
                     ce.setReason(json.get("reason"));
                     this.exception = ce;
                 } catch (Exception e) {
-                    CouchException ce = new CouchException("Error deserializing server response", cause,
+                    CouchException ce = new CouchException("Error deserializing server response",
+                            cause,
                             responseCode);
                     this.exception = ce;
                 }
@@ -152,7 +153,8 @@ public class CouchClient  {
     // - if there's a couch error returned as json, un-marshall and throw
     // - anything else, just throw the IOException back, use the cause part of the exception?
 
-    // it needs to catch eg FileNotFoundException and rethrow to emulate the previous exception handling behaviour
+    // it needs to catch eg FileNotFoundException and rethrow to emulate the previous exception
+    // handling behaviour
     private ExecuteResult execute(HttpConnection connection) {
 
         InputStream inputStream = null; // input stream - response from server on success
@@ -248,7 +250,7 @@ public class CouchClient  {
     }
 
     private <T> T executeWithRetry(final HttpConnection connection,
-                                                InputStreamProcessor<T> processor) throws
+                                   InputStreamProcessor<T> processor) throws
             CouchException {
         // all CouchClient requests want to receive application/json responses
         connection.requestProperties.put("Accept", "application/json");
@@ -284,31 +286,51 @@ public class CouchClient  {
         return options;
     }
 
-    public ChangesResult changes(Object since, Integer limit) {
-        return this.changes(null, null, since, limit);
-    }
-
-    public ChangesResult changes(String filterName, Map<String, String> filterParameters, Object since, Integer limit) {
+    private Map<String, Object> getParametrizedChangeFeedOptions(Object since, Integer limit) {
         Map<String, Object> options = getDefaultChangeFeedOptions();
-        if(filterName != null) {
-            options.put("filter", filterName);
-            if(filterParameters != null) {
-                options.putAll(filterParameters);
-            }
-        }
-        if(since != null) {
+        if (since != null) {
             options.put("since", since);
         }
         if (limit != null) {
             options.put("limit", limit);
         }
         // seq_interval: improve performance and reduce load on the remote database
-        if(limit != null) {
+        if (limit != null) {
             options.put("seq_interval", limit);
         } else {
             options.put("seq_interval", 1000);
         }
+        return options;
+    }
+
+    public ChangesResult changes(Object since, Integer limit) {
+        Map<String, Object> options = getParametrizedChangeFeedOptions(since, limit);
         return this.changes(options);
+    }
+
+    public ChangesResult changes(PullFilter filter, Object since, Integer limit) {
+        Map<String, Object> options = getParametrizedChangeFeedOptions(since, limit);
+        if (filter != null) {
+            String filterName = filter.getName();
+            Map filterParameters = filter.getParameters();
+            if (filterName != null) {
+                options.put("filter", filterName);
+                if (filterParameters != null) {
+                    options.putAll(filterParameters);
+                }
+            }
+        }
+        return this.changes(options);
+    }
+
+    public ChangesResult changes(String selector, Object since, Integer limit) {
+        Misc.checkNotNullOrEmpty(selector,null);
+        Map<String, Object> options = getParametrizedChangeFeedOptions(since, limit);
+        options.put("filter", "_selector");
+        URI changesFeedUri = uriHelper.changesUri(options);
+        HttpConnection connection = Http.POST(changesFeedUri, "application/json");
+        connection.setRequestBody(selector);
+        return executeToJsonObjectWithRetry(connection, ChangesResult.class);
     }
 
     public ChangesResult changes(final Map<String, Object> options) {
@@ -349,7 +371,8 @@ public class CouchClient  {
         }
     }
 
-    public <T> T processAttachmentStream(String id, String rev, String attachmentName, final boolean acceptGzip, InputStreamProcessor<T> processor) {
+    public <T> T processAttachmentStream(String id, String rev, String attachmentName, final
+    boolean acceptGzip, InputStreamProcessor<T> processor) {
         Misc.checkNotNullOrEmpty(id, "id");
         Misc.checkNotNullOrEmpty(rev, "rev");
         Map<String, Object> queries = new HashMap<String, Object>();
@@ -362,7 +385,8 @@ public class CouchClient  {
         return executeWithRetry(connection, processor);
     }
 
-    public void putAttachmentStream(String id, String rev, String attachmentName, String contentType, byte[] attachmentData) {
+    public void putAttachmentStream(String id, String rev, String attachmentName, String
+            contentType, byte[] attachmentData) {
         Misc.checkNotNullOrEmpty(id, "id");
         Misc.checkNotNullOrEmpty(rev, "rev");
         Map<String, Object> queries = new HashMap<String, Object>();
@@ -387,18 +411,18 @@ public class CouchClient  {
      *   "2-65ddd7d56da84f25af544e84a3267ccf" ]
      * }
      */
-    public Map<String,Object> getDocConflictRevs(String id)  {
+    public Map<String, Object> getDocConflictRevs(String id) {
         Map<String, Object> options = new HashMap<String, Object>();
         options.put("conflicts", true);
         return this.getDocument(id, options, JSONUtils.STRING_MAP_TYPE_DEF);
     }
 
     /**
-     * Convenience method to get document with revision history for a given list of open revisions. It does that by
+     * Convenience method to get document with revision history for a given list of open
+     * revisions. It does that by
      * adding "open_revs=["rev1", "rev2"]" option to the GET request.
      *
      * It must return a list because that is how CouchDB return its results.
-     *
      */
     public List<OpenRevision> getDocWithOpenRevisions(String id, Collection<String> revisions,
                                                       Collection<String> attsSince,
@@ -433,7 +457,8 @@ public class CouchClient  {
      * Each time the iterator is advanced, a DocumentRevsList is returned, which represents the
      * leaf nodes and their ancestries for a given document ID.
      * </p>
-     * @param request A request for 1 or more (ID,rev) pairs.
+     *
+     * @param request               A request for 1 or more (ID,rev) pairs.
      * @param pullAttachmentsInline If true, retrieve attachments as inline base64
      * @return An iterator representing the result of calling the _bulk_docs endpoint.
      */
@@ -458,7 +483,8 @@ public class CouchClient  {
         // deserialise response
         BulkGetResponse response = executeToJsonObjectWithRetry(connection, BulkGetResponse.class);
 
-        Map<String,ArrayList<DocumentRevs>> revsMap = new HashMap<String,ArrayList<DocumentRevs>>();
+        Map<String, ArrayList<DocumentRevs>> revsMap = new HashMap<String,
+                ArrayList<DocumentRevs>>();
 
         // merge results back in, so there is one list of DocumentRevs per ID
         for (BulkGetResponse.Result result : response.results) {
@@ -486,7 +512,7 @@ public class CouchClient  {
         return this.getDocument(id, new HashMap<String, Object>(), JSONUtils.STRING_MAP_TYPE_DEF);
     }
 
-    public <T> T getDocument(String id, final Class<T> type)  {
+    public <T> T getDocument(String id, final Class<T> type) {
         return this.getDocument(id, new HashMap<String, Object>(),
                 new CouchClientTypeReference<T>(type));
     }
@@ -527,10 +553,10 @@ public class CouchClient  {
     }
 
     /**
-     * Get document along with its revision history, and the result is converted to a <code>DocumentRevs</code> object.
+     * Get document along with its revision history, and the result is converted to a
+     * <code>DocumentRevs</code> object.
      *
      * @see <code>DocumentRevs</code>
-     *
      */
     public DocumentRevs getDocRevisions(String id, String rev) {
         return getDocRevisions(id, rev,
@@ -579,7 +605,7 @@ public class CouchClient  {
 
         String rev = head.getConnection().getHeaderField("ETag");
         // Remove enclosing "" before returning
-        return rev.substring(1, rev.length()-1);
+        return rev.substring(1, rev.length() - 1);
     }
 
     public Response delete(String id, String rev) {
@@ -608,7 +634,8 @@ public class CouchClient  {
         URI uri = this.uriHelper.bulkDocsUri();
         HttpConnection connection = Http.POST(uri, "application/json");
         connection.setRequestBody(payload);
-        return executeToJsonObjectWithRetry(connection, new CouchClientTypeReference<List<Response>>());
+        return executeToJsonObjectWithRetry(connection, new
+                CouchClientTypeReference<List<Response>>());
     }
 
     /**
@@ -639,8 +666,8 @@ public class CouchClient  {
     private String generateBulkSerializedDocsPayload(List<String> serializedDocs) {
         String newEditsVal = "\"new_edits\": false, ";
         StringBuilder sb = new StringBuilder("[");
-        for(String doc : serializedDocs) {
-            if(sb.length() > 1) {
+        for (String doc : serializedDocs) {
+            if (sb.length() > 1) {
                 sb.append(", ");
             }
             sb.append(doc);
@@ -671,7 +698,9 @@ public class CouchClient  {
      * If the ID has no missing revision, it should not appear in the Map's key set. If all IDs
      * do not have missing revisions, the returned Map should be empty map, but never null.
      *
-     * @see <a target="_blank" href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff documentation</a>
+     * @see
+     * <a target="_blank" href="http://wiki.apache.org/couchdb/HttpPostRevsDiff">HttpPostRevsDiff
+     * documentation</a>
      */
     public Map<String, MissingRevisions> revsDiff(Map<String, Set<String>> revisions) {
         Misc.checkNotNull(revisions, "Input revisions");
@@ -735,7 +764,8 @@ public class CouchClient  {
         CouchClientTypeReference() {
             this(null);
         }
-        CouchClientTypeReference(Class<T> type){
+
+        CouchClientTypeReference(Class<T> type) {
             this.type = type;
         }
 
@@ -753,6 +783,7 @@ public class CouchClient  {
     private static final class TypeInputStreamProcessor<T> implements InputStreamProcessor<T> {
 
         private final TypeReference<T> typeReference;
+
         TypeInputStreamProcessor(TypeReference<T> typeReference) {
             this.typeReference = typeReference;
         }
@@ -774,4 +805,4 @@ public class CouchClient  {
             return null;
         }
     }
- }
+}

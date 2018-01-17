@@ -167,7 +167,7 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     }
 
     protected ReplicatorBuilder.Pull getPullBuilder() {
-        return this.getPullBuilder(null);
+        return this.getPullBuilder((PullFilter)null);
 
     }
 
@@ -176,6 +176,22 @@ public abstract class ReplicationTestBase extends CouchTestBase {
                 from(this.couchConfig.getRootUri()).
                 to(this.documentStore)
                 .filter(filter)
+                .addRequestInterceptors(couchConfig.getRequestInterceptors(false))
+                .addResponseInterceptors(couchConfig.getResponseInterceptors(false));
+        if (couchConfig.getUsername() != null && couchConfig.getPassword() != null) {
+
+            pull.username(couchConfig.getUsername())
+                    .password(couchConfig.getPassword());
+        }
+
+        return pull;
+    }
+
+    protected ReplicatorBuilder.Pull getPullBuilder(String selector) {
+        ReplicatorBuilder.Pull pull = ReplicatorBuilder.pull().
+                from(this.couchConfig.getRootUri()).
+                to(this.documentStore)
+                .selector(selector)
                 .addRequestInterceptors(couchConfig.getRequestInterceptors(false))
                 .addResponseInterceptors(couchConfig.getResponseInterceptors(false));
         if (couchConfig.getUsername() != null && couchConfig.getPassword() != null) {
@@ -197,6 +213,10 @@ public abstract class ReplicationTestBase extends CouchTestBase {
 
     protected PullStrategy getPullStrategy(PullFilter filter) {
         return (PullStrategy)((ReplicatorImpl)this.getPullBuilder(filter).build()).strategy;
+    }
+
+    protected PullStrategy getPullStrategy(String selector) {
+        return (PullStrategy)((ReplicatorImpl)this.getPullBuilder(selector).build()).strategy;
     }
 
     protected PushResult push() throws Exception {

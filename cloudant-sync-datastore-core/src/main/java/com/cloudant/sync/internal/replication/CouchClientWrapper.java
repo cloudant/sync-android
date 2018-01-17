@@ -45,7 +45,8 @@ import java.util.logging.Logger;
 public class CouchClientWrapper implements CouchDB {
 
     private final static String LOG_TAG = "CouchClientWrapper";
-    private static final Logger logger = Logger.getLogger(CouchClientWrapper.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(CouchClientWrapper.class
+            .getCanonicalName());
 
     CouchClient couchClient;
 
@@ -136,19 +137,30 @@ public class CouchClientWrapper implements CouchDB {
         if (filter == null) {
             return couchClient.changes(lastSequence, limit);
         } else {
-            return couchClient.changes(filter.getName(), filter.getParameters(), lastSequence, limit);
+            return couchClient.changes(filter, lastSequence, limit);
+        }
+    }
+
+    @Override
+    public ChangesResult changes(String selector, Object lastSequence, int limit) {
+        if (selector == null) {
+            return couchClient.changes(lastSequence, limit);
+        } else {
+            return couchClient.changes(selector, lastSequence, limit);
         }
     }
 
     @Override
     public Iterable<DocumentRevsList> bulkGetRevisions(List<BulkGetRequest> requests,
                                                        boolean pullAttachmentsInline) {
-        List<com.cloudant.sync.internal.mazha.BulkGetRequest> splitRequests = new ArrayList<com.cloudant.sync.internal.mazha.BulkGetRequest>();
+        List<com.cloudant.sync.internal.mazha.BulkGetRequest> splitRequests = new ArrayList<com
+                .cloudant.sync.internal.mazha.BulkGetRequest>();
 
         // split the requests out
         for (BulkGetRequest request : requests) {
             for (String rev : request.revs) {
-                com.cloudant.sync.internal.mazha.BulkGetRequest splitRequest = new com.cloudant.sync.internal.mazha.BulkGetRequest();
+                com.cloudant.sync.internal.mazha.BulkGetRequest splitRequest = new com.cloudant
+                        .sync.internal.mazha.BulkGetRequest();
                 splitRequest.id = request.id;
                 splitRequest.rev = rev;
                 if (pullAttachmentsInline) {
@@ -171,16 +183,17 @@ public class CouchClientWrapper implements CouchDB {
                                            Collection<String> attsSince,
                                            boolean pullAttachmentsInline) {
         List<OpenRevision> openRevisions =
-                couchClient.getDocWithOpenRevisions(documentId, revisionIds, attsSince, pullAttachmentsInline);
+                couchClient.getDocWithOpenRevisions(documentId, revisionIds, attsSince,
+                        pullAttachmentsInline);
 
         // expect all the open revisions return ok, return error is there is any missing
         List<DocumentRevs> documentRevs = new ArrayList<DocumentRevs>();
-        for(OpenRevision openRev : openRevisions) {
-            if(openRev instanceof OkOpenRevision) {
+        for (OpenRevision openRev : openRevisions) {
+            if (openRev instanceof OkOpenRevision) {
                 documentRevs.add(((OkOpenRevision) openRev).getDocumentRevs());
             } else {
                 throw new RuntimeException("Missing open revision for document:" + documentId
-                           + ", revisions: " + Arrays.asList(revisionIds));
+                        + ", revisions: " + Arrays.asList(revisionIds));
             }
         }
 
@@ -218,7 +231,8 @@ public class CouchClientWrapper implements CouchDB {
 
     @Override
     public void bulkCreateDocs(List<InternalDocumentRevision> revisions) {
-        logger.entering("com.cloudant.sync.internal.replication.CouchClientWrapper", "bulkCreateDocs",
+        logger.entering("com.cloudant.sync.internal.replication.CouchClientWrapper",
+                "bulkCreateDocs",
                 revisions);
 
         List<Map> allObjs = new ArrayList<Map>();
@@ -228,29 +242,32 @@ public class CouchClientWrapper implements CouchDB {
 
         List<Response> responses = couchClient.bulkCreateDocs(allObjs);
         for (Response r : responses) {
-            logger.info(String.format("Response: %s",r));
+            logger.info(String.format("Response: %s", r));
         }
     }
 
     @Override
     public void bulkCreateSerializedDocs(List<String> serializedDocs) {
-        logger.entering("com.cloudant.sync.internal.replication.CouchClientWrapper","bulkCreateSerializedDocs",serializedDocs);
-        if(serializedDocs.size() <= 0) {
+        logger.entering("com.cloudant.sync.internal.replication.CouchClientWrapper",
+                "bulkCreateSerializedDocs", serializedDocs);
+        if (serializedDocs.size() <= 0) {
             return;
         }
 
         List<Response> responses = couchClient.bulkCreateSerializedDocs(serializedDocs);
         // N.B. The successful response to a _bulk_docs using new_edits:false is an empty array
         // hence this unusual check and throw exception if any responses are returned.
-        if(responses != null && responses.size() > 0) {
-            logger.severe(String.format("Unknown bulkCreateDocs API error: %s for input: %s",responses,serializedDocs));
+        if (responses != null && responses.size() > 0) {
+            logger.severe(String.format("Unknown bulkCreateDocs API error: %s for input: %s",
+                    responses, serializedDocs));
             throw new RuntimeException("Unknown bulkCreateDocs api error");
         }
     }
 
     @Override
     public List<Response> putMultiparts(List<MultipartAttachmentWriter> multiparts) {
-        logger.entering("com.cloudant.sync.internal.replication.CouchClientWrapper","putMultiparts",multiparts);
+        logger.entering("com.cloudant.sync.internal.replication.CouchClientWrapper",
+                "putMultiparts", multiparts);
         ArrayList<Response> responses = new ArrayList<Response>();
         for (MultipartAttachmentWriter mpw : multiparts) {
             Response r = couchClient.putMultipart(mpw);

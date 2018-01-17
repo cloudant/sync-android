@@ -49,6 +49,7 @@ interface CouchDB {
 
     ChangesResult changes(Object lastSequence, int limit);
     ChangesResult changes(PullFilter filter, Object lastSequence, int limit);
+    ChangesResult changes(String selector, Object lastSequence, int limit);
     List<DocumentRevs> getRevisions(String documentId,
                                            Collection<String> revisionIds,
                                            Collection<String> attsSince,

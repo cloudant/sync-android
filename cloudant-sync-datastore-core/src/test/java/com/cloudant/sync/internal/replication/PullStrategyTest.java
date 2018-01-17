@@ -54,8 +54,8 @@ public class PullStrategyTest extends ReplicationTestBase {
         DocumentRevision rev = this.datastore.read(id);
         Bar bar = new Bar();
         Map<String, Object> m = rev.getBody().asMap();
-        bar.setAge((Integer)m.get("age"));
-        bar.setName((String)m.get("name"));
+        bar.setAge((Integer) m.get("age"));
+        bar.setName((String) m.get("name"));
         bar.setId(rev.getId());
         bar.setRevision(rev.getRevision());
         return bar;
@@ -63,7 +63,7 @@ public class PullStrategyTest extends ReplicationTestBase {
 
     private List<String> findRevisionOfLeafs(DocumentRevisionTree docTree) {
         List<String> leafRevs = new ArrayList<String>();
-        for(DocumentRevisionTree.DocumentRevisionNode obj : docTree.leafs()) {
+        for (DocumentRevisionTree.DocumentRevisionNode obj : docTree.leafs()) {
             leafRevs.add(obj.getData().getRevision());
         }
         return leafRevs;
@@ -138,7 +138,8 @@ public class PullStrategyTest extends ReplicationTestBase {
     @Test
     public void pull_twoDocsWithBatchSizeOne_bothDocRevisionsShouldBePulled() throws Exception {
         // build our own pull strategy, set changes limit per batch to 1
-        PullStrategy replicator = (PullStrategy)((ReplicatorImpl)super.getPullBuilder().changeLimitPerBatch(1).build()).strategy;
+        PullStrategy replicator = (PullStrategy) ((ReplicatorImpl) super.getPullBuilder()
+                .changeLimitPerBatch(1).build()).strategy;
 
         Bar bar1 = BarUtils.createBar(remoteDb, "Tom", 31);
         Bar bar2 = BarUtils.createBar(remoteDb, "Jerry", 41);
@@ -306,7 +307,7 @@ public class PullStrategyTest extends ReplicationTestBase {
 
         Assert.assertEquals(2, datastore.getDocumentCount());
         String[] birds = {"snipe", "kookaburra"};
-        for(String mammal : birds) {
+        for (String mammal : birds) {
             Assert.assertTrue(datastore.contains(mammal));
         }
     }
@@ -324,8 +325,9 @@ public class PullStrategyTest extends ReplicationTestBase {
         this.pull(replicator, 8);
 
         Assert.assertEquals(8, datastore.getDocumentCount());
-        String[] mammals = {"aardvark", "badger", "elephant", "giraffe", "lemur", "llama", "panda", "zebra"};
-        for(String mammal : mammals) {
+        String[] mammals = {"aardvark", "badger", "elephant", "giraffe", "lemur", "llama",
+                "panda", "zebra"};
+        for (String mammal : mammals) {
             Assert.assertTrue(datastore.contains(mammal));
         }
     }
@@ -344,7 +346,7 @@ public class PullStrategyTest extends ReplicationTestBase {
 
         Assert.assertEquals(6, datastore.getDocumentCount());
         String[] mammals = {"badger", "kookaburra", "lemur", "llama", "panda", "snipe"};
-        for(String mammal : mammals) {
+        for (String mammal : mammals) {
             Assert.assertTrue(mammal + " should be in the datastore", datastore.contains(mammal));
         }
     }
@@ -363,7 +365,7 @@ public class PullStrategyTest extends ReplicationTestBase {
 
         Assert.assertEquals(1, datastore.getDocumentCount());
         String[] mammals = {"panda"};
-        for(String mammal : mammals) {
+        for (String mammal : mammals) {
             Assert.assertTrue(mammal + " should be in the datastore", datastore.contains(mammal));
         }
     }
