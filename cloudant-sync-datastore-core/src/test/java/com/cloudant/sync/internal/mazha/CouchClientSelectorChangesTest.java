@@ -16,14 +16,11 @@ package com.cloudant.sync.internal.mazha;
 
 import static org.hamcrest.Matchers.hasSize;
 
-import com.cloudant.common.RequireCloudant;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-@Category(RequireCloudant.class)
 public class CouchClientSelectorChangesTest extends CouchClientTestBase {
 
     @Before
@@ -33,14 +30,16 @@ public class CouchClientSelectorChangesTest extends CouchClientTestBase {
     }
 
     @Test
-    public void changes_selector() {
+    public void changes_selector() throws Exception {
+        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(client.getRootUri()));
         String animalBirdSelector = "{\"selector\":{\"class\":\"bird\"}}";
         ChangesResult changes = client.changes(animalBirdSelector, null, 5);
         Assert.assertThat(changes.getResults(), hasSize(2));
     }
 
     @Test
-    public void changes_selectorAndMoreThanLimitNumberOfDocs() {
+    public void changes_selectorAndMoreThanLimitNumberOfDocs() throws Exception {
+        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(client.getRootUri()));
         String animalMammalSelector = "{\"selector\":{\"class\":\"mammal\"}}";
         ChangesResult firstChangeSet = client.changes(animalMammalSelector, null, 5);
         Assert.assertThat(firstChangeSet.getResults(), hasSize(5));
