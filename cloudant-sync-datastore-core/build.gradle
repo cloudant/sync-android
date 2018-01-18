@@ -53,8 +53,7 @@ test {
         'com.cloudant.common.SystemTest', \
         'com.cloudant.common.RequireRunningCouchDB', \
         'com.cloudant.common.PerformanceTest', \
-        'com.cloudant.common.RequireRunningProxy', \
-        'com.cloudant.common.RequireCloudant'
+        'com.cloudant.common.RequireRunningProxy'
     }
 }
 
@@ -63,20 +62,9 @@ task integrationTest(type: Test, dependsOn: testClasses) {
         excludeCategories \
         'com.cloudant.common.SystemTest', \
         'com.cloudant.common.PerformanceTest', \
-        'com.cloudant.common.RequireRunningProxy',  \
-        'com.cloudant.common.RequireCloudant'
-    }
-}
-
-task integrationTestCloudant(type: Test, dependsOn: testClasses) {
-    useJUnit {
-        excludeCategories \
-        'com.cloudant.common.SystemTest', \
-        'com.cloudant.common.PerformanceTest', \
         'com.cloudant.common.RequireRunningProxy'
     }
 }
-
 
 task performanceTest(type: Test, dependsOn: testClasses) {
     useJUnit {
