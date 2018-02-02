@@ -251,7 +251,7 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
 
     /** Start periodic replications. */
     public synchronized void startPeriodicReplication() {
-        if (!isPeriodicReplicationEnabled()) {
+        if (!isPeriodicReplicationEnabled() || !isPeriodicReplicationAlarmScheduled()) {
             setPeriodicReplicationEnabled(true);
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             Intent alarmIntent = new Intent(this, clazz);
@@ -369,6 +369,14 @@ public abstract class PeriodicReplicationService<T extends PeriodicReplicationRe
         SharedPreferences prefs = context.getSharedPreferences(PREFERENCES_FILE_NAME, Context
             .MODE_PRIVATE);
         return prefs.getBoolean(constructKey(prsClass, PERIODIC_REPLICATION_ENABLED_SUFFIX), false);
+    }
+
+    private boolean isPeriodicReplicationAlarmScheduled() {
+        Intent alarmIntent = new Intent(this, clazz);
+        alarmIntent.setAction(PeriodicReplicationReceiver.ALARM_ACTION);
+        PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(this, 0, alarmIntent,
+                PendingIntent.FLAG_NO_CREATE);
+        return pendingAlarmIntent != null;
     }
 
     /**
