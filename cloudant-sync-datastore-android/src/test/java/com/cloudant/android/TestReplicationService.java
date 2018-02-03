@@ -14,8 +14,12 @@
 
 package com.cloudant.android;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 
+import com.cloudant.sync.replication.PeriodicReplicationReceiver;
 import com.cloudant.sync.replication.WifiPeriodicReplicationReceiver;
 import com.cloudant.sync.replication.PeriodicReplicationService;
 
@@ -24,6 +28,7 @@ public class TestReplicationService extends PeriodicReplicationService {
     private static final String TASKS_DATASTORE_NAME = "tasks";
     private static final String DATASTORE_MANGER_DIR = "data";
     private static final String TAG = "TestReplicationService";
+    private static final String ALARM_ACTION = "com.cloudant.sync.replication.PeriodicReplicationReceiver.Alarm";
 
     /** The period between replications for our test PeriodicReplicationService when there are no
      * components bound to the service. The default is 120 seconds (2 minutes), but the value
@@ -61,5 +66,15 @@ public class TestReplicationService extends PeriodicReplicationService {
 
     public void setUnboundIntervalSeconds(int seconds) {
         mUnboundIntervalSeconds = seconds;
+    }
+
+    public void cancelPendingIntenIfScheduled() {
+        Intent alarmIntent = new Intent(getBaseContext(), TestReceiver.class);
+        alarmIntent.setAction(ALARM_ACTION);
+        PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(getBaseContext(), 0,
+                alarmIntent, 0);
+        if (pendingAlarmIntent != null) {
+            pendingAlarmIntent.cancel();
+        }
     }
 }
