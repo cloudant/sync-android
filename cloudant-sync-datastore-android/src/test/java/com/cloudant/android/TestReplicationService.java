@@ -72,7 +72,7 @@ public class TestReplicationService extends PeriodicReplicationService {
         Intent alarmIntent = new Intent(getBaseContext(), TestReceiver.class);
         alarmIntent.setAction(ALARM_ACTION);
         PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(getBaseContext(), 0,
-                alarmIntent, 0);
+                alarmIntent, PendingIntent.FLAG_NO_CREATE);
         if (pendingAlarmIntent != null) {
             pendingAlarmIntent.cancel();
         }
