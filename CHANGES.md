@@ -3,6 +3,7 @@
 - [IMPROVED] Improved efficiency of sub-query when picking winning
   revisions. This improves performance when inserting revisions,
   including during pull replication.
+- [UPGRADED] Upgraded to version 2.12.0 of the `cloudant-http` library.
 
 # 2.1.0 (2017-12-04)
 - [NEW] Added API for upcoming IBM Cloud Identity and Access
