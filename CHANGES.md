@@ -1,4 +1,6 @@
 # Unreleased
+- [IMPROVED] PeriodicReplicationService checks that the alarm is scheduled to determine that the service is active.
+  When the application was stopped by the user using "force stop" the alarm was rescheduled only after a device reboot. 
 - [NEW] Added API for specifying a mango selector in the filtered pull replicator
 - [IMPROVED] Improved efficiency of sub-query when picking winning
   revisions. This improves performance when inserting revisions,

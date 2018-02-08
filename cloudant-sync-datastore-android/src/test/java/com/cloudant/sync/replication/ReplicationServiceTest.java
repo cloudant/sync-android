@@ -392,6 +392,51 @@ public class ReplicationServiceTest extends ServiceTestCase<TestReplicationServi
 
     /**
      * Check that when an intent is sent to the {@link PeriodicReplicationService} indicating that
+     * periodic replications should be started, if they have already been started but an PendingItem
+     * is not scheduled due a forced stop. In this case, the {@link AlarmManager} is invoked to
+     * restart the periodic replications.
+     */
+    @Test
+    public void testOnStartCommandStartPeriodicReplicationsAlreadyStartedWithoutAlarm() {
+        TestReplicationService service = new TestReplicationService(mMockContext);
+        Intent intent = new Intent(mMockContext, TestReplicationService.class);
+        intent.putExtra(PeriodicReplicationService.EXTRA_COMMAND, PeriodicReplicationService
+                .COMMAND_START_PERIODIC_REPLICATION);
+
+        when(mMockContext.getSystemService(Context.ALARM_SERVICE)).thenReturn(mMockAlarmManager);
+        when(mMockPreferences.getBoolean(PREFERENCE_CLASS_NAME + ".periodicReplicationsActive",
+                false)).thenReturn(true);
+
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        service.onCreate();
+        service.cancelPendingIntenIfScheduled();
+        service.setOperationStartedListener(new PeriodicReplicationService
+                .OperationStartedListener() {
+            @Override
+            public void operationStarted(int operationId) {
+                assertEquals("Unexpected command received",
+                        PeriodicReplicationService.COMMAND_START_PERIODIC_REPLICATION,
+                        operationId);
+                latch.countDown();
+            }
+        });
+
+        service.onStartCommand(intent, 0, 0);
+        service.setReplicators(mMockReplicators);
+        try {
+            assertTrue("The countdown should reach zero", latch.await(DEFAULT_WAIT_SECONDS,
+                    TimeUnit.SECONDS));
+            verify(mMockAlarmManager, times(1)).setInexactRepeating(Mockito.anyInt(), Mockito
+                    .anyLong(), Mockito.anyLong(), Mockito.any(PendingIntent.class));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * Check that when an intent is sent to the {@link PeriodicReplicationService} indicating that
      * the replication timers have changed, the service is restarted with the new timer settings.
      */
     @Test
