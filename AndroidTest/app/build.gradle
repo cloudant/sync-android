@@ -85,7 +85,7 @@ dependencies {
     compile 'commons-io:commons-io:2.4'
     compile 'commons-codec:commons-codec:1.9'
     compile 'org.apache.commons:commons-lang3:3.3.2'
-    compile group: 'com.cloudant', name: 'cloudant-http', version:'2.11.0'
+    compile group: 'com.cloudant', name: 'cloudant-http', version:'2.12.0'
     compile 'com.google.code.findbugs:jsr305:3.0.0' //this is needed for some versions of android
     compile files('../../cloudant-sync-datastore-android-encryption/libs/sqlcipher.jar') //required sqlcipher lib
     compile files('../../cloudant-sync-datastore-android/libs/android-support-v4.jar')
@@ -145,4 +145,3 @@ def convertTestSysPropsToHash (){
         "}"
 
 }
-
