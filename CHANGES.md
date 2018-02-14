@@ -1,4 +1,4 @@
-# Unreleased
+# 2.2.0 (2018-02-14)
 - [NEW] Added API for specifying a mango selector in the filtered pull replicator
 - [IMPROVED] Improved efficiency of sub-query when picking winning
   revisions. This improves performance when inserting revisions,
