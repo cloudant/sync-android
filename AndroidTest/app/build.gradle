@@ -124,7 +124,7 @@ task(clearDeviceLog, type: AndroidExec) {
 task(pullDeviceLog, type: AndroidExec) {
     doFirst {
         def logPrefix = System.getenv('TEST_ENV_NAME')
-        if (logPrefix == null) logPrefix = UUID.randomUUID()
+        if (logPrefix == null) logPrefix = UUID.randomUUID().toString()
         standardOutput = new FileOutputStream(new File(reportsDir, logPrefix + "_logcat.log"), false)
     }
     commandLine "adb","logcat", "-d", "-v", "threadtime"
