@@ -23,6 +23,7 @@ import com.cloudant.sync.internal.mazha.CouchConfig;
 import com.cloudant.sync.internal.util.JSONUtils;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -40,6 +41,32 @@ import java.util.Map;
 public class HttpTest extends CouchTestBase {
 
     private String data = "{\"hello\":\"world\"}";
+    private ByteArrayInputStream bis;
+
+    @Before
+    public void setupDataByteStream() {
+        this.bis = new ByteArrayInputStream(data.getBytes());
+    }
+
+    private HttpConnection postAndAssertNothingReadBeforeSettingBodyGenerator(CouchConfig config)
+            throws Exception {
+        HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
+                "application/json");
+
+        // nothing read from stream
+        Assert.assertEquals(bis.available(), data.getBytes().length);
+
+        conn.setRequestBody(new HttpConnection.InputStreamGenerator() {
+            @Override
+            public InputStream getInputStream() {
+                return bis;
+            }
+        });
+        // This test invokes HttpConnection directly rather than via the CouchClient, so we need to
+        // force the addition of some default interceptors
+        conn.requestInterceptors.addAll(CouchClient.DEFAULT_REQUEST_INTERCEPTORS);
+        return conn;
+    }
 
     /*
      * Test "Expect: 100-Continue" header works as expected
@@ -54,21 +81,9 @@ public class HttpTest extends CouchTestBase {
      * whilst we are still writing).
      */
     @Test
-    public void testExpect100Continue() throws IOException {
+    public void testExpect100Continue() throws Exception {
         CouchConfig config = getCouchConfig("no_such_database");
-        HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
-                "application/json");
-        final ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
-
-        // nothing read from stream
-        Assert.assertEquals(bis.available(), data.getBytes().length);
-
-        conn.setRequestBody(new HttpConnection.InputStreamGenerator() {
-            @Override
-            public InputStream getInputStream() {
-                return bis;
-            }
-        });
+        HttpConnection conn = postAndAssertNothingReadBeforeSettingBodyGenerator(config);
         boolean thrown = false;
         try {
             conn.execute();
@@ -87,24 +102,12 @@ public class HttpTest extends CouchTestBase {
      * Basic test that we can write a document body by POSTing to a known database
      */
     @Test
-    public void testWriteToServerOk() throws IOException {
+    public void testWriteToServerOk() throws Exception {
         CouchConfig config = getCouchConfig("httptest" + System.currentTimeMillis());
         CouchClient client = new CouchClient(config.getRootUri(), config.getRequestInterceptors()
                 , config.getResponseInterceptors());
         client.createDb();
-        HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
-                "application/json");
-        final ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
-
-        // nothing read from stream
-        Assert.assertEquals(bis.available(), data.getBytes().length);
-
-        conn.setRequestBody(new HttpConnection.InputStreamGenerator() {
-            @Override
-            public InputStream getInputStream() {
-                return bis;
-            }
-        });
+        HttpConnection conn = postAndAssertNothingReadBeforeSettingBodyGenerator(config);
         conn.execute();
 
         // stream was read to end
@@ -117,24 +120,12 @@ public class HttpTest extends CouchTestBase {
      * without first calling execute()
      */
     @Test
-    public void testReadBeforeExecute() throws IOException {
+    public void testReadBeforeExecute() throws Exception {
         CouchConfig config = getCouchConfig("httptest" + System.currentTimeMillis());
         CouchClient client = new CouchClient(config.getRootUri(), config.getRequestInterceptors()
                 , config.getResponseInterceptors());
         client.createDb();
-        HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
-                "application/json");
-        final ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
-
-        // nothing read from stream
-        Assert.assertEquals(bis.available(), data.getBytes().length);
-
-        conn.setRequestBody(new HttpConnection.InputStreamGenerator() {
-            @Override
-            public InputStream getInputStream() {
-                return bis;
-            }
-        });
+        HttpConnection conn = postAndAssertNothingReadBeforeSettingBodyGenerator(config);
         try {
             conn.responseAsString();
             Assert.fail("IOException not thrown as expected");
@@ -156,7 +147,7 @@ public class HttpTest extends CouchTestBase {
     // be named cookie_test
     //
     @Test
-    public void testCookieAuthWithoutRetry() throws IOException {
+    public void testCookieAuthWithoutRetry() throws Exception {
 
         if (TestOptions.IGNORE_AUTH_HEADERS) {
             return;
@@ -168,21 +159,9 @@ public class HttpTest extends CouchTestBase {
                         .currentTimeMillis()).getRootUri().toString());
 
         CouchConfig config = getCouchConfig("cookie_test");
-        HttpConnection conn = new HttpConnection("POST", config.getRootUri().toURL(),
-                "application/json");
+        HttpConnection conn = postAndAssertNothingReadBeforeSettingBodyGenerator(config);
         conn.responseInterceptors.add(interceptor);
         conn.requestInterceptors.add(interceptor);
-        final ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes());
-
-        // nothing read from stream
-        Assert.assertEquals(bis.available(), data.getBytes().length);
-
-        conn.setRequestBody(new HttpConnection.InputStreamGenerator() {
-            @Override
-            public InputStream getInputStream() {
-                return bis;
-            }
-        });
         conn.execute();
 
         // stream was read to end

@@ -1,3 +1,7 @@
+# Unreleased
+- [IMPROVED] Forced a TLS1.2 `SSLSocketFactory` where possible on Android API versions < 20 (it is
+  already enabled by default on newer API levels).
+
 # 2.2.0 (2018-02-14)
 - [NEW] Added API for specifying a mango selector in the filtered pull replicator
 - [IMPROVED] Improved efficiency of sub-query when picking winning

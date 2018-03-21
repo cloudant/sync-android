@@ -18,7 +18,6 @@ import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.http.internal.interceptors.CookieInterceptor;
 import com.cloudant.http.internal.interceptors.IamCookieInterceptor;
-import com.cloudant.http.internal.interceptors.UserAgentInterceptor;
 import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.internal.replication.PullStrategy;
 import com.cloudant.sync.internal.replication.PushStrategy;
@@ -40,10 +39,6 @@ import java.util.Locale;
 // S = Source Type, T = target Type, E = Extending class Type
 public abstract class ReplicatorBuilder<S, T, E> {
 
-    private static final UserAgentInterceptor USER_AGENT_INTERCEPTOR =
-            new UserAgentInterceptor(ReplicatorBuilder.class.getClassLoader(),
-                    "META-INF/com.cloudant.sync.client.properties");
-
     private T target;
 
     private S source;
@@ -61,10 +56,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
             <HttpConnectionResponseInterceptor>();
 
     private String iamApiKey = null;
-
-    private ReplicatorBuilder() {
-        requestInterceptors.add(USER_AGENT_INTERCEPTOR);
-    }
 
     private int getDefaultPort(URI uri) {
 
