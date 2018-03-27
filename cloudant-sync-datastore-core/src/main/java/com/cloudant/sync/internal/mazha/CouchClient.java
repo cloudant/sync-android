@@ -25,6 +25,8 @@ import com.cloudant.http.Http;
 import com.cloudant.http.HttpConnection;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
+import com.cloudant.http.internal.interceptors.SSLCustomizerInterceptor;
+import com.cloudant.http.internal.interceptors.UserAgentInterceptor;
 import com.cloudant.sync.internal.common.RetriableTask;
 import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
@@ -39,11 +41,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +59,24 @@ import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
 public class CouchClient {
+
+    public static final List<HttpConnectionRequestInterceptor> DEFAULT_REQUEST_INTERCEPTORS;
+
+     // Set up the defaults
+     static {
+         HttpConnectionRequestInterceptor ua_interceptor =
+                 new UserAgentInterceptor(CouchClient.class.getClassLoader(),
+                         "META-INF/com.cloudant.sync.client.properties");
+         HttpConnectionRequestInterceptor tlsInterceptor = checkAndGetTlsInterceptor();
+         DEFAULT_REQUEST_INTERCEPTORS = (tlsInterceptor != null) ?
+                 Arrays.asList(ua_interceptor, tlsInterceptor) :
+                 Collections.singletonList(ua_interceptor);
+     }
 
     private CouchURIHelper uriHelper;
     private List<HttpConnectionRequestInterceptor> requestInterceptors;
@@ -66,12 +90,129 @@ public class CouchClient {
         this.requestInterceptors = new ArrayList<HttpConnectionRequestInterceptor>();
         this.responseInterceptors = new ArrayList<HttpConnectionResponseInterceptor>();
 
+        this.requestInterceptors.addAll(DEFAULT_REQUEST_INTERCEPTORS);
+
         if (requestInterceptors != null) {
             this.requestInterceptors.addAll(requestInterceptors);
         }
 
         if (responseInterceptors != null) {
             this.responseInterceptors.addAll(responseInterceptors);
+        }
+    }
+
+    private static SSLCustomizerInterceptor checkAndGetTlsInterceptor() {
+        // Some assistance for TLSv1.2 support. Two things we check before we try to force TLSv1.2
+        // so that we don't interfere with any other custom configuration that may have been
+        // provided:
+        //   i) are we running on Android, and an old version of Android (api level < 20 does not
+        //      have TLSv1.2 enabled by default)
+        //   ii) does the default SSLContext have TLSv1.2 enabled or available
+        if (Misc.isRunningOnAndroid()) {
+            // This block catches all exceptions from TLSv1.2 checks, if we get exceptions we bail
+            // with a RuntimeException
+            try {
+                // Get the API level reflectively so we don't need to import classes only available
+                // in Android
+                int androidApiLevel = Class.forName("android.os.Build$VERSION").getField
+                        ("SDK_INT").getInt(null);
+                // If we are on an old version of Android and TLSv1.2 has not been enabled already
+                // on the default context then we add a special interceptor
+                if (androidApiLevel < 20) {
+                    // Check i has passed we are on an old version of Android
+
+                    // Get the default SSLContext
+                    SSLContext defSslCtx = SSLContext.getDefault();
+
+                    // Check the default protocols for TLSv1.2
+                    if (!Arrays.asList(defSslCtx.getDefaultSSLParameters().getProtocols())
+                            .contains(TlsOnlySslSocketFactory.TLSv12) &&
+                            Arrays.asList(defSslCtx.getSupportedSSLParameters().getProtocols())
+                                    .contains(TlsOnlySslSocketFactory.TLSv12)) {
+                        // Check ii has passed TLSv1.2 is not already enabled on the default context
+                        // but is supported on the default context so we can use it
+
+                        // In an ideal world we would also check the default SSLSocketFactory that
+                        // is set on the HttpsUrlConnection to see if that has been customized from
+                        // the default, but there isn't really a way to check this, equals is not
+                        // overridden on the SSLSocketFactory and there is no route back to the
+                        // SSLContext that generated the SSLSocketFactory.
+                        SSLContext sc = SSLContext.getInstance(TlsOnlySslSocketFactory.TLSv12);
+                        sc.init(null, null, null);
+                        // We add this interceptor, but it could be overridden by a later user
+                        // provided interceptor, so this shouldn't change anyone's existing
+                        // customizations.
+                        SSLSocketFactory s = sc.getSocketFactory();
+                        return new SSLCustomizerInterceptor(new TlsOnlySslSocketFactory(s));
+                    }
+                }
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            } catch (KeyManagementException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+
+    private static final class TlsOnlySslSocketFactory extends SSLSocketFactory {
+
+        private static final String TLSv12 = "TLSv1.2";
+        private static final String[] TLSv12Only = new String[]{TLSv12};
+        private final SSLSocketFactory delegate;
+
+        private TlsOnlySslSocketFactory(SSLSocketFactory delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public String[] getDefaultCipherSuites() {
+            return delegate.getDefaultCipherSuites();
+        }
+
+        @Override
+        public String[] getSupportedCipherSuites() {
+            return delegate.getSupportedCipherSuites();
+        }
+
+        @Override
+        public Socket createSocket(Socket socket, String s, int i, boolean b) throws IOException {
+            return tlsOnlySocket(delegate.createSocket(socket, s, i, b));
+        }
+
+        @Override
+        public Socket createSocket(String s, int i) throws IOException {
+            return tlsOnlySocket(delegate.createSocket(s, i));
+        }
+
+        @Override
+        public Socket createSocket(String s, int i, InetAddress inetAddress, int i1) throws
+                IOException {
+            return tlsOnlySocket(delegate.createSocket(s, i, inetAddress, i1));
+        }
+
+        @Override
+        public Socket createSocket(InetAddress inetAddress, int i) throws IOException {
+            return tlsOnlySocket(delegate.createSocket(inetAddress, i));
+        }
+
+        @Override
+        public Socket createSocket(InetAddress inetAddress, int i, InetAddress inetAddress1, int
+                i1) throws IOException {
+            return tlsOnlySocket(delegate.createSocket(inetAddress, i, inetAddress1, i1));
+        }
+
+        private Socket tlsOnlySocket(Socket s) {
+            if (s instanceof SSLSocket) {
+                ((SSLSocket) s).setEnabledProtocols(TLSv12Only);
+            }
+            return s;
         }
     }
 

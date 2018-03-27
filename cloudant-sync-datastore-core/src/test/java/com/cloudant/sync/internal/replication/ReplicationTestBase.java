@@ -23,11 +23,11 @@ import com.cloudant.http.internal.interceptors.CookieInterceptor;
 import com.cloudant.http.internal.interceptors.CookieInterceptorBase;
 import com.cloudant.http.internal.interceptors.IamCookieInterceptor;
 import com.cloudant.sync.documentstore.DocumentStore;
+import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.mazha.CouchConfig;
 import com.cloudant.sync.internal.mazha.CouchException;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
-import com.cloudant.sync.internal.documentstore.DatabaseImpl;
 import com.cloudant.sync.replication.PullFilter;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
@@ -37,13 +37,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
-import java.io.UnsupportedEncodingException;
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
-import java.net.URLEncoder;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -255,12 +254,13 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         respI.setAccessible(true);
         List<HttpConnectionRequestInterceptor> reqIList = (List)reqI.get(p);
         List<HttpConnectionRequestInterceptor> respIList = (List)respI.get(p);
-        // This relies on the UserAgentInterceptor being added before the CookieInterceptor.
-        Assert.assertEquals(2, reqIList.size());
-        Assert.assertEquals(CookieInterceptor.class, reqIList.get(1).getClass());
+        // Note this introspection happens before the interceptors are passed to the CouchClient so
+        // excludes any other interceptors (e.g. UserAgentInterceptor that might be added there).
+        Assert.assertEquals(1, reqIList.size());
+        Assert.assertEquals(CookieInterceptor.class, reqIList.get(0).getClass());
         Assert.assertEquals(1, respIList.size());
         Assert.assertEquals(CookieInterceptor.class, respIList.get(0).getClass());
-        CookieInterceptorBase ci = (CookieInterceptorBase)reqIList.get(1);
+        CookieInterceptorBase ci = (CookieInterceptorBase)reqIList.get(0);
         Field srbField = CookieInterceptorBase.class.getDeclaredField("sessionRequestBody");
         srbField.setAccessible(true);
         byte[] srb = (byte[])srbField.get(ci);
@@ -277,9 +277,10 @@ public abstract class ReplicationTestBase extends CouchTestBase {
         respI.setAccessible(true);
         List<HttpConnectionRequestInterceptor> reqIList = (List)reqI.get(p);
         List<HttpConnectionRequestInterceptor> respIList = (List)respI.get(p);
-        // This relies on the UserAgentInterceptor being added before the  IamCookieInterceptor.
-        Assert.assertEquals(2, reqIList.size());
-        Assert.assertEquals(IamCookieInterceptor.class, reqIList.get(1).getClass());
+        // Note this introspection happens before the interceptors are passed to the CouchClient so
+        // excludes any other interceptors (e.g. UserAgentInterceptor that might be added there).
+        Assert.assertEquals(1, reqIList.size());
+        Assert.assertEquals(IamCookieInterceptor.class, reqIList.get(0).getClass());
         Assert.assertEquals(1, respIList.size());
         Assert.assertEquals(IamCookieInterceptor.class, respIList.get(0).getClass());
     }
