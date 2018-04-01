@@ -38,6 +38,7 @@ import com.cloudant.sync.event.notifications.DocumentCreated;
 import com.cloudant.sync.event.notifications.DocumentDeleted;
 import com.cloudant.sync.event.notifications.DocumentModified;
 import com.cloudant.sync.event.notifications.DocumentUpdated;
+import com.cloudant.sync.internal.PurgeNotification;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.common.ValueListMap;
 import com.cloudant.sync.internal.documentstore.callables.ChangesCallable;
@@ -61,6 +62,7 @@ import com.cloudant.sync.internal.documentstore.callables.GetSequenceCallable;
 import com.cloudant.sync.internal.documentstore.callables.InsertDocumentIDCallable;
 import com.cloudant.sync.internal.documentstore.callables.InsertLocalDocumentCallable;
 import com.cloudant.sync.internal.documentstore.callables.InsertRevisionCallable;
+import com.cloudant.sync.internal.documentstore.callables.PurgeCallable;
 import com.cloudant.sync.internal.documentstore.callables.ResolveConflictsForDocumentCallable;
 import com.cloudant.sync.internal.documentstore.callables.RevsDiffBatchCallable;
 import com.cloudant.sync.internal.documentstore.callables.SetCurrentCallable;
@@ -1084,5 +1086,13 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
         // for reference.
         forceInsert(Collections.singletonList(new ForceInsertItem(internalRev,
                 revIDs, null, preparedAttachments, false)));
+    }
+
+    public void purge(final DocumentRevision rev) {
+        // purge rev and attachments...
+        PurgeCallable pc = new PurgeCallable(rev.getId(), rev.getRevision(), attachmentsDir);
+        queue.submit(pc);
+        // send event on message bus so Query can perform purge
+        eventBus.post(new PurgeNotification(rev.getId(), rev.getRevision()));
     }
 }

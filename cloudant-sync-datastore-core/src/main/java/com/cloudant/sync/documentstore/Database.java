@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2017 IBM Corp. All rights reserved.
  *
  * Original iOS version by  Jens Alfke, ported to Android by Marty Schoch
  * Copyright © 2012 Couchbase, Inc. All rights reserved.
@@ -355,6 +355,8 @@ public interface Database {
      *     Events documentation</a>
      */
     EventBus getEventBus();
+
+    void purge(final DocumentRevision rev);
 
 
 }
