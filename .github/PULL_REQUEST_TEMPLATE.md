@@ -1,24 +1,86 @@
+<!--
 Thanks for your hard work, please ensure all items are complete before opening.
+-->
+## Checklist
 
-- [ ] Tick to sign-off your agreement to the [Developer Certificate of Origin (DCO) 1.1](https://github.com/cloudant/sync-android/blob/master/DCO1.1.txt)
-- [ ] You have added tests for any code changes
-- [ ] You have updated the [CHANGES.md](https://github.com/cloudant/sync-android/blob/master/CHANGES.md)
-- [ ] You have completed the PR template below:
+- [ ] Tick to sign-off your agreement to the [Developer Certificate of Origin (DCO) 1.1](../DCO1.1.txt)
+- [ ] Added tests for code changes _or_ test/build only changes
+- [ ] Updated the change log file (`CHANGES.md`|`CHANGELOG.md`) _or_ test/build only changes
+- [ ] Completed the PR template below:
 
-## What
+## Description
 
-What was changed e.g.
->Corrected NPE when trying to read settings from a migrated index.
+<!--
+Link to issue this PR is resolving, use the Fixes #nnn form so that the issue
+closes automatically when the PR merges e.g.:
+Fixes #23
 
-## How
+OR (including for test/build issues)
 
-How the change was implemented and reasoning behind it, e.g.
->Added a null check before attempting to call getBytes for deserialization.
+### 1. Steps to reproduce and a small code sample that demonstrates the issue
+### 2. What you expected to happen
+### 3. What actually happened
+-->
+
+## Approach
+
+<!--
+Be brief: which component(s) of the code base does the fix focus on.
+
+A place to note whether the part of the code base that is being worked is
+particularly sensitive.
+-->
+
+## Schema & API Changes
+
+<!--
+Either:
+
+- "No change"
+
+OR
+
+- "Fixing bug in API, will change x in such-and-such way"
+-->
+
+## Security and Privacy
+
+<!--
+Either:
+
+- "No change"
+
+OR
+
+"Making changes in e.g. auth|https|encryption|io
+need to be careful about..."
+
+-->
 
 ## Testing
 
-How to test your changes work, not required for documentation changes.
+<!--
+Either:
+- Added new tests:
+    - test x
+    - test y
+    - test z
 
-## Issues
+OR
 
-Links to the github issue(s) (if present) that this pull request is resolving.
+- Modified existing tests because ...
+
+OR
+
+- N/A build or packaging only changes
+-->
+
+## Monitoring and Logging
+<!--
+Either:
+
+- "No change"
+OR
+
+- "Added new log line X..."
+-->
