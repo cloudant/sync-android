@@ -29,8 +29,8 @@ Got a 400 bad request
 - Version(s) that are affected by this issue.
     > 2.0.2
 - Android or Java version (including vendor and platform)
-    >Android 5.1, API level 22, Linux/armv7l
-    >Java 1.8.0_151 OpenJDK macOS
+    > Android 5.1, API level 22, Linux/armv7l
+    > Java 1.8.0_151 OpenJDK macOS
 - sync-android artifact you are using:
     - [ ] cloudant-sync-datastore-android
     - [ ] cloudant-sync-datastore-android-encryption
