@@ -1,9 +1,19 @@
-# Developing this library
+# Contributing
 
-Cloudant Sync - Android is written in Java and uses
-[gradle](http://www.gradle.org) as its build tool.
+## Issues
 
-## Developer Certificate of Origin
+Please [read these guidelines](http://ibm.biz/cdt-issue-guide) before opening an issue.
+If you still need to open an issue then we ask that you complete the template as
+fully as possible.
+
+## Pull requests
+
+We welcome pull requests, but ask contributors to keep in mind the following:
+
+* Only PRs with the template completed will be accepted
+* We will not accept PRs for user specific functionality
+
+### Developer Certificate of Origin
 
 In order for us to accept pull-requests, the contributor must sign-off a
 [Developer Certificate of Origin (DCO)](DCO1.1.txt). This clarifies the
@@ -16,18 +26,12 @@ Please read the agreement and acknowledge it by ticking the appropriate box in t
 
 - [x] Tick to sign-off your agreement to the Developer Certificate of Origin (DCO) 1.1
 
-## Requirements
+## General information
 
-The main requirements are:
+Cloudant Sync - Android is written in Java and uses
+[gradle](http://www.gradle.org) as its build tool.
 
-* Java 1.6
-* Android SDK
-
-Optionally, and recommended:
-
-* CouchDB
-
-## Coding guidelines
+### Coding guidelines
 
 Adopting the [Google Java Style](https://google-styleguide.googlecode.com/svn/trunk/javaguide.html)
 with the following changes:
@@ -42,16 +46,27 @@ with the following changes:
 4.5.2
     Indent continuation of +4 characters fine, but I think
     IDEA defaults to 8, which is okay too.
-```
+    ```
 
-## Installing requirements
+## Requirements
 
-### Java
+The main requirements are:
+
+* Java 1.6
+* Android SDK
+
+Optionally, and recommended:
+
+* CouchDB
+
+### Installing requirements
+
+#### Java
 
 Follow the instructions for your platform.
 
 
-### CouchDB
+#### CouchDB
 
 Again, using brew:
 
@@ -59,11 +74,11 @@ Again, using brew:
 $ brew install couchdb
 ```
 
-### Android SDK
+#### Android SDK
 
 Follow the instructions provided on the android developer site.
 
-## Building the library
+## Building
 
 The project should build out of the box with:
 
@@ -82,6 +97,8 @@ maven repository:
 ```bash
 $ gradlew install
 ```
+
+## Testing
 
 ### Running integration tests
 
