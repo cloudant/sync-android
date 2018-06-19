@@ -33,7 +33,6 @@ Replicator replicator = ReplicatorBuilder.pull()
               .from(new URI("https://username.cloudant.com"))
               .to(ds)
               .addRequestInterceptors(interceptor)
-              .addResponseInterceptors(interceptor)
               .build();
 
 replicator.start();
