@@ -3,7 +3,7 @@ Thanks for your hard work, please ensure all items are complete before opening.
 -->
 ## Checklist
 
-- [ ] Tick to sign-off your agreement to the [Developer Certificate of Origin (DCO) 1.1](../DCO1.1.txt)
+- [ ] Tick to sign-off your agreement to the [Developer Certificate of Origin (DCO) 1.1](../blob/master/DCO1.1.txt)
 - [ ] Added tests for code changes _or_ test/build only changes
 - [ ] Updated the change log file (`CHANGES.md`|`CHANGELOG.md`) _or_ test/build only changes
 - [ ] Completed the PR template below:
