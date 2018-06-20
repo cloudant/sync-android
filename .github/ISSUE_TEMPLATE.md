@@ -4,25 +4,15 @@ Please [read these guidelines](http://ibm.biz/cdt-issue-guide) before opening an
 
 ## Bug Description
 
-### 1. Steps to reproduce and a small code sample that demonstrates the issue
+### 1. Steps to reproduce and the simplest code sample possible to demonstrate the issue
 <!--
-EXAMPLE:
-1. Initialize client
-2. List DBs
-
-cc = new CloudantClient(...)
-dbNames = cc.allDbs()
+Outline the steps you take to make the problem happen.
+Provide the simplest code sample you can, in context, that reproduces the issue.
 -->
 
 ### 2. What you expected to happen
-<!--
-Expected to get a list of all databases
--->
 
 ### 3. What actually happened
-<!--
-Got a 400 bad request
--->
 
 ## Environment details
 <!--
