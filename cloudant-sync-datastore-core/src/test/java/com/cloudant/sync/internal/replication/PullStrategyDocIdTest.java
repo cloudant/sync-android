@@ -75,22 +75,4 @@ public class PullStrategyDocIdTest extends ReplicationTestBase {
         }
     }
 
-//    @Test
-//    public void pull_filterSelectorSmallFromAnimalDbUsingNullFilter_eightDocShouldBePulled()
-//            throws Exception {
-//        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(remoteDb.couchClient.getRootUri()));
-//        String selector = "{\"selector\":{\"chinese_name\":\"\u718a\u732b\"}}";
-//        PullStrategy replicator = super.getPullStrategy(selector);
-//
-//        Assert.assertEquals(0, datastore.getDocumentCount());
-//
-//        AnimalDb.populate(remoteDb.couchClient);
-//        this.pull(replicator, 1);
-//
-//        Assert.assertEquals(1, datastore.getDocumentCount());
-//        String[] mammals = {"panda"};
-//        for (String mammal : mammals) {
-//            Assert.assertTrue(mammal + " should be in the datastore", datastore.contains(mammal));
-//        }
-//    }
 }
