@@ -465,18 +465,30 @@ public class CouchClient {
     }
 
     public ChangesResult changes(String selector, Object since, Integer limit) {
-        Misc.checkNotNullOrEmpty(selector,null);
-        Map<String, Object> options = getParametrizedChangeFeedOptions(since, limit);
-        options.put("filter", "_selector");
-        URI changesFeedUri = uriHelper.changesUri(options);
-        HttpConnection connection = Http.POST(changesFeedUri, "application/json");
-        connection.setRequestBody(selector);
-        return executeToJsonObjectWithRetry(connection, ChangesResult.class);
+        Misc.checkNotNullOrEmpty(selector, null);
+        return changesRequestWithPost("_selector", selector, since, limit);
+    }
+
+    public ChangesResult changes(List<String> docIds, Object since, Integer limit) {
+        Misc.checkState((docIds != null && !docIds.isEmpty()), null);
+        Map<String, Object> docIdsMap = new HashMap<String, Object>();
+        docIdsMap.put("doc_ids", docIds);
+        String docsIdsDoc = JSONUtils.serializeAsString(docIdsMap);
+        return changesRequestWithPost("_doc_ids", docsIdsDoc, since, limit);
     }
 
     public ChangesResult changes(final Map<String, Object> options) {
         URI changesFeedUri = uriHelper.changesUri(options);
         HttpConnection connection = Http.GET(changesFeedUri);
+        return executeToJsonObjectWithRetry(connection, ChangesResult.class);
+    }
+
+    private ChangesResult changesRequestWithPost(String filter, String body, Object since, Integer limit) {
+        Map<String, Object> options = getParametrizedChangeFeedOptions(since, limit);
+        options.put("filter", filter);
+        URI changesFeedUri = uriHelper.changesUri(options);
+        HttpConnection connection = Http.POST(changesFeedUri, "application/json");
+        connection.setRequestBody(body);
         return executeToJsonObjectWithRetry(connection, ChangesResult.class);
     }
 

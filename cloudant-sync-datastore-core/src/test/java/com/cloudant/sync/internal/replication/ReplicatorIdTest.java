@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Arrays;
 
 /**
  * Created by tomblench on 10/12/14.
@@ -193,6 +194,41 @@ public class ReplicatorIdTest {
                 .from(new URI
                         ("http://default-host/default-database")).to(mockDocumentStore)
                 .selector("{\"selector\":{\"class\":\"bird\"}}").build()).strategy;
+
+        Assert.assertNotEquals(pull1.getReplicationId(),
+                pull2.getReplicationId());
+    }
+
+    // two pull reps, one with doc IDs, one without, not equal
+    @Test
+    public void pullWithDocIdsNotEqual() throws Exception {
+        PullStrategy pull1 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
+                .from(new URI
+                        ("http://default-host/default-database")).to(mockDocumentStore).build
+                        ()).strategy;
+        PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
+                .from(new URI
+                        ("http://default-host/default-database")).to(mockDocumentStore)
+                .docIds(Arrays.asList("id1", "id2"))
+                .build()).strategy;
+
+        Assert.assertNotEquals(pull1.getReplicationId(),
+                pull2.getReplicationId());
+    }
+
+    // two pull reps, one with different doc IDs, not equal
+    @Test
+    public void pullWithDifferentDocIdsNotEqual() throws Exception {
+        PullStrategy pull1 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
+                .from(new URI
+                        ("http://default-host/default-database")).to(mockDocumentStore)
+                .docIds(Arrays.asList("id3", "id4"))
+                .build()).strategy;
+        PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
+                .from(new URI
+                        ("http://default-host/default-database")).to(mockDocumentStore)
+                .docIds(Arrays.asList("id1", "id2"))
+                .build()).strategy;
 
         Assert.assertNotEquals(pull1.getReplicationId(),
                 pull2.getReplicationId());
