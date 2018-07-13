@@ -259,8 +259,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
 
         private String pullPullSelector = null;
 
-        private List<String> pullDocIds = null;
-
         private int changeLimitPerBatch = 1000;
 
         private int insertBatchSize = 100;
@@ -274,10 +272,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
                     "Source and target cannot be null");
             Misc.checkState(this.pullPullFilter == null || this.pullPullSelector == null,
                     "Filter and selector cannot be defined at the same time");
-            if (this.pullPullFilter != null || this.pullPullSelector != null) {
-                Misc.checkState(this.pullDocIds == null || this.pullDocIds.isEmpty(),
-                        "Doc Ids cannot be provided at the same time than selecto or filter");
-            }
 
             // add cookie interceptor and remove creds from URI if required
             super.source = super.addAuthInterceptorIfRequired(super.source);
@@ -286,7 +280,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
                     super.target.database(),
                     pullPullFilter,
                     pullPullSelector,
-                    pullDocIds,
                     super.requestInterceptors,
                     super.responseInterceptors);
 
@@ -328,22 +321,6 @@ public abstract class ReplicatorBuilder<S, T, E> {
             return this;
         }
 
-        /**
-         * <p>Sets the list of doc IDs to use as filtering criteria when a pull replication calls the
-         * source database's {@code _changes} feed.
-         * </p>
-         * Note: Doc IDs filtering are supported only when replicating against a CouchDB 2.x compliant database
-         *
-         * @see
-         * <a target="_blank" href="https://console.bluemix.net/docs/services/Cloudant/api/database.html#get-changes">See doc_ids filtering</a>
-         *
-         * @param docIds - List of document Ids
-         * @return This instance of {@link ReplicatorBuilder}
-         */
-        public Pull docIds(List<String> docIds) {
-            this.pullDocIds = docIds;
-            return this;
-        }
         /**
          * Sets the number of changes to fetch from the _changes feed per batch
          *

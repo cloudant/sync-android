@@ -51,13 +51,12 @@ import java.util.Map;
  */
 public class PullFilter {
 
-    private final String name;
+    protected String name;
 
-    private final Map<String, String> parameters;
+    protected Map<String, Object> parameters;
 
     /**
-     * Constructs a filter object for a function that requires no
-     * parameters.
+     * Constructs a filter object for a function that requires no parameters.
      *
      *
      *
@@ -74,8 +73,7 @@ public class PullFilter {
     }
 
     /**
-     * Constructs a filter object for a function that requires no
-     * parameters.
+     * Constructs a filter object for a function that requires parameters.
      *
      *
      *
@@ -86,18 +84,16 @@ public class PullFilter {
      *                   and the name of the filter function, separated by a slash. For example,
      *                   {@code filterDoc/filterFunctionName}
      *
-     * @param parameters Any parameters required for the function. Can be {@code null}. The contents
+     * @param parameters Any parameters required for the function. Can not be {@code null}. The contents
      *                   of {@code properties} are expanded to {@code key=value} pairs when
      *                   constructing the {@code _changes} feed call for the remote database.
-     *                   Integer values should be added as String objects.
      *
      * @see <a target="_blank" href="http://docs.couchdb.org/en/latest/ddocs/ddocs.html#filter-functions">Filter
      * functions CouchDB docs</a>
      */
-    public PullFilter(String filterName, Map<String, String> parameters) {
+    public PullFilter(String filterName, Map<String, ?> parameters) {
         this.name = filterName;
-        Map<String, String> internalParams = new HashMap<String, String>();
-        internalParams.putAll(parameters);
+        Map<String, Object> internalParams = new HashMap<String, Object>(parameters);
         this.parameters = Collections.unmodifiableMap(internalParams);
     }
 
@@ -113,7 +109,7 @@ public class PullFilter {
      * Returns the filter function's parameters.
      * @return parameters for the function
      */
-     public Map<String, String> getParameters() {
+     public Map<String, Object> getParameters() {
         return this.parameters;
     }
 
@@ -138,7 +134,7 @@ public class PullFilter {
         } else {
             List<String> queries = new ArrayList<String>();
 
-            for(Map.Entry<String, String> parameter : this.parameters.entrySet()) {
+            for(Map.Entry<String, Object> parameter : this.parameters.entrySet()) {
                 queries.add(String.format("%s=%s", parameter.getKey(), parameter.getValue()));
             }
             Collections.sort(queries);

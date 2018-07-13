@@ -28,6 +28,7 @@ import com.cloudant.sync.internal.mazha.CouchClient;
 import com.cloudant.sync.internal.mazha.CouchConfig;
 import com.cloudant.sync.internal.mazha.CouchException;
 import com.cloudant.sync.internal.sqlite.SQLDatabase;
+import com.cloudant.sync.replication.PullDocIdsFilter;
 import com.cloudant.sync.replication.PullFilter;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
@@ -203,10 +204,11 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     }
 
     protected ReplicatorBuilder.Pull getPullBuilder(List<String> docIds) {
-        ReplicatorBuilder.Pull pull = ReplicatorBuilder.pull().
-                from(this.couchConfig.getRootUri()).
-                to(this.documentStore)
-                .docIds(docIds)
+        PullDocIdsFilter filter = new PullDocIdsFilter(docIds);
+        ReplicatorBuilder.Pull pull = ReplicatorBuilder.pull()
+                .from(this.couchConfig.getRootUri())
+                .to(this.documentStore)
+                .filter(filter)
                 .addRequestInterceptors(couchConfig.getRequestInterceptors(false))
                 .addResponseInterceptors(couchConfig.getResponseInterceptors(false));
         if (couchConfig.getUsername() != null && couchConfig.getPassword() != null) {
