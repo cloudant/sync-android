@@ -32,7 +32,6 @@ import com.cloudant.sync.internal.documentstore.DocumentRevsList;
 import com.cloudant.sync.internal.documentstore.MultipartAttachmentWriter;
 import com.cloudant.sync.internal.util.JSONUtils;
 import com.cloudant.sync.internal.util.Misc;
-import com.cloudant.sync.replication.PullDocIdsFilter;
 import com.cloudant.sync.replication.PullFilter;
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -451,28 +450,31 @@ public class CouchClient {
     }
 
     public ChangesResult changes(PullFilter filter, Object since, Integer limit) {
-        Map<String, Object> queryOptions = getParametrizedChangeFeedOptions(since, limit);
-        Map<String,Object> bodyOptions = null;
+        Map<String, Object> options = getParametrizedChangeFeedOptions(since, limit);
         if (filter != null) {
             String filterName = filter.getName();
+            Map filterParameters = filter.getParameters();
             if (filterName != null) {
-                queryOptions.put("filter", filterName);
-            }
-            if (filter instanceof PullDocIdsFilter) {
-                bodyOptions = filter.getParameters();
-            } else {
-                Map<String,Object> filterParameters = filter.getParameters();
+                options.put("filter", filterName);
                 if (filterParameters != null) {
-                    queryOptions.putAll(filterParameters);
+                    options.putAll(filterParameters);
                 }
             }
         }
-        return  changesRequestWithPost(queryOptions, bodyOptions);
+        return this.changes(options);
     }
 
     public ChangesResult changes(String selector, Object since, Integer limit) {
         Misc.checkNotNullOrEmpty(selector, null);
         return changesRequestWithPost("_selector", selector, since, limit);
+    }
+
+    public ChangesResult changes(List<String> docIds, Object since, Integer limit) {
+        Misc.checkState((docIds != null && !docIds.isEmpty()), null);
+        Map<String, Object> docIdsMap = new HashMap<String, Object>();
+        docIdsMap.put("doc_ids", docIds);
+        String docsIdsDoc = JSONUtils.serializeAsString(docIdsMap);
+        return changesRequestWithPost("_doc_ids", docsIdsDoc, since, limit);
     }
 
     public ChangesResult changes(final Map<String, Object> options) {
@@ -481,24 +483,12 @@ public class CouchClient {
         return executeToJsonObjectWithRetry(connection, ChangesResult.class);
     }
 
-    public ChangesResult changesRequestWithPost(final Map<String, Object> queryOptions, final Map<String,Object> bodyOptions) {
-        URI changesFeedUri = uriHelper.changesUri(queryOptions);
-        HttpConnection connection = Http.POST(changesFeedUri, "application/json");
-        if (bodyOptions != null) {
-            String body = JSONUtils.serializeAsString(bodyOptions);
-            connection.setRequestBody(body);
-        }
-        return executeToJsonObjectWithRetry(connection, ChangesResult.class);
-    }
-
     private ChangesResult changesRequestWithPost(String filter, String body, Object since, Integer limit) {
         Map<String, Object> options = getParametrizedChangeFeedOptions(since, limit);
         options.put("filter", filter);
         URI changesFeedUri = uriHelper.changesUri(options);
         HttpConnection connection = Http.POST(changesFeedUri, "application/json");
-        if (body != null) {
-            connection.setRequestBody(body);
-        }
+        connection.setRequestBody(body);
         return executeToJsonObjectWithRetry(connection, ChangesResult.class);
     }
 

@@ -17,7 +17,6 @@
 package com.cloudant.sync.internal.replication;
 
 import com.cloudant.common.RequireRunningCouchDB;
-import com.cloudant.sync.replication.PullDocIdsFilter;
 import com.cloudant.sync.replication.PullFilter;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
@@ -128,11 +127,11 @@ public class PullReplicatorTest extends ReplicationTestBase {
 
     @Test
     public void testPullReplicationCreatedSuccessfullyWithDocIds() throws Exception {
-        PullDocIdsFilter filter = new PullDocIdsFilter(Arrays.asList("id1", "id2"));
+
         Replicator replicator = ReplicatorBuilder.pull()
                 .from(this.source)
                 .to(this.documentStore)
-                .filter(filter)
+                .docIds(Arrays.asList("id1","id2"))
                 .build();
 
         Assert.assertNotNull(replicator);
@@ -153,14 +152,25 @@ public class PullReplicatorTest extends ReplicationTestBase {
 
     @Test(expected = IllegalStateException.class)
     public void testPullReplicationSelectorAndDocIdIncompatible() throws Exception {
-        PullDocIdsFilter filter = new PullDocIdsFilter(Arrays.asList("id1"));
+
         Replicator replicator = ReplicatorBuilder.pull()
                 .from(this.source)
                 .to(this.documentStore)
                 .selector("{\"selector\":{\"class\":\"a_class\"}}")
-                .filter(filter)
+                .docIds(Arrays.asList("id1"))
                 .build();
 
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPullReplicationFilterAndDocIdIncompatible() throws Exception {
+
+        Replicator replicator = ReplicatorBuilder.pull()
+                .from(this.source)
+                .to(this.documentStore)
+                .filter(new PullFilter("a_filter"))
+                .docIds(Arrays.asList("id1"))
+                .build();
     }
 
     @Test

@@ -151,6 +151,15 @@ public class CouchClientWrapper implements CouchDB {
     }
 
     @Override
+    public ChangesResult changes(List<String> docIds, Object lastSequence, int limit) {
+        if (docIds == null || docIds.isEmpty()) {
+            return couchClient.changes(lastSequence, limit);
+        } else {
+            return couchClient.changes(docIds, lastSequence, limit);
+        }
+    }
+
+    @Override
     public Iterable<DocumentRevsList> bulkGetRevisions(List<BulkGetRequest> requests,
                                                        boolean pullAttachmentsInline) {
         List<com.cloudant.sync.internal.mazha.BulkGetRequest> splitRequests = new ArrayList<com

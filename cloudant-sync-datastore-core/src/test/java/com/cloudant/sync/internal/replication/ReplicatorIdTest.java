@@ -23,7 +23,6 @@ import com.cloudant.common.CollectionFactory;
 import com.cloudant.sync.documentstore.Database;
 import com.cloudant.sync.documentstore.DocumentStore;
 import com.cloudant.sync.internal.documentstore.DatabaseImpl;
-import com.cloudant.sync.replication.PullDocIdsFilter;
 import com.cloudant.sync.replication.PullFilter;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 
@@ -203,7 +202,6 @@ public class ReplicatorIdTest {
     // two pull reps, one with doc IDs, one without, not equal
     @Test
     public void pullWithDocIdsNotEqual() throws Exception {
-        PullDocIdsFilter filter = new PullDocIdsFilter(Arrays.asList("id1", "id2"));
         PullStrategy pull1 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
                         ("http://default-host/default-database")).to(mockDocumentStore).build
@@ -211,7 +209,7 @@ public class ReplicatorIdTest {
         PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
                         ("http://default-host/default-database")).to(mockDocumentStore)
-                .filter(filter)
+                .docIds(Arrays.asList("id1", "id2"))
                 .build()).strategy;
 
         Assert.assertNotEquals(pull1.getReplicationId(),
@@ -221,17 +219,15 @@ public class ReplicatorIdTest {
     // two pull reps, one with different doc IDs, not equal
     @Test
     public void pullWithDifferentDocIdsNotEqual() throws Exception {
-        PullDocIdsFilter filter1 = new PullDocIdsFilter(Arrays.asList("id3", "id4"));
-        PullDocIdsFilter filter2 = new PullDocIdsFilter(Arrays.asList("id1", "id2"));
         PullStrategy pull1 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
                         ("http://default-host/default-database")).to(mockDocumentStore)
-                .filter(filter1)
+                .docIds(Arrays.asList("id3", "id4"))
                 .build()).strategy;
         PullStrategy pull2 = (PullStrategy) ((ReplicatorImpl) ReplicatorBuilder.pull()
                 .from(new URI
                         ("http://default-host/default-database")).to(mockDocumentStore)
-                .filter(filter2)
+                .docIds(Arrays.asList("id1", "id2"))
                 .build()).strategy;
 
         Assert.assertNotEquals(pull1.getReplicationId(),
