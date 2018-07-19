@@ -74,8 +74,7 @@ public class PullFilter {
     }
 
     /**
-     * Constructs a filter object for a function that requires no
-     * parameters.
+     * Constructs a filter object for a function that requires parameters.
      *
      *
      *
@@ -86,7 +85,7 @@ public class PullFilter {
      *                   and the name of the filter function, separated by a slash. For example,
      *                   {@code filterDoc/filterFunctionName}
      *
-     * @param parameters Any parameters required for the function. Can be {@code null}. The contents
+     * @param parameters Any parameters required for the function. Can't be {@code null}. The contents
      *                   of {@code properties} are expanded to {@code key=value} pairs when
      *                   constructing the {@code _changes} feed call for the remote database.
      *                   Integer values should be added as String objects.

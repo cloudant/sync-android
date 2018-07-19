@@ -446,7 +446,7 @@ public class CouchClient {
 
     public ChangesResult changes(Object since, Integer limit) {
         Map<String, Object> options = getParametrizedChangeFeedOptions(since, limit);
-        return this.changes(options);
+        return this.changesRequestWithGet(options);
     }
 
     public ChangesResult changes(PullFilter filter, Object since, Integer limit) {
@@ -461,31 +461,38 @@ public class CouchClient {
                 }
             }
         }
-        return this.changes(options);
+        return this.changesRequestWithGet(options);
     }
 
     public ChangesResult changes(String selector, Object since, Integer limit) {
         Misc.checkNotNullOrEmpty(selector, null);
-        return changesRequestWithPost("_selector", selector, since, limit);
+
+        Map<String, Object> options = getParametrizedChangeFeedOptions(since, limit);
+        options.put("filter", "_selector");
+
+        return changesRequestWithPost(selector, options);
     }
 
     public ChangesResult changes(List<String> docIds, Object since, Integer limit) {
         Misc.checkState((docIds != null && !docIds.isEmpty()), null);
+
+        Map<String, Object> options = getParametrizedChangeFeedOptions(since, limit);
+        options.put("filter", "_doc_ids");
+
         Map<String, Object> docIdsMap = new HashMap<String, Object>();
         docIdsMap.put("doc_ids", docIds);
         String docsIdsDoc = JSONUtils.serializeAsString(docIdsMap);
-        return changesRequestWithPost("_doc_ids", docsIdsDoc, since, limit);
+
+        return changesRequestWithPost(docsIdsDoc, options);
     }
 
-    public ChangesResult changes(final Map<String, Object> options) {
+    private ChangesResult changesRequestWithGet(final Map<String, Object> options) {
         URI changesFeedUri = uriHelper.changesUri(options);
         HttpConnection connection = Http.GET(changesFeedUri);
         return executeToJsonObjectWithRetry(connection, ChangesResult.class);
     }
 
-    private ChangesResult changesRequestWithPost(String filter, String body, Object since, Integer limit) {
-        Map<String, Object> options = getParametrizedChangeFeedOptions(since, limit);
-        options.put("filter", filter);
+    private ChangesResult changesRequestWithPost( String body, final Map<String, Object> options) {
         URI changesFeedUri = uriHelper.changesUri(options);
         HttpConnection connection = Http.POST(changesFeedUri, "application/json");
         connection.setRequestBody(body);
