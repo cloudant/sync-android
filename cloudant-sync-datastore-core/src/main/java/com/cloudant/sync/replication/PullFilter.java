@@ -85,7 +85,7 @@ public class PullFilter {
      *                   and the name of the filter function, separated by a slash. For example,
      *                   {@code filterDoc/filterFunctionName}
      *
-     * @param parameters Any parameters required for the function. Can't be {@code null}. The contents
+     * @param parameters Any parameters required for the function. Must not be {@code null}. The contents
      *                   of {@code properties} are expanded to {@code key=value} pairs when
      *                   constructing the {@code _changes} feed call for the remote database.
      *                   Integer values should be added as String objects.

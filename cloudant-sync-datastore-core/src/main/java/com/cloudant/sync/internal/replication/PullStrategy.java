@@ -122,22 +122,13 @@ public class PullStrategy implements ReplicationStrategy {
         } else if (selector != null) {
             replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source, selector);
         } else if (docIds != null && !docIds.isEmpty()) {
-            String concatenatedIds = join(docIds);
+            String concatenatedIds = Misc.join(",",docIds);
             replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source,
                     concatenatedIds);
         } else {
             replicatorName = String.format("%s <-- %s ", target.getPath(), source);
         }
         this.name = String.format("%s [%s]", LOG_TAG, replicatorName);
-    }
-
-    private String join(List<String> docIds) {
-        StringBuilder sb = new StringBuilder();
-        for (String docId: docIds) {
-            sb.append(docId).append(",");
-        }
-        sb.deleteCharAt(sb.length() - 1);
-        return sb.toString();
     }
 
     @Override
@@ -465,7 +456,7 @@ public class PullStrategy implements ReplicationStrategy {
         } else if (selector != null) {
             dict.put("selector", this.selector);
         } else if (docIds != null && !docIds.isEmpty()) {
-            dict.put("docIds", join(docIds));
+            dict.put("docIds", Misc.join(",",docIds));
         }
         // get raw SHA-1 of dictionary
         try {
