@@ -47,8 +47,8 @@ public class PullStrategyDocIdTest extends ReplicationTestBase {
         this.pull(replicator, 2);
 
         Assert.assertEquals(2, datastore.getDocumentCount());
-        String[] birds = {"snipe", "kookaburra"};
-        for (String bird : birds) {
+
+        for (String bird : docIds) {
             Assert.assertTrue(datastore.contains(bird));
         }
     }
@@ -68,9 +68,8 @@ public class PullStrategyDocIdTest extends ReplicationTestBase {
         this.pull(replicator, 8);
 
         Assert.assertEquals(8, datastore.getDocumentCount());
-        String[] mammals = {"aardvark", "badger", "elephant", "giraffe", "lemur", "llama",
-                "panda", "zebra"};
-        for (String mammal : mammals) {
+
+        for (String mammal : docIds) {
             Assert.assertTrue(datastore.contains(mammal));
         }
     }
