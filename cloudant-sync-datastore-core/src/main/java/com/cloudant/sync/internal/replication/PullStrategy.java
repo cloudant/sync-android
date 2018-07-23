@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -81,6 +82,7 @@ public class PullStrategy implements ReplicationStrategy {
 
     PullFilter filter;
     String selector;
+    List<String> docIds;
 
     DatastoreWrapper targetDb;
 
@@ -101,10 +103,15 @@ public class PullStrategy implements ReplicationStrategy {
                         Database target,
                         PullFilter filter,
                         String selector,
+                        List<String> docIds,
                         List<HttpConnectionRequestInterceptor> requestInterceptors,
                         List<HttpConnectionResponseInterceptor> responseInterceptors) {
         this.filter = filter;
         this.selector = selector;
+        this.docIds = docIds;
+        if (docIds != null && !docIds.isEmpty()) {
+            Collections.sort(docIds);
+        }
         this.sourceDb = new CouchClientWrapper(new CouchClient(source, requestInterceptors,
                 responseInterceptors));
         this.targetDb = new DatastoreWrapper((DatabaseImpl) target);
@@ -114,6 +121,10 @@ public class PullStrategy implements ReplicationStrategy {
                     filter.getName());
         } else if (selector != null) {
             replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source, selector);
+        } else if (docIds != null && !docIds.isEmpty()) {
+            String concatenatedIds = Misc.join(",",docIds);
+            replicatorName = String.format("%s <-- %s (%s)", target.getPath(), source,
+                    concatenatedIds);
         } else {
             replicatorName = String.format("%s <-- %s ", target.getPath(), source);
         }
@@ -444,6 +455,8 @@ public class PullStrategy implements ReplicationStrategy {
             dict.put("filter", this.filter.toQueryString());
         } else if (selector != null) {
             dict.put("selector", this.selector);
+        } else if (docIds != null && !docIds.isEmpty()) {
+            dict.put("docIds", Misc.join(",",docIds));
         }
         // get raw SHA-1 of dictionary
         try {
@@ -465,6 +478,11 @@ public class PullStrategy implements ReplicationStrategy {
         if (this.selector != null) {
             changeFeeds = this.sourceDb.changes(
                     this.selector,
+                    lastCheckpoint,
+                    this.changeLimitPerBatch);
+        } else if (this.docIds != null && !this.docIds.isEmpty()) {
+            changeFeeds = this.sourceDb.changes(
+                    this.docIds,
                     lastCheckpoint,
                     this.changeLimitPerBatch);
         } else {
