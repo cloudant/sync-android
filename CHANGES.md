@@ -1,5 +1,5 @@
 # 2.3.0 (2018-08-14)
-- [NEW] Added API for specifying a list of document IDs in the filtered pull replicator
+- [NEW] Added API for specifying a list of document IDs in the filtered pull replicator.
 - [IMPROVED] Forced a TLS1.2 `SSLSocketFactory` where possible on Android API versions < 20 (it is
   already enabled by default on newer API levels).
 
