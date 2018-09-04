@@ -1,6 +1,8 @@
 # Cloudant Sync - Android Datastore
 
 [![Build Status](https://travis-ci.org/cloudant/sync-android.svg?branch=master)](https://travis-ci.org/cloudant/sync-android)
+[![Code Quality: Java](https://img.shields.io/lgtm/grade/java/g/cloudant/sync-android.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cloudant/sync-android/context:java)
+[![Total Alerts](https://img.shields.io/lgtm/alerts/g/cloudant/sync-android.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cloudant/sync-android/alerts)
 
 | Artifact | Links |
 | ---|--- |
