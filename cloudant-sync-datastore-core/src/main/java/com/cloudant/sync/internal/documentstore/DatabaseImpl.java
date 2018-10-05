@@ -896,8 +896,8 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
         }
 
         // check to see if we are creating a local (non-replicating) document
-        if (rev.getId().startsWith(CouchConstants._local_prefix)) {
-            String localId = rev.getId().substring(CouchConstants._local_prefix.length());
+        if (docId.startsWith(CouchConstants._local_prefix)) {
+            String localId = docId.substring(CouchConstants._local_prefix.length());
             try {
                 insertLocalDocument(localId, rev.getBody());
                 // we can return the input document as-is since there was no doc id or rev id to generate
