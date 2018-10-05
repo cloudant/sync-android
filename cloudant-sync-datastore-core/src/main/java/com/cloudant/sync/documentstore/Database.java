@@ -296,7 +296,7 @@ public interface Database {
      * {@link com.cloudant.sync.event.notifications.DocumentUpdated DocumentUpdated}
      * event is posted on the event bus.</p>
      *
-     * <p><b<Note:</b> to update local documents, call {@link #create(DocumentRevision)}</p>
+     * <p><b>Note:</b> to update local documents, call {@link #create(DocumentRevision)}</p>
      *
      * @param rev the {@link DocumentRevision} to be updated
      * @return a {@link DocumentRevision} - the updated document
@@ -348,7 +348,7 @@ public interface Database {
      * {@link Database#delete(DocumentRevision)
      * delete} on all leaf revisions</p>
      *
-     * <p><b<Note:</b> to delete local documents, call {@link #delete(DocumentRevision)}</p>
+     * <p><b>Note:</b> to delete local documents, call {@link #delete(DocumentRevision)}</p>
      *
      * @param id the ID of the document to delete leaf nodes for
      * @return a List of a {@link DocumentRevision}s - the deleted or "tombstone" documents
