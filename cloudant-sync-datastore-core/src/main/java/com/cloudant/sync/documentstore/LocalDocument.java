@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 IBM Corp. All rights reserved.
+ * Copyright © 2015, 2018 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -15,8 +15,15 @@
 package com.cloudant.sync.documentstore;
 
 /**
- * A local Document. {@code LocalDocument}s do not have a history, or the concept of revisions
+ * <p>
+ *     <b>Note:</b> this class is deprecated and will be moved to an internal package in a future
+ *     release.
+ * </p>
+ * <p>
+ *     A local Document. {@code LocalDocument}s do not have a history, or the concept of revisions
+ * </p>
  */
+@Deprecated
 public class LocalDocument {
 
     /**
