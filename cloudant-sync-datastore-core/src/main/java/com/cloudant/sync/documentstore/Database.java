@@ -342,13 +342,13 @@ public interface Database {
             DocumentStoreException;
 
     /**
-     * <p>Delete all leaf revisions for the document</p>
+     * <p>Delete all leaf revisions for the document; or delete a
+     * <a href="https://couchdb.readthedocs.io/en/stable/api/local.html">local document</a>,
+     * if {@code documentId} is prefixed with {@code _local/}.</p>
      *
      * <p>This is equivalent to calling
      * {@link Database#delete(DocumentRevision)
      * delete} on all leaf revisions</p>
-     *
-     * <p><b>Note:</b> to delete local documents, call {@link #delete(DocumentRevision)}</p>
      *
      * @param id the ID of the document to delete leaf nodes for
      * @return a List of a {@link DocumentRevision}s - the deleted or "tombstone" documents
@@ -356,7 +356,7 @@ public interface Database {
      * @see Database#getEventBus()
      * @see Database#delete(DocumentRevision)
      */
-    List<DocumentRevision> delete(String id) throws DocumentStoreException;
+    List<DocumentRevision> delete(String id) throws DocumentNotFoundException, DocumentStoreException;
 
     /**
      * Compacts the SQL database and disk storage by removing the bodies and attachments of obsolete revisions.

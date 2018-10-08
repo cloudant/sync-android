@@ -194,11 +194,11 @@ public class LocalDocumentCrud extends DocumentStoreTestBase {
     }
 
     /**
-     * Create then delete local rev and check that contains() returns false for it
+     * Create then delete (rev argument) local rev and check that contains() returns false for it
      * @throws Exception
      */
     @Test
-    public void testDeleteAndContains() throws Exception {
+    public void testDeleteRevArgAndContains() throws Exception {
         DocumentRevision rev = new DocumentRevision(idPrefixed);
         rev.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
         this.documentStore.database().create(rev);
@@ -211,12 +211,25 @@ public class LocalDocumentCrud extends DocumentStoreTestBase {
     }
 
     /**
+     * Deleting local doc twice (string argument) should throw DocumentNotFoundException
+     * @throws Exception
+     */
+    @Test(expected = DocumentNotFoundException.class)
+    public void testDeleteRevArgThrowsForAlreadyDeleted() throws Exception {
+        DocumentRevision rev = new DocumentRevision(idPrefixed);
+        rev.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
+        this.documentStore.database().create(rev);
+        this.documentStore.database().delete(rev);
+        this.documentStore.database().delete(rev);
+    }
+
+    /**
      * Create a local rev and assert that an exception is thrown if we try to delete it with rev id
      * set to a non-null value
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
-    public void testDeleteThrowsForNonNullRevisionId() throws Exception {
+    public void testDeleteRevArgThrowsForNonNullRevisionId() throws Exception {
         DocumentRevision rev = new DocumentRevision(idPrefixed);
         rev.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
         this.documentStore.database().create(rev);
@@ -225,13 +238,32 @@ public class LocalDocumentCrud extends DocumentStoreTestBase {
     }
 
     /**
-     * Create a local rev and assert that an exception is thrown if we try to delete it using the
-     * String argument type instead of the DocumentRevision argument type
+     * Create then delete (string argument) local rev and check that contains() returns false for it
      * @throws Exception
      */
-    @Test(expected = IllegalArgumentException.class)
-    public void testDeleteThrowsForIncorrectArgumentType() throws Exception {
+    @Test
+    public void testDeleteStringArgAndContains() throws Exception {
         DocumentRevision rev = new DocumentRevision(idPrefixed);
+        rev.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
+        this.documentStore.database().create(rev);
+        DocumentRevision deleted = this.documentStore.database().delete(idPrefixed).get(0);
+        // delete returns null for local documents since local documents don't have tombstones
+        assertNull(deleted);
+        // check that contains() returns false for the local doc
+        boolean contains = this.documentStore.database().contains(idPrefixed);
+        assertFalse(contains);
+    }
+
+    /**
+     * Deleting local doc twice (string argument) should throw DocumentNotFoundException
+     * @throws Exception
+     */
+    @Test(expected = DocumentNotFoundException.class)
+    public void testDeleteStringArgThrowsForAlreadyDeleted() throws Exception {
+        DocumentRevision rev = new DocumentRevision(idPrefixed);
+        rev.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
+        this.documentStore.database().create(rev);
+        this.documentStore.database().delete(idPrefixed);
         this.documentStore.database().delete(idPrefixed);
     }
 

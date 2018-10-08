@@ -1020,27 +1020,28 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
             ConflictException, DocumentNotFoundException, DocumentStoreException {
         Misc.checkNotNull(rev, "DocumentRevision");
         Misc.checkState(isOpen(), "Datastore is closed");
-
-        if (rev.getId().startsWith(CouchConstants._local_prefix)) {
-            Misc.checkArgument(rev.getRevision() == null, "Local documents must have a null revision ID");
-            String localId = rev.getId().substring(CouchConstants._local_prefix.length());
-            deleteLocalDocument(localId);
-            // for local documents there is no "new document" to post on the event bus or return as
-            // the document is removed rather than updated with a tombstone
-            eventBus.post(new DocumentDeleted(rev, null));
-            return null;
-        }
-
         try {
-            InternalDocumentRevision deletedRevision = get(queue.submit(new DeleteDocumentCallable(rev.getId(), rev.getRevision())));
-            if (deletedRevision != null) {
-                eventBus.post(new DocumentDeleted(rev, deletedRevision));
+            // local documents
+            if (rev.getId().startsWith(CouchConstants._local_prefix)) {
+                Misc.checkArgument(rev.getRevision() == null, "Local documents must have a null revision ID");
+                String localId = rev.getId().substring(CouchConstants._local_prefix.length());
+                deleteLocalDocument(localId);
+                // for local documents there is no "new document" to post on the event bus or return as
+                // the document is removed rather than updated with a tombstone
+                eventBus.post(new DocumentDeleted(rev, null));
+                return null;
+            } else {
+                // "normal" documents
+                InternalDocumentRevision deletedRevision = get(queue.submit(new DeleteDocumentCallable(rev.getId(), rev.getRevision())));
+                if (deletedRevision != null) {
+                    eventBus.post(new DocumentDeleted(rev, deletedRevision));
+                }
+                return deletedRevision;
             }
-            return deletedRevision;
         } catch (ExecutionException e) {
             // conflictexception if source revision isn't current rev
             throwCauseAs(e, ConflictException.class);
-            // documentnotfoundexception if it's already deleted
+            // documentnotfoundexception if it's already deleted, or was a non-existent local document
             throwCauseAs(e, DocumentNotFoundException.class);
             String message = "Failed to delete document";
             logger.log(Level.SEVERE, message, e);
@@ -1051,19 +1052,21 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
     // delete all leaf nodes
     @Override
     public List<DocumentRevision> delete(final String id)
-            throws DocumentStoreException {
+            throws DocumentNotFoundException, DocumentStoreException {
         Misc.checkNotNull(id, "ID");
-        // check for local prefix:
-        // there are two reasons not to delete local documents here:
-        // 1) "delete all leaf nodes" has no meaning for local documents
-        // 2) DeleteAllRevisionsCallable can throw DocumentNotFoundException which would mean a
-        // breaking API change or downcasting of that exception, which is Not Good.
-        if (id.startsWith(CouchConstants._local_prefix)) {
-            throw new IllegalArgumentException("Use delete(final DocumentRevision rev) to delete local documents");
-        }
         try {
-            return get(queue.submitTransaction(new DeleteAllRevisionsCallable(id)));
+            if (id.startsWith(CouchConstants._local_prefix)) {
+                String localId = id.substring(CouchConstants._local_prefix.length());
+                deleteLocalDocument(localId);
+                // for local documents there is no "new document" to return as the document is
+                // removed rather than updated with a tombstone
+                return Collections.singletonList(null);
+            } else {
+                return get(queue.submitTransaction(new DeleteAllRevisionsCallable(id)));
+            }
         } catch (ExecutionException e) {
+            // documentnotfoundexception if it was a non-existent local document
+            throwCauseAs(e, DocumentNotFoundException.class);
             String message = "Failed to delete document";
             logger.log(Level.SEVERE, message, e);
             throw new DocumentStoreException(message, e.getCause());
