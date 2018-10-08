@@ -287,16 +287,15 @@ public interface Database {
 
     /**
      * <p>Updates a document that exists in the DocumentStore with with body and attachments
-     * from <code>rev</code>.
-     * </p>
+     * from <code>rev</code>; or creates or updates
+     * a <a href="https://couchdb.readthedocs.io/en/stable/api/local.html">local document</a>,
+     * if {@code documentId} is prefixed with {@code _local/}.
      *
      * <p>{@code rev} must be a current revision for this document.</p>
      *
      * <p>If the document is successfully updated, a
      * {@link com.cloudant.sync.event.notifications.DocumentUpdated DocumentUpdated}
      * event is posted on the event bus.</p>
-     *
-     * <p><b>Note:</b> to update local documents, call {@link #create(DocumentRevision)}</p>
      *
      * @param rev the {@link DocumentRevision} to be updated
      * @return a {@link DocumentRevision} - the updated document

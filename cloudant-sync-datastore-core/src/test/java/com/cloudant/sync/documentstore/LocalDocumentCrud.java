@@ -165,32 +165,24 @@ public class LocalDocumentCrud extends DocumentStoreTestBase {
     }
 
     /**
-     * Create a local rev and attempt to update it.
-     * This will fail because the correct usage is to call create() which is really an upsert.
-     *
+     * Create a local rev and update it.
      * @throws Exception
      */
     @Test
-    public void testUpdateThrows() throws Exception {
+    public void testUpdateAndRead() throws Exception {
         // create first rev
         DocumentRevision rev = new DocumentRevision(idPrefixed);
         rev.setBody(DocumentBodyFactory.create("{\"hello\":\"world\"}".getBytes()));
         this.documentStore.database().create(rev);
-        // create second rev
+        // update with second rev
         DocumentRevision rev2 = new DocumentRevision(idPrefixed);
         rev2.setBody(DocumentBodyFactory.create("{\"hello\":\"universe\"}".getBytes()));
-        boolean caught = false;
-        try {
-            this.documentStore.database().update(rev2);
-        } catch (IllegalArgumentException iae) {
-            caught = true;
-        }
-        assertTrue(caught);
+        this.documentStore.database().update(rev2);
         // read the document back, it should have the id including the _local/ prefix
         DocumentRevision rev3 = this.documentStore.database().read(idPrefixed);
         assertEquals(idPrefixed, rev3.id);
         // check the body, it should still be the old body because the update failed
-        assertEquals("world", rev3.getBody().asMap().get("hello"));
+        assertEquals("universe", rev3.getBody().asMap().get("hello"));
     }
 
     /**

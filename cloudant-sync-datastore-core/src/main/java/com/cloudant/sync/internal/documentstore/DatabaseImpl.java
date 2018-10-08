@@ -965,8 +965,9 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
         Misc.checkArgument(rev.isFullRevision(), "Projected revisions cannot be used to " +
                 "create documents");
 
+        // Shortcut if this is a create/update of local doc
         if (rev.getId().startsWith(CouchConstants._local_prefix)) {
-            throw new IllegalArgumentException("Use create(final DocumentRevision rev) create or update local documents");
+            return create(rev);
         }
 
         // Shortcut if this is a deletion
