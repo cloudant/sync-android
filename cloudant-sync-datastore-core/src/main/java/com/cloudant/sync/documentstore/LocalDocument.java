@@ -17,7 +17,8 @@ package com.cloudant.sync.documentstore;
 /**
  * <p>
  *     <b>Note:</b> this class is deprecated and will be moved to an internal package in a future
- *     release.
+ *     release. For local documents use a {@link DocumentRevision} with an {@code id} prefixed with
+ *     {@code _local} and a {@code rev} set to {@code null}.
  * </p>
  * <p>
  *     A local Document. {@code LocalDocument}s do not have a history, or the concept of revisions
