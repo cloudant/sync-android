@@ -315,7 +315,9 @@ public interface Database {
      * if {@code documentId} is prefixed with {@code _local/}.</p>
      *
      * <p>This operation leaves a "tombstone" for the deleted document, so that
-     * future replication operations can successfully replicate the deletion.
+     * future replication operations can successfully replicate the deletion. Note that local
+     * documents do not have tombstones since they do not have a revision history; they are
+     * immediately removed from the database.
      * </p>
      *
      * <p>If the document is successfully deleted, a
@@ -346,6 +348,12 @@ public interface Database {
      * <a href="https://couchdb.readthedocs.io/en/stable/api/local.html">local document</a>,
      * if {@code documentId} is prefixed with {@code _local/}.</p>
      *
+     * <p>This operation leaves a "tombstone" for each deleted document, so that
+     * future replication operations can successfully replicate the deletion. Note that local
+     * documents do not have tombstones since they do not have a revision history; they are
+     * immediately removed from the database.
+     * </p>
+     *
      * <p>This is equivalent to calling
      * {@link Database#delete(DocumentRevision)
      * delete} on all leaf revisions</p>
@@ -353,7 +361,6 @@ public interface Database {
      * @param id the ID of the document to delete leaf nodes for
      * @return a List of a {@link DocumentRevision}s - the deleted or "tombstone" documents
      * @throws DocumentStoreException if there was an error reading from or writing to the database
-     * @see Database#getEventBus()
      * @see Database#delete(DocumentRevision)
      */
     List<DocumentRevision> delete(String id) throws DocumentNotFoundException, DocumentStoreException;
