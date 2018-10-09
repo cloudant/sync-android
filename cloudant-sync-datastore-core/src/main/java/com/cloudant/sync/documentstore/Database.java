@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2018 IBM Corp. All rights reserved.
  *
  * Original iOS version by  Jens Alfke, ported to Android by Marty Schoch
  * Copyright © 2012 Couchbase, Inc. All rights reserved.
@@ -73,7 +73,10 @@ public interface Database {
     File getPath();
 
     /**
-     * <p>Returns the current winning revision of a document.</p>
+     * <p>Returns the current winning revision of a document; or returns the given
+     * <a href="https://couchdb.readthedocs.io/en/stable/api/local.html">local document</a>,
+     * if {@code documentId} is prefixed with {@code _local/}.
+     * </p>
      *
      * <p>Previously deleted documents can be retrieved
      * (via tombstones, see {@link Database#delete(DocumentRevision)})
@@ -109,7 +112,9 @@ public interface Database {
 
     /**
      * <p>Returns whether this DocumentStore contains a particular revision of
-     * a document.</p>
+     * a document; or contains the given
+     * <a href="https://couchdb.readthedocs.io/en/stable/api/local.html">local document</a>,
+     * if {@code documentId} is prefixed with {@code _local/}.</p>
      *
      * <p>{@code true} will still be returned if the document is deleted.</p>
      *
@@ -122,7 +127,10 @@ public interface Database {
     boolean contains(String documentId, String revisionId) throws DocumentStoreException;
 
     /**
-     * <p>Returns whether this DocumentStore contains any revisions of a document.
+     * <p>Returns whether this DocumentStore contains any revisions of a document; or contains the
+     * given
+     * <a href="https://couchdb.readthedocs.io/en/stable/api/local.html">local document</a>,
+     * if {@code documentId} is prefixed with {@code _local/}.
      * </p>
      *
      * <p>{@code true} will still be returned if the document is deleted.</p>
@@ -195,6 +203,7 @@ public interface Database {
 
     /**
      * <p>Return the number of documents in the DocumentStore</p>
+     * <p><b>Note:</b> this excludes local documents.</p>
      *
      * @return number of non-deleted documents in DocumentStore
      * @throws DocumentStoreException if there was an error reading from the database.
@@ -253,7 +262,10 @@ public interface Database {
         throws ConflictException;
 
     /**
-     * <p>Adds a new document with body and attachments from <code>rev</code>.</p>
+     * <p>Adds a new document with body and attachments from <code>rev</code>; or creates or updates
+     * a <a href="https://couchdb.readthedocs.io/en/stable/api/local.html">local document</a>,
+     * if {@code documentId} is prefixed with {@code _local/}.
+     * </p>
      *
      * <p>If the ID in <code>rev</code> is null, the document's ID will be auto-generated,
      * and can be found by inspecting the returned {@code DocumentRevision}.</p>
@@ -275,8 +287,9 @@ public interface Database {
 
     /**
      * <p>Updates a document that exists in the DocumentStore with with body and attachments
-     * from <code>rev</code>.
-     * </p>
+     * from <code>rev</code>; or creates or updates
+     * a <a href="https://couchdb.readthedocs.io/en/stable/api/local.html">local document</a>,
+     * if {@code documentId} is prefixed with {@code _local/}.
      *
      * <p>{@code rev} must be a current revision for this document.</p>
      *
@@ -296,10 +309,14 @@ public interface Database {
             AttachmentException, DocumentStoreException, DocumentNotFoundException;
 
     /**
-     * <p>Deletes a document from the DocumentStore.</p>
+     * <p>Deletes a document from the DocumentStore; or delete a
+     * <a href="https://couchdb.readthedocs.io/en/stable/api/local.html">local document</a>,
+     * if {@code documentId} is prefixed with {@code _local/}.</p>
      *
      * <p>This operation leaves a "tombstone" for the deleted document, so that
-     * future replication operations can successfully replicate the deletion.
+     * future replication operations can successfully replicate the deletion. Note that local
+     * documents do not have tombstones since they do not have a revision history; they are
+     * immediately removed from the database.
      * </p>
      *
      * <p>If the document is successfully deleted, a
@@ -326,7 +343,15 @@ public interface Database {
             DocumentStoreException;
 
     /**
-     * <p>Delete all leaf revisions for the document</p>
+     * <p>Delete all leaf revisions for the document; or delete a
+     * <a href="https://couchdb.readthedocs.io/en/stable/api/local.html">local document</a>,
+     * if {@code documentId} is prefixed with {@code _local/}.</p>
+     *
+     * <p>This operation leaves a "tombstone" for each deleted document, so that
+     * future replication operations can successfully replicate the deletion. Note that local
+     * documents do not have tombstones since they do not have a revision history; they are
+     * immediately removed from the database.
+     * </p>
      *
      * <p>This is equivalent to calling
      * {@link Database#delete(DocumentRevision)
@@ -335,10 +360,9 @@ public interface Database {
      * @param id the ID of the document to delete leaf nodes for
      * @return a List of a {@link DocumentRevision}s - the deleted or "tombstone" documents
      * @throws DocumentStoreException if there was an error reading from or writing to the database
-     * @see Database#getEventBus()
      * @see Database#delete(DocumentRevision)
      */
-    List<DocumentRevision> delete(String id) throws DocumentStoreException;
+    List<DocumentRevision> delete(String id) throws DocumentNotFoundException, DocumentStoreException;
 
     /**
      * Compacts the SQL database and disk storage by removing the bodies and attachments of obsolete revisions.

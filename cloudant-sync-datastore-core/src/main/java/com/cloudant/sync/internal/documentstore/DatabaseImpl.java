@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016, 2017 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2018 IBM Corp. All rights reserved.
  *
  * Original iOS version by  Jens Alfke, ported to Android by Marty Schoch
  * Copyright © 2012 Couchbase, Inc. All rights reserved.
@@ -38,6 +38,7 @@ import com.cloudant.sync.event.notifications.DocumentCreated;
 import com.cloudant.sync.event.notifications.DocumentDeleted;
 import com.cloudant.sync.event.notifications.DocumentModified;
 import com.cloudant.sync.event.notifications.DocumentUpdated;
+import com.cloudant.sync.internal.common.CouchConstants;
 import com.cloudant.sync.internal.common.CouchUtils;
 import com.cloudant.sync.internal.common.ValueListMap;
 import com.cloudant.sync.internal.documentstore.callables.ChangesCallable;
@@ -242,9 +243,16 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
             DocumentNotFoundException, DocumentStoreException {
         Misc.checkState(this.isOpen(), "Database is closed");
         Misc.checkNotNullOrEmpty(id, "Document id");
-
         try {
-            return get(queue.submit(new GetDocumentCallable(id, rev, this.attachmentsDir, this.attachmentStreamFactory)));
+            if (id.startsWith(CouchConstants._local_prefix)) {
+                Misc.checkArgument(rev == null, "Local documents must have a null revision ID");
+                String localId = id.substring(CouchConstants._local_prefix.length());
+                LocalDocument ld = get(queue.submit(new GetLocalDocumentCallable(localId)));
+                // convert to DocumentRevision, adding back "_local/" prefix which was stripped off when document was written
+                return new DocumentRevisionBuilder().setDocId(CouchConstants._local_prefix + ld.docId).setBody(ld.body).build();
+            } else {
+                return get(queue.submit(new GetDocumentCallable(id, rev, this.attachmentsDir, this.attachmentStreamFactory)));
+            }
         } catch (ExecutionException e) {
             throwCauseAs(e, DocumentNotFoundException.class);
             String message = String.format(Locale.ENGLISH, "Failed to get document id %s at revision %s", id, rev);
@@ -879,11 +887,26 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
         Misc.checkArgument(rev.isFullRevision(), "Projected revisions cannot be used to " +
                 "create documents");
         final String docId;
+
         // create docid if docid is null
         if (rev.getId() == null) {
             docId = CouchUtils.generateDocumentId();
         } else {
             docId = rev.getId();
+        }
+
+        // check to see if we are creating a local (non-replicating) document
+        if (docId.startsWith(CouchConstants._local_prefix)) {
+            String localId = docId.substring(CouchConstants._local_prefix.length());
+            try {
+                insertLocalDocument(localId, rev.getBody());
+                // we can return the input document as-is since there was no doc id or rev id to generate
+                return rev;
+            } catch (DocumentException e) {
+                throw new DocumentStoreException(e.getMessage(), e.getCause());
+            } finally {
+                eventBus.post(new DocumentCreated(rev));
+            }
         }
 
         // We need to work out which of the attachments for the revision are ones
@@ -942,6 +965,11 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
         Misc.checkArgument(rev.isFullRevision(), "Projected revisions cannot be used to " +
                 "create documents");
 
+        // Shortcut if this is a create/update of local doc
+        if (rev.getId().startsWith(CouchConstants._local_prefix)) {
+            return create(rev);
+        }
+
         // Shortcut if this is a deletion
         if (rev.isDeleted()) {
             return delete(rev);
@@ -993,17 +1021,28 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
             ConflictException, DocumentNotFoundException, DocumentStoreException {
         Misc.checkNotNull(rev, "DocumentRevision");
         Misc.checkState(isOpen(), "Datastore is closed");
-
         try {
-            InternalDocumentRevision deletedRevision = get(queue.submit(new DeleteDocumentCallable(rev.getId(), rev.getRevision())));
-            if (deletedRevision != null) {
-                eventBus.post(new DocumentDeleted(rev, deletedRevision));
+            // local documents
+            if (rev.getId().startsWith(CouchConstants._local_prefix)) {
+                Misc.checkArgument(rev.getRevision() == null, "Local documents must have a null revision ID");
+                String localId = rev.getId().substring(CouchConstants._local_prefix.length());
+                deleteLocalDocument(localId);
+                // for local documents there is no "new document" to post on the event bus or return as
+                // the document is removed rather than updated with a tombstone
+                eventBus.post(new DocumentDeleted(rev, null));
+                return null;
+            } else {
+                // "normal" documents
+                InternalDocumentRevision deletedRevision = get(queue.submit(new DeleteDocumentCallable(rev.getId(), rev.getRevision())));
+                if (deletedRevision != null) {
+                    eventBus.post(new DocumentDeleted(rev, deletedRevision));
+                }
+                return deletedRevision;
             }
-            return deletedRevision;
         } catch (ExecutionException e) {
             // conflictexception if source revision isn't current rev
             throwCauseAs(e, ConflictException.class);
-            // documentnotfoundexception if it's already deleted
+            // documentnotfoundexception if it's already deleted, or was a non-existent local document
             throwCauseAs(e, DocumentNotFoundException.class);
             String message = "Failed to delete document";
             logger.log(Level.SEVERE, message, e);
@@ -1014,11 +1053,21 @@ public class DatabaseImpl implements Database, com.cloudant.sync.documentstore.a
     // delete all leaf nodes
     @Override
     public List<DocumentRevision> delete(final String id)
-            throws DocumentStoreException {
+            throws DocumentNotFoundException, DocumentStoreException {
         Misc.checkNotNull(id, "ID");
         try {
-            return get(queue.submitTransaction(new DeleteAllRevisionsCallable(id)));
+            if (id.startsWith(CouchConstants._local_prefix)) {
+                String localId = id.substring(CouchConstants._local_prefix.length());
+                deleteLocalDocument(localId);
+                // for local documents there is no "new document" to return as the document is
+                // removed rather than updated with a tombstone
+                return Collections.singletonList(null);
+            } else {
+                return get(queue.submitTransaction(new DeleteAllRevisionsCallable(id)));
+            }
         } catch (ExecutionException e) {
+            // documentnotfoundexception if it was a non-existent local document
+            throwCauseAs(e, DocumentNotFoundException.class);
             String message = "Failed to delete document";
             logger.log(Level.SEVERE, message, e);
             throw new DocumentStoreException(message, e.getCause());
