@@ -49,13 +49,7 @@ def runTests(testEnv, isAndroid) {
 stage('Build') {
     // Checkout, build and assemble the source and doc
     node {
-        checkout([
-                $class                           : 'GitSCM',
-                branches                         : scm.branches,
-                doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
-                extensions                       : scm.extensions + [[$class: 'CleanBeforeCheckout']],
-                userRemoteConfigs                : scm.userRemoteConfigs
-        ])
+        checkout scm
         sh './gradlew clean assemble'
         stash name: 'built'
     }
