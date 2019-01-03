@@ -40,7 +40,7 @@ public class CouchDbInfo {
 	private Object updateSeq;
 
 	@JsonProperty("purge_seq")
-	private long purgeSeq;
+	private String purgeSeq;
 
 	@JsonProperty("compact_running")
 	private boolean compactRunning;
@@ -73,7 +73,7 @@ public class CouchDbInfo {
 		return updateSeq;
 	}
 
-	public long getPurgeSeq() {
+	public String getPurgeSeq() {
 		return purgeSeq;
 	}
 
