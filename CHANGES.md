@@ -2,7 +2,7 @@
 - [NEW] `Database` methods `read`, `contains`, `create`, and `delete` now accept local
   (non-replicating documents). These documents must have their document ID prefixed with `_local/`
   and must have their revision ID set to `null` (where applicable).
-- [FIXED] Exception parsing remote database information when replicating with CouchDB 2.3. 
+- [FIXED] Fixed purge_seq to return a String object when replicating with CouchDB 2.3 databases. 
      
 # 2.3.0 (2018-08-14)
 - [NEW] Added API for specifying a list of document IDs in the filtered pull replicator.
