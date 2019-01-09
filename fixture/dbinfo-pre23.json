@@ -1,0 +1,20 @@
+{
+  "db_name": "test",
+  "update_seq": "4-g1AAAAFTeJzLYWBg4MhgTmEQTM4vTc5ISXLIyU9OzMnILy7JAUoxJTIkyf___z8rkQGPoiQFIJlkD1bHiE-dA0hdPFgdEz51CSB19QTtzWMBkgwNQAqodD4xahdA1O4nRu0BiNr7-P0EUfsAohbk3iwA10dvMg",
+  "sizes": {
+    "file": 161030,
+    "external": 112978,
+    "active": 113762
+  },
+  "purge_seq": 0,
+  "other": {
+    "data_size": 112978
+  },
+  "doc_del_count": 0,
+  "doc_count": 3,
+  "disk_size": 161030,
+  "disk_format_version": 6,
+  "data_size": 113762,
+  "compact_running": false,
+  "instance_start_time": "0"
+}

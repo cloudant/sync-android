@@ -16,17 +16,24 @@
 
 package com.cloudant.sync.util;
 
-import com.cloudant.sync.internal.util.JSONUtils;
+import com.cloudant.sync.internal.mazha.CouchDbInfo;
 import com.cloudant.sync.internal.replication.Foo;
-import org.junit.Assert;
+import com.cloudant.sync.internal.util.JSONUtils;
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import org.apache.commons.io.FileUtils;
+import static org.hamcrest.CoreMatchers.is;
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 
 public class JSONUtilsTest {
 
@@ -147,6 +154,16 @@ public class JSONUtilsTest {
         Map<String, Object> breakfast = (Map)activities.get(1);
         Assert.assertEquals(4, breakfast.size());
         Assert.assertEquals(Integer.valueOf(40), breakfast.get("Duration"));
+    }
+
+    @Test
+    public void deserialize_CouchDBInfo_purgeSeq_from_long() throws Exception {
+        File dbinfoData = TestUtils.loadFixture("fixture/dbinfo-pre23.json");
+        CouchDbInfo deserialized = JSONUtils.fromJson(new FileReader(dbinfoData), new
+                TypeReference<CouchDbInfo>() {
+        });
+        Long purgeSeq = Long.valueOf(deserialized.getPurgeSeq());
+        Assert.assertThat(purgeSeq, is(0l));
     }
 
     private byte[] readJsonDataFromFile(String filename) throws IOException {
