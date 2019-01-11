@@ -1,4 +1,4 @@
-# 2.4.0 (Unreleased)
+# 2.4.0 (2019-01-15)
 - [NEW] `Database` methods `read`, `contains`, `create`, and `delete` now accept local
   (non-replicating documents). These documents must have their document ID prefixed with `_local/`
   and must have their revision ID set to `null` (where applicable).
