@@ -58,9 +58,9 @@ stage('Build') {
 stage('QA') {
     // Define the matrix environments
     def CLOUDANT_ENV = ['TEST_ENV_NAME=Cloudant_Test','DB_HTTP=https', 'DB_HOST=clientlibs-test.cloudant.com', 'DB_PORT=443', 'DB_IGNORE_COMPACTION=true', 'CREDS_ID=clientlibs-test']
-    def COUCH1_6_ENV = ['TEST_ENV_NAME=CouchDB1_6_Test','DB_HTTP=http', 'DB_HOST=cloudantsync002.bristol.uk.ibm.com', 'DB_PORT=5984', 'DB_IGNORE_COMPACTION=false', 'CREDS_ID=couchdb']
-    def COUCH2_0_ENV = ['TEST_ENV_NAME=CouchDB2_0_Test','DB_HTTP=http', 'DB_HOST=cloudantsync002.bristol.uk.ibm.com', 'DB_PORT=5985', 'DB_IGNORE_COMPACTION=true', 'CREDS_ID=couchdb']
-    def CLOUDANT_LOCAL_ENV = ['TEST_ENV_NAME=CloudantLocal_Test','DB_HTTP=http', 'DB_HOST=cloudantsync002.bristol.uk.ibm.com', 'DB_PORT=8081', 'DB_IGNORE_COMPACTION=true', 'CREDS_ID=couchdb']
+    def COUCH1_6_ENV = ['TEST_ENV_NAME=CouchDB1_6_Test','DB_HTTP=http', 'DB_HOST=cloudantsync002.bristol-victoria.uk.ibm.com', 'DB_PORT=5984', 'DB_IGNORE_COMPACTION=false', 'CREDS_ID=couchdb']
+    def COUCH2_0_ENV = ['TEST_ENV_NAME=CouchDB2_0_Test','DB_HTTP=http', 'DB_HOST=cloudantsync002.bristol-victoria.uk.ibm.com', 'DB_PORT=5985', 'DB_IGNORE_COMPACTION=true', 'CREDS_ID=couchdb']
+    def CLOUDANT_LOCAL_ENV = ['TEST_ENV_NAME=CloudantLocal_Test','DB_HTTP=http', 'DB_HOST=cloudantsync002.bristol-victoria.uk.ibm.com', 'DB_PORT=8081', 'DB_IGNORE_COMPACTION=true', 'CREDS_ID=couchdb']
 
     // Standard builds do Findbugs and test sync-android for Android and Java against Cloudant
     def axes = [
