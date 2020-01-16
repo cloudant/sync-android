@@ -262,6 +262,13 @@ public class PullStrategy implements ReplicationStrategy {
             if (changeFeeds.size() > 0) {
                 batchChangesProcessed = processOneChangesBatch(changeFeeds);
                 state.documentCounter += batchChangesProcessed;
+            } else {
+                try {
+                    this.targetDb.putCheckpoint(this.getReplicationId(), changeFeeds.getLastSeq());
+                } catch (DocumentStoreException e) {
+                    logger.log(Level.WARNING, "Failed to put checkpoint doc, next replication will " +
+                            "start from previous checkpoint", e);
+                }
             }
 
             long batchEndTime = System.currentTimeMillis();

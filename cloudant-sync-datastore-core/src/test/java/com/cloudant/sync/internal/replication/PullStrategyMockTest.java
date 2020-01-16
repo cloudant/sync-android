@@ -231,6 +231,36 @@ public class PullStrategyMockTest extends ReplicationTestBase {
         verify(mockListener,never()).error(any(ReplicationStrategyErrored.class));
     }
 
+    @Test
+    public void testSetCheckpointWhenEmptyChanges() throws Exception {
+        CouchDB mockRemoteDb = mock(CouchDB.class);
+        when(mockRemoteDb.changes((PullFilter) null, null, 1000)).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                FileReader fr = new FileReader(TestUtils.loadFixture
+                        ("fixture/empty_changes.json"));
+                return JSONUtils.fromJson(fr, ChangesResult.class);
+            }
+        });
+        when(mockRemoteDb.exists()).thenReturn(true);
+
+        StrategyListener mockListener = mock(StrategyListener.class);
+        PullStrategy pullStrategy = super.getPullStrategy();
+        pullStrategy.sourceDb = mockRemoteDb;
+        pullStrategy.getEventBus().register(mockListener);
+        pullStrategy.run();
+
+        //should have 0 document
+        Assert.assertEquals(this.datastore.getDocumentCount(), 0);
+        //Checkpoint should be created in targetDb
+        String checkpoint = (String) pullStrategy.targetDb.getCheckpoint(pullStrategy.getReplicationId());
+        Assert.assertEquals(checkpoint,"5-g1AAAAIreJyVkEsKwjAURZ...");
+        //make sure the correct events were fired
+        verify(mockListener).complete(any(ReplicationStrategyCompleted.class));
+        verify(mockListener,never()).error(any(ReplicationStrategyErrored.class));
+    }
+
+
     public class StrategyListener {
 
         @Subscribe
