@@ -1,5 +1,5 @@
 # 2.x.y (Unreleased)
-- [IMPROVED] Record checkpoint on empty `_changes` result in Pull replications. This change optimizes 
+- [IMPROVED] Record checkpoint on empty `_changes` result in pull replications. This change optimizes 
    filtered replications when changes in remote database doesn't match the replication filter. 
 # 2.4.0 (2019-01-15)
 - [NEW] `Database` methods `read`, `contains`, `create`, and `delete` now accept local

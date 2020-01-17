@@ -254,7 +254,7 @@ public class PullStrategyMockTest extends ReplicationTestBase {
         Assert.assertEquals(this.datastore.getDocumentCount(), 0);
         //Checkpoint should be created in targetDb
         String checkpoint = (String) pullStrategy.targetDb.getCheckpoint(pullStrategy.getReplicationId());
-        Assert.assertEquals(checkpoint,"5-g1AAAAIreJyVkEsKwjAURZ...");
+        Assert.assertEquals(checkpoint,"10-d9e5b0147af143e5b6d1979378ad957b");
         //make sure the correct events were fired
         verify(mockListener).complete(any(ReplicationStrategyCompleted.class));
         verify(mockListener,never()).error(any(ReplicationStrategyErrored.class));
