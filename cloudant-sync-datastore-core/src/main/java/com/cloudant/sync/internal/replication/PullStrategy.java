@@ -236,9 +236,10 @@ public class PullStrategy implements ReplicationStrategy {
         }
 
         this.state.documentCounter = 0;
+
         while (!this.state.cancel) {
             this.state.batchCounter++;
-
+            final Object lastKnownCheckpoint = this.targetDb.getCheckpoint(this.getReplicationId());
             String msg = String.format(
                     "Batch %s started (completed %s changes so far)",
                     this.state.batchCounter,
@@ -247,7 +248,7 @@ public class PullStrategy implements ReplicationStrategy {
             logger.info(msg);
             long batchStartTime = System.currentTimeMillis();
 
-            ChangesResultWrapper changeFeeds = this.nextBatch();
+            ChangesResultWrapper changeFeeds = this.nextBatch(lastKnownCheckpoint);
             int batchChangesProcessed = 0;
 
             // So we can check whether all changes were processed during
@@ -262,11 +263,14 @@ public class PullStrategy implements ReplicationStrategy {
             if (changeFeeds.size() > 0) {
                 batchChangesProcessed = processOneChangesBatch(changeFeeds);
                 state.documentCounter += batchChangesProcessed;
-            } else {
+            }
+
+            if (!this.state.cancel && (lastKnownCheckpoint == null || !lastKnownCheckpoint.equals(changeFeeds.getLastSeq()))) {
                 try {
                     this.targetDb.putCheckpoint(this.getReplicationId(), changeFeeds.getLastSeq());
                 } catch (DocumentStoreException e) {
-                    logger.log(Level.WARNING, "Failed to put checkpoint doc, next replication will " +
+                    logger.log(Level.WARNING, "Failed to put checkpoint doc, next replication " +
+                            "will " +
                             "start from previous checkpoint", e);
                 }
             }
@@ -442,15 +446,6 @@ public class PullStrategy implements ReplicationStrategy {
             }
         }
 
-        if (!this.state.cancel) {
-            try {
-                this.targetDb.putCheckpoint(this.getReplicationId(), changeFeeds.getLastSeq());
-            } catch (DocumentStoreException e) {
-                logger.log(Level.WARNING, "Failed to put checkpoint doc, next replication will " +
-                        "start from previous checkpoint", e);
-            }
-        }
-
         return changesProcessed;
     }
 
@@ -477,8 +472,8 @@ public class PullStrategy implements ReplicationStrategy {
         }
     }
 
-    private ChangesResultWrapper nextBatch() throws DocumentStoreException {
-        final Object lastCheckpoint = this.targetDb.getCheckpoint(this.getReplicationId());
+    private ChangesResultWrapper nextBatch(final Object lastCheckpoint) {
+//        final Object lastCheckpoint = this.targetDb.getCheckpoint(this.getReplicationId());
         logger.fine("last checkpoint " + lastCheckpoint);
 
         ChangesResult changeFeeds = null;

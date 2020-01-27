@@ -16,6 +16,7 @@
 
 package com.cloudant.sync.internal.replication;
 
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyString;
@@ -232,7 +233,7 @@ public class PullStrategyMockTest extends ReplicationTestBase {
     }
 
     @Test
-    public void testSetCheckpointWhenEmptyChanges() throws Exception {
+    public void testSetCheckpointWhenEmpty() throws Exception {
         CouchDB mockRemoteDb = mock(CouchDB.class);
         when(mockRemoteDb.changes((PullFilter) null, null, 1000)).then(new Answer<Object>() {
             @Override
@@ -253,11 +254,72 @@ public class PullStrategyMockTest extends ReplicationTestBase {
         //should have 0 document
         Assert.assertEquals(this.datastore.getDocumentCount(), 0);
         //Checkpoint should be created in targetDb
-        String checkpoint = (String) pullStrategy.targetDb.getCheckpoint(pullStrategy.getReplicationId());
-        Assert.assertEquals(checkpoint,"10-d9e5b0147af143e5b6d1979378ad957b");
+        String checkpoint =
+                (String) pullStrategy.targetDb.getCheckpoint(pullStrategy.getReplicationId());
+        Assert.assertEquals(checkpoint, "10-d9e5b0147af143e5b6d1979378ad957b");
         //make sure the correct events were fired
         verify(mockListener).complete(any(ReplicationStrategyCompleted.class));
-        verify(mockListener,never()).error(any(ReplicationStrategyErrored.class));
+        verify(mockListener, never()).error(any(ReplicationStrategyErrored.class));
+    }
+
+    @Test
+    public void testDoNotSetCheckpointWhenNotModified() throws Exception {
+        CouchDB mockRemoteDb = mock(CouchDB.class);
+        when(mockRemoteDb.changes((PullFilter) null, "10-d9e5b0147af143e5b6d1979378ad957b", 1000)).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                FileReader fr = new FileReader(TestUtils.loadFixture
+                        ("fixture/empty_changes.json"));
+                return JSONUtils.fromJson(fr, ChangesResult.class);
+            }
+        });
+        when(mockRemoteDb.exists()).thenReturn(true);
+
+        DatastoreWrapper mockLocalDb = mock(DatastoreWrapper.class);
+        when(mockLocalDb.getCheckpoint(any(String.class))).thenReturn("10" +
+                "-d9e5b0147af143e5b6d1979378ad957b");
+
+        StrategyListener mockListener = mock(StrategyListener.class);
+        PullStrategy pullStrategy = super.getPullStrategy();
+        pullStrategy.sourceDb = mockRemoteDb;
+        pullStrategy.targetDb = mockLocalDb;
+        pullStrategy.getEventBus().register(mockListener);
+        pullStrategy.run();
+
+        //make sure the correct events were fired
+        verify(mockListener).complete(any(ReplicationStrategyCompleted.class));
+        verify(mockListener, never()).error(any(ReplicationStrategyErrored.class));
+        verify(mockLocalDb, never()).putCheckpoint(anyString(), any());
+    }
+
+    @Test
+    public void testSetCheckpointWhenModified() throws Exception {
+        CouchDB mockRemoteDb = mock(CouchDB.class);
+        when(mockRemoteDb.changes((PullFilter) null, "9-d9e5b0147af143e5b6d1979378ad957b", 1000)).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                FileReader fr = new FileReader(TestUtils.loadFixture
+                        ("fixture/empty_changes.json"));
+                return JSONUtils.fromJson(fr, ChangesResult.class);
+            }
+        });
+        when(mockRemoteDb.exists()).thenReturn(true);
+
+        DatastoreWrapper mockLocalDb = mock(DatastoreWrapper.class);
+        when(mockLocalDb.getCheckpoint(any(String.class))).thenReturn("9" +
+                "-d9e5b0147af143e5b6d1979378ad957b");
+
+        StrategyListener mockListener = mock(StrategyListener.class);
+        PullStrategy pullStrategy = super.getPullStrategy();
+        pullStrategy.sourceDb = mockRemoteDb;
+        pullStrategy.targetDb = mockLocalDb;
+        pullStrategy.getEventBus().register(mockListener);
+        pullStrategy.run();
+
+        //make sure the correct events were fired
+        verify(mockListener).complete(any(ReplicationStrategyCompleted.class));
+        verify(mockListener, never()).error(any(ReplicationStrategyErrored.class));
+        verify(mockLocalDb).putCheckpoint(anyString(), eq("10-d9e5b0147af143e5b6d1979378ad957b"));
     }
 
 
