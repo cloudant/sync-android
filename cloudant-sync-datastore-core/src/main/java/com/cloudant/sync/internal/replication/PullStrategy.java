@@ -473,7 +473,6 @@ public class PullStrategy implements ReplicationStrategy {
     }
 
     private ChangesResultWrapper nextBatch(final Object lastCheckpoint) {
-//        final Object lastCheckpoint = this.targetDb.getCheckpoint(this.getReplicationId());
         logger.fine("last checkpoint " + lastCheckpoint);
 
         ChangesResult changeFeeds = null;
