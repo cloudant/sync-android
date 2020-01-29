@@ -6,7 +6,7 @@ def testConfig = convertTestSysPropsToHash()
 android {
 
     compileSdkVersion 22
-    buildToolsVersion "23.0.2"
+    buildToolsVersion "29.0.2"
 
     lintOptions {
         abortOnError false
