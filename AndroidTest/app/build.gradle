@@ -108,6 +108,9 @@ dependencies {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        url 'https://maven.google.com'
+    }
 }
 
 task(uploadFixtures, type: AndroidExec) {
