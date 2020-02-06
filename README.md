@@ -236,7 +236,7 @@ Replication is used to synchronise data between the local datastore and a
 remote database, either a CouchDB instance or a Cloudant database. Many
 datastores can replicate with the same remote database, meaning that
 cross-device synchronisation is achieved by setting up replications from each
-device the the remote database.
+device to the remote database.
 
 Replication is simple to get started in the common cases:
 
