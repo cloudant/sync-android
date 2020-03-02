@@ -17,6 +17,7 @@
 package com.cloudant.sync.internal.replication;
 
 import com.cloudant.common.CouchTestBase;
+import com.cloudant.http.HttpConnectionInterceptorContext;
 import com.cloudant.http.HttpConnectionRequestInterceptor;
 import com.cloudant.http.HttpConnectionResponseInterceptor;
 import com.cloudant.http.internal.interceptors.CookieInterceptor;
@@ -40,9 +41,12 @@ import org.junit.Before;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -266,25 +270,27 @@ public abstract class ReplicationTestBase extends CouchTestBase {
     }
 
     protected void assertCookieInterceptorPresent(ReplicatorBuilder p, String expectedRequestBody)
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, NoSuchMethodException, IllegalAccessException,
+            InvocationTargetException {
         // peek inside these private fields to see that interceptors have been set
         Field reqI = ReplicatorBuilder.class.getDeclaredField("requestInterceptors");
         Field respI = ReplicatorBuilder.class.getDeclaredField("responseInterceptors");
         reqI.setAccessible(true);
         respI.setAccessible(true);
-        List<HttpConnectionRequestInterceptor> reqIList = (List)reqI.get(p);
-        List<HttpConnectionRequestInterceptor> respIList = (List)respI.get(p);
+        List<HttpConnectionRequestInterceptor> reqIList = (List) reqI.get(p);
+        List<HttpConnectionRequestInterceptor> respIList = (List) respI.get(p);
         // Note this introspection happens before the interceptors are passed to the CouchClient so
         // excludes any other interceptors (e.g. UserAgentInterceptor that might be added there).
         Assert.assertEquals(1, reqIList.size());
         Assert.assertEquals(CookieInterceptor.class, reqIList.get(0).getClass());
         Assert.assertEquals(1, respIList.size());
         Assert.assertEquals(CookieInterceptor.class, respIList.get(0).getClass());
-        CookieInterceptorBase ci = (CookieInterceptorBase)reqIList.get(0);
-        Field srbField = CookieInterceptorBase.class.getDeclaredField("sessionRequestBody");
-        srbField.setAccessible(true);
-        byte[] srb = (byte[])srbField.get(ci);
-        String srbString = new String(srb);
+        CookieInterceptor ci = (CookieInterceptor) reqIList.get(0);
+        Method getPayloadMethod = CookieInterceptorBase.class.getDeclaredMethod(
+                "getSessionRequestPayload", new Class[]{HttpConnectionInterceptorContext.class});
+        getPayloadMethod.setAccessible(true);
+        byte[] srb = (byte[]) getPayloadMethod.invoke(ci, new Object[]{null});
+        String srbString = new String(srb, Charset.forName("UTF-8"));
         Assert.assertEquals(expectedRequestBody, srbString);
     }
 

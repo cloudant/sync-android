@@ -1,6 +1,8 @@
 # 2.x.y (Unreleased)
 - [IMPROVED] Record checkpoint on empty `_changes` result in pull replications. This change optimizes 
    filtered replications when changes in remote database doesn't match the replication filter. 
+- [UPGRADED] Upgraded to version 2.19.0 of the `cloudant-http` library.
+
 # 2.4.0 (2019-01-15)
 - [NEW] `Database` methods `read`, `contains`, `create`, and `delete` now accept local
   (non-replicating documents). These documents must have their document ID prefixed with `_local/`
