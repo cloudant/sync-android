@@ -1,4 +1,4 @@
-# 2.x.y (Unreleased)
+# 2.4.1 (2020-03-06)
 - [IMPROVED] Record checkpoint on empty `_changes` result in pull replications. This change optimizes 
    filtered replications when changes in remote database doesn't match the replication filter. 
 - [UPGRADED] Upgraded to version 2.19.0 of the `cloudant-http` library.
