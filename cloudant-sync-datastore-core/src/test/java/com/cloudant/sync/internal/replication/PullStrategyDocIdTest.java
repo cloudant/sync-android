@@ -37,7 +37,7 @@ public class PullStrategyDocIdTest extends ReplicationTestBase {
 
     @Test
     public void pull_filterDocIdsFromAnimalDb_twoDocShouldBePulled() throws Exception {
-        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(remoteDb.couchClient.getRootUri()));
+        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBVersion2or3(remoteDb.couchClient.getRootUri()));
         List<String> docIds = Arrays.asList("snipe","kookaburra");
         PullStrategy replicator = super.getPullStrategy(docIds);
 
@@ -57,7 +57,7 @@ public class PullStrategyDocIdTest extends ReplicationTestBase {
     public void
     pull_filterSelectorMammalFromAnimalDbUsingParameterizedFilter_eightDocShouldBePulled()
             throws Exception {
-        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(remoteDb.couchClient.getRootUri()));
+        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBVersion2or3(remoteDb.couchClient.getRootUri()));
         List<String> docIds = Arrays.asList("aardvark", "badger", "elephant", "giraffe", "lemur", "llama",
                 "panda", "zebra");
         PullStrategy replicator = super.getPullStrategy(docIds);

@@ -98,7 +98,7 @@ public class ChangesFeedTest extends CouchClientTestBase {
     @Test
     public void changes_dbChangesMustSuccessfullyReturnWithSeqInterval() throws IOException,
             URISyntaxException {
-        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(client.getRootUri()));
+        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBVersion2or3(client.getRootUri()));
         Response res1 = ClientTestUtils.createHelloWorldDoc(client);
         Response res2 = ClientTestUtils.createHelloWorldDoc(client);
         ClientTestUtils.createHelloWorldDoc(client);

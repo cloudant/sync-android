@@ -239,11 +239,11 @@ public class ClientTestUtils {
         return revisions;
     }
 
-    public static boolean isCouchDBV2(URI uri) throws URISyntaxException, IOException {
+    public static boolean isCouchDBVersion2or3(URI uri) throws URISyntaxException, IOException {
         URI root = new URI(uri.getScheme() + "://" + uri.getAuthority());
         HttpConnection connection = Http.GET(root);
         String response = connection.execute().responseAsString();
-        return response.contains("\"version\":\"2.");
+        return response.contains("\"version\":\"2.") || response.contains("\"version\":\"3.");
     }
 
 

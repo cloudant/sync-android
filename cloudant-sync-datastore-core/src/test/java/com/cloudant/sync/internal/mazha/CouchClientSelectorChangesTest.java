@@ -19,7 +19,6 @@ import static org.hamcrest.Matchers.hasSize;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 public class CouchClientSelectorChangesTest extends CouchClientTestBase {
 
@@ -31,7 +30,7 @@ public class CouchClientSelectorChangesTest extends CouchClientTestBase {
 
     @Test
     public void changes_selector() throws Exception {
-        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(client.getRootUri()));
+        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBVersion2or3(client.getRootUri()));
         String animalBirdSelector = "{\"selector\":{\"class\":\"bird\"}}";
         ChangesResult changes = client.changes(animalBirdSelector, null, 5);
         Assert.assertThat(changes.getResults(), hasSize(2));
@@ -39,7 +38,7 @@ public class CouchClientSelectorChangesTest extends CouchClientTestBase {
 
     @Test
     public void changes_selectorAndMoreThanLimitNumberOfDocs() throws Exception {
-        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(client.getRootUri()));
+        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBVersion2or3(client.getRootUri()));
         String animalMammalSelector = "{\"selector\":{\"class\":\"mammal\"}}";
         ChangesResult firstChangeSet = client.changes(animalMammalSelector, null, 5);
         Assert.assertThat(firstChangeSet.getResults(), hasSize(5));
