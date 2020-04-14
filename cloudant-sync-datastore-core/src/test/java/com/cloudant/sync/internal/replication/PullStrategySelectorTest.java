@@ -19,7 +19,6 @@ import com.cloudant.sync.internal.mazha.ClientTestUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 public class PullStrategySelectorTest extends ReplicationTestBase {
 
@@ -35,7 +34,7 @@ public class PullStrategySelectorTest extends ReplicationTestBase {
 
     @Test
     public void pull_filterSelectorBirdFromAnimalDb_twoDocShouldBePulled() throws Exception {
-        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(remoteDb.couchClient.getRootUri()));
+        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBVersion2or3(remoteDb.couchClient.getRootUri()));
         String selector ="{\"selector\":{\"class\":\"bird\"}}";
         PullStrategy replicator = super.getPullStrategy(selector);
 
@@ -55,7 +54,7 @@ public class PullStrategySelectorTest extends ReplicationTestBase {
     public void
     pull_filterSelectorMammalFromAnimalDbUsingParameterizedFilter_eightDocShouldBePulled()
             throws Exception {
-        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(remoteDb.couchClient.getRootUri()));
+        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBVersion2or3(remoteDb.couchClient.getRootUri()));
         String selector = "{\"selector\":{\"class\":\"mammal\"}}";
         PullStrategy replicator = super.getPullStrategy(selector);
 
@@ -75,7 +74,7 @@ public class PullStrategySelectorTest extends ReplicationTestBase {
     @Test
     public void pull_filterSelectorSmallFromAnimalDbUsingIntegerFilter_eightDocShouldBePulled()
             throws Exception {
-        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(remoteDb.couchClient.getRootUri()));
+        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBVersion2or3(remoteDb.couchClient.getRootUri()));
         String selector = "{\"selector\":{\"max_length\":{\"$lte\":2}}}";
         PullStrategy replicator = super.getPullStrategy(selector);
 
@@ -94,7 +93,7 @@ public class PullStrategySelectorTest extends ReplicationTestBase {
     @Test
     public void pull_filterSelectorSmallFromAnimalDbUsingNullFilter_eightDocShouldBePulled()
             throws Exception {
-        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBV2(remoteDb.couchClient.getRootUri()));
+        org.junit.Assume.assumeTrue(ClientTestUtils.isCouchDBVersion2or3(remoteDb.couchClient.getRootUri()));
         String selector = "{\"selector\":{\"chinese_name\":\"\u718a\u732b\"}}";
         PullStrategy replicator = super.getPullStrategy(selector);
 
