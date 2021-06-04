@@ -1,3 +1,13 @@
+# DEPRECATED
+
+**This library is now deprecated and will be end-of-life on Dec 31 2021.**
+
+The library remains supported until the end-of-life date,
+but will receive only _critical_ maintenance updates.
+
+For FAQs and additional information please refer to the
+[Cloudant blog](https://blog.cloudant.com/2021/06/30/Cloudant-SDK-Transition.html).
+
 # Cloudant Sync - Android Datastore
 
 [![Build Status](https://travis-ci.org/cloudant/sync-android.svg?branch=master)](https://travis-ci.org/cloudant/sync-android)
@@ -203,7 +213,7 @@ try {
 }
 ```
 
-Extensive code samples can be found in 
+Extensive code samples can be found in
 [the CRUD samples class](https://github.com/cloudant/sync-android/blob/master/doc/CrudSamples.java).
 
 You can also subscribe for notifications of changes in the database, which
@@ -256,7 +266,7 @@ Read more in [the replication docs](https://github.com/cloudant/sync-android/blo
 ### Authentication
 
 Sync-android uses session cookies by default to authenticate with the server if
-credentials are provided with in the URL. 
+credentials are provided with in the URL.
 
 To use an IAM API key on IBM Bluemix, use the `iamApiKey` method when
 building the `Replicator` object:

@@ -1,14 +1,17 @@
+# Unreleased
+- [DEPRECATED] This library is now deprecated and will be EOL on Dec 31 2021.
+
 # 2.4.1 (2020-03-06)
-- [IMPROVED] Record checkpoint on empty `_changes` result in pull replications. This change optimizes 
-   filtered replications when changes in remote database doesn't match the replication filter. 
+- [IMPROVED] Record checkpoint on empty `_changes` result in pull replications. This change optimizes
+   filtered replications when changes in remote database doesn't match the replication filter.
 - [UPGRADED] Upgraded to version 2.19.0 of the `cloudant-http` library.
 
 # 2.4.0 (2019-01-15)
 - [NEW] `Database` methods `read`, `contains`, `create`, and `delete` now accept local
   (non-replicating documents). These documents must have their document ID prefixed with `_local/`
   and must have their revision ID set to `null` (where applicable).
-- [FIXED] Fixed purge_seq to return a String object when replicating with CouchDB 2.3 databases. 
-     
+- [FIXED] Fixed purge_seq to return a String object when replicating with CouchDB 2.3 databases.
+
 # 2.3.0 (2018-08-14)
 - [NEW] Added API for specifying a list of document IDs in the filtered pull replicator.
 - [IMPROVED] Forced a TLS1.2 `SSLSocketFactory` where possible on Android API versions < 20 (it is
