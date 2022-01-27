@@ -1,9 +1,8 @@
-# DEPRECATED
+# :warning: NO LONGER MAINTAINED :warning:
 
-**This library is now deprecated and will be end-of-life on Dec 31 2021.**
+**This library is end-of-life and no longer supported.**
 
-The library remains supported until the end-of-life date,
-but will receive only _critical_ maintenance updates.
+This repository will not be updated. The repository will be kept available in read-only mode.
 
 For FAQs and additional information please refer to the
 [Cloudant blog](https://blog.cloudant.com/2021/06/30/Cloudant-SDK-Transition.html).
