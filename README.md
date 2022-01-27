@@ -3,6 +3,7 @@
 **This library is end-of-life and no longer supported.**
 
 This repository will not be updated. The repository will be kept available in read-only mode.
+If you are interested in continuing development efforts please see the list of [forks](https://github.com/cloudant/sync-android/network/members) for alternatives.
 
 For FAQs and additional information please refer to the
 [Cloudant blog](https://blog.cloudant.com/2021/06/30/Cloudant-SDK-Transition.html).
