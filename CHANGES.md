@@ -1,4 +1,5 @@
 # Unreleased
+- [DEPRECATED] This library is end-of-life and no longer supported.
 - [DEPRECATED] This library is now deprecated and will be EOL on Dec 31 2021.
 
 # 2.4.1 (2020-03-06)
